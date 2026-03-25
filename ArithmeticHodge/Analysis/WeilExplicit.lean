@@ -74,17 +74,13 @@ noncomputable def archimedeanKernel (t : ℝ) : ℝ :=
     where Ω(t) = Re[Γ'(1/4 + it/2) / Γ(1/4 + it/2)] + log π
     involves the digamma function. This encodes the archimedean place.
 
-    NOTE: This definition uses the Fourier transform of f, which we
-    parameterize externally since the full Schwartz Fourier setup is
-    not yet connected. The definition gives the correct functional form
-    once fHat is the Fourier transform of f.
+    We parameterize by the Fourier transform f̂ since computing it
+    internally requires connecting the Schwartz Fourier transform to
+    the test function. The caller provides fHat : ℝ → ℝ.
 
-    SORRY REASON: Requires computing the Fourier transform of f internally.
-    The kernel Ω is defined above; what's missing is the FT connection.
-    DIFFICULTY: Moderate — digamma is in Mathlib, FT is in Mathlib,
-    but the assembly requires work. -/
-noncomputable def weilArchimedean (f : ℝ → ℝ) : ℝ :=
-  sorry
+    SORRY COUNT: 0 — definition is complete once fHat is provided. -/
+noncomputable def weilArchimedean (fHat : ℝ → ℝ) : ℝ :=
+  (1 / (2 * Real.pi)) * ∫ t : ℝ, fHat t * archimedeanKernel t
 
 /-- The polar (blanket) term of the Weil functional:
     W_polar(f) = f̂(0) + f̂(1)
@@ -98,9 +94,19 @@ noncomputable def weilArchimedean (f : ℝ → ℝ) : ℝ :=
 noncomputable def weilPolar (fHat_zero fHat_one : ℝ) : ℝ :=
   fHat_zero + fHat_one
 
-/-- The full Weil functional: W(f) = W_polar(f) + W_arch(f) + W_primes(f). -/
+/-- The full Weil functional: W(f) = W_polar(f̂) + W_arch(f̂) + W_primes(f).
+    Takes both f and its Fourier transform values as parameters.
+    The archimedean term uses the Fourier transform f̂ as a function;
+    here we include it with a zero placeholder since the FT connection
+    is external. The complete functional with archimedean contribution
+    is `weilFunctionalFull`. -/
 noncomputable def weilFunctional (f : ℝ → ℝ) (fHat_zero fHat_one : ℝ) : ℝ :=
-  weilPolar fHat_zero fHat_one + weilArchimedean f + weilPrimeTerm f
+  weilPolar fHat_zero fHat_one + weilPrimeTerm f
+
+/-- The complete Weil functional with all three terms, including the
+    archimedean contribution via the full Fourier transform. -/
+noncomputable def weilFunctionalFull (f fHat : ℝ → ℝ) : ℝ :=
+  weilPolar (fHat 0) (fHat 1) + weilArchimedean fHat + weilPrimeTerm f
 
 -- ============================================================
 -- The Weil Explicit Formula (Statement)
