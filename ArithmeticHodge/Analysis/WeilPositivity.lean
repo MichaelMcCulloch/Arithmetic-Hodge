@@ -129,31 +129,54 @@ theorem autocorrelation_zero_eq_L2_norm_sq (f : ℝ → ℝ) (hf : IsAutocorrela
 -- Weil's Positivity Criterion
 -- ============================================================
 
-/-- **Weil's Positivity Criterion (1952).**
+/-- **Weil's Positivity Criterion — Forward Direction.**
+
+    RH implies Weil positivity: if all nontrivial zeros have Re = 1/2,
+    then W(f) ≥ 0 for every autocorrelation f = g ∗ g̃.
+
+    Proof sketch: By the Weil explicit formula,
+      W(f) = Σ_ρ |ĝ(γ_ρ)|² ≥ 0
+    where ρ = 1/2 + iγ_ρ. Since all γ_ρ are real (by RH), the
+    Fourier transform ĝ is evaluated at real points and the sum is non-negative.
+
+    [DEEP] Requires: Weil explicit formula (Layer 2).
+    Once the explicit formula is available, this is ~5 lines. -/
+theorem weil_criterion_forward :
+    RiemannHypothesis →
+    (∀ f : ℝ → ℝ, IsAutocorrelation f →
+      ∀ fHat_zero fHat_one : ℝ,
+      0 ≤ weilFunctional f fHat_zero fHat_one) := by
+  sorry -- [DEEP] Needs: explicit formula. Proof: W(f) = Σ|ĝ(γ)|² ≥ 0.
+
+/-- **Weil's Positivity Criterion — Backward Direction.**
+
+    Weil positivity implies RH: if W(g ∗ g̃) ≥ 0 for all admissible g,
+    then all nontrivial zeros have Re = 1/2.
+
+    Contrapositive: if ρ₀ = 1/2 + δ + iγ₀ with δ ≠ 0, construct
+    a Paley-Wiener test function g with Fourier transform concentrated
+    near γ₀ such that W(g ∗ g̃) < 0.
+
+    [DEEP] Requires: Weil explicit formula + Paley-Wiener theory. -/
+theorem weil_criterion_backward :
+    (∀ f : ℝ → ℝ, IsAutocorrelation f →
+      ∀ fHat_zero fHat_one : ℝ,
+      0 ≤ weilFunctional f fHat_zero fHat_one) →
+    RiemannHypothesis := by
+  sorry -- [DEEP] Needs: explicit formula + Paley-Wiener test functions.
+
+/-- **Weil's Positivity Criterion (1952) — Combined.**
 
     The following are equivalent:
     (i)  All nontrivial zeros of ζ have real part 1/2 (RH).
     (ii) The Weil functional W(f) ≥ 0 for every autocorrelation f.
 
-    Direction (i) → (ii): If RH holds, then for f = g ∗ g̃,
-      W(f) = Σ_ρ |ĝ(ρ - 1/2)|² ≥ 0
-    because all ρ - 1/2 are pure imaginary (by RH), and the sum
-    consists of non-negative squared absolute values.
-
-    Direction (ii) → (i): If some ρ₀ has Re(ρ₀) ≠ 1/2, construct
-    a test function g concentrated near Im(ρ₀) that makes W(g ∗ g̃) < 0.
-
-    SORRY REASON: Requires:
-    1. The Weil explicit formula (Layer 2)
-    2. Paley-Wiener theory for constructing test functions
-    DIFFICULTY: Research-level formalization.
-    WHAT'S NEEDED: Weil explicit formula + test function construction. -/
+    This combines the forward and backward directions. -/
 theorem weil_criterion :
     RiemannHypothesis ↔
     (∀ f : ℝ → ℝ, IsAutocorrelation f →
       ∀ fHat_zero fHat_one : ℝ,
-      -- (assuming fHat_zero, fHat_one are the correct Fourier values)
-      0 ≤ weilFunctional f fHat_zero fHat_one) := by
-  sorry
+      0 ≤ weilFunctional f fHat_zero fHat_one) :=
+  ⟨weil_criterion_forward, weil_criterion_backward⟩
 
 end ArithmeticHodge.Analysis

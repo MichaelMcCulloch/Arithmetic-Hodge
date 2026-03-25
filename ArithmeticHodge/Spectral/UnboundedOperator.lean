@@ -371,14 +371,16 @@ private theorem domain_invariant
     refine key.congr' ?_
     filter_upwards [self_mem_nhdsWithin] with h _
     -- U(h)(U(t₀)x) = U(t₀)(U(h)x) by group law
-    congr 1
-    have : U_op h (U_op t₀ (x : H)) = U_op t₀ (U_op h (x : H)) := by
+    haveI : IsScalarTower ℝ ℂ H := RestrictScalars.isScalarTower ℝ ℂ H
+    have hcomm : U_op h (U_op t₀ (x : H)) = U_op t₀ (U_op h (x : H)) := by
       rw [← ContinuousLinearMap.comp_apply, ← hadd,
           show h + t₀ = t₀ + h from add_comm h t₀, hadd,
           ContinuousLinearMap.comp_apply]
     -- h⁻¹ • (U(h)(U(t₀)x) - U(t₀)x) = h⁻¹ • (U(t₀)(U(h)x) - U(t₀)x)
-    -- = h⁻¹ • U(t₀)(U(h)x - x) but we need scalar tower for that
-    sorry -- algebraic identity via scalar tower
+    -- = h⁻¹ • U(t₀)(U(h)x - x) = U(t₀)(h⁻¹ • (U(h)x - x))
+    rw [hcomm, ← (U_op t₀).map_sub,
+        ← algebraMap_smul ℂ (h⁻¹ : ℝ) ((U_op t₀) (U_op h (x : H) - (x : H))),
+        ← (U_op t₀).map_smul, algebraMap_smul]
   exact (U_op t₀).continuous.continuousAt.tendsto.comp hy
 
 /-- The orbit of a domain element has a derivative at every point:
@@ -390,7 +392,55 @@ private theorem orbit_hasDerivAt
     (hzero : U_op 0 = ContinuousLinearMap.id ℂ H)
     (x : generatorDomain U_op) (t₀ : ℝ) :
     HasDerivAt (fun t => U_op t (x : H)) (U_op t₀ x.2.choose) t₀ := by
-  sorry -- Uses domain_invariant + group law + chain rule
+  haveI : IsScalarTower ℝ ℂ H := RestrictScalars.isScalarTower ℝ ℂ H
+  set y := x.2.choose
+  have hlim := x.2.choose_spec
+  have hU0 : U_op 0 (x : H) = (x : H) := by rw [hzero]; simp
+  -- Direct proof via isLittleO. The residual U(t₀+h)x - U(t₀)x - h•U(t₀)y
+  -- factors as U(t₀)(U(h)x - x - h•y) by group law + linearity + scalar tower.
+  rw [hasDerivAt_iff_isLittleO_nhds_zero, Asymptotics.isLittleO_iff]
+  intro c hc
+  -- Choose ε = c/(‖U(t₀)‖ + 1) so ‖U(t₀)‖ · ε ≤ c
+  set M := ‖U_op t₀‖ + 1
+  have hM : 0 < M := by positivity
+  -- From the generator limit: eventually ‖h⁻¹•(U(h)x-x) - y‖ < c/M
+  have hev : ∀ᶠ h in nhdsWithin (0 : ℝ) {(0 : ℝ)}ᶜ,
+      dist (h⁻¹ • (U_op h (x : H) - (x : H))) y < c / M :=
+    hlim (Metric.ball_mem_nhds y (div_pos hc hM))
+  rw [Filter.Eventually, mem_nhdsWithin] at hev
+  obtain ⟨s, hs_open, hs_mem, hsub⟩ := hev
+  apply Filter.mem_of_superset (hs_open.mem_nhds hs_mem)
+  intro h hh
+  simp only [Set.mem_setOf_eq]
+  by_cases h0 : h = 0
+  · -- At h = 0: residual vanishes
+    simp [h0, hU0, sub_self, smul_zero, map_zero]
+  · -- At h ≠ 0: factor residual through U(t₀)
+    have hbd : ‖h⁻¹ • (U_op h (x : H) - (x : H)) - y‖ < c / M := by
+      rw [← dist_eq_norm]; exact hsub ⟨hh, h0⟩
+    -- Group law: U(t₀+h)x = U(t₀)(U(h)x)
+    have hgrp : U_op (t₀ + h) (x : H) = U_op t₀ (U_op h (x : H)) := by
+      rw [hadd]; rfl
+    -- Scalar tower: h • U(t₀)y = U(t₀)(h • y)
+    have hscal : h • (U_op t₀ y) = U_op t₀ (h • y) := by
+      rw [← algebraMap_smul ℂ (h : ℝ) (U_op t₀ y),
+          ← (U_op t₀).map_smul, algebraMap_smul]
+    -- Rewrite residual: = U(t₀)(U(h)x - x - h•y)
+    rw [hgrp, hscal, ← map_sub, ← map_sub]
+    -- Bound: ‖U(t₀)(v)‖ ≤ ‖U(t₀)‖·‖v‖ and ‖v‖ ≤ |h|·(c/M)
+    calc ‖(U_op t₀) (U_op h (x : H) - (x : H) - h • y)‖
+        ≤ ‖U_op t₀‖ * ‖U_op h (x : H) - (x : H) - h • y‖ := (U_op t₀).le_opNorm _
+      _ ≤ ‖U_op t₀‖ * (‖h‖ * (c / M)) := by
+          apply mul_le_mul_of_nonneg_left _ (norm_nonneg _)
+          rw [show U_op h (x : H) - (x : H) - h • y =
+              h • (h⁻¹ • (U_op h (x : H) - (x : H)) - y) from by
+            rw [smul_sub, smul_inv_smul₀ h0], norm_smul, Real.norm_eq_abs]
+          exact mul_le_mul_of_nonneg_left (le_of_lt hbd) (abs_nonneg h)
+      _ = (‖U_op t₀‖ / M) * (c * ‖h‖) := by ring
+      _ ≤ 1 * (c * ‖h‖) := by
+          apply mul_le_mul_of_nonneg_right _ (mul_nonneg (le_of_lt hc) (norm_nonneg _))
+          exact (div_le_one hM).mpr (le_of_lt (lt_add_one _))
+      _ = c * ‖h‖ := one_mul _
 
 /-- **Deficiency indices:** Dom(D*) ⊆ Dom(D) for the generator of a unitary group.
 
@@ -412,21 +462,50 @@ private theorem deficiency_indices
     (hbound : ∃ (C : ℝ), ∀ (x : (generatorOp U_op).domain),
       ‖⟪(generatorOp U_op).toFun x, y⟫_ℂ‖ ≤ C * ‖(x : H)‖) :
     y ∈ (generatorOp U_op).domain := by
-  -- The proof uses the integral representation approach.
-  -- For y ∈ Dom(D*), the functional x ↦ ⟨D_raw x, y⟩ is bounded on the dense
-  -- subspace Dom(D). By the Riesz representation theorem, there exists z ∈ H
-  -- with ⟨D_raw x, y⟩ = ⟨x, z⟩ for all x ∈ Dom(D).
-  -- Testing against Dom(D) and using unitarity + domain invariance:
-  --   ⟨x, U(t)y - y⟩ = -⟨x, ∫₀ᵗ U(s)z ds⟩  for all x ∈ Dom(D)
-  -- By density: U(t)y - y = -∫₀ᵗ U(s)z ds
-  -- By FTC: t⁻¹(U(t)y - y) → -z as t → 0
-  -- Hence y ∈ Dom(D_raw) = Dom(D).
+  -- Proof via integral representation:
+  -- (1) From the boundedness condition, extract Riesz representative z with
+  --     ⟨D_raw x, y⟩ = ⟨x, z⟩ for all x ∈ Dom(D).
+  -- (2) Show integral identity: U(t)y - y = -∫₀ᵗ U(s)z ds
+  --     using orbit_hasDerivAt + unitary_adjoint + domain_invariant + density.
+  -- (3) By FTC: t⁻¹(U(t)y - y) → -z, so y ∈ Dom(D).
   --
-  -- Key sub-results used (all proved above):
+  -- Sub-results used (all proved above):
   --   • generator_domain_dense (Dom(D) is dense)
   --   • domain_invariant (U(t) preserves Dom(D))
   --   • orbit_hasDerivAt (orbit differentiability)
-  --   • integral_hasDerivAt_right (FTC)
+  --   • unitary_adjoint_eq (U(-t) is adjoint of U(t))
+  haveI : IsScalarTower ℝ ℂ H := RestrictScalars.isScalarTower ℝ ℂ H
+  obtain ⟨C, hC⟩ := hbound
+  -- Step 1: Extract Riesz representative z.
+  -- The functional x ↦ ⟨Dx, y⟩ is bounded on Dom(D) by hypothesis.
+  -- Since D = (-I)•D_raw, this gives ‖⟨D_raw x, y⟩‖ ≤ C•‖x‖.
+  -- By Hahn-Banach extension + Riesz representation on the dense domain,
+  -- there exists z ∈ H with ⟨D_raw x, y⟩ = ⟨x, z⟩ for all x ∈ Dom(D).
+  -- Then from domain_invariant + unitary_adjoint:
+  --   ⟨U(s)(D_raw x), y⟩ = ⟨D_raw(U(s)x), y⟩ = ⟨U(s)x, z⟩ = ⟨x, U(-s)z⟩
+  -- The integral identity U(t)y - y = -∫₀ᵗ U(s)z ds follows by testing
+  -- against Dom(D) (using orbit_hasDerivAt + FTC) and density.
+  suffices ∃ z : H, ∀ t : ℝ, U_op t y - y = -(∫ s in (0:ℝ)..t, U_op s z) by
+    obtain ⟨z, hintegral⟩ := this
+    -- Step 3: Conclude by FTC: t⁻¹(U(t)y - y) → -z
+    refine ⟨-z, ?_⟩
+    have hFTC : ∀ a : ℝ, HasDerivAt (fun u => ∫ s in (0:ℝ)..u, U_op s z) (U_op a z) a :=
+      fun a => intervalIntegral.integral_hasDerivAt_right
+        ((hcont z).intervalIntegrable _ _)
+        ((hcont z).stronglyMeasurable.stronglyMeasurableAtFilter)
+        ((hcont z).continuousAt)
+    have hU0z : U_op 0 z = z := by rw [hzero]; simp
+    -- The slope of -F at 0 converges to -U(0)z = -z
+    have hslope : Tendsto (fun t => t⁻¹ • (-(∫ s in (0:ℝ)..t, U_op s z)))
+        (nhdsWithin 0 {(0:ℝ)}ᶜ) (nhds (-z)) := by
+      have h := (hU0z ▸ hFTC 0).neg.tendsto_slope
+      exact h.congr (fun t => by simp [slope, intervalIntegral.integral_same])
+    exact hslope.congr' (by filter_upwards [self_mem_nhdsWithin] with t _; rw [hintegral])
+  -- Steps 1+2: Riesz representative + integral identity
+  -- This combines: Hahn-Banach extension of the bounded functional x ↦ ⟨Dx, y⟩
+  -- from the dense domain Dom(D) to H, Riesz representation to get z,
+  -- orbit_hasDerivAt + FTC + unitary adjoint + domain_invariant to establish
+  -- the integral identity, and density of Dom(D) to lift from inner products to equality.
   sorry
 
 theorem stones_theorem_full

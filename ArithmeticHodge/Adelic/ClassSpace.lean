@@ -138,7 +138,51 @@ theorem haar_invariant_of_trivial_haarChar
   simp only [Measure.coe_nnreal_smul_apply, ENNReal.coe_one, one_mul] at h'
   exact h'
 
-/-- **Haar Measure Invariance Under Scaling.**
+-- ============================================================
+-- Adèle Class Space Axioms
+-- ============================================================
+
+/-- **Axiomatized properties of the adèle class space.**
+
+    These hold for 𝔸_ℚ/ℚ* but the construction is not yet in Mathlib.
+    By packaging them as a class, we isolate the construction from the theory.
+    The single sorry for the entire adelic infrastructure is relocated to
+    instantiating this class for the actual adèle class space.
+
+    Properties axiomatized:
+    - Locally compact Hausdorff topological group
+    - Second countable (for Haar measure uniqueness)
+    - Borel σ-algebra
+    - A Haar measure that is regular
+    - A scaling flow as continuous group automorphisms
+    - Product formula consequence: trivial Haar character for the scaling flow -/
+class AdeleClassSpaceData (X : Type*) extends
+    TopologicalSpace X, CommGroup X, IsTopologicalGroup X,
+    LocallyCompactSpace X, T2Space X,
+    MeasurableSpace X, BorelSpace X, SecondCountableTopology X where
+  /-- The Haar measure on the adèle class space -/
+  haarMeasure : MeasureTheory.Measure X
+  /-- It is a Haar measure -/
+  isHaar : haarMeasure.IsHaarMeasure
+  /-- It is regular -/
+  isRegular : haarMeasure.Regular
+  /-- The scaling flow as continuous group automorphisms -/
+  scalingFlow : ℝ → X ≃ₜ* X
+  /-- Product formula consequence: trivial Haar character for the scaling flow -/
+  trivialHaarChar : ∀ t, MeasureTheory.mulEquivHaarChar (scalingFlow t) = 1
+
+/-- **Haar measure invariance from the AdeleClassSpaceData class.**
+    The product formula (axiomatized as trivialHaarChar) immediately gives
+    Haar measure invariance via `haar_invariant_of_trivial_haarChar`.
+    SORRY COUNT: 0 — proved from class axioms. -/
+theorem haar_invariant_from_class (X : Type*) [inst : AdeleClassSpaceData X] (t : ℝ) :
+    Measure.map (inst.scalingFlow t) inst.haarMeasure = inst.haarMeasure := by
+  haveI := inst.isHaar
+  haveI := inst.isRegular
+  exact haar_invariant_of_trivial_haarChar X inst.haarMeasure (inst.scalingFlow t)
+    (inst.trivialHaarChar t)
+
+/-- **Haar Measure Invariance Under Scaling** (legacy interface).
 
     On the adèle class space, Haar measure is invariant under scaling because
     the product formula forces the Haar character of each scaling map to be 1.
@@ -147,7 +191,8 @@ theorem haar_invariant_of_trivial_haarChar
     The remaining sorry is constructing the adèle class space and verifying
     that the product formula implies trivial Haar character.
 
-    [INFRASTRUCTURE] Remaining gap: adèle class space construction. -/
+    [INFRASTRUCTURE] Remaining gap: adèle class space construction.
+    With AdeleClassSpaceData, this sorry is relocated to class instantiation. -/
 theorem haar_invariant_under_scaling
     (G : Type*) [TopologicalSpace G] [Group G] [IsTopologicalGroup G]
     [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G]
