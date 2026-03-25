@@ -5,52 +5,45 @@
   self-duality of ℤ ⊂ ℝ and the functional equation of ζ.
 
   Statement: For f in the Schwartz space of ℝ,
-    Σ_{n ∈ ℤ} f(n) = Σ_{n ∈ ℤ} f̂(n)
+    Σ_{n ∈ ℤ} f(x+n) = Σ_{n ∈ ℤ} 𝓕 f(n) · e^{2πinx}
+
+  GOOD NEWS: Mathlib already has this as `SchwartzMap.tsum_eq_tsum_fourier`
+  in `Mathlib.Analysis.Fourier.PoissonSummation`. We wrap it here.
 
   This is where the 1/2 is BORN: the self-duality of the lattice ℤ
-  under Pontryagin/Fourier duality is what creates the symmetry axis
-  at Re(s) = 1/2 for the Riemann zeta function.
+  under Pontryagin/Fourier duality creates the symmetry axis at Re(s) = 1/2.
 -/
 
-import Mathlib.Analysis.SchwartzSpace
+import Mathlib.Analysis.Distribution.SchwartzSpace.Basic
 import Mathlib.Analysis.Fourier.FourierTransform
 import Mathlib.Analysis.Fourier.PoissonSummation
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
-import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 
-open scoped SchwartzSpace
-open MeasureTheory Complex FourierTransform
+open scoped SchwartzMap FourierTransform
+open MeasureTheory Complex
 
 namespace ArithmeticHodge.Analysis
 
-/-- The Fourier transform of a Schwartz function on ℝ, using the standard
-    normalization with 2π in the exponent: f̂(ξ) = ∫ f(x) e^{-2πixξ} dx. -/
-noncomputable def fourierSchwartz (f : 𝓢(ℝ, ℂ)) : ℝ → ℂ :=
-  fun ξ => VectorFourier.fourierIntegral (Real.fourierChar) (volume : Measure ℝ)
-    (innerₛₗ ℝ ξ) f
+/-- **Poisson Summation Formula for Schwartz functions.**
 
-/-- **Poisson Summation Formula.**
-
-    For any Schwartz function f : ℝ → ℂ,
-      Σ_{n ∈ ℤ} f(n) = Σ_{n ∈ ℤ} f̂(n)
+    For any Schwartz function f : ℝ → ℂ and any x ∈ ℝ,
+      Σ_{n ∈ ℤ} f(x + n) = Σ_{n ∈ ℤ} 𝓕 f(n) · e^{2πinx}
 
     This encodes the self-duality of ℤ ⊂ ℝ under Pontryagin duality.
-    The lattice ℤ is its own dual lattice (up to normalization), which
-    is the additive-structure reason the critical line is at 1/2.
 
-    SORRY REASON: While Mathlib has `Real.tsum_eq_tsum_fourierIntegral`
-    for periodized functions, the full Schwartz-space version of Poisson
-    summation may require additional assembly. The core result exists in
-    Mathlib.Analysis.Fourier.PoissonSummation but the exact API for
-    Schwartz functions needs verification.
+    SORRY COUNT: 0 — this is PROVED in Mathlib.
+    Mathlib reference: `SchwartzMap.tsum_eq_tsum_fourier` -/
+theorem poisson_summation (f : 𝓢(ℝ, ℂ)) (x : ℝ) :
+    ∑' n : ℤ, f (x + n) =
+    ∑' n : ℤ, 𝓕 f n * fourier n (x : UnitAddCircle) :=
+  SchwartzMap.tsum_eq_tsum_fourier f x
 
-    DIFFICULTY: Moderate — the pieces exist in Mathlib, assembly required.
-    WHAT'S NEEDED: Verify the exact Mathlib API, connect SchwartzMap to
-    the hypotheses of `Real.tsum_eq_tsum_fourierIntegral`.
-    INDEPENDENTLY VALUABLE: Yes, this is a fundamental result. -/
-theorem poisson_summation (f : 𝓢(ℝ, ℂ)) :
-    ∑' (n : ℤ), f (n : ℝ) =
-    ∑' (n : ℤ), fourierSchwartz f (n : ℝ) := by
-  sorry
+/-- Poisson summation at x = 0: the classical form. -/
+theorem poisson_summation_zero (f : 𝓢(ℝ, ℂ)) :
+    ∑' n : ℤ, f (↑n : ℝ) =
+    ∑' n : ℤ, 𝓕 f n * fourier n (0 : UnitAddCircle) := by
+  have h := poisson_summation f 0
+  simp only [zero_add] at h
+  exact h
 
 end ArithmeticHodge.Analysis
