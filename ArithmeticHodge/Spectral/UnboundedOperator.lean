@@ -14,6 +14,9 @@
 
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.InnerProductSpace.Adjoint
+import Mathlib.Analysis.InnerProductSpace.Continuous
+import Mathlib.MeasureTheory.Function.L2Space
+import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
@@ -502,11 +505,256 @@ private theorem deficiency_indices
       exact h.congr (fun t => by simp [slope, intervalIntegral.integral_same])
     exact hslope.congr' (by filter_upwards [self_mem_nhdsWithin] with t _; rw [hintegral])
   -- Steps 1+2: Riesz representative + integral identity
-  -- This combines: Hahn-Banach extension of the bounded functional x ↦ ⟨Dx, y⟩
-  -- from the dense domain Dom(D) to H, Riesz representation to get z,
-  -- orbit_hasDerivAt + FTC + unitary adjoint + domain_invariant to establish
-  -- the integral identity, and density of Dom(D) to lift from inner products to equality.
-  sorry
+  -- We construct z via Riesz representation of the bounded ℂ-linear functional
+  -- x ↦ ⟪y, Ax⟫ on Dom(A), then prove U(t)y - y = -∫₀ᵗ U(s)z ds using density.
+  set D := generatorOp U_op with hD_def
+  have hdense : Dense (D.domain : Set H) :=
+    generator_domain_dense U_op hadd hzero hcont
+  -- D_raw linearity (by uniqueness of limits):
+  have draw_add : ∀ (a b : D.domain),
+      (a + b).2.choose = a.2.choose + b.2.choose := by
+    intro a b
+    have ha := a.2.choose_spec; have hb := b.2.choose_spec
+    have hab := (a + b).2.choose_spec
+    have hlim : Filter.Tendsto
+        (fun t : ℝ => t⁻¹ • (U_op t ((a : H) + (b : H)) - ((a : H) + (b : H))))
+        (nhdsWithin 0 {(0 : ℝ)}ᶜ) (nhds (a.2.choose + b.2.choose)) := by
+      have heq : ∀ t : ℝ, t⁻¹ • (U_op t ((a : H) + (b : H)) - ((a : H) + (b : H))) =
+          t⁻¹ • (U_op t (a : H) - (a : H)) + t⁻¹ • (U_op t (b : H) - (b : H)) := by
+        intro t; simp [map_add, add_sub_add_comm, smul_add]
+      simp_rw [heq]; exact ha.add hb
+    have hab' : Filter.Tendsto
+        (fun t : ℝ => t⁻¹ • (U_op t ((a : H) + (b : H)) - ((a : H) + (b : H))))
+        (nhdsWithin 0 {(0 : ℝ)}ᶜ) (nhds (a + b).2.choose) := hab
+    exact tendsto_nhds_unique hab' hlim
+  have draw_smul : ∀ (c : ℂ) (a : D.domain),
+      (c • a).2.choose = c • a.2.choose := by
+    intro c a
+    have ha := a.2.choose_spec; have hca := (c • a).2.choose_spec
+    have hlim : Filter.Tendsto
+        (fun t : ℝ => t⁻¹ • (U_op t (c • (a : H)) - c • (a : H)))
+        (nhdsWithin 0 {(0 : ℝ)}ᶜ) (nhds (c • a.2.choose)) := by
+      have heq : ∀ t : ℝ, t⁻¹ • (U_op t (c • (a : H)) - c • (a : H)) =
+          c • (t⁻¹ • (U_op t (a : H) - (a : H))) := by
+        intro t; rw [map_smul, ← smul_sub c]
+        exact (smul_algebra_smul_comm t⁻¹ c _).symm
+      simp_rw [heq]; exact ha.const_smul c
+    have hca' : Filter.Tendsto
+        (fun t : ℝ => t⁻¹ • (U_op t (c • (a : H)) - c • (a : H)))
+        (nhdsWithin 0 {(0 : ℝ)}ᶜ) (nhds (c • a).2.choose) := hca
+    exact tendsto_nhds_unique hca' hlim
+  -- domain_invariant raw derivative: D_raw(U(t)x) = U(t)(D_raw x)
+  have draw_invariant : ∀ (x : D.domain) (t₀ : ℝ),
+      (⟨U_op t₀ (x : H), domain_invariant U_op hadd hzero x t₀⟩ : D.domain).2.choose =
+      U_op t₀ x.2.choose := by
+    intro x t₀
+    have hinv := domain_invariant U_op hadd hzero x t₀
+    have hx_lim := x.2.choose_spec
+    -- The proof of domain_invariant shows lim = U(t₀)(D_raw x)
+    have hlim : Filter.Tendsto
+        (fun h : ℝ => h⁻¹ • (U_op h (U_op t₀ (x : H)) - U_op t₀ (x : H)))
+        (nhdsWithin 0 {(0 : ℝ)}ᶜ) (nhds (U_op t₀ x.2.choose)) := by
+      have key : Filter.Tendsto
+          (fun h : ℝ => U_op t₀ (h⁻¹ • (U_op h (x : H) - (x : H))))
+          (nhdsWithin 0 {(0 : ℝ)}ᶜ) (nhds (U_op t₀ x.2.choose)) :=
+        (U_op t₀).continuous.continuousAt.tendsto.comp hx_lim
+      refine key.congr' ?_
+      filter_upwards [self_mem_nhdsWithin] with h _
+      have hcomm : U_op h (U_op t₀ (x : H)) = U_op t₀ (U_op h (x : H)) := by
+        rw [← ContinuousLinearMap.comp_apply, ← hadd,
+            show h + t₀ = t₀ + h from add_comm h t₀, hadd,
+            ContinuousLinearMap.comp_apply]
+      rw [hcomm, ← (U_op t₀).map_sub,
+          ← algebraMap_smul ℂ (h⁻¹ : ℝ) ((U_op t₀) (U_op h (x : H) - (x : H))),
+          ← (U_op t₀).map_smul, algebraMap_smul]
+    exact tendsto_nhds_unique
+      (⟨U_op t₀ (x : H), hinv⟩ : D.domain).2.choose_spec hlim
+  -- Step 1: Build the ℂ-linear functional φ(x) = ⟪y, Ax⟫ on Dom(A).
+  -- This is linear: inner product is linear in 2nd arg, A is ℂ-linear.
+  -- Boundedness: |⟪y, Ax⟫| = |conj(⟪Ax, y⟫)| = |⟪Ax, y⟫| ≤ C*‖x‖.
+  have hbound_yAx : ∀ (x : D.domain), ‖⟪y, D.toFun x⟫_ℂ‖ ≤ C * ‖(x : H)‖ := by
+    intro x
+    rw [show ‖⟪y, D.toFun x⟫_ℂ‖ = ‖⟪D.toFun x, y⟫_ℂ‖ from by
+      rw [← Complex.norm_conj, inner_conj_symm]]
+    exact hC x
+  set φ_lin : D.domain →ₗ[ℂ] ℂ :=
+    { toFun := fun x => ⟪y, D.toFun x⟫_ℂ
+      map_add' := by
+        intro a b
+        show ⟪y, (-Complex.I) • (a + b).2.choose⟫_ℂ =
+            ⟪y, (-Complex.I) • a.2.choose⟫_ℂ + ⟪y, (-Complex.I) • b.2.choose⟫_ℂ
+        rw [draw_add, smul_add, inner_add_right]
+      map_smul' := by
+        intro c a
+        show ⟪y, (-Complex.I) • (c • a).2.choose⟫_ℂ =
+            c • ⟪y, (-Complex.I) • a.2.choose⟫_ℂ
+        rw [draw_smul]
+        rw [show (-Complex.I) • (c • a.2.choose) = c • ((-Complex.I) • a.2.choose) from by
+          rw [← mul_smul, ← mul_smul, mul_comm]]
+        rw [inner_smul_right, smul_eq_mul] }
+  set φ_clm : D.domain →L[ℂ] ℂ := φ_lin.mkContinuousOfExistsBound ⟨C, hbound_yAx⟩
+  -- Step 2: Extend to all of H via density, then apply Riesz.
+  haveI : IsUniformAddGroup D.domain := by
+    have h_sub : UniformContinuous fun p : D.domain × D.domain => p.1 - p.2 :=
+      (isUniformEmbedding_subtype_val.uniformContinuous.comp uniformContinuous_fst).sub
+        (isUniformEmbedding_subtype_val.uniformContinuous.comp uniformContinuous_snd)
+        |>.subtype_mk _
+    exact ⟨h_sub⟩
+  have h_dr : DenseRange (D.domain.subtypeL) := hdense.denseRange_val
+  set φ_ext : H →L[ℂ] ℂ :=
+    φ_clm.extend D.domain.subtypeL
+  have hφ_ext_eq : ∀ x : D.domain, φ_ext (x : H) = φ_clm x := by
+    intro x
+    exact φ_clm.extend_eq h_dr isUniformEmbedding_subtype_val.isUniformInducing x
+  -- Riesz: get z₁ with ⟪z₁, v⟫ = φ_ext(v) for all v
+  set z₁ : H := (InnerProductSpace.toDual ℂ H).symm φ_ext
+  have hz₁ : ∀ v : H, ⟪z₁, v⟫_ℂ = φ_ext v := fun v => InnerProductSpace.toDual_symm_apply
+  -- For x ∈ Dom(A): ⟪z₁, x⟫ = ⟪y, Ax⟫ = (-I)•⟪y, D_raw(x)⟫
+  have hz₁_dom : ∀ x : D.domain, ⟪z₁, (x : H)⟫_ℂ = ⟪y, D.toFun x⟫_ℂ := by
+    intro x; rw [hz₁, hφ_ext_eq]; rfl
+  -- The witness is z = (-I)•z₁.
+  -- Proof: for w ∈ Dom(A) and all s, we need
+  --   ⟪U(-s)(D_raw w), y⟫ = ⟪w, U(s)((-I)•z₁)⟫
+  -- which we verify via the Riesz identity applied to U(-s)w ∈ Dom(A).
+  set z := (-Complex.I) • z₁
+  use z
+  intro t
+  -- Prove U(t)y - y = -(∫ s in (0:ℝ)..t, U_op s z) by testing against the dense Dom(D).
+  apply hdense.eq_of_inner_right (𝕜 := ℂ)
+  intro w hw
+  set w' : D.domain := ⟨w, hw⟩
+  -- Both sides are continuous in t; we prove equality of the scalar functions
+  -- f(t) = ⟪w, U(t)y - y⟫ and g(t) = ⟪w, -(∫₀ᵗ U(s)z ds)⟫
+  -- by showing they agree via FTC: both vanish at t=0 and have the same derivative.
+  -- Strategy: compute ⟪w, U(t)y - y⟫ and ⟪w, -∫₀ᵗ U(s)z ds⟫ using
+  -- orbit_hasDerivAt + FTC + the Riesz identity.
+  --
+  -- Define f₁(t) = ⟪U(t)w, y⟫ (= ⟪w, U(-t)y⟫ ... but we use orbit form).
+  -- By orbit_hasDerivAt: HasDerivAt (fun t => U(t)w) (U(t)(D_raw w)) t.
+  -- So HasDerivAt f₁ (⟪U(t)(D_raw w), y⟫) t.
+  -- By FTC: f₁(0) - f₁(-t) = ∫₋ₜ⁰ f₁'(s) ds = ∫₋ₜ⁰ ⟪U(s)(D_raw w), y⟫ ds.
+  -- i.e., ⟪w, y⟫ - ⟪U(-t)w, y⟫ = ∫₋ₜ⁰ ⟪U(s)(D_raw w), y⟫ ds
+  --                               = ∫₀ᵗ ⟪U(-s)(D_raw w), y⟫ ds  (substitution s→-s)
+  -- So ⟪U(-t)w - w, y⟫ = -∫₀ᵗ ⟪U(-s)(D_raw w), y⟫ ds ... (*)
+  --
+  -- We also have (using adjoint + inner product through integral):
+  -- ⟪w, ∫₀ᵗ U(s)z ds⟫ = ∫₀ᵗ ⟪w, U(s)z⟫ ds
+  -- and ⟪w, U(s)z⟫ = ⟪w, U(s)((-I)•z₁)⟫ = ⟪w, (-I)•U(s)z₁⟫ = (-I)•⟪w, U(s)z₁⟫
+  --                = (-I)•⟪U(-s)w, z₁⟫  (adjoint)
+  --                = (-I)•conj(⟪z₁, U(-s)w⟫)  (inner_conj_symm)
+  -- By Riesz on domain element U(-s)w:
+  --   ⟪z₁, U(-s)w⟫ = ⟪y, A(U(-s)w)⟫ = ⟪y, (-I)•D_raw(U(-s)w)⟫
+  --                 = (-I)•⟪y, U(-s)(D_raw w)⟫  (D_raw commutes with U, inner_smul_right)
+  -- So: ⟪w, U(s)z⟫ = (-I)•conj((-I)•⟪y, U(-s)(D_raw w)⟫)
+  --                 = (-I)•conj(-I)•conj(⟪y, U(-s)(D_raw w)⟫)
+  --                 = (-I)•I•⟪U(-s)(D_raw w), y⟫
+  --                 = 1•⟪U(-s)(D_raw w), y⟫ = ⟪U(-s)(D_raw w), y⟫
+  -- So ⟪w, ∫₀ᵗ U(s)z ds⟫ = ∫₀ᵗ ⟪U(-s)(D_raw w), y⟫ ds
+  -- Combined with (*): ⟪U(-t)w - w, y⟫ = -⟪w, ∫₀ᵗ U(s)z ds⟫
+  -- i.e., ⟪w, U(t)y - y⟫ = ⟪w, -(∫₀ᵗ U(s)z ds)⟫  ✓
+  --
+  -- Implementation: we prove this via FTC on ℂ-valued functions.
+  -- Define f(t) = ⟪U(t)(w : H), y⟫ as a differentiable ℂ-valued function of t.
+  -- orbit_hasDerivAt gives the H-valued derivative; compose with ⟪·, y⟫.
+  -- Step A: Compute LHS = ⟪w, U(t)y - y⟫ = ⟪U(-t)w, y⟫ - ⟪w, y⟫ via adjoint.
+  rw [inner_sub_right]
+  have hadj_t : ⟪w, U_op t y⟫_ℂ = ⟪U_op (-t) w, y⟫_ℂ := by
+    rw [← inner_conj_symm (𝕜 := ℂ) w,
+        unitary_adjoint_eq U_op hiso hadd hzero t y w,
+        inner_conj_symm]
+  rw [hadj_t, ← inner_sub_left]
+  -- Goal: ⟪U(-t)w - w, y⟫ = ⟪w, -(∫ s in (0:ℝ)..t, U_op s z)⟫
+  rw [inner_neg_right]
+  -- Goal: ⟪U(-t)w - w, y⟫ = -(⟪w, ∫ s in (0:ℝ)..t, U_op s z⟫)
+  -- Step B: Pull inner product through the integral.
+  -- ⟪w, ∫ s in 0..t, U(s)z⟫ = ∫ s in 0..t, ⟪w, U(s)z⟫ via innerSL.
+  have hint_inner : ⟪w, ∫ s in (0:ℝ)..t, U_op s z⟫_ℂ =
+      ∫ s in (0:ℝ)..t, ⟪w, U_op s z⟫_ℂ := by
+    -- Pull inner product through interval integral via CLM composition.
+    have h1 := (innerSL ℂ w).intervalIntegral_comp_comm
+      ((hcont z).intervalIntegrable (μ := volume) 0 t)
+    simp only [innerSL_apply_apply] at h1
+    exact h1.symm
+  rw [hint_inner]
+  -- Goal: ⟪U(-t)w - w, y⟫ = -(∫ s in (0:ℝ)..t, ⟪w, U_op s z⟫)
+  -- Step C: Show the integrand ⟪w, U(s)z⟫ = ⟪U(-s)(D_raw w), y⟫ for all s.
+  have integrand_eq : ∀ s : ℝ, ⟪w, U_op s z⟫_ℂ = ⟪U_op (-s) w'.2.choose, y⟫_ℂ := by
+    intro s
+    -- z = (-I)•z₁, so U(s)z = (-I)•U(s)z₁
+    have hz_unfold : U_op s z = (-Complex.I) • U_op s z₁ := by
+      show U_op s ((-Complex.I) • z₁) = _; rw [map_smul]
+    rw [hz_unfold, inner_smul_right]
+    -- Now: (-I) * ⟪w, U(s)z₁⟫.
+    -- Use adjoint: ⟪w, U(s)z₁⟫ = ⟪U(-s)w, z₁⟫
+    have hadj_s : ⟪w, U_op s z₁⟫_ℂ = ⟪U_op (-s) w, z₁⟫_ℂ := by
+      have h := unitary_adjoint_eq U_op hiso hadd hzero s z₁ w
+      rw [← inner_conj_symm (𝕜 := ℂ) w, h, inner_conj_symm]
+    rw [hadj_s, ← inner_conj_symm (𝕜 := ℂ) (U_op (-s) w)]
+    -- Now: (-I) * conj(⟪z₁, U(-s)w⟫)
+    -- Apply Riesz identity to U(-s)w ∈ Dom(D)
+    have hinv : U_op (-s) w ∈ D.domain := domain_invariant U_op hadd hzero w' (-s)
+    set w_s : D.domain := ⟨U_op (-s) w, hinv⟩
+    rw [hz₁_dom w_s]
+    -- Now: (-I) * conj(⟪y, D.toFun w_s⟫)
+    -- D.toFun w_s = (-I) • w_s.2.choose by definition
+    -- w_s.2.choose = U(-s)(D_raw w) by draw_invariant
+    have hDfun : D.toFun w_s = (-Complex.I) • w_s.2.choose := rfl
+    rw [hDfun, draw_invariant w' (-s)]
+    -- Now: (-I) * conj(⟪y, (-I) • U(-s)(D_raw w)⟫) = ⟪U(-s)(D_raw w), y⟫
+    rw [inner_smul_right]
+    -- Now: (-I) * conj((-I) * ⟪y, U(-s)(D_raw w)⟫) = ⟪U(-s)(D_raw w), y⟫
+    rw [map_mul, starRingEnd_apply]
+    rw [show star (-Complex.I) = Complex.I by
+      simp [star_neg, show star Complex.I = -Complex.I from Complex.conj_I]]
+    rw [inner_conj_symm]
+    -- (-I) * (I * ⟪U(-s)(D_raw w), y⟫) = ⟪U(-s)(D_raw w), y⟫
+    -- Use I*I = -1 to simplify
+    have : -Complex.I * (Complex.I * ⟪U_op (-s) w'.2.choose, y⟫_ℂ) =
+        ⟪U_op (-s) w'.2.choose, y⟫_ℂ := by
+      rw [← mul_assoc, show -Complex.I * Complex.I = 1 from by
+        rw [neg_mul, Complex.I_mul_I]; ring]
+      ring
+    exact this
+  -- Step D: Use FTC on the orbit to compute ⟪U(-t)w - w, y⟫.
+  -- HasDerivAt (fun t => U(t)w) (U(t)(D_raw w)) t for all t.
+  -- So HasDerivAt (fun t => ⟪U(t)w, y⟫) (⟪U(t)(D_raw w), y⟫) t.
+  -- Compose with negation: HasDerivAt (fun s => ⟪U(-s)w, y⟫) (-⟪U(-s)(D_raw w), y⟫) s.
+  -- By FTC: ⟪U(-t)w, y⟫ - ⟪U(0)w, y⟫ = ∫₀ᵗ (-⟪U(-s)(D_raw w), y⟫) ds
+  -- = -∫₀ᵗ ⟪U(-s)(D_raw w), y⟫ ds.
+  -- So ⟪U(-t)w - w, y⟫ = -∫₀ᵗ ⟪U(-s)(D_raw w), y⟫ ds.
+  -- Combined with integrand_eq: = -∫₀ᵗ ⟪w, U(s)z⟫ ds. ✓
+  -- FTC setup for the ℂ-valued function t ↦ ⟪U(t)(w:H), y⟫.
+  have hderiv_orbit : ∀ t₀ : ℝ,
+      HasDerivAt (fun t => ⟪U_op t (w : H), y⟫_ℂ) (⟪U_op t₀ w'.2.choose, y⟫_ℂ) t₀ := by
+    intro t₀
+    have := (orbit_hasDerivAt U_op hadd hzero w' t₀).inner (𝕜 := ℂ) (hasDerivAt_const t₀ y)
+    simp only [inner_zero_right, zero_add] at this; exact this
+  -- Compose with negation: HasDerivAt (fun s => ⟪U(-s)w, y⟫) (-⟪U(-s)(dw), y⟫) s.
+  have hderiv_neg : ∀ s₀ : ℝ,
+      HasDerivAt (fun s => ⟪U_op (-s) (w : H), y⟫_ℂ) (-⟪U_op (-s₀) w'.2.choose, y⟫_ℂ) s₀ := by
+    intro s₀
+    have h1 := hderiv_orbit (-s₀)
+    -- Compose with g(s) = -s via scomp: result is (-1) • f'(g(s₀))
+    have h2 := h1.scomp s₀ (hasDerivAt_neg s₀)
+    simp only [neg_smul, one_smul, Function.comp_def] at h2; exact h2
+  -- Apply FTC: ⟪U(-t)w, y⟫ - ⟪w, y⟫ = ∫₀ᵗ (-⟪U(-s)(dw), y⟫) ds
+  have hU0w : U_op 0 (w : H) = w := by rw [hzero]; simp
+  have hFTC : ⟪U_op (-t) (w : H), y⟫_ℂ - ⟪(w : H), y⟫_ℂ =
+      ∫ s in (0:ℝ)..t, (-⟪U_op (-s) w'.2.choose, y⟫_ℂ) := by
+    have h_sub := intervalIntegral.integral_eq_sub_of_hasDerivAt
+      (a := (0 : ℝ)) (b := t)
+      (fun s _ => hderiv_neg s)
+      ((by exact ((((hcont w'.2.choose).comp continuous_neg).inner
+            continuous_const).neg) :
+          Continuous (fun s => -⟪U_op (-s) w'.2.choose, y⟫_ℂ)).intervalIntegrable 0 t)
+    rw [h_sub, show -(0 : ℝ) = 0 from neg_zero, hU0w]
+  -- Rewrite LHS using inner_sub_left and FTC
+  rw [inner_sub_left, hFTC]
+  -- Goal: ∫₀ᵗ (-⟪U(-s)(dw), y⟫) ds = -(∫₀ᵗ ⟪w, U(s)z⟫ ds)
+  -- Use integrand_eq to replace the integrands, then integral_neg
+  rw [show (fun s => -⟪U_op (-s) w'.2.choose, y⟫_ℂ) =
+      (fun s => -⟪w, U_op s z⟫_ℂ) from funext (fun s => by rw [integrand_eq s])]
+  exact intervalIntegral.integral_neg
 
 theorem stones_theorem_full
     (U_op : ℝ → H →L[ℂ] H)
