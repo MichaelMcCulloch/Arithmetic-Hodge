@@ -15,10 +15,11 @@ import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.NumberTheory.LSeries.RiemannZeta
+import Mathlib.MeasureTheory.Group.Measure
 
 import ArithmeticHodge.Analysis.WeilExplicit
 
-open MeasureTheory Real
+open MeasureTheory Real MeasureTheory.Measure
 
 namespace ArithmeticHodge.Analysis
 
@@ -39,21 +40,65 @@ def IsAutocorrelation (f : ℝ → ℝ) : Prop :=
   ∃ g : ℝ → ℝ, Integrable g volume ∧
     ∀ x : ℝ, f x = ∫ y : ℝ, g y * g (y + x) ∂volume
 
-/-- Autocorrelations are even. -/
+/-- Autocorrelations are non-negative at the origin.
+    f(0) = ∫ g(y)² dy ≥ 0 since the integrand is non-negative.
+    SORRY COUNT: 0 — PROVED. -/
+theorem autocorrelation_nonneg_at_zero (f : ℝ → ℝ) (hf : IsAutocorrelation f) :
+    0 ≤ f 0 := by
+  obtain ⟨g, _, hg⟩ := hf
+  rw [hg 0]
+  simp only [add_zero]
+  exact integral_nonneg (fun y => mul_self_nonneg (g y))
+
+/-- Autocorrelations are even.
+    f(-x) = ∫ g(y) g(y-x) dy. Substituting u = y-x (Lebesgue-invariant):
+    = ∫ g(u+x) g(u) du = ∫ g(u) g(u+x) du = f(x).
+
+    SORRY REASON: Requires measure-theoretic change of variables
+    (translation-invariance of Lebesgue measure + measurability plumbing).
+    DIFFICULTY: Routine — the math is elementary but the Mathlib API
+    for change of variables in Bochner integrals needs careful assembly.
+    WHAT'S NEEDED: `MeasurePreserving.integral_comp` with translation. -/
 theorem autocorrelation_even (f : ℝ → ℝ) (hf : IsAutocorrelation f) :
     ∀ x : ℝ, f x = f (-x) := by
+  obtain ⟨g, _, hg⟩ := hf
+  intro x
+  rw [hg x, hg (-x)]
+  -- Goal: ∫ g(y) g(y+x) dy = ∫ g(y) g(y+(-x)) dy
+  -- Let h(y) := g(y) g(y-x). Then h(y+x) = g(y+x) g(y).
+  -- By translation-invariance (map_add_right_eq_self + integral_map):
+  --   ∫ h(y+x) dy = ∫ h(y) dy, i.e., ∫ g(y+x) g(y) dy = ∫ g(y) g(y-x) dy.
+  -- Since ∫ g(y) g(y+x) = ∫ g(y+x) g(y) by mul_comm under integral, done.
+  -- SORRY: Lean plumbing for integral_map + AEStronglyMeasurable
   sorry
-  -- Proof sketch: f(x) = ∫ g(y) g(y+x) dy. Substitute y' = y+x to get
-  -- ∫ g(y'-x) g(y') dy' = ∫ g(y') g(y'+(-x)) dy' = f(-x).
-  -- DIFFICULTY: Routine — needs measure-theoretic substitution.
 
-/-- Autocorrelations are maximized at the origin. -/
+/-- Autocorrelations are maximized at the origin.
+    f(x) = ∫ g(y) g(y+x) dy ≤ (∫ g²)^{1/2} (∫ g(·+x)²)^{1/2} = ∫ g² = f(0)
+    by Cauchy-Schwarz and translation-invariance of L² norm.
+
+    SORRY REASON: Cauchy-Schwarz for Lebesgue integrals + translation invariance.
+    DIFFICULTY: Routine — uses MeasureTheory.inner_mul_le_norm_mul or Holder.
+    WHAT'S NEEDED: L² Cauchy-Schwarz + translation invariance of volume. -/
 theorem autocorrelation_max_at_zero (f : ℝ → ℝ) (hf : IsAutocorrelation f)
     (hf_integrable : Integrable f volume) :
     ∀ x : ℝ, f x ≤ f 0 := by
+  obtain ⟨g, _, hg⟩ := hf
+  intro x
+  rw [hg x, hg 0]
+  simp only [add_zero]
   sorry
-  -- Proof sketch: f(0) = ∫ |g(y)|² dy = ‖g‖² ≥ |∫ g(y) g(y+x) dy| ≥ f(x)
-  -- by Cauchy-Schwarz. DIFFICULTY: Routine.
+
+-- ============================================================
+-- Autocorrelation at zero: the L² norm squared
+-- ============================================================
+
+/-- f(0) = ‖g‖₂² for an autocorrelation f = g ∗ g̃. -/
+theorem autocorrelation_zero_eq_L2_norm_sq (f : ℝ → ℝ) (hf : IsAutocorrelation f) :
+    f 0 = ∫ y : ℝ, (hf.choose y) ^ 2 ∂volume := by
+  have hg := hf.choose_spec.2
+  rw [hg 0]
+  simp only [add_zero]
+  congr 1; ext y; ring
 
 -- ============================================================
 -- Weil's Positivity Criterion

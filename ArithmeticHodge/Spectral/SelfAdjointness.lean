@@ -43,11 +43,11 @@ theorem StrongContUnitaryGroup.norm_preserving
     (U : StrongContUnitaryGroup H) (t : ℝ) (x : H) :
     ‖U.op t x‖ = ‖x‖ := by
   have h := U.isometry t x x
-  simp only [inner_self_eq_norm_sq_to_K] at h
-  have h1 : (‖U.op t x‖ : ℂ) ^ 2 = (‖x‖ : ℂ) ^ 2 := by
-    push_cast
-    exact_mod_cast h
-  sorry -- needs norm_sq extraction; routine
+  rw [@inner_self_eq_norm_sq_to_K ℂ, @inner_self_eq_norm_sq_to_K ℂ] at h
+  -- h : (↑(‖U.op t x‖ ^ 2) : ℂ) = ↑(‖x‖ ^ 2)
+  have h' : ‖U.op t x‖ ^ 2 = ‖x‖ ^ 2 := by exact_mod_cast h
+  nlinarith [norm_nonneg (U.op t x), norm_nonneg x,
+             sq_nonneg (‖U.op t x‖ - ‖x‖)]
 
 /-- **Stone's Theorem.**
 
