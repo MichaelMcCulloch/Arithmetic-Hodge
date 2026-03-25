@@ -39,6 +39,7 @@ import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.WeilExplicit
 import ArithmeticHodge.Analysis.WeilPositivity
 import ArithmeticHodge.Adelic.ClassSpace
+import ArithmeticHodge.Spectral.UnboundedOperator
 import ArithmeticHodge.Spectral.SelfAdjointness
 import ArithmeticHodge.Arithmetic.HodgeIndex
 import ArithmeticHodge.Strategy.DetailedBalance

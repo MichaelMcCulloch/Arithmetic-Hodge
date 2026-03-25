@@ -20,6 +20,7 @@ import Mathlib.Topology.Algebra.Group.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.RingTheory.DedekindDomain.AdicValuation
 import Mathlib.RingTheory.Int.Basic
+import Mathlib.MeasureTheory.Measure.Haar.MulEquivHaarChar
 
 open MeasureTheory
 
@@ -44,11 +45,13 @@ namespace ArithmeticHodge.Adelic
     SORRY REASON: Full adelic norm API not yet available.
     WHAT'S NEEDED: Adelic norm + product formula in adelic form.
     The proof below establishes the integer-level consequence. -/
-theorem product_formula_rat (x : ℚ) (hx : x ≠ 0) :
-    -- The adelic norm of a rational number equals 1.
-    -- Placeholder: we prove the PID consequence instead.
-    True := by
-  trivial
+theorem product_formula_rat (n : ℕ) (hn : n ≠ 0) :
+    -- The product formula (elementary form): every nonzero natural number
+    -- equals the product of prime powers in its factorization.
+    -- This is the integer-level manifestation of ∏_v |x|_v = 1.
+    -- [INFRASTRUCTURE] Full adelic version needs adelic norm API.
+    n = ∏ p ∈ n.factorization.support, p ^ n.factorization p :=
+  (Nat.prod_factorization_pow_eq_self hn).symm
 
 /-- **Integer units are ±1** -- a consequence of Z being a PID with
     trivial class group. The only elements with |x| = 1 and |x|_p <= 1
@@ -117,11 +120,42 @@ theorem ScalingFlowData.flow_comp {G : Type*} [TopologicalSpace G] [Group G]
     3. Product formula → trivial modular function
     DIFFICULTY: Substantial — the quotient construction is nontrivial.
     WHAT'S NEEDED: Quotient of locally compact group by discrete subgroup. -/
-theorem haar_invariant_under_scaling :
-    -- For any scaling flow on a locally compact group G,
-    -- if the modular function is trivial, then Haar measure is invariant.
-    -- This is a consequence of the definition of the modular function.
-    True := by
-  trivial
+theorem haar_invariant_of_trivial_haarChar
+    (G : Type*) [TopologicalSpace G] [Group G] [IsTopologicalGroup G]
+    [LocallyCompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G]
+    [SecondCountableTopology G]
+    (μ : Measure G) [μ.IsHaarMeasure] [μ.Regular]
+    (φ : G ≃ₜ* G) (hchar : MeasureTheory.mulEquivHaarChar φ = 1) :
+    -- If a continuous group automorphism has trivial Haar character
+    -- (mulEquivHaarChar = 1), then it preserves Haar measure.
+    -- This is the abstract form of: product formula → Δ(σ_t) = 1 → μ-invariant.
+    Measure.map φ μ = μ := by
+  have h := MeasureTheory.mulEquivHaarChar_smul_map μ φ
+  rw [hchar] at h
+  -- h : (1 : ℝ≥0) • Measure.map φ μ = μ
+  ext s hs
+  have h' := congr_arg (· s) h
+  simp only [Measure.coe_nnreal_smul_apply, ENNReal.coe_one, one_mul] at h'
+  exact h'
+
+/-- **Haar Measure Invariance Under Scaling.**
+
+    On the adèle class space, Haar measure is invariant under scaling because
+    the product formula forces the Haar character of each scaling map to be 1.
+
+    This builds on `haar_invariant_of_trivial_haarChar` above (PROVED).
+    The remaining sorry is constructing the adèle class space and verifying
+    that the product formula implies trivial Haar character.
+
+    [INFRASTRUCTURE] Remaining gap: adèle class space construction. -/
+theorem haar_invariant_under_scaling
+    (G : Type*) [TopologicalSpace G] [Group G] [IsTopologicalGroup G]
+    [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G]
+    (μ : Measure G) [μ.IsHaarMeasure]
+    (sf : ScalingFlowData G)
+    (hmeas : ∀ t, Measurable (sf.flow t))
+    (hauto : ∀ t, Function.Bijective (sf.flow t)) :
+    sf.PreservesMeasure μ := by
+  sorry -- [INFRASTRUCTURE] Needs: adèle class space + product formula → trivial Haar character
 
 end ArithmeticHodge.Adelic

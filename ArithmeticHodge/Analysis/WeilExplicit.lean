@@ -14,7 +14,7 @@
 -/
 
 import Mathlib.NumberTheory.ArithmeticFunction.Defs
-import Mathlib.NumberTheory.VonMangoldt
+import Mathlib.NumberTheory.ArithmeticFunction.VonMangoldt
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
@@ -133,14 +133,24 @@ noncomputable def weilFunctionalFull (f fHat : ℝ → ℝ) : ℝ :=
     INDEPENDENTLY VALUABLE: One of the most important formulas in
     analytic number theory. -/
 theorem weil_explicit_formula
-    (h : ℝ → ℝ) (hcont : Continuous h)
-    (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
-    (hHat_zero hHat_one : ℝ) :
-    -- The spectral side (sum over zeros) equals the geometric side (Weil functional)
-    -- Full statement: ∑' (ρ : NontrivialZetaZero), h (ρ.val.im) = weilFunctional h hHat_zero hHat_one
-    -- We state this as an axiom-like sorry since the type NontrivialZetaZero
-    -- doesn't carry countability/summability structure yet.
-    True := by
-  trivial
+    (h : ℝ → ℝ) (hHat : ℝ → ℝ)
+    (hcont : Continuous h)
+    (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
+    -- The Weil explicit formula:
+    --   ∑_ρ h(γ_ρ) = W_polar(ĥ) + W_arch(ĥ) + W_primes(h)
+    -- where ρ = 1/2 + iγ_ρ ranges over nontrivial zeta zeros.
+    --
+    -- We state this as: the sum over zeros (spectral side) converges
+    -- and equals the Weil functional (geometric side). The sum is over
+    -- NontrivialZetaZero, using the imaginary part of each zero.
+    --
+    -- [DEEP] Requires: Hadamard product for ζ, contour integration,
+    -- residue calculus, growth estimates on ζ'/ζ.
+    -- WHAT ELIMINATES THIS: Residue calculus + Hadamard factorization in Mathlib.
+    ∃ (zeros : ℕ → ℝ),  -- the imaginary parts γ_ρ of the nontrivial zeros
+      (∀ n, ∃ ρ : NontrivialZetaZero, zeros n = ρ.val.im) ∧
+      Summable (fun n => h (zeros n)) ∧
+      ∑' n, h (zeros n) = weilFunctionalFull h hHat := by
+  sorry -- [DEEP] Requires Hadamard product, contour integration, ζ'/ζ estimates
 
 end ArithmeticHodge.Analysis
