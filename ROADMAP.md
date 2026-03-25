@@ -10,9 +10,9 @@ Every `sorry` traces to one of the distinct mathematical gaps below.
 | Total .lean files | 13 |
 | Total lines | ~1,700 |
 | `True := by trivial` placeholders | **0** (was 10) |
-| sorry declarations | 12 |
+| sorry declarations | 10 |
 | Distinct mathematical gaps | 8 |
-| Fully proved theorems | 25+ |
+| Fully proved theorems | 30+ |
 | New infrastructure | UnboundedOperator API (170 lines) |
 
 ## Proved Theorems (highlights)
@@ -43,10 +43,14 @@ Every `sorry` traces to one of the distinct mathematical gaps below.
 - ✓ `generatorDomain` submodule (zero_mem proved)
 - ✓ `stones_theorem_full` stated with proper unbounded types
 
+**Proved:**
+- ✓ `generatorDomain` submodule closure (add_mem, smul_mem) — PROVED
+- ✓ `unitary_adjoint_eq` — U(-t) is adjoint of U(t) — PROVED
+- ✓ `raw_generator_skew_symmetric` — limit substitution t↦-t — PROVED
+- ✓ `generator_is_symmetric` — via -i factor + skew-symmetry — PROVED
 **Remaining sorry's within the infrastructure:**
-- `generator_is_symmetric` — limit manipulation + inner product continuity
-- `generator_domain_dense` — Bochner integral mollification
-- Deficiency indices (0,0) — Cayley transform
+- `generator_domain_dense` — Bochner interval integral + FTC mollification
+- Deficiency indices Dom(A*) ⊆ Dom(A) — Cayley transform
 **Delegated to by:** `workpacket_4`, `scaling_generator_self_adjoint`, `stones_theorem_unbounded`
 
 #### 2. `haar_invariant_under_scaling` (ClassSpace.lean:151)
