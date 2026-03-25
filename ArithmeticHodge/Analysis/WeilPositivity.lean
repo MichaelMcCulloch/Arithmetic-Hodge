@@ -11,9 +11,10 @@
   is equivalent to W being non-negative on autocorrelations.
 -/
 
-import Mathlib.MeasureTheory.Integral.Bochner
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.NumberTheory.LSeries.RiemannZeta
 
 import ArithmeticHodge.Analysis.WeilExplicit
 
@@ -21,8 +22,12 @@ open MeasureTheory Real
 
 namespace ArithmeticHodge.Analysis
 
+-- ============================================================
+-- Autocorrelations
+-- ============================================================
+
 /-- A function f : ℝ → ℝ is an autocorrelation if it can be written as
-    f = g ∗ g̃ for some g, where g̃(x) = conj(g(-x)) and ∗ is convolution.
+    f = g ∗ g̃ for some g, where g̃(x) = g(-x) and ∗ is convolution.
 
     For real-valued g, this means f(x) = ∫ g(y) · g(y + x) dy.
 
@@ -34,34 +39,51 @@ def IsAutocorrelation (f : ℝ → ℝ) : Prop :=
   ∃ g : ℝ → ℝ, Integrable g volume ∧
     ∀ x : ℝ, f x = ∫ y : ℝ, g y * g (y + x) ∂volume
 
-/-- The Fourier transform of an autocorrelation is non-negative.
-    This is because f = g ∗ g̃ implies f̂ = |ĝ|² ≥ 0. -/
-theorem autocorrelation_fourier_nonneg (f : ℝ → ℝ) (hf : IsAutocorrelation f) :
-    True := by  -- Simplified; full version needs Fourier transform
-  trivial
-  -- Full statement: ∀ ξ, 0 ≤ fourierTransform f ξ
+/-- Autocorrelations are even. -/
+theorem autocorrelation_even (f : ℝ → ℝ) (hf : IsAutocorrelation f) :
+    ∀ x : ℝ, f x = f (-x) := by
+  sorry
+  -- Proof sketch: f(x) = ∫ g(y) g(y+x) dy. Substitute y' = y+x to get
+  -- ∫ g(y'-x) g(y') dy' = ∫ g(y') g(y'+(-x)) dy' = f(-x).
+  -- DIFFICULTY: Routine — needs measure-theoretic substitution.
+
+/-- Autocorrelations are maximized at the origin. -/
+theorem autocorrelation_max_at_zero (f : ℝ → ℝ) (hf : IsAutocorrelation f)
+    (hf_integrable : Integrable f volume) :
+    ∀ x : ℝ, f x ≤ f 0 := by
+  sorry
+  -- Proof sketch: f(0) = ∫ |g(y)|² dy = ‖g‖² ≥ |∫ g(y) g(y+x) dy| ≥ f(x)
+  -- by Cauchy-Schwarz. DIFFICULTY: Routine.
+
+-- ============================================================
+-- Weil's Positivity Criterion
+-- ============================================================
 
 /-- **Weil's Positivity Criterion (1952).**
 
     The following are equivalent:
-    (i)  All nontrivial zeros of ζ have real part 1/2 (the Riemann Hypothesis).
-    (ii) W(f) ≥ 0 for every autocorrelation f.
+    (i)  All nontrivial zeros of ζ have real part 1/2 (RH).
+    (ii) The Weil functional W(f) ≥ 0 for every autocorrelation f.
 
     Direction (i) → (ii): If RH holds, then for f = g ∗ g̃,
       W(f) = Σ_ρ |ĝ(ρ - 1/2)|² ≥ 0
-    because all terms are non-negative (they are squared absolute values).
+    because all ρ - 1/2 are pure imaginary (by RH), and the sum
+    consists of non-negative squared absolute values.
 
-    Direction (ii) → (i): If some ρ₀ has Re(ρ₀) ≠ 1/2, one can construct
-    a specific g concentrated near Im(ρ₀) such that W(g ∗ g̃) < 0.
+    Direction (ii) → (i): If some ρ₀ has Re(ρ₀) ≠ 1/2, construct
+    a test function g concentrated near Im(ρ₀) that makes W(g ∗ g̃) < 0.
 
-    SORRY REASON: Requires the Weil explicit formula (Layer 2) and
-    construction of specific test functions for the converse direction.
+    SORRY REASON: Requires:
+    1. The Weil explicit formula (Layer 2)
+    2. Paley-Wiener theory for constructing test functions
     DIFFICULTY: Research-level formalization.
-    WHAT'S NEEDED: Weil explicit formula + Paley-Wiener theory for
-    constructing test functions with prescribed Fourier support. -/
+    WHAT'S NEEDED: Weil explicit formula + test function construction. -/
 theorem weil_criterion :
-    (∀ f : ℝ → ℝ, IsAutocorrelation f → 0 ≤ weilFunctional f) ↔
-    True := by  -- True is a placeholder for "all nontrivial zeros on the critical line"
+    RiemannHypothesis ↔
+    (∀ f : ℝ → ℝ, IsAutocorrelation f →
+      ∀ fHat_zero fHat_one : ℝ,
+      -- (assuming fHat_zero, fHat_one are the correct Fourier values)
+      0 ≤ weilFunctional f fHat_zero fHat_one) := by
   sorry
 
 end ArithmeticHodge.Analysis
