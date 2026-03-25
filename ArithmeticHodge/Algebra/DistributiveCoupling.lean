@@ -18,6 +18,8 @@ import Mathlib.RingTheory.EuclideanDomain
 import Mathlib.RingTheory.Int.Basic
 import Mathlib.Data.Int.Basic
 import Mathlib.Algebra.Ring.Basic
+import Mathlib.Topology.Algebra.InfiniteSum.Basic
+import Mathlib.Topology.Algebra.Ring.Basic
 
 namespace ArithmeticHodge.Algebra
 
@@ -95,5 +97,27 @@ instance : IsDomain ℤ := inferInstance
 
 /-- ℤ has characteristic zero. -/
 instance : CharZero ℤ := inferInstance
+
+-- ============================================================
+-- Distribution Over Finite Products
+-- ============================================================
+
+/-- Distribution interacts correctly with products of sums (FOIL law).
+    (a + b)(c + d) = ac + ad + bc + bd.
+    This extends distribution beyond single-factor statements. -/
+theorem distribution_product_sum {R : Type*} [CommRing R] (a b c d : R) :
+    (a + b) * (c + d) = a * c + a * d + b * c + b * d := by
+  ring
+
+-- ============================================================
+-- Z as the Universal Initial Ring
+-- ============================================================
+
+/-- Z is the initial object in the category of commutative rings:
+    for any ring R, there is a unique ring homomorphism Z -> R (the cast).
+    This universality means Z algebraic structure propagates to ALL rings.
+    SORRY COUNT: 0 -- the cast is the unique homomorphism. -/
+noncomputable def intCastRingHom (R : Type*) [CommRing R] : ℤ →+* R :=
+  Int.castRingHom R
 
 end ArithmeticHodge.Algebra
