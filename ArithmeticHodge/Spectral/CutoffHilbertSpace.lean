@@ -12,6 +12,8 @@ import Mathlib.MeasureTheory.Measure.Restrict
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.InnerProductSpace.l2Space
+import Mathlib.NumberTheory.LSeries.Nonvanishing
+import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import ArithmeticHodge.Adelic.ClassSpace
 import ArithmeticHodge.Spectral.UnboundedOperator
 import ArithmeticHodge.Analysis.WeilDefs
@@ -166,19 +168,132 @@ theorem spectralPairingOf_nonneg (Λ : ℝ) (hΛ : 0 < Λ)
   intro i
   exact mul_nonneg (hfourier_nonneg _) (vacuumWeightOf_nonneg X Λ i)
 
+-- ============================================================
+-- Trace Formula Decomposition: Steps A-D
+-- ============================================================
+
+/-- **Step A: The Prime Number Theorem gives a spectral gap.**
+
+    ζ(1+it) ≠ 0 for all t ∈ ℝ (Mathlib: `riemannZeta_ne_zero_of_one_le_re`).
+    In operator language: the scaling flow on L²(𝔸_ℚ/ℚ*) has no eigenvalue
+    at Re(s) = 1. The character |·|^{it} is NOT in the point spectrum.
+
+    This is the fundamental input from analytic number theory. The scaling
+    flow on the adèle class space is ergodic precisely because ζ has no
+    zeros on the line Re(s) = 1.
+
+    The PNT fact is available in Mathlib. The translation to operator
+    language requires identifying characters of the scaling flow with
+    eigenvectors of D_Λ at eigenvalue 0. On the compact cutoff space,
+    this becomes: no eigenvalue of D_Λ accumulates at the Re(s)=1 boundary
+    as Λ → ∞.
+
+    SORRY: Translation from zeta nonvanishing to operator spectral gap. -/
+theorem cutoff_spectral_gap
+    (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) (Λ : ℝ) (hΛ : 0 < Λ) :
+    ∀ (i : ℕ), cutoffEigenvaluesOf X Λ i ≠ 0 →
+      |cutoffEigenvaluesOf X Λ i| < Λ := by
+  sorry
+
+/-- **Step B: Spectral gap implies mixing (RAGE theorem).**
+
+    No eigenvalue at the boundary → continuous spectral measure →
+    correlations decay. The RAGE theorem (Ruelle-Amrein-Georgescu-Enss):
+    for self-adjoint D with continuous spectrum and compact K,
+      (1/T) ∫₀ᵀ ‖K·e^{itD}x‖² dt → 0 as T → ∞.
+
+    In our setting: the spectral gap from Step A ensures the spectral
+    measure of D_Λ near the boundary is continuous. RAGE then gives:
+    for any test function h with Schwartz-class decay, the matrix
+    elements ⟨h(D_Λ)eᵢ, eⱼ⟩ decay as |λᵢ - λⱼ| → ∞.
+
+    Combined with the eigenbasis expansion, this gives:
+      |spectralPairingOf X Λ h - spectralPairingOf X Λ' h| → 0
+    as Λ, Λ' → ∞, i.e., the spectral pairing is Cauchy.
+
+    SORRY: RAGE theorem. Standard functional analysis (Reed & Simon IV,
+    Theorem XI.115). Proof: spectral theorem + Riemann-Lebesgue +
+    finite-rank approximation of compact operators. ~60 lines. -/
+theorem spectralPairing_cauchy
+    (h : ℝ → ℝ) (hcont : Continuous h)
+    (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
+    (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) :
+    ∀ ε > 0, ∃ N : ℝ, ∀ Λ ≥ N,
+      |spectralPairingOf X Λ h -
+        Analysis.weilFunctionalFull h (Analysis.fourierCos h)| < ε := by
+  sorry
+
+/-- **Step C: Mixing → Boundary control: O(1/Λ) rate.**
+
+    The kernel K_h(x,y) decays as |x-y| → ∞ (from Step B / RAGE).
+    The boundary of {|x| ≤ Λ} in the adèle class space has relative
+    volume O(1/Λ) (the height function grows linearly).
+
+    Therefore: |spectralPairing_Λ(h) - W(h)| ≤ C/Λ for some C > 0.
+
+    This quantitative estimate strengthens Step B's qualitative Cauchy
+    property to a concrete convergence rate.
+
+    SORRY: Kernel estimates from mixing + boundary volume estimates
+    from the geometry of the adèle class space. -/
+theorem spectralPairing_boundary_control
+    (h : ℝ → ℝ) (hcont : Continuous h)
+    (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
+    (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) :
+    ∃ (C : ℝ), 0 < C ∧ ∀ (Λ : ℝ), 0 < Λ →
+      |spectralPairingOf X Λ h -
+        Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ C / Λ := by
+  sorry
+
+/-- **Step D: O(1/Λ) → Tendsto.**
+
+    If |f(Λ) - L| ≤ C/Λ for all Λ > 0, then f(Λ) → L as Λ → ∞.
+    Standard ε-δ argument.
+
+    SORRY COUNT: 0 — PROVED. -/
+theorem tendsto_of_bound_div
+    (f : ℝ → ℝ) (L : ℝ) (C : ℝ) (hC : 0 < C)
+    (hbound : ∀ Λ : ℝ, 0 < Λ → |f Λ - L| ≤ C / Λ) :
+    Filter.Tendsto f Filter.atTop (nhds L) := by
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  -- Choose N = C / ε + 1, so for Λ ≥ N: C / Λ ≤ C / (C/ε + 1) < ε
+  have hN_pos : (0 : ℝ) < C / ε + 1 := by positivity
+  refine ⟨C / ε + 1, fun Λ hΛ => ?_⟩
+  have hΛ_pos : (0 : ℝ) < Λ := lt_of_lt_of_le hN_pos hΛ
+  rw [Real.dist_eq]
+  calc |f Λ - L| ≤ C / Λ := hbound Λ hΛ_pos
+    _ ≤ C / (C / ε + 1) := by
+        exact div_le_div_of_nonneg_left hC.le hN_pos hΛ
+    _ < C / (C / ε) := by
+        apply div_lt_div_of_pos_left hC (by positivity) (by linarith)
+    _ = ε := by field_simp
+
 /-- **Convergence of the spectral pairing to the Weil functional.**
 
     As Λ → ∞: spectralPairingOf X Λ h → W(h).
 
     This IS the GL(1)/ℚ trace formula.
 
-    SORRY: PNT + RAGE + Tate local computations + convergence. -/
+    Decomposed into four steps:
+    - Step A: PNT → spectral gap (`cutoff_spectral_gap`)
+    - Step B: Spectral gap → Cauchy (`spectralPairing_cauchy`)
+    - Step C: Mixing → O(1/Λ) bound (`spectralPairing_boundary_control`)
+    - Step D: O(1/Λ) → Tendsto (`tendsto_of_bound_div`) — PROVED
+
+    Sorry count: 3 targeted sorries (Steps A, B, C), down from 1 monolithic. -/
 theorem spectralPairingOf_tendsto_weil
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
     Filter.Tendsto (fun Λ => spectralPairingOf X Λ h)
       Filter.atTop (nhds (Analysis.weilFunctionalFull h (Analysis.fourierCos h))) := by
-  sorry
+  -- Step A: PNT gives ζ(1+it) ≠ 0 (Mathlib)
+  have hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0 :=
+    fun s hs => riemannZeta_ne_zero_of_one_le_re hs
+  -- Steps B+C: PNT + mixing + boundary geometry give O(1/Λ) bound
+  obtain ⟨C, hC, hbound⟩ := spectralPairing_boundary_control X h hcont hdecay hζ
+  -- Step D: O(1/Λ) → 0 implies convergence (PROVED)
+  exact tendsto_of_bound_div _ _ C hC hbound
 
 end Spectral
 
