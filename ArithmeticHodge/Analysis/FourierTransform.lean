@@ -172,10 +172,126 @@ theorem fourierCos_autocorrelation_eq_sq (g : ℝ → ℝ)
     simp only [ĝ, fourierTransformC]
     exact integral_conj (𝕜 := ℂ) (X := ℝ) (μ := MeasureTheory.volume)
   -- The main identity by Fubini + substitution + factoring.
-  -- Full formal proof requires MeasureTheory.integral_integral_swap
-  -- (product integrability from ‖g‖₁² < ∞) and integral_mul_left.
-  -- Each step is standard measure theory; we sorry the assembly.
-  sorry
+  -- The goal is: ∫ x, (↑(f x)) * E x = conj(ĝ) * ĝ
+  --
+  -- Step 1: Express ĝ in terms of E
+  have hg_hat : ĝ = ∫ u : ℝ, (g u : ℂ) * E u := by
+    simp only [ĝ, fourierTransformC, hE_def]
+    congr 1; ext y; push_cast; ring
+  -- Step 2: Inner integral calculation
+  -- ∫ x, g(y+x) E(x) = E(-y) * ĝ
+  have inner_calc : ∀ y : ℝ,
+      ∫ x : ℝ, (g (y + x) : ℂ) * E x = E (-y) * ĝ := by
+    intro y
+    -- Sub u = y + x: ∫ x, g(y+x) E(x) = ∫ u, g(u) E(u-y)
+    -- Sub u = y + x: ∫ x, g(y+x) E(x) = ∫ u, g(u) E(u-y)
+    have hsub : ∫ x : ℝ, (g (y + x) : ℂ) * E x =
+        ∫ u : ℝ, (g u : ℂ) * E (u - y) := by
+      set F : ℝ → ℂ := fun u => (g u : ℂ) * E (u - y)
+      have : (fun x : ℝ => (g (y + x) : ℂ) * E x) = fun x => F (x + y) := by
+        ext x; simp only [F]; congr 1
+        · congr 1; ring
+        · congr 1; ring
+      rw [this]
+      exact integral_add_right_eq_self F y
+    rw [hsub]
+    -- Split E(u-y) = E(u) * E(-y)
+    simp_rw [show ∀ u : ℝ, E (u - y) = E u * E (-y) from fun u => by
+      rw [show (u - y : ℝ) = u + (-y) from sub_eq_add_neg u y]; exact hE_add u (-y)]
+    -- ∫ u, g(u) * (E(u) * E(-y)) = (∫ u, g(u) * E(u)) * E(-y)
+    simp_rw [show ∀ u : ℝ, (g u : ℂ) * (E u * E (-y)) = (g u : ℂ) * E u * E (-y) from
+      fun u => by ring]
+    have : ∫ u : ℝ, (g u : ℂ) * E u * E (-y) = (∫ u : ℝ, (g u : ℂ) * E u) * E (-y) :=
+      integral_mul_const (E (-y)) (fun u => (g u : ℂ) * E u)
+    rw [this, hg_hat, mul_comm]
+  -- Step 3: Assemble the proof
+  -- LHS = ∫ x, ↑(f x) * E x
+  -- First rewrite f(x) = ∫ y, g(y) * g(y+x) and push cast
+  -- Rewrite: ↑(f x) = ∫ y, ↑(g y) * ↑(g(y+x))
+  have cast_f : ∀ x : ℝ, (f x : ℂ) = ∫ y : ℝ, (g y : ℂ) * (g (y + x) : ℂ) := by
+    intro x; rw [hf x]
+    -- ↑(∫ g y * g(y+x)) = ∫ ↑(g y * g(y+x)) = ∫ ↑(g y) * ↑(g(y+x))
+    trans ∫ y : ℝ, ((g y * g (y + x) : ℝ) : ℂ)
+    · exact integral_ofReal (𝕜 := ℂ).symm
+    · congr 1; ext y; push_cast; ring
+  -- Combined: expand f, push cast, distribute E
+  have expand_distrib : ∀ x : ℝ,
+      (f x : ℂ) * E x = ∫ y : ℝ, (g y : ℂ) * (g (y + x) : ℂ) * E x := by
+    intro x
+    rw [cast_f]
+    exact (integral_mul_const (E x) _).symm
+  have lhs_rw : (∫ x : ℝ, (f x : ℂ) * E x) =
+      ∫ x : ℝ, ∫ y : ℝ, (g y : ℂ) * (g (y + x) : ℂ) * E x := by
+    congr 1; ext x; exact expand_distrib x
+  rw [lhs_rw]
+  -- Apply Fubini (need product integrability)
+  have hprod_int : Integrable (Function.uncurry fun (x y : ℝ) =>
+      (g y : ℂ) * (g (y + x) : ℂ) * E x) (volume.prod volume) := by
+    -- |g(y) g(y+x) E(x)| = |g(y)| |g(y+x)| since |E(x)| = 1.
+    -- Step A: convolution_integrand gives (x, y) ↦ g̃(y) g(x-y) is product-integrable
+    set g' : ℝ → ℝ := fun t => g (-t)
+    have hg' : Integrable g' volume :=
+      hg.comp_sub_left 0 |>.congr (ae_of_all _ fun x => by simp [g'])
+    have hconv_prod : Integrable (fun p : ℝ × ℝ =>
+        (ContinuousLinearMap.lsmul ℝ ℝ) (g' p.2) (g (p.1 - p.2))) (volume.prod volume) :=
+      hg'.convolution_integrand (ContinuousLinearMap.lsmul ℝ ℝ) hg
+    -- Step B: Under (x,y) ↦ (x,-y), this becomes g(y) * g(y+x)
+    have hmp : MeasurePreserving (Prod.map id Neg.neg : ℝ × ℝ → ℝ × ℝ)
+        (volume.prod volume) (volume.prod volume) :=
+      (MeasurePreserving.id volume).prod (Measure.measurePreserving_neg volume)
+    have hreal_prod : Integrable (fun p : ℝ × ℝ => g p.2 * g (p.2 + p.1))
+        (volume.prod volume) := by
+      rw [show (fun p : ℝ × ℝ => g p.2 * g (p.2 + p.1)) =
+          (fun p : ℝ × ℝ => (ContinuousLinearMap.lsmul ℝ ℝ) (g' p.2) (g (p.1 - p.2))) ∘
+          (Prod.map id Neg.neg) from by
+        ext ⟨x, y⟩
+        simp [g', ContinuousLinearMap.lsmul_apply, smul_eq_mul, sub_neg_eq_add, add_comm]]
+      exact (hmp.integrable_comp hconv_prod.aestronglyMeasurable).mpr hconv_prod
+    -- Step C: Complex integrand has ‖g(y) g(y+x) E(x)‖ = |g(y) * g(y+x)|
+    -- so our complex function is integrable by Integrable.mono.
+    refine hreal_prod.mono ?_ (ae_of_all _ fun ⟨x, y⟩ => ?_)
+    · -- AEStronglyMeasurable of the complex integrand
+      -- (↑(g(y) * g(y+x))) * E(x) is ae-measurable since ↑(real-integrand) and E are.
+      have h_ofReal : AEStronglyMeasurable (fun p : ℝ × ℝ =>
+          (↑(g p.2 * g (p.2 + p.1)) : ℂ)) (volume.prod volume) :=
+        continuous_ofReal.comp_aestronglyMeasurable hreal_prod.aestronglyMeasurable
+      have h_E : AEStronglyMeasurable (fun p : ℝ × ℝ => E p.1) (volume.prod volume) :=
+        ((Complex.continuous_exp.comp
+          ((continuous_ofReal.comp (continuous_const.mul continuous_id')).mul
+            continuous_const)).comp continuous_fst).aestronglyMeasurable
+      exact (h_ofReal.mul h_E).congr (ae_of_all _ fun ⟨x, y⟩ => by
+        simp only [Function.uncurry, Pi.mul_apply, Complex.ofReal_mul])
+    · simp only [Function.uncurry]
+      rw [Complex.norm_mul, Complex.norm_mul, Complex.norm_real, Complex.norm_real,
+          Complex.norm_exp_ofReal_mul_I, mul_one, Real.norm_eq_abs, Real.norm_eq_abs,
+          ← abs_mul]
+      exact le_of_eq (Real.norm_eq_abs _).symm
+  rw [integral_integral_swap hprod_int]
+  -- Factor out g(y) from inner integral + use inner_calc + collect
+  -- Goal: ∫ y, ∫ x, g(y) * g(y+x) * E(x) = conj(ĝ) * ĝ
+  have step_factor_inner : ∀ y : ℝ,
+      (∫ x : ℝ, (g y : ℂ) * (g (y + x) : ℂ) * E x) = (g y : ℂ) * (E (-y) * ĝ) := by
+    intro y
+    -- Factor g(y) out: ∫ x, g(y) * g(y+x) * E(x) = g(y) * ∫ x, g(y+x) * E(x)
+    have : ∫ x : ℝ, (g y : ℂ) * (g (y + x) : ℂ) * E x =
+        (g y : ℂ) * ∫ x : ℝ, (g (y + x) : ℂ) * E x := by
+      have : ∀ x : ℝ, (g y : ℂ) * (g (y + x) : ℂ) * E x =
+          (g y : ℂ) * ((g (y + x) : ℂ) * E x) := fun x => by ring
+      simp_rw [this]
+      exact integral_const_mul (g y : ℂ) _
+    rw [this, inner_calc]
+  have goal_rw : (∫ y : ℝ, ∫ x : ℝ, (g y : ℂ) * (g (y + x) : ℂ) * E x) =
+      ∫ y : ℝ, (g y : ℂ) * (E (-y) * ĝ) := by
+    congr 1; ext y; exact step_factor_inner y
+  rw [goal_rw]
+  -- Now: ∫ y, g(y) * (E(-y) * ĝ) = conj(ĝ) * ĝ
+  -- = ∫ y, g(y) * E(-y) * ĝ = (∫ y, g(y) * E(-y)) * ĝ
+  have : ∀ y : ℝ, (g y : ℂ) * (E (-y) * ĝ) = (g y : ℂ) * E (-y) * ĝ :=
+    fun y => by ring
+  simp_rw [this]
+  have : ∫ y : ℝ, (g y : ℂ) * E (-y) * ĝ = (∫ y : ℝ, (g y : ℂ) * E (-y)) * ĝ :=
+    integral_mul_const ĝ _
+  rw [this, hint_conjg]
 
 /-- **Fourier transform of an autocorrelation is non-negative.**
     Follows from `fourierCos_autocorrelation_eq_sq`: `fourierCos f ξ = ‖ĝ(ξ)‖² ≥ 0`. -/
