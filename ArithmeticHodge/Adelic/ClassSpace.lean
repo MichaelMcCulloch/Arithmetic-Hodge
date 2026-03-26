@@ -170,6 +170,15 @@ class AdeleClassSpaceData (X : Type*) extends
   scalingFlow : ℝ → X ≃ₜ* X
   /-- Product formula consequence: trivial Haar character for the scaling flow -/
   trivialHaarChar : ∀ t, MeasureTheory.mulEquivHaarChar (scalingFlow t) = 1
+  /-- The height function |·| : X → ℝ (idèle norm on the adèle class space).
+      Used to define compact cutoffs {x : |x| ≤ Λ} for regularization. -/
+  heightFn : X → ℝ
+  /-- The height function is measurable -/
+  heightFn_measurable : Measurable heightFn
+  /-- The height function is non-negative -/
+  heightFn_nonneg : ∀ x, 0 ≤ heightFn x
+  /-- The sublevel sets {x : heightFn x ≤ Λ} are compact (proper map) -/
+  heightFn_compact : ∀ Λ : ℝ, IsCompact {x : X | heightFn x ≤ Λ}
 
 /-- **Haar measure invariance from the AdeleClassSpaceData class.**
     The product formula (axiomatized as trivialHaarChar) immediately gives
