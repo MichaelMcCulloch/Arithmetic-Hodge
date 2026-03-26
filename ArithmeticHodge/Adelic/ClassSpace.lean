@@ -185,6 +185,14 @@ class AdeleClassSpaceData (X : Type*) extends
   heightFn_nonneg : ∀ x, 0 ≤ heightFn x
   /-- The sublevel sets {x : heightFn x ≤ Λ} are compact (proper map) -/
   heightFn_compact : ∀ Λ : ℝ, IsCompact {x : X | heightFn x ≤ Λ}
+  /-- The Haar measure of sublevel sets grows at least linearly.
+      On the adèle class space, Vol({heightFn ≤ Λ}) ≥ c·Λ for Λ ≥ 1.
+      This follows from the non-compactness of X and the properness of heightFn:
+      the shells {Λ-1 ≤ heightFn ≤ Λ} have uniformly positive measure
+      (they are non-empty open-ish sets in a locally compact group). -/
+  heightFn_volume_growth :
+    ∃ c : ℝ, 0 < c ∧ ∀ Λ : ℝ, 1 ≤ Λ →
+      ENNReal.ofReal (c * Λ) ≤ haarMeasure {x : X | heightFn x ≤ Λ}
 
 /-- **Haar measure invariance from the AdeleClassSpaceData class.**
     The product formula (axiomatized as trivialHaarChar) immediately gives
