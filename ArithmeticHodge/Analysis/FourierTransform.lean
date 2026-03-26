@@ -104,7 +104,21 @@ theorem rh_implies_weil_positivity_from_explicit :
     If ρ is a nontrivial zero, so is 1-ρ̄. -/
 theorem nontrivial_zero_paired (ρ : NontrivialZetaZero) :
     ∃ ρ' : NontrivialZetaZero, ρ'.val.re = 1 - ρ.val.re := by
-  sorry -- SCAFFOLD: completedRiemannZeta₀_one_sub + zero correspondence
+  refine ⟨⟨1 - ρ.val, ?_, ?_, ?_⟩, ?_⟩
+  · -- riemannZeta (1 - ρ.val) = 0 via functional equation
+    have hρ_ne_one : ρ.val ≠ 1 := by
+      intro h; have := ρ.re_lt_one; rw [h] at this; simp at this
+    have hρ_ne_neg_nat : ∀ n : ℕ, ρ.val ≠ -↑n := by
+      intro n hn
+      have hre := ρ.re_pos
+      rw [hn] at hre
+      simp [Complex.neg_re, Complex.ofReal_re] at hre
+      exact not_lt.mpr (Nat.cast_nonneg' n) hre
+    rw [riemannZeta_one_sub hρ_ne_neg_nat hρ_ne_one]
+    simp [ρ.is_zero]
+  · simp [Complex.sub_re, Complex.one_re]; linarith [ρ.re_lt_one]
+  · simp [Complex.sub_re, Complex.one_re]; linarith [ρ.re_pos]
+  · simp [Complex.sub_re, Complex.one_re]
 
 /-- **Paley-Wiener test function construction.**
     Given a zero off the critical line, construct an autocorrelation with W(f) < 0.
