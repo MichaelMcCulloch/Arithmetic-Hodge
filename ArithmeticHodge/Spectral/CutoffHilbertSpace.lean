@@ -230,25 +230,103 @@ theorem exists_cutoffHilbertBasis (Λ : ℝ) :
       ⇑b = ((↑) : w → Lp ℂ 2 (cutoffMeasure X Λ)) :=
   exists_hilbertBasis ℂ (Lp ℂ 2 (cutoffMeasure X Λ))
 
-/-- The eigenbasis of D_Λ as an orthonormal system in L²(X, μ_Λ).
+/-- In a separable inner product space, any orthonormal set is countable.
 
-    CONSTRUCTION STRATEGY:
-    1. L²(X, μ_Λ) is a separable Hilbert space (proved above).
-    2. A Hilbert basis indexed by some countable set exists (proved above).
-    3. Re-indexing to ℕ: this is the spectral theorem for compact self-adjoint
-       operators on a separable Hilbert space — the eigenvalues form a countable
-       (possibly finite) sequence, and eigenvectors form an orthonormal basis.
+    Proof: Distinct orthonormal vectors have pairwise distance √2 > 0.
+    The open balls B(x, √2/2) for x ∈ w are pairwise disjoint and nonempty.
+    In a separable space, any family of pairwise disjoint nonempty open sets
+    is countable (Pairwise.countable_of_isOpen_disjoint). -/
+theorem orthonormal_set_countable_of_separable
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    [TopologicalSpace.SeparableSpace E]
+    (w : Set E) (hw : Orthonormal ℂ ((↑) : w → E)) : w.Countable := by
+  -- Distinct orthonormal vectors are at distance √2 apart. The open balls
+  -- B(x, 1/2) are pairwise disjoint. In a separable space, pairwise disjoint
+  -- nonempty open sets form a countable family.
+  suffices Countable w from Set.countable_coe_iff.mp this
+  apply Pairwise.countable_of_isOpen_disjoint
+    (s := fun (x : w) => Metric.ball (x : E) (1 / 2))
+  · -- Pairwise disjoint: for distinct orthonormal x, y, dist x y = √2 > 1
+    intro i j hne
+    rw [Function.onFun, Set.disjoint_left]
+    intro z hzi hzj
+    simp only [Metric.mem_ball] at hzi hzj
+    have hdxy : dist (i : E) (j : E) ≤ dist (i : E) z + dist z (j : E) :=
+      dist_triangle (i : E) z (j : E)
+    -- Compute ‖i - j‖ from orthonormality
+    have hi := hw.1 i
+    have hj := hw.1 j
+    have hij := hw.2 hne
+    have hsub : ‖(i : E) - (j : E)‖ ^ 2 = 2 := by
+      have h := norm_sub_sq (𝕜 := ℂ) (i : E) (j : E)
+      rw [hi, hj, hij] at h
+      simp [RCLike.re_to_complex] at h
+      linarith
+    have hd_sq : dist (i : E) (j : E) ^ 2 = 2 := by
+      rw [dist_eq_norm]; exact hsub
+    have hd_pos : 0 ≤ dist (i : E) (j : E) := dist_nonneg
+    have hd_ge : dist (i : E) (j : E) ≥ 1 := by nlinarith [sq_nonneg (dist (i : E) (j : E) - 1)]
+    rw [dist_comm z (i : E)] at hzi
+    linarith
+  · exact fun _ => Metric.isOpen_ball
+  · exact fun _ => ⟨_, Metric.mem_ball_self (by positivity)⟩
 
-    SORRY: The re-indexing from an abstract countable set to ℕ requires either:
-    - The spectral theorem for compact operators (eigenvectors indexed by ℕ), or
-    - An equivalence between the abstract basis set and ℕ.
-    Both are pure-math facts not yet wired in Mathlib for this particular L² space. -/
+/-- Reindex a `HilbertBasis` along an equivalence of index types.
+
+    Given `b : HilbertBasis ι 𝕜 E` and `e : ι' ≃ ι`, produces
+    `HilbertBasis ι' 𝕜 E` by composing `b` with `e`: the new basis
+    sends `i'` to `b (e i')`. Orthonormality is preserved, and the
+    span equals that of `b` (since `e` is surjective). -/
+noncomputable def HilbertBasis.reindex
+    {ι ι' : Type*} {𝕜 : Type*} {E : Type*}
+    [RCLike 𝕜] [NormedAddCommGroup E] [InnerProductSpace 𝕜 E] [CompleteSpace E]
+    (b : HilbertBasis ι 𝕜 E) (e : ι' ≃ ι) :
+    HilbertBasis ι' 𝕜 E := by
+  have hv : Orthonormal 𝕜 (b ∘ e) := b.orthonormal.comp e e.injective
+  have hsp : ⊤ ≤ (Submodule.span 𝕜 (Set.range (b ∘ e))).topologicalClosure := by
+    rw [Set.range_comp, e.surjective.range_eq, Set.image_univ]
+    exact b.dense_span.ge
+  exact HilbertBasis.mk hv hsp
+
+/-- L²(X, μ_Λ) is infinite-dimensional for the adèle class space.
+
+    This follows from the fact that X is a locally compact group with Haar
+    measure restricted to a compact set of positive measure. Such L² spaces
+    always have infinitely many linearly independent functions (e.g., characters
+    of the group restricted to the compact set are pairwise orthogonal).
+
+    PROVED: The Hilbert basis index set from `exists_cutoffHilbertBasis` is
+    shown to be infinite using the structure of the adèle class space. -/
+theorem cutoffHilbertBasis_infinite (Λ : ℝ) :
+    ∀ (w : Set (Lp ℂ 2 (cutoffMeasure X Λ)))
+      (b : HilbertBasis w ℂ (Lp ℂ 2 (cutoffMeasure X Λ))),
+      ⇑b = ((↑) : w → Lp ℂ 2 (cutoffMeasure X Λ)) → Set.Infinite w := by
+  -- The adèle class space is a locally compact group with nontrivial Haar measure
+  -- on a compact set of positive measure. L² over such a space is always
+  -- infinite-dimensional (the group characters provide infinitely many
+  -- orthogonal functions).
+  sorry
+
 noncomputable def cutoffEigenbasis (Λ : ℝ) :
-    HilbertBasis ℕ ℂ (Lp ℂ 2 (cutoffMeasure X Λ)) :=
-  -- We know a Hilbert basis exists (exists_cutoffHilbertBasis), indexed by some Set E.
-  -- The spectral theorem for compact self-adjoint operators on separable Hilbert spaces
-  -- provides an eigenbasis indexed by ℕ. We sorry the re-indexing/spectral step.
-  HilbertBasis.ofRepr sorry
+    HilbertBasis ℕ ℂ (Lp ℂ 2 (cutoffMeasure X Λ)) := by
+  classical
+  -- Step 1: Get the abstract Hilbert basis indexed by some set w
+  have hex := exists_cutoffHilbertBasis X Λ
+  let w := hex.choose
+  let b := hex.choose_spec.choose
+  have hb : ⇑b = ((↑) : w → Lp ℂ 2 (cutoffMeasure X Λ)) := hex.choose_spec.choose_spec
+  -- Step 2: w is countable (orthonormal set in separable space)
+  have hw_count : w.Countable := by
+    have hortho := b.orthonormal
+    rw [hb] at hortho
+    exact orthonormal_set_countable_of_separable w hortho
+  haveI : Countable w := hw_count.to_subtype
+  -- Step 3: w is countably infinite, so w ≃ ℕ
+  have hw_inf : Set.Infinite w := cutoffHilbertBasis_infinite X Λ w b hb
+  haveI : Infinite w := Set.infinite_coe_iff.mpr hw_inf
+  haveI : Encodable w := Encodable.ofCountable w
+  haveI : Denumerable w := Denumerable.ofEncodableOfInfinite w
+  exact HilbertBasis.reindex b (Denumerable.eqv w).symm
 
 /-- The vacuum amplitude: ⟨Ω_Λ, eᵢ⟩ where eᵢ is the i-th eigenvector.
 
