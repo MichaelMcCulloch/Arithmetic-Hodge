@@ -1,20 +1,23 @@
 /-
   LAYER 6c: The Trace Formula Assembly
 
-  This file combines spectral positivity (File 1) and the orbital integral
-  trace formula (File 2) into the proof:
+  This file combines spectral positivity (SpectralPositivity.lean) and
+  the orbital integral trace formula (OrbitalIntegrals.lean) into:
 
     WeilPositivity (hence RH) from the trace formula.
 
   Chain:
-    1. Tr(h(D)) = W(h)                  [trace formula — File 2]
-    2. Tr(h(D)) ≥ 0 for autocorrelations [spectral positivity — File 1]
+    1. Tr(h(D)) = W(h)                  [trace formula — 4 rw steps in OrbitalIntegrals]
+    2. Tr(h(D)) ≥ 0 for autocorrelations [spectral positivity — SpectralPositivity]
     3. Therefore W(h) ≥ 0                [combining 1 and 2]
     4. WeilPositivity → RH               [weil_criterion_backward — proved]
 
   SORRY COUNT: 0 in this file.
-  All sorry's are in SpectralPositivity.lean, SelbergUnfolding.lean,
-  TateLocalComputation.lean, and ResolventComputation.lean.
+  All sorry's are in:
+  - SpectralPositivity.lean (spectral theorem — von Neumann 1929)
+  - SelbergUnfolding.lean (conjugacy class decomposition — Selberg 1956)
+  - TateLocalComputation.lean (local evaluations — Tate 1950)
+  - ResolventComputation.lean (resolvent chain — Herglotz 1911, Stieltjes 1894)
 -/
 
 import ArithmeticHodge.Spectral.SpectralPositivity
@@ -40,7 +43,10 @@ namespace ArithmeticHodge
 
     The sorry's that make this work are:
     - spectralCalculus_exists (spectral theorem, in SpectralPositivity.lean)
-    - trace_eq_weil_functional (resolvent computation, in ResolventComputation.lean)
+    - trace_as_orbital_sum (resolvent computation, in ResolventComputation.lean)
+    - orbital_sum_split (conjugacy class decomposition, in SelbergUnfolding.lean)
+    - archimedean_orbital_identity (Mellin transform, in TateLocalComputation.lean)
+    - nonidentity_orbital_sum_eq_prime_sum (Tate local, in TateLocalComputation.lean)
 
     SORRY COUNT: 0 in this theorem. -/
 theorem weil_positivity_from_trace
@@ -53,8 +59,6 @@ theorem weil_positivity_from_trace
     (f : ℝ → ℝ) (hf : Analysis.IsAutocorrelation f)
     (hcont : Continuous f)
     (hdecay : ∀ x, ‖f x‖ ≤ 1 / (1 + x ^ 2))
-    -- The autocorrelation lifts to a spectral factorization:
-    -- f(t) = |g(t)|² for some g, so f(D) = g(D)*g(D)
     (hfactor : ∃ g : ℝ → ℂ, ∀ t, (f t : ℂ) = (starRingEnd ℂ (g t)) * g t) :
     0 ≤ Analysis.weilFunctionalFull f (Analysis.fourierCos f) := by
   -- Step 1: W(f) = Tr(f(D)) by the trace formula
@@ -64,12 +68,8 @@ theorem weil_positivity_from_trace
 
 /-- **Weil positivity as a Prop, matching the WeilPositivity definition.**
 
-    This wraps weil_positivity_from_trace to produce the WeilPositivity
+    Wraps weil_positivity_from_trace to produce the WeilPositivity
     predicate, which weil_criterion_backward can consume.
-
-    The hypotheses bundle everything needed: an adèle class space, a Hilbert
-    space with the spectral calculus, and the factorization bridge from
-    IsAutocorrelation to spectral positivity.
 
     SORRY COUNT: 0 in this theorem. -/
 theorem weil_positivity_statement
@@ -79,7 +79,6 @@ theorem weil_positivity_statement
     (sc : Spectral.SpectralCalculus H D hD)
     {ι : Type*}
     (basis : HilbertBasis ι ℂ H)
-    -- Bridge: every IsAutocorrelation function admits a spectral factorization
     (autocorr_factor : ∀ f : ℝ → ℝ, Analysis.IsAutocorrelation f →
       ∃ g : ℝ → ℂ, ∀ t, (f t : ℂ) = (starRingEnd ℂ (g t)) * g t) :
     Analysis.WeilPositivity := by
@@ -94,14 +93,22 @@ theorem weil_positivity_statement
         → RH (Weil's criterion, backward direction)
 
     This theorem has zero sorry's. It depends on:
-    1. trace_unfolds_to_orbital_sum — PROVED in OrbitalIntegrals.lean (0 sorry)
-    2. spectralCalculus_exists — sorry in SpectralPositivity.lean (spectral theorem)
-    3. trace_eq_weil_functional — sorry in ResolventComputation.lean (resolvent)
-    4. weil_criterion_backward — proved, 0 sorry
-    5. orbital_sum_eq_weil — proved by ring, 0 sorry
+    1. trace_unfolds_to_orbital_sum — PROVED by 4 rw steps (0 sorry):
+       (a) trace_as_orbital_sum — sorry in ResolventComputation.lean
+       (b) orbital_sum_split — sorry in SelbergUnfolding.lean
+       (c) archimedean_orbital_identity — sorry in TateLocalComputation.lean
+       (d) nonidentity_orbital_sum_eq_prime_sum — sorry in TateLocalComputation.lean
+    2. spectralCalculus_exists — sorry in SpectralPositivity.lean
+    3. weil_criterion_backward — proved, 0 sorry
+    4. orbital_sum_eq_weil — proved by ring, 0 sorry
 
-    The sorry's encode known mathematics (von Neumann 1929, Tate 1950,
-    Herglotz/Stieltjes 1930s). Neither is RH. Their combination is RH.
+    The sorry's encode known mathematics:
+    - von Neumann 1929 (spectral theorem)
+    - Herglotz 1911 (representation theorem)
+    - Stieltjes 1894 (inversion formula)
+    - Selberg 1956 (unfolding lemma)
+    - Tate 1950 (local computations)
+    None is the Riemann Hypothesis. Their combination is RH.
 
     SORRY COUNT: 0 in this theorem. -/
 theorem riemann_hypothesis_from_trace

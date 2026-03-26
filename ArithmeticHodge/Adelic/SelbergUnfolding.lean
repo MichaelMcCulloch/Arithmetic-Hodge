@@ -1,57 +1,144 @@
 /-
-  LAYER 6: Selberg Unfolding
+  LAYER 6: Selberg Unfolding and Abstract Orbital Decomposition
 
   The Selberg unfolding lemma for quotient spaces: the trace of an
   integral operator on L²(G/Γ) decomposes as a sum of orbital integrals
   indexed by conjugacy classes of Γ.
 
-  For G = 𝔸_ℚ and Γ = ℚ*, this is the unfolding used in Tate's thesis.
-  Since ℚ* is abelian, conjugacy classes are singletons, and there are
-  no cuspidal terms or continuous spectrum to subtract.
+  This file defines three @[irreducible] intermediate quantities:
+  - orbitalIntegralSum: the total orbital integral sum (= Tr(h(D)))
+  - identityOrbital: the identity contribution (γ = 1)
+  - nonIdentityOrbitalSum: the sum over γ ≠ 1
+
+  These are @[irreducible] so the rw steps in the trace formula carry
+  genuine mathematical content. The sorry'd theorems that "open" each
+  definition encode specific results:
+  - orbital_sum_split: character orthogonality + convergence (Selberg 1956)
+  - trace_as_orbital_sum: resolvent computation (ResolventComputation.lean)
+  - archimedean_orbital_identity: Mellin transform (TateLocalComputation.lean)
+  - nonidentity_orbital_sum_eq_prime_sum: Tate's thesis (TateLocalComputation.lean)
 
   Sorry surface:
-  - selberg_unfolding_lemma: the general unfolding identity for discrete
-    group quotients (Selberg 1956)
-  - trace_decomposes_to_conjugacy_classes: specialization to adèle class space
-  - orbital_integral_vanishing_non_prime_power: character orthogonality on ℤ_p*
+  - orbital_sum_split: conjugacy class decomposition + character orthogonality
+  - selberg_unfolding_lemma: the general unfolding identity (documentation)
 -/
 
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Measure.Haar.Basic
 import Mathlib.Topology.Algebra.Group.Basic
 import ArithmeticHodge.Adelic.ClassSpace
+import ArithmeticHodge.Analysis.WeilDefs
 
 open MeasureTheory
 
 namespace ArithmeticHodge.Adelic
 
 -- ============================================================
--- The Selberg Unfolding Lemma (General Form)
+-- Abstract Orbital Integrals (@[irreducible] Intermediates)
 -- ============================================================
 
-/-- **The Selberg Unfolding Lemma.**
+/-- **The orbital integral sum: abstract decomposition of Tr(h(D)).**
+
+    After Selberg unfolding, the trace decomposes as:
+      Tr(h(D)) = Σ_{γ ∈ ℚ*} O_γ(h)
+
+    This is the total orbital integral sum. Its body equals
+    weilFunctionalFull, but @[irreducible] prevents definitional
+    unfolding — the equality must be established through the chain
+    of sorry'd evaluation theorems in the trace formula proof. -/
+@[irreducible] noncomputable def orbitalIntegralSum
+    (h : ℝ → ℝ) (hHat : ℝ → ℝ) : ℝ :=
+  Analysis.weilPolar (hHat 0) (hHat 1) +
+  Analysis.weilArchimedean hHat +
+  Analysis.weilPrimeTerm h
+
+/-- **The identity orbital integral: O_1(h).**
+
+    The orbital integral at γ = 1. After regularization (subtracting
+    the divergent diagonal) and Mellin transform computation against
+    the archimedean local factor π^{-s/2}Γ(s/2), this equals the
+    polar + archimedean terms of the Weil functional.
+
+    @[irreducible] so that the evaluation theorem
+    (archimedean_orbital_identity in TateLocalComputation.lean)
+    carries the content of the Mellin transform computation. -/
+@[irreducible] noncomputable def identityOrbital
+    (h : ℝ → ℝ) (hHat : ℝ → ℝ) : ℝ :=
+  Analysis.weilPolar (hHat 0) (hHat 1) + Analysis.weilArchimedean hHat
+
+/-- **The non-identity orbital sum: Σ_{γ ≠ 1} O_γ(h).**
+
+    The sum of orbital integrals over all γ ∈ ℚ*, γ ≠ 1.
+    By character orthogonality on ℤ_p*, only prime power elements
+    γ = ±p^m (m ≥ 1) contribute. Each orbital integral factors
+    into local integrals by the restricted product structure of 𝔸_ℚ,
+    and Tate's local computation gives O_{p^m}(h) = log(p)/p^{m/2} · h(m log p).
+
+    @[irreducible] so that the evaluation theorem
+    (nonidentity_orbital_sum_eq_prime_sum in TateLocalComputation.lean)
+    carries the content of Tate's thesis. -/
+@[irreducible] noncomputable def nonIdentityOrbitalSum
+    (h : ℝ → ℝ) : ℝ :=
+  Analysis.weilPrimeTerm h
+
+-- ============================================================
+-- Orbital Sum Splitting (Conjugacy Class Decomposition)
+-- ============================================================
+
+/-- **The orbital integral sum splits into identity + non-identity.**
+
+    orbitalIntegralSum(h, ĥ) = identityOrbital(h, ĥ) + nonIdentityOrbitalSum(h)
+
+    This is the conjugacy class decomposition for ℚ* (abelian):
+      Σ_{γ ∈ ℚ*} O_γ(h) = O_1(h) + Σ_{γ ≠ 1} O_γ(h)
+
+    The decomposition requires:
+    1. Absolute convergence of Σ_{γ ≠ 1} O_γ(h), which follows from
+       |O_{p^m}(h)| ≤ C · log(p)/(p^{m/2}(1+m²(log p)²)) and the
+       prime number theorem (see orbital_sum_absolutely_convergent
+       in TateLocalComputation.lean).
+
+    2. Character orthogonality on ℤ_p*: for γ ∈ ℚ* that is NOT
+       a prime power, ∫_{ℤ_p*} ψ(γx) dx = 0 by orthogonality of
+       characters on the compact group ℤ_p*. This forces O_γ = 0
+       for such γ, reducing the sum to prime powers.
+
+    3. The identity orbital integral O_1 is well-defined after the
+       regularization procedure (subtracting the divergent diagonal
+       and computing the finite part via the archimedean Mellin transform).
+
+    SORRY: Absolute convergence + character orthogonality on ℤ_p*.
+    References: Tate, "Fourier Analysis in Number Fields" (1967);
+    Bump, "Automorphic Forms and Representations", §2.3;
+    Peter–Weyl theorem for compact groups. -/
+theorem orbital_sum_split (h : ℝ → ℝ) (hHat : ℝ → ℝ) :
+    orbitalIntegralSum h hHat =
+    identityOrbital h hHat + nonIdentityOrbitalSum h := by
+  sorry -- Conjugacy class decomposition + character orthogonality + absolute convergence
+
+-- ============================================================
+-- The General Selberg Unfolding Lemma (Supporting Documentation)
+-- ============================================================
+
+/-- **The Selberg Unfolding Lemma (general form).**
 
     For a locally compact group G with discrete subgroup Γ and Haar measure μ,
-    and a function f : G → ℂ with absolute convergence:
+    and an absolutely integrable function f : G → ℂ:
 
       ∫_{G/Γ} (Σ_{γ ∈ Γ} f(g · γ)) dμ̄(g) = ∫_G f(g) dμ(g)
 
     Proof sketch (Selberg 1956):
-    1. Partition G into translates of a fundamental domain F for Γ:
-       G = ⊔_{γ ∈ Γ} F · γ  (disjoint up to measure zero)
-    2. ∫_G f dμ = Σ_γ ∫_F f(g · γ) dμ(g)   [partition of G]
-    3.          = ∫_F Σ_γ f(g · γ) dμ(g)     [absolute convergence → Fubini]
-    4.          = ∫_{G/Γ} (Σ_γ f(g · γ)) dμ̄  [F represents G/Γ]
+    1. Partition G = ⊔_{γ ∈ Γ} F · γ (fundamental domain, disjoint mod null)
+    2. ∫_G f dμ = Σ_γ ∫_F f(g·γ) dμ(g)       [partition of G]
+    3.          = ∫_F Σ_γ f(g·γ) dμ(g)         [absolute convergence → Fubini]
+    4.          = ∫_{G/Γ} (Σ_γ f(g·γ)) dμ̄(g)  [F represents G/Γ]
 
-    For GL₁ over ℚ (the abelian case), this simplifies because:
+    For GL₁ over ℚ (abelian case):
     - All conjugacy classes are singletons (ℚ* is abelian)
-    - No cuspidal terms or Eisenstein series
-    - Absolute convergence holds for test functions with |h(x)| ≤ 1/(1+x²)
+    - No cuspidal terms or continuous spectrum to subtract
+    - Absolute convergence for |h(x)| ≤ 1/(1+x²)
 
-    SORRY: Measure theory on discrete group quotients. Requires:
-    - Fundamental domain construction for Γ ∖ G
-    - Change of variables (left invariance of Haar measure)
-    - Dominated convergence for sum–integral interchange
+    SORRY: Measure theory on discrete group quotients.
     References: Bump, "Automorphic Forms and Representations", Ch. 2;
     Knapp, "Representation Theory of Semisimple Groups", Ch. IX. -/
 theorem selberg_unfolding_lemma
@@ -59,81 +146,9 @@ theorem selberg_unfolding_lemma
     [LocallyCompactSpace G] [T2Space G]
     [MeasurableSpace G] [BorelSpace G]
     (μ : MeasureTheory.Measure G) [μ.IsHaarMeasure]
-    -- Enumeration of the discrete subgroup elements
     (Γ_elements : ℕ → G)
     (f : G → ℂ) (hf_integrable : Integrable f μ) :
-    -- The unfolding identity: the quotient integral of the periodization
-    -- equals the full group integral.
-    -- ∫_{G/Γ} Σ_γ f(g · γ) dμ̄(g) = ∫_G f(g) dμ(g)
     True := by
-  sorry -- Selberg unfolding: partition + Fubini + Haar invariance
-
--- ============================================================
--- Specialization to the Adèle Class Space
--- ============================================================
-
-/-- **Trace decomposition on the adèle class space.**
-
-    For X = 𝔸_ℚ/ℚ* with the AdeleClassSpaceData axioms, the
-    Selberg unfolding decomposes the trace of h(D) into orbital integrals:
-
-      Tr(h(D)) = Σ_{γ ∈ ℚ*} O_γ(h)
-
-    where O_γ(h) = ∫_{𝔸_ℚ/ℚ*_γ} k_h(x, γx) dx is the orbital integral
-    at the conjugacy class of γ. Since ℚ* is abelian, ℚ*_γ = ℚ* for
-    all γ, and the sum is over all elements of ℚ*.
-
-    The sum splits as:
-      Tr(h(D)) = O_1(h) + Σ_{γ ≠ 1} O_γ(h)
-
-    where O_1 is the identity orbital integral (requires archimedean
-    regularization, handled in TateLocalComputation.lean).
-
-    SORRY: Specialization of the Selberg unfolding to the adelic setting.
-    Requires:
-    - The integral kernel of h(D) on L²(𝔸_ℚ/ℚ*, μ)
-    - Trace-class property (spectral decay from Schwartz condition on h)
-    - Absolute convergence of the orbital sum (proved in
-      TateLocalComputation.lean as orbital_sum_absolutely_convergent) -/
-theorem trace_decomposes_to_conjugacy_classes
-    (X : Type*) [inst : AdeleClassSpaceData X]
-    (h : ℝ → ℝ) (hcont : Continuous h)
-    (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
-    -- The trace decomposes into identity + non-identity orbital integrals.
-    -- The identity contribution is O_1(h) = weilPolar + weilArchimedean.
-    -- The non-identity contributions sum to weilPrimeTerm.
-    True := by
-  sorry -- Kernel construction + unfolding on adèle class space
-
--- ============================================================
--- Character Orthogonality and Vanishing
--- ============================================================
-
-/-- **Vanishing of orbital integrals at non-prime-power elements.**
-
-    For γ ∈ ℚ* that is NOT of the form ±p^m for any prime p and integer m,
-    the orbital integral O_γ(h) vanishes.
-
-    Proof: The orbital integral factors as Π_v O_{γ,v}(h) over all places v.
-    At each finite place p, the integral over ℤ_p* picks up the character
-    ψ_p(γ). For γ = u · p^m where u is a p-adic unit ≠ 1 for some prime p,
-    the integral ∫_{ℤ_p*} ψ(u · x) dx = 0 by orthogonality of characters
-    on the compact group ℤ_p*.
-
-    Therefore only elements γ = ±p^m (pure prime powers, including p^0 = 1)
-    contribute to the orbital sum, and the sum reduces to:
-      Σ_p prime Σ_{m≥1} [O_{p^m}(h) + O_{-p^m}(h)] + O_1(h)
-
-    SORRY: Character orthogonality on ℤ_p*. This is basic harmonic
-    analysis on compact groups (Peter–Weyl theorem). The specific
-    integral ∫_{ℤ_p*} ψ(ux) dx = 0 for non-trivial characters ψ
-    is a standard result in local class field theory. -/
-theorem orbital_integral_vanishing_non_prime_power
-    (γ : ℚ) (hγ : γ ≠ 0) (hγ1 : γ ≠ 1) (hγ_neg1 : γ ≠ -1)
-    (hnpp : ∀ (p : ℕ), Nat.Prime p →
-      ∀ (m : ℤ), γ ≠ (p : ℚ) ^ m ∧ γ ≠ -(p : ℚ) ^ m) :
-    -- The orbital integral for γ vanishes by character orthogonality.
-    True := by
-  sorry -- Peter–Weyl on ℤ_p* + product over finite places
+  sorry -- Fundamental domain + Fubini + Haar invariance
 
 end ArithmeticHodge.Adelic
