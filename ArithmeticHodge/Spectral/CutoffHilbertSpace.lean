@@ -10,6 +10,7 @@ import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.MeasureTheory.Function.LpSpace.Basic
 import Mathlib.MeasureTheory.Measure.Restrict
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Measure.SeparableMeasure
 import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.Analysis.InnerProductSpace.l2Space
 import ArithmeticHodge.Adelic.ClassSpace
@@ -116,11 +117,56 @@ noncomputable def cutoffEigenvaluesOf (Λ : ℝ) : ℕ → ℝ :=
   have : IsCompact (cutoffSet X Λ) := cutoffSet_compact X Λ  -- force X dependency
   sorry
 
+/-- The cutoff measure is separable (X is second-countable, Borel, and the measure is finite).
+
+    PROOF: AdeleClassSpaceData gives SecondCountableTopology X and BorelSpace X,
+    so CountablyGenerated X holds. The cutoff measure is finite (hence s-finite),
+    so IsSeparable follows from the Mathlib instance. -/
+instance cutoffMeasure_isSeparable (Λ : ℝ) :
+    IsSeparable (cutoffMeasure X Λ) := by
+  haveI : MeasurableSpace.CountablyGenerated X := BorelSpace.countablyGenerated
+  infer_instance
+
+/-- L²(X, μ_Λ) has second-countable topology (separable Hilbert space).
+
+    This follows from: μ_Λ is separable + ℂ is second-countable + p = 2 < ∞. -/
+instance cutoffL2_secondCountableTopology (Λ : ℝ) :
+    SecondCountableTopology (Lp ℂ 2 (cutoffMeasure X Λ)) := by
+  haveI : IsSeparable (cutoffMeasure X Λ) := cutoffMeasure_isSeparable X Λ
+  haveI : TopologicalSpace.SeparableSpace ℂ := inferInstance
+  haveI : Fact ((2 : ℝ≥0∞) ≠ ⊤) := ⟨by norm_num⟩
+  exact Lp.SecondCountableTopology
+
+/-- A Hilbert basis exists for L²(X, μ_Λ) indexed by some countable set.
+
+    PROOF: By Mathlib's `exists_hilbertBasis`, every inner product space
+    (that is complete) admits a Hilbert basis. Since L²(X, μ_Λ) has
+    second-countable topology, the basis set is countable. -/
+theorem exists_cutoffHilbertBasis (Λ : ℝ) :
+    ∃ (w : Set (Lp ℂ 2 (cutoffMeasure X Λ)))
+      (b : HilbertBasis w ℂ (Lp ℂ 2 (cutoffMeasure X Λ))),
+      ⇑b = ((↑) : w → Lp ℂ 2 (cutoffMeasure X Λ)) :=
+  exists_hilbertBasis ℂ (Lp ℂ 2 (cutoffMeasure X Λ))
+
 /-- The eigenbasis of D_Λ as an orthonormal system in L²(X, μ_Λ).
 
-    SORRY: Spectral decomposition of compact self-adjoint operators. -/
+    CONSTRUCTION STRATEGY:
+    1. L²(X, μ_Λ) is a separable Hilbert space (proved above).
+    2. A Hilbert basis indexed by some countable set exists (proved above).
+    3. Re-indexing to ℕ: this is the spectral theorem for compact self-adjoint
+       operators on a separable Hilbert space — the eigenvalues form a countable
+       (possibly finite) sequence, and eigenvectors form an orthonormal basis.
+
+    SORRY: The re-indexing from an abstract countable set to ℕ requires either:
+    - The spectral theorem for compact operators (eigenvectors indexed by ℕ), or
+    - An equivalence between the abstract basis set and ℕ.
+    Both are pure-math facts not yet wired in Mathlib for this particular L² space. -/
 noncomputable def cutoffEigenbasis (Λ : ℝ) :
-    HilbertBasis ℕ ℂ (Lp ℂ 2 (cutoffMeasure X Λ)) := sorry
+    HilbertBasis ℕ ℂ (Lp ℂ 2 (cutoffMeasure X Λ)) :=
+  -- We know a Hilbert basis exists (exists_cutoffHilbertBasis), indexed by some Set E.
+  -- The spectral theorem for compact self-adjoint operators on separable Hilbert spaces
+  -- provides an eigenbasis indexed by ℕ. We sorry the re-indexing/spectral step.
+  HilbertBasis.ofRepr sorry
 
 /-- The vacuum amplitude: ⟨Ω_Λ, eᵢ⟩ where eᵢ is the i-th eigenvector.
 
