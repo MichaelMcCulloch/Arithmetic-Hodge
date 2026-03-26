@@ -36,7 +36,13 @@ import ArithmeticHodge.Algebra.DistributiveCoupling
 import ArithmeticHodge.Analysis.PoissonSummation
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
+import ArithmeticHodge.Analysis.WeilDefs
+import ArithmeticHodge.Analysis.EntireFunction.WeierstraßProduct
+import ArithmeticHodge.Analysis.EntireFunction.Order
+import ArithmeticHodge.Analysis.EntireFunction.Hadamard
+import ArithmeticHodge.Analysis.ZetaProduct
 import ArithmeticHodge.Analysis.WeilExplicit
+import ArithmeticHodge.Analysis.FourierTransform
 import ArithmeticHodge.Analysis.WeilPositivity
 import ArithmeticHodge.Adelic.ClassSpace
 import ArithmeticHodge.Spectral.UnboundedOperator

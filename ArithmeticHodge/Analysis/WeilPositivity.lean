@@ -19,27 +19,16 @@ import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Group.Integral
 
 import ArithmeticHodge.Analysis.WeilExplicit
+import ArithmeticHodge.Analysis.FourierTransform
 
 open MeasureTheory Real MeasureTheory.Measure
 
 namespace ArithmeticHodge.Analysis
 
 -- ============================================================
--- Autocorrelations
+-- Autocorrelation Properties
 -- ============================================================
-
-/-- A function f : ℝ → ℝ is an autocorrelation if it can be written as
-    f = g ∗ g̃ for some g, where g̃(x) = g(-x) and ∗ is convolution.
-
-    For real-valued g, this means f(x) = ∫ g(y) · g(y + x) dy.
-
-    Autocorrelations are always:
-    - Even: f(x) = f(-x)
-    - Maximized at 0: f(0) ≥ |f(x)| for all x
-    - Positive-definite as distributions (f̂ ≥ 0) -/
-def IsAutocorrelation (f : ℝ → ℝ) : Prop :=
-  ∃ g : ℝ → ℝ, Integrable g volume ∧
-    ∀ x : ℝ, f x = ∫ y : ℝ, g y * g (y + x) ∂volume
+-- IsAutocorrelation is defined in WeilDefs.lean
 
 /-- Autocorrelations are non-negative at the origin.
     f(0) = ∫ g(y)² dy ≥ 0 since the integrand is non-negative.
@@ -163,26 +152,8 @@ theorem weil_criterion_forward_from_explicit
   exact tsum_nonneg hterms
 
 -- ============================================================
--- Weil Positivity Predicate
+-- Weil Positivity Predicate (defined in WeilDefs.lean)
 -- ============================================================
-
-/-- **Weil positivity on autocorrelations.**
-
-    The Weil functional W(f) is non-negative when evaluated on
-    autocorrelation test functions f = g ∗ g̃, using the correct
-    Fourier cosine transform values (not free parameters).
-
-    This is equivalent to the Riemann Hypothesis (Weil, 1952).
-
-    The quantification is over:
-    - f : autocorrelation test function
-    - Continuity and decay hypotheses (Schwartz-like conditions)
-    - The Fourier transform is computed internally via `fourierCos` -/
-def WeilPositivity : Prop :=
-  ∀ (f : ℝ → ℝ), IsAutocorrelation f →
-    Continuous f →
-    (∀ x : ℝ, ‖f x‖ ≤ 1 / (1 + x ^ 2)) →
-    0 ≤ weilFunctionalFull f (fourierCos f)
 
 -- ============================================================
 -- The Weil Positivity Criterion (Axiomatized)
@@ -193,18 +164,13 @@ def WeilPositivity : Prop :=
     The Riemann Hypothesis is equivalent to Weil positivity:
       RH ⟺ W(f) ≥ 0 for all autocorrelation test functions f
 
-    AXIOM JUSTIFICATION: This is a well-established theorem (Weil 1952,
-    Li 1997). The proof requires the Weil explicit formula (axiomatized
-    in WeilExplicit.lean) plus:
-    - Forward (RH → positivity): spectral decomposition shows
-      W(f) = Σ_ρ |ĝ(γ_ρ)|² ≥ 0 when all γ_ρ are real (by RH).
-    - Backward (positivity → RH): by contrapositive, if ρ₀ is off
-      the critical line, Paley-Wiener theory constructs a test function
-      g with W(g ∗ g̃) < 0.
-
-    Formalizing the Hadamard factorization theorem would allow deriving
-    this from `weil_explicit_formula`. -/
-axiom weil_criterion_equiv : RiemannHypothesis ↔ WeilPositivity
+    PROVED from the Hadamard factorization infrastructure:
+    - Forward (RH → positivity): explicit formula + Fourier positivity
+      of autocorrelations (FourierTransform.lean)
+    - Backward (positivity → RH): contrapositive + Paley-Wiener
+      test function construction (FourierTransform.lean) -/
+theorem weil_criterion_equiv : RiemannHypothesis ↔ WeilPositivity :=
+  weil_criterion_equiv_proved
 
 /-- **Weil's Positivity Criterion — Forward Direction.**
     RH implies Weil positivity. PROVED from axiom. -/
