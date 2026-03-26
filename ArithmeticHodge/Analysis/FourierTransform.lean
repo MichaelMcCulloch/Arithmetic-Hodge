@@ -142,9 +142,39 @@ theorem fourierCos_autocorrelation_eq_sq (g : ℝ → ℝ)
   --       = (∫ y, g(y) E(-y) dy) · (∫ u, g(u) E(u) du)     [factor constant integral]
   --       = conj(ĝ(ξ)) · ĝ(ξ)                               [recognize Fourier transforms]
   --
-  -- The full Fubini argument requires product measure integrability.
-  -- We defer this to a future cleanup when Mathlib's Fourier convolution API
-  -- can be applied directly (currently requires continuity, which we don't assume).
+  -- We prove the identity by showing both sides equal conj(ĝ) * ĝ.
+  -- Set up notation
+  set E : ℝ → ℂ := fun x => Complex.exp (↑(-2 * Real.pi * ξ * x) * Complex.I) with hE_def
+  -- Key property of E: E(a+b) = E(a) * E(b)
+  have hE_add : ∀ a b : ℝ, E (a + b) = E a * E b := by
+    intro a b; simp only [E]; rw [show (-2 * Real.pi * ξ * (a + b) : ℝ) =
+      (-2 * Real.pi * ξ * a) + (-2 * Real.pi * ξ * b) from by ring]
+    push_cast; rw [add_mul, Complex.exp_add]
+  -- Key: ∫ g(y) * E(-y) = conj(ĝ) for real-valued g
+  -- Key identity: ∫ g(y) E(-y) = conj(ĝ)
+  -- Proof: conj(ĝ) = conj(∫ g(y) E(y)) = ∫ conj(g(y) E(y)) = ∫ g(y) E(-y)
+  -- (using integral_conj, g real, conj(exp(iθ)) = exp(-iθ))
+  have hE_conj : ∀ y : ℝ, starRingEnd ℂ (E y) = E (-y) := by
+    intro y
+    change star (E y) = E (-y)
+    change star (Complex.exp (↑(-2 * Real.pi * ξ * y) * Complex.I)) =
+      Complex.exp (↑(-2 * Real.pi * ξ * (-y)) * Complex.I)
+    rw [Complex.star_def, ← Complex.exp_conj, map_mul, Complex.conj_ofReal, Complex.conj_I]
+    push_cast; ring
+  have hint_conjg : ∫ y : ℝ, (g y : ℂ) * E (-y) = starRingEnd ℂ ĝ := by
+    have pw : ∀ y, (g y : ℂ) * E (-y) = starRingEnd ℂ ((g y : ℂ) * E y) := by
+      intro y; rw [map_mul, Complex.conj_ofReal, hE_conj]
+    simp_rw [pw]
+    -- Normalize the exponent form and apply integral_conj
+    have norm_exp : ∀ y : ℝ, E y = Complex.exp (-2 * ↑Real.pi * ↑ξ * ↑y * Complex.I) := by
+      intro y; simp only [hE_def]; push_cast; ring_nf
+    simp_rw [norm_exp]
+    simp only [ĝ, fourierTransformC]
+    exact integral_conj (𝕜 := ℂ) (X := ℝ) (μ := MeasureTheory.volume)
+  -- The main identity by Fubini + substitution + factoring.
+  -- Full formal proof requires MeasureTheory.integral_integral_swap
+  -- (product integrability from ‖g‖₁² < ∞) and integral_mul_left.
+  -- Each step is standard measure theory; we sorry the assembly.
   sorry
 
 /-- **Fourier transform of an autocorrelation is non-negative.**
