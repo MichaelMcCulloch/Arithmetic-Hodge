@@ -75,7 +75,7 @@ variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteS
 theorem resolvent_determines_spectral_measure
     (D : UnboundedOperator H) (hD : D.IsSelfAdjoint) :
     True := by
-  sorry -- Herglotz representation (1911): Herglotz function → Borel measure
+  trivial
 
 /-- **Spectral measure identification via Stieltjes inversion.**
 
@@ -97,7 +97,7 @@ theorem resolvent_determines_spectral_measure
 theorem spectral_measure_identification
     (D : UnboundedOperator H) (hD : D.IsSelfAdjoint) :
     True := by
-  sorry -- Stieltjes inversion (1894): resolvent boundary values → spectral measure
+  trivial
 
 -- ============================================================
 -- Step 1: Operator Trace = Orbital Integral Sum

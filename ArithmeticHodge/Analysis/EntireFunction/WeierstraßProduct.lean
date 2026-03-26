@@ -24,8 +24,10 @@ import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+import Mathlib.Analysis.Normed.Module.MultipliableUniformlyOn
+import Mathlib.Analysis.Complex.LocallyUniformLimit
 
-open Complex Filter Topology Finset BigOperators
+open Complex Filter Topology Finset BigOperators Metric
 
 namespace ArithmeticHodge.Analysis.EntireFunction
 
@@ -475,7 +477,56 @@ theorem weierstraßProduct_convergent (a : ZeroSequence) (p : ℕ)
 theorem weierstraßProduct_differentiable (a : ZeroSequence) (p : ℕ)
     (hconv : Summable (fun n => (‖a.zeros n‖⁻¹) ^ (p + 1 : ℝ))) :
     Differentiable ℂ (weierstraßProduct a p) := by
-  sorry -- SCAFFOLD: differentiability of uniformly convergent product of analytic functions
+  have hpow : Summable (fun n => (‖a.zeros n‖⁻¹) ^ (p + 1)) :=
+    rpow_to_pow_summable a p hconv
+  intro z₀
+  set R := ‖z₀‖ + 1
+  have hR : 0 < R := by positivity
+  have hz₀_ball : z₀ ∈ ball (0 : ℂ) R := by
+    simp only [mem_ball_zero_iff]; linarith
+  -- Suffices: differentiable on a ball containing z₀
+  suffices h : DifferentiableOn ℂ (weierstraßProduct a p) (ball 0 R) from
+    h.differentiableAt (isOpen_ball.mem_nhds hz₀_ball)
+  -- Write each factor as 1 + perturbation
+  set f : ℕ → ℂ → ℂ := fun n z => weierstraßElementary p (z / a.zeros n) - 1
+  have hprod_eq : weierstraßProduct a p = fun z => ∏' n, (1 + f n z) := by
+    ext z; simp only [weierstraßProduct, f]; congr 1; ext n; ring
+  rw [hprod_eq]
+  -- Establish locally uniform convergence
+  have hloc : HasProdLocallyUniformlyOn (fun n z => 1 + f n z)
+      (fun z => ∏' n, (1 + f n z)) (ball (0 : ℂ) R) := by
+    apply Summable.hasProdLocallyUniformlyOn_nat_one_add isOpen_ball
+      (show Summable (fun n => R ^ (p + 1) * (‖a.zeros n‖⁻¹) ^ (p + 1)) from hpow.mul_left _)
+    · -- Uniform bound on ball 0 R
+      apply (a.tendsto_norm.eventually_ge_atTop (2 * R)).mono
+      intro n hn x hx
+      simp only [f]
+      have ha_pos : (0 : ℝ) < ‖a.zeros n‖ := by linarith [hR]
+      have hxR : ‖x‖ < R := mem_ball_zero_iff.mp hx
+      have hxnorm : ‖x / a.zeros n‖ ≤ 1 / 2 := by
+        rw [norm_div, div_le_div_iff₀ ha_pos two_pos]; linarith
+      have hbound := weierstraßElementary_bound p (x / a.zeros n) hxnorm
+      rw [norm_sub_rev] at hbound
+      calc ‖weierstraßElementary p (x / a.zeros n) - 1‖
+          ≤ ‖x / a.zeros n‖ ^ (p + 1) := hbound
+        _ = (‖x‖ / ‖a.zeros n‖) ^ (p + 1) := by rw [norm_div]
+        _ ≤ (R / ‖a.zeros n‖) ^ (p + 1) :=
+            pow_le_pow_left₀ (div_nonneg (norm_nonneg _) (norm_nonneg _))
+              ((div_le_div_iff_of_pos_right ha_pos).mpr (le_of_lt hxR)) _
+        _ = R ^ (p + 1) * (‖a.zeros n‖⁻¹) ^ (p + 1) := by
+            rw [div_eq_mul_inv, mul_pow]
+    · -- Continuity of each perturbation
+      intro n
+      exact (((weierstraßElementary_differentiable p).comp
+        (differentiable_id.div_const _)).sub (differentiable_const 1)).continuous.continuousOn
+  -- Finite products are differentiable, so the locally uniform limit is differentiable
+  exact (hloc : TendstoLocallyUniformlyOn _ _ _ _).differentiableOn
+    (Eventually.of_forall fun s =>
+      DifferentiableOn.fun_finset_prod fun i _ =>
+        (differentiableOn_const 1).add
+          (((weierstraßElementary_differentiable p).comp
+            (differentiable_id.div_const _)).differentiableOn.sub (differentiableOn_const 1)))
+    isOpen_ball
 
 /-- **The zeros of the Weierstraß product are exactly {a_n}.**
 
@@ -505,6 +556,172 @@ theorem weierstraßProduct_zero_iff (a : ZeroSequence) (p : ℕ)
     rintro ⟨n, rfl⟩
     apply tprod_of_exists_eq_zero
     exact ⟨n, by simp [weierstraßElementary, div_self (a.ne_zero n)]⟩
+
+-- ============================================================
+-- Raw sequence API (without ZeroSequence structure)
+-- ============================================================
+
+/-- Perturbation norm summability for raw zero sequences.
+    This extends the private `perturbation_summable_norm` from
+    `ZeroSequence` to arbitrary `ℕ → ℂ`, deriving the eventually-large
+    condition from summability rather than `tendsto_norm`. -/
+theorem perturbation_summable' (zeros : ℕ → ℂ) (p : ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1 : ℝ))) (z : ℂ) :
+    Summable fun n => ‖weierstraßElementary p (z / zeros n) - 1‖ := by
+  -- Convert rpow to ℕ-pow
+  have hpow : Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1)) := by
+    have : (fun n => (‖zeros n‖⁻¹) ^ (p + 1 : ℝ)) = fun n => (‖zeros n‖⁻¹) ^ (p + 1) := by
+      ext n; rw [← Real.rpow_natCast]; norm_cast
+    rwa [this] at hconv
+  -- Bounding sequence is summable
+  apply (hpow.mul_left (‖z‖ ^ (p + 1))).of_norm_bounded_eventually
+  rw [Nat.cofinite_eq_atTop]
+  -- From summability, the terms tend to 0
+  have htend : Filter.Tendsto (fun n => (‖zeros n‖⁻¹) ^ (p + 1)) Filter.atTop (nhds 0) :=
+    Nat.cofinite_eq_atTop ▸ hpow.tendsto_atTop_zero
+  -- Choose c so that ‖z‖ · c ≤ 1/2
+  set c := (1 : ℝ) / (2 * ‖z‖ + 1) with hc_def
+  have hc_pos : (0 : ℝ) < c := by positivity
+  have hc_pow_pos : (0 : ℝ) < c ^ (p + 1) := by positivity
+  -- Eventually ‖zeros n‖⁻¹^{p+1} < c^{p+1}
+  apply (htend.eventually (Iio_mem_nhds hc_pow_pos)).mono
+  intro n (hn : (‖zeros n‖⁻¹) ^ (p + 1) < c ^ (p + 1))
+  -- Extract ‖zeros n‖⁻¹ < c
+  have hinv_lt : ‖zeros n‖⁻¹ < c :=
+    lt_of_pow_lt_pow_left₀ (p + 1) (le_of_lt hc_pos) hn
+  -- Therefore ‖z / zeros n‖ ≤ 1/2
+  have hznorm : ‖z / zeros n‖ ≤ 1 / 2 := by
+    rw [norm_div, div_eq_mul_inv]
+    calc ‖z‖ * ‖zeros n‖⁻¹
+        ≤ ‖z‖ * c := mul_le_mul_of_nonneg_left (le_of_lt hinv_lt) (norm_nonneg z)
+      _ = ‖z‖ / (2 * ‖z‖ + 1) := by rw [hc_def, mul_one_div]
+      _ ≤ 1 / 2 := by
+          rw [div_le_div_iff₀ (by positivity : (0 : ℝ) < 2 * ‖z‖ + 1) two_pos]
+          linarith [norm_nonneg z]
+  -- Apply the weierstraß elementary factor bound
+  have hbound := weierstraßElementary_bound p (z / zeros n) hznorm
+  rw [norm_sub_rev] at hbound
+  rw [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _)]
+  calc ‖weierstraßElementary p (z / zeros n) - 1‖
+      ≤ ‖z / zeros n‖ ^ (p + 1) := hbound
+    _ = ‖z‖ ^ (p + 1) * ‖zeros n‖⁻¹ ^ (p + 1) := by
+        rw [norm_div, div_eq_mul_inv, mul_pow]
+
+/-- Product of weierstraßElementary factors is nonzero when no factor vanishes.
+    Each factor `E_p(z/a_n)` is nonzero when `z/a_n ≠ 1`, and the product
+    converges to a nonzero value by `tprod_one_add_ne_zero_of_summable`. -/
+theorem tprod_weierstraßElementary_ne_zero (zeros : ℕ → ℂ) (p : ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1 : ℝ)))
+    (z : ℂ) (hne : ∀ n, z / zeros n ≠ 1) :
+    ∏' n, weierstraßElementary p (z / zeros n) ≠ 0 := by
+  have hrewrite : (fun n => weierstraßElementary p (z / zeros n)) =
+      fun n => 1 + (weierstraßElementary p (z / zeros n) - 1) := by ext n; ring
+  rw [hrewrite]
+  exact tprod_one_add_ne_zero_of_summable
+    (fun n => by simp only [add_sub_cancel]; exact weierstraßElementary_ne_zero p _ (hne n))
+    (perturbation_summable' zeros p hconv z)
+
+/-- Helper: convert rpow summability to nat-pow summability with tendsto. -/
+private theorem rpow_to_pow_with_tendsto (zeros : ℕ → ℂ) (p : ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1 : ℝ))) :
+    (Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1))) ∧
+    Tendsto (fun n => (‖zeros n‖⁻¹) ^ (p + 1)) atTop (nhds 0) := by
+  have hpow : Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1)) := by
+    have : (fun n => (‖zeros n‖⁻¹) ^ (p + 1 : ℝ)) = fun n => (‖zeros n‖⁻¹) ^ (p + 1) := by
+      ext n; rw [← Real.rpow_natCast]; norm_cast
+    rwa [this] at hconv
+  exact ⟨hpow, Nat.cofinite_eq_atTop ▸ hpow.tendsto_atTop_zero⟩
+
+/-- The Weierstraß product converges locally uniformly on any open ball.
+    This is the core convergence result used for both differentiability
+    and log-derivative computations. -/
+theorem hasProdLocallyUniformlyOn_weierstraß (zeros : ℕ → ℂ) (p : ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1 : ℝ)))
+    (R : ℝ) (hR : 0 < R) :
+    HasProdLocallyUniformlyOn (fun n z => weierstraßElementary p (z / zeros n))
+      (fun z => ∏' n, weierstraßElementary p (z / zeros n)) (ball (0 : ℂ) R) := by
+  obtain ⟨hpow, htend⟩ := rpow_to_pow_with_tendsto zeros p hconv
+  set f : ℕ → ℂ → ℂ := fun n z => weierstraßElementary p (z / zeros n) - 1
+  have hrewrite : (fun n z => weierstraßElementary p (z / zeros n)) =
+      fun n z => 1 + f n z := by ext n z; simp [f]
+  rw [hrewrite]
+  have hprod_rewrite : (fun z => ∏' n, weierstraßElementary p (z / zeros n)) =
+      fun z => ∏' n, (1 + f n z) := by ext z; congr 1; ext n; simp [f]
+  rw [hprod_rewrite]
+  set c := (1 : ℝ) / (2 * R + 1)
+  have hc_pos : (0 : ℝ) < c := by positivity
+  apply Summable.hasProdLocallyUniformlyOn_nat_one_add isOpen_ball
+    (show Summable (fun n => R ^ (p + 1) * (‖zeros n‖⁻¹) ^ (p + 1)) from hpow.mul_left _)
+  · apply (htend.eventually (Iio_mem_nhds (show (0 : ℝ) < c ^ (p + 1) by positivity))).mono
+    intro n (hn : (‖zeros n‖⁻¹) ^ (p + 1) < c ^ (p + 1)) x hx
+    simp only [f]
+    have hinv_lt : ‖zeros n‖⁻¹ < c := lt_of_pow_lt_pow_left₀ (p + 1) (le_of_lt hc_pos) hn
+    have hxR : ‖x‖ < R := mem_ball_zero_iff.mp hx
+    have hxnorm : ‖x / zeros n‖ ≤ 1 / 2 := by
+      rw [norm_div, div_eq_mul_inv]
+      have h1 : ‖x‖ * ‖zeros n‖⁻¹ ≤ R * c :=
+        mul_le_mul (le_of_lt hxR) (le_of_lt hinv_lt)
+          (inv_nonneg.mpr (norm_nonneg _)) (le_of_lt hR)
+      have h2 : R * c ≤ 1 / 2 := by
+        show R * (1 / (2 * R + 1)) ≤ 1 / 2
+        rw [mul_one_div, div_le_div_iff₀ (by positivity : (0 : ℝ) < 2 * R + 1) two_pos]
+        linarith
+      linarith
+    have hbound := weierstraßElementary_bound p (x / zeros n) hxnorm
+    rw [norm_sub_rev] at hbound
+    calc ‖weierstraßElementary p (x / zeros n) - 1‖
+        ≤ ‖x / zeros n‖ ^ (p + 1) := hbound
+      _ = (‖x‖ / ‖zeros n‖) ^ (p + 1) := by rw [norm_div]
+      _ ≤ (R / ‖zeros n‖) ^ (p + 1) := by
+          by_cases hzn : ‖zeros n‖ = 0
+          · simp [hzn]
+          · exact pow_le_pow_left₀ (div_nonneg (norm_nonneg _) (norm_nonneg _))
+              ((div_le_div_iff_of_pos_right (lt_of_le_of_ne (norm_nonneg _) (Ne.symm hzn))).mpr
+                (le_of_lt hxR)) _
+      _ = R ^ (p + 1) * (‖zeros n‖⁻¹) ^ (p + 1) := by rw [div_eq_mul_inv, mul_pow]
+  · intro n
+    exact (((weierstraßElementary_differentiable p).comp
+      (differentiable_id.div_const _)).sub (differentiable_const 1)).continuous.continuousOn
+
+/-- The Weierstraß product is multipliable locally uniformly on any open set. -/
+theorem multipliableLocallyUniformlyOn_weierstraß (zeros : ℕ → ℂ) (p : ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1 : ℝ))) (s : Set ℂ) (hs : IsOpen s) :
+    MultipliableLocallyUniformlyOn (fun n z => weierstraßElementary p (z / zeros n)) s := by
+  refine ⟨fun z => ∏' n, weierstraßElementary p (z / zeros n), ?_⟩
+  intro u hu z₀ hz₀
+  set R := ‖z₀‖ + 1
+  have hR : 0 < R := by positivity
+  have hz₀_ball : z₀ ∈ ball (0 : ℂ) R := by simp only [mem_ball_zero_iff]; linarith
+  -- Get convergence on ball 0 R
+  have hloc := hasProdLocallyUniformlyOn_weierstraß zeros p hconv R hR
+  obtain ⟨t, ht, htu⟩ := hloc u hu z₀ hz₀_ball
+  -- ht : t ∈ nhdsWithin z₀ (ball 0 R)
+  -- Since ball 0 R is open and z₀ ∈ ball 0 R, nhdsWithin = nhds
+  have hball_nhds : nhdsWithin z₀ (ball (0 : ℂ) R) = nhds z₀ :=
+    isOpen_ball.nhdsWithin_eq hz₀_ball
+  rw [hball_nhds] at ht
+  -- t ∩ s ∈ nhdsWithin z₀ s
+  refine ⟨t ∩ s, ?_, htu.mono fun n hn y hy => hn y hy.1⟩
+  exact Filter.inter_mem (nhdsWithin_le_nhds ht) self_mem_nhdsWithin
+
+/-- The tprod of weierstraßElementary factors is differentiable for raw sequences. -/
+theorem tprod_weierstraßElementary_differentiable (zeros : ℕ → ℂ) (p : ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ (p + 1 : ℝ))) :
+    Differentiable ℂ (fun z => ∏' n, weierstraßElementary p (z / zeros n)) := by
+  intro z₀
+  set R := ‖z₀‖ + 1
+  have hR : 0 < R := by positivity
+  have hz₀_ball : z₀ ∈ ball (0 : ℂ) R := by simp only [mem_ball_zero_iff]; linarith
+  suffices h : DifferentiableOn ℂ (fun z => ∏' n, weierstraßElementary p (z / zeros n)) (ball 0 R)
+    from h.differentiableAt (isOpen_ball.mem_nhds hz₀_ball)
+  -- Reuse the HasProdLocallyUniformlyOn lemma
+  have hloc := hasProdLocallyUniformlyOn_weierstraß zeros p hconv R hR
+  exact (hloc : TendstoLocallyUniformlyOn _ _ _ _).differentiableOn
+    (Eventually.of_forall fun s =>
+      DifferentiableOn.fun_finset_prod fun i _ =>
+        ((weierstraßElementary_differentiable p).comp
+          (differentiable_id.div_const _)).differentiableOn)
+    isOpen_ball
 
 -- ============================================================
 -- Weierstraß Factorization Theorem (existence form)

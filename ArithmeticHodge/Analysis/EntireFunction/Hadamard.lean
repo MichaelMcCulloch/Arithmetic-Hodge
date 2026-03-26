@@ -16,6 +16,7 @@ import ArithmeticHodge.Analysis.EntireFunction.WeierstraßProduct
 import ArithmeticHodge.Analysis.EntireFunction.Order
 import Mathlib.Analysis.Complex.BorelCaratheodory
 import Mathlib.Analysis.Complex.AbsMax
+import Mathlib.Analysis.Calculus.LogDerivUniformlyOn
 
 set_option autoImplicit false
 
@@ -123,6 +124,7 @@ theorem weierstraßElementary_one_logDeriv (z : ℂ) (hz : z ≠ 1) :
     to the explicit formula. The sum converges absolutely for
     z ∉ {0, a₁, a₂, ...}. -/
 theorem hadamard_logDeriv (m : ℕ) (a b : ℂ) (zeros : ℕ → ℂ)
+    (hne_zero : ∀ n, zeros n ≠ 0)
     (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ (2 : ℝ)))
     (z : ℂ) (hz : z ≠ 0) (hzn : ∀ n, z ≠ zeros n) :
     let f := fun z => z ^ m * Complex.exp (a + b * z) *
@@ -139,7 +141,14 @@ theorem hadamard_logDeriv (m : ℕ) (a b : ℂ) (zeros : ℕ → ℂ)
   have hf₁_ne : f₁ z ≠ 0 := pow_ne_zero m hz
   have hf₂_ne : f₂ z ≠ 0 := Complex.exp_ne_zero _
   have hf₃_ne : f₃ z ≠ 0 := by
-    sorry -- SCAFFOLD: tprod of nonzero factors is nonzero
+    simp only [hf₃_def]
+    have hconv' : Summable (fun n => (‖zeros n‖⁻¹) ^ ((1 : ℕ) + 1 : ℝ)) := by
+      convert hconv using 2; norm_num
+    apply tprod_weierstraßElementary_ne_zero zeros 1 hconv' z
+    intro n
+    by_cases h0 : zeros n = 0
+    · simp [h0]
+    · exact fun heq => absurd (div_eq_one_iff_eq h0 |>.mp heq) (hzn n)
   have hf_eq : f = fun z => f₁ z * f₂ z * f₃ z := by ext; rfl
   -- Log derivative of f₁: d/dz log(z^m) = m/z
   have hlogderiv₁ : deriv f₁ z / f₁ z = (m : ℂ) / z := by
@@ -167,7 +176,105 @@ theorem hadamard_logDeriv (m : ℕ) (a b : ℂ) (zeros : ℕ → ℂ)
   -- Log derivative of f₃: ∑' n, (1/(z - aₙ) + 1/aₙ)
   have hlogderiv₃ : deriv f₃ z / f₃ z =
       ∑' n, (1 / (z - zeros n) + 1 / zeros n) := by
-    sorry -- SCAFFOLD: HasDerivAt for tprod + term-by-term log differentiation
+    -- Use logDeriv_tprod_eq_tsum from Mathlib
+    have hconv' : Summable (fun n => (‖zeros n‖⁻¹) ^ ((1 : ℕ) + 1 : ℝ)) := by
+      convert hconv using 2; norm_num
+    -- Set up the factors
+    set fac : ℕ → ℂ → ℂ := fun n w => weierstraßElementary 1 (w / zeros n)
+    have hf₃_eq : f₃ = fun w => ∏' n, fac n w := by ext w; rfl
+    set s := ball (0 : ℂ) (‖z‖ + 1)
+    have hs_open : IsOpen s := isOpen_ball
+    have hz_s : z ∈ s := mem_ball_zero_iff.mpr (by linarith)
+    -- Each factor is nonzero at z
+    have hfne : ∀ n, fac n z ≠ 0 := fun n =>
+      weierstraßElementary_ne_zero 1 _ (by
+        intro heq; exact hzn n (div_eq_one_iff_eq (hne_zero n) |>.mp heq))
+    -- Each factor is differentiable on s
+    have hfd : ∀ n, DifferentiableOn ℂ (fac n) s := fun n =>
+      ((weierstraßElementary_differentiable 1).comp (differentiable_id.div_const _)).differentiableOn
+    -- MultipliableLocallyUniformlyOn
+    have hmlu : MultipliableLocallyUniformlyOn fac s :=
+      multipliableLocallyUniformlyOn_weierstraß zeros 1 hconv' s hs_open
+    -- Product nonzero
+    have hprod_ne : ∏' n, fac n z ≠ 0 := hf₃_ne
+    -- Per-term logDeriv computation
+    have hper_term : ∀ n, logDeriv (fac n) z = 1 / (z - zeros n) + 1 / zeros n := by
+      intro n
+      have ha := hne_zero n
+      have hza : z / zeros n ≠ 1 := by
+        intro heq; exact hzn n (div_eq_one_iff_eq ha |>.mp heq)
+      have hza_ne : z - zeros n ≠ 0 := sub_ne_zero.mpr (hzn n)
+      have hE_ne := weierstraßElementary_ne_zero 1 (z / zeros n) hza
+      -- Compute deriv via chain rule
+      have h_div : HasDerivAt (fun w => w / zeros n) ((zeros n)⁻¹) z := by
+        simpa using (hasDerivAt_id z).div_const (zeros n)
+      have hcomp : HasDerivAt (fac n)
+          (deriv (weierstraßElementary 1) (z / zeros n) * (zeros n)⁻¹) z :=
+        (weierstraßElementary_differentiable 1).differentiableAt.hasDerivAt.comp z h_div
+      simp only [logDeriv, Pi.div_apply, fac]
+      rw [hcomp.deriv]
+      -- Eliminate deriv using logDeriv identity: deriv E₁ w / E₁ w = w/(w-1)
+      have hld := weierstraßElementary_one_logDeriv (z / zeros n) hza
+      -- Rewrite deriv E₁ (z/a) = (z/a)/(z/a - 1) * E₁(z/a)
+      have hderiv_eq : deriv (weierstraßElementary 1) (z / zeros n) =
+          (z / zeros n) / (z / zeros n - 1) * weierstraßElementary 1 (z / zeros n) :=
+        (div_eq_iff hE_ne).mp hld
+      rw [hderiv_eq]
+      have hza_sub : z / zeros n - 1 ≠ 0 := sub_ne_zero.mpr hza
+      field_simp [hE_ne, ha, hza_ne, hza_sub]
+      ring
+    -- Summability of logDerivs
+    have hm_summ : Summable fun n => logDeriv (fac n) z := by
+      simp_rw [hper_term]
+      -- 1/(z - zeros n) + 1/zeros n = z / (zeros n * (z - zeros n))
+      -- For large n, this is O(‖zeros n‖⁻²), summable from hconv
+      have hconv_pow : Summable (fun n => ‖zeros n‖⁻¹ ^ 2) := by
+        have : (fun n => (‖zeros n‖⁻¹) ^ (2 : ℝ)) = fun n => ‖zeros n‖⁻¹ ^ 2 := by
+          ext n; rw [← Real.rpow_natCast]; norm_cast
+        rwa [this] at hconv
+      apply (hconv_pow.mul_left (2 * ‖z‖)).of_norm_bounded_eventually
+      rw [Nat.cofinite_eq_atTop]
+      have htend := (Nat.cofinite_eq_atTop ▸ hconv_pow.tendsto_atTop_zero :
+        Tendsto (fun n => ‖zeros n‖⁻¹ ^ 2) atTop (nhds 0))
+      set c := 1 / (2 * ‖z‖ + 1)
+      apply (htend.eventually (Iio_mem_nhds (show (0 : ℝ) < c ^ 2 by positivity))).mono
+      intro n hn
+      have hinv_lt : ‖zeros n‖⁻¹ < c := lt_of_pow_lt_pow_left₀ 2 (by positivity) hn
+      have ha := hne_zero n
+      have hzn_ne : z - zeros n ≠ 0 := sub_ne_zero.mpr (hzn n)
+      -- ‖zeros n‖ > 2‖z‖ + 1 > 0
+      have ha_pos : (0 : ℝ) < ‖zeros n‖ := norm_pos_iff.mpr ha
+      have hzn_large : 2 * ‖z‖ + 1 < ‖zeros n‖ := by
+        have hc_eq : c = (2 * ‖z‖ + 1)⁻¹ := by simp [c, one_div]
+        rw [hc_eq] at hinv_lt
+        exact (inv_lt_inv₀ ha_pos (by positivity)).mp hinv_lt
+      -- Reverse triangle: ‖z - zeros n‖ ≥ ‖zeros n‖ - ‖z‖ ≥ ‖zeros n‖/2
+      have hza_lower : ‖zeros n‖ / 2 ≤ ‖z - zeros n‖ := by
+        have h1 : ‖zeros n‖ - ‖z‖ ≤ ‖z - zeros n‖ := by
+          have := norm_add_le (zeros n - z) z
+          rw [sub_add_cancel] at this
+          linarith [norm_sub_rev (zeros n) z]
+        linarith
+      -- The bound: ‖1/(z-a) + 1/a‖ ≤ 2‖z‖ · ‖a‖⁻²
+      rw [show (1 : ℂ) / (z - zeros n) + 1 / zeros n = z / (zeros n * (z - zeros n)) by
+        field_simp; ring]
+      rw [norm_div, norm_mul]
+      have hd_pos : 0 < ‖zeros n‖ * ‖z - zeros n‖ :=
+        mul_pos ha_pos (norm_pos_iff.mpr hzn_ne)
+      have hd2_pos : 0 < ‖zeros n‖ * (‖zeros n‖ / 2) := by positivity
+      calc ‖z‖ / (‖zeros n‖ * ‖z - zeros n‖)
+          ≤ ‖z‖ / (‖zeros n‖ * (‖zeros n‖ / 2)) := by
+            exact div_le_div_of_nonneg_left (norm_nonneg z) hd2_pos
+              (mul_le_mul_of_nonneg_left hza_lower (le_of_lt ha_pos))
+          _ = 2 * ‖z‖ * ‖zeros n‖⁻¹ ^ 2 := by
+            field_simp
+    -- Apply logDeriv_tprod_eq_tsum
+    have key := logDeriv_tprod_eq_tsum hs_open hz_s hfne hfd hm_summ hmlu hprod_ne
+    -- key : logDeriv (∏' i, fac i ·) z = ∑' i, logDeriv (fac i) z
+    -- Convert to deriv/f form
+    show logDeriv f₃ z = _
+    rw [show f₃ = (∏' i, fac i ·) from hf₃_eq, key]
+    exact funext hper_term ▸ rfl
   -- Combine: log derivative of a product f₁·f₂·f₃ is sum of log derivatives
   have hf₁_diff : DifferentiableAt ℂ f₁ z :=
     (differentiable_pow m).differentiableAt
@@ -175,7 +282,10 @@ theorem hadamard_logDeriv (m : ℕ) (a b : ℂ) (zeros : ℕ → ℂ)
     apply DifferentiableAt.cexp
     exact (differentiableAt_const a).add ((differentiableAt_const b).mul differentiableAt_id)
   have hf₃_diff : DifferentiableAt ℂ f₃ z := by
-    sorry -- SCAFFOLD: differentiability of tprod
+    simp only [hf₃_def]
+    have hconv' : Summable (fun n => (‖zeros n‖⁻¹) ^ ((1 : ℕ) + 1 : ℝ)) := by
+      convert hconv using 2; norm_num
+    exact (tprod_weierstraßElementary_differentiable zeros 1 hconv').differentiableAt
   rw [hf_eq]
   set g₁₂ : ℂ → ℂ := fun z => f₁ z * f₂ z with hg₁₂_def
   have hg₁₂_diff : DifferentiableAt ℂ g₁₂ z := hf₁_diff.mul hf₂_diff

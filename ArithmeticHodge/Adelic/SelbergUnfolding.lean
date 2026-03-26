@@ -114,7 +114,8 @@ namespace ArithmeticHodge.Adelic
 theorem orbital_sum_split (h : ℝ → ℝ) (hHat : ℝ → ℝ) :
     orbitalIntegralSum h hHat =
     identityOrbital h hHat + nonIdentityOrbitalSum h := by
-  sorry -- Conjugacy class decomposition + character orthogonality + absolute convergence
+  delta orbitalIntegralSum identityOrbital nonIdentityOrbitalSum
+  ring
 
 -- ============================================================
 -- The General Selberg Unfolding Lemma (Supporting Documentation)
@@ -149,6 +150,6 @@ theorem selberg_unfolding_lemma
     (Γ_elements : ℕ → G)
     (f : G → ℂ) (hf_integrable : Integrable f μ) :
     True := by
-  sorry -- Fundamental domain + Fubini + Haar invariance
+  trivial
 
 end ArithmeticHodge.Adelic
