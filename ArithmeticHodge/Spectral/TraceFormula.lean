@@ -38,11 +38,15 @@ namespace ArithmeticHodge
 
     SORRY: Requires the Fubini identity (FourierTransform.lean:148). -/
 theorem autocorrelation_fourierCos_nonneg
-    (f : ℝ → ℝ) (hf : Analysis.IsAutocorrelation f) (ξ : ℝ) :
+    (f : ℝ → ℝ) (hf : Analysis.IsAutocorrelation f)
+    (hdecay : ∀ x, ‖f x‖ ≤ 1 / (1 + x ^ 2)) (ξ : ℝ) :
     0 ≤ Analysis.fourierCos f ξ := by
   obtain ⟨g, hg_int, hg_eq⟩ := hf
+  -- g ∈ L²: f(0) = ∫ g² and |f(0)| ≤ 1, so ∫ g² ≤ 1, hence g² integrable.
+  -- But showing integrability from bounded integral requires more care.
+  -- For now, sorry this standard L² membership fact.
   have hg_sq : MeasureTheory.Integrable (fun y => g y ^ 2) MeasureTheory.volume := by
-    sorry -- g ∈ L² follows from f(0) = ∫ g² < ∞
+    sorry -- g ∈ L²: f(0) = ∫ g² ≤ 1 by decay bound
   exact Analysis.fourierCos_autocorrelation_nonneg g hg_int hg_sq f hg_eq ξ
 
 -- ============================================================
@@ -61,10 +65,11 @@ theorem autocorrelation_fourierCos_nonneg
 theorem spectralPairing_nonneg
     (X : Type*) [Adelic.AdeleClassSpaceData X]
     (Λ : ℝ) (hΛ : 0 < Λ)
-    (h : ℝ → ℝ) (hf : Analysis.IsAutocorrelation h) :
+    (h : ℝ → ℝ) (hf : Analysis.IsAutocorrelation h)
+    (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
     0 ≤ Spectral.Cutoff.spectralPairingOf X Λ h :=
   Spectral.Cutoff.spectralPairingOf_nonneg X Λ hΛ h hf
-    (autocorrelation_fourierCos_nonneg h hf)
+    (autocorrelation_fourierCos_nonneg h hf hdecay)
 
 -- ============================================================
 -- Sorry: Convergence (The Trace Formula)
@@ -100,7 +105,7 @@ theorem weil_nonneg_of_spectral_pairing
     0 ≤ Analysis.weilFunctionalFull h (Analysis.fourierCos h) :=
   ge_of_tendsto (spectralPairing_tendsto_weil X h hcont hdecay)
     (eventually_atTop.mpr ⟨1, fun Λ hΛ =>
-      spectralPairing_nonneg X Λ (by linarith) h hf⟩)
+      spectralPairing_nonneg X Λ (by linarith) h hf hdecay⟩)
 
 /-- **Weil positivity.** SORRY COUNT: 0. -/
 theorem weil_positivity_from_spectral_pairing
