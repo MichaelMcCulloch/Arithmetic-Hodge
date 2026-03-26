@@ -67,14 +67,23 @@ noncomputable def zetaZeroSeq : ℕ → ℂ :=
     | some z => (z : ℂ)
     | none => 1/2
 
-/-- Each entry of zetaZeroSeq is a nontrivial zeta zero (when it comes
-    from the encoding). For entries where the encoding returns none, the
-    value 1/2 is used as a dummy — but the explicit formula only sums
-    over the actual zeros. -/
+/-- An index is a valid zero index when the encoding maps it to an actual zero. -/
+def IsZetaZeroIndex (n : ℕ) : Prop :=
+  (zetaZeros_countable.toEncodable.decode n).isSome
+
+/-- Each valid entry of zetaZeroSeq is a nontrivial zeta zero.
+    For entries where the encoding returns none, the value 1/2 is used
+    as a dummy — but the spec only asserts the zero property for valid indices. -/
 theorem zetaZeroSeq_spec :
-    ∀ n, riemannZeta (zetaZeroSeq n) = 0 ∧
-         0 < (zetaZeroSeq n).re ∧ (zetaZeroSeq n).re < 1 := by
-  sorry -- SCAFFOLD: from encoding properties + zero set membership
+    ∀ n, IsZetaZeroIndex n →
+      riemannZeta (zetaZeroSeq n) = 0 ∧
+      0 < (zetaZeroSeq n).re ∧ (zetaZeroSeq n).re < 1 := by
+  intro n hn
+  simp only [IsZetaZeroIndex] at hn
+  simp only [zetaZeroSeq]
+  obtain ⟨z, hz⟩ := Option.isSome_iff_exists.mp hn
+  rw [hz]
+  exact z.property
 
 /-- The enumeration covers all nontrivial zeros. -/
 theorem zetaZeroSeq_surj :

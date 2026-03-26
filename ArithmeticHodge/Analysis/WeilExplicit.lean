@@ -43,18 +43,24 @@ theorem weil_explicit_formula
     (hcont : Continuous h)
     (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
     ∃ (zeros : ℕ → ℝ),
-      (∀ n, ∃ ρ : NontrivialZetaZero, zeros n = ρ.val.im) ∧
+      (∀ n, IsZetaZeroIndex n → ∃ ρ : NontrivialZetaZero, zeros n = ρ.val.im) ∧
+      (∀ s : ℂ, riemannZeta s = 0 → 0 < s.re → s.re < 1 →
+        ∃ n, zeros n = s.im) ∧
       Summable (fun n => h (zeros n)) ∧
       ∑' n, h (zeros n) = weilFunctionalFull h (fourierCos h) := by
   -- The zero sequence: imaginary parts of nontrivial zeros from zetaZeroSeq
-  refine ⟨fun n => (zetaZeroSeq n).im, ?_, ?_, ?_⟩
-  -- (1) Each entry corresponds to a nontrivial zero
-  · intro n
-    obtain ⟨hzero, hre_pos, hre_lt⟩ := zetaZeroSeq_spec n
+  refine ⟨fun n => (zetaZeroSeq n).im, ?_, ?_, ?_, ?_⟩
+  -- (1) Each valid entry corresponds to a nontrivial zero
+  · intro n hn
+    obtain ⟨hzero, hre_pos, hre_lt⟩ := zetaZeroSeq_spec n hn
     exact ⟨⟨zetaZeroSeq n, hzero, hre_pos, hre_lt⟩, rfl⟩
-  -- (2) Summability: from decay hypothesis + zero density
+  -- (2) Surjectivity: every nontrivial zero is represented
+  · intro s hzero hre_pos hre_lt
+    obtain ⟨n, hn⟩ := zetaZeroSeq_surj s hzero hre_pos hre_lt
+    exact ⟨n, by simp only; rw [hn]⟩
+  -- (3) Summability: from decay hypothesis + zero density
   · exact summable_over_zeros h hdecay
-  -- (3) The sum equals the Weil functional: the explicit formula identity
+  -- (4) The sum equals the Weil functional: the explicit formula identity
   · obtain ⟨cv, hcv_sum, hcv_weil⟩ := sum_over_zeros_eq_contour h hcont hdecay
     rw [hcv_sum, hcv_weil]
 

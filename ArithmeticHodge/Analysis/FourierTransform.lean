@@ -33,36 +33,27 @@ namespace ArithmeticHodge.Analysis
 noncomputable def fourierTransformC (g : ℝ → ℝ) (ξ : ℝ) : ℂ :=
   ∫ y : ℝ, (g y : ℂ) * Complex.exp (-2 * Real.pi * ξ * y * Complex.I)
 
-/-- **Fourier transform of an autocorrelation is non-negative.**
-
-    If f(x) = ∫ g(y) g(y+x) dy (i.e., f = g ∗ g̃), then
-    fourierCos f ξ = |ĝ(ξ)|² ≥ 0.
-
-    Proof sketch:
-    fourierCos f ξ = ∫ (∫ g(y) g(y+x) dy) cos(2πξx) dx
-                   = Re(∫∫ g(y) g(y+x) e^{-2πixξ} dy dx)     [cos = Re(exp)]
-                   = Re(∫ g(y) e^{2πiyξ} dy · ∫ g(z) e^{-2πizξ} dz)  [Fubini + sub]
-                   = Re(conj(ĝ(ξ)) · ĝ(ξ))
-                   = |ĝ(ξ)|²
-                   ≥ 0 -/
-theorem fourierCos_autocorrelation_nonneg (g : ℝ → ℝ)
-    (hg : Integrable g MeasureTheory.volume)
-    (hg_sq : Integrable (fun y => g y ^ 2) MeasureTheory.volume)
-    (f : ℝ → ℝ) (hf : ∀ x, f x = ∫ y : ℝ, g y * g (y + x))
-    (ξ : ℝ) :
-    0 ≤ fourierCos f ξ := by
-  sorry -- SCAFFOLD: Fubini + substitution + |z|² = z * conj(z) ≥ 0
-
 /-- **The Fourier cosine transform of an autocorrelation equals |ĝ|².**
 
-    This is the precise identity, not just the bound. -/
+    This is the precise identity. -/
 theorem fourierCos_autocorrelation_eq_sq (g : ℝ → ℝ)
     (hg : Integrable g MeasureTheory.volume)
     (hg_sq : Integrable (fun y => g y ^ 2) MeasureTheory.volume)
     (f : ℝ → ℝ) (hf : ∀ x, f x = ∫ y : ℝ, g y * g (y + x))
     (ξ : ℝ) :
     fourierCos f ξ = ‖fourierTransformC g ξ‖ ^ 2 := by
-  sorry -- SCAFFOLD: same computation as above, keeping the equality
+  sorry -- SCAFFOLD: Fubini + substitution + cos = Re(exp) identity
+
+/-- **Fourier transform of an autocorrelation is non-negative.**
+    Follows from `fourierCos_autocorrelation_eq_sq`: `fourierCos f ξ = ‖ĝ(ξ)‖² ≥ 0`. -/
+theorem fourierCos_autocorrelation_nonneg (g : ℝ → ℝ)
+    (hg : Integrable g MeasureTheory.volume)
+    (hg_sq : Integrable (fun y => g y ^ 2) MeasureTheory.volume)
+    (f : ℝ → ℝ) (hf : ∀ x, f x = ∫ y : ℝ, g y * g (y + x))
+    (ξ : ℝ) :
+    0 ≤ fourierCos f ξ := by
+  rw [fourierCos_autocorrelation_eq_sq g hg hg_sq f hf ξ]
+  positivity
 
 -- ============================================================
 -- Weil Criterion: Forward Direction (RH → Positivity)
@@ -82,7 +73,7 @@ theorem rh_implies_weil_positivity_from_explicit :
     RiemannHypothesis → WeilPositivity := by
   intro hRH f hf_auto hf_cont hf_decay
   -- Apply the explicit formula to f
-  obtain ⟨zeros, hzeros_spec, hsum, hexpl⟩ :=
+  obtain ⟨zeros, hzeros_spec, _, hsum, hexpl⟩ :=
     weil_explicit_formula f hf_cont hf_decay
   -- W(f) = Σ f(γ_ρ) by the explicit formula
   rw [← hexpl]
@@ -109,20 +100,49 @@ theorem rh_implies_weil_positivity_from_explicit :
 -- Weil Criterion: Backward Direction (Positivity → RH)
 -- ============================================================
 
-/-- **Weil positivity implies RH, proved by contrapositive.**
+/-- **Zeros come in pairs under the functional equation.**
+    If ρ is a nontrivial zero, so is 1-ρ̄. -/
+theorem nontrivial_zero_paired (ρ : NontrivialZetaZero) :
+    ∃ ρ' : NontrivialZetaZero, ρ'.val.re = 1 - ρ.val.re := by
+  sorry -- SCAFFOLD: completedRiemannZeta₀_one_sub + zero correspondence
 
-    If there exists a nontrivial zero ρ₀ with Re(ρ₀) ≠ 1/2,
-    then we can construct an autocorrelation f with W(f) < 0.
+/-- **Paley-Wiener test function construction.**
+    Given a zero off the critical line, construct an autocorrelation with W(f) < 0.
+    See Bombieri (2000) "Remarks on Weil's quadratic functional". -/
+theorem exists_negative_weil_autocorrelation
+    (ρ₀ : NontrivialZetaZero) (hσ : ρ₀.val.re ≠ 1 / 2) :
+    ∃ (f : ℝ → ℝ),
+      IsAutocorrelation f ∧
+      Continuous f ∧
+      (∀ x : ℝ, ‖f x‖ ≤ 1 / (1 + x ^ 2)) ∧
+      weilFunctionalFull f (fourierCos f) < 0 := by
+  sorry -- SCAFFOLD: Paley-Wiener construction (requires Schwartz space API)
 
-    The construction: by the functional equation, if ρ₀ = σ₀ + iγ₀ is a zero
-    with σ₀ > 1/2, then 1-ρ₀ is also a zero with Re = 1-σ₀ < 1/2.
-    Using Paley-Wiener theory, construct g ∈ Schwartz(ℝ) with ĝ supported
-    in a small interval around γ₀. Then g ∗ g̃ is an autocorrelation whose
-    Weil functional is dominated by the contribution of the pair (ρ₀, 1-ρ₀),
-    which can be made negative by concentrating ĝ near γ₀. -/
+/-- **Nontrivial zeros lie in the critical strip.** -/
+theorem nontrivial_zero_in_critical_strip (s : ℂ)
+    (hs_zero : riemannZeta s = 0)
+    (hs_not_trivial : ¬∃ n : ℕ, s = -2 * (↑n + 1))
+    (hs_ne_one : s ≠ 1) :
+    0 < s.re ∧ s.re < 1 := by
+  constructor
+  · sorry -- SCAFFOLD: functional equation + nonvanishing for Re ≥ 1
+  · by_contra h
+    push_neg at h
+    exact absurd hs_zero (riemannZeta_ne_zero_of_one_le_re h)
+
+/-- **Weil positivity implies RH, proved by contrapositive.** -/
 theorem weil_positivity_implies_rh_from_explicit :
     WeilPositivity → RiemannHypothesis := by
-  sorry -- SCAFFOLD: contrapositive + Paley-Wiener test function construction
+  intro hWP s hs_zero hs_not_trivial hs_ne_one
+  by_contra hσ
+  obtain ⟨hs_re_pos, hs_re_lt⟩ :=
+    nontrivial_zero_in_critical_strip s hs_zero hs_not_trivial hs_ne_one
+  let ρ₀ : NontrivialZetaZero := ⟨s, hs_zero, hs_re_pos, hs_re_lt⟩
+  obtain ⟨f, hf_auto, hf_cont, hf_decay, hf_neg⟩ :=
+    exists_negative_weil_autocorrelation ρ₀ hσ
+  have hf_pos : 0 ≤ weilFunctionalFull f (fourierCos f) :=
+    hWP f hf_auto hf_cont hf_decay
+  linarith
 
 -- ============================================================
 -- Weil Criterion Equivalence (combining both directions)
