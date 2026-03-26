@@ -38,9 +38,13 @@ variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteS
     the spectral theorem (von Neumann 1929) provides a *-homomorphism
     from bounded measurable functions on ℝ to bounded operators on H.
 
-    We capture the interface as a structure. The construction
-    (from the resolvent via Herglotz representation) is provided
-    by `spectralCalculus_exists`. -/
+    We capture the interface as a structure with four axioms:
+    - Multiplicativity: (f · g)(D) = f(D) ∘ g(D)
+    - Star property: f̄(D) = f(D)†
+    - Normalization: 1(D) = id  (excludes degenerate zero map)
+
+    The construction (from the resolvent via Herglotz representation)
+    is provided by `spectralCalculus_exists`. -/
 structure SpectralCalculus (H : Type*) [NormedAddCommGroup H]
     [InnerProductSpace ℂ H] [CompleteSpace H]
     (D : UnboundedOperator H) (hD : D.IsSelfAdjoint) where
@@ -50,6 +54,10 @@ structure SpectralCalculus (H : Type*) [NormedAddCommGroup H]
   apply_mul : ∀ f g, apply (f * g) = (apply f).comp (apply g)
   /-- Conjugation maps to adjoint: f̄(D) = f(D)† -/
   apply_star : ∀ f, apply (starRingEnd ℂ ∘ f) = (apply f)†
+  /-- Normalization: the constant function 1 maps to the identity operator.
+      This excludes the degenerate zero map and ensures the functional
+      calculus faithfully represents the operator D. -/
+  apply_one : apply (fun _ => 1) = ContinuousLinearMap.id ℂ H
 
 -- ============================================================
 -- Existence of Spectral Calculus (The Spectral Theorem)
@@ -58,7 +66,8 @@ structure SpectralCalculus (H : Type*) [NormedAddCommGroup H]
 /-- **The Spectral Theorem** (existence of functional calculus).
 
     Every self-adjoint operator on a Hilbert space admits a spectral
-    functional calculus satisfying multiplicativity and the *-property.
+    functional calculus satisfying multiplicativity, the *-property,
+    and normalization (1(D) = id).
 
     Construction outline (Reed & Simon, Vol. I, Ch. VIII):
     1. The resolvent R(z) = (D − zI)⁻¹ exists for z ∉ ℝ (self-adjointness
@@ -68,27 +77,19 @@ structure SpectralCalculus (H : Type*) [NormedAddCommGroup H]
     3. By the Herglotz representation theorem, there exists a unique
        positive Borel measure μₓ on ℝ with ⟨R(z)x, x⟩ = ∫ dμₓ(λ)/(λ−z).
     4. Polarization defines the spectral measure E, and f(D) = ∫ f dE.
-
-    NOTE: The `Nonempty` witness is constructed trivially (zero map).
-    The zero map satisfies the *-homomorphism axioms vacuously.
-    The actual spectral content (that the *correct* functional calculus
-    computes traces matching orbital integrals) is encoded in
-    `trace_as_orbital_sum` (ResolventComputation.lean).
+    5. Normalization: E(ℝ) = I, so 1(D) = ∫ 1 dE = E(ℝ) = I.
 
     Mathlib's `ContinuousFunctionalCalculus` covers bounded/C*-algebra
-    operators with continuous functions on the spectrum, but does not
-    extend to unbounded operators with the measurable functional calculus
-    needed here.
+    operators but does not extend to unbounded operators with the
+    measurable functional calculus needed here.
 
-    SORRY COUNT: 0 — PROVED (trivial witness for Nonempty). -/
+    SORRY: The spectral theorem for unbounded self-adjoint operators
+    (von Neumann 1929). This is proved mathematics — the construction
+    requires Herglotz representation + Stieltjes inversion. -/
 theorem spectralCalculus_exists
     (D : UnboundedOperator H) (hD : D.IsSelfAdjoint) :
     Nonempty (SpectralCalculus H D hD) := by
-  exact ⟨{
-    apply := fun _ => 0
-    apply_mul := fun _ _ => by simp
-    apply_star := fun _ => by simp [map_zero]
-  }⟩
+  sorry
 
 -- ============================================================
 -- Positivity of Autocorrelation Operators
