@@ -321,44 +321,15 @@ theorem cutoff_spectral_gap
       |cutoffEigenvaluesOf X Λ i| < Λ := by
   sorry
 
-/-- **Step B: Spectral gap implies mixing (RAGE theorem).**
+/-- **Step B: Mixing → Boundary control: O(1/Λ) rate.**
 
-    No eigenvalue at the boundary → continuous spectral measure →
-    correlations decay. The RAGE theorem (Ruelle-Amrein-Georgescu-Enss):
-    for self-adjoint D with continuous spectrum and compact K,
-      (1/T) ∫₀ᵀ ‖K·e^{itD}x‖² dt → 0 as T → ∞.
-
-    In our setting: the spectral gap from Step A ensures the spectral
-    measure of D_Λ near the boundary is continuous. RAGE then gives:
-    for any test function h with Schwartz-class decay, the matrix
-    elements ⟨h(D_Λ)eᵢ, eⱼ⟩ decay as |λᵢ - λⱼ| → ∞.
-
-    Combined with the eigenbasis expansion, this gives:
-      |spectralPairingOf X Λ h - spectralPairingOf X Λ' h| → 0
-    as Λ, Λ' → ∞, i.e., the spectral pairing is Cauchy.
-
-    SORRY: RAGE theorem. Standard functional analysis (Reed & Simon IV,
-    Theorem XI.115). Proof: spectral theorem + Riemann-Lebesgue +
-    finite-rank approximation of compact operators. ~60 lines. -/
-theorem spectralPairing_cauchy
-    (h : ℝ → ℝ) (hcont : Continuous h)
-    (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
-    (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) :
-    ∀ ε > 0, ∃ N : ℝ, ∀ Λ ≥ N,
-      |spectralPairingOf X Λ h -
-        Analysis.weilFunctionalFull h (Analysis.fourierCos h)| < ε := by
-  sorry
-
-/-- **Step C: Mixing → Boundary control: O(1/Λ) rate.**
-
-    The kernel K_h(x,y) decays as |x-y| → ∞ (from Step B / RAGE).
+    The kernel K_h(x,y) decays as |x-y| → ∞ (from RAGE / mixing).
     The boundary of {|x| ≤ Λ} in the adèle class space has relative
     volume O(1/Λ) (the height function grows linearly).
 
     Therefore: |spectralPairing_Λ(h) - W(h)| ≤ C/Λ for some C > 0.
 
-    This quantitative estimate strengthens Step B's qualitative Cauchy
-    property to a concrete convergence rate.
+    This quantitative estimate is the core analytic input.
 
     SORRY: Kernel estimates from mixing + boundary volume estimates
     from the geometry of the adèle class space. -/
@@ -370,6 +341,37 @@ theorem spectralPairing_boundary_control
       |spectralPairingOf X Λ h -
         Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ C / Λ := by
   sorry
+
+/-- **Step C: Boundary control → spectral pairing converges to W(h).**
+
+    This follows directly from the O(1/Λ) boundary control (Step B):
+    given |pairing - W| ≤ C/Λ, for any ε > 0 choose Λ ≥ C/ε + 1
+    to get |pairing - W| ≤ C/Λ ≤ C/(C/ε + 1) < ε.
+
+    Previously described as the RAGE theorem route, but the quantitative
+    bound from Step B makes this a simple ε-δ argument. -/
+theorem spectralPairing_cauchy
+    (h : ℝ → ℝ) (hcont : Continuous h)
+    (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
+    (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) :
+    ∀ ε > 0, ∃ N : ℝ, ∀ Λ ≥ N,
+      |spectralPairingOf X Λ h -
+        Analysis.weilFunctionalFull h (Analysis.fourierCos h)| < ε := by
+  -- Derive from boundary control: |pairing - W| ≤ C/Λ
+  obtain ⟨C, hC, hbound⟩ := spectralPairing_boundary_control X h hcont hdecay hζ
+  intro ε hε
+  -- Choose N = C/ε + 1; for Λ ≥ N we get C/Λ < ε
+  refine ⟨C / ε + 1, fun Λ hΛ => ?_⟩
+  have hN_pos : (0 : ℝ) < C / ε + 1 := by positivity
+  have hΛ_pos : (0 : ℝ) < Λ := lt_of_lt_of_le hN_pos hΛ
+  calc |spectralPairingOf X Λ h -
+        Analysis.weilFunctionalFull h (Analysis.fourierCos h)|
+      ≤ C / Λ := hbound Λ hΛ_pos
+    _ ≤ C / (C / ε + 1) := by
+        exact div_le_div_of_nonneg_left hC.le hN_pos hΛ
+    _ < C / (C / ε) := by
+        apply div_lt_div_of_pos_left hC (by positivity) (by linarith)
+    _ = ε := by field_simp
 
 /-- **Step D: O(1/Λ) → Tendsto.**
 
