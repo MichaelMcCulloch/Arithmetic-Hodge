@@ -99,6 +99,7 @@ noncomputable def fourierCos (f : ℝ → ℝ) (ξ : ℝ) : ℝ :=
 /-- A function f : ℝ → ℝ is an autocorrelation if f = g ∗ g̃ for some g. -/
 def IsAutocorrelation (f : ℝ → ℝ) : Prop :=
   ∃ g : ℝ → ℝ, Integrable g volume ∧
+    Integrable (fun y => g y ^ 2) volume ∧
     ∀ x : ℝ, f x = ∫ y : ℝ, g y * g (y + x) ∂volume
 
 -- ============================================================

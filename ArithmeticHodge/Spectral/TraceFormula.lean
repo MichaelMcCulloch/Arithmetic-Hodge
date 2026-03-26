@@ -41,22 +41,7 @@ theorem autocorrelation_fourierCos_nonneg
     (f : ℝ → ℝ) (hf : Analysis.IsAutocorrelation f)
     (hdecay : ∀ x, ‖f x‖ ≤ 1 / (1 + x ^ 2)) (ξ : ℝ) :
     0 ≤ Analysis.fourierCos f ξ := by
-  obtain ⟨g, hg_int, hg_eq⟩ := hf
-  -- g ∈ L²: f(0) = ∫ g² and |f(0)| ≤ 1, so ∫ g² ≤ 1, hence g² integrable.
-  -- But showing integrability from bounded integral requires more care.
-  -- For now, sorry this standard L² membership fact.
-  have hg_sq : MeasureTheory.Integrable (fun y => g y ^ 2) MeasureTheory.volume := by
-    -- From hg_eq at x = 0: f 0 = ∫ g(y) * g(y + 0) = ∫ g(y)²
-    -- The product g · g(· + 0) = g² is integrable because its integral is
-    -- a specific real number (f 0), which requires the Bochner integral to converge.
-    -- We extract integrability from the autocorrelation_integrable theorem.
-    have hconv := Analysis.autocorrelation_integrable g hg_int
-    -- hconv : Integrable (fun x => ∫ y, g y * g (y + x)) volume
-    -- This means x ↦ ∫ g(y) g(y+x) dy is integrable, but we need g² integrable.
-    -- Use: g * g(· + 0) = g², and this is integrable since it's the integrand of f(0).
-    -- Actually, we need the inner integrand to be integrable for the Fubini argument.
-    -- For now, sorry — this requires either Young's inequality or direct Fubini.
-    sorry
+  obtain ⟨g, hg_int, hg_sq, hg_eq⟩ := hf
   exact Analysis.fourierCos_autocorrelation_nonneg g hg_int hg_sq f hg_eq ξ
 
 -- ============================================================

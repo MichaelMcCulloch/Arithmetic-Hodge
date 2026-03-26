@@ -279,10 +279,32 @@ theorem bombieriTestFn_integrable (σ₀ : ℝ) :
 noncomputable def bombieriAutocorrelation (σ₀ : ℝ) : ℝ → ℝ :=
   fun x => ∫ y : ℝ, bombieriTestFn σ₀ y * bombieriTestFn σ₀ (y + x)
 
+/-- The Bombieri test function is L² (square bounded by Gaussian). -/
+theorem bombieriTestFn_sq_integrable (σ₀ : ℝ) :
+    Integrable (fun y => bombieriTestFn σ₀ y ^ 2) volume := by
+  unfold bombieriTestFn
+  apply Integrable.mono' (integrable_exp_neg_mul_sq (by linarith [Real.pi_pos] : (0 : ℝ) < 2 * Real.pi))
+  · fun_prop
+  · exact ae_of_all _ fun x => by
+      rw [Real.norm_eq_abs]
+      have hexp := Real.exp_pos (-Real.pi * x ^ 2)
+      have hcos := Real.abs_cos_le_one (2 * Real.pi * (σ₀ - 1 / 2) * x)
+      calc |(Real.exp (-Real.pi * x ^ 2) * Real.cos (2 * Real.pi * (σ₀ - 1/2) * x)) ^ 2|
+          = (Real.exp (-Real.pi * x ^ 2) * Real.cos (2 * Real.pi * (σ₀ - 1/2) * x)) ^ 2 := by
+            rw [abs_of_nonneg (sq_nonneg _)]
+        _ = Real.exp (-Real.pi * x ^ 2) ^ 2 * Real.cos (2 * Real.pi * (σ₀ - 1/2) * x) ^ 2 := by ring
+        _ ≤ Real.exp (-Real.pi * x ^ 2) ^ 2 * 1 := by
+            apply mul_le_mul_of_nonneg_left _ (sq_nonneg _)
+            exact (sq_le_one_iff_abs_le_one _).mpr (Real.abs_cos_le_one _)
+        _ = Real.exp (-(2 * Real.pi) * x ^ 2) := by
+            rw [mul_one]
+            rw [sq, ← Real.exp_add]
+            ring_nf
+
 /-- The Bombieri autocorrelation is an autocorrelation. -/
 theorem bombieriAutocorrelation_isAuto (σ₀ : ℝ) :
     IsAutocorrelation (bombieriAutocorrelation σ₀) :=
-  ⟨bombieriTestFn σ₀, bombieriTestFn_integrable σ₀, fun _ => rfl⟩
+  ⟨bombieriTestFn σ₀, bombieriTestFn_integrable σ₀, bombieriTestFn_sq_integrable σ₀, fun _ => rfl⟩
 
 /-- The Bombieri autocorrelation is continuous (dominated convergence). -/
 theorem bombieriAutocorrelation_continuous (σ₀ : ℝ) :

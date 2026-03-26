@@ -35,7 +35,7 @@ namespace ArithmeticHodge.Analysis
     SORRY COUNT: 0 — PROVED. -/
 theorem autocorrelation_nonneg_at_zero (f : ℝ → ℝ) (hf : IsAutocorrelation f) :
     0 ≤ f 0 := by
-  obtain ⟨g, _, hg⟩ := hf
+  obtain ⟨g, _, _, hg⟩ := hf
   rw [hg 0]
   simp only [add_zero]
   exact integral_nonneg (fun y => mul_self_nonneg (g y))
@@ -46,7 +46,7 @@ theorem autocorrelation_nonneg_at_zero (f : ℝ → ℝ) (hf : IsAutocorrelation
     SORRY COUNT: 0 — PROVED. -/
 theorem autocorrelation_even (f : ℝ → ℝ) (hf : IsAutocorrelation f) :
     ∀ x : ℝ, f x = f (-x) := by
-  obtain ⟨g, _, hg⟩ := hf
+  obtain ⟨g, _, _, hg⟩ := hf
   intro x
   rw [hg x, hg (-x)]
   -- Goal: ∫ g(y) g(y+x) dy = ∫ g(y) g(y+(-x)) dy
@@ -109,7 +109,7 @@ theorem autocorrelation_max_at_zero (g : ℝ → ℝ)
 /-- f(0) = ‖g‖₂² for an autocorrelation f = g ∗ g̃. -/
 theorem autocorrelation_zero_eq_L2_norm_sq (f : ℝ → ℝ) (hf : IsAutocorrelation f) :
     f 0 = ∫ y : ℝ, (hf.choose y) ^ 2 ∂volume := by
-  have hg := hf.choose_spec.2
+  have hg := hf.choose_spec.2.2
   rw [hg 0]
   simp only [add_zero]
   congr 1; ext y; ring
