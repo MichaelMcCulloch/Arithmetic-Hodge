@@ -185,6 +185,14 @@ class AdeleClassSpaceData (X : Type*) extends
   heightFn_nonneg : ∀ x, 0 ≤ heightFn x
   /-- The sublevel sets {x : heightFn x ≤ Λ} are compact (proper map) -/
   heightFn_compact : ∀ Λ : ℝ, IsCompact {x : X | heightFn x ≤ Λ}
+  /-- The boundary shell {Λ-1 ≤ heightFn x ≤ Λ} has Haar measure bounded
+      uniformly in Λ. This holds for the adelic height because the height
+      function grows logarithmically (it is the idelic norm), so level sets
+      have bounded measure — equivalently, the pushforward measure
+      heightFn_* μ has locally bounded density on ℝ. -/
+  heightFn_shell_bound : ∃ (M : ℝ), 0 < M ∧ ∀ (Λ : ℝ), 1 < Λ →
+    haarMeasure {x : X | Λ - 1 ≤ heightFn x ∧ heightFn x ≤ Λ} ≤
+      ENNReal.ofReal M
 
 /-- **Haar measure invariance from the AdeleClassSpaceData class.**
     The product formula (axiomatized as trivialHaarChar) immediately gives

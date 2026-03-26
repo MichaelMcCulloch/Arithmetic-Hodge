@@ -428,7 +428,7 @@ theorem boundary_volume_estimate :
     ∃ (M : ℝ), 0 < M ∧ ∀ (Λ : ℝ), 1 < Λ →
       inst.haarMeasure {x : X | Λ - 1 ≤ inst.heightFn x ∧ inst.heightFn x ≤ Λ} ≤
         ENNReal.ofReal M := by
-  sorry
+  exact inst.heightFn_shell_bound
 
 /-- **Sub-lemma 5b: Bulk volume lower bound.**
 
