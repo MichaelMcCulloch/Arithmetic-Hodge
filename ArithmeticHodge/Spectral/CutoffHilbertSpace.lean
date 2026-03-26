@@ -298,28 +298,66 @@ theorem spectralPairingOf_nonneg (Λ : ℝ) (hΛ : 0 < Λ)
 -- Trace Formula Decomposition: Steps A-D
 -- ============================================================
 
-/-- **Step A: The Prime Number Theorem gives a spectral gap.**
+-- **Step A: The Prime Number Theorem gives a spectral gap.**
+--
+-- ζ(1+it) ≠ 0 for all t ∈ ℝ (Mathlib: `riemannZeta_ne_zero_of_one_le_re`).
+-- In operator language: the scaling flow on L²(𝔸_ℚ/ℚ*) has no eigenvalue
+-- at Re(s) = 1. The character |·|^{it} is NOT in the point spectrum.
+--
+-- The proof decomposes into two helper lemmas:
+-- - `eigenvalues_bounded_by_cutoff`: compact domain → |λᵢ| ≤ Λ
+-- - `eigenvalue_strict_bound_from_pnt`: ζ(1+it) ≠ 0 → |λᵢ| ≠ Λ for λᵢ ≠ 0
+-- Combined: nonzero eigenvalues satisfy |λᵢ| < Λ.
 
-    ζ(1+it) ≠ 0 for all t ∈ ℝ (Mathlib: `riemannZeta_ne_zero_of_one_le_re`).
-    In operator language: the scaling flow on L²(𝔸_ℚ/ℚ*) has no eigenvalue
-    at Re(s) = 1. The character |·|^{it} is NOT in the point spectrum.
+/-- **Eigenvalues of D_Λ on the compact cutoff are bounded by the cutoff scale.**
 
-    This is the fundamental input from analytic number theory. The scaling
-    flow on the adèle class space is ergodic precisely because ζ has no
-    zeros on the line Re(s) = 1.
+    On the compact domain S_Λ = {x : heightFn x ≤ Λ}, the generator D_Λ of
+    the scaling flow has eigenvalues bounded in absolute value by Λ. This is
+    because:
+    1. D_Λ generates the scaling flow σ_t restricted to L²(S_Λ)
+    2. The characters of σ_t on S_Λ have frequencies determined by the geometry
+       of the cutoff: the height function is bounded by Λ on S_Λ, so the
+       Fourier analysis of σ_t|_{S_Λ} produces eigenvalues in [-Λ, Λ]
+    3. Formally: if D_Λ φ = λ φ, then φ(σ_t(x)) = e^{iλt} φ(x), and the
+       support constraint heightFn(x) ≤ Λ forces |λ| ≤ Λ
 
-    The PNT fact is available in Mathlib. The translation to operator
-    language requires identifying characters of the scaling flow with
-    eigenvectors of D_Λ at eigenvalue 0. On the compact cutoff space,
-    this becomes: no eigenvalue of D_Λ accumulates at the Re(s)=1 boundary
-    as Λ → ∞.
+    SORRY: This requires the spectral theory of the generator D_Λ which
+    depends on Sorry 1 (cutoffEigenvaluesOf construction). The bound itself
+    is a standard consequence of compact domain spectral theory. -/
+theorem eigenvalues_bounded_by_cutoff (Λ : ℝ) (hΛ : 0 < Λ) (i : ℕ) :
+    |cutoffEigenvaluesOf X Λ i| ≤ Λ := by
+  sorry
 
-    SORRY: Translation from zeta nonvanishing to operator spectral gap. -/
+/-- **PNT strengthens the eigenvalue bound: nonzero eigenvalues are strictly bounded.**
+
+    ζ(1+it) ≠ 0 for all t (the PNT) means no eigenvalue of D_Λ lies exactly
+    at the boundary |λ| = Λ. The mechanism:
+    - An eigenvalue at |λ| = Λ would correspond to a character |·|^{iλ/Λ}
+      contributing to ζ(1 + iλ/Λ) = 0, contradicting hζ
+    - More precisely: eigenvalues at the cutoff boundary arise from the
+      Eisenstein series / continuous spectrum contribution, which is controlled
+      by the nonvanishing of ζ on Re(s) = 1
+
+    SORRY: The translation from zeta nonvanishing to strict inequality
+    requires the identification of boundary eigenvalues with zeta zeros,
+    which is the core of Connes' trace formula approach. -/
+theorem eigenvalue_strict_bound_from_pnt
+    (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) (Λ : ℝ) (hΛ : 0 < Λ)
+    (i : ℕ) (hne : cutoffEigenvaluesOf X Λ i ≠ 0) :
+    |cutoffEigenvaluesOf X Λ i| ≠ Λ := by
+  sorry
+
 theorem cutoff_spectral_gap
     (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) (Λ : ℝ) (hΛ : 0 < Λ) :
     ∀ (i : ℕ), cutoffEigenvaluesOf X Λ i ≠ 0 →
       |cutoffEigenvaluesOf X Λ i| < Λ := by
-  sorry
+  intro i hne
+  -- Eigenvalues are bounded by Λ (compact domain spectral theory)
+  have hle : |cutoffEigenvaluesOf X Λ i| ≤ Λ := eigenvalues_bounded_by_cutoff X Λ hΛ i
+  -- PNT sharpens to strict inequality for nonzero eigenvalues
+  have hne_boundary : |cutoffEigenvaluesOf X Λ i| ≠ Λ :=
+    eigenvalue_strict_bound_from_pnt X hζ Λ hΛ i hne
+  exact lt_of_le_of_ne hle hne_boundary
 
 /-- **Step B: Spectral gap implies mixing (RAGE theorem).**
 
