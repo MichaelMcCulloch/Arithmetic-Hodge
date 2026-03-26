@@ -26,6 +26,7 @@ import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.Analysis.Normed.Module.MultipliableUniformlyOn
 import Mathlib.Analysis.Complex.LocallyUniformLimit
+import Mathlib.Analysis.Complex.HasPrimitives
 
 open Complex Filter Topology Finset BigOperators Metric
 
@@ -741,6 +742,64 @@ theorem tprod_weierstraßElementary_differentiable (zeros : ℕ → ℂ) (p : �
     constraint that g is a polynomial when f has finite order.
 
     We state a version with uniform genus p. -/
+private theorem tprod_const_one' : ∏' (_ : ℕ), (1 : ℂ) = 1 := tprod_one
+
+/-- **Entire logarithm theorem.** A zero-free entire function h can be written as
+    h = exp ∘ g for some entire function g.
+
+    The proof uses Mathlib's `Differentiable.isExactOn_univ` (which provides
+    primitives for entire functions via Morera's theorem) applied to h'/h.
+    The primitive G satisfies G' = h'/h, so h · exp(-G) has derivative 0,
+    hence is constant. Normalizing at 0 gives h = exp(G + c). -/
+private theorem entire_logarithm (h : ℂ → ℂ) (hh : Differentiable ℂ h)
+    (hne : ∀ z, h z ≠ 0) :
+    ∃ g : ℂ → ℂ, Differentiable ℂ g ∧ ∀ z, h z = Complex.exp (g z) := by
+  -- h'/h is entire since h is never zero
+  have hderiv_diff : Differentiable ℂ (deriv h) := by
+    rw [← differentiableOn_univ]
+    exact hh.differentiableOn.deriv isOpen_univ
+  have hψ_diff : Differentiable ℂ (fun z => deriv h z / h z) :=
+    fun z => (hderiv_diff z).div hh.differentiableAt (hne z)
+  -- h'/h has an entire primitive G with G(0) = log(h(0))
+  have hExact : IsExactOn (fun z => deriv h z / h z) Set.univ :=
+    Differentiable.isExactOn_univ hψ_diff
+  obtain ⟨G, hG0, hGderiv⟩ := hExact.with_val_at 0 (Complex.log (h 0))
+  have hG_diff : Differentiable ℂ G := fun z => (hGderiv z (Set.mem_univ z)).differentiableAt
+  -- φ(z) = h(z) · exp(-G(z)) has derivative 0
+  set φ : ℂ → ℂ := fun z => h z * Complex.exp (-G z) with hφ_def
+  have hφ_diff : Differentiable ℂ φ :=
+    hh.mul (Complex.differentiable_exp.comp hG_diff.neg)
+  have hφ_deriv : ∀ z, deriv φ z = 0 := by
+    intro z
+    have hd_h : HasDerivAt h (deriv h z) z := hh.differentiableAt.hasDerivAt
+    have hd_G : HasDerivAt G (deriv h z / h z) z := hGderiv z (Set.mem_univ z)
+    have hd_exp : HasDerivAt (fun w => Complex.exp (-G w))
+        (Complex.exp (-G z) * -(deriv h z / h z)) z := hd_G.neg.cexp
+    have hd_prod : HasDerivAt φ
+        (deriv h z * Complex.exp (-G z) + h z * (Complex.exp (-G z) * -(deriv h z / h z))) z :=
+      hd_h.mul hd_exp
+    rw [hd_prod.deriv]
+    have := hne z; field_simp; ring
+  -- φ is constant (derivative 0 everywhere on connected ℂ)
+  have hφ_const : ∀ z, φ z = φ 0 :=
+    fun z => is_const_of_deriv_eq_zero hφ_diff hφ_deriv z 0
+  -- φ(0) = h(0) · exp(-log(h(0))) = 1
+  have hφ0 : φ 0 = 1 := by
+    simp only [hφ_def]
+    rw [hG0]
+    have hne0 := hne 0
+    rw [show -(Complex.log (h 0)) = ((-1 : ℤ) : ℂ) * Complex.log (h 0) from by push_cast; ring,
+      Complex.exp_int_mul, zpow_neg_one, Complex.exp_log hne0]
+    exact mul_inv_cancel₀ hne0
+  -- φ ≡ 1, so h(z) = exp(G(z))
+  exact ⟨G, hG_diff, fun z => by
+    have key : h z * Complex.exp (-G z) = 1 := by
+      rw [show h z * Complex.exp (-G z) = φ z from rfl, hφ_const z, hφ0]
+    calc h z = h z * Complex.exp (-G z) * (Complex.exp (-G z))⁻¹ := by
+          rw [mul_assoc, mul_inv_cancel₀ (Complex.exp_ne_zero _), mul_one]
+      _ = (Complex.exp (-G z))⁻¹ := by rw [key, one_mul]
+      _ = Complex.exp (G z) := by rw [← Complex.exp_neg, neg_neg]⟩
+
 theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf_ne : ¬ f = 0) :
     ∃ (m : ℕ) (g : ℂ → ℂ) (a : ℕ → ℂ) (p : ℕ),
@@ -748,6 +807,19 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       (∀ n, a n ≠ 0 → f (a n) = 0) ∧
       ∀ z, f z = z ^ m * Complex.exp (g z) *
         ∏' n, weierstraßElementary p (z / a n) := by
-  sorry -- SCAFFOLD: Full Weierstraß factorization
+  -- Split into zero-free and has-zeros cases
+  by_cases hzf : ∀ z, f z ≠ 0
+  · -- f is zero-free: use entire logarithm theorem.
+    -- Take m = 0, p = 0, a = const 0, so ∏' E_0(z/0) = ∏' 1 = 1.
+    obtain ⟨g, hg_diff, hg_eq⟩ := entire_logarithm f hf hzf
+    exact ⟨0, g, fun _ => 0, 0, hg_diff,
+      fun n h => absurd rfl h,
+      fun z => by simp [hg_eq z, weierstraßElementary_zero]⟩
+  · -- f has zeros: full Weierstraß product construction needed.
+    -- For general entire functions of infinite order, no finite uniform genus p
+    -- guarantees convergence. The theorem as stated requires the zero sequence
+    -- to grow fast enough for some fixed p.
+    -- For finite order ρ, p = ⌊ρ⌋ works (exponent-of-convergence theorem).
+    sorry
 
 end ArithmeticHodge.Analysis.EntireFunction

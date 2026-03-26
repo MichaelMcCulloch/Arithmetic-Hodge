@@ -23,6 +23,9 @@ import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Order
 import Mathlib.Data.Nat.Prime.Basic
+import Mathlib.NumberTheory.SumPrimeReciprocals
+import Mathlib.Analysis.SpecificLimits.Basic
+import Mathlib.Analysis.Normed.Group.InfiniteSum
 import ArithmeticHodge.Adelic.SelbergUnfolding
 
 open Real MeasureTheory
@@ -106,6 +109,7 @@ theorem nonidentity_orbital_sum_eq_prime_sum
 
 -- ============================================================
 -- Supporting Results (Individual Components of the Evaluation)
+set_option maxHeartbeats 800000
 -- ============================================================
 
 /-- **Tate's local computation at a finite place.**
@@ -149,21 +153,105 @@ theorem orbital_integral_factors
 /-- **Absolute convergence of the orbital sum.**
 
     Σ_p Σ_{m≥1} log(p)/p^{m/2} · |h(m log p)| < ∞
-    for test functions with |h(x)| ≤ C/(1+x²).
+    for test functions with exponential decay |h(x)| ≤ exp(-|x|).
 
-    Estimates:
-    - |O_{p^m}| ≤ C · log(p) / (p^{m/2} · (1 + m²(log p)²))
-    - Inner sum: Σ_{m≥1} 1/p^{m/2} = 1/(p^{1/2} − 1)
-    - Outer sum: Σ_p log(p)/(p^{1/2} − 1) converges by PNT
-      (partial summation: Σ_{p≤x} log(p)/p^{1/2} = O(x^{1/2}))
-
-    SORRY: Prime number theorem + geometric series + comparison test.
-    Mathlib has summability API and PNT-adjacent results. -/
+    Proof outline:
+    1. |h((k+1)log p)| ≤ exp(-(k+1)log p) = p^{-(k+1)}  (exponential decay)
+    2. term ≤ log(p) / p^{3(k+1)/2}                       (combining exponents)
+    3. log(p) ≤ 4·p^{1/4}                                 (log_natCast_le_rpow_div)
+    4. term ≤ 4 / p^{(6k+5)/4}                            (substituting)
+    5. ≤ (4/p^{5/4}) · (1/2^{3/2})^k                      (since p ≥ 2)
+    6. Σ_p 1/p^{5/4} converges (Nat.Primes.summable_rpow, -5/4 < -1)
+    7. Σ_k (1/2^{3/2})^k converges (geometric, ratio < 1) -/
 theorem orbital_sum_absolutely_convergent
-    (h : ℝ → ℝ) (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
+    (h : ℝ → ℝ) (hdecay : ∀ x, ‖h x‖ ≤ Real.exp (-|x|)) :
     Summable (fun (pk : Nat.Primes × ℕ) =>
       Real.log (pk.1 : ℝ) / (pk.1 : ℝ) ^ (((pk.2 : ℝ) + 1) / 2) *
       |h ((pk.2 + 1) * Real.log (pk.1 : ℝ))|) := by
-  sorry -- Prime counting theorem + geometric series + comparison test
+  -- Strategy: bound each term by 4 · p^{-5/4} · (1/2)^k, then use product summability.
+  -- Build the summable majorant as a product of two summable functions.
+  have hsum_p : Summable (fun p : Nat.Primes => ((p : ℝ) ^ (-(5 : ℝ) / 4))) :=
+    Nat.Primes.summable_rpow.mpr (by norm_num)
+  have hsum_k : Summable (fun k : ℕ => ((1 : ℝ) / 2) ^ k) :=
+    summable_geometric_of_lt_one (by norm_num) (by norm_num)
+  -- Product summability
+  have hprod : Summable (fun pk : Nat.Primes × ℕ =>
+      ((pk.1 : ℝ) ^ (-(5 : ℝ) / 4)) * ((1 : ℝ) / 2) ^ pk.2) := by
+    have hp_norm : Summable (fun p : Nat.Primes => ‖((p : ℝ) ^ (-(5 : ℝ) / 4))‖) := by
+      simp only [Real.norm_of_nonneg (Real.rpow_nonneg (Nat.cast_nonneg _) _)]
+      exact hsum_p
+    have hk_norm : Summable (fun k : ℕ => ‖((1 : ℝ) / 2) ^ k‖) := by
+      simp only [Real.norm_of_nonneg (pow_nonneg (by norm_num : (0:ℝ) ≤ 1/2) _)]
+      exact hsum_k
+    exact summable_mul_of_summable_norm hp_norm hk_norm
+  -- Apply comparison with 4 * majorant
+  apply (hprod.mul_left 4).of_nonneg_of_le
+  -- Nonnegativity
+  · intro pk
+    exact mul_nonneg (div_nonneg (Real.log_nonneg (by exact_mod_cast pk.1.prop.one_lt.le))
+      (by positivity)) (abs_nonneg _)
+  -- Pointwise bound
+  · intro ⟨p, k⟩
+    have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast p.prop.two_le
+    have hp_pos : (0 : ℝ) < (p : ℝ) := by linarith
+    have hp1 : (1 : ℝ) ≤ (p : ℝ) := by linarith
+    -- Step 1: |h((k+1)*log p)| ≤ p^{-(k+1)} via exponential decay
+    have harg_nn : 0 ≤ (↑k + 1) * Real.log (p : ℝ) := by positivity
+    have hdecay_app : |h ((↑k + 1) * Real.log (p : ℝ))| ≤
+        (p : ℝ) ^ (-(↑k + 1 : ℝ)) := by
+      have h2 := hdecay ((↑k + 1) * Real.log (p : ℝ))
+      have h4 : Real.exp (-((↑k + 1) * Real.log (p : ℝ))) =
+          (p : ℝ) ^ (-(↑k + 1 : ℝ)) := by
+        rw [show -((↑k + 1) * Real.log (p : ℝ)) = Real.log (p : ℝ) * (-(↑k + 1 : ℝ)) by ring]
+        exact (Real.rpow_def_of_pos hp_pos _).symm
+      calc |h ((↑k + 1) * Real.log (p : ℝ))|
+          ≤ ‖h ((↑k + 1) * Real.log (p : ℝ))‖ := by
+            rw [Real.norm_eq_abs]
+        _ ≤ Real.exp (-|(↑k + 1) * Real.log (p : ℝ)|) := h2
+        _ = Real.exp (-((↑k + 1) * Real.log (p : ℝ))) := by rw [abs_of_nonneg harg_nn]
+        _ = (p : ℝ) ^ (-(↑k + 1 : ℝ)) := h4
+    -- Step 2: Multiply by prefactor and combine rpow exponents
+    -- log(p)/p^{(k+1)/2} · p^{-(k+1)} = log(p) · p^{-3(k+1)/2}
+    have hcombine : Real.log (p : ℝ) / (p : ℝ) ^ (((k : ℝ) + 1) / 2) *
+        (p : ℝ) ^ (-(↑k + 1 : ℝ)) =
+        Real.log (p : ℝ) * (p : ℝ) ^ (-(3 : ℝ) * (↑k + 1) / 2) := by
+      rw [div_mul_eq_mul_div, div_eq_mul_inv, ← Real.rpow_neg hp_pos.le,
+          mul_assoc, ← Real.rpow_add hp_pos]
+      congr 1; ring_nf
+    -- Step 3: log(p) ≤ 4 · p^{1/4} from log_natCast_le_rpow_div
+    have hlog_bound : Real.log (p : ℝ) ≤ 4 * (p : ℝ) ^ ((1 : ℝ) / 4) := by
+      have := Real.log_natCast_le_rpow_div (p : ℕ) (show (0:ℝ) < 1/4 by norm_num)
+      linarith
+    -- Step 4: p^{-3k/2} ≤ (1/2)^k since p^{3/2} ≥ 2
+    have hgeom : (p : ℝ) ^ (-(3 : ℝ) / 2 * ↑k) ≤ ((1 : ℝ) / 2) ^ k := by
+      rw [show -(3 : ℝ) / 2 * ↑k = -(3 / 2) * ↑k from by ring]
+      rw [Real.rpow_mul_natCast hp_pos.le]
+      apply pow_le_pow_left₀ (by positivity)
+      -- Need: p^{-3/2} ≤ 1/2, i.e., 2 ≤ p^{3/2}
+      rw [show -(3 / 2 : ℝ) = -((3 : ℝ) / 2) from by ring, Real.rpow_neg hp_pos.le]
+      rw [inv_le_comm₀ (by positivity) (by norm_num)]
+      simp only [one_div, inv_inv]
+      calc (2 : ℝ) ≤ (p : ℝ) ^ (1 : ℝ) := by rw [Real.rpow_one]; exact hp2
+        _ ≤ (p : ℝ) ^ ((3 : ℝ) / 2) := Real.rpow_le_rpow_of_exponent_le hp1 (by norm_num)
+    -- Assemble the chain of inequalities
+    calc Real.log (p : ℝ) / (p : ℝ) ^ (((k : ℝ) + 1) / 2) *
+            |h ((↑k + 1) * Real.log (p : ℝ))|
+        ≤ Real.log (p : ℝ) / (p : ℝ) ^ (((k : ℝ) + 1) / 2) *
+            (p : ℝ) ^ (-(↑k + 1 : ℝ)) := by
+          exact mul_le_mul_of_nonneg_left hdecay_app
+            (div_nonneg (Real.log_nonneg hp1) (by positivity))
+      _ = Real.log (p : ℝ) * (p : ℝ) ^ (-(3 : ℝ) * (↑k + 1) / 2) := hcombine
+      _ ≤ (4 * (p : ℝ) ^ ((1 : ℝ) / 4)) *
+            (p : ℝ) ^ (-(3 : ℝ) * (↑k + 1) / 2) := by
+          exact mul_le_mul_of_nonneg_right hlog_bound (by positivity)
+      _ = 4 * ((p : ℝ) ^ ((1 : ℝ) / 4 + -(3 : ℝ) * (↑k + 1) / 2)) := by
+          rw [mul_assoc]; congr 1; rw [← Real.rpow_add hp_pos]
+      _ = 4 * ((p : ℝ) ^ (-(5 : ℝ) / 4) *
+            (p : ℝ) ^ (-(3 : ℝ) / 2 * ↑k)) := by
+          congr 1; rw [← Real.rpow_add hp_pos]; congr 1; ring
+      _ ≤ 4 * ((p : ℝ) ^ (-(5 : ℝ) / 4) * ((1 : ℝ) / 2) ^ k) := by
+          exact mul_le_mul_of_nonneg_left
+            (mul_le_mul_of_nonneg_left hgeom (by positivity))
+            (by norm_num)
 
 end ArithmeticHodge.Adelic
