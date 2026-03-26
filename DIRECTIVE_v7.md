@@ -1,8 +1,8 @@
 # DIRECTIVE: ArithmeticHodge v7 — Eliminate Every Sorry
 
 You are continuing a Lean 4 + Mathlib formalization that reduces the Riemann
-Hypothesis to a single class axiom. The project has 4,985 lines across 23 files.
-There are 33 sorry scaffolds and 0 standalone axioms. Your job is to eliminate
+Hypothesis to a single class axiom. The project has ~5,584 lines across 23 files.
+There are 17 sorry scaffolds and 0 standalone axioms. Your job is to eliminate
 every sorry by writing the proofs yourself.
 
 ---
@@ -203,109 +203,98 @@ lake build
 
 If it doesn't build, fix it. Do not proceed until `lake build` succeeds.
 Count the sorries: `grep -rn "^\s*sorry" ArithmeticHodge/ --include="*.lean" | wc -l`
-The number should be 33. If it's different, investigate.
+The number should be 17. If it's different, investigate.
 
-### Phase 1: Leaves first (the headwaters)
+### The 17 remaining sorries
 
-These 9 sorries have NO upstream dependencies. They can each be attacked
-independently. Resolve them in this order (easiest → hardest):
+Grouped by file and dependency structure. Work leaves first.
 
-#### 1.1 Weierstraß product nonvanishing (Hadamard.lean:142)
-`tprod of nonzero factors is nonzero`
-**Mathlib:** `tprod_one_add_ne_zero_of_summable` should exist or be close.
-Try `Multipliable.tprod_ne_zero` or build from `HasProd.ne_zero`.
-**Estimated effort:** 10 lines.
+#### Cluster A: Entire Function Theory (8 sorries)
 
-#### 1.2 Weierstraß product differentiability (Hadamard.lean:178, WeierstraßProduct.lean:478)
-`differentiability of uniformly convergent product of analytic functions`
-**Strategy:** Each factor is differentiable. Uniform convergence on compact sets
-→ the product is differentiable. Use `HasFPowerSeriesOnBall` or show the partial
-products converge in the topology of `H(ℂ)`.
-**Estimated effort:** 40-60 lines.
+These form a dependency chain. Start with the leaves (1, 5) then work upward.
 
-#### 1.3 Hadamard log derivative (Hadamard.lean:170)
-`HasDerivAt for tprod + term-by-term log differentiation`
-**Strategy:** (d/dz) log ∏ fₙ = Σ fₙ'/fₙ where the sum converges uniformly on
-compacts. Use the derivative of the product (1.2) + chain rule for log.
-**Estimated effort:** 30-50 lines.
+1. **Order.lean:233** — `zeroCount_le_logMax`
+   Jensen at radius 2r → n(r)·log 2 ≤ N(2r). Uses the proved `jensen_formula`.
+   **Blocking:** Bridge between `Nat.card` zero count and `ValueDistribution.logCounting`.
 
-#### 1.4 Jensen zero count bound (Order.lean:233)
-See Primer 2 above. This is the link from Jensen to zero counting.
-**Estimated effort:** 40-60 lines.
+2. **Order.lean:252** — `zeroExponent_le_order`
+   Jensen bounds ⟹ zero density ≤ growth rate. Depends on (1).
 
-#### 1.5 Fourier transform of autocorrelation (FourierTransform.lean:45)
-`Fubini + substitution + cos = Re(exp) identity`
-**Strategy:** The Fourier transform of g∗g̃ is |ĝ|². This is Fubini + change
-of variables. Mathlib has `MeasureTheory.integral_prod` for Fubini and
-`MeasureTheory.Integrable.integral_prod_left` for iterated integrals.
-**Estimated effort:** 30-40 lines.
+3. **Order.lean:270** — `completedZeta_order`
+   ξ(s) has order 1. Needs quantitative Stirling for Γ + zero density for ζ.
 
-#### 1.6 p-adic Haar measure computation (TateLocalComputation.lean:130)
-`∫_{ℤ_p*} 1 d*x = 1, half-density |p^m|^{1/2}`
-**Strategy:** ℤₚ* = ℤₚ \ pℤₚ, so μ(ℤₚ*) = 1 - 1/p. Normalize. The half-
-density factor |p^m|^{1/2} = p^{-m/2} is a definition.
-**Estimated effort:** 20-30 lines.
+4. **Order.lean:276** — `zetaZero_exponent_of_convergence`
+   Exponent = 1. N(T) ~ T log T / (2π) ⟹ exponent = 1.
 
-#### 1.7 Borel-Carathéodory (Order.lean:295)
-`Phragmén-Lindelöf convexity principle`
-**Strategy:** Maximum modulus principle applied to e^{f(z)} on a strip.
-Hadamard three-lines theorem. Mathlib has `Complex.norm_le_of_isBounded`
-and maximum principle infrastructure.
-**Estimated effort:** 50-80 lines. This is meaty but well-documented.
+5. **Order.lean:296** — `zeta_vertical_strip_bound` (inner sorry)
+   Phragmén-Lindelöf convexity bound. Independent leaf.
 
-#### 1.8 Herglotz representation (ResolventComputation.lean:78)
-**Strategy:** A holomorphic function with positive real part on the upper half-
-plane is represented by a Borel measure. This is the spectral side of Stone's
-theorem — you already have the operator side. The Herglotz integral is the
-Poisson integral of the boundary measure.
-**Estimated effort:** 60-80 lines.
+6. **WeierstraßProduct.lean:823** — `weierstraß_factorization` (has-zeros case)
+   Requires zero enumeration with multiplicity, product convergence, removable singularity.
+   The zero-free case and `entire_logarithm` are already proved.
 
-#### 1.9 Stieltjes inversion (ResolventComputation.lean:100)
-**Strategy:** The spectral measure is recovered from the resolvent via
-μ((a,b]) = lim_{ε→0} (1/π) ∫ₐᵇ Im⟨(D-t-iε)⁻¹x, x⟩ dt.
-This is a limit interchange (dominated convergence) + residue computation.
-**Estimated effort:** 40-60 lines.
+7. **Hadamard.lean:61** — `hadamard_factorization`
+   Four-step argument: Weierstraß product + quotient is exp(polynomial).
+   Depends on (6) + (2) + Cauchy coefficient estimates.
 
-After Phase 1: **24 → 15 sorries.**
+8. **Hadamard.lean:76** — `hadamard_factorization_order_one` (**NOW PROVED** — check
+   if the sorry at line 76 was eliminated; if not, it specializes (7) to order 1).
 
-### Phase 2: The chains (downstream flow)
+#### Cluster B: Zeta Product (4 sorries)
 
-With the leaves resolved, three chains unlock:
+Depends on Cluster A results. `xi_logDeriv_expansion` and `summable_over_zeros`
+are now proved.
 
-#### Chain A: Jensen → Order → Hadamard → ξ product
-Order.lean:252 → Order.lean:270 → Order.lean:276 → Hadamard.lean:60 →
-Hadamard.lean:75 → ZetaProduct.lean:123.
-**6 sorries.** Each depends on the previous. Work sequentially.
+9. **ZetaProduct.lean:175** — `xi_hadamard_product`
+    Apply `hadamard_factorization_order_one` to `completedRiemannZeta₀`.
+    Blocked on reindexing between Hadamard zeros and `zetaZeroSeq`.
 
-#### Chain B: Zeta product → explicit formula
-ZetaProduct.lean:146 → ZetaProduct.lean:209 → ZetaProduct.lean:225 →
-ZetaProduct.lean:242 → ZetaProduct.lean:260.
-**5 sorries.** These are contour integration and residue theory. The hardest
-single cluster. But: contour integration in Lean has been done (see Mathlib's
-`Complex.integral_boundary_rect_eq_zero_of_differentiableOn`). Residues can
-be computed via Laurent series (`Complex.hasFPowerSeriesOnBall`). This is not
-uncharted territory.
+10. **ZetaProduct.lean:339** — `zeta_logDeriv_growth`
+    ζ'/ζ = O(log²|t|). Requires zero density + Stirling/digamma asymptotics.
 
-#### Chain C: Fourier → Weil criterion
-FourierTransform.lean:97 → FourierTransform.lean:107 →
-FourierTransform.lean:119 → FourierTransform.lean:128.
-**4 sorries.** Forward direction (RH → positivity) uses the explicit formula
-(from Chain B) + Fourier positivity (from Phase 1). Backward direction uses
-Paley-Wiener test function construction.
+11. **ZetaProduct.lean:360** — `zeta_zero_density`
+    N(T) counting formula. Argument principle + Stirling approximation.
 
-After Phase 2: **15 → 0 sorries in the analysis stack.**
+12. **ZetaProduct.lean:423** — `sum_over_zeros_eq_contour`
+    The full Weil explicit formula via contour integration. Rectangle contour →
+    residues at zeros = LHS, other residues = RHS.
 
-### Phase 3: The adelic/spectral cluster
+#### Cluster C: Fourier Transform (4 sorries)
 
-SelbergUnfolding.lean (2), TateLocalComputation.lean (remaining 4),
-SpectralPositivity.lean (1), ResolventComputation.lean (remaining 1).
+Independent from Clusters A/B except for (14).
 
-**8 sorries.** These depend on the analysis stack being clean. With Phases 1-2
-done, the Tate computations plug into the explicit formula, the Selberg
-unfolding uses the orbital integrals, and the spectral positivity connects the
-trace formula to Weil positivity.
+13. **FourierTransform.lean:148** — Fubini core step in `fourierCos_autocorrelation_eq_sq`
+    Goal: ∫ f(x)·E(x) = conj(ĝ)·ĝ. Setup (cos=Re(exp), normSq) already proved.
+    Needs `integral_prod_mul` + shear substitution + `Complex.exp_add`.
 
-After Phase 3: **0 sorries. 1 class axiom. The project is complete.**
+14. **FourierTransform.lean:200** — `rh_implies_weil_positivity_from_explicit`
+    RH + explicit formula → W(f) ≥ 0. Forward direction of Weil's criterion.
+
+15. **FourierTransform.lean:309** — `bombieriAutocorrelation_decay`
+    Gaussian-to-rational decay bound. exp(-cx²) ≤ C'/(1+x²).
+
+16. **FourierTransform.lean:316** — `bombieriAutocorrelation_weil_neg`
+    Bombieri's Theorem 2: spectral negativity for off-line zeros. The deepest
+    analytic result. Reference: Bombieri (2000) "Remarks on Weil's quadratic functional".
+
+#### Cluster D: Spectral (1 sorry)
+
+17. **ResolventComputation.lean:133** — `resolvent_spectral_trace_eq_weil`
+    The deep spectral chain: Herglotz + Stieltjes + Selberg + Tate → Tr(h(D)) = W(h).
+    `trace_as_orbital_sum` is now sorry-free (proved from this + `orbital_eq_weil`).
+
+### What has been proved (previously sorry)
+
+- `orbital_sum_absolutely_convergent` — 90-line proof (prime summability)
+- `xi_logDeriv_expansion` — logarithmic derivative of Hadamard product
+- `summable_over_zeros` — via normSq bound + comparison test
+- `trace_as_orbital_sum` — from resolvent chain + definitional equality
+- `exists_negative_weil_autocorrelation` — Bombieri modulated Gaussian construction
+- `hadamard_factorization_order_one` — specialization of general Hadamard
+- `entire_logarithm` — zero-free entire = exp(g), ~50 lines
+- `bombieriTestFn_integrable`, `bombieriAutocorrelation_continuous` — Gaussian analysis
+- `autocorrelation_integrable` — via convolution API
+- `zetaZeroSeq_ne_zero`, `zetaZeroSeq_normSq_bound` — zero sequence properties
 
 ---
 
@@ -340,7 +329,7 @@ After Phase 3: **0 sorries. 1 class axiom. The project is complete.**
 
 6. **Track progress numerically.** After each session, report:
    - Current sorry count (target: 0)
-   - Lines of Lean (currently: 4,985)
+   - Lines of Lean (currently: ~5,584)
    - Files modified
    - Theorems proved (with 1-line descriptions)
    - Failures encountered (with diagnoses)
