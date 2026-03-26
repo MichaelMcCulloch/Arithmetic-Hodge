@@ -37,22 +37,15 @@ namespace ArithmeticHodge
 
     For a cutoff parameter Λ > 0, the regularized trace Tr_Λ(f(D_Λ))
     is the trace of the operator f(D_Λ) on the compact quotient
-    {x ∈ 𝔸_ℚ/ℚ* : |x| ≤ Λ}.
+    {x ∈ 𝔸_ℚ/ℚ* : |x| ≤ Λ}. The cutoff operator D_Λ is the generator
+    of the scaling flow restricted to the compact region.
 
-    The cutoff operator D_Λ is the generator of the scaling flow
-    restricted to the compact region. Since the region is compact,
-    D_Λ acts on a (effectively) finite-dimensional space and has
-    discrete spectrum.
-
-    @[irreducible] because the content is in the sorry'd theorems
-    that characterize its properties (non-negativity, convergence). -/
-@[irreducible] noncomputable def regularizedTrace
+    SORRY: The cutoff trace construction. Requires: L² projection onto
+    {|x| ≤ Λ}, self-adjointness of D_Λ, spectral calculus, trace. -/
+noncomputable def regularizedTrace
     (X : Type*) [Adelic.AdeleClassSpaceData X]
     (Λ : ℝ) (f : ℝ → ℝ) : ℝ :=
-  -- Placeholder: the actual value is determined by the cutoff construction.
-  -- The @[irreducible] tag prevents this body from being unfolded;
-  -- the properties of regularizedTrace are established by the theorems below.
-  Analysis.weilFunctionalFull f (Analysis.fourierCos f)
+  sorry
 
 -- ============================================================
 -- Sorry 1: Regularized Spectral Positivity
