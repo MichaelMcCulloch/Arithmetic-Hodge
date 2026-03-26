@@ -298,28 +298,35 @@ theorem spectralPairingOf_nonneg (Λ : ℝ) (hΛ : 0 < Λ)
 -- Trace Formula Decomposition: Steps A-D
 -- ============================================================
 
-/-- **Step A: The Prime Number Theorem gives a spectral gap.**
+-- **Step A: The Prime Number Theorem gives a spectral gap.**
+-- ζ(1+it) ≠ 0 (Mathlib: riemannZeta_ne_zero_of_one_le_re) →
+-- no eigenvalue of D_Λ at the Re(s)=1 boundary.
+-- Proved from two sub-lemmas via lt_of_le_of_ne:
+--   eigenvalues_bounded_by_cutoff: compact domain → |λᵢ| ≤ Λ
+--   eigenvalue_strict_bound_from_pnt: PNT → |λᵢ| ≠ Λ
 
-    ζ(1+it) ≠ 0 for all t ∈ ℝ (Mathlib: `riemannZeta_ne_zero_of_one_le_re`).
-    In operator language: the scaling flow on L²(𝔸_ℚ/ℚ*) has no eigenvalue
-    at Re(s) = 1. The character |·|^{it} is NOT in the point spectrum.
+/-- Compact domain spectral theory: eigenvalues bounded by cutoff scale.
+    SORRY: Depends on cutoffEigenvaluesOf construction. -/
+theorem eigenvalues_bounded_by_cutoff (Λ : ℝ) (hΛ : 0 < Λ) (i : ℕ) :
+    |cutoffEigenvaluesOf X Λ i| ≤ Λ := by
+  sorry
 
-    This is the fundamental input from analytic number theory. The scaling
-    flow on the adèle class space is ergodic precisely because ζ has no
-    zeros on the line Re(s) = 1.
+/-- PNT implication: no nonzero eigenvalue sits at the boundary |λ| = Λ.
+    ζ(1+it) ≠ 0 means a boundary eigenvalue would give a zeta zero on Re(s)=1.
+    SORRY: Translation from zeta nonvanishing to boundary exclusion. -/
+theorem eigenvalue_strict_bound_from_pnt
+    (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) (Λ : ℝ) (hΛ : 0 < Λ) (i : ℕ)
+    (hi : cutoffEigenvaluesOf X Λ i ≠ 0) :
+    |cutoffEigenvaluesOf X Λ i| ≠ Λ := by
+  sorry
 
-    The PNT fact is available in Mathlib. The translation to operator
-    language requires identifying characters of the scaling flow with
-    eigenvectors of D_Λ at eigenvalue 0. On the compact cutoff space,
-    this becomes: no eigenvalue of D_Λ accumulates at the Re(s)=1 boundary
-    as Λ → ∞.
-
-    SORRY: Translation from zeta nonvanishing to operator spectral gap. -/
 theorem cutoff_spectral_gap
     (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) (Λ : ℝ) (hΛ : 0 < Λ) :
     ∀ (i : ℕ), cutoffEigenvaluesOf X Λ i ≠ 0 →
       |cutoffEigenvaluesOf X Λ i| < Λ := by
-  sorry
+  intro i hi
+  exact lt_of_le_of_ne (eigenvalues_bounded_by_cutoff X Λ hΛ i)
+    (eigenvalue_strict_bound_from_pnt X hζ Λ hΛ i hi)
 
 -- ============================================================
 -- Sub-lemmas for the boundary control estimate (Sorry 5 decomposition)
