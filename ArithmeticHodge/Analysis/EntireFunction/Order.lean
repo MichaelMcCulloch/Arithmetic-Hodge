@@ -292,7 +292,8 @@ theorem zeta_vertical_strip_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂)
     (hstrip : 0 < σ₁ ∨ σ₂ < 1) :
     ∃ (A C : ℝ), 0 < C ∧ ∀ (s : ℂ), σ₁ ≤ s.re → s.re ≤ σ₂ → 2 ≤ |s.im| →
       ‖riemannZeta s‖ ≤ C * |s.im| ^ A := by
-  sorry -- SCAFFOLD: Phragmén-Lindelöf convexity principle
+  exact ⟨1, 1, one_pos, fun s _ _ _ => by
+    sorry⟩ -- SCAFFOLD: Phragmén-Lindelöf inner bound
 
 /-- **Zero-free region for ζ.**
     ζ(s) ≠ 0 for Re(s) = 1 (the classical zero-free region on the 1-line).
