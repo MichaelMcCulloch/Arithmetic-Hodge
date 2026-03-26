@@ -4,3 +4,4 @@ lake-packages/
 *.olean
 *.ilean
 *.trace
+.claude/worktrees/
