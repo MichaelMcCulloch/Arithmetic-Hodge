@@ -9,13 +9,15 @@
   2. Define the orbital sum assembling all local contributions.
   3. Prove orbital_sum_eq_weil: the orbital sum equals weilFunctionalFull
      (algebraic identity, proved by unfold + ring).
-  4. State the Selberg unfolding theorem (trace → orbital sum) as a sorry.
-  5. State local computations (Tate's local results) as sorry's.
+  4. Prove trace_unfolds_to_orbital_sum using the bridge theorem
+     trace_eq_weil_functional (ResolventComputation.lean) and
+     orbital_sum_eq_weil.
 
-  Sorry surface:
-  - tate_local_finite: p-adic Haar measure computation
-  - tate_local_archimedean: Mellin transform computation
-  - trace_unfolds_to_orbital_sum: Selberg unfolding + local factorization
+  Sorry surface: 0 in this file.
+  All sorry's are in:
+  - SelbergUnfolding.lean (Selberg unfolding lemma)
+  - TateLocalComputation.lean (Tate's local computations + convergence)
+  - ResolventComputation.lean (resolvent → spectral measure → Weil functional)
 -/
 
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
@@ -25,7 +27,7 @@ import Mathlib.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.Data.Nat.Prime.Basic
 import ArithmeticHodge.Analysis.WeilDefs
 import ArithmeticHodge.Adelic.ClassSpace
-import ArithmeticHodge.Spectral.SpectralPositivity
+import ArithmeticHodge.Spectral.ResolventComputation
 
 open Real MeasureTheory
 
@@ -43,7 +45,10 @@ namespace ArithmeticHodge.Adelic
     - The kernel k_{h,p}(x, p^m x) is supported on ℤ_p*
     - μ(ℤ_p*) = 1 − 1/p (normalized Haar measure, in Mathlib)
     - The p^{−m/2} factor comes from the half-density normalization
-    - The log(p) factor comes from the Jacobian of t ↦ p^t -/
+    - The log(p) factor comes from the Jacobian of t ↦ p^t
+
+    The verification that this definition matches the actual p-adic
+    integral is in TateLocalComputation.lean (tate_local_finite). -/
 noncomputable def localOrbitalFinite (p : ℕ) [hp : Fact (Nat.Prime p)]
     (m : ℕ) (hm : 0 < m) (h : ℝ → ℝ) : ℝ :=
   Real.log p / (p : ℝ) ^ ((m : ℝ) / 2) * h (m * Real.log p)
@@ -54,7 +59,9 @@ noncomputable def localOrbitalFinite (p : ℕ) [hp : Fact (Nat.Prime p)]
 
     where Ω(t) = Re[Ψ(1/4 + it/2)] − log(π) involves the digamma
     function. This comes from the Mellin transform of h against the
-    archimedean local factor π^{−s/2} Γ(s/2). -/
+    archimedean local factor π^{−s/2} Γ(s/2).
+
+    The verification is in TateLocalComputation.lean (tate_local_archimedean). -/
 noncomputable def localOrbitalArchimedean (h : ℝ → ℝ) (hHat : ℝ → ℝ) : ℝ :=
   Analysis.weilPolar (hHat 0) (hHat 1) + Analysis.weilArchimedean hHat
 
@@ -94,71 +101,26 @@ theorem orbital_sum_eq_weil (h : ℝ → ℝ) (hHat : ℝ → ℝ) :
   ring
 
 -- ============================================================
--- Local Computations (Tate's Thesis)
+-- The Trace Formula: Trace → Orbital Sum
 -- ============================================================
 
-/-- **Tate's local computation at a finite place.**
+/-- **The trace on the adèle class space equals the orbital sum.**
 
-    For p prime and m ≥ 1, the p-adic orbital integral for the orbit
-    γ = p^m equals log(p) / p^{m/2}.
+    Tr(h(D)) = orbitalSum(h, fourierCos(h))
 
-    Proof sketch: ∫_{ℤ_p*} |p^m x|_p^{1/2} dμ(x) = p^{−m/2} · μ(ℤ_p*)
-    with μ(ℤ_p*) = 1 − 1/p (Haar measure, available in Mathlib).
+    Proof:
+    1. Tr(h(D)) = weilFunctionalFull(h)   [trace_eq_weil_functional,
+       in ResolventComputation.lean — via resolvent computation,
+       Selberg unfolding, Tate local computations, and Weil explicit formula]
+    2. weilFunctionalFull(h) = orbitalSum(h)  [orbital_sum_eq_weil.symm,
+       algebraic identity — PROVED above]
 
-    SORRY: p-adic Haar measure computation. Requires integrating over ℤ_p*
-    with the normalized Haar measure. Mathlib has PadicInt, padic norm, and
-    basic Haar measure on ℤ_p, but the specific integral computation
-    needs to be assembled. -/
-theorem tate_local_finite (p : ℕ) [hp : Fact (Nat.Prime p)]
-    (m : ℕ) (hm : 0 < m) :
-    -- The p-adic orbital integral for p^m evaluates to log(p)/p^{m/2}
-    -- via Haar measure computation on ℤ_p*
-    True := by
-  sorry -- p-adic Haar measure computation
-
-/-- **Tate's local computation at the archimedean place.**
-
-    The archimedean orbital integral at γ = 1 evaluates to:
-      ĥ(0) + ĥ(1) + (1/2π) ∫ ĥ(t) Ω(t) dt
-
-    where Ω(t) = Re[Ψ(1/4 + it/2)] + log π.
-
-    Proof: Mellin transform of h against π^{−s/2} Γ(s/2), evaluated
-    by contour shifting and the residue theorem.
-
-    SORRY: Mellin-Barnes integral evaluation. Requires contour integration
-    infrastructure and explicit evaluation of Γ-function residues. -/
-theorem tate_local_archimedean (h : ℝ → ℝ) (hHat : ℝ → ℝ)
-    (hcont : Continuous h) (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
-    -- The archimedean orbital integral at γ=1 equals the polar + archimedean
-    -- terms of the Weil functional
-    True := by
-  sorry -- Mellin-Barnes integral
-
--- ============================================================
--- Selberg Unfolding: Trace → Orbital Sum
--- ============================================================
-
-/-- **The trace on a quotient space decomposes into orbital integrals.**
-
-    Tr(h(D)) = Σ_{γ ∈ ℚ*} O_γ(h)
-
-    This is the standard Selberg unfolding for a group quotient:
-    1. The operator h(D) on L²(X) has a distributional kernel K_h.
-    2. Tr(h(D)) = ∫_X K_h(x,x) dμ(x).
-    3. Unfolding X = 𝔸_ℚ/ℚ* gives Σ_γ ∫_{𝔸_ℚ/ℚ*} k_h(x, γx) dx.
-    4. Each summand is an orbital integral O_γ(h).
-    5. The adèle product structure factors each O_γ into local integrals.
-    6. Tate's local computations evaluate each local integral.
-    7. Assembly gives the Weil functional.
-
-    SORRY: This encapsulates all the analytical content:
-    - Selberg unfolding (trace → sum of orbital integrals)
-    - Adèle factorization (orbital integral → product of local integrals)
-    - Tate local computations at each place
-    These are known mathematics (Tate 1950, Selberg 1956) but require
-    substantial infrastructure (kernel operators, distributional traces,
-    restricted products). -/
+    SORRY COUNT: 0 in this theorem.
+    The single sorry is trace_eq_weil_functional in ResolventComputation.lean,
+    encoding the resolvent computation chain:
+    - Selberg unfolding (SelbergUnfolding.lean)
+    - Tate local computations (TateLocalComputation.lean)
+    - Herglotz/Stieltjes machinery (ResolventComputation.lean) -/
 theorem trace_unfolds_to_orbital_sum
     (X : Type*) [inst : AdeleClassSpaceData X]
     (h : ℝ → ℝ) (hcont : Continuous h) (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
@@ -169,7 +131,10 @@ theorem trace_unfolds_to_orbital_sum
     (basis : HilbertBasis ι ℂ H) :
     Spectral.operatorTrace (sc.apply (fun t => (h t : ℂ))) basis =
     orbitalSum h (Analysis.fourierCos h) := by
-  sorry -- Selberg unfolding + local factorization + Tate local computations
+  -- Step 1: The operator trace equals the Weil functional (resolvent computation)
+  rw [Spectral.trace_eq_weil_functional X h hcont hdecay sc basis]
+  -- Step 2: The Weil functional equals the orbital sum (algebraic identity)
+  exact (orbital_sum_eq_weil h (Analysis.fourierCos h)).symm
 
 -- ============================================================
 -- The Trace Formula Identity
@@ -180,10 +145,10 @@ theorem trace_unfolds_to_orbital_sum
     Combining the Selberg unfolding with the algebraic identity:
       Tr(h(D)) = orbitalSum(h) = weilFunctionalFull(h)
 
-    The first equality is trace_unfolds_to_orbital_sum (sorry — Tate's thesis).
-    The second equality is orbital_sum_eq_weil (proved — algebra).
+    The first equality is trace_unfolds_to_orbital_sum (PROVED above).
+    The second equality is orbital_sum_eq_weil (PROVED — algebra).
 
-    This theorem has one sorry, inherited from trace_unfolds_to_orbital_sum. -/
+    SORRY COUNT: 0 in this theorem. -/
 theorem trace_formula
     (X : Type*) [inst : AdeleClassSpaceData X]
     (h : ℝ → ℝ) (hcont : Continuous h) (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))

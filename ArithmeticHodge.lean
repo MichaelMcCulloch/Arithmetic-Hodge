@@ -45,9 +45,12 @@ import ArithmeticHodge.Analysis.WeilExplicit
 import ArithmeticHodge.Analysis.FourierTransform
 import ArithmeticHodge.Analysis.WeilPositivity
 import ArithmeticHodge.Adelic.ClassSpace
+import ArithmeticHodge.Adelic.SelbergUnfolding
+import ArithmeticHodge.Adelic.TateLocalComputation
 import ArithmeticHodge.Spectral.UnboundedOperator
 import ArithmeticHodge.Spectral.SelfAdjointness
 import ArithmeticHodge.Spectral.SpectralPositivity
+import ArithmeticHodge.Spectral.ResolventComputation
 import ArithmeticHodge.Spectral.TraceFormula
 import ArithmeticHodge.Adelic.OrbitalIntegrals
 import ArithmeticHodge.Arithmetic.HodgeIndex

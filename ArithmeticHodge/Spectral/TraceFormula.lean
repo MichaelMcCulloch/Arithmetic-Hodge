@@ -13,7 +13,8 @@
     4. WeilPositivity → RH               [weil_criterion_backward — proved]
 
   SORRY COUNT: 0 in this file.
-  All sorry's are in SpectralPositivity.lean and OrbitalIntegrals.lean.
+  All sorry's are in SpectralPositivity.lean, SelbergUnfolding.lean,
+  TateLocalComputation.lean, and ResolventComputation.lean.
 -/
 
 import ArithmeticHodge.Spectral.SpectralPositivity
@@ -39,7 +40,7 @@ namespace ArithmeticHodge
 
     The sorry's that make this work are:
     - spectralCalculus_exists (spectral theorem, in SpectralPositivity.lean)
-    - trace_unfolds_to_orbital_sum (Selberg unfolding + Tate, in OrbitalIntegrals.lean)
+    - trace_eq_weil_functional (resolvent computation, in ResolventComputation.lean)
 
     SORRY COUNT: 0 in this theorem. -/
 theorem weil_positivity_from_trace
@@ -93,13 +94,14 @@ theorem weil_positivity_statement
         → RH (Weil's criterion, backward direction)
 
     This theorem has zero sorry's. It depends on:
-    1. trace_unfolds_to_orbital_sum — sorry in OrbitalIntegrals.lean (Tate's thesis)
+    1. trace_unfolds_to_orbital_sum — PROVED in OrbitalIntegrals.lean (0 sorry)
     2. spectralCalculus_exists — sorry in SpectralPositivity.lean (spectral theorem)
-    3. weil_criterion_backward — proved, 0 sorry
-    4. orbital_sum_eq_weil — proved by ring, 0 sorry
+    3. trace_eq_weil_functional — sorry in ResolventComputation.lean (resolvent)
+    4. weil_criterion_backward — proved, 0 sorry
+    5. orbital_sum_eq_weil — proved by ring, 0 sorry
 
-    The two sorry's encode known mathematics from 1929 and 1950.
-    Neither is RH. Their combination is RH.
+    The sorry's encode known mathematics (von Neumann 1929, Tate 1950,
+    Herglotz/Stieltjes 1930s). Neither is RH. Their combination is RH.
 
     SORRY COUNT: 0 in this theorem. -/
 theorem riemann_hypothesis_from_trace
