@@ -168,6 +168,12 @@ class AdeleClassSpaceData (X : Type*) extends
   isRegular : haarMeasure.Regular
   /-- The scaling flow as continuous group automorphisms -/
   scalingFlow : ℝ → X ≃ₜ* X
+  /-- The scaling flow at time 0 is the identity -/
+  scalingFlow_zero : ∀ x, scalingFlow 0 x = x
+  /-- The scaling flow satisfies the group law -/
+  scalingFlow_add : ∀ s t x, scalingFlow (s + t) x = scalingFlow s (scalingFlow t x)
+  /-- The scaling flow is jointly continuous in (t, x) -/
+  scalingFlow_continuous : Continuous (fun p : ℝ × X => scalingFlow p.1 p.2)
   /-- Product formula consequence: trivial Haar character for the scaling flow -/
   trivialHaarChar : ∀ t, MeasureTheory.mulEquivHaarChar (scalingFlow t) = 1
   /-- The height function |·| : X → ℝ (idèle norm on the adèle class space).
