@@ -103,7 +103,7 @@ Prove that `SpectralCalculus` exists for every self-adjoint operator. Stone's th
 
 4. The functional calculus is f(D) = ∫ f(λ) dE(λ).
 
-Build as much of this chain as you can. Where you reach an infrastructure wall, make the `sorry` atomic and document what specific Mathlib API is missing. The resolvent of the generator exists (from self-adjointness + the deficiency indices proof). The Herglotz representation may require building Stieltjes measures from Mathlib's measure theory.
+Build as much of this chain as you can. Where you reach an infrastructure wall, build a ladder yourself. Build any missing infrastructure if necessary. The resolvent of the generator exists (from self-adjointness + the deficiency indices proof). The Herglotz representation may require building Stieltjes measures from Mathlib's measure theory.
 
 ---
 

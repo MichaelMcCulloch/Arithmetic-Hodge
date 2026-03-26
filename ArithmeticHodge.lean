@@ -47,5 +47,8 @@ import ArithmeticHodge.Analysis.WeilPositivity
 import ArithmeticHodge.Adelic.ClassSpace
 import ArithmeticHodge.Spectral.UnboundedOperator
 import ArithmeticHodge.Spectral.SelfAdjointness
+import ArithmeticHodge.Spectral.SpectralPositivity
+import ArithmeticHodge.Spectral.TraceFormula
+import ArithmeticHodge.Adelic.OrbitalIntegrals
 import ArithmeticHodge.Arithmetic.HodgeIndex
 import ArithmeticHodge.Strategy.DetailedBalance
