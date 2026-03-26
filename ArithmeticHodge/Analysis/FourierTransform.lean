@@ -112,7 +112,7 @@ theorem nontrivial_zero_paired (ρ : NontrivialZetaZero) :
       intro n hn
       have hre := ρ.re_pos
       rw [hn] at hre
-      simp [Complex.neg_re, Complex.ofReal_re] at hre
+      simp [Complex.neg_re] at hre
       exact not_lt.mpr (Nat.cast_nonneg' n) hre
     rw [riemannZeta_one_sub hρ_ne_neg_nat hρ_ne_one]
     simp [ρ.is_zero]
@@ -139,7 +139,49 @@ theorem nontrivial_zero_in_critical_strip (s : ℂ)
     (hs_ne_one : s ≠ 1) :
     0 < s.re ∧ s.re < 1 := by
   constructor
-  · sorry -- SCAFFOLD: functional equation + nonvanishing for Re ≥ 1
+  · -- Proof by contradiction: if s.re ≤ 0, then (1-s).re ≥ 1, so ζ(1-s) ≠ 0.
+    -- But the functional equation forces ζ(1-s) = 0, contradiction.
+    by_contra h
+    push_neg at h -- h : s.re ≤ 0
+    -- Step 1: s ≠ 0 (since ζ(0) = -1/2 ≠ 0)
+    have hs_ne_zero : s ≠ 0 := by
+      intro heq; rw [heq] at hs_zero; simp [riemannZeta_zero] at hs_zero
+    -- Step 2: Gammaℝ s ≠ 0 (its zeros are at 0, -2, -4, ... which are excluded)
+    have hGamma_ne : Gammaℝ s ≠ 0 := by
+      rw [Ne, Gammaℝ_eq_zero_iff]
+      push_neg
+      intro n
+      by_cases hn : n = 0
+      · simp [hn]; exact hs_ne_zero
+      · intro heq
+        apply hs_not_trivial
+        obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hn
+        exact ⟨m, by rw [heq]; push_cast; ring⟩
+    -- Step 3: completedRiemannZeta s = 0
+    have hΛ_zero : completedRiemannZeta s = 0 := by
+      have := riemannZeta_def_of_ne_zero hs_ne_zero
+      rw [hs_zero] at this
+      rw [eq_comm, div_eq_zero_iff] at this
+      exact this.resolve_right hGamma_ne
+    -- Step 4: completedRiemannZeta (1 - s) = 0 by functional equation
+    have hΛ_one_sub : completedRiemannZeta (1 - s) = 0 := by
+      rw [completedRiemannZeta_one_sub]; exact hΛ_zero
+    -- Step 5: (1 - s).re ≥ 1
+    have hre_one_sub : 1 ≤ (1 - s).re := by
+      simp [Complex.sub_re, Complex.one_re]; linarith
+    -- Step 6: 1 - s ≠ 0
+    have h1s_ne_zero : (1 : ℂ) - s ≠ 0 := by
+      intro heq
+      have : (1 - s).re = 0 := by rw [heq]; simp
+      linarith
+    -- Step 7: Gammaℝ (1 - s) ≠ 0 (since (1-s).re > 0)
+    have hGamma_one_sub : Gammaℝ (1 - s) ≠ 0 := by
+      exact Gammaℝ_ne_zero_of_re_pos (by linarith)
+    -- Step 8: riemannZeta (1 - s) = 0
+    have hζ_one_sub : riemannZeta (1 - s) = 0 := by
+      rw [riemannZeta_def_of_ne_zero h1s_ne_zero, hΛ_one_sub, zero_div]
+    -- Step 9: But riemannZeta (1 - s) ≠ 0 since (1-s).re ≥ 1
+    exact absurd hζ_one_sub (riemannZeta_ne_zero_of_one_le_re hre_one_sub)
   · by_contra h
     push_neg at h
     exact absurd hs_zero (riemannZeta_ne_zero_of_one_le_re h)
