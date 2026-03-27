@@ -199,6 +199,11 @@ class AdeleClassSpaceData (X : Type*) extends
   heightFn_volume_growth :
     ∃ c : ℝ, 0 < c ∧ ∀ Λ : ℝ, 1 ≤ Λ →
       ENNReal.ofReal (c * Λ) ≤ haarMeasure {x : X | heightFn x ≤ Λ}
+  /-- The height function translates under the scaling flow:
+      heightFn(σ_t(x)) = heightFn(x) + t. This captures the fact
+      that the idelic norm scales exponentially: |σ_t(x)| = e^t |x|,
+      and heightFn = log|·| in the log-height convention. -/
+  heightFn_scalingFlow : ∀ t : ℝ, ∀ x : X, heightFn (scalingFlow t x) = heightFn x + t
   /-- The group is nondiscrete: the identity is not isolated.
       This holds for 𝔸_ℚ/ℚ* since ℚ* is discrete in 𝔸_ℚ but
       the quotient inherits the (nondiscrete) adelic topology. -/
