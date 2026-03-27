@@ -444,7 +444,8 @@ theorem boundary_volume_estimate :
 theorem bulk_volume_lower_bound :
     ∃ (c : ℝ), 0 < c ∧ ∀ (Λ : ℝ), 1 < Λ →
       ENNReal.ofReal (c * Λ) ≤ inst.haarMeasure (cutoffSet X Λ) := by
-  sorry
+  obtain ⟨c, hc, hgrowth⟩ := inst.heightFn_volume_growth
+  exact ⟨c, hc, fun Λ hΛ => hgrowth Λ (le_of_lt hΛ)⟩
 
 /-- **Sub-lemma 5c: Test function kernel bound.**
 
