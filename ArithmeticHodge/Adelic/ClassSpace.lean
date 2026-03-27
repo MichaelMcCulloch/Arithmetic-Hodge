@@ -22,7 +22,8 @@ import Mathlib.RingTheory.DedekindDomain.AdicValuation
 import Mathlib.RingTheory.Int.Basic
 import Mathlib.MeasureTheory.Measure.Haar.MulEquivHaarChar
 
-open MeasureTheory
+open MeasureTheory Filter
+open scoped Topology
 
 namespace ArithmeticHodge.Adelic
 
@@ -181,8 +182,13 @@ class AdeleClassSpaceData (X : Type*) extends
   heightFn : X → ℝ
   /-- The height function is measurable -/
   heightFn_measurable : Measurable heightFn
+  /-- The height function is continuous (the idèle norm is continuous on 𝔸_ℚ/ℚ*) -/
+  heightFn_continuous : Continuous heightFn
   /-- The height function is non-negative -/
   heightFn_nonneg : ∀ x, 0 ≤ heightFn x
+  /-- The identity has height 0 (|1| = 1 in the idèle norm, but we use log-height
+      convention where the identity maps to 0) -/
+  heightFn_one : heightFn 1 = 0
   /-- The sublevel sets {x : heightFn x ≤ Λ} are compact (proper map) -/
   heightFn_compact : ∀ Λ : ℝ, IsCompact {x : X | heightFn x ≤ Λ}
   /-- Boundary shells have uniformly bounded Haar measure. -/
@@ -193,6 +199,10 @@ class AdeleClassSpaceData (X : Type*) extends
   heightFn_volume_growth :
     ∃ c : ℝ, 0 < c ∧ ∀ Λ : ℝ, 1 ≤ Λ →
       ENNReal.ofReal (c * Λ) ≤ haarMeasure {x : X | heightFn x ≤ Λ}
+  /-- The group is nondiscrete: the identity is not isolated.
+      This holds for 𝔸_ℚ/ℚ* since ℚ* is discrete in 𝔸_ℚ but
+      the quotient inherits the (nondiscrete) adelic topology. -/
+  nondiscrete : (𝓝[≠] (1 : X)).NeBot
 
 /-- **Haar measure invariance from the AdeleClassSpaceData class.**
     The product formula (axiomatized as trivialHaarChar) immediately gives
