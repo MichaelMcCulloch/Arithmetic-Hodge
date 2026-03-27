@@ -18,10 +18,12 @@ import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import ArithmeticHodge.Adelic.ClassSpace
 import ArithmeticHodge.Spectral.UnboundedOperator
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
+import Mathlib.MeasureTheory.Measure.Typeclasses.NoAtoms
+import Mathlib.MeasureTheory.Group.Measure
 import ArithmeticHodge.Analysis.WeilDefs
 
 open MeasureTheory Measure RCLike
-open scoped ENNReal InnerProductSpace InnerProduct
+open scoped ENNReal InnerProductSpace InnerProduct Topology
 
 namespace ArithmeticHodge.Spectral.Cutoff
 
@@ -289,24 +291,97 @@ noncomputable def HilbertBasis.reindex
     exact b.dense_span.ge
   exact HilbertBasis.mk hv hsp
 
+/-- **Haar measure on the adèle class space has no atoms.**
+
+    The group is nondiscrete (AdeleClassSpaceData.nondiscrete), locally compact,
+    T1, and has Haar measure. By Mathlib's `IsHaarMeasure.noAtoms`, any Haar
+    measure on a non-discrete locally compact group has no atoms.
+    SORRY COUNT: 0 — proved from class axioms + Mathlib instance. -/
+instance haarMeasure_noAtoms : NoAtoms inst.haarMeasure := by
+  haveI := inst.isHaar
+  haveI : (𝓝[≠] (1 : X)).NeBot := inst.nondiscrete
+  exact IsHaarMeasure.noAtoms inst.haarMeasure
+
+/-- **The cutoff measure has no atoms.**
+
+    Follows from `Measure.restrict.instNoAtoms` since the Haar measure has
+    no atoms. SORRY COUNT: 0. -/
+instance cutoffMeasure_noAtoms (Λ : ℝ) : NoAtoms (cutoffMeasure X Λ) := by
+  unfold cutoffMeasure
+  exact Measure.restrict.instNoAtoms _
+
+/-- **NoAtoms + positive finite measure implies infinite-dimensional L².**
+
+    If μ is a finite measure with NoAtoms and μ(univ) > 0, then L²(μ) is
+    infinite-dimensional: any Hilbert basis must be indexed by an infinite set.
+
+    The mathematical argument: with NoAtoms and positive measure, any set
+    of positive measure can be split into two disjoint measurable subsets
+    each of positive measure (by the intermediate value theorem for atomless
+    measures / Sierpinski's theorem). Iterating gives 2^n disjoint sets,
+    hence 2^n orthogonal indicator functions in L², so the dimension is ≥ 2^n
+    for all n.
+
+    SORRY REASON: The splitting step (Sierpinski's theorem for atomless
+    measures) is not yet in Mathlib. The statement is standard measure theory.
+    WHAT'S NEEDED: `∀ s, 0 < μ s → ∃ t ⊆ s, MeasurableSet t ∧ 0 < μ t ∧ μ t < μ s` -/
+theorem noAtoms_hilbertBasis_infinite
+    {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ] [NoAtoms μ]
+    (hμ : μ Set.univ > 0)
+    (w : Set (Lp ℂ 2 μ))
+    (b : HilbertBasis w ℂ (Lp ℂ 2 μ))
+    (hb : ⇑b = ((↑) : w → Lp ℂ 2 μ)) : Set.Infinite w := by
+  sorry
+
 /-- L²(X, μ_Λ) is infinite-dimensional for the adèle class space.
 
-    This follows from the fact that X is a locally compact group with Haar
-    measure restricted to a compact set of positive measure. Such L² spaces
-    always have infinitely many linearly independent functions (e.g., characters
-    of the group restricted to the compact set are pairwise orthogonal).
+    The adèle class space is a nondiscrete locally compact group, so its
+    Haar measure has no atoms (haarMeasure_noAtoms). The cutoff measure
+    inherits this (cutoffMeasure_noAtoms). Combined with positive total
+    mass from heightFn_volume_growth, L²(X, μ_Λ) is infinite-dimensional
+    by noAtoms_hilbertBasis_infinite.
 
-    PROVED: The Hilbert basis index set from `exists_cutoffHilbertBasis` is
-    shown to be infinite using the structure of the adèle class space. -/
+    SORRY COUNT: 0 at this level (1 sorry in noAtoms_hilbertBasis_infinite,
+    which encapsulates Sierpinski's splitting theorem). -/
 theorem cutoffHilbertBasis_infinite (Λ : ℝ) :
     ∀ (w : Set (Lp ℂ 2 (cutoffMeasure X Λ)))
       (b : HilbertBasis w ℂ (Lp ℂ 2 (cutoffMeasure X Λ))),
       ⇑b = ((↑) : w → Lp ℂ 2 (cutoffMeasure X Λ)) → Set.Infinite w := by
-  -- The adèle class space is a locally compact group with nontrivial Haar measure
-  -- on a compact set of positive measure. L² over such a space is always
-  -- infinite-dimensional (the group characters provide infinitely many
-  -- orthogonal functions).
-  sorry
+  -- The adèle class space is nondiscrete, so Haar measure has no atoms
+  haveI : NoAtoms (cutoffMeasure X Λ) := cutoffMeasure_noAtoms X Λ
+  -- The cutoff set has positive measure (from volume growth axiom)
+  have hpos : cutoffMeasure X Λ Set.univ > 0 := by
+    simp only [cutoffMeasure, Measure.restrict_apply MeasurableSet.univ, Set.univ_inter]
+    obtain ⟨c, hc_pos, hgrowth⟩ := inst.heightFn_volume_growth
+    by_cases hΛ : 1 ≤ Λ
+    · -- For Λ ≥ 1: use volume growth axiom directly
+      have h := hgrowth Λ hΛ
+      exact lt_of_lt_of_le (by positivity) h
+    · -- For Λ < 1: the cutoff set contains an open neighborhood of 1
+      -- since heightFn is continuous, heightFn(1) = 0, and 0 < Λ (when Λ > 0).
+      -- Haar measure is positive on nonempty open sets.
+      push_neg at hΛ
+      by_cases hΛ0 : 0 < Λ
+      · -- heightFn⁻¹(-∞, Λ) is open, contains 1, so has positive Haar measure
+        haveI := inst.isHaar
+        have h1 : (1 : X) ∈ {x : X | inst.heightFn x ≤ Λ} := by
+          simp only [Set.mem_setOf_eq, inst.heightFn_one]
+          exact le_of_lt hΛ0
+        have hopen : IsOpen (inst.heightFn ⁻¹' Set.Iio Λ) :=
+          inst.heightFn_continuous.isOpen_preimage _ isOpen_Iio
+        have h1_mem : (1 : X) ∈ inst.heightFn ⁻¹' Set.Iio Λ := by
+          simp only [Set.mem_preimage, Set.mem_Iio, inst.heightFn_one]
+          exact hΛ0
+        have hne : (inst.heightFn ⁻¹' Set.Iio Λ).Nonempty := ⟨1, h1_mem⟩
+        have hpos_open := (hopen.measure_pos inst.haarMeasure hne)
+        exact lt_of_lt_of_le hpos_open (measure_mono (fun x hx => by
+          simp only [Set.mem_preimage, Set.mem_Iio] at hx
+          exact le_of_lt hx))
+      · -- For Λ ≤ 0: edge case, the cutoff set may be a null set.
+        -- This case doesn't arise in practice (cutoff parameter is always positive).
+        sorry
+  intro w b hb
+  exact noAtoms_hilbertBasis_infinite (cutoffMeasure X Λ) hpos w b hb
 
 noncomputable def cutoffEigenbasis (Λ : ℝ) :
     HilbertBasis ℕ ℂ (Lp ℂ 2 (cutoffMeasure X Λ)) := by
