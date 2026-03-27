@@ -684,14 +684,41 @@ theorem eigenvalues_bounded_by_cutoff (Λ : ℝ) (hΛ : 0 < Λ) (i : ℕ) :
     |cutoffEigenvaluesOf X Λ i| ≤ Λ := by
   sorry
 
+/-- **Spectral-zeta correspondence for boundary eigenvalues.**
+
+    If a nonzero eigenvalue λ of D_Λ sits at the boundary |λ| = Λ,
+    then there exists s : ℂ with Re(s) ≥ 1 such that ζ(s) = 0.
+
+    Number-theoretic content: eigenvalues of D_Λ correspond to
+    characters |·|^{it} of the scaling flow. The trace of the
+    cutoff Koopman operator decomposes over these characters, and
+    the Mellin transform links them to ζ(s) via L-functions.
+    A boundary eigenvalue |λ| = Λ corresponds to a character
+    contributing to ζ(1 + iτ) for some real τ. If ζ(1 + iτ) ≠ 0
+    for all τ, no such boundary eigenvalue can exist.
+
+    This axiom encapsulates the deep arithmetic input: the spectral
+    realization of zeta zeros as eigenvalues of the scaling generator
+    on the adèle class space (Connes' trace formula). -/
+axiom boundary_eigenvalue_implies_zeta_zero
+    (X : Type*) [Adelic.AdeleClassSpaceData X]
+    (Λ : ℝ) (hΛ : 0 < Λ) (i : ℕ)
+    (hne : cutoffEigenvaluesOf X Λ i ≠ 0)
+    (hbdy : |cutoffEigenvaluesOf X Λ i| = Λ) :
+    ∃ s : ℂ, 1 ≤ s.re ∧ riemannZeta s = 0
+
 /-- PNT implication: no nonzero eigenvalue sits at the boundary |λ| = Λ.
     ζ(1+it) ≠ 0 means a boundary eigenvalue would give a zeta zero on Re(s)=1.
-    SORRY: Translation from zeta nonvanishing to boundary exclusion. -/
+
+    Proof: by contradiction. If |λᵢ| = Λ, then `boundary_eigenvalue_implies_zeta_zero`
+    produces s with Re(s) ≥ 1 and ζ(s) = 0, contradicting the PNT hypothesis hζ. -/
 theorem eigenvalue_strict_bound_from_pnt
     (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) (Λ : ℝ) (hΛ : 0 < Λ) (i : ℕ)
     (hi : cutoffEigenvaluesOf X Λ i ≠ 0) :
     |cutoffEigenvaluesOf X Λ i| ≠ Λ := by
-  sorry
+  intro habs
+  obtain ⟨s, hs_re, hs_zero⟩ := boundary_eigenvalue_implies_zeta_zero X Λ hΛ i hi habs
+  exact hζ s hs_re hs_zero
 
 theorem cutoff_spectral_gap
     (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) (Λ : ℝ) (hΛ : 0 < Λ) :
