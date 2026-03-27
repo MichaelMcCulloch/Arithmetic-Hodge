@@ -457,83 +457,12 @@ theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
 -- Order of the Completed Zeta Function
 -- ============================================================
 
-/-- For s > 1, the series Σ_ρ ‖ρ‖⁻ˢ over nontrivial zeta zeros converges.
+/-- **Stirling upper bound on the order of Λ₀.**
 
-    This follows from the Riemann–von Mangoldt formula N(T) = O(T log T)
-    and partial (Abel) summation: the tail Σ_{‖ρ‖>R} ‖ρ‖⁻ˢ is bounded by
-    ∫_R^∞ t⁻ˢ dN(t) ≤ C·∫_R^∞ t⁻ˢ·log t dt, which converges for s > 1. -/
-private lemma zetaZeros_summable_rpow_of_gt_one (s : ℝ) (hs : 1 < s) :
-    Summable (fun z : { w : ℂ // completedRiemannZeta₀ w = 0 ∧ w ≠ 0 } =>
-      ‖(z : ℂ)‖⁻¹ ^ s) := by
-  -- By zeta_zero_density: N(T) ≤ C₁·T·log T for T ≥ 2.
-  -- The n-th zero satisfies ‖ρ_n‖ ≥ c·n/log n for large n.
-  -- Therefore ‖ρ_n‖⁻¹ ≤ C·(log n)/n, and ‖ρ_n‖⁻ˢ ≤ C^s·(log n)^s/n^s.
-  -- Since s > 1, the series Σ (log n)^s / n^s converges by the integral test
-  -- (or comparison with Σ n^{-s+ε} for small ε > 0).
-  sorry -- HARD: Abel summation + zeta_zero_density convergence bound
+    The growth of completedRiemannZeta₀ satisfies log M(Λ₀, r) = O(r log r),
+    which gives entireOrder Λ₀ ≤ 1.
 
-/-- For 0 < s < 1, the series Σ_ρ ‖ρ‖⁻ˢ over nontrivial zeta zeros diverges.
-
-    From N(T) ≥ c·T for large T (a corollary of zeta_zero_density),
-    the partial sums satisfy Σ_{‖ρ‖≤T} ‖ρ‖⁻ˢ ≥ c'·T^{1-s} → ∞. -/
-private lemma zetaZeros_not_summable_rpow_of_lt_one (s : ℝ) (hs₀ : 0 < s) (hs₁ : s < 1) :
-    ¬ Summable (fun z : { w : ℂ // completedRiemannZeta₀ w = 0 ∧ w ≠ 0 } =>
-      ‖(z : ℂ)‖⁻¹ ^ s) := by
-  -- By zeta_zero_density: N(T) ≥ c·T for T ≥ T₀ (the main term dominates).
-  -- The n-th zero satisfies ‖ρ_n‖ ≤ C·n for all n ≥ 1.
-  -- Therefore ‖ρ_n‖⁻ˢ ≥ c/n^s, and Σ n⁻ˢ = ∞ for s < 1.
-  sorry -- HARD: Abel summation + zeta_zero_density divergence bound
-
-/-- The nontrivial zeros of ζ have exponent of convergence 1.
-    This means Σ_ρ |ρ|^{-σ} converges for σ > 1 and diverges for σ < 1. -/
-theorem zetaZero_exponent_of_convergence :
-    zeroExponent completedRiemannZeta₀ = 1 := by
-  -- The exponent of convergence λ = sInf { σ : EReal | 0 < σ ∧ Σ‖ρ‖⁻ˢ < ∞ }.
-  -- Upper bound (λ ≤ 1): for all s > 1, the sum converges, so (s : EReal) ∈ S.
-  -- Lower bound (λ ≥ 1): for all s < 1, the sum diverges, so every element of S is ≥ 1.
-  apply le_antisymm
-  · -- Upper bound: zeroExponent ≤ 1
-    -- For any x > 1 (in EReal), sInf S ≤ x (since x.toReal ∈ S).
-    -- By density of EReal, this gives sInf S ≤ 1.
-    unfold zeroExponent
-    apply le_of_forall_gt_imp_ge_of_dense
-    intro x hx
-    -- hx : (1 : EReal) < x
-    by_cases hx_top : x = ⊤
-    · subst hx_top; exact le_top
-    · have hx_ne_bot : x ≠ ⊥ := ne_bot_of_gt hx
-      set r := x.toReal with hr_def
-      have hr_eq : (r : EReal) = x := EReal.coe_toReal hx_top hx_ne_bot
-      have hr_gt : 1 < r := by
-        have : (1 : EReal) < (r : EReal) := hr_eq ▸ hx
-        exact_mod_cast this
-      rw [← hr_eq]
-      apply sInf_le
-      refine ⟨by exact_mod_cast lt_trans one_pos hr_gt, r, rfl, ?_⟩
-      exact zetaZeros_summable_rpow_of_gt_one r hr_gt
-  · -- Lower bound: 1 ≤ zeroExponent
-    -- Every element σ of the defining set satisfies 1 ≤ σ.
-    unfold zeroExponent
-    apply le_sInf
-    intro σ ⟨hσ_pos, s, hs_eq, hs_summ⟩
-    rw [← hs_eq]
-    -- Need: (1 : EReal) ≤ (s : EReal), i.e., 1 ≤ s
-    -- Suffices to show 1 ≤ s; by contradiction, if s < 1 then sum diverges
-    by_contra hlt
-    push_neg at hlt
-    -- hlt : (↑s : EReal) < 1; extract s < 1 as reals
-    have hs_lt : s < 1 := by exact_mod_cast hlt
-    have hs_pos : 0 < s := by
-      have := hs_eq ▸ hσ_pos
-      exact_mod_cast this
-    exact zetaZeros_not_summable_rpow_of_lt_one s hs_pos hs_lt hs_summ
-
-/-- **Stirling upper bound on the order of ξ.**
-
-    The growth of completedRiemannZeta₀ satisfies log M(ξ, r) = O(r log r),
-    which gives entireOrder ξ ≤ 1.
-
-    Proof sketch: ξ(s) is expressed via the Mellin transform of the Jacobi theta
+    Proof sketch: Λ₀(s) is expressed via the Mellin transform of the Jacobi theta
     kernel, which has exponential decay O(e^{−πt}) at infinity.
     For |s| ≤ r, the Mellin integral satisfies
       |Λ₀(s/2)| ≤ ∫₀^∞ |f(t)| · t^{r/2−1} dt ≤ Γ(r/2) / π^{r/2},
@@ -543,21 +472,10 @@ theorem zetaZero_exponent_of_convergence :
     is not available in Mathlib; this is axiomatized as a sound mathematical fact. -/
 private axiom completedZeta₀_order_le_one : entireOrder completedRiemannZeta₀ ≤ 1
 
-/-- **ξ(s) = completedRiemannZeta₀(s) has order 1.**
-
-    The proof combines:
-    1. Upper bound: Stirling's approximation for Γ(s/2) gives
-       log M(ξ, r) = O(r log r), hence order ≤ 1.
-       (Axiomatized via `completedZeta₀_order_le_one`.)
-    2. Lower bound: ξ has infinitely many zeros (the nontrivial zeros
-       of ζ), and the zero density N(T) ~ T/(2π) log(T/(2πe)) shows
-       the exponent of convergence is exactly 1, so order ≥ 1. -/
-theorem completedZeta_order :
-    entireOrder completedRiemannZeta₀ = 1 := by
-  apply le_antisymm
-  · exact completedZeta₀_order_le_one
-  · -- Lower bound: order ≥ 1, via exponent of convergence of zeros.
-    have hξ_ne : ¬ completedRiemannZeta₀ = 0 := by
+/-- Λ₀ is not the zero function.
+    Proof: if Λ₀ ≡ 0, then Λ(s) = -1/s - 1/(1-s), and computing
+    ζ(2) via Λ gives π = 3, contradicting π > 3. -/
+private lemma completedZeta₀_ne_zero : ¬ completedRiemannZeta₀ = 0 := by
       intro h
       -- If ξ ≡ 0, then completedRiemannZeta s = -1/s - 1/(1-s),
       -- and riemannZeta 2 = completedRiemannZeta 2 / Gammaℝ 2.
@@ -601,10 +519,78 @@ theorem completedZeta_order :
       -- But π > 3
       exact absurd (Complex.ofReal_injective (by exact_mod_cast hpi3 : (↑Real.pi : ℂ) = ↑(3 : ℝ)))
         (ne_of_gt Real.pi_gt_three)
-    calc (1 : EReal)
+
+/-- For 0 < s < 1, the series Σ_ρ ‖ρ‖⁻ˢ over zeros of Λ₀ diverges.
+
+    The hadamardZeros sequence provides zeros of completedRiemannZeta₀.
+    From zeta_zero_density, there are ≥ c·T such zeros with |Im| ≤ T.
+    For 0 < s < 1, the finset partial sums grow like T^{1-s} → ∞,
+    contradicting summability. -/
+private lemma zetaZeros_not_summable_rpow_of_lt_one (s : ℝ) (hs₀ : 0 < s) (hs₁ : s < 1) :
+    ¬ Summable (fun z : { w : ℂ // completedRiemannZeta₀ w = 0 ∧ w ≠ 0 } =>
+      ‖(z : ℂ)‖⁻¹ ^ s) := by
+  -- Strategy: hadamardZeros maps into the zero subtype (hadamardZeros_spec +
+  -- hadamardZeros_ne_zero). zeta_zero_density provides N(T) ≥ c·T zeros
+  -- with |Im| ≤ T. Each gives a distinct element of the subtype (modulo
+  -- multiplicity), and their ‖·‖⁻ˢ partial sums grow like T^{1-s} → ∞.
+  -- The Abel summation / finset partial sum bound connects this to
+  -- the summability definition. This requires zero density on hadamardZeros
+  -- (from zeta_zero_density) and the bound ‖z‖ ≤ C·(|Im z| + 1) for Λ₀ zeros.
+  --
+  -- DEPENDENCY: zeta_zero_density (ZetaProduct.lean)
+  -- The density estimate + Abel summation chain.
+  -- The key steps (each calling pre-existing sorry'd infrastructure):
+  -- 1. From zeta_zero_density: #{n < ⌈T⌉² : |Im(hadamardZeros n)| ≤ T} ≈ T·log T
+  -- 2. hadamardZeros n ∈ Z for all n (hadamardZeros_spec + hadamardZeros_ne_zero)
+  -- 3. The image Finset in Z has ≥ c·T distinct elements for large T
+  -- 4. Each has ‖z‖⁻ˢ bounded below (using Im² ≤ ‖z‖² ≤ Re² + Im²)
+  -- 5. Finset sum ≥ c·T·(something) → ∞ contradicts summability bound
+  sorry
+
+/-- The zeros of Λ₀ = completedRiemannZeta₀ have exponent of convergence 1.
+
+    **Upper bound** (λ ≤ 1): From `zeroExponent_le_order` and the Stirling bound
+    `completedZeta₀_order_le_one`, we have λ ≤ ρ ≤ 1.
+
+    **Lower bound** (λ ≥ 1): For any 0 < s < 1, the series over zero norms
+    diverges by `zetaZeros_not_summable_rpow_of_lt_one`, so every element of
+    the defining set { σ | Σ ‖z‖⁻σ < ∞ } satisfies σ ≥ 1. -/
+theorem zetaZero_exponent_of_convergence :
+    zeroExponent completedRiemannZeta₀ = 1 := by
+  apply le_antisymm
+  · -- Upper bound: zeroExponent ≤ entireOrder ≤ 1
+    calc zeroExponent completedRiemannZeta₀
+        ≤ entireOrder completedRiemannZeta₀ :=
+          zeroExponent_le_order _ differentiable_completedZeta₀ completedZeta₀_ne_zero
+      _ ≤ 1 := completedZeta₀_order_le_one
+  · -- Lower bound: 1 ≤ zeroExponent
+    -- Every element σ of the defining set satisfies 1 ≤ σ.
+    unfold zeroExponent
+    apply le_sInf
+    intro σ ⟨hσ_pos, s, hs_eq, hs_summ⟩
+    rw [← hs_eq]
+    -- Need: (1 : EReal) ≤ (s : EReal), i.e., 1 ≤ s
+    -- By contradiction: if s < 1 then the sum diverges
+    by_contra hlt
+    push_neg at hlt
+    have hs_lt : s < 1 := by exact_mod_cast hlt
+    have hs_pos : 0 < s := by
+      have := hs_eq ▸ hσ_pos
+      exact_mod_cast this
+    exact zetaZeros_not_summable_rpow_of_lt_one s hs_pos hs_lt hs_summ
+
+/-- **Λ₀ has order 1.**
+
+    Upper bound: Stirling bound (axiomatized via `completedZeta₀_order_le_one`).
+    Lower bound: exponent of convergence = 1 ≤ order (via `zeroExponent_le_order`). -/
+theorem completedZeta_order :
+    entireOrder completedRiemannZeta₀ = 1 := by
+  apply le_antisymm
+  · exact completedZeta₀_order_le_one
+  · calc (1 : EReal)
         = zeroExponent completedRiemannZeta₀ := zetaZero_exponent_of_convergence.symm
       _ ≤ entireOrder completedRiemannZeta₀ :=
-          zeroExponent_le_order _ differentiable_completedZeta₀ hξ_ne
+          zeroExponent_le_order _ differentiable_completedZeta₀ completedZeta₀_ne_zero
 
 /-- **The genus of ξ is 1.**
     Since the order is 1, the Hadamard genus p = ⌊ρ⌋ = 1.

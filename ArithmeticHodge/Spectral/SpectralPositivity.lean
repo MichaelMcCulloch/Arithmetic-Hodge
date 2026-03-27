@@ -117,6 +117,73 @@ private lemma resolvent_norm_bound
   exact le_of_mul_le_mul_right h1 hxn
 
 -- ============================================================
+-- Cayley Transform Infrastructure
+-- ============================================================
+
+/-- If w is orthogonal to the range of (D - zI) for a densely-defined
+    self-adjoint D with Im z ≠ 0, then w = 0.
+
+    Proof outline:
+    1. ⟨Dx, w⟩ = conj(z)⟨x, w⟩ shows the functional is bounded
+    2. Self-adjointness forces w ∈ Dom(D)
+    3. Symmetry gives ⟨x, (D-z̄)w⟩ = 0 for all x ∈ Dom(D)
+    4. Density gives (D-z̄)w = 0
+    5. Resolvent bound gives w = 0 -/
+private lemma range_orthogonal_eq_zero
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (z : ℂ) (hz : z.im ≠ 0) (w : H)
+    (horth : ∀ x : D.domain, ⟪D.toFun x - z • (x : H), w⟫_ℂ = 0) :
+    w = 0 := by
+  -- Step 1: ⟨Dx, w⟩ = conj(z) * ⟨x, w⟩ for all x ∈ Dom(D)
+  have hdx : ∀ x : D.domain, ⟪D.toFun x, w⟫_ℂ = starRingEnd ℂ z * ⟪(x : H), w⟫_ℂ := by
+    intro x
+    have h := horth x
+    rw [inner_sub_left, inner_smul_left, sub_eq_zero] at h
+    exact h
+  -- Step 2: The functional x ↦ ⟨Dx, w⟩ is bounded by ‖z‖·‖w‖·‖x‖
+  have hbound : ∃ C : ℝ, ∀ x : D.domain, ‖⟪D.toFun x, w⟫_ℂ‖ ≤ C * ‖(x : H)‖ := by
+    refine ⟨‖z‖ * ‖w‖, fun x => ?_⟩
+    rw [hdx x, norm_mul, RCLike.norm_conj]
+    calc ‖z‖ * ‖⟪(x : H), w⟫_ℂ‖
+        ≤ ‖z‖ * (‖(x : H)‖ * ‖w‖) :=
+          mul_le_mul_of_nonneg_left (norm_inner_le_norm (𝕜 := ℂ) _ _) (norm_nonneg _)
+      _ = ‖z‖ * ‖w‖ * ‖(x : H)‖ := by ring
+  -- Step 3: By self-adjointness, w ∈ Dom(D)
+  have hw_dom : w ∈ D.domain := hD.2 w hbound
+  -- Step 4: ⟨x, (D - z̄)w⟩ = 0 for all x ∈ Dom(D), by symmetry
+  have hDzbar : ∀ x : D.domain,
+      ⟪(x : H), D.toFun ⟨w, hw_dom⟩ - starRingEnd ℂ z • w⟫_ℂ = 0 := by
+    intro x
+    rw [inner_sub_right, inner_smul_right, ← hD.1 x ⟨w, hw_dom⟩]
+    exact sub_eq_zero.mpr (hdx x)
+  -- Step 5: By density of Dom(D), (D - z̄)w = 0
+  have hDw_zero : D.toFun ⟨w, hw_dom⟩ - starRingEnd ℂ z • w = 0 :=
+    hd.eq_zero_of_inner_right (fun v hv => hDzbar ⟨v, hv⟩)
+  -- Step 6: Resolvent bound with z̄ gives |Im z| · ‖w‖ ≤ 0
+  have hres := resolvent_norm_bound hD (starRingEnd ℂ z) ⟨w, hw_dom⟩
+  rw [hDw_zero, norm_zero] at hres
+  -- hres : |(starRingEnd ℂ z).im| * ‖w‖ ≤ 0
+  -- |(conj z).im| = |-z.im| = |z.im|
+  have him : |(starRingEnd ℂ z).im| = |z.im| := by
+    simp [starRingEnd_apply, RCLike.star_def, RCLike.conj_im, abs_neg]
+  rw [him] at hres
+  exact norm_eq_zero.mp (le_antisymm (nonneg_of_mul_nonneg_left hres (abs_pos.mpr hz) |>.le)
+    (norm_nonneg _) |>.symm ▸ rfl)
+
+/-- The range of (D - zI) is surjective for Im z ≠ 0 and D densely-defined
+    self-adjoint. That is, for every y ∈ H there exists x ∈ Dom(D) with
+    (D - z)x = y.
+
+    Proof: range is dense (orthogonal complement is zero by
+    `range_orthogonal_eq_zero`), then a Cauchy sequence argument using
+    the resolvent bound shows the range is closed. -/
+private lemma resolvent_surjective
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (z : ℂ) (hz : z.im ≠ 0) (y : H) :
+    ∃ x : D.domain, D.toFun x - z • (x : H) = y := by
+  sorry
+
+-- ============================================================
 -- Existence of Spectral Calculus (The Spectral Theorem)
 -- ============================================================
 
