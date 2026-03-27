@@ -19,11 +19,14 @@ The approach is informed by a physical intuition: mathematical structures are di
 - Hadamard product logarithmic derivative (hadamard_logDeriv)
 - Borel-Carathéodory theorem
 - Jensen's formula connection to Mathlib's logCounting
+- **Jensen zero count bound** (`zeroCount_le_logMax` — n(f,r) ≤ (1/log2)·log(M(f,2r)/|f(0)|), full finsum infrastructure)
 - Poisson summation, theta functional equation, zeta functional equation (from Mathlib)
 - Fourier positivity of autocorrelations (fourierCos_autocorrelation_eq_sq — full Fubini proof)
 - Weil criterion backward direction (positivity → RH, via Bombieri test functions)
 - Spectral pairing non-negativity → convergence → Weil positivity → RH chain
 - Cutoff Hilbert space infrastructure (separability, infinite-dimensionality, eigenbasis)
+- **Atomless splitting lemma** (Sierpinski 1922 — `noAtoms_exists_measurableSet_pos_lt`, full proof via measure support)
+- **Infinite-dimensional L²** (`noAtoms_hilbertBasis_infinite` — no sorry, uses splitting lemma)
 - Haar invariance from trivial Haar character
 
 ### What's scaffolded (sorry present, known mathematics)
@@ -35,7 +38,7 @@ The approach is informed by a physical intuition: mathematical structures are di
 - `zeta_zero_density` — N(T) ~ (T/2π)log(T/2πe)
 - `bombieriAutocorrelation_weil_neg` — Bombieri's Theorem 2
 - `rh_implies_weil_positivity_from_explicit` — forward Weil criterion
-- `zeroCount_le_logMax` — zero count from Jensen
+- ~~`zeroCount_le_logMax`~~ — **PROVED** (zero count from Jensen, full finsum infrastructure)
 - `vacuumVector_norm_sq_le_one` — vacuum normalization
 
 ### What's axiomatized (the real mathematical content)

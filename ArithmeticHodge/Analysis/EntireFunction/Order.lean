@@ -230,7 +230,202 @@ theorem zeroCount_le_logMax (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf0 : f 0 ≠ 0) (r : ℝ) (hr : 0 < r) :
     (zeroCount f r : ℝ) ≤ (1 / Real.log 2) *
       (Real.log (maxModulus f (2 * r)) - Real.log ‖f 0‖) := by
-  sorry -- SCAFFOLD: Jensen at radius 2r, then n(r)·log 2 ≤ N(2r)
+  -- Step 1: Jensen's formula at radius 2r gives the upper bound on N(f, 2r)
+  have h2r : 0 < 2 * r := by linarith
+  have hJensen := jensen_zero_count_le_log_max f hf hf0 (2 * r) h2r
+  -- Step 2: The key inequality n(f,r) · log 2 ≤ N(f, 2r)
+  -- Each zero z of f with ‖z‖ ≤ r contributes ≥ log 2 to the integrated counting
+  -- function N(f, 2r) = Σ multiplicity(z) · log(2r/‖z‖) ≥ Σ 1 · log 2 = n(f,r) · log 2
+  have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos one_lt_two
+  -- Suffices to show n(f,r) · log 2 ≤ log M(f, 2r) - log ‖f 0‖
+  -- Strategy: n(f,r) · log 2 ≤ N(f, 2r) ≤ log M(f, 2r) - log ‖f 0‖
+  have key : (zeroCount f r : ℝ) * Real.log 2 ≤ integratedZeroCount f (2 * r) := by
+    -- We prove this by showing each zero z with ‖z‖ ≤ r contributes ≥ log 2 to N(f, 2r)
+    unfold integratedZeroCount
+    -- logCounting f (↑0) = logCounting f (0 : WithTop ℂ) uses the zero divisor
+    change (zeroCount f r : ℝ) * Real.log 2 ≤ ValueDistribution.logCounting f (0 : WithTop ℂ) (2 * r)
+    rw [ValueDistribution.logCounting_zero]
+    -- Goal: (zeroCount f r : ℝ) * log 2 ≤ (divisor f univ)⁺.logCounting (2 * r)
+    -- Set up
+    set D := (MeromorphicOn.divisor f Set.univ)⁺ with hD_def
+    have hf_an : AnalyticOnNhd ℂ f Set.univ := analyticOnNhd_univ_iff_differentiable.mpr hf
+    have hf_mer : MeromorphicOn f Set.univ := hf_an.meromorphicOn
+    -- D 0 = 0 since f 0 ≠ 0
+    have hord0 : meromorphicOrderAt f 0 = 0 := by
+      rwa [(hf_an 0 (Set.mem_univ 0)).meromorphicNFAt.meromorphicOrderAt_eq_zero_iff]
+    have hD0 : D 0 = 0 := by
+      simp [hD_def, Function.locallyFinsuppWithin.posPart_apply,
+            MeromorphicOn.divisor_apply hf_mer (Set.mem_univ 0), hord0]
+    -- Expand logCounting
+    show (zeroCount f r : ℝ) * Real.log 2 ≤ D.logCounting (2 * r)
+    -- For entire f, divisor is nonneg, so D = (divisor f univ)⁺ = divisor f univ
+    have hdiv_nn : (0 : Function.locallyFinsupp ℂ ℤ) ≤ MeromorphicOn.divisor f Set.univ :=
+      (hf_an.meromorphicNFOn.divisor_nonneg_iff_analyticOnNhd).mpr hf_an
+    -- D z = divisor f univ z for all z (since divisor ≥ 0, posPart = id)
+    -- Pointwise nonneg
+    have hdiv_nn_z : ∀ z, 0 ≤ MeromorphicOn.divisor f Set.univ z := hdiv_nn
+    have hD_eq : ∀ z, D z = MeromorphicOn.divisor f Set.univ z := by
+      intro z
+      show (MeromorphicOn.divisor f Set.univ z)⁺ = MeromorphicOn.divisor f Set.univ z
+      exact posPart_eq_self.mpr (hdiv_nn_z z)
+    -- D ≥ 0
+    have hD_nn : (0 : Function.locallyFinsupp ℂ ℤ) ≤ D := by
+      intro z; rw [hD_eq]; exact hdiv_nn_z z
+    -- Set R = 2 * r
+    set R := 2 * r with hR_def
+    have hR_pos : 0 < R := by linarith
+    -- Use single ≤ D for each zero, then logCounting_le (when R ≥ 1) or direct argument
+    -- For z a zero with ‖z‖ ≤ r: meromorphicOrderAt f z ≥ 1 and ≠ ⊤
+    have hzero_div : ∀ z : ℂ, f z = 0 → 1 ≤ D z := by
+      intro z hfz
+      rw [hD_eq, MeromorphicOn.divisor_apply hf_mer (Set.mem_univ z)]
+      -- Need: 1 ≤ (meromorphicOrderAt f z).untop₀
+      have han_z := hf_an z (Set.mem_univ z)
+      -- f z = 0 implies meromorphicOrderAt f z ≠ 0
+      have hord_ne_zero : meromorphicOrderAt f z ≠ 0 := by
+        intro h
+        exact absurd hfz (han_z.meromorphicNFAt.meromorphicOrderAt_eq_zero_iff.mp h)
+      -- meromorphicOrderAt f z ≥ 0 (analytic)
+      have hord_nn := han_z.meromorphicOrderAt_nonneg
+      -- meromorphicOrderAt f z > 0
+      have hord_pos : 0 < meromorphicOrderAt f z :=
+        lt_of_le_of_ne hord_nn (Ne.symm hord_ne_zero)
+      -- meromorphicOrderAt f z ≠ ⊤ (f is not identically zero)
+      have hord_ne_top : meromorphicOrderAt f z ≠ ⊤ := by
+        rw [meromorphicOrderAt_ne_top_iff_eventually_ne_zero han_z.meromorphicAt]
+        -- f has isolated zeros: either eventually zero or eventually nonzero near z
+        rcases han_z.eventually_eq_zero_or_eventually_ne_zero with h | h
+        · -- If f is eventually 0 near z, then by identity principle f = 0 everywhere
+          exfalso
+          have : f = 0 := AnalyticOnNhd.eq_of_eventuallyEq hf_an
+            (analyticOnNhd_const) h
+          exact hf0 (congr_fun this 0)
+        · exact h
+      -- Now: untop₀ of a positive finite WithTop ℤ is ≥ 1
+      have h_eq := WithTop.coe_untop₀_of_ne_top hord_ne_top
+      rw [← h_eq] at hord_pos
+      exact_mod_cast hord_pos
+    -- Now the main bound. Use monotonicity of logCounting on Ioi 0
+    -- logCounting D R ≥ 0 (since D ≥ 0, D 0 = 0, R > 0 means all terms are nonneg)
+    -- We need: zeroCount * log 2 ≤ D.logCounting R
+    -- Expand logCounting
+    unfold Function.locallyFinsuppWithin.logCounting
+    simp only [AddMonoidHom.coe_mk, ZeroHom.coe_mk, hD0, Int.cast_zero, zero_mul, add_zero]
+    -- The support of D.toClosedBall R is finite
+    have hsupp_fin := (Function.locallyFinsuppWithin.toClosedBall R D).finiteSupport
+      (isCompact_closedBall 0 |R|)
+    -- Convert finsum to Finset.sum
+    -- The function being summed is g z := ↑(D.toClosedBall R z) * log(R * ‖z‖⁻¹)
+    -- Its support is contained in the support of D.toClosedBall R
+    rw [finsum_eq_sum_of_support_subset _ (s := hsupp_fin.toFinset) (fun x hx => by
+      simp only [Finset.mem_coe, hsupp_fin.mem_toFinset, Function.mem_support]
+      intro h
+      exact (Function.mem_support.mp hx) (by simp [h]))]
+    -- Each z with ‖z‖ ≤ r and f z = 0 is in the support, and contributes ≥ log 2
+    -- The zero set in ball r is a subset of the support of D.toClosedBall R
+    -- First show each zero is in hsupp_fin.toFinset
+    have habs_R : |R| = R := abs_of_pos hR_pos
+    have hzero_in_supp : ∀ z : ℂ, ‖z‖ ≤ r → f z = 0 → z ∈ hsupp_fin.toFinset := by
+      intro z hz hfz
+      rw [hsupp_fin.mem_toFinset, Function.mem_support]
+      have hz_mem : z ∈ Metric.closedBall (0 : ℂ) |R| := by
+        simp [Metric.mem_closedBall, habs_R]; linarith
+      rw [Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+      exact_mod_cast ne_of_gt (lt_of_lt_of_le Int.one_pos (hzero_div z hfz))
+    -- Each term in the sum is nonneg
+    have hterm_nn : ∀ z ∈ hsupp_fin.toFinset,
+        0 ≤ ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+            Real.log (R * ‖z‖⁻¹) := by
+      intro z hz
+      have hz_mem : z ∈ Metric.closedBall (0 : ℂ) |R| := by
+        exact Function.locallyFinsuppWithin.toClosedBall_support_subset_closedBall D
+          (hsupp_fin.mem_toFinset.mp hz)
+      rw [Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+      -- z is in the support, so D z ≠ 0. Since D ≥ 0, D z > 0. Since D 0 = 0, z ≠ 0.
+      have hDz_ne : D z ≠ 0 := by
+        have := hsupp_fin.mem_toFinset.mp hz
+        rwa [Function.mem_support, Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+          at this
+      have hz0 : z ≠ 0 := by
+        intro heq; rw [heq] at hDz_ne; exact hDz_ne hD0
+      apply mul_nonneg
+      · exact_mod_cast hD_nn z
+      · apply Real.log_nonneg
+        rw [habs_R, Metric.mem_closedBall, Complex.dist_eq, sub_zero] at hz_mem
+        rw [le_mul_inv_iff₀ (norm_pos_iff.mpr hz0)]
+        linarith
+    -- Each zero z with ‖z‖ ≤ r contributes ≥ log 2
+    have hterm_ge : ∀ z : ℂ, ‖z‖ ≤ r → f z = 0 →
+        Real.log 2 ≤ ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+            Real.log (R * ‖z‖⁻¹) := by
+      intro z hz hfz
+      have hz_ne : z ≠ 0 := by intro h; rw [h] at hfz; exact hf0 hfz
+      have hz_mem : z ∈ Metric.closedBall (0 : ℂ) |R| := by
+        simp [Metric.mem_closedBall, habs_R]; linarith
+      rw [Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+      -- D z ≥ 1 and log(R/‖z‖) ≥ log 2
+      have hDz := hzero_div z hfz
+      have hlog_ge : Real.log 2 ≤ Real.log (R * ‖z‖⁻¹) := by
+        apply Real.log_le_log (by positivity)
+        rw [le_mul_inv_iff₀ (norm_pos_iff.mpr hz_ne)]
+        linarith
+      calc Real.log 2
+          = 1 * Real.log 2 := by ring
+        _ ≤ ↑(D z) * Real.log (R * ‖z‖⁻¹) := by
+            apply mul_le_mul
+            · exact_mod_cast hDz
+            · exact hlog_ge
+            · exact hlog2_pos.le
+            · exact_mod_cast le_trans (by norm_num : (0 : ℤ) ≤ 1) hDz
+    -- Now: zeroCount * log 2 = Nat.card * log 2 ≤ ∑ over zeros ≤ ∑ over support
+    -- Use Nat.card = the number of elements in the subtype
+    -- We need to relate zeroCount to a sum over a finset
+    -- zeroCount f r = Nat.card { z : ℂ // ‖z‖ ≤ r ∧ f z = 0 }
+    -- Key: this equals the cardinality of a finite set, and we can bound
+    -- the sum over the support by summing over these zeros
+
+    -- Since the zeros are finite and contained in the support finset,
+    -- build a finset of zeros
+    -- The zeros in ball r are finite (subset of the finite support)
+    have hzero_finite : Set.Finite { z : ℂ | ‖z‖ ≤ r ∧ f z = 0 } := by
+      apply Set.Finite.subset (s := ↑hsupp_fin.toFinset) hsupp_fin.toFinset.finite_toSet
+      intro z ⟨hz, hfz⟩
+      exact Finset.mem_coe.mpr (hzero_in_supp z hz hfz)
+    -- zeroCount equals the toFinset.card
+    have hzc_eq : zeroCount f r = hzero_finite.toFinset.card := by
+      unfold zeroCount
+      exact Nat.card_eq_card_finite_toFinset hzero_finite
+    rw [hzc_eq]
+    -- Now: hzero_finite.toFinset ⊆ hsupp_fin.toFinset
+    have hsubset : hzero_finite.toFinset ⊆ hsupp_fin.toFinset := by
+      intro z hz
+      rw [Set.Finite.mem_toFinset] at hz
+      exact hzero_in_supp z hz.1 hz.2
+    -- Goal: hzero_finite.toFinset.card * log 2 ≤ ∑ z in hsupp_fin.toFinset, ...
+    calc ↑hzero_finite.toFinset.card * Real.log 2
+        = hzero_finite.toFinset.card • Real.log 2 := by rw [nsmul_eq_mul]
+      _ ≤ ∑ z ∈ hzero_finite.toFinset,
+            ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+            Real.log (R * ‖z‖⁻¹) := by
+          apply Finset.card_nsmul_le_sum
+          intro z hz
+          rw [Set.Finite.mem_toFinset] at hz
+          exact hterm_ge z hz.1 hz.2
+      _ ≤ ∑ z ∈ hsupp_fin.toFinset,
+            ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+            Real.log (R * ‖z‖⁻¹) :=
+          Finset.sum_le_sum_of_subset_of_nonneg hsubset
+            (fun z hz _ => hterm_nn z hz)
+  -- Combine with Jensen
+  have chain : (zeroCount f r : ℝ) * Real.log 2 ≤
+      Real.log (maxModulus f (2 * r)) - Real.log ‖f 0‖ := le_trans key hJensen
+  -- Divide by log 2
+  calc (zeroCount f r : ℝ)
+      = (zeroCount f r : ℝ) * Real.log 2 / Real.log 2 := by
+          rw [mul_div_cancel_right₀ _ (ne_of_gt hlog2_pos)]
+    _ ≤ (Real.log (maxModulus f (2 * r)) - Real.log ‖f 0‖) / Real.log 2 :=
+          div_le_div_of_nonneg_right chain hlog2_pos.le
+    _ = 1 / Real.log 2 * (Real.log (maxModulus f (2 * r)) - Real.log ‖f 0‖) := by ring
 
 -- ============================================================
 -- Exponent of Convergence

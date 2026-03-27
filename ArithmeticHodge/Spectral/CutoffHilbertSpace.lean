@@ -20,6 +20,7 @@ import ArithmeticHodge.Adelic.ClassSpace
 import ArithmeticHodge.Spectral.UnboundedOperator
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Measure.Typeclasses.NoAtoms
+import Mathlib.MeasureTheory.Measure.Support
 import Mathlib.MeasureTheory.Group.Measure
 import ArithmeticHodge.Analysis.WeilDefs
 
@@ -530,14 +531,76 @@ instance cutoffMeasure_noAtoms (Λ : ℝ) : NoAtoms (cutoffMeasure X Λ) := by
   exact Measure.restrict.instNoAtoms _
 
 /-- **Atomless splitting lemma (Sierpinski 1922).** In a `NoAtoms` finite
-    measure, any measurable set of positive measure contains a measurable
-    subset of strictly positive and strictly smaller measure.
-    Standard measure theory; not yet available in Mathlib. SORRY COUNT: 1. -/
+    measure on a second countable T₂ Borel space, any measurable set of
+    positive measure contains a measurable subset of strictly positive
+    and strictly smaller measure.
+
+    The proof uses the support of the restricted measure μ.restrict s.
+    In a hereditarily Lindelöf space, μ(supp(μ)ᶜ) = 0. The support of
+    μ.restrict s must contain ≥ 2 points (otherwise the measure would be
+    concentrated on a singleton, contradicting NoAtoms). Separate these
+    points with disjoint open sets (T₂) to get the splitting. -/
 theorem noAtoms_exists_measurableSet_pos_lt
-    {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ] [NoAtoms μ]
+    {α : Type*} [TopologicalSpace α] [SecondCountableTopology α] [T2Space α]
+    [MeasurableSpace α] [BorelSpace α]
+    (μ : Measure α) [IsFiniteMeasure μ] [NoAtoms μ]
     {s : Set α} (hs : MeasurableSet s) (hμs : 0 < μ s) :
     ∃ t, t ⊆ s ∧ MeasurableSet t ∧ 0 < μ t ∧ μ t < μ s := by
-  sorry
+  -- Work with the restricted measure ν = μ.restrict s
+  set ν := μ.restrict s with hν_def
+  -- ν has positive total mass
+  have hν_pos : 0 < ν Set.univ := by
+    rw [hν_def, Measure.restrict_apply MeasurableSet.univ, Set.univ_inter]; exact hμs
+  -- The support of ν: ν(supp(ν)ᶜ) = 0 in hereditarily Lindelöf spaces
+  have hν_supp : ν ν.supportᶜ = 0 := Measure.measure_compl_support
+  -- supp(ν) is nonempty (otherwise ν(univ) ≤ ν(suppᶜ) = 0)
+  have hsupp_ne : ν.support.Nonempty := by
+    by_contra h
+    rw [Set.not_nonempty_iff_eq_empty] at h
+    have h1 : ν Set.univ ≤ ν ν.supportᶜ := by rw [h, Set.compl_empty]
+    exact absurd (lt_of_lt_of_le hν_pos (h1.trans (le_of_eq hν_supp))) (not_lt.mpr (zero_le _))
+  -- supp(ν) has ≥ 2 points: if subsingleton, ν concentrated on ≤ 1 point → ν = 0
+  have hsupp_not_sub : ¬ ν.support.Subsingleton := by
+    intro hsub
+    have h1 : ν ν.support = 0 := hsub.measure_zero ν
+    -- ν(univ) = ν(supp) + ν(suppᶜ) via decomposition; both are 0
+    have h2 : ν Set.univ ≤ ν ν.support + ν ν.supportᶜ := by
+      calc ν Set.univ
+          ≤ ν (ν.support ∪ ν.supportᶜ) := measure_mono (Set.subset_union_compl_iff_inter_subset.mpr
+              (by simp))
+        _ ≤ ν ν.support + ν ν.supportᶜ := measure_union_le _ _
+    rw [h1, hν_supp, add_zero] at h2
+    exact absurd hν_pos (not_lt.mpr h2)
+  -- Extract two distinct points in the support
+  rw [Set.not_subsingleton_iff] at hsupp_not_sub
+  obtain ⟨x, hx, y, hy, hxy⟩ := hsupp_not_sub
+  -- Separate x, y with disjoint open sets (T₂)
+  obtain ⟨U, V, hU_open, hV_open, hxU, hyV, hUV_disj⟩ := t2_separation hxy
+  -- x ∈ supp(ν) → ν(U) > 0 → μ(s ∩ U) > 0
+  have hνU : 0 < ν U := (mem_support_iff_forall x).mp hx U (hU_open.mem_nhds hxU)
+  have hμsU : 0 < μ (s ∩ U) := by
+    have : ν U = μ (U ∩ s) := by rw [hν_def, Measure.restrict_apply hU_open.measurableSet]
+    rwa [this, Set.inter_comm] at hνU
+  -- y ∈ supp(ν) → ν(V) > 0 → μ(s ∩ V) > 0
+  have hνV : 0 < ν V := (mem_support_iff_forall y).mp hy V (hV_open.mem_nhds hyV)
+  have hμsV : 0 < μ (s ∩ V) := by
+    have : ν V = μ (V ∩ s) := by rw [hν_def, Measure.restrict_apply hV_open.measurableSet]
+    rwa [this, Set.inter_comm] at hνV
+  -- t = s ∩ U works
+  refine ⟨s ∩ U, Set.inter_subset_left, hs.inter hU_open.measurableSet, hμsU, ?_⟩
+  -- μ(s ∩ U) < μ(s): since s ∩ V is disjoint from s ∩ U and has positive measure
+  have hsub : s ∩ V ⊆ s \ (s ∩ U) := by
+    intro z ⟨hzs, hzV⟩
+    exact ⟨hzs, fun ⟨_, hzU⟩ => Set.disjoint_left.mp hUV_disj hzU hzV⟩
+  have hfin : μ (s ∩ U) ≠ ⊤ :=
+    ne_top_of_le_ne_top (measure_ne_top μ s) (measure_mono Set.inter_subset_left)
+  have hdisjoint : Disjoint (s ∩ U) (s ∩ V) :=
+    hUV_disj.mono Set.inter_subset_right Set.inter_subset_right
+  calc μ (s ∩ U)
+      < μ (s ∩ U) + μ (s ∩ V) := ENNReal.lt_add_right hfin (ne_of_gt hμsV)
+    _ = μ (s ∩ U ∪ s ∩ V) := (measure_union hdisjoint
+          (hs.inter hV_open.measurableSet)).symm
+    _ ≤ μ s := measure_mono (Set.union_subset Set.inter_subset_left Set.inter_subset_left)
 
 /-- **NoAtoms + positive finite measure implies infinite-dimensional L².**
 
@@ -555,7 +618,9 @@ theorem noAtoms_exists_measurableSet_pos_lt
 
     SORRY COUNT: 1 (uses `noAtoms_exists_measurableSet_pos_lt`). -/
 theorem noAtoms_hilbertBasis_infinite
-    {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ] [NoAtoms μ]
+    {α : Type*} [TopologicalSpace α] [SecondCountableTopology α] [T2Space α]
+    [MeasurableSpace α] [BorelSpace α]
+    (μ : Measure α) [IsFiniteMeasure μ] [NoAtoms μ]
     (hμ : μ Set.univ > 0)
     (w : Set (Lp ℂ 2 μ))
     (b : HilbertBasis w ℂ (Lp ℂ 2 μ))
