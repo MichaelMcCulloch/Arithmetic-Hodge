@@ -158,17 +158,21 @@ private lemma range_orthogonal_eq_zero
     exact sub_eq_zero.mpr (hdx x)
   -- Step 5: By density of Dom(D), (D - z̄)w = 0
   have hDw_zero : D.toFun ⟨w, hw_dom⟩ - starRingEnd ℂ z • w = 0 :=
-    hd.eq_zero_of_inner_right (fun v hv => hDzbar ⟨v, hv⟩)
+    hd.eq_zero_of_inner_right (𝕜 := ℂ) (fun v hv => hDzbar ⟨v, hv⟩)
   -- Step 6: Resolvent bound with z̄ gives |Im z| · ‖w‖ ≤ 0
   have hres := resolvent_norm_bound hD (starRingEnd ℂ z) ⟨w, hw_dom⟩
   rw [hDw_zero, norm_zero] at hres
-  -- hres : |(starRingEnd ℂ z).im| * ‖w‖ ≤ 0
   -- |(conj z).im| = |-z.im| = |z.im|
   have him : |(starRingEnd ℂ z).im| = |z.im| := by
-    simp [starRingEnd_apply, RCLike.star_def, RCLike.conj_im, abs_neg]
+    have : (starRingEnd ℂ z : ℂ).im = -z.im := rfl
+    rw [this, abs_neg]
   rw [him] at hres
-  exact norm_eq_zero.mp (le_antisymm (nonneg_of_mul_nonneg_left hres (abs_pos.mpr hz) |>.le)
-    (norm_nonneg _) |>.symm ▸ rfl)
+  -- hres : |z.im| * ‖w‖ ≤ 0, but |z.im| > 0, so ‖w‖ = 0
+  have h_eq : |z.im| * ‖w‖ = 0 :=
+    le_antisymm hres (mul_nonneg (abs_nonneg _) (norm_nonneg _))
+  rcases mul_eq_zero.mp h_eq with h | h
+  · exact absurd (abs_eq_zero.mp h) hz
+  · exact norm_eq_zero.mp h
 
 /-- The range of (D - zI) is surjective for Im z ≠ 0 and D densely-defined
     self-adjoint. That is, for every y ∈ H there exists x ∈ Dom(D) with
