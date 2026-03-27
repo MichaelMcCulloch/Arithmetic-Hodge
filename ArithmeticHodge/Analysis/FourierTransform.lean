@@ -20,6 +20,7 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 import Mathlib.MeasureTheory.Group.Integral
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
+import Mathlib.Analysis.Real.Pi.Bounds
 
 import ArithmeticHodge.Analysis.WeilExplicit
 
@@ -462,19 +463,96 @@ theorem bombieriAutocorrelation_continuous (σ₀ : ℝ) :
     exact ae_of_all _ fun y =>
       Continuous.mul continuous_const (hg_cont.comp (continuous_const.add continuous_id))
 
-/-- The Bombieri autocorrelation has Gaussian decay, hence rational decay. -/
+-- Helper: 1 + x² ≤ exp(π·x²/2) via π/2 > 1 and add_one_le_exp
+private lemma one_add_sq_le_exp_pi_half_sq (x : ℝ) :
+    1 + x ^ 2 ≤ Real.exp (π * x ^ 2 / 2) := by
+  have hpi : (1 : ℝ) ≤ π / 2 := by linarith [Real.pi_gt_three]
+  calc 1 + x ^ 2
+      ≤ 1 + π / 2 * x ^ 2 := by nlinarith [sq_nonneg x]
+    _ = π * x ^ 2 / 2 + 1 := by ring
+    _ ≤ Real.exp (π * x ^ 2 / 2) := Real.add_one_le_exp _
+
+-- Helper: exp(-πx²/2) ≤ 1/(1+x²)
+private lemma exp_neg_pi_half_sq_le_inv (x : ℝ) :
+    Real.exp (-(π * x ^ 2 / 2)) ≤ 1 / (1 + x ^ 2) := by
+  have h1 : 0 < 1 + x ^ 2 := by positivity
+  rw [le_div_iff₀ h1]
+  calc Real.exp (-(π * x ^ 2 / 2)) * (1 + x ^ 2)
+      ≤ Real.exp (-(π * x ^ 2 / 2)) * Real.exp (π * x ^ 2 / 2) := by
+        apply mul_le_mul_of_nonneg_left (one_add_sq_le_exp_pi_half_sq x) (Real.exp_pos _).le
+    _ = 1 := by
+        rw [← Real.exp_add]
+        have : -(π * x ^ 2 / 2) + π * x ^ 2 / 2 = 0 := by ring
+        rw [this, Real.exp_zero]
+
+-- Helper: pointwise norm bound |g(y)·g(y+x)| ≤ exp(-πy²)·exp(-π(y+x)²)
+private lemma bombieriTestFn_product_norm_bound (σ₀ x y : ℝ) :
+    ‖bombieriTestFn σ₀ y * bombieriTestFn σ₀ (y + x)‖ ≤
+    Real.exp (-π * y ^ 2) * Real.exp (-π * (y + x) ^ 2) := by
+  simp only [bombieriTestFn, norm_mul, Real.norm_eq_abs,
+    abs_of_pos (Real.exp_pos _)]
+  calc Real.exp (-π * y ^ 2) * |Real.cos (2 * π * (σ₀ - 1 / 2) * y)| *
+         (Real.exp (-π * (y + x) ^ 2) * |Real.cos (2 * π * (σ₀ - 1 / 2) * (y + x))|)
+      ≤ Real.exp (-π * y ^ 2) * 1 * (Real.exp (-π * (y + x) ^ 2) * 1) := by
+        apply mul_le_mul
+        · exact mul_le_mul_of_nonneg_left (Real.abs_cos_le_one _) (Real.exp_pos _).le
+        · exact mul_le_mul_of_nonneg_left (Real.abs_cos_le_one _) (Real.exp_pos _).le
+        · exact mul_nonneg (Real.exp_pos _).le (abs_nonneg _)
+        · exact mul_nonneg (Real.exp_pos _).le
+            (by linarith [Real.abs_cos_le_one (2 * π * (σ₀ - 1 / 2) * y)])
+    _ = Real.exp (-π * y ^ 2) * Real.exp (-π * (y + x) ^ 2) := by ring
+
+-- Helper: the Gaussian product dominator is integrable
+private lemma gaussian_product_integrable (x : ℝ) :
+    Integrable (fun y => Real.exp (-π * y ^ 2) * Real.exp (-π * (y + x) ^ 2)) volume := by
+  have : (fun y => Real.exp (-π * y ^ 2) * Real.exp (-π * (y + x) ^ 2)) =
+         (fun y => Real.exp (-(2 * π) * (y + x / 2) ^ 2) * Real.exp (-(π * x ^ 2 / 2))) := by
+    ext y; rw [← Real.exp_add, ← Real.exp_add]; congr 1; ring
+  rw [this]
+  exact ((integrable_exp_neg_mul_sq (by linarith [Real.pi_pos] : (0 : ℝ) < 2 * π)).comp_add_right
+    (x / 2)).mul_const _
+
+/-- The Bombieri autocorrelation has Gaussian decay, hence rational decay.
+
+    Proof outline:
+    1. `|f(x)| ≤ ∫ exp(-πy²)·exp(-π(y+x)²) dy` (triangle inequality, |cos| ≤ 1)
+    2. Complete the square: `-πy² - π(y+x)² = -2π(y+x/2)² - πx²/2`
+    3. `∫ exp(-2πu²) du = √(π/(2π)) = √(1/2) ≤ 1` (via `integral_gaussian`)
+    4. So `|f(x)| ≤ exp(-πx²/2) ≤ 1/(1+x²)` (via `add_one_le_exp` and `π/2 > 1`) -/
 theorem bombieriAutocorrelation_decay (σ₀ : ℝ) :
     ∀ x : ℝ, ‖bombieriAutocorrelation σ₀ x‖ ≤ 1 / (1 + x ^ 2) := by
   intro x
-  -- |f(x)| = |∫ g(y) g(y+x) dy| ≤ ∫ |g(y)| |g(y+x)| dy
-  -- |g(y)| ≤ exp(-πy²), |g(y+x)| ≤ exp(-π(y+x)²)
-  -- So |f(x)| ≤ ∫ exp(-πy² - π(y+x)²) dy
-  -- By completing the square: -πy² - π(y+x)² = -2π(y+x/2)² - πx²/2
-  -- ∫ exp(-2π(y+x/2)²) dy = √(1/(4π)) · √(2π) = 1/√2  [by Gaussian integral]
-  -- So |f(x)| ≤ exp(-πx²/2)/√2
-  -- And exp(-πx²/2)/√2 ≤ 1/(1+x²) since (1+x²)exp(-πx²/2) ≤ √2.
-  -- We verify: max of (1+x²)exp(-πx²/2) is at x=0 giving value 1 < √2.
-  sorry
+  unfold bombieriAutocorrelation
+  -- Step 1: Triangle inequality + pointwise bound
+  calc ‖∫ y, bombieriTestFn σ₀ y * bombieriTestFn σ₀ (y + x)‖
+      ≤ ∫ y, ‖bombieriTestFn σ₀ y * bombieriTestFn σ₀ (y + x)‖ :=
+        norm_integral_le_integral_norm _
+    _ ≤ ∫ y, Real.exp (-π * y ^ 2) * Real.exp (-π * (y + x) ^ 2) := by
+        apply integral_mono_of_nonneg
+        · exact ae_of_all _ fun y => norm_nonneg _
+        · exact gaussian_product_integrable x
+        · exact ae_of_all _ fun y => bombieriTestFn_product_norm_bound σ₀ x y
+    -- Step 2: Complete the square, factor out exp(-πx²/2)
+    _ = ∫ y, Real.exp (-(2 * π) * (y + x / 2) ^ 2 + -(π * x ^ 2 / 2)) := by
+        congr 1; ext y; rw [← Real.exp_add]; congr 1; ring
+    _ = ∫ y, Real.exp (-(2 * π) * (y + x / 2) ^ 2) * Real.exp (-(π * x ^ 2 / 2)) := by
+        congr 1; ext y; rw [Real.exp_add]
+    _ = (∫ y, Real.exp (-(2 * π) * (y + x / 2) ^ 2)) * Real.exp (-(π * x ^ 2 / 2)) := by
+        rw [MeasureTheory.integral_mul_const]
+    -- Step 3: Shift variable (translation invariance), evaluate Gaussian integral
+    _ = (∫ u, Real.exp (-(2 * π) * u ^ 2)) * Real.exp (-(π * x ^ 2 / 2)) := by
+        congr 1
+        exact integral_add_right_eq_self (fun u => Real.exp (-(2 * π) * u ^ 2)) (x / 2)
+    _ = √(π / (2 * π)) * Real.exp (-(π * x ^ 2 / 2)) := by
+        rw [integral_gaussian (2 * π)]
+    -- Step 4: √(π/(2π)) = √(1/2) ≤ 1
+    _ ≤ 1 * Real.exp (-(π * x ^ 2 / 2)) := by
+        apply mul_le_mul_of_nonneg_right _ (Real.exp_pos _).le
+        rw [show π / (2 * π) = 1 / 2 from by field_simp]
+        rw [Real.sqrt_le_one]; norm_num
+    _ = Real.exp (-(π * x ^ 2 / 2)) := one_mul _
+    -- Step 5: exp(-πx²/2) ≤ 1/(1+x²) via 1+x² ≤ exp(πx²/2)
+    _ ≤ 1 / (1 + x ^ 2) := exp_neg_pi_half_sq_le_inv x
 
 /-- Core spectral negativity (Bombieri's Theorem 2). -/
 theorem bombieriAutocorrelation_weil_neg
