@@ -529,28 +529,189 @@ instance cutoffMeasure_noAtoms (Λ : ℝ) : NoAtoms (cutoffMeasure X Λ) := by
   unfold cutoffMeasure
   exact Measure.restrict.instNoAtoms _
 
+/-- **Atomless splitting lemma (Sierpinski 1922).** In a `NoAtoms` finite
+    measure, any measurable set of positive measure contains a measurable
+    subset of strictly positive and strictly smaller measure.
+    Standard measure theory; not yet available in Mathlib. SORRY COUNT: 1. -/
+theorem noAtoms_exists_measurableSet_pos_lt
+    {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ] [NoAtoms μ]
+    {s : Set α} (hs : MeasurableSet s) (hμs : 0 < μ s) :
+    ∃ t, t ⊆ s ∧ MeasurableSet t ∧ 0 < μ t ∧ μ t < μ s := by
+  sorry
+
 /-- **NoAtoms + positive finite measure implies infinite-dimensional L².**
 
     If μ is a finite measure with NoAtoms and μ(univ) > 0, then L²(μ) is
     infinite-dimensional: any Hilbert basis must be indexed by an infinite set.
 
-    The mathematical argument: with NoAtoms and positive measure, any set
-    of positive measure can be split into two disjoint measurable subsets
-    each of positive measure (by the intermediate value theorem for atomless
-    measures / Sierpinski's theorem). Iterating gives 2^n disjoint sets,
-    hence 2^n orthogonal indicator functions in L², so the dimension is ≥ 2^n
-    for all n.
+    The proof proceeds by contradiction: if w were finite, b.repr gives an
+    isometric isomorphism L²(μ) ≃ₗᵢ[ℂ] ℓ²(w,ℂ), making L² finite-dimensional
+    with dimension |w|. But the atomless splitting lemma
+    (`noAtoms_exists_measurableSet_pos_lt`) lets us iteratively split univ into
+    arbitrarily many pairwise disjoint measurable sets of positive measure.
+    Their indicator functions are pairwise orthogonal and nonzero in L²,
+    hence linearly independent. Having |w|+1 linearly independent vectors
+    in a |w|-dimensional space is a contradiction.
 
-    SORRY REASON: The splitting step (Sierpinski's theorem for atomless
-    measures) is not yet in Mathlib. The statement is standard measure theory.
-    WHAT'S NEEDED: `∀ s, 0 < μ s → ∃ t ⊆ s, MeasurableSet t ∧ 0 < μ t ∧ μ t < μ s` -/
+    SORRY COUNT: 1 (uses `noAtoms_exists_measurableSet_pos_lt`). -/
 theorem noAtoms_hilbertBasis_infinite
     {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ] [NoAtoms μ]
     (hμ : μ Set.univ > 0)
     (w : Set (Lp ℂ 2 μ))
     (b : HilbertBasis w ℂ (Lp ℂ 2 μ))
     (hb : ⇑b = ((↑) : w → Lp ℂ 2 μ)) : Set.Infinite w := by
-  sorry
+  -- Proof by contradiction: if w is finite, L²(μ) is finite-dimensional.
+  intro hfin
+  haveI : Fintype w := hfin.fintype
+  -- b gives an OrthonormalBasis (since w is Fintype), hence a Basis
+  have hbas := b.toOrthonormalBasis.toBasis
+  haveI : FiniteDimensional ℂ (Lp ℂ 2 μ) := hbas.finiteDimensional_of_finite
+  -- The finrank equals |w|
+  have hrank : Module.finrank ℂ (Lp ℂ 2 μ) = Fintype.card w :=
+    Module.finrank_eq_card_basis hbas
+  -- We derive a contradiction: using the splitting lemma, we can construct
+  -- |w|+1 pairwise disjoint measurable sets of positive measure. Their
+  -- indicator functions are pairwise orthogonal nonzero elements of L²(μ),
+  -- hence linearly independent. But |w|+1 > finrank = |w|, contradiction.
+  -- Step 1: recursively construct finrank+1 pairwise disjoint measurable sets
+  -- of positive measure by iterating the splitting lemma.
+  -- At each step, split the remainder into (piece, new_remainder).
+  set n := Fintype.card w
+  -- Build a sequence of (piece, remainder) pairs by recursion
+  -- splitSeq k = (A_k, R_k) where A_k ⊆ R_{k-1}, R_k = R_{k-1} \ A_k
+  -- R_{-1} = univ
+  have split_step : ∀ (r : Set α), MeasurableSet r → 0 < μ r →
+      ∃ (a rem : Set α), a ⊆ r ∧ MeasurableSet a ∧ 0 < μ a ∧
+        rem = r \ a ∧ MeasurableSet rem ∧ 0 < μ rem := by
+    intro r hr hμr
+    obtain ⟨t, ht_sub, htm, htpos, htlt⟩ := noAtoms_exists_measurableSet_pos_lt μ hr hμr
+    refine ⟨t, r \ t, ht_sub, htm, htpos, rfl, hr.diff htm, ?_⟩
+    have h_diff := measure_diff ht_sub htm.nullMeasurableSet
+      (ne_top_of_le_ne_top (measure_ne_top μ r) (measure_mono ht_sub))
+    rw [h_diff]
+    exact tsub_pos_of_lt htlt
+  -- Use Nat.rec to build the sequence. We track (pieces_so_far, remainder, properties).
+  -- For simplicity, we build a function f : Fin (n+1) → Set α with the required properties.
+  -- We use Classical.choice to pick the splits.
+  -- Construct sets A_0, ..., A_n and remainders R_0, ..., R_n with:
+  --   R_{-1} = univ, A_k ⊆ R_{k-1}, R_k = R_{k-1} \ A_k
+  --   MeasurableSet A_k, 0 < μ(A_k), MeasurableSet R_k, 0 < μ(R_k)
+  --   A_k pairwise disjoint (since A_k ⊆ R_{k-1} and R_{k-1} is disjoint from A_0,...,A_{k-1})
+  -- We build this by choosing at each step.
+  suffices h : ∃ (f : Fin (n + 1) → Set α),
+      (∀ i, MeasurableSet (f i)) ∧
+      (∀ i, 0 < μ (f i)) ∧
+      Pairwise fun i j => Disjoint (f i) (f j) by
+    obtain ⟨f, hfm, hfpos, hfdisj⟩ := h
+    -- Step 2: Build indicator functions in L²
+    have hfin_meas : ∀ i, μ (f i) ≠ ⊤ := fun i => measure_ne_top μ (f i)
+    let v : Fin (n + 1) → Lp ℂ 2 μ := fun i =>
+      indicatorConstLp 2 (hfm i) (hfin_meas i) (1 : ℂ)
+    -- Step 3: Show nonzero and pairwise orthogonal
+    have hv_ne_zero : ∀ i, v i ≠ 0 := by
+      intro i hi
+      have hnorm : ‖v i‖ = 0 := by rw [hi, norm_zero]
+      rw [norm_indicatorConstLp (by norm_num : (2 : ℝ≥0∞) ≠ 0)
+          (by norm_num : (2 : ℝ≥0∞) ≠ ⊤)] at hnorm
+      have h1 : (0 : ℝ) < ‖(1 : ℂ)‖ := by norm_num
+      have h2 : (0 : ℝ) < (μ.real (f i)) ^ ((1 : ℝ) / (2 : ℝ≥0∞).toReal) := by
+        apply Real.rpow_pos_of_pos
+        simp only [Measure.real]
+        exact ENNReal.toReal_pos (hfpos i).ne' (hfin_meas i)
+      linarith [mul_pos h1 h2]
+    have hv_ortho : Pairwise fun i j => @inner ℂ _ _ (v i) (v j) = 0 := by
+      intro i j hij
+      show @inner ℂ _ _ (v i) (v j) = 0
+      rw [L2.inner_indicatorConstLp_indicatorConstLp]
+      have hdisj := hfdisj hij
+      rw [Set.disjoint_iff_inter_eq_empty.mp hdisj, measureReal_empty]
+      simp
+    -- Step 4: Linear independence
+    have hli : LinearIndependent ℂ v :=
+      linearIndependent_of_ne_zero_of_inner_eq_zero hv_ne_zero hv_ortho
+    -- Step 5: Contradiction with finrank
+    have hcard := hli.fintype_card_le_finrank
+    simp [Fintype.card_fin] at hcard
+    omega
+  -- Prove the existence of the disjoint family by iterating the splitting lemma.
+  -- We build a sequence of (piece, remainder) pairs using Nat.rec.
+  -- splitData k = (piece_k, remainder_k) where piece_k and remainder_k partition remainder_{k-1}
+  -- with remainder_{-1} = univ.
+  -- The pieces piece_0, ..., piece_n are pairwise disjoint since piece_k ⊆ remainder_{k-1}
+  -- and remainder_{k-1} is disjoint from all previous pieces.
+  suffices hsplit : ∀ m : ℕ, ∃ (pieces : Fin m → Set α) (rem : Set α),
+      (∀ i, MeasurableSet (pieces i)) ∧
+      (∀ i, 0 < μ (pieces i)) ∧
+      MeasurableSet rem ∧ 0 < μ rem ∧
+      (∀ i, pieces i ⊆ Set.univ) ∧
+      (∀ i, Disjoint (pieces i) rem) ∧
+      Pairwise fun i j => Disjoint (pieces i) (pieces j) by
+    -- Apply with m = n + 1 and extract the pieces
+    obtain ⟨pieces, _, hm, hp, _, _, _, _, hdisj⟩ := hsplit (n + 1)
+    exact ⟨pieces, hm, hp, hdisj⟩
+  intro m
+  induction m with
+  | zero =>
+    exact ⟨Fin.elim0, Set.univ, fun i => Fin.elim0 i, fun i => Fin.elim0 i,
+           MeasurableSet.univ, hμ, fun i => Fin.elim0 i, fun i => Fin.elim0 i,
+           fun i => Fin.elim0 i⟩
+  | succ m ih =>
+    obtain ⟨pieces, rem, hm_meas, hm_pos, hrem_meas, hrem_pos, hm_sub, hm_disj_rem,
+            hm_pairwise⟩ := ih
+    -- Split rem into (new_piece, new_rem)
+    obtain ⟨t, ht_sub, htm, htpos, htlt⟩ :=
+      noAtoms_exists_measurableSet_pos_lt μ hrem_meas hrem_pos
+    have hnew_rem_meas : MeasurableSet (rem \ t) := hrem_meas.diff htm
+    have hnew_rem_pos : 0 < μ (rem \ t) := by
+      rw [measure_diff ht_sub htm.nullMeasurableSet
+        (ne_top_of_le_ne_top (measure_ne_top μ rem) (measure_mono ht_sub))]
+      exact tsub_pos_of_lt htlt
+    -- Define new pieces: old pieces extended with t at the last position
+    let newPieces : Fin (m + 1) → Set α := fun i =>
+      if h : i.val < m then pieces ⟨i.val, h⟩ else t
+    refine ⟨newPieces, rem \ t,
+            fun i => ?_, fun i => ?_,
+            hnew_rem_meas, hnew_rem_pos,
+            fun i => ?_, fun i => ?_, fun i j hij => ?_⟩
+    · -- Measurability
+      show MeasurableSet (newPieces i)
+      simp only [newPieces]
+      split
+      · exact hm_meas _
+      · exact htm
+    · -- Positive measure
+      show 0 < μ (newPieces i)
+      simp only [newPieces]
+      split
+      · exact hm_pos _
+      · exact htpos
+    · exact Set.subset_univ _
+    · -- Disjoint from new remainder
+      show Disjoint (newPieces i) (rem \ t)
+      simp only [newPieces]
+      split
+      · next hi => exact (hm_disj_rem ⟨i.val, hi⟩).mono_right Set.diff_subset
+      · exact Set.disjoint_sdiff_right
+    · -- Pairwise disjoint
+      show Disjoint (newPieces i) (newPieces j)
+      simp only [newPieces]
+      by_cases hi : i.val < m <;> by_cases hj : j.val < m
+      · -- Both old pieces
+        simp [hi, hj]
+        have hne : (⟨i.val, hi⟩ : Fin m) ≠ ⟨j.val, hj⟩ := by
+          intro heq; exact hij (Fin.ext (Fin.mk.inj heq))
+        exact hm_pairwise hne
+      · -- i is old, j is new (j = m)
+        simp [hi, hj]
+        exact (hm_disj_rem ⟨i.val, hi⟩).mono_right ht_sub
+      · -- i is new, j is old
+        simp [hi, hj]
+        exact ((hm_disj_rem ⟨j.val, hj⟩).mono_right ht_sub).symm
+      · -- Both new: impossible since i ≠ j but both have val ≥ m
+        exfalso
+        have him : i.val = m := Nat.eq_of_lt_succ_of_not_lt i.isLt hi
+        have hjm : j.val = m := Nat.eq_of_lt_succ_of_not_lt j.isLt hj
+        exact hij (Fin.ext (him.trans hjm.symm))
 
 /-- L²(X, μ_Λ) is infinite-dimensional for the adèle class space.
 
