@@ -17,6 +17,7 @@ import Mathlib.NumberTheory.LSeries.Nonvanishing
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import ArithmeticHodge.Adelic.ClassSpace
 import ArithmeticHodge.Spectral.UnboundedOperator
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import ArithmeticHodge.Analysis.WeilDefs
 
 open MeasureTheory Measure RCLike
@@ -385,7 +386,52 @@ theorem kernel_uniform_bound (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
     ∃ (K : ℝ), 0 < K ∧ ∀ (ξ : ℝ),
       |Analysis.fourierCos h ξ| ≤ K := by
-  sorry
+  -- We use K = π + 1 > 0. The integral ∫ (1+x²)⁻¹ = π bounds |fourierCos h ξ|.
+  have hdom_integrable : Integrable (fun x : ℝ => (1 + x ^ 2)⁻¹) volume :=
+    integrable_inv_one_add_sq
+  -- K = (∫ (1+x²)⁻¹) + 1; we prove 0 < K using the integral equals π
+  refine ⟨(∫ x : ℝ, (1 + x ^ 2)⁻¹) + 1, ?_, fun ξ => ?_⟩
+  · -- 0 < K: since ∫ (1+x²)⁻¹ = π > 0
+    have : (∫ x : ℝ, (1 + x ^ 2)⁻¹) = Real.pi := integral_univ_inv_one_add_sq
+    linarith [Real.pi_pos]
+  · -- Bound |fourierCos h ξ| ≤ K
+    -- Unfold: fourierCos h ξ = ∫ h(x) cos(2πξx) dx
+    show |∫ x : ℝ, h x * Real.cos (2 * Real.pi * ξ * x)| ≤ _
+    -- Step 1: |∫ f| ≤ ∫ |f| (for real-valued, ‖·‖ = |·|)
+    have step1 : |∫ x : ℝ, h x * Real.cos (2 * Real.pi * ξ * x)| ≤
+        ∫ x : ℝ, |h x * Real.cos (2 * Real.pi * ξ * x)| := by
+      exact_mod_cast norm_integral_le_integral_norm
+        (fun x => h x * Real.cos (2 * Real.pi * ξ * x))
+    -- Step 2: |h(x) cos(...)| ≤ |h(x)| since |cos| ≤ 1
+    have step2 : ∀ x : ℝ, |h x * Real.cos (2 * Real.pi * ξ * x)| ≤ |h x| := by
+      intro x
+      rw [abs_mul]
+      exact mul_le_of_le_one_right (abs_nonneg _) (Real.abs_cos_le_one _)
+    -- Step 3: |h(x)| ≤ (1+x²)⁻¹ from decay hypothesis
+    have step3 : ∀ x : ℝ, |h x| ≤ (1 + x ^ 2)⁻¹ := by
+      intro x
+      have := hdecay x
+      rwa [Real.norm_eq_abs, one_div] at this
+    -- Step 4: Combined pointwise bound
+    have step4 : ∀ x : ℝ, |h x * Real.cos (2 * Real.pi * ξ * x)| ≤ (1 + x ^ 2)⁻¹ :=
+      fun x => (step2 x).trans (step3 x)
+    -- Step 5: The product h · cos is integrable (dominated by integrable (1+x²)⁻¹)
+    have h_cos_cont : Continuous (fun x => h x * Real.cos (2 * Real.pi * ξ * x)) :=
+      hcont.mul (Real.continuous_cos.comp (continuous_const.mul continuous_id))
+    have h_integrable : Integrable (fun x => h x * Real.cos (2 * Real.pi * ξ * x)) volume := by
+      apply Integrable.mono hdom_integrable h_cos_cont.aestronglyMeasurable
+      filter_upwards with x
+      rw [Real.norm_eq_abs, Real.norm_eq_abs]
+      exact (step4 x).trans (le_abs_self _)
+    -- Step 6: ∫ |h(x) cos(...)| ≤ ∫ (1+x²)⁻¹
+    have step6 : (∫ x : ℝ, |h x * Real.cos (2 * Real.pi * ξ * x)|) ≤
+        ∫ x : ℝ, (1 + x ^ 2)⁻¹ := by
+      apply integral_mono h_integrable.norm hdom_integrable
+      intro x
+      simp only [Real.norm_eq_abs]
+      exact step4 x
+    -- Conclusion
+    linarith
 
 /-- **Step C: Mixing → Boundary control: O(1/Λ) rate.**
 
