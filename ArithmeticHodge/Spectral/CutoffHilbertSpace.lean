@@ -731,12 +731,53 @@ theorem kernel_uniform_bound (h : ℝ → ℝ) (hcont : Continuous h)
     -- Conclusion
     linarith
 
+/-- **Sub-lemma 5d': Spectral pairing is absolutely bounded.**
+
+    For any Λ > 0, the spectral pairing on S_Λ is a finite real number.
+    This follows from the discrete spectrum (finite trace on compact domain)
+    and the kernel bound.
+
+    SORRY REASON: Requires the spectral decomposition of the cutoff operator. -/
+theorem spectralPairing_abs_bound
+    (h : ℝ → ℝ) (hcont : Continuous h)
+    (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
+    ∃ (B : ℝ), ∀ (Λ : ℝ), 0 < Λ →
+      |spectralPairingOf X Λ h| ≤ B ∧
+      |Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ B := by
+  sorry
+
+/-- **Sub-lemma 5d: Selberg unfolding — boundary integral bound.**
+
+    For large Λ (> 1), the spectral pairing on S_Λ differs from the Weil
+    functional by at most K * M / (c * Λ), where:
+    - K bounds the Fourier kernel (sub-lemma 5c)
+    - M bounds the boundary shell volume (sub-lemma 5a)
+    - c is the bulk volume growth rate (sub-lemma 5b)
+
+    SORRY REASON: Requires the full Selberg unfolding identity relating
+    the cutoff spectral sum to the orbital integral decomposition. -/
+theorem selberg_boundary_integral_bound
+    (h : ℝ → ℝ) (hcont : Continuous h)
+    (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
+    (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0)
+    (K : ℝ) (hK : 0 < K) (hkernel : ∀ ξ : ℝ, |Analysis.fourierCos h ξ| ≤ K)
+    (M : ℝ) (hM : 0 < M) (hbdry : ∀ (Λ : ℝ), 1 < Λ →
+      inst.haarMeasure {x : X | Λ - 1 ≤ inst.heightFn x ∧ inst.heightFn x ≤ Λ} ≤
+        ENNReal.ofReal M)
+    (c : ℝ) (hc : 0 < c) (hbulk : ∀ (Λ : ℝ), 1 < Λ →
+      ENNReal.ofReal (c * Λ) ≤ inst.haarMeasure (cutoffSet X Λ)) :
+    ∀ (Λ : ℝ), 1 < Λ →
+      |spectralPairingOf X Λ h -
+        Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ K * M / (c * Λ) := by
+  sorry
+
 /-- **Step C: Mixing → Boundary control: O(1/Λ) rate.**
 
-    Decomposed into three independently-attackable sub-lemmas:
+    Decomposed into four independently-attackable sub-lemmas:
     - 5a: Boundary shell has bounded measure (boundary_volume_estimate)
     - 5b: Bulk volume grows like Λ (bulk_volume_lower_bound)
     - 5c: Test function kernel is uniformly bounded (kernel_uniform_bound)
+    - 5d: Selberg unfolding gives boundary integral bound (selberg_boundary_integral_bound)
 
     The combination gives: the difference between the cutoff spectral
     pairing and the full Weil functional is controlled by the boundary
@@ -750,7 +791,11 @@ theorem kernel_uniform_bound (h : ℝ → ℝ) (hcont : Continuous h)
 
     The zeta non-vanishing hypothesis (hζ) ensures the spectral gap
     from Step A, which controls the rate of convergence of the
-    eigenvalue distribution. -/
+    eigenvalue distribution.
+
+    SORRY COUNT: 0 in this body — the sorry is isolated in
+    selberg_boundary_integral_bound (sub-lemma 5d) and
+    spectralPairing_abs_bound (sub-lemma 5d'). -/
 theorem spectralPairing_boundary_control
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
@@ -758,24 +803,53 @@ theorem spectralPairing_boundary_control
     ∃ (C : ℝ), 0 < C ∧ ∀ (Λ : ℝ), 0 < Λ →
       |spectralPairingOf X Λ h -
         Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ C / Λ := by
-  -- Obtain the three sub-lemma bounds
-  obtain ⟨M, hM, _hbdry⟩ := boundary_volume_estimate X
-  obtain ⟨c, hc, _hbulk⟩ := bulk_volume_lower_bound X
-  obtain ⟨K, hK, _hkernel⟩ := kernel_uniform_bound h hcont hdecay
-  -- The constant C = K * M / c controls the boundary error
-  refine ⟨K * M / c + 1, by positivity, fun Λ hΛ => ?_⟩
-  -- The core estimate: boundary contribution ≤ K · M / (c · Λ) ≤ C / Λ
-  -- Each factor is independently bounded:
-  --   kernel contribution ≤ K  (sub-lemma 5c)
-  --   boundary volume ≤ M     (sub-lemma 5a)
-  --   bulk volume ≥ c · Λ     (sub-lemma 5b)
-  -- Product: K · M / (c · Λ) ≤ (K·M/c + 1) / Λ = C / Λ
-  --
-  -- SORRY: The final assembly requires expressing the spectral pairing
-  -- difference as a boundary integral and applying the three bounds.
-  -- This is the "integration by parts" / unfolding step that identifies
-  -- spectralPairingOf - W(h) with a boundary integral.
-  sorry
+  -- Obtain the three analytic sub-lemma bounds
+  obtain ⟨M, hM, hbdry⟩ := boundary_volume_estimate X
+  obtain ⟨c, hc, hbulk⟩ := bulk_volume_lower_bound X
+  obtain ⟨K, hK, hkernel⟩ := kernel_uniform_bound h hcont hdecay
+  -- Obtain the absolute bound for small-Λ regime
+  obtain ⟨B, habs⟩ := spectralPairing_abs_bound X h hcont hdecay
+  -- The constant C = max(K * M / c + 1, 2 * B + 1) controls both regimes
+  set C := max (K * M / c + 1) (2 * B + 1) with hC_def
+  have hC_pos : 0 < C := by
+    apply lt_max_of_lt_left; positivity
+  refine ⟨C, hC_pos, fun Λ hΛ => ?_⟩
+  -- Case split: large Λ (> 1) vs small Λ (0 < Λ ≤ 1)
+  by_cases hΛ1 : 1 < Λ
+  · -- Large Λ: apply Selberg boundary integral bound (sub-lemma 5d)
+    have hsel := selberg_boundary_integral_bound X h hcont hdecay hζ
+      K hK hkernel M hM hbdry c hc hbulk Λ hΛ1
+    -- We have: |diff| ≤ K * M / (c * Λ) = (K * M / c) / Λ
+    -- We need: |diff| ≤ C / Λ where C ≥ K * M / c + 1
+    calc |spectralPairingOf X Λ h -
+          Analysis.weilFunctionalFull h (Analysis.fourierCos h)|
+        ≤ K * M / (c * Λ) := hsel
+      _ = K * M / c / Λ := by ring
+      _ ≤ C / Λ := by
+          apply div_le_div_of_nonneg_right _ (le_of_lt hΛ)
+          calc K * M / c ≤ K * M / c + 1 := by linarith
+            _ ≤ C := le_max_left _ _
+  · -- Small Λ (0 < Λ ≤ 1): use absolute bounds
+    -- |diff| ≤ |spectralPairing| + |W(h)| ≤ 2B
+    -- C / Λ ≥ C ≥ 2B + 1 > 2B
+    push_neg at hΛ1
+    obtain ⟨habs1, habs2⟩ := habs Λ hΛ
+    have hdiff : |spectralPairingOf X Λ h -
+        Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ 2 * B := by
+      set a := spectralPairingOf X Λ h
+      set b := Analysis.weilFunctionalFull h (Analysis.fourierCos h)
+      have h1 : |a - b| ≤ |a| + |b| := by
+        have := norm_sub_le a b
+        simp only [Real.norm_eq_abs] at this
+        exact this
+      linarith
+    have hC_ge : 2 * B + 1 ≤ C := le_max_right _ _
+    have hCΛ : C ≤ C / Λ := by
+      rw [le_div_iff₀ hΛ]
+      calc C * Λ ≤ C * 1 := by
+            apply mul_le_mul_of_nonneg_left hΛ1 (le_of_lt hC_pos)
+        _ = C := mul_one C
+    linarith
 
 /-- **Step B: Spectral gap implies mixing (RAGE theorem).**
 
