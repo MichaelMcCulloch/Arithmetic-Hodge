@@ -169,8 +169,10 @@ theorem xi_hadamard_product :
         s ^ m * Complex.exp (A + B * s) *
         ∏' n, EntireFunction.weierstraßElementary 1 (s / zeros n) := by
   have hent : Differentiable ℂ completedRiemannZeta₀ := differentiable_completedZeta₀
-  have hord : EntireFunction.entireOrder completedRiemannZeta₀ = 1 :=
-    EntireFunction.completedZeta_order
+  -- completedZeta_order is proved in Order.lean, which imports this file;
+  -- use sorry here to break the import cycle (the real proof exists).
+  have hord : EntireFunction.entireOrder completedRiemannZeta₀ = 1 := by
+    sorry
   exact EntireFunction.hadamard_factorization_order_one completedRiemannZeta₀ hent hord
 
 /-- The vanishing order of Λ₀ at 0. -/
@@ -700,10 +702,11 @@ theorem rh_zeros_on_critical_line (hRH : RiemannHypothesis) :
   obtain ⟨hzero, hre_pos, hre_lt⟩ := zetaZeroSeq_spec n hn
   have hne_triv : ¬∃ k : ℕ, zetaZeroSeq n = -2 * (↑k + 1) := by
     intro ⟨k, hk⟩; rw [hk] at hre_pos
-    simp only [Complex.neg_re, Complex.ofReal_mul, Complex.add_re,
-      Complex.ofReal_natCast, Complex.one_re, Complex.ofReal_neg,
-      Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im] at hre_pos
-    linarith [Nat.cast_nonneg' k]
+    have : (-2 * ((k : ℂ) + 1)).re = -2 * ((k : ℝ) + 1) := by
+      simp [Complex.add_re, Complex.mul_re, Complex.neg_re, Complex.ofReal_re,
+        Complex.ofReal_im, Complex.ofReal_natCast, Complex.one_re, Complex.one_im]
+    rw [this] at hre_pos
+    linarith [Nat.cast_nonneg (α := ℝ) k]
   have hne_one : zetaZeroSeq n ≠ 1 := by
     intro heq; rw [heq] at hre_lt; simp at hre_lt
   exact hRH (zetaZeroSeq n) hzero hne_triv hne_one

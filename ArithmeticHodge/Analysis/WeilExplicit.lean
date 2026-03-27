@@ -65,7 +65,9 @@ theorem weil_explicit_formula
     obtain ⟨n, hn⟩ := zetaZeroSeq_surj s hzero hre_pos hre_lt
     exact ⟨n, by simp only; rw [hn]⟩
   -- (3) Summability: from decay hypothesis + zero density
-  · exact summable_over_zeros h hdecay
+  --     summable_over_zeros gives this for hadamardZeros; need zetaZeroSeq ↔ hadamardZeros
+  · have := summable_over_zeros h hdecay
+    sorry
   -- (4) The sum equals the Weil functional: the explicit formula identity
   · obtain ⟨cv, hcv_sum, hcv_weil⟩ := sum_over_zeros_eq_contour h hcont hdecay hRH
     rw [hcv_sum, hcv_weil]

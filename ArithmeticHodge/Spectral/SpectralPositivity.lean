@@ -180,7 +180,7 @@ private lemma range_dense
     {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
     (z : ℂ) (hz : z.im ≠ 0) :
     Dense (Set.range (fun x : D.domain => D.toFun x - z • (x : H))) := by
-  rw [dense_iff_closure_eq, eq_univ_iff_forall]
+  rw [dense_iff_closure_eq, Set.eq_univ_iff_forall]
   intro y
   rw [mem_closure_iff_nhds]
   intro U hU

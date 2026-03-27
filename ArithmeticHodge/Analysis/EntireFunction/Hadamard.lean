@@ -45,7 +45,7 @@ private theorem polynomial_of_vanishing_iteratedDeriv (g : ℂ → ℂ) (hg : Di
       have := hvan z; rwa [iteratedDeriv_succ, iteratedDeriv_zero] at this
     have hconst : ∀ z, g z = g 0 :=
       fun z => is_const_of_deriv_eq_zero hg hd z 0
-    exact ⟨C (g 0), natDegree_C_le _, fun z => by rw [hconst z]; simp⟩
+    exact ⟨C (g 0), (natDegree_C _).le, fun z => by rw [hconst z]; simp⟩
   | succ n ih =>
     -- deriv g is entire with vanishing (n+1)-th iterated derivative
     have hg' : Differentiable ℂ (deriv g) := hg.contDiff.differentiable_deriv_two
@@ -57,22 +57,23 @@ private theorem polynomial_of_vanishing_iteratedDeriv (g : ℂ → ℂ) (hg : Di
       C (Q.coeff k / (↑(k + 1) : ℂ)) * X ^ (k + 1) with hR_def
     have hR_deriv : derivative R = Q := by
       ext j
-      simp only [hR_def, map_sum, derivative_C_mul_X_pow, Nat.add_sub_cancel, coeff_sum,
-        coeff_C_mul, coeff_X_pow, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq',
-        Finset.mem_range]
-      split_ifs with hj
-      · have : (↑(j + 1) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.succ_ne_zero j)
-        field_simp
-      · push_neg at hj
-        exact (Q.coeff_eq_zero_of_natDegree_lt (by omega)).symm
+      simp only [hR_def, map_sum, derivative_C_mul_X_pow, Nat.add_sub_cancel]
+      -- Each coeff simplifies: Q.coeff k / (k+1) * (k+1) = Q.coeff k
+      have cancel : ∀ k, Q.coeff k / (↑(k + 1) : ℂ) * ↑(k + 1) = Q.coeff k :=
+        fun k => div_mul_cancel₀ _ (Nat.cast_ne_zero.mpr (Nat.succ_ne_zero k))
+      simp_rw [cancel]
+      -- Now ∑ k in range(n+1), C(Q.coeff k) * X^k = Q since deg Q ≤ n
+      conv_rhs => rw [Q.as_sum_range_C_mul_X_pow' (by omega : Q.natDegree < n + 1)]
     have hR_eval_zero : aeval (0 : ℂ) R = 0 := by
       simp only [hR_def, map_sum, map_mul, aeval_C, aeval_X_pow,
         zero_pow (Nat.succ_ne_zero _), mul_zero, Finset.sum_const_zero]
     have hR_diff : Differentiable ℂ (fun z => aeval z R) := R.differentiable_aeval
     have hconst_diff : Differentiable ℂ (fun z => g z - aeval z R) := hg.sub hR_diff
-    have hconst_deriv : ∀ z, deriv (fun z => g z - aeval z R) z = 0 := fun z => by
-      rw [deriv_sub hg.differentiableAt hR_diff.differentiableAt,
-        hQ_eq z, R.deriv_aeval, hR_deriv, sub_self]
+    have hconst_deriv : ∀ z, deriv (fun w => g w - aeval w R) z = 0 := fun z => by
+      have : deriv (fun w => g w - aeval w R) z =
+          deriv g z - deriv (fun w => aeval w R) z :=
+        deriv_sub hg.differentiableAt hR_diff.differentiableAt
+      rw [this, R.deriv_aeval, hR_deriv, hQ_eq z, sub_self]
     have hconst : ∀ z, g z = g 0 + aeval z R := fun z => by
       have h := is_const_of_deriv_eq_zero hconst_diff hconst_deriv z 0
       simp only [hR_eval_zero, sub_zero] at h
@@ -80,13 +81,12 @@ private theorem polynomial_of_vanishing_iteratedDeriv (g : ℂ → ℂ) (hg : Di
     refine ⟨C (g 0) + R, ?_, fun z => ?_⟩
     · calc (C (g 0) + R).natDegree
           ≤ max (C (g 0)).natDegree R.natDegree := natDegree_add_le _ _
-        _ ≤ max 0 (n + 1) := max_le_max (natDegree_C_le _) (by
-            apply (natDegree_sum_le _ _).trans
-            simp only [Finset.sup_le_iff, Finset.mem_range]
-            intro k hk
-            exact (natDegree_C_mul_X_pow_le _ _).trans (by omega))
+        _ ≤ max 0 (n + 1) := max_le_max ((natDegree_C _).le) (by
+            exact natDegree_sum_le_of_forall_le _ _ fun k hk =>
+              (natDegree_C_mul_X_pow_le _ _).trans (by
+                simp only [Finset.mem_range] at hk; omega))
         _ = n + 1 := by omega
-    · rw [hconst z, map_add, aeval_C]
+    · rw [hconst z, map_add, aeval_C]; simp
 
 -- ============================================================
 -- Hadamard Factorization Theorem
