@@ -174,13 +174,34 @@ private lemma range_orthogonal_eq_zero
   · exact absurd (abs_eq_zero.mp h) hz
   · exact norm_eq_zero.mp h
 
+/-- The range of (D - zI) is dense for Im z ≠ 0 and D densely-defined
+    self-adjoint. Follows from `range_orthogonal_eq_zero`. -/
+private lemma range_dense
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (z : ℂ) (hz : z.im ≠ 0) :
+    Dense (Set.range (fun x : D.domain => D.toFun x - z • (x : H))) := by
+  rw [dense_iff_closure_eq, eq_univ_iff_forall]
+  intro y
+  rw [mem_closure_iff_nhds]
+  intro U hU
+  rw [mem_nhds_iff] at hU
+  obtain ⟨V, hVU, hVopen, hyV⟩ := hU
+  -- If range ∩ V = ∅, all of range is in Vᶜ, so range ⊆ {y}ᗮ?
+  -- Use orthogonal complement argument
+  by_contra h
+  push_neg at h
+  -- h : ∀ w ∈ V, w ∉ range(fun x => Dx - z•x)
+  -- This means y is not in closure of range, so y ⊥ range
+  -- More precisely, use the contrapositive of range_orthogonal_eq_zero
+  sorry
+
 /-- The range of (D - zI) is surjective for Im z ≠ 0 and D densely-defined
     self-adjoint. That is, for every y ∈ H there exists x ∈ Dom(D) with
     (D - z)x = y.
 
-    Proof: range is dense (orthogonal complement is zero by
-    `range_orthogonal_eq_zero`), then a Cauchy sequence argument using
-    the resolvent bound shows the range is closed. -/
+    Proof: range is dense (from `range_dense`), then we construct a
+    Cauchy sequence converging to a preimage using the resolvent bound
+    and the self-adjointness condition for domain membership. -/
 private lemma resolvent_surjective
     {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
     (z : ℂ) (hz : z.im ≠ 0) (y : H) :
