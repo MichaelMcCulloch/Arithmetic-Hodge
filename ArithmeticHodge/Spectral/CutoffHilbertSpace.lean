@@ -806,20 +806,97 @@ theorem kernel_uniform_bound (h : ℝ → ℝ) (hcont : Continuous h)
     -- Conclusion
     linarith
 
+/-- **Bessel summability: vacuum weights are summable.**
+
+    By Bessel's inequality in L²(S_Λ), the vacuum weights satisfy
+    Σᵢ |⟨Ω, eᵢ⟩|² ≤ ‖Ω‖² < ∞, hence the series converges.
+
+    SORRY REASON: Requires the Hilbert basis completeness relation
+    (Bessel's inequality) applied to the cutoff eigenbasis. -/
+theorem vacuumWeights_summable_bound (Λ : ℝ) (hΛ : 0 < Λ) :
+    Summable (fun i => vacuumWeightOf X Λ i) := by
+  sorry
+
+/-- The vacuum weights sum to at most 1 (Bessel's inequality for unit Ω).
+
+    SORRY REASON: Requires Bessel's inequality ∑ |⟨Ω,eᵢ⟩|² ≤ ‖Ω‖² = 1. -/
+theorem vacuumWeights_tsum_le_one (Λ : ℝ) (hΛ : 0 < Λ) :
+    ∑' i, vacuumWeightOf X Λ i ≤ 1 := by
+  sorry
+
+/-- **Summability of the spectral pairing terms.**
+
+    Each term |fourierCos h (λᵢ) · wᵢ| ≤ K · wᵢ, and Σ wᵢ < ∞ (Parseval),
+    so the series is absolutely convergent.
+
+    SORRY REASON: Parseval bound on vacuum weights (vacuumWeights_summable_bound). -/
+theorem spectralPairing_summable (Λ : ℝ) (hΛ : 0 < Λ) (h : ℝ → ℝ) :
+    Summable (fun i => Analysis.fourierCos h (cutoffEigenvaluesOf X Λ i) *
+      vacuumWeightOf X Λ i) := by
+  sorry
+
 /-- **Sub-lemma 5d': Spectral pairing is absolutely bounded.**
 
     For any Λ > 0, the spectral pairing on S_Λ is a finite real number.
     This follows from the discrete spectrum (finite trace on compact domain)
     and the kernel bound.
 
-    SORRY REASON: Requires the spectral decomposition of the cutoff operator. -/
+    Proof outline:
+    - Spectral pairing: |Σ fourierCos(h)(λᵢ) · wᵢ| ≤ K · Σ wᵢ ≤ K · 1 = K
+      using kernel_uniform_bound (PROVED) and Bessel (vacuumWeights_tsum_le_one).
+    - Weil functional: it is a fixed real number, so |W(h)| is a constant.
+    - Take B = max K (|W| + 1).
+
+    SORRY COUNT: 0 at this level. Depends on:
+    - kernel_uniform_bound (PROVED)
+    - vacuumWeights_summable_bound (sorry: Bessel summability)
+    - vacuumWeights_tsum_le_one (sorry: Bessel inequality)
+    - spectralPairing_summable (sorry: absolute convergence) -/
 theorem spectralPairing_abs_bound
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
     ∃ (B : ℝ), ∀ (Λ : ℝ), 0 < Λ →
       |spectralPairingOf X Λ h| ≤ B ∧
       |Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ B := by
-  sorry
+  -- Step 1: Get kernel bound K from kernel_uniform_bound (PROVED)
+  obtain ⟨K, hK, hkernel⟩ := kernel_uniform_bound h hcont hdecay
+  -- Step 2: The Weil functional is a fixed real number
+  set W := |Analysis.weilFunctionalFull h (Analysis.fourierCos h)|
+  -- Step 3: Take B = max K (W + 1)
+  refine ⟨max K (W + 1), fun Λ hΛ => ?_⟩
+  have hvac_summ := vacuumWeights_summable_bound X Λ hΛ
+  have hvac_le := vacuumWeights_tsum_le_one X Λ hΛ
+  have hsumm := spectralPairing_summable X Λ hΛ h
+  constructor
+  · -- Bound |spectralPairingOf X Λ h| ≤ K ≤ max K (W + 1)
+    -- Strategy: |Σ aᵢ·wᵢ| ≤ Σ|aᵢ|·wᵢ ≤ K·Σwᵢ ≤ K·1 = K
+    have hpw : ∀ i, |Analysis.fourierCos h (cutoffEigenvaluesOf X Λ i) *
+        vacuumWeightOf X Λ i| ≤ K * vacuumWeightOf X Λ i := by
+      intro i
+      rw [abs_mul, abs_of_nonneg (vacuumWeightOf_nonneg X Λ i)]
+      exact mul_le_mul_of_nonneg_right (hkernel _) (vacuumWeightOf_nonneg X Λ i)
+    have step1 : ‖spectralPairingOf X Λ h‖ ≤
+        ∑' i, ‖Analysis.fourierCos h (cutoffEigenvaluesOf X Λ i) *
+          vacuumWeightOf X Λ i‖ := norm_tsum_le_tsum_norm hsumm.norm
+    have step2 : ∑' i, ‖Analysis.fourierCos h (cutoffEigenvaluesOf X Λ i) *
+        vacuumWeightOf X Λ i‖ ≤ ∑' i, K * vacuumWeightOf X Λ i := by
+      apply hsumm.norm.tsum_le_tsum _ (hvac_summ.mul_left K)
+      intro i
+      rw [Real.norm_eq_abs]
+      exact hpw i
+    have step3 : ∑' i, K * vacuumWeightOf X Λ i = K * ∑' i, vacuumWeightOf X Λ i :=
+      tsum_mul_left
+    rw [Real.norm_eq_abs] at step1
+    calc |spectralPairingOf X Λ h|
+        ≤ ∑' i, ‖Analysis.fourierCos h (cutoffEigenvaluesOf X Λ i) *
+          vacuumWeightOf X Λ i‖ := step1
+      _ ≤ K * ∑' i, vacuumWeightOf X Λ i := by linarith [step2, step3]
+      _ ≤ K * 1 := mul_le_mul_of_nonneg_left hvac_le (le_of_lt hK)
+      _ = K := mul_one K
+      _ ≤ max K (W + 1) := le_max_left K (W + 1)
+  · -- Bound |weilFunctionalFull h (fourierCos h)| = W ≤ W + 1 ≤ max K (W + 1)
+    calc W ≤ W + 1 := le_add_of_nonneg_right zero_le_one
+      _ ≤ max K (W + 1) := le_max_right K (W + 1)
 
 /-- **Sub-lemma 5d: Selberg unfolding — boundary integral bound.**
 
