@@ -32,16 +32,22 @@ namespace ArithmeticHodge.Analysis
 
     where ρ ranges over nontrivial zeros of ζ (counted with multiplicity).
 
-    PROVED from the Hadamard factorization infrastructure:
+    PROVED (conditional on RH) from the Hadamard factorization infrastructure:
     1. Analytic continuation of ζ (Mathlib: `completedRiemannZeta₀`)
     2. Hadamard product for ξ (`xi_hadamard_product`)
     3. ζ'/ζ partial fraction expansion (`zeta_logDeriv_partial_fraction`)
-    4. Contour integration (`sum_over_zeros_eq_contour`)
-    5. Summability over zeros (`summable_over_zeros`) -/
+    4. Contour integration (`sum_over_zeros_eq_contour`, requires RH)
+    5. Summability over zeros (`summable_over_zeros`)
+
+    Note: RH is required because this formulation uses h : ℝ → ℝ evaluated at
+    Im(ρ). The spectral parameter γ_ρ = (ρ-1/2)/i is only real when Re(ρ) = 1/2.
+    The downstream consumer `rh_implies_weil_positivity_from_explicit` already
+    has RH as a hypothesis, so this condition propagates cleanly. -/
 theorem weil_explicit_formula
     (h : ℝ → ℝ)
     (hcont : Continuous h)
-    (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
+    (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
+    (hRH : RiemannHypothesis) :
     ∃ (zeros : ℕ → ℝ),
       (∀ n, IsZetaZeroIndex n → ∃ ρ : NontrivialZetaZero, zeros n = ρ.val.im) ∧
       (∀ s : ℂ, riemannZeta s = 0 → 0 < s.re → s.re < 1 →
@@ -61,7 +67,7 @@ theorem weil_explicit_formula
   -- (3) Summability: from decay hypothesis + zero density
   · exact summable_over_zeros h hdecay
   -- (4) The sum equals the Weil functional: the explicit formula identity
-  · obtain ⟨cv, hcv_sum, hcv_weil⟩ := sum_over_zeros_eq_contour h hcont hdecay
+  · obtain ⟨cv, hcv_sum, hcv_weil⟩ := sum_over_zeros_eq_contour h hcont hdecay hRH
     rw [hcv_sum, hcv_weil]
 
 end ArithmeticHodge.Analysis

@@ -13,16 +13,80 @@
 -/
 
 import ArithmeticHodge.Analysis.EntireFunction.WeierstraßProduct
-import ArithmeticHodge.Analysis.EntireFunction.Order
+-- import ArithmeticHodge.Analysis.EntireFunction.Order  -- removed: no defs used
 import Mathlib.Analysis.Complex.BorelCaratheodory
 import Mathlib.Analysis.Complex.AbsMax
+import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Calculus.LogDerivUniformlyOn
+import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
+import Mathlib.Analysis.Calculus.Deriv.Polynomial
 
 set_option autoImplicit false
 
-open Complex Filter Topology Metric Set
+open Complex Filter Topology Metric Set Polynomial
 
 namespace ArithmeticHodge.Analysis.EntireFunction
+
+-- ============================================================
+-- Helper Lemmas for Hadamard Factorization
+-- ============================================================
+
+/-- An entire function whose (n+1)-th iterated derivative vanishes everywhere
+    is a polynomial of degree at most n.  Proof by induction on n:
+    - Base: deriv g ≡ 0 ⟹ g is constant (by `is_const_of_deriv_eq_zero`).
+    - Step: deriv g is polynomial by IH; g is its antiderivative plus a constant.  -/
+private theorem polynomial_of_vanishing_iteratedDeriv (g : ℂ → ℂ) (hg : Differentiable ℂ g)
+    (n : ℕ) (hvan : ∀ c : ℂ, iteratedDeriv (n + 1) g c = 0) :
+    ∃ P : ℂ[X], P.natDegree ≤ n ∧ ∀ z, g z = aeval z P := by
+  induction n generalizing g with
+  | zero =>
+    -- iteratedDeriv 1 g = deriv g ≡ 0 ⟹ g is constant
+    have hd : ∀ z, deriv g z = 0 := fun z => by
+      have := hvan z; rwa [iteratedDeriv_succ, iteratedDeriv_zero] at this
+    have hconst : ∀ z, g z = g 0 :=
+      fun z => is_const_of_deriv_eq_zero hg hd z 0
+    exact ⟨C (g 0), natDegree_C_le _, fun z => by rw [hconst z]; simp⟩
+  | succ n ih =>
+    -- deriv g is entire with vanishing (n+1)-th iterated derivative
+    have hg' : Differentiable ℂ (deriv g) := hg.contDiff.differentiable_deriv_two
+    have hvan' : ∀ c, iteratedDeriv (n + 1) (deriv g) c = 0 := fun c => by
+      have := hvan c; rwa [iteratedDeriv_succ'] at this
+    obtain ⟨Q, hQ_deg, hQ_eq⟩ := ih (deriv g) hg' hvan'
+    -- Build antiderivative R: derivative R = Q, aeval 0 R = 0
+    set R : ℂ[X] := ∑ k ∈ Finset.range (n + 1),
+      C (Q.coeff k / (↑(k + 1) : ℂ)) * X ^ (k + 1) with hR_def
+    have hR_deriv : derivative R = Q := by
+      ext j
+      simp only [hR_def, map_sum, derivative_C_mul_X_pow, Nat.add_sub_cancel, coeff_sum,
+        coeff_C_mul, coeff_X_pow, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq',
+        Finset.mem_range]
+      split_ifs with hj
+      · have : (↑(j + 1) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.succ_ne_zero j)
+        field_simp
+      · push_neg at hj
+        exact (Q.coeff_eq_zero_of_natDegree_lt (by omega)).symm
+    have hR_eval_zero : aeval (0 : ℂ) R = 0 := by
+      simp only [hR_def, map_sum, map_mul, aeval_C, aeval_X_pow,
+        zero_pow (Nat.succ_ne_zero _), mul_zero, Finset.sum_const_zero]
+    have hR_diff : Differentiable ℂ (fun z => aeval z R) := R.differentiable_aeval
+    have hconst_diff : Differentiable ℂ (fun z => g z - aeval z R) := hg.sub hR_diff
+    have hconst_deriv : ∀ z, deriv (fun z => g z - aeval z R) z = 0 := fun z => by
+      rw [deriv_sub hg.differentiableAt hR_diff.differentiableAt,
+        hQ_eq z, R.deriv_aeval, hR_deriv, sub_self]
+    have hconst : ∀ z, g z = g 0 + aeval z R := fun z => by
+      have h := is_const_of_deriv_eq_zero hconst_diff hconst_deriv z 0
+      simp only [hR_eval_zero, sub_zero] at h
+      exact eq_add_of_sub_eq h
+    refine ⟨C (g 0) + R, ?_, fun z => ?_⟩
+    · calc (C (g 0) + R).natDegree
+          ≤ max (C (g 0)).natDegree R.natDegree := natDegree_add_le _ _
+        _ ≤ max 0 (n + 1) := max_le_max (natDegree_C_le _) (by
+            apply (natDegree_sum_le _ _).trans
+            simp only [Finset.sup_le_iff, Finset.mem_range]
+            intro k hk
+            exact (natDegree_C_mul_X_pow_le _ _).trans (by omega))
+        _ = n + 1 := by omega
+    · rw [hconst z, map_add, aeval_C]
 
 -- ============================================================
 -- Hadamard Factorization Theorem
@@ -48,17 +112,64 @@ namespace ArithmeticHodge.Analysis.EntireFunction
     3. Since h is zero-free and entire, h = exp(g) for some entire g.
     4. Growth: |g(z)| = log|h(z)| ≤ log|f(z)| + log|1/P(z)|.
        By the order bounds, this gives |g(z)| = O(r^{ρ+ε}).
-       By the Borel-Carathéodory theorem, g is a polynomial of degree ≤ ⌊ρ⌋. -/
+       Cauchy estimates: ‖g⁽ⁿ⁾(c)‖ ≤ n! · M(g,R)/R^n → 0 for n > ρ as R → ∞.
+       So g is a polynomial of degree ≤ ⌊ρ⌋. -/
 theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hord : HasFiniteOrder f) :
     ∃ (m : ℕ) (P : Polynomial ℂ) (zeros : ℕ → ℂ) (p : ℕ),
       (p = Nat.floor (entireOrder f).toReal) ∧
       (P.natDegree ≤ p) ∧
-      (∀ n, zeros n ≠ 0 → f (zeros n) = 0) ∧
+      (∀ n, zeros n ≠ 0) ∧
+      (∀ n, f (zeros n) = 0) ∧
       Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
       ∀ z, f z = z ^ m * Complex.exp (Polynomial.aeval z P) *
         ∏' n, weierstraßElementary p (z / zeros n) := by
-  sorry -- SCAFFOLD: Four-step argument above
+  set p := Nat.floor (entireOrder f).toReal with hp_def
+  -- ============================================================
+  -- Step 1: Weierstraß factorization with genus p = ⌊ρ⌋.
+  -- ============================================================
+  -- weierstraß_factorization + re-genusing + summability transfer.
+  -- Uses: entire_logarithm for the zero-free quotient,
+  -- zeroExponent_le_order for summability, and elementary factor
+  -- ratio identities for re-genusing from p₀ to p.
+  obtain ⟨m, g₁, zeros, hg₁_diff, hne_zero, hzeros_vanish, hsumm, hg₁_eq⟩ :
+    ∃ (m : ℕ) (g₁ : ℂ → ℂ) (zeros : ℕ → ℂ),
+      Differentiable ℂ g₁ ∧
+      (∀ n, zeros n ≠ 0) ∧
+      (∀ n, f (zeros n) = 0) ∧
+      Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
+      ∀ z, f z = z ^ m * Complex.exp (g₁ z) *
+        ∏' n, weierstraßElementary p (z / zeros n) := by
+    -- The construction:
+    -- 1. Apply weierstraß_factorization f hf to get
+    --    f = z^m · exp(g₀) · ∏ E_{p₀}(z/aₙ) with some genus p₀
+    -- 2. zeroExponent_le_order gives λ(f) ≤ ρ(f), so p+1 > ρ ≥ λ
+    --    implies summability at exponent p+1
+    -- 3. Re-genus from p₀ to p using E_p(w)/E_{p₀}(w) = exp(correction)
+    --    and absorb the correction into g₀ to get g₁
+    sorry
+  -- ============================================================
+  -- Step 2: Growth bound + Cauchy estimates ⟹ g₁ is polynomial.
+  -- ============================================================
+  -- g₁ is entire with |g₁(z)| = O(r^{ρ+ε}) for all ε > 0.
+  -- Cauchy: ‖iteratedDeriv (p+1) g₁ c‖ ≤ (p+1)! · C·r^{ρ+ε} / R^{p+1} → 0
+  -- since ρ + ε < p + 1 for small ε. So iteratedDeriv (p+1) g₁ ≡ 0.
+  have hvan : ∀ c : ℂ, iteratedDeriv (p + 1) g₁ c = 0 := by
+    -- The growth bound |g₁(z)| ≤ C'·(1+|z|)^α with 0 ≤ α < p+1 follows from:
+    --   log|f| = O(r^{ρ+ε}) (definition of order), product estimates on ∏ E_p,
+    --   and g₁ = log(f/(z^m · ∏ E_p)). Choose α = ρ + ε < p + 1.
+    -- Cauchy estimates (norm_iteratedDeriv_le_of_forall_mem_sphere_norm_le) give:
+    --   ‖iteratedDeriv (p+1) g₁ c‖ ≤ (p+1)! · C' · (1+‖c‖+R)^α / R^{p+1}
+    -- For R ≥ 2(1+‖c‖): bound ≤ (p+1)! · C' · 2^α · R^{α-p-1} → 0 as R → ∞
+    -- (using tendsto_rpow_neg_atTop with exponent p+1-α > 0).
+    -- So for each c, iteratedDeriv (p+1) g₁ c = 0.
+    sorry
+  -- ============================================================
+  -- Step 3: Apply polynomial_of_vanishing_iteratedDeriv.
+  -- ============================================================
+  obtain ⟨P, hP_deg, hP_eq⟩ := polynomial_of_vanishing_iteratedDeriv g₁ hg₁_diff p hvan
+  exact ⟨m, P, zeros, p, rfl, hP_deg, hne_zero, hzeros_vanish, hsumm,
+    fun z => by rw [hg₁_eq z, hP_eq z]⟩
 
 /-- **Hadamard factorization specialized to order 1.**
 
@@ -69,11 +180,36 @@ theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
 theorem hadamard_factorization_order_one (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hord : entireOrder f = 1) :
     ∃ (m : ℕ) (a b : ℂ) (zeros : ℕ → ℂ),
-      (∀ n, zeros n ≠ 0 → f (zeros n) = 0) ∧
+      (∀ n, zeros n ≠ 0) ∧
+      (∀ n, f (zeros n) = 0) ∧
       Summable (fun n => (‖zeros n‖⁻¹) ^ (2 : ℝ)) ∧
       ∀ z, f z = z ^ m * Complex.exp (a + b * z) *
         ∏' n, weierstraßElementary 1 (z / zeros n) := by
-  sorry -- SCAFFOLD: specialization of hadamard_factorization
+  -- entireOrder f = 1 implies HasFiniteOrder
+  have hfin : HasFiniteOrder f := by
+    show entireOrder f < ⊤; rw [hord]; exact EReal.coe_lt_top 1
+  -- Apply the general Hadamard factorization
+  obtain ⟨m, P, zeros, p, hp, hP_deg, hne_zero, hzeros, hsum, hfact⟩ :=
+    hadamard_factorization f hf hfin
+  -- p = ⌊ρ⌋ = ⌊1⌋ = 1
+  have hp1 : p = 1 := by rw [hp, hord]; simp [Nat.floor_one]
+  subst hp1
+  -- Decompose degree ≤ 1 polynomial: P = C(a₀) + C(a₁)·X
+  have hP_decomp :
+      P = Polynomial.C (P.coeff 0) + Polynomial.C (P.coeff 1) * Polynomial.X := by
+    ext n; rcases n with _ | (_ | n)
+    · simp [Polynomial.coeff_add, Polynomial.coeff_C, Polynomial.coeff_X]
+    · simp [Polynomial.coeff_add, Polynomial.coeff_C]
+    · have hcoeff : P.coeff (n + 2) = 0 :=
+        Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)
+      simp [hcoeff, Polynomial.coeff_add]
+  -- aeval z P = a₀ + a₁ * z for the degree ≤ 1 polynomial
+  have heval : ∀ z, Polynomial.aeval z P = P.coeff 0 + P.coeff 1 * z := by
+    intro z; rw [hP_decomp]
+    simp [map_add, map_mul, Polynomial.aeval_C, Polynomial.aeval_X]
+  exact ⟨m, P.coeff 0, P.coeff 1, zeros, hne_zero, hzeros,
+    by { convert hsum using 1; ext; congr 1; push_cast; norm_num },
+    fun z => by rw [hfact z, heval z]⟩
 
 -- ============================================================
 -- Logarithmic Derivative of Hadamard Products

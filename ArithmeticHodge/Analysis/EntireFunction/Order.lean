@@ -19,9 +19,14 @@ import Mathlib.Analysis.Analytic.IsolatedZeros
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.LSeries.Nonvanishing
+import Mathlib.NumberTheory.LSeries.HurwitzZetaValues
+import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Order.Filter.Basic
+import Mathlib.Analysis.PSeries
+import ArithmeticHodge.Analysis.ZetaProduct
+import ArithmeticHodge.Analysis.EntireFunction.Defs
 
 open Complex Filter Topology Real MeromorphicOn
 
@@ -31,24 +36,7 @@ namespace ArithmeticHodge.Analysis.EntireFunction
 -- Maximum Modulus and Order
 -- ============================================================
 
-/-- The maximum modulus function M(f, r) = sup_{|z|≤r} |f(z)|.
-    For an entire function, this is always finite for finite r. -/
-noncomputable def maxModulus (f : ℂ → ℂ) (r : ℝ) : ℝ :=
-  ⨆ (z : ℂ) (_ : ‖z‖ ≤ r), ‖f z‖
-
-/-- The order of an entire function f, defined as
-    ρ(f) = lim sup_{r→∞} log(log M(f,r)) / log r
-
-    This measures the growth rate: f grows roughly like exp(r^ρ).
-    - Polynomials have order 0
-    - exp(z) has order 1
-    - exp(exp(z)) has infinite order -/
-noncomputable def entireOrder (f : ℂ → ℂ) : EReal :=
-  Filter.limsup (fun r : ℝ => (Real.log (Real.log (maxModulus f r)) / Real.log r : ℝ)) Filter.atTop
-
-/-- An entire function has finite order if its order is not +∞. -/
-def HasFiniteOrder (f : ℂ → ℂ) : Prop :=
-  entireOrder f < ⊤
+-- maxModulus, entireOrder, HasFiniteOrder are imported from Defs.lean
 
 /-- The type of an entire function of finite order:
     τ(f) = lim sup_{r→∞} log M(f,r) / r^ρ
@@ -444,31 +432,179 @@ noncomputable def zeroExponent (f : ℂ → ℂ) : EReal :=
 theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf_ne : ¬ f = 0) :
     zeroExponent f ≤ entireOrder f := by
-  sorry -- SCAFFOLD: Jensen bounds ⟹ zero density ≤ growth rate
+  /- For any σ > entireOrder f, Jensen's formula and Abel summation show
+     Σ ‖zₙ‖⁻σ converges, placing σ in the defining set of zeroExponent.
+     By density of EReal, sInf of that set ≤ entireOrder f. -/
+  apply le_of_forall_gt_imp_ge_of_dense
+  intro σ hσ
+  -- Case: σ = ⊤ is trivial
+  by_cases hσ_top : σ = ⊤
+  · exact hσ_top ▸ le_top
+  -- For finite σ > entireOrder f: extract a real s with (↑s : EReal) = σ,
+  -- s > 0, and the zero series converges at exponent s.
+  -- The analytical chain:
+  --   entireOrder f < s  ⟹  log M(f,r) ≤ r^s for large r  (definition of order)
+  --   zeroCount_le_logMax  ⟹  n(f,r) = O(r^s)             (Jensen's formula)
+  --   Abel summation       ⟹  Σ ‖zₙ‖⁻ˢ < ∞               (convergence)
+  obtain ⟨s, hs_eq, hs_pos, hs_summ⟩ :
+      ∃ s : ℝ, (s : EReal) = σ ∧ 0 < s ∧
+      Summable (fun z : { w : ℂ // f w = 0 ∧ w ≠ 0 } => ‖(z : ℂ)‖⁻¹ ^ s) := by
+    sorry -- Jensen + Abel summation (requires entireOrder f ≥ 0 and n(r)=O(r^s)⟹convergence)
+  rw [← hs_eq]
+  exact csInf_le' ⟨by exact_mod_cast hs_pos, s, rfl, hs_summ⟩
 
 -- ============================================================
 -- Order of the Completed Zeta Function
 -- ============================================================
 
-/-- **ξ(s) = completedRiemannZeta₀(s) has order 1.**
+/-- For s > 1, the series Σ_ρ ‖ρ‖⁻ˢ over nontrivial zeta zeros converges.
 
-    The proof combines:
-    1. Upper bound: Stirling's approximation for Γ(s/2) gives
-       |ξ(σ+it)| ≤ C·|t|^A · exp(π|t|/4) for fixed σ, which
-       after taking supremum gives log M(ξ, r) = O(r log r),
-       hence order ≤ 1.
-    2. Lower bound: ξ has infinitely many zeros (the nontrivial zeros
-       of ζ), and the zero density N(T) ~ T/(2π) log(T/(2πe)) shows
-       the exponent of convergence is exactly 1, so order ≥ 1. -/
-theorem completedZeta_order :
-    entireOrder completedRiemannZeta₀ = 1 := by
-  sorry -- SCAFFOLD: Stirling bound for upper + zero density for lower
+    This follows from the Riemann–von Mangoldt formula N(T) = O(T log T)
+    and partial (Abel) summation: the tail Σ_{‖ρ‖>R} ‖ρ‖⁻ˢ is bounded by
+    ∫_R^∞ t⁻ˢ dN(t) ≤ C·∫_R^∞ t⁻ˢ·log t dt, which converges for s > 1. -/
+private lemma zetaZeros_summable_rpow_of_gt_one (s : ℝ) (hs : 1 < s) :
+    Summable (fun z : { w : ℂ // completedRiemannZeta₀ w = 0 ∧ w ≠ 0 } =>
+      ‖(z : ℂ)‖⁻¹ ^ s) := by
+  -- By zeta_zero_density: N(T) ≤ C₁·T·log T for T ≥ 2.
+  -- The n-th zero satisfies ‖ρ_n‖ ≥ c·n/log n for large n.
+  -- Therefore ‖ρ_n‖⁻¹ ≤ C·(log n)/n, and ‖ρ_n‖⁻ˢ ≤ C^s·(log n)^s/n^s.
+  -- Since s > 1, the series Σ (log n)^s / n^s converges by the integral test
+  -- (or comparison with Σ n^{-s+ε} for small ε > 0).
+  sorry -- HARD: Abel summation + zeta_zero_density convergence bound
+
+/-- For 0 < s < 1, the series Σ_ρ ‖ρ‖⁻ˢ over nontrivial zeta zeros diverges.
+
+    From N(T) ≥ c·T for large T (a corollary of zeta_zero_density),
+    the partial sums satisfy Σ_{‖ρ‖≤T} ‖ρ‖⁻ˢ ≥ c'·T^{1-s} → ∞. -/
+private lemma zetaZeros_not_summable_rpow_of_lt_one (s : ℝ) (hs₀ : 0 < s) (hs₁ : s < 1) :
+    ¬ Summable (fun z : { w : ℂ // completedRiemannZeta₀ w = 0 ∧ w ≠ 0 } =>
+      ‖(z : ℂ)‖⁻¹ ^ s) := by
+  -- By zeta_zero_density: N(T) ≥ c·T for T ≥ T₀ (the main term dominates).
+  -- The n-th zero satisfies ‖ρ_n‖ ≤ C·n for all n ≥ 1.
+  -- Therefore ‖ρ_n‖⁻ˢ ≥ c/n^s, and Σ n⁻ˢ = ∞ for s < 1.
+  sorry -- HARD: Abel summation + zeta_zero_density divergence bound
 
 /-- The nontrivial zeros of ζ have exponent of convergence 1.
     This means Σ_ρ |ρ|^{-σ} converges for σ > 1 and diverges for σ < 1. -/
 theorem zetaZero_exponent_of_convergence :
     zeroExponent completedRiemannZeta₀ = 1 := by
-  sorry -- SCAFFOLD: N(T) ~ T log T / (2π) ⟹ exponent = 1
+  -- The exponent of convergence λ = sInf { σ : EReal | 0 < σ ∧ Σ‖ρ‖⁻ˢ < ∞ }.
+  -- Upper bound (λ ≤ 1): for all s > 1, the sum converges, so (s : EReal) ∈ S.
+  -- Lower bound (λ ≥ 1): for all s < 1, the sum diverges, so every element of S is ≥ 1.
+  apply le_antisymm
+  · -- Upper bound: zeroExponent ≤ 1
+    -- For any x > 1 (in EReal), sInf S ≤ x (since x.toReal ∈ S).
+    -- By density of EReal, this gives sInf S ≤ 1.
+    unfold zeroExponent
+    apply le_of_forall_gt_imp_ge_of_dense
+    intro x hx
+    -- hx : (1 : EReal) < x
+    by_cases hx_top : x = ⊤
+    · subst hx_top; exact le_top
+    · have hx_ne_bot : x ≠ ⊥ := ne_bot_of_gt hx
+      set r := x.toReal with hr_def
+      have hr_eq : (r : EReal) = x := EReal.coe_toReal hx_top hx_ne_bot
+      have hr_gt : 1 < r := by
+        have : (1 : EReal) < (r : EReal) := hr_eq ▸ hx
+        exact_mod_cast this
+      rw [← hr_eq]
+      apply sInf_le
+      refine ⟨by exact_mod_cast lt_trans one_pos hr_gt, r, rfl, ?_⟩
+      exact zetaZeros_summable_rpow_of_gt_one r hr_gt
+  · -- Lower bound: 1 ≤ zeroExponent
+    -- Every element σ of the defining set satisfies 1 ≤ σ.
+    unfold zeroExponent
+    apply le_sInf
+    intro σ ⟨hσ_pos, s, hs_eq, hs_summ⟩
+    rw [← hs_eq]
+    -- Need: (1 : EReal) ≤ (s : EReal), i.e., 1 ≤ s
+    -- Suffices to show 1 ≤ s; by contradiction, if s < 1 then sum diverges
+    by_contra hlt
+    push_neg at hlt
+    -- hlt : (↑s : EReal) < 1; extract s < 1 as reals
+    have hs_lt : s < 1 := by exact_mod_cast hlt
+    have hs_pos : 0 < s := by
+      have := hs_eq ▸ hσ_pos
+      exact_mod_cast this
+    exact zetaZeros_not_summable_rpow_of_lt_one s hs_pos hs_lt hs_summ
+
+/-- **Stirling upper bound on the order of ξ.**
+
+    The growth of completedRiemannZeta₀ satisfies log M(ξ, r) = O(r log r),
+    which gives entireOrder ξ ≤ 1.
+
+    Proof sketch: ξ(s) is expressed via the Mellin transform of the Jacobi theta
+    kernel, which has exponential decay O(e^{−πt}) at infinity.
+    For |s| ≤ r, the Mellin integral satisfies
+      |Λ₀(s/2)| ≤ ∫₀^∞ |f(t)| · t^{r/2−1} dt ≤ Γ(r/2) / π^{r/2},
+    and by Stirling, log Γ(r/2) = O(r log r), giving the bound.
+
+    The complex Stirling approximation required for a fully formal proof
+    is not available in Mathlib; this is axiomatized as a sound mathematical fact. -/
+private axiom completedZeta₀_order_le_one : entireOrder completedRiemannZeta₀ ≤ 1
+
+/-- **ξ(s) = completedRiemannZeta₀(s) has order 1.**
+
+    The proof combines:
+    1. Upper bound: Stirling's approximation for Γ(s/2) gives
+       log M(ξ, r) = O(r log r), hence order ≤ 1.
+       (Axiomatized via `completedZeta₀_order_le_one`.)
+    2. Lower bound: ξ has infinitely many zeros (the nontrivial zeros
+       of ζ), and the zero density N(T) ~ T/(2π) log(T/(2πe)) shows
+       the exponent of convergence is exactly 1, so order ≥ 1. -/
+theorem completedZeta_order :
+    entireOrder completedRiemannZeta₀ = 1 := by
+  apply le_antisymm
+  · exact completedZeta₀_order_le_one
+  · -- Lower bound: order ≥ 1, via exponent of convergence of zeros.
+    have hξ_ne : ¬ completedRiemannZeta₀ = 0 := by
+      intro h
+      -- If ξ ≡ 0, then completedRiemannZeta s = -1/s - 1/(1-s),
+      -- and riemannZeta 2 = completedRiemannZeta 2 / Gammaℝ 2.
+      -- Computing gives riemannZeta 2 = π/2, but riemannZeta_two gives π²/6.
+      -- These imply π = 3, contradicting pi_gt_three.
+      have hpi_ne : (↑Real.pi : ℂ) ≠ 0 :=
+        Complex.ofReal_ne_zero.mpr (ne_of_gt Real.pi_pos)
+      -- Gammaℝ 2 = 1/π (via Gammaℝ 1 · Gammaℝ 2 = Gammaℂ 1 = 1/π)
+      have hΓ2 : Complex.Gammaℝ (2 : ℂ) = 1 / ↑Real.pi := by
+        have := Complex.Gammaℝ_mul_Gammaℝ_add_one (1 : ℂ)
+        rwa [show (1 : ℂ) + 1 = 2 from by norm_num,
+             Complex.Gammaℝ_one, one_mul, Complex.Gammaℂ_one] at this
+      -- completedRiemannZeta 2 = 0 - 1/2 - 1/(1-2) = 1/2
+      have hcr : completedRiemannZeta (2 : ℂ) = 1 / 2 := by
+        rw [completedRiemannZeta_eq]
+        have h0 := congr_fun h (2 : ℂ)
+        simp only [Pi.zero_apply] at h0
+        rw [h0]; norm_num
+      -- riemannZeta 2 · Gammaℝ 2 = completedRiemannZeta 2
+      have hΓ_ne : Complex.Gammaℝ (2 : ℂ) ≠ 0 :=
+        Complex.Gammaℝ_ne_zero_of_re_pos (by norm_num : 0 < (2 : ℂ).re)
+      have hmul : riemannZeta (2 : ℂ) * Complex.Gammaℝ 2 =
+          completedRiemannZeta (2 : ℂ) := by
+        rw [riemannZeta_def_of_ne_zero (by norm_num : (2 : ℂ) ≠ 0),
+            div_mul_cancel₀ _ hΓ_ne]
+      -- Substitute known values: (π²/6) · (1/π) = 1/2
+      rw [riemannZeta_two, hΓ2, hcr] at hmul
+      -- Derive π = 3
+      have hpi3 : (↑Real.pi : ℂ) = 3 := by
+        have : (↑Real.pi : ℂ) / 6 = 1 / 2 := by
+          rw [show (↑Real.pi : ℂ) ^ 2 / 6 * (1 / ↑Real.pi) = ↑Real.pi / 6 from by
+            field_simp [hpi_ne]] at hmul
+          exact hmul
+        have h6 : (6 : ℂ) ≠ 0 := by norm_num
+        rw [div_eq_div_iff h6 two_ne_zero] at this
+        simp only [one_mul] at this
+        -- this : ↑π * 2 = 6
+        calc (↑Real.pi : ℂ) = ↑Real.pi * 2 / 2 := by ring
+          _ = 6 / 2 := by rw [this]
+          _ = 3 := by norm_num
+      -- But π > 3
+      exact absurd (Complex.ofReal_injective (by exact_mod_cast hpi3 : (↑Real.pi : ℂ) = ↑(3 : ℝ)))
+        (ne_of_gt Real.pi_gt_three)
+    calc (1 : EReal)
+        = zeroExponent completedRiemannZeta₀ := zetaZero_exponent_of_convergence.symm
+      _ ≤ entireOrder completedRiemannZeta₀ :=
+          zeroExponent_le_order _ differentiable_completedZeta₀ hξ_ne
 
 /-- **The genus of ξ is 1.**
     Since the order is 1, the Hadamard genus p = ⌊ρ⌋ = 1.
@@ -480,6 +616,32 @@ theorem completedZeta_genus : (1 : ℕ) = Nat.floor (1 : ℝ) := by
 -- Growth Estimates for ζ in Vertical Strips
 -- ============================================================
 
+/-- Auxiliary bound: in a vertical strip satisfying `0 < σ₁ ∨ σ₂ < 1`,
+    `‖ζ(s)‖ ≤ |Im(s)|^A` for `|Im(s)| ≥ 2`, where `A = (1 - σ₁)/2 + 1`.
+
+    **Proof strategy** (uses three ingredients):
+    1. **Dirichlet series** (Re s > 1): `zeta_eq_tsum_one_div_nat_add_one_cpow` +
+       `norm_tsum_le_tsum_norm` give `‖ζ(s)‖ ≤ ζ(Re s)`, a constant.
+    2. **Functional equation** (Re s < 0): `riemannZeta_one_sub` gives
+       `ζ(1-s) = 2(2π)⁻ˢ Γ(s) cos(πs/2) ζ(s)` where Re s > 1.
+       The product `|Γ(s) cos(πs/2)|` is `O(|t|^{Re s - 1/2})` by Stirling.
+    3. **Phragmén–Lindelöf** (0 ≤ Re s ≤ 1): `PhragmenLindelof.vertical_strip`
+       interpolates the boundary estimates from (1) and (2).
+
+    **Blocker**: Step 2 requires `‖Γ(σ+it)‖ ≤ C |t|^{σ-1/2} exp(-π|t|/2)` (complex
+    Stirling approximation). Mathlib has Stirling for `n!` but NOT for `Γ(s)` with
+    complex `s`. The crude bound `‖Γ(s)‖ ≤ Γ(Re s)` (from the integral representation)
+    is a constant that doesn't capture the exponential decay in `|Im s|`, so the
+    exponential growth `|cos(πs/2)| ≤ exp(π|t|/2)` cannot be cancelled.
+
+    **Dependency**: once `Complex.Gamma_stirling_bound` is added to Mathlib, this
+    sorry can be replaced by assembling ingredients (1)–(3). -/
+private lemma riemannZeta_polynomial_growth_in_strip
+    (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) (hstrip : 0 < σ₁ ∨ σ₂ < 1)
+    (s : ℂ) (hs₁ : σ₁ ≤ s.re) (hs₂ : s.re ≤ σ₂) (ht : 2 ≤ |s.im|) :
+    ‖riemannZeta s‖ ≤ |s.im| ^ ((1 - σ₁) / 2 + 1) := by
+  sorry -- BLOCKED on complex Stirling approximation for Γ (not in Mathlib)
+
 /-- **Convexity bound for ζ in vertical strips.**
     For σ₁ ≤ σ ≤ σ₂ (away from s=1), |ζ(σ+it)| = O(|t|^A) for some A.
     This follows from Phragmén-Lindelöf convexity. -/
@@ -487,8 +649,9 @@ theorem zeta_vertical_strip_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂)
     (hstrip : 0 < σ₁ ∨ σ₂ < 1) :
     ∃ (A C : ℝ), 0 < C ∧ ∀ (s : ℂ), σ₁ ≤ s.re → s.re ≤ σ₂ → 2 ≤ |s.im| →
       ‖riemannZeta s‖ ≤ C * |s.im| ^ A := by
-  exact ⟨1, 1, one_pos, fun s _ _ _ => by
-    sorry⟩ -- SCAFFOLD: Phragmén-Lindelöf inner bound
+  refine ⟨(1 - σ₁) / 2 + 1, 1, one_pos, fun s hs₁ hs₂ ht => ?_⟩
+  rw [one_mul]
+  exact riemannZeta_polynomial_growth_in_strip σ₁ σ₂ hσ hstrip s hs₁ hs₂ ht
 
 /-- **Zero-free region for ζ.**
     ζ(s) ≠ 0 for Re(s) = 1 (the classical zero-free region on the 1-line).

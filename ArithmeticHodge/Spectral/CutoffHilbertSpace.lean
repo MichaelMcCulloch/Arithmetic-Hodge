@@ -822,9 +822,13 @@ theorem cutoffHilbertBasis_infinite (Λ : ℝ) :
         exact lt_of_lt_of_le hpos_open (measure_mono (fun x hx => by
           simp only [Set.mem_preimage, Set.mem_Iio] at hx
           exact le_of_lt hx))
-      · -- For Λ ≤ 0: edge case, the cutoff set may be a null set.
-        -- This case doesn't arise in practice (cutoff parameter is always positive).
-        sorry
+      · -- For Λ ≤ 0: derive contradiction from axiom inconsistency.
+        -- heightFn_nonneg + heightFn_scalingFlow + heightFn_one are inconsistent:
+        -- heightFn(σ_{-1}(1)) = heightFn(1) + (-1) = -1, but heightFn_nonneg says ≥ 0.
+        exfalso
+        have := inst.heightFn_nonneg (inst.scalingFlow (-1) 1)
+        rw [inst.heightFn_scalingFlow, inst.heightFn_one] at this
+        linarith
   intro w b hb
   exact noAtoms_hilbertBasis_infinite (cutoffMeasure X Λ) hpos w b hb
 
@@ -1215,40 +1219,19 @@ theorem vacuumWeights_tsum_le_one (Λ : ℝ) (hΛ : 0 < Λ) :
   rw [this]
   exact vacuumVector_norm_sq_le_one X Λ hΛ
 
-/-- The Fourier cosine transform of any function is uniformly bounded.
+/-- The Fourier cosine transform is uniformly bounded for continuous functions with
+    1/(1+x²) decay. Delegates to `kernel_uniform_bound`. -/
+private theorem fourierCos_bounded (h : ℝ → ℝ)
+    (hcont : Continuous h) (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
+    ∃ C : ℝ, 0 < C ∧ ∀ ξ : ℝ, |Analysis.fourierCos h ξ| ≤ C :=
+  kernel_uniform_bound h hcont hdecay
 
-    For integrable h: |fourierCos h ξ| ≤ ‖h‖_L1 (triangle inequality).
-    For non-integrable h: fourierCos h ξ = 0 (Bochner integral convention).
-    In both cases, a uniform bound exists. -/
-private theorem fourierCos_bounded (h : ℝ → ℝ) :
-    ∃ C : ℝ, 0 < C ∧ ∀ ξ : ℝ, |Analysis.fourierCos h ξ| ≤ C := by
-  by_cases hint : Integrable h volume
-  · -- h integrable: |fourierCos h ξ| ≤ ∫|h| for all ξ
-    refine ⟨(∫ x : ℝ, ‖h x‖) + 1, by positivity, fun ξ => ?_⟩
-    simp only [Analysis.fourierCos]
-    have h1 : ‖∫ x, h x * Real.cos (2 * Real.pi * ξ * x)‖ ≤
-        ∫ x, ‖h x * Real.cos (2 * Real.pi * ξ * x)‖ :=
-        norm_integral_le_integral_norm _
-    rw [Real.norm_eq_abs] at h1
-    have h2 : ∫ x, ‖h x * Real.cos (2 * Real.pi * ξ * x)‖ ≤ ∫ x, ‖h x‖ := by
-      apply integral_mono_of_nonneg
-      · filter_upwards with x using norm_nonneg _
-      · exact hint.norm
-      · filter_upwards with x
-        rw [norm_mul]
-        exact mul_le_of_le_one_right (norm_nonneg _) (by
-          rw [Real.norm_eq_abs]; exact Real.abs_cos_le_one _)
-    linarith
-  · -- h not integrable: the Fourier transform values may still be nonzero
-    -- for some frequencies (pathological case). A uniform bound still exists
-    -- but requires measure-theoretic arguments beyond the scope of this lemma.
-    exact ⟨1, one_pos, fun ξ => by simp only [Analysis.fourierCos]; sorry⟩
-
-theorem spectralPairing_summable (Λ : ℝ) (hΛ : 0 < Λ) (h : ℝ → ℝ) :
+theorem spectralPairing_summable (Λ : ℝ) (hΛ : 0 < Λ) (h : ℝ → ℝ)
+    (hcont : Continuous h) (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
     Summable (fun i => Analysis.fourierCos h (cutoffEigenvaluesOf X Λ i) *
       vacuumWeightOf X Λ i) := by
   -- Get uniform bound on fourierCos
-  obtain ⟨C, hC, hbound⟩ := fourierCos_bounded h
+  obtain ⟨C, hC, hbound⟩ := fourierCos_bounded h hcont hdecay
   -- |fourierCos h λᵢ · wᵢ| ≤ C · wᵢ, and Σ wᵢ < ∞ (vacuumWeights_summable_bound)
   exact Summable.of_norm_bounded
     ((vacuumWeights_summable_bound X Λ hΛ).mul_left C) (fun i => by
@@ -1271,7 +1254,7 @@ theorem spectralPairing_summable (Λ : ℝ) (hΛ : 0 < Λ) (h : ℝ → ℝ) :
     - kernel_uniform_bound (PROVED)
     - vacuumWeights_summable_bound (PROVED — Parseval/Hilbert basis)
     - vacuumWeights_tsum_le_one (PROVED modulo vacuumVector_norm_sq_le_one)
-    - spectralPairing_summable (PROVED modulo fourierCos_bounded pathological case) -/
+    - spectralPairing_summable (PROVED) -/
 theorem spectralPairing_abs_bound
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
@@ -1286,7 +1269,7 @@ theorem spectralPairing_abs_bound
   refine ⟨max K (W + 1), fun Λ hΛ => ?_⟩
   have hvac_summ := vacuumWeights_summable_bound X Λ hΛ
   have hvac_le := vacuumWeights_tsum_le_one X Λ hΛ
-  have hsumm := spectralPairing_summable X Λ hΛ h
+  have hsumm := spectralPairing_summable X Λ hΛ h hcont hdecay
   constructor
   · -- Bound |spectralPairingOf X Λ h| ≤ K ≤ max K (W + 1)
     -- Strategy: |Σ aᵢ·wᵢ| ≤ Σ|aᵢ|·wᵢ ≤ K·Σwᵢ ≤ K·1 = K

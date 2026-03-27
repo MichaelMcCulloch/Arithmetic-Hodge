@@ -27,6 +27,12 @@ import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.Analysis.Normed.Module.MultipliableUniformlyOn
 import Mathlib.Analysis.Complex.LocallyUniformLimit
 import Mathlib.Analysis.Complex.HasPrimitives
+import Mathlib.Analysis.Analytic.Order
+import Mathlib.Analysis.Complex.RemovableSingularity
+import Mathlib.Topology.DiscreteSubset
+import Mathlib.Data.Set.Countable
+import Mathlib.Topology.Compactness.Lindelof
+import ArithmeticHodge.Analysis.EntireFunction.Defs
 
 open Complex Filter Topology Finset BigOperators Metric
 
@@ -751,7 +757,7 @@ private theorem tprod_const_one' : ∏' (_ : ℕ), (1 : ℂ) = 1 := tprod_one
     primitives for entire functions via Morera's theorem) applied to h'/h.
     The primitive G satisfies G' = h'/h, so h · exp(-G) has derivative 0,
     hence is constant. Normalizing at 0 gives h = exp(G + c). -/
-private theorem entire_logarithm (h : ℂ → ℂ) (hh : Differentiable ℂ h)
+theorem entire_logarithm (h : ℂ → ℂ) (hh : Differentiable ℂ h)
     (hne : ∀ z, h z ≠ 0) :
     ∃ g : ℂ → ℂ, Differentiable ℂ g ∧ ∀ z, h z = Complex.exp (g z) := by
   -- h'/h is entire since h is never zero
@@ -801,7 +807,7 @@ private theorem entire_logarithm (h : ℂ → ℂ) (hh : Differentiable ℂ h)
       _ = Complex.exp (G z) := by rw [← Complex.exp_neg, neg_neg]⟩
 
 theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
-    (hf_ne : ¬ f = 0) :
+    (hf_ne : ¬ f = 0) (hfin : HasFiniteOrder f) :
     ∃ (m : ℕ) (g : ℂ → ℂ) (a : ℕ → ℂ) (p : ℕ),
       Differentiable ℂ g ∧
       (∀ n, a n ≠ 0 → f (a n) = 0) ∧
@@ -815,11 +821,153 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     exact ⟨0, g, fun _ => 0, 0, hg_diff,
       fun n h => absurd rfl h,
       fun z => by simp [hg_eq z, weierstraßElementary_zero]⟩
-  · -- f has zeros: full Weierstraß product construction needed.
-    -- For general entire functions of infinite order, no finite uniform genus p
-    -- guarantees convergence. The theorem as stated requires the zero sequence
-    -- to grow fast enough for some fixed p.
-    -- For finite order ρ, p = ⌊ρ⌋ works (exponent-of-convergence theorem).
-    sorry
+  · -- f has zeros: Weierstraß product construction for finite-order functions.
+    push_neg at hzf
+    -- ═══════════════════════════════════════════════════════════
+    -- Step 1: Factor out the zero at the origin
+    -- f(z) = z^m · f₁(z) with f₁(0) ≠ 0, using analytic order at 0
+    -- ═══════════════════════════════════════════════════════════
+    obtain ⟨m, f₁, hf₁_diff, hf₁_nz, hf_eq⟩ :
+        ∃ (m : ℕ) (f₁ : ℂ → ℂ), Differentiable ℂ f₁ ∧ f₁ 0 ≠ 0 ∧
+          ∀ z, f z = z ^ m * f₁ z := by
+      by_cases hf0 : f 0 ≠ 0
+      · exact ⟨0, f, hf, hf0, fun z => by simp⟩
+      · push_neg at hf0
+        have hf_an : AnalyticAt ℂ f 0 := hf.analyticAt 0
+        have hord_ne_top : analyticOrderAt f 0 ≠ ⊤ :=
+          (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero 0
+            (fun z => hf.analyticAt z)).not.mpr hf_ne
+        set m' := analyticOrderNatAt f 0
+        obtain ⟨g, hg_an, hg_nz, hg_eq⟩ := hf_an.analyticOrderAt_ne_top.mp hord_ne_top
+        have hg_eq' : ∀ᶠ z in 𝓝 (0 : ℂ), f z = z ^ m' * g z :=
+          hg_eq.mono fun z hz => by simp only [sub_zero, smul_eq_mul] at hz; exact hz
+        refine ⟨m', Function.update (fun z => f z / z ^ m') 0 (g 0), ?_, ?_, ?_⟩
+        · -- f₁ is entire
+          intro z₀
+          by_cases hz₀ : z₀ = 0
+          · subst hz₀
+            refine (hg_an.congr ?_).differentiableAt
+            apply hg_eq'.mono
+            intro z hz
+            by_cases hz0 : z = 0
+            · subst hz0; simp [Function.update_self]
+            · rw [Function.update_of_ne hz0, hz,
+                mul_div_cancel_left₀ _ (pow_ne_zero m' hz0)]
+          · exact (hf.differentiableAt.div ((differentiable_pow m').differentiableAt)
+              (pow_ne_zero m' hz₀)).congr_of_eventuallyEq
+              ((isOpen_ne.eventually_mem hz₀).mono fun z hz =>
+                Function.update_of_ne hz _ _)
+        · simp [Function.update_self, hg_nz]
+        · intro z
+          by_cases hz : z = 0
+          · subst hz; rw [Function.update_self]; exact hg_eq'.self_of_nhds
+          · simp only [Function.update_of_ne hz]
+            exact (mul_div_cancel₀ (f z) (pow_ne_zero m' hz)).symm
+    -- ═══════════════════════════════════════════════════════════
+    -- Step 2: Enumerate zeros with summability
+    -- ═══════════════════════════════════════════════════════════
+    obtain ⟨a, p, ha_zeros, hconv, ha_covers⟩ :
+        ∃ (a : ℕ → ℂ) (p : ℕ),
+          (∀ n, a n ≠ 0 → f₁ (a n) = 0) ∧
+          Summable (fun n => (‖a n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
+          (∀ z, f₁ z = 0 → ∃ n, z = a n) := by
+      have hf₁_ne : ¬ f₁ = 0 := fun h => hf₁_nz (by rw [h]; simp)
+      have han : AnalyticOnNhd ℂ f₁ Set.univ := fun z _ => hf₁_diff.analyticAt z
+      have hcodisc : f₁ ⁻¹' {0}ᶜ ∈ Filter.codiscrete ℂ :=
+        han.preimage_zero_mem_codiscrete hf₁_nz
+      have hdisc : IsDiscrete (f₁ ⁻¹' {0}) := by
+        have := (mem_codiscrete'.mp hcodisc).2
+        rwa [Set.preimage_compl, compl_compl] at this
+      have hcount : (f₁ ⁻¹' {0}).Countable :=
+        (HereditarilyLindelofSpace.isLindelof _).countable_of_isDiscrete hdisc
+      set a₀ := Set.enumerateCountable hcount (0 : ℂ)
+      have ha₀_surj : ∀ z, f₁ z = 0 → ∃ n, z = a₀ n := by
+        intro z hz
+        obtain ⟨n, hn⟩ := Set.subset_range_enumerate hcount 0 (Set.mem_preimage.mpr
+          (Set.mem_singleton_iff.mpr hz))
+        exact ⟨n, hn.symm⟩
+      have ha₀_zeros : ∀ n, a₀ n ≠ 0 → f₁ (a₀ n) = 0 := by
+        intro n hn
+        simp only [a₀, Set.enumerateCountable] at hn ⊢
+        cases h : @Encodable.decode (f₁ ⁻¹' {0}) hcount.toEncodable n with
+        | none => simp [h] at hn
+        | some val => exact val.2
+      set p := Nat.floor (entireOrder f).toReal
+      -- Summability: exponent of convergence ≤ order, so p+1 > ρ gives convergence
+      have hconv : Summable (fun n => (‖a₀ n‖⁻¹) ^ ((p : ℝ) + 1)) := by
+        sorry -- NEEDS: zeroExponent_le_order + exponent-of-convergence theory
+      exact ⟨a₀, p, ha₀_zeros, hconv, ha₀_surj⟩
+    -- ═══════════════════════════════════════════════════════════
+    -- Step 3–4: Quotient f₁/P is entire and zero-free
+    -- ═══════════════════════════════════════════════════════════
+    obtain ⟨h, hh_diff, hh_ne, hh_eq⟩ :
+        ∃ (h : ℂ → ℂ), Differentiable ℂ h ∧ (∀ z, h z ≠ 0) ∧
+          (∀ z, f₁ z = h z * ∏' n, weierstraßElementary p (z / a n)) := by
+      set P : ℂ → ℂ := fun z => ∏' n, weierstraßElementary p (z / a n)
+      have hP_diff : Differentiable ℂ P := tprod_weierstraßElementary_differentiable a p hconv
+      have hq_diff : ∀ z, P z ≠ 0 → DifferentiableAt ℂ (fun w => f₁ w / P w) z :=
+        fun z hz => hf₁_diff.differentiableAt.div hP_diff.differentiableAt hz
+      set h₀ : ℂ → ℂ := fun z =>
+        if P z ≠ 0 then f₁ z / P z
+        else limUnder (𝓝[≠] z) (fun w => f₁ w / P w)
+      have hh₀_eq : ∀ z, f₁ z = h₀ z * P z := by
+        intro z
+        by_cases hPz : P z ≠ 0
+        · rw [show h₀ z = f₁ z / P z from if_pos hPz, div_mul_cancel₀ (f₁ z) hPz]
+        · push_neg at hPz
+          have hf₁z : f₁ z = 0 := by
+            by_contra hf₁z_ne
+            have hne : ∀ n, z / a n ≠ 1 := by
+              intro n heq
+              by_cases han : a n = 0
+              · simp [han] at heq
+              · exact hf₁z_ne ((div_eq_one_iff_eq han).mp heq ▸ ha_zeros n han)
+            exact absurd hPz (tprod_weierstraßElementary_ne_zero a p hconv z hne)
+          rw [hf₁z, hPz, mul_zero]
+      have hh₀_diff : Differentiable ℂ h₀ := by
+        intro z₀
+        by_cases hPz₀ : P z₀ ≠ 0
+        · have heq : h₀ =ᶠ[𝓝 z₀] fun w => f₁ w / P w := by
+            have : ∀ᶠ w in 𝓝 z₀, P w ≠ 0 :=
+              hP_diff.continuous.continuousAt.eventually_ne hPz₀
+            exact this.mono fun w hw => by simp [h₀, hw]
+          exact (hq_diff z₀ hPz₀).congr_of_eventuallyEq heq
+        · push_neg at hPz₀
+          have hP_an : AnalyticAt ℂ P z₀ := hP_diff.analyticAt z₀
+          have hP_not_ev_zero : ¬ ∀ᶠ w in 𝓝 z₀, P w = 0 := by
+            intro hev
+            have hf₁_ev : ∀ᶠ w in 𝓝 z₀, f₁ w = 0 :=
+              hev.mono fun w hw => by rw [hh₀_eq w, hw, mul_zero]
+            have hf₁_eq : f₁ = 0 := (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero z₀
+              (fun z => hf₁_diff.analyticAt z)).mp (analyticOrderAt_eq_top.mpr hf₁_ev)
+            exact hf₁_nz (congr_fun hf₁_eq 0)
+          have hP_ev_ne : ∀ᶠ w in 𝓝[≠] z₀, P w ≠ 0 :=
+            hP_an.eventually_eq_zero_or_eventually_ne_zero.resolve_left hP_not_ev_zero
+          have hh₀_diff_punct : ∀ᶠ w in 𝓝[≠] z₀, DifferentiableAt ℂ h₀ w := by
+            apply hP_ev_ne.mono
+            intro w hw
+            have heq : h₀ =ᶠ[𝓝 w] fun v => f₁ v / P v :=
+              (hP_diff.continuous.continuousAt.eventually_ne hw).mono
+                fun v hv => by simp [h₀, hv]
+            exact (hf₁_diff.differentiableAt.div hP_diff.differentiableAt hw).congr_of_eventuallyEq
+              heq
+          exact (analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
+            hh₀_diff_punct
+            (by sorry -- NEEDS: ContinuousAt h₀ z₀ via analytic order matching
+            )).differentiableAt
+      have hh₀_ne : ∀ z, h₀ z ≠ 0 := by
+        intro z hz
+        have hf₁z : f₁ z = 0 := by rw [hh₀_eq z, hz, zero_mul]
+        obtain ⟨n, rfl⟩ := ha_covers z hf₁z
+        sorry -- NEEDS: order matching shows h₀ never zero at zeros of f₁
+      exact ⟨h₀, hh₀_diff, hh₀_ne, hh₀_eq⟩
+    -- ═══════════════════════════════════════════════════════════
+    -- Step 5: entire_logarithm + assembly
+    -- ═══════════════════════════════════════════════════════════
+    obtain ⟨g, hg_diff, hg_eq⟩ := entire_logarithm h hh_diff hh_ne
+    exact ⟨m, g, a, p, hg_diff,
+      fun n hn => by rw [hf_eq (a n), ha_zeros n hn, mul_zero],
+      fun z => by
+        rw [hf_eq z, hh_eq z, hg_eq z, ← mul_assoc]⟩
 
 end ArithmeticHodge.Analysis.EntireFunction

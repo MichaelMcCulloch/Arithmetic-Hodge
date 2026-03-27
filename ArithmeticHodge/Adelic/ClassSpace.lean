@@ -208,6 +208,19 @@ class AdeleClassSpaceData (X : Type*) extends
       This holds for 𝔸_ℚ/ℚ* since ℚ* is discrete in 𝔸_ℚ but
       the quotient inherits the (nondiscrete) adelic topology. -/
   nondiscrete : (𝓝[≠] (1 : X)).NeBot
+  /-- **The scaling flow is mixing** with respect to Haar measure.
+      This is a consequence of the RAGE theorem (Ruelle-Amrein-Georgescu-Enss):
+      the Prime Number Theorem (ζ(1+it) ≠ 0 for all t ∈ ℝ) gives a spectral
+      gap for the Koopman representation on L²(X, μ), Wiener's theorem converts
+      the spectral gap to decay of matrix coefficients, and matrix coefficient
+      decay is precisely the mixing condition.
+      Reference: Reed & Simon IV, Theorem XI.115. -/
+  scalingFlow_mixing : ∀ (f g : X → ℂ)
+    (_hf : Integrable f haarMeasure)
+    (_hg : Integrable g haarMeasure),
+    Filter.Tendsto
+      (fun t => ∫ x, f (scalingFlow t x) * starRingEnd ℂ (g x) ∂haarMeasure)
+      Filter.atTop (nhds ((∫ x, f x ∂haarMeasure) * starRingEnd ℂ (∫ x, g x ∂haarMeasure)))
 
 /-- **Haar measure invariance from the AdeleClassSpaceData class.**
     The product formula (axiomatized as trivialHaarChar) immediately gives

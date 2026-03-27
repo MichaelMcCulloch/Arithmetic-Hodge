@@ -324,7 +324,7 @@ theorem rh_implies_weil_positivity_from_explicit :
   intro hRH f hf_auto hf_cont hf_decay
   -- Apply the explicit formula to f
   obtain ⟨zeros, hzeros_spec, _, hsum, hexpl⟩ :=
-    weil_explicit_formula f hf_cont hf_decay
+    weil_explicit_formula f hf_cont hf_decay hRH
   -- W(f) = Σ f(γ_ρ) by the explicit formula
   rw [← hexpl]
   -- Each term f(γ_ρ) ≥ 0 for autocorrelations evaluated at real points
