@@ -24,6 +24,7 @@ import Mathlib.Analysis.Complex.Trigonometric
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
+import ArithmeticHodge.Analysis.EntireFunction.Defs
 
 open Complex Real Filter Topology MeasureTheory Set Finset
 open scoped NNReal ComplexConjugate
@@ -165,11 +166,13 @@ theorem digamma_growth_bound (σ₁ σ₂ : ℝ) :
   refine ⟨(N + 1) * (|σ₂| + |σ₁| + 10) + 1, by positivity, fun s hσ₁ hσ₂ him => ?_⟩
   -- For s not a non-positive integer (guaranteed by |Im s| ≥ 2)
   have hs_ne : ∀ m : ℕ, s ≠ -↑m := by
-    intro m
-    intro h
+    intro m h
     have : s.im = (-↑m : ℂ).im := congr_arg Complex.im h
-    simp at this
-    rw [this, abs_zero] at him; linarith
+    simp at this; rw [this, abs_zero] at him; linarith
+  -- Proof via functional equation shift + Cauchy estimate on log Γ.
+  -- See Titchmarsh, Theory of Functions, §4.4; Whittaker-Watson, §12.
+  -- Shift by N to Re(s+N) ≥ |t|+2, bound shift sum by O(1) (harmonic-type),
+  -- bound ψ at shifted point by O(log|t|) via Cauchy on Γ'/Γ.
   sorry
 
 /-! ## Complex Stirling bound
@@ -343,6 +346,45 @@ theorem complex_stirling_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ ≤ σ₂) :
   obtain ⟨Cψ, hCψ_pos, hCψ⟩ := digamma_growth_bound (min σ₁ (1/2)) (max σ₂ (1/2))
   refine ⟨Cψ * (|σ₂ - 1/2| + |σ₁ - 1/2| + 1) + |σ₂| + |σ₁| + 10,
     by positivity, fun s hσ₁ hσ₂ him => ?_⟩
+  sorry
+
+/-! ## Crude Gamma bound for order estimates
+
+For the order of the completed zeta function, we only need the crude bound
+log|Γ(s)| ≤ C · |s| · log|s|, not the full Stirling approximation. This
+follows from |Γ(s)| ≤ Γ(Re(s)) for Re(s) > 0 (integral bound) plus the
+reflection formula for Re(s) ≤ 0, plus real Stirling for Γ(x).
+-/
+
+/-- Crude bound: |Γ(s)| ≤ Γ(Re(s)) for Re(s) > 0.
+    Follows from the integral representation: |∫ t^{s-1} e^{-t} dt| ≤ ∫ t^{Re(s)-1} e^{-t} dt. -/
+private lemma norm_Gamma_le_Gamma_re {s : ℂ} (hs : 0 < s.re) :
+    ‖Complex.Gamma s‖ ≤ Real.Gamma s.re := by
+  -- Γ(s) = ∫₀^∞ t^{s-1} e^{-t} dt, |Γ(s)| ≤ ∫ t^{Re(s)-1} e^{-t} dt = Γ(Re(s))
+  -- |Γ(s)| = |∫ t^{s-1} e^{-t} dt| ≤ ∫ t^{Re(s)-1} e^{-t} dt = Γ(Re(s))
+  -- Follows from: norm of integral ≤ integral of norms, and
+  -- |t^{s-1}| = t^{Re(s)-1} for t > 0 (since |t^z| = t^{Re z}).
+  sorry
+
+/-- Crude bound: log Γ(x) ≤ x · log x for real x ≥ 2.
+    From Stirling: Γ(x) = √(2π) · x^{x-1/2} · e^{-x} · (1 + O(1/x)).
+    So log Γ(x) = (x-1/2)log x - x + (1/2)log(2π) + O(1/x) ≤ x · log x. -/
+private lemma log_Gamma_le_mul_log {x : ℝ} (hx : 2 ≤ x) :
+    Real.log (Real.Gamma x) ≤ x * Real.log x := by
+  sorry
+
+/-- **Crude order bound for the completed zeta function.**
+
+    log M(Λ₀, r) = O(r · log r), hence entireOrder Λ₀ ≤ 1.
+
+    This avoids the sharp Stirling approximation by using only:
+    - |Γ(s)| ≤ Γ(Re(s)) for Re(s) > 0
+    - Real Stirling: log Γ(x) ≤ x · log x for x ≥ 2
+    - Functional equation: Λ₀(s) = Λ₀(1-s)
+    - ζ convergence: |ζ(s)| ≤ C for Re(s) ≥ 2 -/
+theorem log_maxModulus_completedZeta_le (r : ℝ) (hr : 2 ≤ r) :
+    Real.log (ArithmeticHodge.Analysis.EntireFunction.maxModulus completedRiemannZeta₀ r) ≤
+      (r + 10) * Real.log (r + 10) := by
   sorry
 
 end ArithmeticHodge.Analysis
