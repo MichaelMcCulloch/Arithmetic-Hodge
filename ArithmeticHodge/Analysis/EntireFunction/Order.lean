@@ -617,6 +617,17 @@ private lemma summable_rpow_inv_of_counting_bound (f : ℂ → ℂ) (hf : Differ
     (C R₀ : ℝ) (hC : 0 < C) (hR₀ : 1 ≤ R₀)
     (hcount : ∀ r, R₀ ≤ r → (zeroCount f r : ℝ) ≤ C * r ^ α) :
     Summable (fun z : { w : ℂ // f w = 0 ∧ w ≠ 0 } => ‖(z : ℂ)‖⁻¹ ^ s) := by
+  -- Strategy: partition zeros into annular shells {2^k ≤ ‖z‖ < 2^{k+1}}.
+  -- Each shell has ≤ C · (2^{k+1})^α zeros, each contributing ≤ (2^k)^{-s}.
+  -- Shell k contributes ≤ C · 2^α · 2^{k(α-s)}. Since α < s, sum over k converges.
+  --
+  -- For zeros with ‖z‖ < max(1, R₀): finitely many (isolated zeros of entire f),
+  -- contributing a finite sum. For ‖z‖ ≥ max(1, R₀): use the counting bound.
+  --
+  -- Technical approach: bound by a geometric series in the annular shells.
+  -- Each term ‖z‖⁻¹ ^ s ≤ 1 for ‖z‖ ≥ 1, so it suffices to show summability
+  -- of the terms with ‖z‖ ≥ 1. For ‖z‖ < 1 there are finitely many zeros
+  -- (by isolation), contributing a finite sum.
   sorry
 
 /-- The exponent of convergence of the zeros of f:
