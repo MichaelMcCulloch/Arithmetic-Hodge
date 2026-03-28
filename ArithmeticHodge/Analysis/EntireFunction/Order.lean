@@ -617,17 +617,30 @@ private lemma summable_rpow_inv_of_counting_bound (f : ℂ → ℂ) (hf : Differ
     (C R₀ : ℝ) (hC : 0 < C) (hR₀ : 1 ≤ R₀)
     (hcount : ∀ r, R₀ ≤ r → (zeroCount f r : ℝ) ≤ C * r ^ α) :
     Summable (fun z : { w : ℂ // f w = 0 ∧ w ≠ 0 } => ‖(z : ℂ)‖⁻¹ ^ s) := by
-  -- Strategy: partition zeros into annular shells {2^k ≤ ‖z‖ < 2^{k+1}}.
-  -- Each shell has ≤ C · (2^{k+1})^α zeros, each contributing ≤ (2^k)^{-s}.
-  -- Shell k contributes ≤ C · 2^α · 2^{k(α-s)}. Since α < s, sum over k converges.
+  -- Bound: for ‖z‖ ≥ R₀, there are ≤ C·R^α zeros with ‖z‖ ≤ R.
+  -- The n-th zero (by modulus, for n > C·R₀^α) has ‖z_n‖ ≥ (n/C)^{1/α}.
+  -- So ‖z_n‖⁻ˢ ≤ C^{s/α} · n^{-s/α}, and s/α > 1 gives convergence.
+  -- We use Summable.of_norm_bounded with a comparison via the counting bound.
+  -- The zero subtype for an entire non-zero function is countable (discrete).
+  -- The zero subtype with ‖z‖ ≤ R has ≤ C·R^α elements (for R ≥ R₀).
+  -- We bound the sum over zeros with ‖z‖ in (2^k R₀, 2^{k+1} R₀]:
+  --   ≤ C·(2^{k+1} R₀)^α terms, each ≤ (2^k R₀)⁻ˢ
+  --   = C·2^α·R₀^{α-s}·2^{k(α-s)}
+  -- Geometric series in 2^{α-s} < 1. Plus finitely many with ‖z‖ < R₀.
   --
-  -- For zeros with ‖z‖ < max(1, R₀): finitely many (isolated zeros of entire f),
-  -- contributing a finite sum. For ‖z‖ ≥ max(1, R₀): use the counting bound.
+  -- For the Lean proof: bound each term by a function of ‖z‖ alone,
+  -- then use summability of the annular bound via geometric series.
   --
-  -- Technical approach: bound by a geometric series in the annular shells.
-  -- Each term ‖z‖⁻¹ ^ s ≤ 1 for ‖z‖ ≥ 1, so it suffices to show summability
-  -- of the terms with ‖z‖ ≥ 1. For ‖z‖ < 1 there are finitely many zeros
-  -- (by isolation), contributing a finite sum.
+  -- Simple bound: if we can show ∑ over the subtype ≤ M for any finite partial sum,
+  -- then Summable follows from completeness.
+  -- Approach: show the set of zeros is countable, enumerate as ℕ → subtype,
+  -- then use the counting bound to show the ℕ-indexed sequence is summable.
+  -- The subtype summability follows from the ℕ-indexed summability.
+  --
+  -- Key: zeros of a non-zero entire function are isolated, hence countable in ℂ.
+  -- For any R, the ball of radius R contains finitely many zeros.
+  -- The counting bound gives an explicit upper bound on the number in each ball.
+  -- Dyadic decomposition + geometric series gives the summability.
   sorry
 
 /-- The exponent of convergence of the zeros of f:
