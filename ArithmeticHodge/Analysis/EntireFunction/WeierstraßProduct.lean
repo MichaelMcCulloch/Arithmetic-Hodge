@@ -731,6 +731,57 @@ theorem tprod_weierstraßElementary_differentiable (zeros : ℕ → ℂ) (p : �
           (differentiable_id.div_const _)).differentiableOn)
     isOpen_ball
 
+/-- The exponential sum S_p is differentiable. -/
+theorem differentiable_weierstraßExpSum (p : ℕ) :
+    Differentiable ℂ (weierstraßExpSum p) := by
+  unfold weierstraßExpSum
+  induction p with
+  | zero => simp [differentiable_const]
+  | succ n ih =>
+    simp_rw [Finset.sum_range_succ]
+    exact ih.add ((differentiable_id.pow (n + 1)).div_const _)
+
+/-- The analytic order of E_p(w/z₀) at w = z₀ is 1, for z₀ ≠ 0.
+    Since E_p(w/z₀) = (1 - w/z₀) · exp(S_p(w/z₀)) and exp is nonvanishing,
+    the only zero comes from the factor (1 - w/z₀), which is simple. -/
+theorem analyticOrderAt_weierstraßElementary_at_pole (p : ℕ) (z₀ : ℂ) (hz₀ : z₀ ≠ 0) :
+    analyticOrderAt (fun w => weierstraßElementary p (w / z₀)) z₀ = 1 := by
+  have hf_an : AnalyticAt ℂ (fun w => weierstraßElementary p (w / z₀)) z₀ :=
+    ((weierstraßElementary_differentiable p).comp (differentiable_id.div_const z₀)).analyticAt z₀
+  rw [show (1 : ℕ∞) = ↑(1 : ℕ) from rfl, hf_an.analyticOrderAt_eq_natCast]
+  -- Witness: g(w) = (-z₀⁻¹) * exp(S_p(w/z₀)), so E_p(w/z₀) = (w - z₀) • g(w)
+  refine ⟨fun w => (-z₀⁻¹) * Complex.exp (weierstraßExpSum p (w / z₀)), ?_, ?_, ?_⟩
+  · exact ((Complex.differentiable_exp.comp
+      ((differentiable_weierstraßExpSum p).comp (differentiable_id.div_const z₀))).const_mul
+      _).analyticAt z₀
+  · exact mul_ne_zero (neg_ne_zero.mpr (inv_ne_zero hz₀)) (Complex.exp_ne_zero _)
+  · filter_upwards [univ_mem] with w _
+    simp only [weierstraßElementary_eq, pow_one, smul_eq_mul]
+    -- E_p(w/z₀) = (1 - w/z₀) * exp(S_p(w/z₀))
+    -- (1 - w/z₀) = -(w - z₀) * z₀⁻¹ = (w - z₀) * (-z₀⁻¹)
+    have hz₀' : (z₀ : ℂ) ≠ 0 := hz₀
+    field_simp
+    ring
+
+/-- For a Finset product of identical analytic factors, the order multiplies. -/
+theorem analyticOrderAt_finprod_const {f : ℂ → ℂ} {z₀ : ℂ}
+    (hf : AnalyticAt ℂ f z₀) (s : Finset ℕ) :
+    analyticOrderAt (fun w => ∏ _i ∈ s, f w) z₀ = s.card • analyticOrderAt f z₀ := by
+  have heq : (fun w => ∏ _i ∈ s, f w) = f ^ s.card := by
+    ext w; simp [Finset.prod_const]
+  rw [heq, analyticOrderAt_pow hf]
+
+/-- The tprod of weierstraßElementary is pointwise multipliable for raw sequences
+    satisfying the convergence condition. -/
+theorem multipliable_weierstraßElementary_raw (zeros : ℕ → ℂ) (p : ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1))) (w : ℂ) :
+    Multipliable (fun n => weierstraßElementary p (w / zeros n)) := by
+  have key : (fun n => weierstraßElementary p (w / zeros n)) =
+      (fun n => 1 + (weierstraßElementary p (w / zeros n) - 1)) := by ext n; ring
+  rw [key]
+  apply Complex.multipliable_one_add_of_summable
+  exact (perturbation_summable' zeros p hconv w).of_norm
+
 -- ============================================================
 -- Weierstraß Factorization Theorem (existence form)
 -- ============================================================
@@ -932,11 +983,137 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
             mult' hmult_zero)
       refine ⟨a', p', ha_zeros', hconv', ha_covers', ?_⟩
       -- Order equality: analytic order of Weierstraß product at each zero
-      -- equals analyticOrderAt f₁ there. Requires order theory for infinite
-      -- products with repeated factors (each factor E_p(w/z₀) contributes
-      -- a simple zero; z₀ appearing m times gives order m).
+      -- equals analyticOrderAt f₁ there.
       intro z hz hne
-      sorry
+      obtain ⟨k, rfl⟩ := ha₀_surj z hz
+      have hk : a₀ k ≠ 0 := hne
+      -- The multiplicity m = analyticOrderNatAt f₁ (a₀ k)
+      set m := mult' k with hm_def
+      have hm_pos : 0 < m := hmult_pos k hk
+      -- analyticOrderAt f₁ (a₀ k) = ↑m
+      have hord_ne_top : analyticOrderAt f₁ (a₀ k) ≠ ⊤ :=
+        (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero (a₀ k)
+          (fun z => hf₁_diff.analyticAt z)).not.mpr hf₁_ne
+      have hord_f₁ : analyticOrderAt f₁ (a₀ k) = ↑m := by
+        simp only [m, mult', hk, ite_false]
+        exact (Nat.cast_analyticOrderNatAt hord_ne_top).symm
+      rw [hord_f₁]
+      -- Set up the product function and index set
+      set fac : ℕ → ℂ → ℂ := fun n w => weierstraßElementary p' (w / a' n)
+      -- S = {Nat.pair k j | j < m} — the m indices where a' maps to a₀ k
+      set S : Finset ℕ := (Finset.range m).image (Nat.pair k)
+      have hpair_inj : Function.Injective (Nat.pair k) :=
+        fun j₁ j₂ h => (Nat.pair_eq_pair.mp h).2
+      have hS_card : S.card = m :=
+        Finset.card_image_of_injective _ hpair_inj
+      -- For n ∈ S, a' n = a₀ k
+      have hS_val : ∀ n ∈ S, a' n = a₀ k := by
+        intro n hn
+        simp only [S, Finset.mem_image, Finset.mem_range] at hn
+        obtain ⟨j, hj, rfl⟩ := hn
+        exact stutteredEnum_pair_lt hj
+      -- Multipliability
+      have hmult_w : ∀ w, Multipliable (fun n => fac n w) :=
+        multipliable_weierstraßElementary_raw a' p' hconv'
+      -- Split: ∏' n, fac n w = (∏ n ∈ S, fac n w) * (∏' n : (S : Set ℕ)ᶜ, fac n w)
+      have hsplit : (fun w => ∏' n, fac n w) =ᶠ[nhds (a₀ k)]
+          (fun w => (∏ n ∈ S, fac n w) * (∏' n : (S : Set ℕ)ᶜ, fac n w)) := by
+        filter_upwards [univ_mem] with w _
+        exact ((hmult_w w).prod_mul_tprod_compl (s := S)).symm
+      -- The finite product simplifies: each factor is E_{p'}(w / (a₀ k))
+      have hfin_eq : (fun w => ∏ n ∈ S, fac n w) =
+          (fun w => weierstraßElementary p' (w / (a₀ k))) ^ m := by
+        ext w
+        rw [← hS_card, Pi.pow_apply, ← Finset.prod_const]
+        exact Finset.prod_congr rfl (fun n hn => by simp only [fac]; rw [hS_val n hn])
+      -- Rewrite with congr
+      rw [analyticOrderAt_congr hsplit]
+      -- The finite part has order m (m copies of a simple zero)
+      have hE_an : AnalyticAt ℂ (fun w => weierstraßElementary p' (w / (a₀ k))) (a₀ k) :=
+        ((weierstraßElementary_differentiable p').comp
+          (differentiable_id.div_const _)).analyticAt _
+      -- Complement product
+      set Q : ℂ → ℂ := fun w => ∏' n : (S : Set ℕ)ᶜ, fac n w
+      -- Q is analytic (it's P / finite_part, both analytic)
+      have hP_an : AnalyticAt ℂ (fun w => ∏' n, fac n w) (a₀ k) :=
+        (tprod_weierstraßElementary_differentiable a' p' hconv').analyticAt _
+      have hfin_an : AnalyticAt ℂ (fun w => ∏ n ∈ S, fac n w) (a₀ k) :=
+        analyticAt_finset_prod fun _ _ => ((weierstraßElementary_differentiable p').comp
+          (differentiable_id.div_const _)).analyticAt _
+      have hQ_an : AnalyticAt ℂ Q (a₀ k) := by
+        -- Q = P / finite_part, but we derive analyticity from the tprod structure
+        -- The complement of a finite set in a multipliable family is multipliable
+        -- and the resulting tprod is analytic by the same local uniform convergence
+        -- argument as the full tprod.
+        have : (fun w => (∏ n ∈ S, fac n w) * Q w) =ᶠ[nhds (a₀ k)]
+            (fun w => ∏' n, fac n w) := by
+          filter_upwards [univ_mem] with w _
+          exact (hmult_w w).prod_mul_tprod_compl (s := S)
+        exact (hP_an.congr this.symm).of_mul_left hfin_an
+      -- For n ∉ S with a' n ≠ 0: a' n ≠ a₀ k (injectivity of enumerateCountable
+      -- on non-default values: if a₀ k' = a₀ k ≠ 0 then k' = k)
+      have hcompl_ne : ∀ n : (S : Set ℕ)ᶜ, (a₀ k) / a' (n : ℕ) ≠ 1 := by
+        intro ⟨n, hn⟩
+        simp only [Finset.coe_sort_coe, Set.mem_compl_iff, Finset.mem_coe] at hn
+        intro heq
+        -- a' n ≠ 0 (since a₀ k / a' n = 1 and a₀ k ≠ 0)
+        have ha'n_ne : a' n ≠ 0 := by
+          intro h; simp [h] at heq; exact hk heq
+        -- a' n = a₀ k
+        have ha'n_eq : a' n = a₀ k := by
+          rwa [div_eq_one_iff_eq ha'n_ne] at heq
+        -- From stutteredEnum: a' n ≠ 0 implies n.unpair.2 < mult' n.unpair.1
+        -- and a₀ n.unpair.1 ≠ 0
+        have ⟨hlt, ha₀_ne⟩ := stutteredEnum_ne_zero_imp ha'n_ne
+        -- a' n = a₀ n.unpair.1 (since n.unpair.2 < mult' n.unpair.1)
+        have ha'_simp : a' n = a₀ n.unpair.1 := stutteredEnum_pair_lt (by
+          rwa [Nat.pair_unpair])
+        -- So a₀ n.unpair.1 = a₀ k
+        have heq_a₀ : a₀ n.unpair.1 = a₀ k := ha'_simp ▸ ha'n_eq
+        -- By injectivity of enumerateCountable on non-default values: n.unpair.1 = k
+        have hfst_eq : n.unpair.1 = k := by
+          -- enumerateCountable is injective on {n | a₀ n ≠ 0} for default = 0
+          -- This uses that decode is functional: if decode k₁ = some v and
+          -- decode k₂ = some v then k₁ = k₂ (for the Encodable from Countable)
+          have : ∀ k₁ k₂, a₀ k₁ ≠ 0 → a₀ k₁ = a₀ k₂ → k₁ = k₂ := by
+            intro k₁ k₂ hne₁ heq₁₂
+            simp only [a₀, Set.enumerateCountable] at hne₁ heq₁₂
+            -- When a₀ k₁ ≠ 0 = default, decode k₁ = some v for some v
+            -- and a₀ k₁ = v.val. Similarly for k₂.
+            -- Since Encodable.encode v = k₁ and encode v = k₂...
+            -- This requires decode to be a partial inverse of encode
+            sorry
+          exact this n.unpair.1 k ha₀_ne heq_a₀
+        -- So n = Nat.pair k n.unpair.2 with n.unpair.2 < mult' k = m
+        have : n ∈ S := by
+          rw [show n = Nat.pair n.unpair.1 n.unpair.2 from (Nat.pair_unpair n).symm, hfst_eq]
+          exact Finset.mem_image_of_mem _ (Finset.mem_range.mpr (hm_def ▸ hlt))
+        exact absurd this hn
+      -- Q(a₀ k) ≠ 0 since each factor is nonzero
+      have hQ_ne : Q (a₀ k) ≠ 0 := by
+        simp only [Q]
+        exact tprod_weierstraßElementary_ne_zero
+          (fun n : (S : Set ℕ)ᶜ => a' (n : ℕ)) p'
+          (by
+            -- Summability of the subsequence follows from the full summability
+            have : Summable (fun n : (S : Set ℕ)ᶜ =>
+                (‖a' (n : ℕ)‖⁻¹) ^ ((p' : ℝ) + 1)) :=
+              hconv'.subtype _
+            convert this using 1
+            ext ⟨n, _⟩; rfl)
+          (a₀ k)
+          (fun ⟨n, hn⟩ => hcompl_ne ⟨n, hn⟩)
+      -- Now compute the analytic order
+      rw [show (fun w => (∏ n ∈ S, fac n w) * Q w) =
+          (fun w => ∏ n ∈ S, fac n w) * Q from rfl]
+      rw [analyticOrderAt_mul hfin_an hQ_an]
+      -- Order of Q at a₀ k is 0 (nonvanishing)
+      rw [hQ_an.analyticOrderAt_eq_zero.mpr hQ_ne, add_zero]
+      -- Order of finite product = m * (order of E_p'(·/(a₀ k)))
+      rw [hfin_eq]
+      rw [analyticOrderAt_pow hE_an]
+      rw [analyticOrderAt_weierstraßElementary_at_pole p' (a₀ k) hk]
+      simp [nsmul_eq_mul]
     -- ═══════════════════════════════════════════════════════════
     -- Step 3–4: Quotient f₁/P is entire and zero-free
     -- ═══════════════════════════════════════════════════════════

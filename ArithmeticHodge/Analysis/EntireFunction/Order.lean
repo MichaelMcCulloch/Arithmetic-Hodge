@@ -80,7 +80,7 @@ noncomputable def integratedZeroCount (f : ℂ → ℂ) (r : ℝ) : ℝ :=
 
 set_option autoImplicit false in
 /-- For ‖z‖ ≤ r, we have ‖f z‖ ≤ maxModulus f r. -/
-private lemma norm_le_maxModulus (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+lemma norm_le_maxModulus (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (z : ℂ) (r : ℝ) (hr : 0 < r) (hzr : ‖z‖ ≤ r) :
     ‖f z‖ ≤ maxModulus f r := by
   -- maxModulus f r = ⨆ (w : ℂ) (_ : ‖w‖ ≤ r), ‖f w‖
@@ -426,7 +426,7 @@ theorem zeroCount_le_logMax (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     If the order were negative, the limsup of log log M / log r would be < 0,
     meaning eventually M(f,r) < e. By Liouville's theorem, f would be constant,
     and a constant entire function has order 0 — contradiction. -/
-private lemma entireOrder_nonneg (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+lemma entireOrder_nonneg (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf_ne : ¬ f = 0) : (0 : EReal) ≤ entireOrder f := by
   unfold entireOrder
   apply le_limsup_of_le ⟨⊤, Eventually.of_forall (fun _ => le_top)⟩

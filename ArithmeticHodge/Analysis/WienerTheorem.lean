@@ -239,10 +239,29 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
         simp [Complex.normSq_eq_norm_sq]
     -- Pull (1/T) out of the product integral and use Fubini
     -- We show the integrals match by using integral_mul_left and Fubini
-    -- For now, use a direct calculation
-    -- RHS: Re(∫ p, ↑(1/T) * ∫ s in Icc 0 T, exp(...) ∂(μ⊗μ))
-    -- LHS: (1/T) * ∫ s in Icc 0 T, ‖∫ x, exp(isx) dμ‖²
-    show False
+    -- Pull constant out of product integral
+    rw [integral_const_mul, re_ofReal_mul]
+    congr 1
+    -- Prepare Fubini integrability
+    have hcont : Continuous (uncurry fun (p : ℝ × ℝ) (t : ℝ) =>
+        cexp (↑(t * (p.2 - p.1)) * I)) :=
+      Complex.continuous_exp.comp ((Complex.continuous_ofReal.comp
+        (continuous_snd.mul ((continuous_snd.comp continuous_fst).sub
+          (continuous_fst.comp continuous_fst)))).mul continuous_const)
+    have hint : Integrable (uncurry fun (p : ℝ × ℝ) (t : ℝ) =>
+        cexp (↑(t * (p.2 - p.1)) * I))
+        ((μ.prod μ).prod (volume.restrict (Set.Icc 0 T))) :=
+      (integrable_const (1 : ℂ)).mono' hcont.aestronglyMeasurable
+        (ae_of_all _ fun ⟨_, _⟩ => by
+          simp only [uncurry, norm_one]; exact le_of_eq (Complex.norm_exp_ofReal_mul_I _))
+    -- Fubini: swap integrals
+    rw [integral_integral_swap hint]
+    -- Apply key to rewrite inner integral
+    simp_rw [key]
+    -- Extract Re from integral
+    symm
+    rw [← integral_re (hint.integral_prod_right.congr (ae_of_all _ fun t => key t))]
+    simp_rw [Complex.ofReal_re]
 
   -- ═══════════════════════════════════════════════════════════════
   -- Claim 3 (Evaluate): Re(∫ f dμ') = ∑' x, μ.real {x}²
@@ -259,7 +278,50 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
     show ((↑((μ.prod μ).real (diagonal ℝ)) : ℂ) * 1).re = _
     rw [mul_one, Complex.ofReal_re]
     -- Now: (μ.prod μ).real (diagonal ℝ) = ∑' x, μ.real {x} ^ 2
-    show False
+    -- Use prod_apply to express as lintegral
+    simp only [Measure.real]
+    rw [Measure.prod_apply measurableSet_diagonal]
+    -- Simplify preimage: Prod.mk x ⁻¹' diagonal = {x}
+    have hpreimage : ∀ x : ℝ, Prod.mk x ⁻¹' diagonal ℝ = {x} := by
+      intro x; ext y; simp [Set.mem_diagonal_iff]
+    simp_rw [hpreimage]
+    -- Measurability of x ↦ μ{x}
+    have hmeas : Measurable (fun x : ℝ => μ {x}) := by
+      have := measurable_measure_prodMk_left (ν := μ) measurableSet_diagonal
+      simp_rw [hpreimage] at this; exact this
+    -- The atoms form a countable set
+    set A := Function.support (fun x => μ ({x} : Set ℝ)) with hA_def
+    have hA_eq : A = {x : ℝ | 0 < μ {x}} := by ext; simp [Function.mem_support, pos_iff_ne_zero]
+    have hA_count : A.Countable := by
+      rw [hA_eq]
+      exact countable_meas_pos_of_disjoint_of_meas_iUnion_ne_top μ
+        (fun x => measurableSet_singleton x)
+        (fun i j hij => by exact Set.disjoint_singleton.mpr hij)
+        (ne_top_of_le_ne_top (measure_ne_top μ univ) (measure_iUnion_le _))
+    have hA_meas : MeasurableSet A := hmeas (measurableSet_compl {0})
+    -- Restrict lintegral to atoms
+    have hrestr : ∫⁻ x, μ {x} ∂μ = ∫⁻ x in A, μ {x} ∂μ := by
+      rw [← lintegral_add_compl _ hA_meas]
+      have : ∫⁻ x in Aᶜ, μ {x} ∂μ = 0 := by
+        apply lintegral_eq_zero_of_ae
+        filter_upwards [ae_restrict_mem hA_meas.compl] with x hx
+        exact Function.not_mem_support.mp hx
+      omega
+    rw [hrestr, lintegral_countable _ hA_count]
+    -- Now: (∑' a : A, μ{a} * μ{a}).toReal = ∑' x, (μ{x}).toReal ^ 2
+    simp_rw [sq]
+    rw [ENNReal.tsum_toReal_eq (fun ⟨a, _⟩ => by
+      exact ENNReal.mul_ne_top (measure_ne_top μ _) (measure_ne_top μ _))]
+    simp_rw [ENNReal.toReal_mul]
+    -- Now: ∑' a : A, μ.real{a} * μ.real{a} = ∑' x : ℝ, μ.real{x} * μ.real{x}
+    -- Extend from A to ℝ (zero outside A)
+    rw [← tsum_eq_tsum_of_hasSum_iff_hasSum (fun {a} => by
+      constructor
+      · intro h
+        apply h.map (⟨Subtype.val, Subtype.val_injective⟩ : A ↪ ℝ)
+        exact continuous_id.tendsto _
+      · intro h
+        sorry)]
 
   -- ═══════════════════════════════════════════════════════════════
   -- Combine
