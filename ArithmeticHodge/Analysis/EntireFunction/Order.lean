@@ -564,6 +564,74 @@ private lemma logMax_eventually_le_rpow (f : ℂ → ℂ) (α : ℝ)
       rw [rpow_def_of_pos (lt_trans zero_lt_one hr_gt1), mul_comm]]
     exact le_of_lt ((Real.log_lt_iff_lt_exp hlogM).mp ((div_lt_iff₀ hlogr).mp hr_limsup'))
 
+/-- Counting function bound: if `entireOrder f < α` and `f 0 ≠ 0`,
+    then `zeroCount f r ≤ C * r ^ α` for large `r`. -/
+private lemma zeroCount_eventually_le_rpow (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+    (hf0 : f 0 ≠ 0) (α : ℝ) (hα_pos : 0 < α)
+    (hα : entireOrder f < (α : EReal)) :
+    ∃ (C : ℝ) (R₀ : ℝ), 0 < C ∧ 1 ≤ R₀ ∧
+      ∀ r, R₀ ≤ r → (zeroCount f r : ℝ) ≤ C * r ^ α := by
+  -- From logMax_eventually_le_rpow: eventually log M(f,r) ≤ r^α
+  obtain ⟨R₁, hR₁⟩ := Filter.eventually_atTop.mp (logMax_eventually_le_rpow f α hα)
+  -- Choose R₀ large enough for both the logMax bound and absorbing -log ‖f 0‖
+  set K := |Real.log ‖f 0‖| -- constant to absorb
+  obtain ⟨R₂, hR₂⟩ := Filter.eventually_atTop.mp
+    (Filter.eventually_ge_atTop (max 1 (K ^ (1 / α))))
+  set R₀ := max (max R��� R₂) 2
+  have hR₀_ge1 : (1 : ℝ) ≤ R₀ := by linarith [le_max_right (max R₁ R₂) 2]
+  have hR₁_le : R₁ ≤ R₀ := le_trans (le_max_left R₁ R₂) (le_max_left _ 2)
+  have hR₂_le : R₂ ≤ R₀ := le_trans (le_max_right R₁ R₂) (le_max_left _ 2)
+  set C := 1 / Real.log 2 * (2 ^ α + 1)
+  refine ⟨C, R₀, by positivity, hR₀_ge1, fun r hr => ?_⟩
+  have hr_pos : 0 < r := by linarith
+  -- Jensen bound
+  have hJ := zeroCount_le_logMax f hf hf0 r hr_pos
+  -- log M(f, 2r) ≤ (2r)^α = 2^α · r^α
+  have h2r_logM : Real.log (maxModulus f (2 * r)) ≤ 2 ^ α * r ^ α := by
+    calc Real.log (maxModulus f (2 * r))
+        ≤ (2 * r) ^ α := hR₁ (2 * r) (by linarith)
+      _ = 2 ^ α * r ^ α := Real.mul_rpow (by norm_num) hr_pos.le
+  -- -log ‖f 0‖ ≤ K ≤ r^α (since r ≥ R₀ ≥ K^{1/α})
+  have hrα_ge_K : K ≤ r ^ α := by
+    have hr_ge := hR₂ R₀ hR₂_le
+    have hr_ge_K1α : K ^ (1 / α) ≤ r := le_trans (le_max_right 1 _) (le_trans hr_ge hr)
+    calc K = (K ^ (1 / α)) ^ α := by
+          rw [← Real.rpow_mul (abs_nonneg _), div_mul_cancel₀ 1 (ne_of_gt hα_pos), Real.rpow_one]
+      _ ≤ r ^ α := Real.rpow_le_rpow (by positivity) hr_ge_K1α hα_pos.le
+  have hlog_bound : -Real.log ‖f 0‖ ≤ r ^ α := by
+    calc -Real.log ‖f 0‖ ≤ |Real.log ‖f 0‖| := neg_le_abs _
+      _ ≤ r ^ α := hrα_ge_K
+  -- Combine
+  calc (zeroCount f r : ℝ)
+      ≤ 1 / Real.log 2 * (Real.log (maxModulus f (2 * r)) - Real.log ‖f 0‖) := hJ
+    _ ≤ 1 / Real.log 2 * (2 ^ α * r ^ α + r ^ α) := by
+        gcongr; linarith
+    _ = C * r ^ α := by ring
+
+/-- Summability of `‖z‖⁻ˢ` over nonzero zeros from counting bound + dyadic decomposition. -/
+private lemma summable_rpow_inv_of_counting_bound (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+    (hf_ne : ¬ f = 0) (s α : ℝ) (hs : 0 < s) (hαs : α < s) (hα_pos : 0 < α)
+    (C R₀ : ℝ) (hC : 0 < C) (hR₀ : 1 ≤ R₀)
+    (hcount : ∀ r, R₀ ≤ r → (zeroCount f r : ℝ) ≤ C * r ^ α) :
+    Summable (fun z : { w : ℂ // f w = 0 ∧ w ≠ 0 } => ‖(z : ℂ)‖⁻¹ ^ s) := by
+  -- Use summable_of_sum_le: bound all finite partial sums uniformly.
+  apply summable_of_sum_le (fun z => Real.rpow_nonneg (inv_nonneg.mpr (norm_nonneg _)) _)
+  -- Fixed bound for zeros with small norm
+  set N₀ := zeroCount f R₀ -- number of zeros with ‖z‖ ≤ R₀
+  -- Geometric series bound for ratio 2^{α-s}
+  set q := (2 : ℝ) ^ (α - s)
+  have hq_pos : 0 < q := rpow_pos_of_pos (by norm_num) _
+  have hq_lt1 : q < 1 := by
+    rw [show q = 2 ^ α / 2 ^ s from by
+      rw [Real.rpow_sub (by norm_num : (0:ℝ) < 2)]]
+    exact div_lt_one_of_lt (Real.rpow_lt_rpow_of_exponent_lt one_lt_two hαs) (by positivity)
+  -- Total bound
+  set B := N₀ * R₀⁻¹ ^ s + C * 2 ^ α / (1 - q)
+  intro u
+  -- Every z in u satisfies f z = 0, z ≠ 0, so ‖z‖ > 0
+  -- We split into small (‖z‖ ≤ R₀) and large (‖z‖ > R₀) parts
+  sorry
+
 /-- The exponent of convergence of the zeros of f:
     λ(f) = inf { σ > 0 : Σ |z_n|^{-σ} < ∞ }
     where {z_n} are the nonzero zeros of f. -/
