@@ -577,12 +577,15 @@ private lemma zeroCount_eventually_le_rpow (f : ℂ → ℂ) (hf : Differentiabl
   set K := |Real.log ‖f 0‖| -- constant to absorb
   obtain ⟨R₂, hR₂⟩ := Filter.eventually_atTop.mp
     (Filter.eventually_ge_atTop (max 1 (K ^ (1 / α))))
-  set R₀ := max (max R��� R₂) 2
+  set R₀ := max (max R₁ R₂) 2
   have hR₀_ge1 : (1 : ℝ) ≤ R₀ := by linarith [le_max_right (max R₁ R₂) 2]
   have hR₁_le : R₁ ≤ R₀ := le_trans (le_max_left R₁ R₂) (le_max_left _ 2)
   have hR₂_le : R₂ ≤ R₀ := le_trans (le_max_right R₁ R₂) (le_max_left _ 2)
   set C := 1 / Real.log 2 * (2 ^ α + 1)
-  refine ⟨C, R₀, by positivity, hR₀_ge1, fun r hr => ?_⟩
+  have hC_pos : 0 < C := by
+    apply mul_pos (div_pos one_pos (Real.log_pos one_lt_two))
+    linarith [rpow_pos_of_pos (show (0:ℝ) < 2 by norm_num) α]
+  refine ⟨C, R₀, hC_pos, hR₀_ge1, fun r hr => ?_⟩
   have hr_pos : 0 < r := by linarith
   -- Jensen bound
   have hJ := zeroCount_le_logMax f hf hf0 r hr_pos
@@ -596,7 +599,7 @@ private lemma zeroCount_eventually_le_rpow (f : ℂ → ℂ) (hf : Differentiabl
     have hr_ge := hR₂ R₀ hR₂_le
     have hr_ge_K1α : K ^ (1 / α) ≤ r := le_trans (le_max_right 1 _) (le_trans hr_ge hr)
     calc K = (K ^ (1 / α)) ^ α := by
-          rw [← Real.rpow_mul (abs_nonneg _), div_mul_cancel₀ 1 (ne_of_gt hα_pos), Real.rpow_one]
+          rw [← Real.rpow_mul (abs_nonneg _), div_mul_cancel₀ 1 hα_pos.ne', Real.rpow_one]
       _ ≤ r ^ α := Real.rpow_le_rpow (by positivity) hr_ge_K1α hα_pos.le
   have hlog_bound : -Real.log ‖f 0‖ ≤ r ^ α := by
     calc -Real.log ‖f 0‖ ≤ |Real.log ‖f 0‖| := neg_le_abs _
@@ -622,11 +625,10 @@ private lemma summable_rpow_inv_of_counting_bound (f : ℂ → ℂ) (hf : Differ
   set q := (2 : ℝ) ^ (α - s)
   have hq_pos : 0 < q := rpow_pos_of_pos (by norm_num) _
   have hq_lt1 : q < 1 := by
-    rw [show q = 2 ^ α / 2 ^ s from by
-      rw [Real.rpow_sub (by norm_num : (0:ℝ) < 2)]]
-    exact div_lt_one_of_lt (Real.rpow_lt_rpow_of_exponent_lt one_lt_two hαs) (by positivity)
+    show (2 : ℝ) ^ (α - s) < 1
+    exact Real.rpow_lt_one_of_one_lt_of_neg one_lt_two (by linarith)
   -- Total bound
-  set B := N₀ * R₀⁻¹ ^ s + C * 2 ^ α / (1 - q)
+  set B := (N₀ : ℝ) * R₀⁻¹ ^ s + C * 2 ^ α / (1 - q)
   intro u
   -- Every z in u satisfies f z = 0, z ≠ 0, so ‖z‖ > 0
   -- We split into small (‖z‖ ≤ R₀) and large (‖z‖ > R₀) parts
@@ -671,8 +673,43 @@ theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     refine ⟨σ.toReal, EReal.coe_toReal hσ_top hσ_ne_bot,
             EReal.toReal_pos hσ_pos hσ_top, ?_⟩
     -- Step 4: Prove summability at exponent σ.toReal
-    -- Jensen + annular decomposition → geometric series bound
-    exact sorry
+    -- Pick α between ρ and s for the counting bound
+    set s := σ.toReal
+    have hs_pos : 0 < s := EReal.toReal_pos hσ_pos hσ_top
+    have hρ_lt_s : entireOrder f < (s : EReal) := by
+      rwa [EReal.coe_toReal hσ_top hσ_ne_bot]
+    -- Choose α = (ρ̃ + s) / 2 where ρ̃ = (entireOrder f).toReal
+    have hne_top : entireOrder f ≠ ⊤ := ne_of_lt (lt_trans hρ_lt_s (EReal.coe_lt_top s))
+    have hne_bot : entireOrder f ≠ ⊥ :=
+      ne_of_gt (lt_of_lt_of_le EReal.bot_lt_zero (entireOrder_nonneg f hf hf_ne))
+    set ρ := (entireOrder f).toReal
+    have hρ_nn : 0 ≤ ρ := EReal.toReal_nonneg (entireOrder_nonneg f hf hf_ne)
+    have hρ_lt_s' : ρ < s := by
+      have hρ_coe : ((entireOrder f).toReal : EReal) = entireOrder f :=
+        EReal.coe_toReal hne_top hne_bot
+      have : entireOrder f < (s : EReal) := hρ_lt_s
+      rw [← hρ_coe] at this
+      exact_mod_cast this
+    set α := (ρ + s) / 2 with hα_def
+    have hα_pos : 0 < α := by rw [hα_def]; linarith
+    have hα_gt_ρ : ρ < α := by rw [hα_def]; linarith
+    have hα_lt_s : α < s := by rw [hα_def]; linarith
+    have hα_ereal : entireOrder f < (α : EReal) := by
+      rw [← EReal.coe_toReal hne_top hne_bot]
+      exact EReal.coe_lt_coe_iff.mpr hα_gt_ρ
+    -- Handle f(0) = 0 case: use translation to reduce to f(0) ≠ 0
+    -- For now, apply the counting bound + summability lemma
+    by_cases hf0 : f 0 ≠ 0
+    · -- f(0) ≠ 0: direct application
+      obtain ⟨C, R₀, hC, hR₀, hcount⟩ :=
+        zeroCount_eventually_le_rpow f hf hf0 α hα_pos hα_ereal
+      exact summable_rpow_inv_of_counting_bound f hf hf_ne s α hs_pos hα_lt_s hα_pos
+        C R₀ hC hR₀ hcount
+    · -- f(0) = 0: translate by z₀ with f(z₀) ≠ 0, apply to g(z) = f(z+z₀)
+      push_neg at hf0
+      -- There exists z₀ with f(z₀) ≠ 0 (since f ≠ 0)
+      -- Define g = f ∘ (· + z₀), apply counting bound to g, transfer to f
+      sorry
   rw [← hs_eq]
   exact csInf_le' ⟨by exact_mod_cast hs_pos, s, rfl, hs_summ⟩
 
