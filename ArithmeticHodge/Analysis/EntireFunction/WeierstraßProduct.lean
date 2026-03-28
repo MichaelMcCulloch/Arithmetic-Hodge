@@ -868,18 +868,71 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     -- ═══════════════════════════════════════════════════════════
     -- Step 2: Enumerate zeros with summability
     -- ═══════════════════════════════════════════════════════════
-    obtain ⟨a, p, ha_zeros, hconv, ha_covers, ha_ord_ge⟩ :
+    obtain ⟨a, p, ha_zeros, hconv, ha_covers, ha_ord_eq⟩ :
         ∃ (a : ℕ → ℂ) (p : ℕ),
           (∀ n, a n ≠ 0 → f₁ (a n) = 0) ∧
           Summable (fun n => (‖a n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
           (∀ z, f₁ z = 0 → ∃ n, z = a n) ∧
           (∀ z, f₁ z = 0 → z ≠ 0 →
-            ↑(analyticOrderNatAt f₁ z) ≤
+            analyticOrderAt f₁ z =
               analyticOrderAt (fun w => ∏' n, weierstraßElementary p (w / a n)) z) := by
-      -- Construction requires a multiplicity-aware (stuttered) enumeration of
-      -- zeros, where each zero z₀ appears exactly analyticOrderNatAt f₁ z₀ times.
-      -- This ensures the Weierstraß product P has vanishing order ≥ f₁'s order
-      -- at every zero, so that the quotient f₁/P is entire and zero-free.
+      -- Step 2a: Zeros of f₁ are discrete and countable
+      have hf₁_ne : ¬ f₁ = 0 := fun h => hf₁_nz (by rw [h]; simp)
+      have hf₁_an : AnalyticOnNhd ℂ f₁ Set.univ := fun z _ => hf₁_diff.analyticAt z
+      have hcodisc : f₁ ⁻¹' {0}ᶜ ∈ Filter.codiscrete ℂ :=
+        hf₁_an.preimage_zero_mem_codiscrete hf₁_nz
+      have hdisc : IsDiscrete (f₁ ⁻¹' {0}) := by
+        have := (mem_codiscrete'.mp hcodisc).2
+        rwa [Set.preimage_compl, compl_compl] at this
+      have hcount : (f₁ ⁻¹' {0}).Countable :=
+        (HereditarilyLindelofSpace.isLindelof _).countable_of_isDiscrete hdisc
+      -- Step 2b: Enumerate distinct zeros
+      set a₀ := Set.enumerateCountable hcount (0 : ℂ)
+      have ha₀_surj : ∀ z, f₁ z = 0 → ∃ k, z = a₀ k := by
+        intro z hz
+        obtain ⟨k, hk⟩ := Set.subset_range_enumerate hcount 0 (Set.mem_preimage.mpr
+          (Set.mem_singleton_iff.mpr hz))
+        exact ⟨k, hk.symm⟩
+      have ha₀_zeros : ∀ k, a₀ k ≠ 0 → f₁ (a₀ k) = 0 := by
+        intro k hk
+        simp only [a₀, Set.enumerateCountable] at hk ⊢
+        cases h : @Encodable.decode (f₁ ⁻¹' {0}) hcount.toEncodable k with
+        | none => simp [h] at hk
+        | some val => exact val.2
+      -- Step 2c: Define multiplicities and stuttered enumeration
+      set mult' : ℕ → ℕ := fun k =>
+        if a₀ k = 0 then 0 else analyticOrderNatAt f₁ (a₀ k)
+      have hmult_pos : ∀ k, a₀ k ≠ 0 → 0 < mult' k := by
+        intro k hk
+        simp only [mult', hk, ite_false]
+        rw [Nat.pos_iff_ne_zero, Ne, analyticOrderNatAt, ENat.toNat_eq_zero, not_or]
+        exact ⟨analyticOrderAt_ne_zero.mpr ⟨hf₁_diff.analyticAt _, ha₀_zeros k hk⟩,
+          (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero (a₀ k)
+            (fun z => hf₁_diff.analyticAt z)).not.mpr hf₁_ne⟩
+      have hmult_zero : ∀ k, a₀ k = 0 → mult' k = 0 :=
+        fun k hk => by simp [mult', hk]
+      set a' := stutteredEnum a₀ mult'
+      set p' := Nat.floor (entireOrder f).toReal
+      -- Step 2d: Verify properties
+      have ha_zeros' : ∀ n, a' n ≠ 0 → f₁ (a' n) = 0 :=
+        fun n hn => stutteredEnum_maps_zeros ha₀_zeros hn
+      have ha_covers' : ∀ z, f₁ z = 0 → ∃ n, z = a' n := by
+        intro z hz
+        obtain ⟨k, rfl⟩ := ha₀_surj z hz
+        have hk : a₀ k ≠ 0 := fun h0 => hf₁_nz (h0 ▸ hz)
+        obtain ⟨n, hn⟩ := stutteredEnum_covers (hmult_pos k hk)
+        exact ⟨n, hn.symm⟩
+      have hconv' : Summable (fun n => (‖a' n‖⁻¹) ^ ((p' : ℝ) + 1)) :=
+        summable_stutteredEnum_of_weighted (Nat.cast_add_one_pos p')
+          (finite_order_zero_summable_weighted f hf hf_ne hfin a₀
+            (fun k hk => by have := ha₀_zeros k hk; rw [hf_eq]; simp [this])
+            mult' hmult_zero)
+      refine ⟨a', p', ha_zeros', hconv', ha_covers', ?_⟩
+      -- Order equality: analytic order of Weierstraß product at each zero
+      -- equals analyticOrderAt f₁ there. Requires order theory for infinite
+      -- products with repeated factors (each factor E_p(w/z₀) contributes
+      -- a simple zero; z₀ appearing m times gives order m).
+      intro z hz hne
       sorry
     -- ═══════════════════════════════════════════════════════════
     -- Step 3–4: Quotient f₁/P is entire and zero-free
@@ -935,10 +988,22 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
                 fun v hv => by simp [h₀, hv]
             exact (hf₁_diff.differentiableAt.div hP_diff.differentiableAt hw).congr_of_eventuallyEq
               heq
+          -- ContinuousAt h₀ z₀: use the bounded removable singularity theorem.
+          -- h₀ is differentiable on 𝓝[≠] z₀ and bounded (via order factorization).
+          have hcont : ContinuousAt h₀ z₀ := by
+            -- h₀ is bounded near z₀: the order equality ensures f₁/P = u/v
+            -- where v(z₀) ≠ 0, and h₀ agrees with f₁/P on the punctured nhd.
+            -- Use the bounded removable singularity theorem to get DifferentiableAt,
+            -- which implies ContinuousAt.
+            --
+            -- The key bound: ‖h₀ z - h₀ z₀‖ is bounded on 𝓝[≠] z₀.
+            -- h₀ z = f₁ z / P z = u z / v z (on punctured nhd, after cancelling (z-z₀)^k).
+            -- u/v is continuous, hence bounded near z₀.
+            -- h₀ z₀ = limUnder = u z₀ / v z₀ (by uniqueness of limits in T2).
+            -- So ‖h₀ z - h₀ z₀‖ = ‖u z/v z - u z₀/v z₀‖ → 0, hence bounded.
+            sorry
           exact (analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
-            hh₀_diff_punct
-            (by sorry -- NEEDS: ContinuousAt h₀ z₀ via analytic order matching
-            )).differentiableAt
+            hh₀_diff_punct hcont).differentiableAt
       have hh₀_ne : ∀ z, h₀ z ≠ 0 := by
         intro z hz
         have hf₁z : f₁ z = 0 := by rw [hh₀_eq z, hz, zero_mul]
@@ -978,13 +1043,13 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
           rw [Nat.one_le_iff_ne_zero, Ne, analyticOrderNatAt,
             ENat.toNat_eq_zero, not_or]
           exact ⟨analyticOrderAt_ne_zero.mpr ⟨hh₀_diff.analyticAt _, hz⟩, hh₀_top⟩
-        -- From multiplicity-aware enumeration: order(P, a n) ≥ order(f₁, a n)
+        -- From multiplicity-aware enumeration: order(P, a n) = order(f₁, a n)
         have hP_ge : analyticOrderNatAt f₁ (a n) ≤ analyticOrderNatAt P (a n) := by
-          have h := ha_ord_ge (a n) hf₁z han
+          have h := ha_ord_eq (a n) hf₁z han
           rw [Nat.cast_analyticOrderNatAt hf₁_top] at h
-          -- h : analyticOrderAt f₁ (a n) ≤ analyticOrderAt P (a n)
+          -- h : analyticOrderAt f₁ (a n) = analyticOrderAt P (a n)
           simp only [analyticOrderNatAt]
-          exact ENat.toNat_le_toNat h hP_top
+          exact ENat.toNat_le_toNat h.le hP_top
         -- Contradiction: f₁_ord = h₀_ord + P_ord ≥ 1 + f₁_ord, impossible in ℕ
         omega
       exact ⟨h₀, hh₀_diff, hh₀_ne, hh₀_eq⟩

@@ -429,35 +429,39 @@ theorem zeroCount_le_logMax (f : ℂ → ℂ) (hf : Differentiable ℂ f)
 private lemma entireOrder_nonneg (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf_ne : ¬ f = 0) : (0 : EReal) ≤ entireOrder f := by
   unfold entireOrder
-  apply le_limsup_of_le
+  apply le_limsup_of_le ⟨⊤, Eventually.of_forall (fun _ => le_top)⟩
   intro b hb
   -- hb : ∀ᶠ r in atTop, (↑(log (log (maxModulus f r)) / log r) : EReal) ≤ b
   -- Goal: (0 : EReal) ≤ b
   by_contra hb_neg
   push_neg at hb_neg
-  -- From hb and hb_neg : b < 0, derive f is bounded → constant → contradiction
-  -- Extract the eventually filter from hb
+  -- b ≠ ⊥ (since real casts > ⊥) and b ≠ ⊤ (since b < 0)
+  have hb_ne_bot : b ≠ ⊥ := by
+    intro h; subst h; exact absurd (hb.exists).choose_spec (not_le.mpr (EReal.bot_lt_coe _))
+  have hb_ne_top : b ≠ ⊤ := ne_of_lt (lt_trans hb_neg EReal.zero_lt_top)
+  have hb'_neg : b.toReal < 0 := EReal.toReal_neg hb_neg hb_ne_bot
+  have hb_coe : (b.toReal : EReal) = b := EReal.coe_toReal hb_ne_top hb_ne_bot
+  -- Convert to real bound
   have hb_real : ∀ᶠ r in Filter.atTop,
       Real.log (Real.log (maxModulus f r)) / Real.log r ≤ b.toReal := by
-    apply hb.mono
-    intro r hr
-    exact_mod_cast (EReal.coe_toReal_le (ne_of_lt hb_neg).symm).trans hr
-  -- For large r > 1: log(log M) / log r ≤ b' < 0, hence M(f,r) < e
-  -- First, get the threshold
-  obtain ⟨R₀, hR₀_pos, hR₀_bound⟩ : ∃ R₀ : ℝ, 1 < R₀ ∧
-      ∀ r ≥ R₀, Real.log (Real.log (maxModulus f r)) / Real.log r ≤ b.toReal := by
-    obtain ⟨N, hN⟩ := (hb_real.and (Filter.eventually_ge_atTop 2)).exists
-    exact ⟨N, by linarith [hN.2], fun r hr => (hN.1.mono_left (fun _ h1 h2 => h1 (le_trans hr h2))) r le_rfl⟩
+    apply hb.mono; intro r hr; rw [← hb_coe] at hr; exact_mod_cast hr
+  -- Extract threshold R₀ > 1
+  obtain ⟨R₀', hR₀'_bound⟩ := Filter.eventually_atTop.mp hb_real
+  set R₀ := max R₀' 2
+  have hR₀_pos : 1 < R₀ := by linarith [le_max_right R₀' 2]
+  have hR₀_bound : ∀ r ≥ R₀,
+      Real.log (Real.log (maxModulus f r)) / Real.log r ≤ b.toReal :=
+    fun r hr => hR₀'_bound r (le_trans (le_max_left _ _) hr)
   -- Actually, let's use a simpler approach: f is bounded
   -- For any z, take r = max(‖z‖, R₀) and use norm_le_maxModulus
-  have hf_bdd : IsBounded (Set.range f) := by
+  have hf_bdd : Bornology.IsBounded (Set.range f) := by
     -- Show ‖f z‖ < Real.exp (R₀ ^ |b.toReal| + 1) for all z (some bound)
     -- From hb_real: for r ≥ R₀, log(log M(f,r)) / log r ≤ b' < 0
     -- This means log(log M(f,r)) ≤ b' * log r < 0 (since log r > 0 for r > 1)
     -- Hence log M(f,r) < e^0 = 1, so M(f,r) < e
     -- For any z: ‖f z‖ ≤ M(f, max(‖z‖, R₀)) < e
     rw [Metric.isBounded_range_iff]
-    use Real.exp 1  -- e as the bound
+    use 2 * Real.exp 1
     intro z w
     have bound_at : ∀ v : ℂ, ‖f v‖ ≤ Real.exp 1 := by
       intro v
@@ -473,26 +477,26 @@ private lemma entireOrder_nonneg (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       -- hbd : log(log M) / log r ≤ b' where b' < 0
       -- If log M ≤ 0: log(log M) = 0 (junk), so 0/log r = 0 ≤ b' < 0, impossible
       -- So log M > 0 and log(log M) ≤ b' * log r < 0, hence log M < 1, M < e
+      have hM_nonneg : 0 ≤ maxModulus f (max ‖v‖ R₀) :=
+        le_trans (norm_nonneg (f 0)) (norm_le_maxModulus f hf 0 _ hr (by simp))
       by_cases hlogM : Real.log (maxModulus f (max ‖v‖ R₀)) ≤ 0
       · -- log M ≤ 0 means M ≤ 1 ≤ e
-        exact le_trans (Real.log_nonpos_iff (by positivity).mp hlogM)
-          (le_of_lt (Real.exp_pos 1))
+        exact le_trans ((Real.log_nonpos_iff hM_nonneg).mp hlogM)
+          (Real.one_le_exp (by norm_num : (0 : ℝ) ≤ 1))
       · push_neg at hlogM
-        -- log M > 0, so log(log M) is meaningful
-        have hloglogM := div_le_iff₀ hlog_pos |>.mp hbd
-        -- hloglogM : log(log M) ≤ b' * log r
-        have hb'_neg : b.toReal < 0 := by
-          exact EReal.toReal_neg hb_neg (ne_of_lt hb_neg).symm
-        have : Real.log (Real.log (maxModulus f (max ‖v‖ R₀))) < 0 := by
+        have hM_pos : 0 < maxModulus f (max ‖v‖ R₀) := by
+          by_contra h; push_neg at h
+          exact absurd (le_antisymm h hM_nonneg ▸ hlogM) (by simp [Real.log_zero])
+        have hloglogM := (div_le_iff₀ hlog_pos).mp hbd
+        have hloglogM_neg : Real.log (Real.log (maxModulus f (max ‖v‖ R₀))) < 0 :=
           calc Real.log (Real.log (maxModulus f (max ‖v‖ R₀)))
               ≤ b.toReal * Real.log (max ‖v‖ R₀) := hloglogM
             _ < 0 := mul_neg_of_neg_of_pos hb'_neg hlog_pos
-        -- log(log M) < 0 means log M < 1 (since log x < 0 ↔ 0 < x < 1)
+        -- log(log M) < 0 → log M < 1 → M < e
         have hlogM_lt1 : Real.log (maxModulus f (max ‖v‖ R₀)) < 1 := by
-          rwa [show (1 : ℝ) = Real.log (Real.exp 1) from (Real.log_exp 1).symm,
-               Real.log_lt_log_iff hlogM (Real.exp_pos 1)] at this
-        -- log M < 1 = log e means M < e
-        exact le_of_lt (Real.log_lt_iff_lt_exp (by positivity) |>.mp hlogM_lt1)
+          have := (Real.log_lt_iff_lt_exp hlogM).mp hloglogM_neg
+          rwa [Real.exp_zero] at this
+        exact le_of_lt ((Real.log_lt_iff_lt_exp hM_pos).mp hlogM_lt1)
     calc dist (f z) (f w) ≤ ‖f z‖ + ‖f w‖ := dist_le_norm_add_norm (f z) (f w)
       _ ≤ Real.exp 1 + Real.exp 1 := add_le_add (bound_at z) (bound_at w)
       _ = 2 * Real.exp 1 := by ring
@@ -501,20 +505,46 @@ private lemma entireOrder_nonneg (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   -- But f ≠ 0
   have hc_ne : c ≠ 0 := by
     intro h; exact hf_ne (hc ▸ h ▸ rfl)
-  -- For constant f: maxModulus f r = ‖c‖ for r ≥ 0
-  -- The ratio log(log ‖c‖)/log r → 0, contradicting eventually ≤ b' < 0
-  -- Since f is bounded by e: ‖c‖ ≤ e
-  have hc_le : ‖c‖ ≤ Real.exp 1 := by
-    have := Metric.isBounded_range_iff.mp hf_bdd
-    obtain ⟨C, hC⟩ := this
-    have h0 := hC 0 0
-    simp at h0
-    have := norm_le_maxModulus f hf 0 1 one_pos (by simp)
-    rw [hc, Function.const_apply] at this
-    have bound := Metric.isBounded_range_iff.mp hf_bdd
-    -- Use the bound_at from above
-    sorry -- ‖c‖ ≤ e follows from the boundedness proof
-  sorry -- Complete: ratio → 0 contradicts ≤ b' < 0
+  -- For constant f: maxModulus f r = ‖c‖ for r > 0
+  have hM_eq : ∀ r, 0 < r → maxModulus f r = ‖c‖ := by
+    intro r hr
+    apply le_antisymm
+    · -- Upper: all values are ‖c‖ or 0
+      show ⨆ (z : ℂ), ⨆ (_ : ‖z‖ ≤ r), ‖f z‖ ≤ ‖c‖
+      apply ciSup_le; intro z
+      by_cases hz : ‖z‖ ≤ r
+      · rw [ciSup_pos hz, hc, Function.const_apply]
+      · rw [ciSup_neg hz, Real.sSup_empty]; exact norm_nonneg c
+    · calc ‖c‖ = ‖f 0‖ := by rw [hc]; rfl
+        _ ≤ maxModulus f r := norm_le_maxModulus f hf 0 r hr (by simp [hr.le])
+  -- Contradiction: log(log ‖c‖) / log r → 0 but must be ≤ b.toReal < 0
+  -- From hR₀_bound + hM_eq: for r ≥ R₀, log(log ‖c‖) / log r ≤ b.toReal
+  set L := Real.log (Real.log ‖c‖)
+  have hLr : ∀ r ≥ R₀, L / Real.log r ≤ b.toReal := by
+    intro r hr
+    have hr_pos : 0 < r := lt_of_lt_of_le (by linarith : (0 : ℝ) < R₀) hr
+    rw [show L = Real.log (Real.log (maxModulus f r)) from by rw [hM_eq r hr_pos]]
+    exact hR₀_bound r hr
+  -- At r = R₀: L ≤ b' * log R₀ < 0
+  have hlog_R₀_pos : 0 < Real.log R₀ := Real.log_pos hR₀_pos
+  have hprod_neg : b.toReal * Real.log R₀ < 0 := mul_neg_of_neg_of_pos hb'_neg hlog_R₀_pos
+  -- Archimedean: find n with n * (b' * log R₀) < L
+  obtain ⟨n, hn⟩ := exists_nat_gt (L / (b.toReal * Real.log R₀))
+  have hn_pos : 0 < n := by
+    by_contra h; push_neg at h; interval_cases n
+    simp at hn
+    have := (div_lt_iff_of_neg hprod_neg).mp hn
+    simp at this; linarith [(div_le_iff₀ hlog_R₀_pos).mp (hLr R₀ le_rfl)]
+  have hn_lt : (n : ℝ) * (b.toReal * Real.log R₀) < L :=
+    (div_lt_iff_of_neg hprod_neg).mp hn
+  -- R₀^n ≥ R₀ and log(R₀^n) = n * log R₀
+  have hR₀n_ge : R₀ ≤ R₀ ^ n :=
+    le_self_pow₀ (le_of_lt hR₀_pos) (by omega)
+  -- Apply hLr at R₀^n to get L ≤ b' * (n * log R₀)
+  have hL_le := (div_le_iff₀ (by rw [Real.log_pow]; positivity)).mp (hLr (R₀ ^ n) hR₀n_ge)
+  rw [Real.log_pow] at hL_le
+  -- hL_le : L ≤ b' * (n * log R₀), hn_lt : n * (b' * log R₀) < L
+  linarith [mul_comm b.toReal (↑n * Real.log R₀)]
 
 /-- The exponent of convergence of the zeros of f:
     λ(f) = inf { σ > 0 : Σ |z_n|^{-σ} < ∞ }
@@ -555,9 +585,8 @@ theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     refine ⟨σ.toReal, EReal.coe_toReal hσ_top hσ_ne_bot,
             EReal.toReal_pos hσ_pos hσ_top, ?_⟩
     -- Step 4: Prove summability at exponent σ.toReal
-    -- Use summable_of_sum_le: bound all finite partial sums
-    apply summable_of_sum_le (fun z => rpow_nonneg (inv_nonneg.mpr (norm_nonneg _)) _)
-    sorry -- Counting function bound + annular decomposition
+    -- Jensen + annular decomposition → geometric series bound
+    exact sorry
   rw [← hs_eq]
   exact csInf_le' ⟨by exact_mod_cast hs_pos, s, rfl, hs_summ⟩
 
