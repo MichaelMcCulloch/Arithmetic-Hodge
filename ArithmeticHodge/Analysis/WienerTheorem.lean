@@ -91,9 +91,30 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
       filter_upwards with T
       simp only [hF_def, wienerKernel]
       apply AEStronglyMeasurable.const_mul
-      -- The set integral of a jointly continuous function is strongly measurable
-      -- in the parameter, via continuous_of_dominated
-      sorry
+      -- The parametric integral is continuous in p, hence AE strongly measurable
+      exact (continuous_of_dominated
+        (F := fun (p : ℝ × ℝ) (t : ℝ) =>
+          Complex.exp (↑(t * (p.2 - p.1)) * Complex.I))
+        (bound := fun _ => 1)
+        (μ := volume.restrict (Set.Icc 0 T))
+        (hF_meas := fun p =>
+          (Complex.continuous_exp.comp
+            ((Complex.continuous_ofReal.comp
+              (continuous_id'.mul continuous_const)).mul
+              continuous_const)).aestronglyMeasurable)
+        (h_bound := fun p => by
+          filter_upwards with t
+          exact le_of_eq (Complex.norm_exp_ofReal_mul_I _))
+        (bound_integrable := by
+          exact integrable_const_iff.mpr (Or.inr (by
+            rw [Measure.restrict_apply_univ]; exact isCompact_Icc.measure_lt_top)))
+        (h_cont := by
+          filter_upwards with t
+          exact Complex.continuous_exp.comp
+            ((Complex.continuous_ofReal.comp
+              (continuous_const.mul
+                (continuous_snd.sub continuous_fst))).mul
+              continuous_const))).aestronglyMeasurable
     · -- (b) ‖F T p‖ ≤ 1 for a.e. p (eventually for T > 0)
       filter_upwards [Ioi_mem_atTop (0 : ℝ)] with T (hT : 0 < T)
       filter_upwards with p
@@ -199,7 +220,8 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
   -- Combine
   -- ═══════════════════════════════════════════════════════════════
   rw [show ∑' x, μ.real {x} ^ 2 = (∫ p, f p ∂μ').re from eval.symm]
-  exact (tendsto_congr rewrite).mpr ((Complex.continuous_re.tendsto _).comp dct)
+  exact ((Complex.continuous_re.tendsto _).comp dct).congr'
+    (rewrite.mono fun T hT => hT.symm)
 
 /-- **Wiener's theorem for continuous measures.** -/
 theorem wiener_continuous_measure {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ]

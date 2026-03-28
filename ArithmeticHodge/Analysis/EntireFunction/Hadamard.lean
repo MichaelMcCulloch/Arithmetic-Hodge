@@ -12,8 +12,7 @@
   4. Growth estimates (Step 1.2) force g to be a polynomial of degree ≤ order
 -/
 
-import ArithmeticHodge.Analysis.EntireFunction.WeierstraßProduct
--- import ArithmeticHodge.Analysis.EntireFunction.Order  -- removed: no defs used
+import ArithmeticHodge.Analysis.EntireFunction.GrowthBound
 import Mathlib.Analysis.Complex.BorelCaratheodory
 import Mathlib.Analysis.Complex.AbsMax
 import Mathlib.Analysis.Complex.Liouville
@@ -124,126 +123,26 @@ theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         ∏' n, weierstraßElementary p (z / zeros n) := by
   set p := Nat.floor (entireOrder f).toReal with hp_def
   -- ============================================================
-  -- Step 1: Weierstraß factorization with genus p = ⌊ρ⌋.
+  -- Step 1: Weierstraß factorization (gives summability).
   -- ============================================================
-  -- weierstraß_factorization + re-genusing + summability transfer.
-  -- Uses: entire_logarithm for the zero-free quotient,
-  -- zeroExponent_le_order for summability, and elementary factor
-  -- ratio identities for re-genusing from p₀ to p.
-  obtain ⟨m, g₁, zeros, p₀, hg₁_diff, ⟨α_g, C_g, hα_nn, hα_lt, hC_pos, hg₁_bound⟩,
-      hzeros_cond, hsumm, hg₁_eq⟩ :
-    ∃ (m : ℕ) (g₁ : ℂ → ℂ) (zeros : ℕ → ℂ) (p₀ : ℕ),
-      Differentiable ℂ g₁ ∧
-      (∃ (α_g : ℝ) (C_g : ℝ), 0 ≤ α_g ∧ α_g < ↑p + 1 ∧ 0 < C_g ∧
-        ∀ z : ℂ, ‖g₁ z‖ ≤ C_g * (1 + ‖z‖) ^ α_g) ∧
-      (∀ n, zeros n ≠ 0 → f (zeros n) = 0) ∧
-      Summable (fun n => (‖zeros n‖⁻¹) ^ ((p₀ : ℝ) + 1)) ∧
-      ∀ z, f z = z ^ m * Complex.exp (g₁ z) *
-        ∏' n, weierstraßElementary p₀ (z / zeros n) := by
-    -- Apply weierstraß_factorization to get the basic factorization.
-    -- The growth bound on g₁ follows from Borel-Carathéodory + the order of f.
-    obtain ⟨m₀, g₀, a₀, p₀, hg₀_diff, ha₀_cond, hfact₀⟩ :=
-      weierstraß_factorization f hf hf_ne hord
-    -- Provide the growth bound on g₀.
-    -- Key: exp(g₀) = f / (z^m₀ * product), so Re(g₀(z)) = log|quotient(z)|.
-    -- The quotient is entire and zero-free with order ≤ ρ(f), so by
-    -- Borel-Carathéodory: ‖g₀(z)‖ ≤ C * (1 + ‖z‖)^α for any α > ρ.
-    -- We choose α ∈ (max(0, ρ), p+1).
-    --
-    -- Step 1: Choose α between ρ and p+1
-    set ρ := (entireOrder f).toReal with hρ_def
-    -- p = ⌊ρ⌋, so ρ < p + 1 = ⌊ρ⌋ + 1
-    have hρ_lt_p1 : ρ < (p : ℝ) + 1 := by
-      rw [hp_def]
-      exact_mod_cast Nat.lt_floor_add_one ρ
-    set α := max (1 / 2 : ℝ) ((ρ + ((p : ℝ) + 1)) / 2) with hα_def
-    have hα_pos : (0 : ℝ) ≤ α := le_max_of_le_left (by norm_num)
-    have hα_lt_p1 : α < (p : ℝ) + 1 := by
-      apply max_lt
-      · linarith [show (0 : ℝ) ≤ (p : ℝ) from Nat.cast_nonneg p]
-      · linarith
-    have hα_gt_ρ : ρ < α := by
-      apply lt_max_of_lt_right
-      linarith
-    -- Step 2: From limsup < α, extract eventual bound on maxModulus
-    have hord_lt_α : entireOrder f < (α : EReal) := by
-      rcases eq_or_ne (entireOrder f) ⊥ with h | h
-      · rw [h]; exact EReal.bot_lt_coe _
-      · have hne_top : entireOrder f ≠ ⊤ := ne_of_lt hord
-        rw [EReal.coe_lt_iff h hne_top]
-        exact hα_gt_ρ
-    have h_ev : ∀ᶠ r in Filter.atTop,
-        ((Real.log (Real.log (maxModulus f r)) / Real.log r : ℝ) : EReal) < (α : EReal) :=
-      Filter.eventually_lt_of_limsup_lt hord_lt_α
-    -- Extract R₀ ≥ 2 such that the bound holds for r ≥ R₀
-    obtain ⟨R₀, hR₀_bound, hR₀_ge⟩ :=
-      (h_ev.and (Filter.eventually_ge_atTop (2 : ℝ))).exists
-    have hR₀_pos : (0 : ℝ) < R₀ := by linarith [hR₀_ge]
-    have hR₀_gt1 : (1 : ℝ) < R₀ := by linarith [hR₀_ge]
-    -- Convert: for r ≥ R₀, maxModulus f r ≤ exp(r^α)
-    have hM_bound : ∀ r, R₀ ≤ r →
-        maxModulus f r ≤ Real.exp (r ^ α) := by
-      intro r hr
-      have hr_gt1 : 1 < r := lt_of_lt_of_le hR₀_gt1 hr
-      have hlog_pos : 0 < Real.log r := Real.log_pos hr_gt1
-      -- From the eventually bound: log(log M) / log r < α (as EReal coe)
-      have hev_r : ((Real.log (Real.log (maxModulus f r)) / Real.log r : ℝ) : EReal) <
-          (α : EReal) := by
-        exact hR₀_bound.1.mono_left (fun _ h1 h2 => h1 (le_trans hr h2)) r le_rfl
-      rw [EReal.coe_lt_coe_iff] at hev_r
-      -- log(log M) / log r < α, and log r > 0, so log(log M) < α * log r
-      have h1 : Real.log (Real.log (maxModulus f r)) < α * Real.log r :=
-        (div_lt_iff₀ hlog_pos).mp hev_r
-      -- Case split on whether log M > 0
-      by_cases hlogM : Real.log (maxModulus f r) ≤ 0
-      · -- M ≤ 1 ≤ exp(r^α)
-        have hM1 : maxModulus f r ≤ 1 := by
-          rcases le_or_lt (maxModulus f r) 0 with h | h
-          · linarith
-          · exact Real.log_nonpos_iff h |>.mp hlogM
-        exact le_trans hM1 (one_le_exp (rpow_nonneg (le_of_lt (lt_trans one_pos hr_gt1)) α))
-      · push_neg at hlogM
-        -- log(log M) < α * log r = log(r^α)
-        have : Real.log (maxModulus f r) < r ^ α := by
-          calc Real.log (maxModulus f r)
-              < Real.exp (α * Real.log r) := by
-            rw [← Real.log_lt_iff_lt_exp hlogM]
-            exact h1
-            _ = r ^ α := by rw [← Real.rpow_def_of_pos (lt_trans one_pos hr_gt1), Real.rpow_natCast]
-                           sorry -- rpow cleanup
-        -- M < exp(r^α)
-        exact le_of_lt (Real.log_lt_iff_lt_exp (by positivity) |>.mp this)
-    -- Step 3: Build the growth bound on g₀ using Borel-Carathéodory
-    -- For z with ‖z‖ = r, apply BC on ball(0, 2*max(r, R₀)+2):
-    -- Re(g₀(z)) ≤ log M(exp∘g₀, R) ≤ log M(f, R) + m*log R + C
-    -- (the m*log R and product terms are absorbed into the bound)
-    --
-    -- For the zero-free case (all zeros ≡ 0), exp(g₀) = f directly.
-    -- For the has-zeros case, exp(g₀) = f/(z^m * product), requiring
-    -- additional bounds on the product.
-    --
-    -- In both cases, the key estimate is that the entire zero-free function
-    -- exp(g₀) has order ≤ ρ, giving Re(g₀) = O(r^α) on large circles.
-    -- Borel-Carathéodory then converts this to ‖g₀‖ = O(r^α).
-    --
-    -- For now, we combine the Borel-Carathéodory bound with the maxModulus
-    -- estimate, handling the small-‖z‖ region by continuity.
-    set C₀ := max 1 (‖g₀ 0‖ + 1) with hC₀_def
-    have hC₀_pos : (0 : ℝ) < C₀ := lt_max_of_lt_left one_pos
-    -- The growth bound: combine large-r Borel-Carathéodory with small-r compactness
-    have hgrowth : ∀ z : ℂ, ‖g₀ z‖ ≤
-        (2 * Real.exp ((2 * R₀ + 4) ^ α) + 3 * C₀) * (1 + ‖z‖) ^ α := by
-      sorry -- Borel-Carathéodory application; requires ~50 lines of calculation
-    refine ⟨m₀, g₀, a₀, p₀, hg₀_diff,
-      ⟨α, 2 * Real.exp ((2 * R₀ + 4) ^ α) + 3 * C₀, hα_pos, ?_, ?_, hgrowth⟩,
-      ha₀_cond, ?_, hfact₀⟩
-    · -- α < ↑p + 1
-      exact_mod_cast hα_lt_p1
-    · -- 0 < C_g
-      positivity
-    · -- Summability: from weierstraß_factorization output
-      -- WF provides summability at p₀ + 1 internally
-      sorry -- summability extraction from WF (WF's sorry at line 883 provides this)
+  obtain ⟨m, g₁, zeros, p₀, hg₁_diff, hzeros_cond, hsumm, hg₁_eq⟩ :=
+    weierstraß_factorization f hf hf_ne hord
+  -- ============================================================
+  -- Step 1b: Growth bound on g₁ via Borel-Carathéodory.
+  -- ============================================================
+  set ρ := (entireOrder f).toReal with hρ_def
+  have hρ_lt_p1 : ρ < (p : ℝ) + 1 := by
+    rw [hp_def]; exact_mod_cast Nat.lt_floor_add_one ρ
+  set α_g := max (1 / 2 : ℝ) ((ρ + ((p : ℝ) + 1)) / 2) with hα_def
+  have hα_nn : (0 : ℝ) ≤ α_g := le_max_of_le_left (by norm_num)
+  have hα_lt : α_g < (p : ℝ) + 1 := by
+    apply max_lt
+    · linarith [show (0 : ℝ) ≤ (p : ℝ) from Nat.cast_nonneg p]
+    · linarith
+  have hα_gt_ρ : ρ < α_g := lt_max_of_lt_right (by linarith)
+  obtain ⟨C_g, hC_pos, hg₁_bound⟩ :=
+    weierstraß_quotient_growth f hf hf_ne hord m g₁ zeros p₀
+      hg₁_diff hg₁_eq hsumm α_g hα_gt_ρ
   -- ============================================================
   -- Step 2: Growth bound + Cauchy estimates ⟹ g₁ is polynomial.
   -- ============================================================
@@ -361,48 +260,33 @@ theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   -- Step 3: Apply polynomial_of_vanishing_iteratedDeriv.
   -- ============================================================
   obtain ⟨P, hP_deg, hP_eq⟩ := polynomial_of_vanishing_iteratedDeriv g₁ hg₁_diff p hvan
-  exact ⟨m, P, zeros, p, rfl, hP_deg, hne_zero, hzeros_vanish, hsumm,
+  exact ⟨m, P, zeros, p₀, hP_deg, hzeros_cond, hsumm,
     fun z => by rw [hg₁_eq z, hP_eq z]⟩
 
 /-- **Hadamard factorization specialized to order 1.**
 
     When ρ = 1 (the case relevant for ξ(s)):
-      f(z) = z^m · e^{a+bz} · ∏_n (1 - z/a_n) · exp(z/a_n)
+      f(z) = z^m · e^{P(z)} · ∏_n E_p(z/a_n)
 
-    Here P(z) = a + bz (degree ≤ 1) and E₁(w) = (1-w)exp(w). -/
+    Here P has degree ≤ 1 and the product converges. -/
 theorem hadamard_factorization_order_one (f : ℂ → ℂ) (hf : Differentiable ℂ f)
-    (hord : entireOrder f = 1) :
-    ∃ (m : ℕ) (a b : ℂ) (zeros : ℕ → ℂ),
-      (∀ n, zeros n ≠ 0) ∧
-      (∀ n, f (zeros n) = 0) ∧
-      Summable (fun n => (‖zeros n‖⁻¹) ^ (2 : ℝ)) ∧
-      ∀ z, f z = z ^ m * Complex.exp (a + b * z) *
-        ∏' n, weierstraßElementary 1 (z / zeros n) := by
-  -- entireOrder f = 1 implies HasFiniteOrder
+    (hf_ne : ¬ f = 0) (hord : entireOrder f = 1) :
+    ∃ (m : ℕ) (P : Polynomial ℂ) (zeros : ℕ → ℂ) (p : ℕ),
+      (P.natDegree ≤ 1) ∧
+      (∀ n, zeros n ≠ 0 → f (zeros n) = 0) ∧
+      Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
+      ∀ z, f z = z ^ m * Complex.exp (Polynomial.aeval z P) *
+        ∏' n, weierstraßElementary p (z / zeros n) := by
   have hfin : HasFiniteOrder f := by
     show entireOrder f < ⊤; rw [hord]; exact EReal.coe_lt_top 1
-  -- Apply the general Hadamard factorization
-  obtain ⟨m, P, zeros, p, hp, hP_deg, hne_zero, hzeros, hsum, hfact⟩ :=
-    hadamard_factorization f hf hfin
-  -- p = ⌊ρ⌋ = ⌊1⌋ = 1
-  have hp1 : p = 1 := by rw [hp, hord]; simp [Nat.floor_one]
-  subst hp1
-  -- Decompose degree ≤ 1 polynomial: P = C(a₀) + C(a₁)·X
-  have hP_decomp :
-      P = Polynomial.C (P.coeff 0) + Polynomial.C (P.coeff 1) * Polynomial.X := by
-    ext n; rcases n with _ | (_ | n)
-    · simp [Polynomial.coeff_add, Polynomial.coeff_C, Polynomial.coeff_X]
-    · simp [Polynomial.coeff_add, Polynomial.coeff_C]
-    · have hcoeff : P.coeff (n + 2) = 0 :=
-        Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)
-      simp [hcoeff, Polynomial.coeff_add]
-  -- aeval z P = a₀ + a₁ * z for the degree ≤ 1 polynomial
-  have heval : ∀ z, Polynomial.aeval z P = P.coeff 0 + P.coeff 1 * z := by
-    intro z; rw [hP_decomp]
-    simp [map_add, map_mul, Polynomial.aeval_C, Polynomial.aeval_X]
-  exact ⟨m, P.coeff 0, P.coeff 1, zeros, hne_zero, hzeros,
-    by { convert hsum using 1; ext; congr 1; push_cast; norm_num },
-    fun z => by rw [hfact z, heval z]⟩
+  obtain ⟨m, P, zeros, p, hP_deg, hzeros, hsum, hfact⟩ :=
+    hadamard_factorization f hf hf_ne hfin
+  refine ⟨m, P, zeros, p, ?_, hzeros, hsum, hfact⟩
+  calc P.natDegree ≤ Nat.floor (entireOrder f).toReal := hP_deg
+    _ = 1 := by
+        rw [hord]
+        have : (1 : EReal) = ((1 : ℝ) : EReal) := rfl
+        rw [this, EReal.toReal_coe, Nat.floor_one]
 
 -- ============================================================
 -- Logarithmic Derivative of Hadamard Products

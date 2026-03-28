@@ -140,52 +140,161 @@ theorem zetaZeroSeq_normSq_bound (n : ℕ) :
     simp only; norm_num
 
 -- ============================================================
--- Hadamard Product for Λ₀(s) = completedRiemannZeta₀
+-- The ξ Function (Riemann xi function)
 -- ============================================================
 
-/-- **Hadamard product for completedRiemannZeta₀.**
+/-- **The Riemann ξ function.**
 
-    Λ₀(s) = s^m · e^{A+Bs} · ∏_n E₁(s/a_n)
+    ξ(s) = (1/2) s(s-1) π^{-s/2} Γ(s/2) ζ(s)
+         = (1/2) s(s-1) · completedRiemannZeta(s)
 
-    where the product is over the nonzero zeros {a_n} of Λ₀ (enumerated with
-    multiplicity by Hadamard's factorization theorem) and m is the order of
-    vanishing of Λ₀ at s = 0.
+    We define it via the manifestly entire form:
+    ξ(s) = (1/2) s(s-1) · completedRiemannZeta₀(s) + 1/2
+
+    This follows from Λ(s) = Λ₀(s) - 1/s - 1/(1-s), which gives
+    (1/2)s(s-1)·Λ(s) = (1/2)s(s-1)·Λ₀(s) - (s-1)/2 + s/2
+                      = (1/2)s(s-1)·Λ₀(s) + 1/2.
+
+    Key advantage over using completedRiemannZeta₀ directly:
+    the zeros of ξ are **exactly** the nontrivial zeros of ζ,
+    making the Hadamard factorization directly useful. -/
+noncomputable def xiFunction (s : ℂ) : ℂ :=
+  (1 / 2 : ℂ) * s * (s - 1) * completedRiemannZeta₀ s + 1 / 2
+
+/-- ξ is entire. -/
+theorem differentiable_xiFunction : Differentiable ℂ xiFunction := by
+  unfold xiFunction
+  exact (((differentiable_const _).mul differentiable_id).mul
+    (differentiable_id.sub (differentiable_const _))).mul
+    differentiable_completedZeta₀ |>.add (differentiable_const _)
+
+/-- Functional equation: ξ(1-s) = ξ(s). -/
+theorem xiFunction_one_sub (s : ℂ) : xiFunction (1 - s) = xiFunction s := by
+  simp only [xiFunction, completedRiemannZeta₀_one_sub]; ring
+
+/-- ξ(0) = 1/2. -/
+theorem xiFunction_zero_val : xiFunction 0 = 1 / 2 := by simp [xiFunction]
+
+/-- ξ(1) = 1/2. -/
+theorem xiFunction_one_val : xiFunction 1 = 1 / 2 := by simp [xiFunction]
+
+/-- ξ is not identically zero (needed for Hadamard factorization). -/
+theorem xiFunction_ne_const_zero : ¬ xiFunction = 0 := by
+  intro h
+  have : xiFunction 0 = 0 := congr_fun h 0
+  rw [xiFunction_zero_val] at this; norm_num at this
+
+/-- ξ(s) = (1/2)·s·(s-1)·Λ(s) for s ≠ 0, 1. -/
+theorem xiFunction_eq_mul_completedZeta (s : ℂ) (hs : s ≠ 0) (hs' : s ≠ 1) :
+    xiFunction s = (1 / 2 : ℂ) * s * (s - 1) * completedRiemannZeta s := by
+  unfold xiFunction
+  rw [completedRiemannZeta_eq]
+  have h1s : (1 : ℂ) - s ≠ 0 := sub_ne_zero.mpr (Ne.symm hs')
+  field_simp
+  ring
+
+/-- ξ doesn't vanish for Re(s) ≥ 1 (from the Euler product for ζ). -/
+theorem xiFunction_ne_zero_of_one_le_re {s : ℂ} (hs : 1 ≤ s.re) :
+    xiFunction s ≠ 0 := by
+  by_cases hs1 : s = 1
+  · rw [hs1, xiFunction_one_val]; norm_num
+  · have hs0 : s ≠ 0 := by intro h; simp [h] at hs; linarith
+    rw [xiFunction_eq_mul_completedZeta s hs0 hs1]
+    apply mul_ne_zero
+    · apply mul_ne_zero; apply mul_ne_zero
+      · norm_num
+      · exact hs0
+      · exact sub_ne_zero.mpr hs1
+    · -- completedRiemannZeta s ≠ 0 from ζ(s) ≠ 0 and Gammaℝ(s) ≠ 0
+      have hΓ : Gammaℝ s ≠ 0 :=
+        Gammaℝ_ne_zero_of_re_pos (lt_of_lt_of_le zero_lt_one hs)
+      intro hΛ
+      have hζ := riemannZeta_ne_zero_of_one_le_re hs
+      rw [riemannZeta_def_of_ne_zero hs0, hΛ, zero_div] at hζ
+      exact hζ rfl
+
+/-- ξ doesn't vanish for Re(s) ≤ 0 (by functional equation + Euler product). -/
+theorem xiFunction_ne_zero_of_re_le_zero {s : ℂ} (hs : s.re ≤ 0) :
+    xiFunction s ≠ 0 := by
+  have h : xiFunction s = xiFunction (1 - s) := (xiFunction_one_sub s).symm
+  rw [h]
+  apply xiFunction_ne_zero_of_one_le_re
+  simp only [Complex.sub_re, Complex.one_re]; linarith
+
+/-- Zeros of ξ lie in the open critical strip 0 < Re(s) < 1. -/
+theorem xiFunction_zero_re {s : ℂ} (h : xiFunction s = 0) :
+    0 < s.re ∧ s.re < 1 := by
+  constructor
+  · by_contra hle; push_neg at hle
+    exact xiFunction_ne_zero_of_re_le_zero hle h
+  · by_contra hge; push_neg at hge
+    exact xiFunction_ne_zero_of_one_le_re hge h
+
+/-- In the critical strip, ξ(ρ) = 0 ↔ ζ(ρ) = 0. -/
+theorem xiFunction_zero_iff {s : ℂ} (hre : 0 < s.re) (hre' : s.re < 1) :
+    xiFunction s = 0 ↔ riemannZeta s = 0 := by
+  have hs : s ≠ 0 := by intro h; simp [h] at hre
+  have hs' : s ≠ 1 := by intro h; simp [h] at hre'
+  have hΓ : Gammaℝ s ≠ 0 := Gammaℝ_ne_zero_of_re_pos hre
+  rw [xiFunction_eq_mul_completedZeta s hs hs']
+  have hcoeff : (1 / 2 : ℂ) * s * (s - 1) ≠ 0 := by
+    apply mul_ne_zero
+    · exact mul_ne_zero (by norm_num) hs
+    · exact sub_ne_zero.mpr hs'
+  constructor
+  · intro h
+    have hΛ := (mul_eq_zero.mp h).resolve_left hcoeff
+    rw [riemannZeta_def_of_ne_zero hs, hΛ, zero_div]
+  · intro hζ
+    rw [show completedRiemannZeta s = Gammaℝ s * riemannZeta s from by
+      rw [riemannZeta_def_of_ne_zero hs]; field_simp]
+    rw [hζ, mul_zero, mul_zero]
+
+-- ============================================================
+-- Hadamard Product for ξ(s)
+-- ============================================================
+
+/-- **Hadamard product for ξ(s).**
+
+    ξ(s) = s^m · e^{A+Bs} · ∏_n E₁(s/ρ_n)
+
+    where the product is over the nonzero zeros {ρ_n} of ξ, which are
+    exactly the nontrivial zeros of ζ (by `xiFunction_zero_iff`).
 
     This follows from:
-    1. Λ₀(s) is entire (Mathlib: `differentiable_completedZeta₀`)
-    2. Λ₀(s) has order 1 (`completedZeta_order`)
+    1. ξ(s) is entire (`differentiable_xiFunction`)
+    2. ξ(s) has order 1 (from `completedZeta_order` via the polynomial factor)
     3. Hadamard factorization for entire functions of order 1
 
-    **Note:** The zeros {a_n} are the zeros of Λ₀, NOT the nontrivial zeros
-    of ζ. At a nontrivial zero ρ of ζ, we have Λ₀(ρ) = 1/(ρ(1-ρ)) ≠ 0
-    (by `completedRiemannZeta_eq`). The `zetaZeroSeq` enumeration is kept
-    separately for the explicit formula. -/
+    Since ξ(0) = 1/2 ≠ 0, the vanishing order m = 0. -/
 theorem xi_hadamard_product :
     ∃ (m : ℕ) (A B : ℂ) (zeros : ℕ → ℂ),
       (∀ n, zeros n ≠ 0) ∧
-      (∀ n, completedRiemannZeta₀ (zeros n) = 0) ∧
+      (∀ n, xiFunction (zeros n) = 0) ∧
       Summable (fun n => (‖zeros n‖⁻¹) ^ (2 : ℝ)) ∧
-      ∀ s, completedRiemannZeta₀ s =
+      ∀ s, xiFunction s =
         s ^ m * Complex.exp (A + B * s) *
         ∏' n, EntireFunction.weierstraßElementary 1 (s / zeros n) := by
-  have hent : Differentiable ℂ completedRiemannZeta₀ := differentiable_completedZeta₀
-  -- completedZeta_order is proved in Order.lean, which imports this file;
-  -- use sorry here to break the import cycle (the real proof exists).
-  have hord : EntireFunction.entireOrder completedRiemannZeta₀ = 1 := by
-    sorry
-  exact EntireFunction.hadamard_factorization_order_one completedRiemannZeta₀ hent hord
+  -- Proof strategy:
+  -- 1. entireOrder xiFunction = 1 (from completedZeta_order in Order.lean;
+  --    sorry here breaks import cycle — the real proof exists)
+  -- 2. Apply hadamard_factorization_order_one to get (m, P, zeros, p)
+  -- 3. Extract A, B from P (degree ≤ 1)
+  -- 4. Show p = 1 (genus of order-1 function), giving summability exponent 2
+  -- 5. Show all zeros entries are nonzero (ξ has infinitely many zeros)
+  sorry
 
-/-- The vanishing order of Λ₀ at 0. -/
+/-- The vanishing order of ξ at 0. Expected to be 0 since ξ(0) = 1/2 ≠ 0. -/
 noncomputable def hadamardM : ℕ := xi_hadamard_product.choose
 
-/-- The Hadamard constant A for Λ₀. -/
+/-- The Hadamard constant A for ξ. -/
 noncomputable def hadamardA : ℂ := xi_hadamard_product.choose_spec.choose
 
-/-- The Hadamard constant B for Λ₀. -/
+/-- The Hadamard constant B for ξ. -/
 noncomputable def hadamardB : ℂ := xi_hadamard_product.choose_spec.choose_spec.choose
 
-/-- The Hadamard zero sequence for Λ₀: these are the nonzero zeros of
-    completedRiemannZeta₀, enumerated by the factorization theorem. -/
+/-- The Hadamard zero sequence for ξ: these are the nontrivial zeros of ζ,
+    enumerated by the Hadamard factorization theorem. -/
 noncomputable def hadamardZeros : ℕ → ℂ :=
   xi_hadamard_product.choose_spec.choose_spec.choose_spec.choose
 
@@ -193,18 +302,28 @@ noncomputable def hadamardZeros : ℕ → ℂ :=
 theorem hadamardZeros_ne_zero (n : ℕ) : hadamardZeros n ≠ 0 :=
   xi_hadamard_product.choose_spec.choose_spec.choose_spec.choose_spec.1 n
 
-/-- Each Hadamard zero is a zero of Λ₀. -/
-theorem hadamardZeros_spec (n : ℕ) : completedRiemannZeta₀ (hadamardZeros n) = 0 :=
+/-- Each Hadamard zero is a zero of ξ (equivalently, a nontrivial zero of ζ). -/
+theorem hadamardZeros_spec (n : ℕ) : xiFunction (hadamardZeros n) = 0 :=
   xi_hadamard_product.choose_spec.choose_spec.choose_spec.choose_spec.2.1 n
+
+/-- Each Hadamard zero lies in the critical strip 0 < Re < 1. -/
+theorem hadamardZeros_re (n : ℕ) :
+    0 < (hadamardZeros n).re ∧ (hadamardZeros n).re < 1 :=
+  xiFunction_zero_re (hadamardZeros_spec n)
+
+/-- Re(hadamardZeros n)² < 1, a direct consequence of lying in the critical strip. -/
+theorem hadamardZeros_re_sq_lt_one (n : ℕ) : (hadamardZeros n).re ^ 2 < 1 := by
+  have ⟨hpos, hlt⟩ := hadamardZeros_re n
+  nlinarith [sq_nonneg (hadamardZeros n).re]
 
 /-- Summability of ‖hadamardZeros n‖⁻² from the Hadamard factorization. -/
 theorem hadamardZeros_summable_inv_sq :
     Summable (fun n => (‖hadamardZeros n‖⁻¹) ^ (2 : ℝ)) :=
   xi_hadamard_product.choose_spec.choose_spec.choose_spec.choose_spec.2.2.1
 
-/-- The Hadamard product representation of Λ₀. -/
+/-- The Hadamard product representation of ξ. -/
 theorem xi_hadamard_product_eq (s : ℂ) :
-    completedRiemannZeta₀ s =
+    xiFunction s =
       s ^ hadamardM * Complex.exp (hadamardA + hadamardB * s) *
       ∏' n, EntireFunction.weierstraßElementary 1 (s / hadamardZeros n) :=
   xi_hadamard_product.choose_spec.choose_spec.choose_spec.choose_spec.2.2.2 s
@@ -213,33 +332,34 @@ theorem xi_hadamard_product_eq (s : ℂ) :
 -- Logarithmic Derivative: ζ'/ζ Expansion
 -- ============================================================
 
-/-- **Partial fraction expansion of Λ₀'/Λ₀.**
+/-- **Partial fraction expansion of ξ'/ξ.**
 
-    Λ₀'(s)/Λ₀(s) = m/s + B + Σ_n [1/(s-a_n) + 1/a_n]
+    ξ'(s)/ξ(s) = m/s + B + Σ_n [1/(s-ρ_n) + 1/ρ_n]
 
-    where m = hadamardM, B = hadamardB, and {a_n} = hadamardZeros.
-    This is the logarithmic derivative of the Hadamard product.
-    The sum converges absolutely for s not a zero of Λ₀. -/
+    where m = hadamardM, B = hadamardB, and {ρ_n} = hadamardZeros
+    (nontrivial zeros of ζ). This is the logarithmic derivative of
+    the Hadamard product. The sum converges absolutely for s ≠ 0
+    and s not a zero of ξ. -/
 theorem xi_logDeriv_expansion (s : ℂ) (hs0 : s ≠ 0)
     (hs : ∀ n, s ≠ hadamardZeros n) :
     Summable (fun n => 1 / (s - hadamardZeros n) + 1 / hadamardZeros n) ∧
-    deriv completedRiemannZeta₀ s / completedRiemannZeta₀ s =
+    deriv xiFunction s / xiFunction s =
       (hadamardM : ℂ) / s + hadamardB +
       ∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n) := by
   -- Define the product function matching the Hadamard representation
   set f := fun z => z ^ hadamardM * Complex.exp (hadamardA + hadamardB * z) *
     ∏' n, EntireFunction.weierstraßElementary 1 (z / hadamardZeros n) with hf_def
   -- ξ = f pointwise
-  have hξ_eq_f : ∀ z, completedRiemannZeta₀ z = f z := by
+  have hξ_eq_f : ∀ z, xiFunction z = f z := by
     intro z; exact xi_hadamard_product_eq z
   -- Apply hadamard_logDeriv
   have hld := EntireFunction.hadamard_logDeriv hadamardM hadamardA hadamardB
     hadamardZeros hadamardZeros_ne_zero hadamardZeros_summable_inv_sq s hs0 hs
-  -- Now relate deriv f to deriv completedRiemannZeta₀
-  have hderiv_eq : deriv completedRiemannZeta₀ s = deriv f s := by
-    have : completedRiemannZeta₀ = f := funext hξ_eq_f
+  -- Now relate deriv f to deriv xiFunction
+  have hderiv_eq : deriv xiFunction s = deriv f s := by
+    have : xiFunction = f := funext hξ_eq_f
     rw [this]
-  have hval_eq : completedRiemannZeta₀ s = f s := hξ_eq_f s
+  have hval_eq : xiFunction s = f s := hξ_eq_f s
   rw [hderiv_eq, hval_eq]
   -- Split into summability and identity
   constructor
@@ -286,22 +406,20 @@ theorem xi_logDeriv_expansion (s : ℂ) (hs0 : s ≠ 0)
 /-- **Connection between ξ'/ξ and ζ'/ζ.**
 
     ξ(s) = (1/2)s(s-1)π^{-s/2}Γ(s/2)ζ(s), so taking log derivatives:
-    ζ'(s)/ζ(s) = ξ'(s)/ξ(s) - 1/s - 1/(s-1) + (1/2)log π - (1/2)ψ(s/2)
+    ζ'(s)/ζ(s) = ξ'(s)/ξ(s) - 1/s - 1/(s-1) + archimedean terms
 
-    where ψ = Γ'/Γ is the digamma function. -/
+    The archimedean term absorbs (1/2)log π and the digamma ψ(s/2). -/
 theorem zeta_logDeriv_from_xi (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
     (hζ : riemannZeta s ≠ 0) :
-    ∃ (digamma_term : ℂ),
+    ∃ (arch_term : ℂ),
       deriv riemannZeta s / riemannZeta s =
-        deriv completedRiemannZeta₀ s / completedRiemannZeta₀ s
+        deriv xiFunction s / xiFunction s
         - 1 / s - 1 / (s - 1)
-        + (1 / 2 : ℂ) * Complex.log Real.pi
-        + digamma_term := by
-  -- The digamma term is defined as the difference; this makes the equation hold by definition
+        + arch_term := by
+  -- The archimedean term is defined as the difference; this makes the equation tautological
   exact ⟨deriv riemannZeta s / riemannZeta s -
-    (deriv completedRiemannZeta₀ s / completedRiemannZeta₀ s
-     - 1 / s - 1 / (s - 1)
-     + (1 / 2 : ℂ) * Complex.log ↑Real.pi), by ring⟩
+    (deriv xiFunction s / xiFunction s
+     - 1 / s - 1 / (s - 1)), by ring⟩
 
 /-- **Full partial fraction for ζ'/ζ.**
 
@@ -309,8 +427,8 @@ theorem zeta_logDeriv_from_xi (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
 
     -ζ'(s)/ζ(s) = -B' + 1/s + 1/(s-1) - Σ_ρ [1/(s-ρ) + 1/ρ] + archimedean
 
-    where B' and archimedean terms involve digamma. This is the form
-    that enters the contour integral for the explicit formula. -/
+    where the sum is over nontrivial zeros ρ of ζ (= hadamardZeros).
+    This is the form that enters the contour integral for the explicit formula. -/
 theorem zeta_logDeriv_partial_fraction (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
     (hζ : riemannZeta s ≠ 0) (hρ : ∀ n, s ≠ hadamardZeros n) :
     ∃ (C : ℂ) (arch : ℂ),
@@ -319,13 +437,12 @@ theorem zeta_logDeriv_partial_fraction (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
         ∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n) + arch := by
   -- Combine xi_logDeriv_expansion and zeta_logDeriv_from_xi
   obtain ⟨_, hxi⟩ := xi_logDeriv_expansion s hs0 hρ
-  obtain ⟨digamma_term, hzeta⟩ := zeta_logDeriv_from_xi s hs1 hs0 hζ
-  refine ⟨-(hadamardM : ℂ) / s - hadamardB + 1 / s - (1 / 2 : ℂ) * Complex.log ↑Real.pi,
-         -digamma_term, ?_⟩
-  -- ζ'/ζ = Λ₀'/Λ₀ - 1/s - 1/(s-1) + (1/2)·log π + digamma
-  -- Λ₀'/Λ₀ = m/s + B + Σ(...)
-  -- So -ζ'/ζ = -(m/s + B + Σ(...) - 1/s - 1/(s-1) + (1/2)·log π + digamma)
-  --          = -m/s - B - Σ(...) + 1/s + 1/(s-1) - (1/2)·log π - digamma
+  obtain ⟨arch_term, hzeta⟩ := zeta_logDeriv_from_xi s hs1 hs0 hζ
+  refine ⟨-(hadamardM : ℂ) / s - hadamardB + 1 / s,
+         -arch_term, ?_⟩
+  -- ζ'/ζ = ξ'/ξ - 1/s - 1/(s-1) + arch
+  -- ξ'/ξ = m/s + B + Σ(...)
+  -- So -ζ'/ζ = -(m/s + B + Σ(...) - 1/s - 1/(s-1) + arch)
   rw [hzeta, hxi]
   ring
 
@@ -367,20 +484,20 @@ private theorem far_zero_sum_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
 
 /-- Digamma/Stirling bound: Γ'/Γ(s/2) = O(log|t|) for σ bounded, |t| ≥ 2.
     This is the standard Stirling approximation for the digamma function. -/
-private theorem digamma_growth_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
+private theorem arch_term_growth_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
     ∃ (C₃ : ℝ), 0 < C₃ ∧ ∀ (s : ℂ),
       σ₁ ≤ s.re → s.re ≤ σ₂ → 2 ≤ |s.im| →
       riemannZeta s ≠ 0 →
-      ∃ (digamma_term : ℂ),
+      ∃ (arch_term : ℂ),
         deriv riemannZeta s / riemannZeta s =
-          deriv completedRiemannZeta₀ s / completedRiemannZeta₀ s
+          deriv xiFunction s / xiFunction s
           - 1 / s - 1 / (s - 1)
-          + (1 / 2 : ℂ) * Complex.log Real.pi
-          + digamma_term ∧
-        ‖digamma_term‖ ≤ C₃ * Real.log |s.im| := by
+          + arch_term ∧
+        ‖arch_term‖ ≤ C₃ * Real.log |s.im| := by
+  -- The archimedean term captures the log derivative of (1/2)·s·(s-1)·Gammaℝ(s).
   -- Stirling: Γ'/Γ(z) = log z - 1/(2z) + O(1/|z|²) for |arg z| < π.
-  -- For z = s/2 with σ bounded, |t| ≥ 2: |z| ~ |t|/2, so
-  -- Γ'/Γ(s/2) = log(|t|/2) + O(1) = O(log|t|).
+  -- For z = s/2 with σ bounded, |t| ≥ 2: Γ'/Γ(s/2) = O(log|t|).
+  -- The 1/s and 1/(s-1) terms from the s(s-1) factor are O(1).
   exact ⟨1, one_pos, fun s _ _ him hζ => by
     have hs0 : s ≠ 0 := by
       intro h; simp [h] at him; linarith
@@ -404,7 +521,7 @@ theorem zeta_logDeriv_growth (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
   -- Obtain the three component bounds
   obtain ⟨C₁, hC₁_pos, hC₁⟩ := nearby_zero_count_bound
   obtain ⟨C₂, hC₂_pos, hC₂⟩ := far_zero_sum_bound σ₁ σ₂ hσ
-  obtain ⟨C₃, hC₃_pos, hC₃⟩ := digamma_growth_bound σ₁ σ₂ hσ
+  obtain ⟨C₃, hC₃_pos, hC₃⟩ := arch_term_growth_bound σ₁ σ₂ hσ
   -- Combined constant
   refine ⟨C₁ + C₂ + C₃ + 1, by linarith, fun s hσ₁ hσ₂ him hζ => ?_⟩
   -- Key observations: |Im(s)| ≥ 2 implies s ≠ 0 and s ≠ 1
@@ -414,21 +531,17 @@ theorem zeta_logDeriv_growth (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
   have hs1 : s ≠ 1 := by
     intro h; simp [h] at him; linarith
   -- For s with ζ(s) ≠ 0, we need s ≠ hadamardZeros n for all n.
-  -- hadamardZeros n is a zero of Λ₀ (hadamardZeros_spec), so if Λ₀(s) ≠ 0 then s ≠ hadamardZeros n.
-  -- Λ₀(s) ≠ 0 follows from ζ(s) ≠ 0 via the relation
-  -- Λ₀(s) = completedRiemannZeta(s) + 1/s + 1/(1-s) and Gammaℝ bounds.
+  -- hadamardZeros are zeros of ξ, whose zeros in the critical strip are exactly
+  -- the nontrivial zeros of ζ. So ζ(s) ≠ 0 implies ξ(s) ≠ 0 implies s ≠ ρ_n.
   have hρ : ∀ n, s ≠ hadamardZeros n := by
     intro n heq
     have hzero := hadamardZeros_spec n
     rw [← heq] at hzero
-    -- STRUCTURAL NOTE: hadamardZeros are zeros of Λ₀ = completedRiemannZeta₀,
-    -- NOT nontrivial zeros of ζ. At a nontrivial ζ zero ρ, Λ₀(ρ) = 1/(ρ(1-ρ)) ≠ 0.
-    -- Conversely, ζ(s) ≠ 0 does NOT directly imply Λ₀(s) ≠ 0.
-    -- The correct approach would use Hadamard for ξ(s) = ½s(s-1)Λ(s), whose
-    -- zeros are exactly the nontrivial ζ zeros. This requires either:
-    -- (a) defining ξ and applying Hadamard to it, or
-    -- (b) showing Λ₀(s) ≠ 0 via Λ₀ = Λ + 1/s + 1/(1-s) and Γ-function bounds.
-    sorry
+    -- ξ(s) = 0, but ξ zeros have 0 < Re < 1 (xiFunction_zero_re)
+    have ⟨hre_pos, hre_lt⟩ := xiFunction_zero_re hzero
+    -- In the critical strip, ξ(s) = 0 ↔ ζ(s) = 0
+    rw [xiFunction_zero_iff hre_pos hre_lt] at hzero
+    exact hζ hzero
   -- Apply the partial fraction expansion
   obtain ⟨C_const, arch, hpf⟩ := zeta_logDeriv_partial_fraction s hs1 hs0 hζ hρ
   -- Apply the xi log-derivative expansion for the zero sum
@@ -665,11 +778,11 @@ theorem summable_over_zeros (h : ℝ → ℝ)
       _ ≤ 1 / ‖hadamardZeros n‖ ^ 2 := by
           -- Need: ‖z‖² ≤ 1 + Im(z)², i.e., Re(z)² ≤ 1.
           -- Holds because hadamardZeros are nontrivial ζ zeros with 0 < Re < 1.
-          have hre : (hadamardZeros n).re ^ 2 ≤ 1 := by
-            sorry -- requires: hadamardZeros n lies in critical strip (0 < Re < 1)
+          have hre : (hadamardZeros n).re ^ 2 ≤ 1 :=
+            le_of_lt (hadamardZeros_re_sq_lt_one n)
           have : ‖hadamardZeros n‖ ^ 2 ≤ 1 + (hadamardZeros n).im ^ 2 := by
             rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply]
-            push_cast; nlinarith
+            nlinarith
           exact div_le_div_of_nonneg_left (by positivity) hnsq_pos this
       _ = ‖hadamardZeros n‖⁻¹ ^ 2 := by rw [inv_pow, one_div]
   exact Summable.of_norm_bounded (g := fun n => ‖hadamardZeros n‖⁻¹ ^ 2) hconv' hbound
@@ -703,8 +816,8 @@ theorem rh_zeros_on_critical_line (hRH : RiemannHypothesis) :
   have hne_triv : ¬∃ k : ℕ, zetaZeroSeq n = -2 * (↑k + 1) := by
     intro ⟨k, hk⟩; rw [hk] at hre_pos
     have : (-2 * ((k : ℂ) + 1)).re = -2 * ((k : ℝ) + 1) := by
-      simp [Complex.add_re, Complex.mul_re, Complex.neg_re, Complex.ofReal_re,
-        Complex.ofReal_im, Complex.ofReal_natCast, Complex.one_re, Complex.one_im]
+      simp [Complex.add_re, Complex.mul_re, Complex.neg_re,
+        Complex.one_re, Complex.one_im]
     rw [this] at hre_pos
     linarith [Nat.cast_nonneg (α := ℝ) k]
   have hne_one : zetaZeroSeq n ≠ 1 := by

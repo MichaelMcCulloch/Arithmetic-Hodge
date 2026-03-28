@@ -813,6 +813,7 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     ∃ (m : ℕ) (g : ℂ → ℂ) (a : ℕ → ℂ) (p : ℕ),
       Differentiable ℂ g ∧
       (∀ n, a n ≠ 0 → f (a n) = 0) ∧
+      Summable (fun n => (‖a n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
       ∀ z, f z = z ^ m * Complex.exp (g z) *
         ∏' n, weierstraßElementary p (z / a n) := by
   -- Split into zero-free and has-zeros cases
@@ -820,9 +821,11 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   · -- f is zero-free: use entire logarithm theorem.
     -- Take m = 0, p = 0, a = const 0, so ∏' E_0(z/0) = ∏' 1 = 1.
     obtain ⟨g, hg_diff, hg_eq⟩ := entire_logarithm f hf hzf
-    exact ⟨0, g, fun _ => 0, 0, hg_diff,
-      fun n h => absurd rfl h,
-      fun z => by simp [hg_eq z, weierstraßElementary_zero]⟩
+    refine ⟨0, g, fun _ => 0, 0, hg_diff,
+      fun n h => absurd rfl h, ?_, fun z => by simp [hg_eq z, weierstraßElementary_zero]⟩
+    -- Summability: ‖0‖⁻¹ ^ 1 = 0, so the series is identically 0
+    exact summable_of_ne_finset_zero (s := ∅) (fun n _ => by
+      simp [norm_zero, inv_zero, Real.zero_rpow (by positivity : (0 : ℝ) + 1 ≠ 0)])
   · -- f has zeros: Weierstraß product construction for finite-order functions.
     push_neg at hzf
     -- ═══════════════════════════════════════════════════════════
@@ -1124,7 +1127,7 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     obtain ⟨g, hg_diff, hg_eq⟩ := entire_logarithm h hh_diff hh_ne
     exact ⟨m, g, a, p, hg_diff,
       fun n hn => by rw [hf_eq (a n), ha_zeros n hn, mul_zero],
-      fun z => by
+      hconv, fun z => by
         rw [hf_eq z, hh_eq z, hg_eq z, ← mul_assoc]⟩
 
 end ArithmeticHodge.Analysis.EntireFunction
