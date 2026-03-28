@@ -617,21 +617,6 @@ private lemma summable_rpow_inv_of_counting_bound (f : ℂ → ℂ) (hf : Differ
     (C R₀ : ℝ) (hC : 0 < C) (hR₀ : 1 ≤ R₀)
     (hcount : ∀ r, R₀ ≤ r → (zeroCount f r : ℝ) ≤ C * r ^ α) :
     Summable (fun z : { w : ℂ // f w = 0 ∧ w ≠ 0 } => ‖(z : ℂ)‖⁻¹ ^ s) := by
-  -- Use summable_of_sum_le: bound all finite partial sums uniformly.
-  apply summable_of_sum_le (fun z => Real.rpow_nonneg (inv_nonneg.mpr (norm_nonneg _)) _)
-  -- Fixed bound for zeros with small norm
-  set N₀ := zeroCount f R₀ -- number of zeros with ‖z‖ ≤ R₀
-  -- Geometric series bound for ratio 2^{α-s}
-  set q := (2 : ℝ) ^ (α - s)
-  have hq_pos : 0 < q := rpow_pos_of_pos (by norm_num) _
-  have hq_lt1 : q < 1 := by
-    show (2 : ℝ) ^ (α - s) < 1
-    exact Real.rpow_lt_one_of_one_lt_of_neg one_lt_two (by linarith)
-  -- Total bound
-  set B := (N₀ : ℝ) * R₀⁻¹ ^ s + C * 2 ^ α / (1 - q)
-  intro u
-  -- Every z in u satisfies f z = 0, z ≠ 0, so ‖z‖ > 0
-  -- We split into small (‖z‖ ≤ R₀) and large (‖z‖ > R₀) parts
   sorry
 
 /-- The exponent of convergence of the zeros of f:
