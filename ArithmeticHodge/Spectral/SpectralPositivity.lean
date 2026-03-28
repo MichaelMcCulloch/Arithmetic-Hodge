@@ -19,6 +19,8 @@ import Mathlib.Analysis.InnerProductSpace.Adjoint
 import Mathlib.Analysis.InnerProductSpace.l2Space
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Order
+import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Basic
+import Mathlib.Analysis.CStarAlgebra.ContinuousLinearMap
 import ArithmeticHodge.Spectral.UnboundedOperator
 
 open scoped InnerProductSpace InnerProduct
@@ -527,6 +529,20 @@ theorem cayleyTransform_unitary
   exact IsUnit.mem_unitary_of_star_mul_self ⟨u, rfl⟩ <|
     (cayleyTransformCLM hD hd).norm_map_iff_adjoint_comp_self.mp
       (fun x => by rw [hcoe]; exact e.norm_map x)
+/-- The Cayley transform is star-normal, giving access to Mathlib's
+    continuous functional calculus via `cfc`. -/
+instance cayleyTransform_isStarNormal
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined) :
+    IsStarNormal (cayleyTransformCLM hD hd) :=
+  isStarNormal_of_mem_unitary (cayleyTransform_unitary hD hd)
+
+/-- For any continuous function f on the spectrum of U, `cfc f U` is well-defined.
+    This gives a functional calculus for the unitary Cayley transform. -/
+noncomputable def cayleyTransformCFC
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (f : ℂ → ℂ) : H →L[ℂ] H :=
+  cfc f (cayleyTransformCLM hD hd)
+
 -- ============================================================
 -- Existence of Spectral Calculus (The Spectral Theorem)
 -- ============================================================

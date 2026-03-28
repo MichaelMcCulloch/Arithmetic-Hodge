@@ -805,7 +805,9 @@ theorem analyticOrderAt_tprod_weierstraß (zeros : ℕ → ℂ) (p : ℕ)
   have hsplit : (fun w => ∏' n, E n w) =ᶠ[nhds z₀]
       fun w => (∏ n ∈ S, E n w) * (∏' (n : ↑(S : Set ℕ)ᶜ), E n w) := by
     filter_upwards [univ_mem] with w _
-    exact ((hmult_w w).prod_mul_tprod_compl (s := S)).symm
+    have hm := hmult_w w
+    have key := @Multipliable.prod_mul_tprod_compl ℕ ℂ _ _ _ (E · w) S hm
+    exact key.symm
   rw [analyticOrderAt_congr hsplit]
   -- The finite product: each factor is E_p(w/z₀), so product = E_p(w/z₀)^card
   have hfin_eq : (fun w => ∏ n ∈ S, E n w) =
