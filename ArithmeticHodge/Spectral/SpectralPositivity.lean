@@ -174,39 +174,273 @@ private lemma range_orthogonal_eq_zero
   · exact absurd (abs_eq_zero.mp h) hz
   · exact norm_eq_zero.mp h
 
+-- ============================================================
+-- Linearity from Symmetry + Dense Domain
+-- ============================================================
+
+/-- A symmetric densely-defined operator is additive.
+    Proof: ⟨D(x+y) - Dx - Dy, w⟩ = 0 for all w ∈ Dom(D) by symmetry;
+    density forces the vector to be zero. -/
+private lemma toFun_map_add
+    {D : UnboundedOperator H} (hD : D.IsSymmetric) (hd : D.IsDenselyDefined)
+    (x y : D.domain) : D.toFun (x + y) = D.toFun x + D.toFun y := by
+  rw [← sub_eq_zero]
+  exact hd.eq_zero_of_inner_left (𝕜 := ℂ) fun w hw => by
+    rw [inner_sub_left, inner_add_left, hD x ⟨w, hw⟩, hD y ⟨w, hw⟩,
+        hD (x + y) ⟨w, hw⟩, D.domain.coe_add x y, inner_add_left, sub_self]
+
+/-- A symmetric densely-defined operator is ℂ-homogeneous. -/
+private lemma toFun_map_smul
+    {D : UnboundedOperator H} (hD : D.IsSymmetric) (hd : D.IsDenselyDefined)
+    (c : ℂ) (x : D.domain) : D.toFun (c • x) = c • D.toFun x := by
+  rw [← sub_eq_zero]
+  exact hd.eq_zero_of_inner_left (𝕜 := ℂ) fun w hw => by
+    rw [inner_sub_left, inner_smul_left, hD x ⟨w, hw⟩,
+        hD (c • x) ⟨w, hw⟩, D.domain.coe_smul c x, inner_smul_left, sub_self]
+
+/-- Linear map x ↦ Dx - zx from a symmetric densely-defined operator. -/
+private noncomputable def resolventMap
+    {D : UnboundedOperator H} (hD : D.IsSymmetric) (hd : D.IsDenselyDefined)
+    (z : ℂ) : D.domain →ₗ[ℂ] H :=
+  (IsLinearMap.mk' D.toFun ⟨toFun_map_add hD hd, toFun_map_smul hD hd⟩) -
+    z • D.domain.subtype
+
+private lemma resolventMap_apply
+    {D : UnboundedOperator H} (hD : D.IsSymmetric) (hd : D.IsDenselyDefined)
+    (z : ℂ) (x : D.domain) :
+    resolventMap hD hd z x = D.toFun x - z • (x : H) := rfl
+
 /-- The range of (D - zI) is dense for Im z ≠ 0 and D densely-defined
-    self-adjoint. Follows from `range_orthogonal_eq_zero`. -/
+    self-adjoint.
+
+    Proof: The range of the linear map f(x) = Dx - zx is a submodule
+    whose orthogonal complement is trivial (by `range_orthogonal_eq_zero`),
+    so its topological closure is ⊤ and it is dense.
+
+    SORRY COUNT: 0 — PROVED. -/
 private lemma range_dense
     {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
     (z : ℂ) (hz : z.im ≠ 0) :
     Dense (Set.range (fun x : D.domain => D.toFun x - z • (x : H))) := by
-  rw [dense_iff_closure_eq, Set.eq_univ_iff_forall]
-  intro y
-  rw [mem_closure_iff_nhds]
-  intro U hU
-  rw [mem_nhds_iff] at hU
-  obtain ⟨V, hVU, hVopen, hyV⟩ := hU
-  -- If range ∩ V = ∅, all of range is in Vᶜ, so range ⊆ {y}ᗮ?
-  -- Use orthogonal complement argument
-  by_contra h
-  push_neg at h
-  -- h : ∀ w ∈ V, w ∉ range(fun x => Dx - z•x)
-  -- This means y is not in closure of range, so y ⊥ range
-  -- More precisely, use the contrapositive of range_orthogonal_eq_zero
-  sorry
+  -- The set range equals the submodule range of the linear resolvent map
+  let f := resolventMap hD.1 hd z
+  rw [show Set.range (fun x : D.domain => D.toFun x - z • (x : H)) =
+      (LinearMap.range f : Set H) from (LinearMap.coe_range f).symm]
+  rw [Submodule.dense_iff_topologicalClosure_eq_top,
+      Submodule.topologicalClosure_eq_top_iff, Submodule.eq_bot_iff]
+  intro w hw
+  exact range_orthogonal_eq_zero hD hd z hz w fun x =>
+    Submodule.inner_right_of_mem_orthogonal (LinearMap.mem_range_self f x) hw
 
 /-- The range of (D - zI) is surjective for Im z ≠ 0 and D densely-defined
-    self-adjoint. That is, for every y ∈ H there exists x ∈ Dom(D) with
-    (D - z)x = y.
+    self-adjoint.
 
-    Proof: range is dense (from `range_dense`), then we construct a
-    Cauchy sequence converging to a preimage using the resolvent bound
-    and the self-adjointness condition for domain membership. -/
+    Proof: The range is a dense closed submodule, hence equals H.
+    Density is from `range_dense`. Closedness: any convergent sequence
+    in the range has Cauchy preimages (resolvent bound + linearity);
+    their limit lands in Dom(D) by the self-adjointness domain condition.
+
+    SORRY COUNT: 0 — PROVED. -/
 private lemma resolvent_surjective
     {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
     (z : ℂ) (hz : z.im ≠ 0) (y : H) :
     ∃ x : D.domain, D.toFun x - z • (x : H) = y := by
-  sorry
+  let f := resolventMap hD.1 hd z
+  have him : (0 : ℝ) < |z.im| := abs_pos.mpr hz
+  -- Show range(f) = H via dense + closed
+  suffices y ∈ (LinearMap.range f : Set H) from
+    let ⟨x, hx⟩ := LinearMap.mem_range.mp this; ⟨x, hx⟩
+  have hdense : Dense (LinearMap.range f : Set H) := by
+    rw [LinearMap.coe_range]; exact range_dense hD hd z hz
+  have hclosed : IsClosed (LinearMap.range f : Set H) := by
+    rw [← isSeqClosed_iff_isClosed]
+    intro u p hu hlim
+    choose xn hxn using fun n => LinearMap.mem_range.mp (hu n)
+    -- Preimages are Cauchy (resolvent bound + linearity)
+    have hcauchy : CauchySeq (fun n => (xn n : H)) := by
+      rw [Metric.cauchySeq_iff']
+      intro ε hε
+      obtain ⟨N, hN⟩ := Metric.cauchySeq_iff'.mp hlim.cauchySeq (ε * |z.im|)
+          (mul_pos hε him)
+      exact ⟨N, fun n hn => by
+        have hb := resolvent_norm_bound hD z (xn n - xn N)
+        have hfsub : f (xn n - xn N) = u n - u N := by rw [f.map_sub, hxn, hxn]
+        rw [show D.toFun (xn n - xn N) - z • ((xn n - xn N : D.domain) : H) =
+            f (xn n - xn N) from rfl, hfsub, D.domain.coe_sub] at hb
+        -- hb : |z.im| * ‖...‖ ≤ ‖u n - u N‖ < ε * |z.im|
+        rw [dist_eq_norm]
+        have hdist := hN n hn; rw [dist_eq_norm] at hdist
+        nlinarith [hb.trans_lt hdist]⟩
+    obtain ⟨x, hxlim⟩ := cauchySeq_tendsto_of_complete hcauchy
+    -- D(xn n) → p + z • x
+    have hDlim : Filter.Tendsto (fun n => D.toFun (xn n)) Filter.atTop
+        (nhds (p + z • x)) := by
+      have heq : (fun n => D.toFun (xn n)) = (fun n => u n + z • (xn n : H)) :=
+        funext fun n => by
+          exact sub_eq_iff_eq_add.mp (hxn n)
+      rw [heq]; exact hlim.add (hxlim.const_smul z)
+    -- Key inner product identity
+    have hinner : ∀ v : D.domain,
+        ⟪D.toFun v, x⟫_ℂ = ⟪(v : H), p + z • x⟫_ℂ := fun v => by
+      have lim1 := Filter.Tendsto.inner (𝕜 := ℂ)
+        (@tendsto_const_nhds _ _ _ (D.toFun v) Filter.atTop) hxlim
+      have lim2 := Filter.Tendsto.inner (𝕜 := ℂ)
+        (@tendsto_const_nhds _ _ _ (v : H) Filter.atTop) hDlim
+      exact tendsto_nhds_unique
+        (show Filter.Tendsto (fun n => ⟪(v : H), D.toFun (xn n)⟫_ℂ) _ _ from
+          funext (fun n => hD.1 v (xn n)) ▸ lim1)
+        lim2
+    -- x ∈ Dom(D)
+    have hxdom : x ∈ D.domain := hD.2 x ⟨‖p + z • x‖, fun v => by
+      rw [hinner v]; exact (norm_inner_le_norm (𝕜 := ℂ) _ _).trans (by rw [mul_comm])⟩
+    -- Dx - zx = p
+    have hfx : D.toFun ⟨x, hxdom⟩ - z • x = p := by
+      rw [← sub_eq_zero]
+      apply hd.eq_zero_of_inner_right (𝕜 := ℂ)
+      intro w hw
+      rw [inner_sub_right, inner_sub_right, inner_smul_right]
+      rw [show ⟪(w : H), D.toFun ⟨x, hxdom⟩⟫_ℂ = ⟪D.toFun ⟨w, hw⟩, x⟫_ℂ from
+        (hD.1 ⟨w, hw⟩ ⟨x, hxdom⟩).symm,
+        hinner ⟨w, hw⟩, inner_add_right, inner_smul_right]; ring
+    exact LinearMap.mem_range.mpr ⟨⟨x, hxdom⟩, hfx⟩
+  exact (hclosed.closure_eq.symm.trans hdense.closure_eq) ▸ Set.mem_univ y
+
+-- ============================================================
+-- Cayley Transform: U = (D - iI)(D + iI)⁻¹
+-- ============================================================
+
+/-- The inverse of (D - zI): for each y, the unique x with Dx - zx = y. -/
+private noncomputable def resolventInv
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (z : ℂ) (hz : z.im ≠ 0) (y : H) : D.domain :=
+  (resolvent_surjective hD hd z hz y).choose
+
+private lemma resolventInv_spec
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (z : ℂ) (hz : z.im ≠ 0) (y : H) :
+    D.toFun (resolventInv hD hd z hz y) - z • (resolventInv hD hd z hz y : H) = y :=
+  (resolvent_surjective hD hd z hz y).choose_spec
+
+/-- Injectivity of (D - zI): if Dx - zx = Dy - zy then x = y. -/
+private lemma resolvent_injective
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (z : ℂ) (hz : z.im ≠ 0) (x y : D.domain)
+    (h : D.toFun x - z • (x : H) = D.toFun y - z • (y : H)) :
+    (x : H) = (y : H) := by
+  -- Use resolventMap (linear) to reduce to norm bound
+  have hRM : resolventMap hD.1 hd z (x - y) = 0 := by
+    have hx : resolventMap hD.1 hd z x = D.toFun x - z • (x : H) := resolventMap_apply hD.1 hd z x
+    have hy : resolventMap hD.1 hd z y = D.toFun y - z • (y : H) := resolventMap_apply hD.1 hd z y
+    rw [map_sub, hx, hy, sub_eq_zero.mpr h]
+  -- resolventMap agrees with D.toFun - z • · on elements
+  have hsub : D.toFun (x - y) - z • ((x - y : D.domain) : H) = 0 := by
+    rw [← resolventMap_apply hD.1 hd z (x - y), hRM]
+  have hb := resolvent_norm_bound hD z (x - y)
+  rw [hsub, norm_zero, D.domain.coe_sub] at hb
+  have : ‖(x : H) - (y : H)‖ = 0 :=
+    le_antisymm (by nlinarith [abs_pos.mpr hz]) (norm_nonneg _)
+  exact sub_eq_zero.mp (norm_eq_zero.mp this)
+
+/-- Key norm equality: ‖(D - iI)x‖ = ‖(D + iI)x‖ for self-adjoint D.
+    Both equal √(‖Dx‖² + ‖x‖²) since the cross terms cancel
+    by the reality of ⟨Dx, x⟩. -/
+private lemma norm_resolvent_i_eq
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint)
+    (x : D.domain) :
+    ‖D.toFun x - Complex.I • (x : H)‖ =
+    ‖D.toFun x + Complex.I • (x : H)‖ := by
+  -- Key fact: Re⟨Dx, i•x⟩_ℂ = 0 since ⟨Dx,x⟩ is real
+  have hre : re ⟪D.toFun x, Complex.I • (x : H)⟫_ℂ = 0 := by
+    rw [inner_smul_right]
+    -- goal: re (I * ⟪Dx, x⟫) = 0
+    have hreal : (⟪D.toFun x, (x : H)⟫_ℂ).im = 0 := by
+      have hsym := hD.1 x x  -- ⟪Dx, x⟫ = ⟪x, Dx⟫
+      have hconj : starRingEnd ℂ ⟪D.toFun x, (x : H)⟫_ℂ = ⟪D.toFun x, (x : H)⟫_ℂ := by
+        rw [inner_conj_symm]; exact hsym.symm
+      exact Complex.conj_eq_iff_im.mp hconj
+    simp [Complex.I_re, Complex.I_im, hreal]
+  -- ‖a-b‖² = ‖a‖² - 2 Re⟨a,b⟩ + ‖b‖², ‖a+b‖² = ‖a‖² + 2 Re⟨a,b⟩ + ‖b‖²
+  -- Since Re⟨a,b⟩ = 0, both are ‖a‖² + ‖b‖²
+  have hsq : ‖D.toFun x - Complex.I • (x : H)‖ ^ 2 =
+             ‖D.toFun x + Complex.I • (x : H)‖ ^ 2 := by
+    rw [@norm_sub_sq ℂ, @norm_add_sq ℂ, hre, mul_zero, sub_zero, add_zero]
+  nlinarith [norm_nonneg (D.toFun x - Complex.I • (x : H)),
+             norm_nonneg (D.toFun x + Complex.I • (x : H)),
+             sq_nonneg (‖D.toFun x - Complex.I • (x : H)‖ -
+                        ‖D.toFun x + Complex.I • (x : H)‖)]
+
+/-- Im(-i) ≠ 0. -/
+private lemma neg_I_im_ne_zero : (-Complex.I).im ≠ 0 := by
+  simp [Complex.ext_iff, Complex.neg_im, Complex.I_im]
+
+/-- Im(i) ≠ 0. -/
+private lemma I_im_ne_zero : Complex.I.im ≠ 0 := by
+  simp [Complex.I_im]
+
+/-- **The Cayley transform** of a self-adjoint operator D.
+
+    U = (D - iI) ∘ (D + iI)⁻¹ : H → H
+
+    Maps every y ∈ H to (D - iI)x where x is the unique element of Dom(D)
+    with (D + iI)x = y. This is a well-defined bounded operator because
+    (D + iI) is bijective (resolvent_surjective + resolvent_norm_bound). -/
+noncomputable def cayleyTransform
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined) (y : H) : H :=
+  let x := resolventInv hD hd (-Complex.I) neg_I_im_ne_zero y
+  D.toFun x - Complex.I • (x : H)
+
+/-- The Cayley transform is an isometry: ‖Uy‖ = ‖y‖.
+
+    Proof: Uy = (D-iI)x where y = (D+iI)x. By `norm_resolvent_i_eq`,
+    ‖(D-iI)x‖ = ‖(D+iI)x‖ = ‖y‖.
+
+    SORRY COUNT: 0 — PROVED. -/
+theorem cayleyTransform_isometry
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined) (y : H) :
+    ‖cayleyTransform hD hd y‖ = ‖y‖ := by
+  unfold cayleyTransform
+  -- Let x = (D+iI)⁻¹ y, so (D+iI)x = y, i.e., Dx - (-i)x = y
+  set x := resolventInv hD hd (-Complex.I) neg_I_im_ne_zero y
+  have hspec := resolventInv_spec hD hd (-Complex.I) neg_I_im_ne_zero y
+  -- hspec : D.toFun x - (-I) • (x : H) = y, i.e., Dx + Ix = y
+  rw [neg_smul, sub_neg_eq_add] at hspec
+  -- Goal: ‖Dx - Ix‖ = ‖y‖
+  rw [← hspec]
+  exact norm_resolvent_i_eq hD x
+
+/-- The Cayley transform is surjective.
+
+    Given w ∈ H, find y with Uy = w. Take x ∈ Dom(D) with (D-iI)x = w
+    (by `resolvent_surjective`). Set y = (D+iI)x. Then Uy = (D-iI)x = w.
+
+    SORRY COUNT: 0 — PROVED. -/
+theorem cayleyTransform_surjective
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined) :
+    Function.Surjective (cayleyTransform hD hd) := by
+  intro w
+  -- Find x with (D - iI)x = w
+  obtain ⟨x, hx⟩ := resolvent_surjective hD hd Complex.I I_im_ne_zero w
+  -- Set y = (D + iI)x
+  let y := D.toFun x + Complex.I • (x : H)
+  use y
+  unfold cayleyTransform
+  -- (D+iI)⁻¹ y recovers x (by uniqueness)
+  set x' := resolventInv hD hd (-Complex.I) neg_I_im_ne_zero y
+  have hspec := resolventInv_spec hD hd (-Complex.I) neg_I_im_ne_zero y
+  rw [neg_smul, sub_neg_eq_add] at hspec
+  -- hspec : D.toFun x' + I • (x' : H) = y = D.toFun x + I • x
+  -- By injectivity of (D + iI): x' = x
+  have hinj : (x' : H) = (x : H) := by
+    apply resolvent_injective hD hd (-Complex.I) neg_I_im_ne_zero
+    rw [neg_smul, sub_neg_eq_add, neg_smul, sub_neg_eq_add, hspec]
+  -- Now Uy = D.toFun x' - I • x' = D.toFun x - I • x = w
+  have hDx' : D.toFun x' = D.toFun x := by
+    have h1 := hspec  -- D.toFun x' + I • x' = D.toFun x + I • x
+    rw [show (x' : H) = (x : H) from hinj] at h1
+    exact add_right_cancel h1
+  -- Goal: (let x := x'; Dx - I•x) = w
+  show D.toFun x' - Complex.I • (x' : H) = w
+  rw [hDx', hinj, hx]
 
 -- ============================================================
 -- Existence of Spectral Calculus (The Spectral Theorem)

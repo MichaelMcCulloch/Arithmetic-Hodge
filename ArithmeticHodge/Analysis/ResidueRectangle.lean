@@ -7,16 +7,15 @@
   1. `circleIntegral_eq_zero_of_diffContOnCl` — ∮ f = 0 for analytic f
   2. `residue` — residue of f at c, defined via circle integral
   3. `residue_eq_of_simple_pole` — for f = g/(z−c), Res(f,c) = g(c)
-  4. `circleIntegral_simple_pole` — residue theorem for one simple pole
-  5. `circleIntegral_eq_two_pi_I_sum_residues` — multi-pole circle residue theorem
-  6. Rectangle Cauchy-Goursat wrappers and contour deformation
+  4. `circleIntegral_eq_two_pi_I_sum_residues` — multi-pole circle residue theorem
+  5. Rectangle Cauchy-Goursat wrappers
 -/
 
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Meromorphic.Order
 
 open Complex MeasureTheory Set Filter Topology Metric
-open scoped Real
+open scoped Real Interval
 
 namespace ArithmeticHodge.Analysis
 
@@ -30,15 +29,15 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E] [CompleteSpace E
 theorem circleIntegral_eq_zero_of_diffContOnCl {f : ℂ → E} {c : ℂ} {R : ℝ} (hR : 0 < R)
     (hf : DiffContOnCl ℂ f (ball c R)) :
     ∮ z in C(c, R), f z = 0 := by
-  set g : ℂ → E := fun z => (z - c) • f z
+  set g : ℂ → E := fun z => (z - c) • f z with hg_def
   have hg : DiffContOnCl ℂ g (ball c R) :=
-    (DiffContOnCl.sub_const diffContOnCl_id c).smul hf
+    ((differentiable_id.sub (differentiable_const c)).diffContOnCl).smul hf
   have step1 : (∮ z in C(c, R), (z - c)⁻¹ • g z) = (2 * ↑π * I) • g c :=
     hg.circleIntegral_sub_inv_smul (mem_ball_self hR)
-  have step2 : g c = 0 := by simp [g, sub_self, zero_smul]
+  have step2 : g c = 0 := by simp [hg_def, sub_self, zero_smul]
   have step3 : ∮ z in C(c, R), f z = ∮ z in C(c, R), (z - c)⁻¹ • g z := by
     refine circleIntegral.integral_congr hR.le fun z hz => ?_
-    simp only [g, inv_smul_smul₀ (sub_ne_zero.mpr (ne_of_mem_sphere hz hR.ne'))]
+    simp only [hg_def, inv_smul_smul₀ (sub_ne_zero.mpr (ne_of_mem_sphere hz hR.ne'))]
   rw [step3, step1, step2, smul_zero]
 
 /-! ## Residue definition and basic properties -/
@@ -47,29 +46,32 @@ theorem circleIntegral_eq_zero_of_diffContOnCl {f : ℂ → E} {c : ℂ} {R : �
 noncomputable def residue (f : ℂ → ℂ) (c : ℂ) : ℂ :=
   (2 * ↑Real.pi * I)⁻¹ * (∮ z in C(c, 1), f z)
 
-/-- The residue equals `(2πi)⁻¹` times the circle integral at any positive radius,
-    provided `f` is continuous on the closed annulus and differentiable on its interior
-    (between the unit circle and the circle of radius `R`). -/
+/-- The residue equals `(2πi)⁻¹` times the circle integral at radius `R`,
+    whenever the two circle integrals (at radii `1` and `R`) are equal.
+    Use the annulus theorem to discharge this hypothesis. -/
+theorem residue_eq_of_circleIntegral {f : ℂ → ℂ} {c : ℂ} {R : ℝ}
+    (heq : ∮ z in C(c, 1), f z = ∮ z in C(c, R), f z) :
+    residue f c = (2 * ↑Real.pi * I)⁻¹ * (∮ z in C(c, R), f z) := by
+  simp only [residue, heq]
+
+/-- Radius-independence of residue: the circle integral at any positive radius
+    gives the same residue, for functions differentiable on the annulus. -/
 theorem residue_eq_inv_two_pi_I_circleIntegral {f : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0 < R)
     (hc : ContinuousOn f (closedBall c (max 1 R) \ ball c (min 1 R)))
     (hd : ∀ z ∈ ball c (max 1 R) \ closedBall c (min 1 R),
       DifferentiableAt ℂ f z) :
     residue f c = (2 * ↑Real.pi * I)⁻¹ * (∮ z in C(c, R), f z) := by
-  unfold residue
-  congr 1
-  rcases le_or_lt R 1 with hR1 | hR1
-  · -- R ≤ 1: deform from radius 1 down to R
-    have hmin : min 1 R = R := min_eq_right hR1
-    have hmax : max 1 R = 1 := max_eq_left hR1
-    rw [hmin, hmax] at hc hd
-    exact (Complex.circleIntegral_eq_of_differentiable_on_annulus_off_countable hR hR1
-      countable_empty (by rwa [diff_empty]) (fun z hz => hd z (by rwa [diff_empty] at hz))).symm
-  · -- R > 1: deform from radius 1 up to R
-    have hmin : min 1 R = 1 := min_eq_left hR1.le
-    have hmax : max 1 R = R := max_eq_right hR1.le
-    rw [hmin, hmax] at hc hd
-    exact Complex.circleIntegral_eq_of_differentiable_on_annulus_off_countable one_pos hR1.le
-      countable_empty (by rwa [diff_empty]) (fun z hz => hd z (by rwa [diff_empty] at hz))
+  apply residue_eq_of_circleIntegral
+  by_cases hR1 : R ≤ 1
+  · -- R ≤ 1: apply annulus theorem with inner=R, outer=1
+    simp only [min_eq_right hR1, max_eq_left hR1] at hc hd
+    exact (Complex.circleIntegral_eq_of_differentiable_on_annulus_off_countable
+      hR hR1 countable_empty hc fun z hz => hd z hz.1)
+  · -- R > 1: apply annulus theorem with inner=1, outer=R
+    push_neg at hR1
+    simp only [min_eq_left hR1.le, max_eq_right hR1.le] at hc hd
+    exact (Complex.circleIntegral_eq_of_differentiable_on_annulus_off_countable
+      one_pos hR1.le countable_empty hc fun z hz => hd z hz.1).symm
 
 /-- For a simple pole `f(z) = (z−c)⁻¹ · g(z)` with `g` analytic on `closedBall c 1`,
     the residue is `g(c)`. -/
@@ -95,7 +97,7 @@ theorem circleIntegral_simple_pole {g : ℂ → ℂ} {c : ℂ} {R : ℝ} (hR : 0
     hg.circleIntegral_sub_inv_smul (mem_ball_self hR)
   simpa [smul_eq_mul] using this
 
-/-- **Residue theorem** (simple pole at `w ≠ c`, circle contour):
+/-- **Residue theorem** (simple pole at `w`, circle contour):
     `∮_{|z−c|=R} g(z)/(z−w) dz = 2πi · g(w)` for `w ∈ ball c R`. -/
 theorem circleIntegral_simple_pole_off_center {g : ℂ → ℂ} {c w : ℂ} {R : ℝ}
     (hw : w ∈ ball c R)
@@ -112,8 +114,13 @@ theorem circleIntegral_sub_inv_eq_two_pi_I {c w : ℂ} {R : ℝ} (hw : w ∈ bal
 
 /-! ## Multi-pole residue theorem for circles -/
 
+private theorem ne_of_mem_sphere_of_mem_ball {c z w : ℂ} {R : ℝ}
+    (hz : z ∈ sphere c R) (hw : w ∈ ball c R) : z ≠ w := by
+  intro heq; rw [heq] at hz
+  exact absurd (mem_sphere.mp hz ▸ mem_ball.mp hw : dist w c < dist w c) (lt_irrefl _)
+
 /-- **Residue theorem** (finitely many simple poles, circle contour):
-    If `f` agrees with `h + Σ aₖ·(z−wₖ)⁻¹` on the circle, where `h` is analytic
+    If `f` equals `h + Σ aₖ·(z−wₖ)⁻¹` on the circle, where `h` is analytic
     on the closed disk and each `wₖ` is strictly inside, then
     `∮ f = 2πi · Σ aₖ`. The `aₖ` are the residues. -/
 theorem circleIntegral_eq_two_pi_I_sum_residues
@@ -126,59 +133,62 @@ theorem circleIntegral_eq_two_pi_I_sum_residues
     (hf : ∀ z ∈ sphere c R,
       f z = h z + ∑ k : Fin n, a k * (z - w k)⁻¹) :
     (∮ z in C(c, R), f z) = 2 * ↑Real.pi * I * ∑ k : Fin n, a k := by
-  -- Rewrite integral using the decomposition on the sphere
-  rw [circleIntegral.integral_congr hR.le hf]
-  -- Split: ∮ (h + Σ aₖ/(z-wₖ)) = ∮ h + ∮ Σ aₖ/(z-wₖ)
+  -- Each pole term is continuous on the sphere (poles are strictly inside)
   have hint_pole : ∀ k : Fin n,
       ContinuousOn (fun z => a k * (z - w k)⁻¹) (sphere c R) := by
     intro k
     apply ContinuousOn.mul continuousOn_const
     apply ContinuousOn.inv₀ (continuousOn_id.sub continuousOn_const)
     intro z hz
-    exact sub_ne_zero.mpr (ne_of_mem_of_not_mem hz (not_mem_sphere_of_lt (hw k)))
+    exact sub_ne_zero.mpr (ne_of_mem_sphere_of_mem_ball hz (hw k))
+  -- Rewrite using the decomposition
+  rw [circleIntegral.integral_congr hR.le hf]
+  -- Split: ∮ (h + Σ aₖ/(z−wₖ)) = ∮ h + ∮ Σ aₖ/(z−wₖ)
   have hint_sum : CircleIntegrable (fun z => ∑ k : Fin n, a k * (z - w k)⁻¹) c R :=
-    CircleIntegrable.fun_sum _ (fun k _ =>
-      (hint_pole k).circleIntegrable hR.le)
-  have hint_h : CircleIntegrable h c R :=
-    hh.continuousOn_ball.circleIntegrable hR.le
-  rw [circleIntegral.integral_add hint_h hint_sum]
-  -- ∮ h = 0 by Cauchy-Goursat
+    CircleIntegrable.fun_sum _ (fun k _ => (hint_pole k).circleIntegrable hR.le)
+  rw [circleIntegral.integral_add
+    ((hh.continuousOn_ball.mono sphere_subset_closedBall).circleIntegrable hR.le) hint_sum]
+  -- ∮ h = 0
   rw [circleIntegral_eq_zero_of_diffContOnCl hR hh, zero_add]
-  -- ∮ Σ aₖ/(z-wₖ) = Σ aₖ · 2πi
-  rw [circleIntegral.integral_fun_sum (fun k _ => (hint_pole k).circleIntegrable hR.le)]
-  simp_rw [circleIntegral.integral_const_mul,
-    circleIntegral_sub_inv_eq_two_pi_I (hw ·)]
+  -- ∮ Σ aₖ/(z−wₖ) = Σ aₖ · 2πi
+  rw [circleIntegral.integral_fun_sum
+    (fun k _ => (hint_pole k).circleIntegrable hR.le)]
+  simp_rw [circleIntegral.integral_const_mul]
+  have : ∀ k : Fin n, ∮ z in C(c, R), (z - w k)⁻¹ = 2 * ↑Real.pi * I :=
+    fun k => circleIntegral_sub_inv_eq_two_pi_I (hw k)
+  simp_rw [this, ← Finset.sum_mul]
   ring
 
 /-! ## Rectangle contour infrastructure -/
 
-/-- Rectangle boundary integral with corners `z` and `w`:
-    `∫ bottom − ∫ top + I·∫ right − I·∫ left`. -/
-noncomputable def rectIntegral (f : ℂ → ℂ) (z w : ℂ) : ℂ :=
+section Rectangle
+
+variable {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℂ E']
+
+/-- Rectangle boundary integral with corners `z` and `w`, matching Mathlib's convention:
+    bottom − top + I • right − I • left. -/
+noncomputable def rectIntegral (f : ℂ → E') (z w : ℂ) : E' :=
   (∫ x : ℝ in z.re..w.re, f (↑x + ↑z.im * I)) -
   (∫ x : ℝ in z.re..w.re, f (↑x + ↑w.im * I)) +
-  I * (∫ y : ℝ in z.im..w.im, f (↑w.re + ↑y * I)) -
-  I * (∫ y : ℝ in z.im..w.im, f (↑z.re + ↑y * I))
+  I • (∫ y : ℝ in z.im..w.im, f (↑w.re + ↑y * I)) -
+  I • (∫ y : ℝ in z.im..w.im, f (↑z.re + ↑y * I))
 
 /-- **Cauchy-Goursat for rectangles** (off-countable version). -/
-theorem rectIntegral_eq_zero {f : ℂ → ℂ} {z w : ℂ} {s : Set ℂ}
+theorem rectIntegral_eq_zero {f : ℂ → E'} {z w : ℂ} {s : Set ℂ}
     (hs : s.Countable)
     (hc : ContinuousOn f ([[z.re, w.re]] ×ℂ [[z.im, w.im]]))
     (hd : ∀ x ∈ Ioo (min z.re w.re) (max z.re w.re) ×ℂ
             Ioo (min z.im w.im) (max z.im w.im) \ s,
       DifferentiableAt ℂ f x) :
-    rectIntegral f z w = 0 := by
-  have := Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable
-    f z w s hs hc hd
-  simp only [rectIntegral]
-  linarith
+    rectIntegral f z w = 0 :=
+  Complex.integral_boundary_rect_eq_zero_of_differentiable_on_off_countable f z w s hs hc hd
 
-/-- **Cauchy-Goursat for rectangles** (differentiable-on version). -/
-theorem rectIntegral_eq_zero_of_differentiableOn {f : ℂ → ℂ} {z w : ℂ}
+/-- **Cauchy-Goursat for rectangles** (DifferentiableOn version). -/
+theorem rectIntegral_eq_zero_of_differentiableOn {f : ℂ → E'} {z w : ℂ}
     (hd : DifferentiableOn ℂ f ([[z.re, w.re]] ×ℂ [[z.im, w.im]])) :
     rectIntegral f z w = 0 :=
-  rectIntegral_eq_zero countable_empty hd.continuousOn (fun x hx =>
-    (hd.differentiableAt ((isOpen_Ioo.reProdIm isOpen_Ioo).mem_nhds hx.1)).differentiableWithinAt
-    |>.differentiableAt ((isOpen_Ioo.reProdIm isOpen_Ioo).mem_nhds hx.1))
+  Complex.integral_boundary_rect_eq_zero_of_differentiableOn f z w hd
+
+end Rectangle
 
 end ArithmeticHodge.Analysis

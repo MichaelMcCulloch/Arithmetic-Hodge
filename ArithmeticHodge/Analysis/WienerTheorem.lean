@@ -240,28 +240,47 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
     -- Pull (1/T) out of the product integral and use Fubini
     -- We show the integrals match by using integral_mul_left and Fubini
     -- Pull constant out of product integral
-    rw [integral_const_mul, re_ofReal_mul]
-    congr 1
     -- Prepare Fubini integrability
-    have hcont : Continuous (uncurry fun (p : ℝ × ℝ) (t : ℝ) =>
+    have hcont : Continuous (Function.uncurry fun (p : ℝ × ℝ) (t : ℝ) =>
         cexp (↑(t * (p.2 - p.1)) * I)) :=
       Complex.continuous_exp.comp ((Complex.continuous_ofReal.comp
         (continuous_snd.mul ((continuous_snd.comp continuous_fst).sub
           (continuous_fst.comp continuous_fst)))).mul continuous_const)
-    have hint : Integrable (uncurry fun (p : ℝ × ℝ) (t : ℝ) =>
+    haveI : IsFiniteMeasure (volume.restrict (Set.Icc (0 : ℝ) T)) :=
+      ⟨by simp [Real.volume_Icc, ENNReal.ofReal_lt_top]⟩
+    have hint : Integrable (Function.uncurry fun (p : ℝ × ℝ) (t : ℝ) =>
         cexp (↑(t * (p.2 - p.1)) * I))
         ((μ.prod μ).prod (volume.restrict (Set.Icc 0 T))) :=
-      (integrable_const (1 : ℂ)).mono' hcont.aestronglyMeasurable
-        (ae_of_all _ fun ⟨_, _⟩ => by
-          simp only [uncurry, norm_one]; exact le_of_eq (Complex.norm_exp_ofReal_mul_I _))
+      by
+        constructor
+        · exact hcont.aestronglyMeasurable
+        · show ∫⁻ x, ↑‖Function.uncurry (fun p t => cexp (↑(t * (p.2 - p.1)) * I)) x‖₊
+              ∂(μ.prod μ).prod (volume.restrict (Set.Icc 0 T)) < ⊤
+          calc ∫⁻ x, ↑‖Function.uncurry (fun p t => cexp (↑(t * (p.2 - p.1)) * I)) x‖₊
+                ∂(μ.prod μ).prod (volume.restrict (Set.Icc 0 T))
+              = ∫⁻ _, 1 ∂(μ.prod μ).prod (volume.restrict (Set.Icc 0 T)) := by
+                congr 1; ext ⟨⟨a, b⟩, t⟩
+                simp only [Function.uncurry, Complex.nnnorm_exp_ofReal_mul_I, ENNReal.coe_one]
+            _ = ((μ.prod μ).prod (volume.restrict (Set.Icc 0 T))) Set.univ := by
+                simp [lintegral_const]
+            _ < ⊤ := measure_lt_top _ _
+    -- Pull constant out and use Fubini
+    have hpull := integral_const_mul (↑(1 / T) : ℂ)
+      (fun p : ℝ × ℝ => ∫ t in Set.Icc 0 T, cexp (↑(t * (p.2 - p.1)) * I))
+      (μ := μ.prod μ)
+    rw [show (∫ (p : ℝ × ℝ), ↑(1 / T) *
+        (∫ (t : ℝ) in Set.Icc 0 T, cexp (↑(t * (p.2 - p.1)) * I)) ∂μ.prod μ) =
+        ↑(1 / T) * ∫ (p : ℝ × ℝ),
+        (∫ (t : ℝ) in Set.Icc 0 T, cexp (↑(t * (p.2 - p.1)) * I)) ∂μ.prod μ from hpull,
+      re_ofReal_mul]
+    congr 1
     -- Fubini: swap integrals
     rw [integral_integral_swap hint]
     -- Apply key to rewrite inner integral
     simp_rw [key]
-    -- Extract Re from integral
+    -- Extract Re from integral: (∫ t, ↑(r t)).re = ∫ t, r t
     symm
-    rw [← integral_re (hint.integral_prod_right.congr (ae_of_all _ fun t => key t))]
-    simp_rw [Complex.ofReal_re]
+    rw [integral_ofReal (𝕜 := ℂ), Complex.ofReal_re]
 
   -- ═══════════════════════════════════════════════════════════════
   -- Claim 3 (Evaluate): Re(∫ f dμ') = ∑' x, μ.real {x}²
@@ -283,45 +302,63 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
     rw [Measure.prod_apply measurableSet_diagonal]
     -- Simplify preimage: Prod.mk x ⁻¹' diagonal = {x}
     have hpreimage : ∀ x : ℝ, Prod.mk x ⁻¹' diagonal ℝ = {x} := by
-      intro x; ext y; simp [Set.mem_diagonal_iff]
+      intro x; ext y; simp [Set.mem_diagonal_iff, eq_comm]
     simp_rw [hpreimage]
     -- Measurability of x ↦ μ{x}
     have hmeas : Measurable (fun x : ℝ => μ {x}) := by
       have := measurable_measure_prodMk_left (ν := μ) measurableSet_diagonal
       simp_rw [hpreimage] at this; exact this
+    -- Convert lintegral to Bochner integral via integral_toReal
+    rw [← integral_toReal hmeas.aemeasurable
+      (ae_of_all _ fun x => measure_lt_top μ _)]
+    -- Now: ∫ x, (μ{x}).toReal ∂μ = ∑' x, (μ{x}).toReal ^ 2
+    -- = ∫ x, μ.real{x} ∂μ = ∑' x, μ.real{x}²
     -- The atoms form a countable set
-    set A := Function.support (fun x => μ ({x} : Set ℝ)) with hA_def
-    have hA_eq : A = {x : ℝ | 0 < μ {x}} := by ext; simp [Function.mem_support, pos_iff_ne_zero]
-    have hA_count : A.Countable := by
-      rw [hA_eq]
-      exact countable_meas_pos_of_disjoint_of_meas_iUnion_ne_top μ
+    have hA_count : {x : ℝ | 0 < μ {x}}.Countable :=
+      Measure.countable_meas_pos_of_disjoint_iUnion
         (fun x => measurableSet_singleton x)
-        (fun i j hij => by exact Set.disjoint_singleton.mpr hij)
-        (ne_top_of_le_ne_top (measure_ne_top μ univ) (measure_iUnion_le _))
-    have hA_meas : MeasurableSet A := hmeas (measurableSet_compl {0})
-    -- Restrict lintegral to atoms
-    have hrestr : ∫⁻ x, μ {x} ∂μ = ∫⁻ x in A, μ {x} ∂μ := by
-      rw [← lintegral_add_compl _ hA_meas]
-      have : ∫⁻ x in Aᶜ, μ {x} ∂μ = 0 := by
-        apply lintegral_eq_zero_of_ae
-        filter_upwards [ae_restrict_mem hA_meas.compl] with x hx
-        exact Function.not_mem_support.mp hx
-      omega
-    rw [hrestr, lintegral_countable _ hA_count]
-    -- Now: (∑' a : A, μ{a} * μ{a}).toReal = ∑' x, (μ{x}).toReal ^ 2
-    simp_rw [sq]
-    rw [ENNReal.tsum_toReal_eq (fun ⟨a, _⟩ => by
-      exact ENNReal.mul_ne_top (measure_ne_top μ _) (measure_ne_top μ _))]
-    simp_rw [ENNReal.toReal_mul]
-    -- Now: ∑' a : A, μ.real{a} * μ.real{a} = ∑' x : ℝ, μ.real{x} * μ.real{x}
-    -- Extend from A to ℝ (zero outside A)
-    rw [← tsum_eq_tsum_of_hasSum_iff_hasSum (fun {a} => by
-      constructor
-      · intro h
-        apply h.map (⟨Subtype.val, Subtype.val_injective⟩ : A ↪ ℝ)
-        exact continuous_id.tendsto _
-      · intro h
-        sorry)]
+        (fun i j hij => Set.disjoint_singleton.mpr hij)
+    -- The function x ↦ μ.real{x} vanishes outside atoms
+    -- Use the Bochner integral computation for functions with countable support
+    -- ∫ x, f(x) dμ = ∑ over atoms a: f(a) · μ.real{a}
+    -- With f(x) = μ.real{x} = (μ{x}).toReal, this gives ∑' a, μ.real{a}²
+    have hmeas_real : Measurable (fun x : ℝ => (μ {x}).toReal) :=
+      ENNReal.measurable_toReal.comp hmeas
+    have hA_meas : MeasurableSet {x : ℝ | (μ {x}).toReal ≠ 0} :=
+      hmeas_real (measurableSet_singleton (0 : ℝ)).compl
+    -- The support equals the atoms set
+    have hsupp_eq : {x : ℝ | (μ {x}).toReal ≠ 0} = {x : ℝ | 0 < μ {x}} := by
+      ext x
+      simp only [Set.mem_setOf_eq, ne_eq, ENNReal.toReal_eq_zero_iff, not_or, pos_iff_ne_zero]
+      exact ⟨fun h => h.1, fun h => ⟨h, (measure_ne_top μ _)⟩⟩
+    -- Restrict to atoms: ∫ f dμ = ∫_A f dμ
+    have hrestr : ∫ x, (μ {x}).toReal ∂μ = ∫ x in {x | 0 < μ {x}}, (μ {x}).toReal ∂μ := by
+      symm
+      apply setIntegral_eq_integral_of_forall_compl_eq_zero
+      intro x hx
+      simp only [Set.mem_setOf_eq, not_lt] at hx
+      have : μ {x} = 0 := le_antisymm hx (zero_le _)
+      simp [this]
+    rw [hrestr]
+    -- Use integral over countable set = tsum
+    have hintble : IntegrableOn (fun x => (μ {x}).toReal) {x | 0 < μ {x}} μ :=
+      ⟨hmeas_real.aestronglyMeasurable.restrict,
+       (hasFiniteIntegral_const (μ Set.univ).toReal).mono
+         (ae_of_all _ fun x => by
+           simp only [Real.norm_eq_abs, abs_of_nonneg ENNReal.toReal_nonneg]
+           exact ENNReal.toReal_mono (measure_ne_top μ _) (measure_mono (Set.subset_univ _)))⟩
+    rw [setIntegral_countable _ hA_count hintble]
+    -- Now: ∑' x : {x | 0 < μ{x}}, μ.real{↑x} • (μ{↑x}).toReal = ∑' x, μ.real{x}²
+    simp_rw [Measure.real, smul_eq_mul, sq]
+    -- Extend from atoms to all of ℝ via tsum_subtype
+    have := tsum_subtype {x : ℝ | 0 < μ {x}} (fun x => (μ {x}).toReal * (μ {x}).toReal)
+    rw [this]; clear this
+    congr 1; ext x
+    by_cases hx : (0 : ℝ≥0∞) < μ {x}
+    · simp [Set.indicator, hx]
+    · push_neg at hx
+      have hx0 : μ {x} = 0 := le_antisymm hx (zero_le _)
+      simp [Set.indicator, hx0, show ¬(0 < μ {x}) from not_lt.mpr hx]
 
   -- ═══════════════════════════════════════════════════════════════
   -- Combine

@@ -546,6 +546,24 @@ lemma entireOrder_nonneg (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   -- hL_le : L ≤ b' * (n * log R₀), hn_lt : n * (b' * log R₀) < L
   linarith [mul_comm b.toReal (↑n * Real.log R₀)]
 
+/-- From `entireOrder f < α`: eventually `Real.log (maxModulus f r) ≤ r ^ α`. -/
+private lemma logMax_eventually_le_rpow (f : ℂ → ℂ) (α : ℝ)
+    (hα : entireOrder f < (α : EReal)) :
+    ∀ᶠ r in Filter.atTop, Real.log (maxModulus f r) ≤ r ^ α := by
+  have hev := eventually_lt_of_limsup_lt hα
+  apply (hev.and (Filter.eventually_ge_atTop 2)).mono
+  intro r ⟨hr_limsup, hr_ge⟩
+  have hr_gt1 : (1 : ℝ) < r := by linarith
+  have hlogr : 0 < Real.log r := Real.log_pos hr_gt1
+  have hr_limsup' : Real.log (Real.log (maxModulus f r)) / Real.log r < α := by
+    exact_mod_cast hr_limsup
+  by_cases hlogM : Real.log (maxModulus f r) ≤ 0
+  · exact le_trans hlogM (rpow_nonneg (le_of_lt (lt_trans zero_lt_one hr_gt1)) α)
+  · push_neg at hlogM
+    rw [show r ^ α = Real.exp (α * Real.log r) from by
+      rw [rpow_def_of_pos (lt_trans zero_lt_one hr_gt1), mul_comm]]
+    exact le_of_lt ((Real.log_lt_iff_lt_exp hlogM).mp ((div_lt_iff₀ hlogr).mp hr_limsup'))
+
 /-- The exponent of convergence of the zeros of f:
     λ(f) = inf { σ > 0 : Σ |z_n|^{-σ} < ∞ }
     where {z_n} are the nonzero zeros of f. -/

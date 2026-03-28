@@ -878,6 +878,7 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     exact summable_of_ne_finset_zero (s := ∅) (fun n _ => by
       simp [norm_zero, inv_zero, Real.zero_rpow (by positivity : (0 : ℝ) + 1 ≠ 0)])
   · -- f has zeros: Weierstraß product construction for finite-order functions.
+    -- [TEMPORARILY SORRY'd due to Mathlib whnf timeout on analyticOrderAt ∘ tprod]
     push_neg at hzf
     -- ═══════════════════════════════════════════════════════════
     -- Step 1: Factor out the zero at the origin
@@ -1004,8 +1005,8 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       set S : Finset ℕ := (Finset.range m).image (Nat.pair k)
       have hpair_inj : Function.Injective (Nat.pair k) :=
         fun j₁ j₂ h => (Nat.pair_eq_pair.mp h).2
-      have hS_card : S.card = m :=
-        Finset.card_image_of_injective _ hpair_inj
+      have hS_card : S.card = m := by
+        rw [Finset.card_image_of_injective _ hpair_inj, Finset.card_range]
       -- For n ∈ S, a' n = a₀ k
       have hS_val : ∀ n ∈ S, a' n = a₀ k := by
         intro n hn
