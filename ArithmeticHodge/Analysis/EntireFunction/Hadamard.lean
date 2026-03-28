@@ -132,9 +132,12 @@ theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   -- Uses: entire_logarithm for the zero-free quotient,
   -- zeroExponent_le_order for summability, and elementary factor
   -- ratio identities for re-genusing from p₀ to p.
-  obtain ⟨m, g₁, zeros, hg₁_diff, hne_zero, hzeros_vanish, hsumm, hg₁_eq⟩ :
+  obtain ⟨m, g₁, zeros, hg₁_diff, ⟨α_g, C_g, hα_nn, hα_lt, hC_pos, hg₁_bound⟩,
+      hne_zero, hzeros_vanish, hsumm, hg₁_eq⟩ :
     ∃ (m : ℕ) (g₁ : ℂ → ℂ) (zeros : ℕ → ℂ),
       Differentiable ℂ g₁ ∧
+      (∃ (α_g : ℝ) (C_g : ℝ), 0 ≤ α_g ∧ α_g < ↑p + 1 ∧ 0 < C_g ∧
+        ∀ z : ℂ, ‖g₁ z‖ ≤ C_g * (1 + ‖z‖) ^ α_g) ∧
       (∀ n, zeros n ≠ 0) ∧
       (∀ n, f (zeros n) = 0) ∧
       Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
@@ -155,15 +158,112 @@ theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   -- Cauchy: ‖iteratedDeriv (p+1) g₁ c‖ ≤ (p+1)! · C·r^{ρ+ε} / R^{p+1} → 0
   -- since ρ + ε < p + 1 for small ε. So iteratedDeriv (p+1) g₁ ≡ 0.
   have hvan : ∀ c : ℂ, iteratedDeriv (p + 1) g₁ c = 0 := by
-    -- The growth bound |g₁(z)| ≤ C'·(1+|z|)^α with 0 ≤ α < p+1 follows from:
-    --   log|f| = O(r^{ρ+ε}) (definition of order), product estimates on ∏ E_p,
-    --   and g₁ = log(f/(z^m · ∏ E_p)). Choose α = ρ + ε < p + 1.
-    -- Cauchy estimates (norm_iteratedDeriv_le_of_forall_mem_sphere_norm_le) give:
-    --   ‖iteratedDeriv (p+1) g₁ c‖ ≤ (p+1)! · C' · (1+‖c‖+R)^α / R^{p+1}
-    -- For R ≥ 2(1+‖c‖): bound ≤ (p+1)! · C' · 2^α · R^{α-p-1} → 0 as R → ∞
-    -- (using tendsto_rpow_neg_atTop with exponent p+1-α > 0).
-    -- So for each c, iteratedDeriv (p+1) g₁ c = 0.
-    sorry
+    -- Cauchy estimate: for any center c and radius R > 0,
+    -- ‖iteratedDeriv (p+1) g₁ c‖ ≤ (p+1)! · (sphere bound) / R^{p+1}
+    have cauchy : ∀ (c : ℂ) (R : ℝ), 0 < R →
+        ‖iteratedDeriv (p + 1) g₁ c‖ ≤
+        ↑(p + 1).factorial * (C_g * (1 + ‖c‖ + R) ^ α_g) / R ^ (p + 1) :=
+      fun c R hR => norm_iteratedDeriv_le_of_forall_mem_sphere_norm_le _ hR
+        hg₁_diff.diffContOnCl fun z hz => by
+          rw [mem_sphere_iff_norm] at hz
+          exact (hg₁_bound z).trans (mul_le_mul_of_nonneg_left
+            (Real.rpow_le_rpow (by positivity) (by linarith [norm_le_insert' z c]) hα_nn)
+            hC_pos.le)
+    -- Step A: iteratedDeriv (p+1) g₁ is bounded.
+    -- Choose R = ‖c‖ + 1 in the Cauchy estimate. Then 1+‖c‖+R = 2(‖c‖+1),
+    -- and (‖c‖+1)^α / (‖c‖+1)^(p+1) ≤ 1 since ‖c‖+1 ≥ 1 and α ≤ p+1.
+    set Bd := ↑(p + 1).factorial * C_g * (2 : ℝ) ^ α_g with hBd_def
+    have hBd_pos : 0 < Bd := by positivity
+    have hbdd : ∀ c : ℂ, ‖iteratedDeriv (p + 1) g₁ c‖ ≤ Bd := by
+      intro c
+      have hR : (0 : ℝ) < ‖c‖ + 1 := by positivity
+      have h1 := cauchy c (‖c‖ + 1) hR
+      have h2 : 1 + ‖c‖ + (‖c‖ + 1) = 2 * (‖c‖ + 1) := by ring
+      rw [h2] at h1
+      have h3 : (2 * (‖c‖ + 1)) ^ α_g = 2 ^ α_g * (‖c‖ + 1) ^ α_g :=
+        Real.mul_rpow (by positivity : (0 : ℝ) ≤ 2) (by positivity : (0 : ℝ) ≤ ‖c‖ + 1)
+      have h4 : (‖c‖ + 1) ^ α_g ≤ (‖c‖ + 1) ^ ((p + 1 : ℕ) : ℝ) :=
+        Real.rpow_le_rpow_of_exponent_le (by linarith [norm_nonneg c] : 1 ≤ ‖c‖ + 1)
+          (by push_cast; linarith [hα_lt])
+      have h5 : (‖c‖ + 1) ^ ((p + 1 : ℕ) : ℝ) = (‖c‖ + 1) ^ (p + 1) :=
+        Real.rpow_natCast (‖c‖ + 1) (p + 1)
+      calc ‖iteratedDeriv (p + 1) g₁ c‖
+          ≤ ↑(p + 1).factorial * (C_g * (2 * (‖c‖ + 1)) ^ α_g) / (‖c‖ + 1) ^ (p + 1) := h1
+        _ = ↑(p + 1).factorial * (C_g * (2 ^ α_g * (‖c‖ + 1) ^ α_g)) /
+            (‖c‖ + 1) ^ (p + 1) := by rw [h3]
+        _ ≤ ↑(p + 1).factorial * (C_g * (2 ^ α_g * (‖c‖ + 1) ^ (p + 1))) /
+            (‖c‖ + 1) ^ (p + 1) := by
+          gcongr
+          exact h4.trans (h5 ▸ le_refl _)
+        _ = Bd := by
+          rw [hBd_def]
+          field_simp
+    -- Step B: By Liouville, iteratedDeriv (p+1) g₁ is constant.
+    have hg₂_diff : Differentiable ℂ (iteratedDeriv (p + 1) g₁) :=
+      hg₁_diff.contDiff.differentiable_iteratedDeriv (p + 1) (WithTop.coe_lt_top _)
+    have hg₂_bdd : Bornology.IsBounded (Set.range (iteratedDeriv (p + 1) g₁)) :=
+      (Metric.isBounded_closedBall (x := (0 : ℂ)) (r := Bd)).subset
+        (Set.range_subset_iff.mpr fun c => mem_closedBall_zero_iff.mpr (hbdd c))
+    have hconst : ∀ c : ℂ, iteratedDeriv (p + 1) g₁ c = iteratedDeriv (p + 1) g₁ 0 :=
+      fun c => hg₂_diff.apply_eq_apply_of_bounded hg₂_bdd c 0
+    -- Step C: The constant value is 0.
+    suffices h0 : iteratedDeriv (p + 1) g₁ 0 = 0 by
+      intro c; rw [hconst c, h0]
+    -- By contradiction: if nonzero, Cauchy bound at c = 0 with R → ∞ gives contradiction
+    by_contra hne
+    rw [← ne_eq, ← norm_pos_iff] at hne
+    set δ := ‖iteratedDeriv (p + 1) g₁ 0‖
+    -- Choose R large enough that the Cauchy bound at 0 is < δ
+    -- Bound: (p+1)! * C_g * (1+R)^α / R^(p+1)
+    -- For R ≥ 1: ≤ (p+1)! * C_g * (2R)^α / R^(p+1) = Bd * R^α / R^(p+1)
+    -- Need: Bd * R^(α-(p+1)) < δ, i.e., R^((p+1)-α) > Bd/δ
+    set β := (↑(p + 1) : ℝ) - α_g with hβ_def
+    have hβ_pos : 0 < β := by simp [hβ_def]; linarith
+    -- Use Archimedean property to find n : ℕ large enough
+    obtain ⟨n, hn⟩ := exists_nat_gt (max 1 ((Bd / δ) ^ β⁻¹))
+    have hn_pos : (0 : ℝ) < n := by linarith [le_max_left 1 ((Bd / δ) ^ β⁻¹)]
+    -- n > (Bd/δ)^(1/β), so n^β > Bd/δ
+    have hn_large : (Bd / δ) ^ β⁻¹ < (n : ℝ) := by
+      linarith [le_max_right 1 ((Bd / δ) ^ β⁻¹)]
+    have hn_rpow : (n : ℝ) ^ β > Bd / δ := by
+      have h0 : (0 : ℝ) ≤ (Bd / δ) ^ β⁻¹ := by positivity
+      calc (n : ℝ) ^ β
+          > ((Bd / δ) ^ β⁻¹) ^ β := Real.rpow_lt_rpow h0 hn_large hβ_pos
+        _ = Bd / δ := by
+          rw [← Real.rpow_mul (by positivity : (0 : ℝ) ≤ Bd / δ),
+            inv_mul_cancel₀ hβ_pos.ne', Real.rpow_one]
+    -- Cauchy estimate at c = 0 with R = n
+    have h_cauchy := cauchy 0 n hn_pos
+    simp only [norm_zero, add_zero] at h_cauchy
+    -- Simplify: 1 + n ≤ 2n (since n ≥ 1)
+    have h_1n : (1 : ℝ) + ↑n ≤ 2 * ↑n := by linarith [le_max_left 1 ((Bd / δ) ^ β⁻¹)]
+    -- (1+n)^α ≤ (2n)^α
+    have h_sphere : (1 + (n : ℝ)) ^ α_g ≤ (2 * (n : ℝ)) ^ α_g :=
+      Real.rpow_le_rpow (by positivity) h_1n hα_nn
+    -- (2n)^α = 2^α * n^α
+    have h_split : (2 * (n : ℝ)) ^ α_g = 2 ^ α_g * (n : ℝ) ^ α_g :=
+      Real.mul_rpow (by positivity : (0 : ℝ) ≤ 2) hn_pos.le
+    -- n^α / n^(p+1) = n^(α-(p+1)) = n^(-β) = 1/n^β
+    have h_rpow_div : (n : ℝ) ^ α_g / (n : ℝ) ^ (p + 1) = (n : ℝ) ^ (-β) := by
+      rw [hβ_def, neg_sub, Real.rpow_sub hn_pos, Real.rpow_natCast]
+    have h_rpow_neg : (n : ℝ) ^ (-β) = ((n : ℝ) ^ β)⁻¹ :=
+      Real.rpow_neg hn_pos.le β
+    -- Chain the inequalities
+    have h_upper : δ ≤ Bd * ((n : ℝ) ^ β)⁻¹ := by
+      calc δ ≤ ↑(p + 1).factorial * (C_g * (1 + ↑n) ^ α_g) / (↑n) ^ (p + 1) := h_cauchy
+        _ ≤ ↑(p + 1).factorial * (C_g * (2 ^ α_g * (↑n) ^ α_g)) / (↑n) ^ (p + 1) := by
+          gcongr
+          calc (1 + (↑n : ℝ)) ^ α_g ≤ (2 * ↑n) ^ α_g := h_sphere
+            _ = 2 ^ α_g * (↑n) ^ α_g := h_split
+        _ = Bd * ((n : ℝ) ^ α_g / (n : ℝ) ^ (p + 1)) := by
+          rw [hBd_def]; field_simp
+        _ = Bd * (n : ℝ) ^ (-β) := by rw [h_rpow_div]
+        _ = Bd * ((n : ℝ) ^ β)⁻¹ := by rw [h_rpow_neg]
+    -- But Bd / n^β < δ (from hn_rpow)
+    have h_lower : Bd * ((n : ℝ) ^ β)⁻¹ < δ := by
+      rw [← div_eq_mul_inv, div_lt_iff₀ (by positivity : 0 < (n : ℝ) ^ β), mul_comm]
+      exact (div_lt_iff₀ hne).mp hn_rpow
+    linarith
   -- ============================================================
   -- Step 3: Apply polynomial_of_vanishing_iteratedDeriv.
   -- ============================================================

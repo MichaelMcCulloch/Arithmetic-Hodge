@@ -33,6 +33,7 @@ import Mathlib.Topology.DiscreteSubset
 import Mathlib.Data.Set.Countable
 import Mathlib.Topology.Compactness.Lindelof
 import ArithmeticHodge.Analysis.EntireFunction.Defs
+import ArithmeticHodge.Analysis.EntireFunction.ZeroSummability
 
 open Complex Filter Topology Finset BigOperators Metric
 
@@ -806,6 +807,7 @@ theorem entire_logarithm (h : ℂ → ℂ) (hh : Differentiable ℂ h)
       _ = (Complex.exp (-G z))⁻¹ := by rw [key, one_mul]
       _ = Complex.exp (G z) := by rw [← Complex.exp_neg, neg_neg]⟩
 
+set_option maxHeartbeats 1600000 in
 theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf_ne : ¬ f = 0) (hfin : HasFiniteOrder f) :
     ∃ (m : ℕ) (g : ℂ → ℂ) (a : ℕ → ℂ) (p : ℕ),
@@ -866,37 +868,19 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     -- ═══════════════════════════════════════════════════════════
     -- Step 2: Enumerate zeros with summability
     -- ═══════════════════════════════════════════════════════════
-    obtain ⟨a, p, ha_zeros, hconv, ha_covers⟩ :
+    obtain ⟨a, p, ha_zeros, hconv, ha_covers, ha_ord_ge⟩ :
         ∃ (a : ℕ → ℂ) (p : ℕ),
           (∀ n, a n ≠ 0 → f₁ (a n) = 0) ∧
           Summable (fun n => (‖a n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
-          (∀ z, f₁ z = 0 → ∃ n, z = a n) := by
-      have hf₁_ne : ¬ f₁ = 0 := fun h => hf₁_nz (by rw [h]; simp)
-      have han : AnalyticOnNhd ℂ f₁ Set.univ := fun z _ => hf₁_diff.analyticAt z
-      have hcodisc : f₁ ⁻¹' {0}ᶜ ∈ Filter.codiscrete ℂ :=
-        han.preimage_zero_mem_codiscrete hf₁_nz
-      have hdisc : IsDiscrete (f₁ ⁻¹' {0}) := by
-        have := (mem_codiscrete'.mp hcodisc).2
-        rwa [Set.preimage_compl, compl_compl] at this
-      have hcount : (f₁ ⁻¹' {0}).Countable :=
-        (HereditarilyLindelofSpace.isLindelof _).countable_of_isDiscrete hdisc
-      set a₀ := Set.enumerateCountable hcount (0 : ℂ)
-      have ha₀_surj : ∀ z, f₁ z = 0 → ∃ n, z = a₀ n := by
-        intro z hz
-        obtain ⟨n, hn⟩ := Set.subset_range_enumerate hcount 0 (Set.mem_preimage.mpr
-          (Set.mem_singleton_iff.mpr hz))
-        exact ⟨n, hn.symm⟩
-      have ha₀_zeros : ∀ n, a₀ n ≠ 0 → f₁ (a₀ n) = 0 := by
-        intro n hn
-        simp only [a₀, Set.enumerateCountable] at hn ⊢
-        cases h : @Encodable.decode (f₁ ⁻¹' {0}) hcount.toEncodable n with
-        | none => simp [h] at hn
-        | some val => exact val.2
-      set p := Nat.floor (entireOrder f).toReal
-      -- Summability: exponent of convergence ≤ order, so p+1 > ρ gives convergence
-      have hconv : Summable (fun n => (‖a₀ n‖⁻¹) ^ ((p : ℝ) + 1)) := by
-        sorry -- NEEDS: zeroExponent_le_order + exponent-of-convergence theory
-      exact ⟨a₀, p, ha₀_zeros, hconv, ha₀_surj⟩
+          (∀ z, f₁ z = 0 → ∃ n, z = a n) ∧
+          (∀ z, f₁ z = 0 → z ≠ 0 →
+            ↑(analyticOrderNatAt f₁ z) ≤
+              analyticOrderAt (fun w => ∏' n, weierstraßElementary p (w / a n)) z) := by
+      -- Construction requires a multiplicity-aware (stuttered) enumeration of
+      -- zeros, where each zero z₀ appears exactly analyticOrderNatAt f₁ z₀ times.
+      -- This ensures the Weierstraß product P has vanishing order ≥ f₁'s order
+      -- at every zero, so that the quotient f₁/P is entire and zero-free.
+      sorry
     -- ═══════════════════════════════════════════════════════════
     -- Step 3–4: Quotient f₁/P is entire and zero-free
     -- ═══════════════════════════════════════════════════════════
@@ -959,7 +943,50 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         intro z hz
         have hf₁z : f₁ z = 0 := by rw [hh₀_eq z, hz, zero_mul]
         obtain ⟨n, rfl⟩ := ha_covers z hf₁z
-        sorry -- NEEDS: order matching shows h₀ never zero at zeros of f₁
+        have han : a n ≠ 0 := fun h => hf₁_nz (h ▸ hf₁z)
+        -- All functions are entire and not identically zero
+        have hf₁_ne : ¬ f₁ = 0 := fun h => hf₁_nz (congr_fun h 0)
+        have hh₀_ne_fun : ¬ h₀ = 0 := by
+          intro h; apply hf₁_ne; ext z; simp [hh₀_eq z, show h₀ z = 0 from congr_fun h z]
+        have hP_ne_fun : ¬ P = 0 := by
+          intro hP_eq
+          have hP0 : P 0 = 0 := congr_fun hP_eq 0
+          have : (fun n => weierstraßElementary p (0 / a n)) = fun _ => (1 : ℂ) :=
+            funext fun n => by rw [zero_div, weierstraßElementary_zero]
+          simp only [P, this, tprod_one] at hP0 -- hP0 : 1 = 0
+          exact one_ne_zero hP0
+        -- Orders are finite (not ⊤) since functions are analytic and not identically zero
+        have hf₁_top : analyticOrderAt f₁ (a n) ≠ ⊤ :=
+          (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero (a n)
+            (fun z => hf₁_diff.analyticAt z)).not.mpr hf₁_ne
+        have hh₀_top : analyticOrderAt h₀ (a n) ≠ ⊤ :=
+          (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero (a n)
+            (fun z => hh₀_diff.analyticAt z)).not.mpr hh₀_ne_fun
+        have hP_top : analyticOrderAt P (a n) ≠ ⊤ :=
+          (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero (a n)
+            (fun z => hP_diff.analyticAt z)).not.mpr hP_ne_fun
+        -- f₁ = h₀ * P ⟹ order(f₁) = order(h₀) + order(P) in ℕ
+        have hord_eq : analyticOrderNatAt f₁ (a n) =
+            analyticOrderNatAt h₀ (a n) + analyticOrderNatAt P (a n) := by
+          have hfun_eq : f₁ = h₀ * P :=
+            funext fun z => by rw [hh₀_eq z, Pi.mul_apply]
+          conv_lhs => rw [hfun_eq]
+          exact analyticOrderNatAt_mul (hh₀_diff.analyticAt _) (hP_diff.analyticAt _)
+            hh₀_top hP_top
+        -- h₀(a n) = 0 ⟹ order(h₀, a n) ≥ 1
+        have hh₀_pos : 1 ≤ analyticOrderNatAt h₀ (a n) := by
+          rw [Nat.one_le_iff_ne_zero, Ne, analyticOrderNatAt,
+            ENat.toNat_eq_zero, not_or]
+          exact ⟨analyticOrderAt_ne_zero.mpr ⟨hh₀_diff.analyticAt _, hz⟩, hh₀_top⟩
+        -- From multiplicity-aware enumeration: order(P, a n) ≥ order(f₁, a n)
+        have hP_ge : analyticOrderNatAt f₁ (a n) ≤ analyticOrderNatAt P (a n) := by
+          have h := ha_ord_ge (a n) hf₁z han
+          rw [Nat.cast_analyticOrderNatAt hf₁_top] at h
+          -- h : analyticOrderAt f₁ (a n) ≤ analyticOrderAt P (a n)
+          simp only [analyticOrderNatAt]
+          exact ENat.toNat_le_toNat h hP_top
+        -- Contradiction: f₁_ord = h₀_ord + P_ord ≥ 1 + f₁_ord, impossible in ℕ
+        omega
       exact ⟨h₀, hh₀_diff, hh₀_ne, hh₀_eq⟩
     -- ═══════════════════════════════════════════════════════════
     -- Step 5: entire_logarithm + assembly

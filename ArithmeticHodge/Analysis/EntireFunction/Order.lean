@@ -25,6 +25,8 @@ import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.Order.Filter.Basic
 import Mathlib.Analysis.PSeries
+import Mathlib.Topology.Algebra.InfiniteSum.Real
+import Mathlib.Analysis.Complex.Liouville
 import ArithmeticHodge.Analysis.ZetaProduct
 import ArithmeticHodge.Analysis.EntireFunction.Defs
 
@@ -419,6 +421,101 @@ theorem zeroCount_le_logMax (f : ℂ → ℂ) (hf : Differentiable ℂ f)
 -- Exponent of Convergence
 -- ============================================================
 
+/-- The order of a non-zero entire function is nonneg.
+
+    If the order were negative, the limsup of log log M / log r would be < 0,
+    meaning eventually M(f,r) < e. By Liouville's theorem, f would be constant,
+    and a constant entire function has order 0 — contradiction. -/
+private lemma entireOrder_nonneg (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+    (hf_ne : ¬ f = 0) : (0 : EReal) ≤ entireOrder f := by
+  unfold entireOrder
+  apply le_limsup_of_le
+  intro b hb
+  -- hb : ∀ᶠ r in atTop, (↑(log (log (maxModulus f r)) / log r) : EReal) ≤ b
+  -- Goal: (0 : EReal) ≤ b
+  by_contra hb_neg
+  push_neg at hb_neg
+  -- From hb and hb_neg : b < 0, derive f is bounded → constant → contradiction
+  -- Extract the eventually filter from hb
+  have hb_real : ∀ᶠ r in Filter.atTop,
+      Real.log (Real.log (maxModulus f r)) / Real.log r ≤ b.toReal := by
+    apply hb.mono
+    intro r hr
+    exact_mod_cast (EReal.coe_toReal_le (ne_of_lt hb_neg).symm).trans hr
+  -- For large r > 1: log(log M) / log r ≤ b' < 0, hence M(f,r) < e
+  -- First, get the threshold
+  obtain ⟨R₀, hR₀_pos, hR₀_bound⟩ : ∃ R₀ : ℝ, 1 < R₀ ∧
+      ∀ r ≥ R₀, Real.log (Real.log (maxModulus f r)) / Real.log r ≤ b.toReal := by
+    obtain ⟨N, hN⟩ := (hb_real.and (Filter.eventually_ge_atTop 2)).exists
+    exact ⟨N, by linarith [hN.2], fun r hr => (hN.1.mono_left (fun _ h1 h2 => h1 (le_trans hr h2))) r le_rfl⟩
+  -- Actually, let's use a simpler approach: f is bounded
+  -- For any z, take r = max(‖z‖, R₀) and use norm_le_maxModulus
+  have hf_bdd : IsBounded (Set.range f) := by
+    -- Show ‖f z‖ < Real.exp (R₀ ^ |b.toReal| + 1) for all z (some bound)
+    -- From hb_real: for r ≥ R₀, log(log M(f,r)) / log r ≤ b' < 0
+    -- This means log(log M(f,r)) ≤ b' * log r < 0 (since log r > 0 for r > 1)
+    -- Hence log M(f,r) < e^0 = 1, so M(f,r) < e
+    -- For any z: ‖f z‖ ≤ M(f, max(‖z‖, R₀)) < e
+    rw [Metric.isBounded_range_iff]
+    use Real.exp 1  -- e as the bound
+    intro z w
+    have bound_at : ∀ v : ℂ, ‖f v‖ ≤ Real.exp 1 := by
+      intro v
+      have hr : 0 < max ‖v‖ R₀ := lt_of_lt_of_le (by linarith : (0 : ℝ) < R₀) (le_max_right _ _)
+      have hle := norm_le_maxModulus f hf v (max ‖v‖ R₀) hr (le_max_left _ _)
+      -- M(f, max(‖v‖, R₀)) < e
+      suffices maxModulus f (max ‖v‖ R₀) ≤ Real.exp 1 from le_trans hle this
+      -- From the bound: for r = max(‖v‖, R₀) ≥ R₀
+      have hr_ge : R₀ ≤ max ‖v‖ R₀ := le_max_right _ _
+      have hr_gt1 : 1 < max ‖v‖ R₀ := lt_of_lt_of_le hR₀_pos hr_ge
+      have hlog_pos : 0 < Real.log (max ‖v‖ R₀) := Real.log_pos hr_gt1
+      have hbd := hR₀_bound (max ‖v‖ R₀) hr_ge
+      -- hbd : log(log M) / log r ≤ b' where b' < 0
+      -- If log M ≤ 0: log(log M) = 0 (junk), so 0/log r = 0 ≤ b' < 0, impossible
+      -- So log M > 0 and log(log M) ≤ b' * log r < 0, hence log M < 1, M < e
+      by_cases hlogM : Real.log (maxModulus f (max ‖v‖ R₀)) ≤ 0
+      · -- log M ≤ 0 means M ≤ 1 ≤ e
+        exact le_trans (Real.log_nonpos_iff (by positivity).mp hlogM)
+          (le_of_lt (Real.exp_pos 1))
+      · push_neg at hlogM
+        -- log M > 0, so log(log M) is meaningful
+        have hloglogM := div_le_iff₀ hlog_pos |>.mp hbd
+        -- hloglogM : log(log M) ≤ b' * log r
+        have hb'_neg : b.toReal < 0 := by
+          exact EReal.toReal_neg hb_neg (ne_of_lt hb_neg).symm
+        have : Real.log (Real.log (maxModulus f (max ‖v‖ R₀))) < 0 := by
+          calc Real.log (Real.log (maxModulus f (max ‖v‖ R₀)))
+              ≤ b.toReal * Real.log (max ‖v‖ R₀) := hloglogM
+            _ < 0 := mul_neg_of_neg_of_pos hb'_neg hlog_pos
+        -- log(log M) < 0 means log M < 1 (since log x < 0 ↔ 0 < x < 1)
+        have hlogM_lt1 : Real.log (maxModulus f (max ‖v‖ R₀)) < 1 := by
+          rwa [show (1 : ℝ) = Real.log (Real.exp 1) from (Real.log_exp 1).symm,
+               Real.log_lt_log_iff hlogM (Real.exp_pos 1)] at this
+        -- log M < 1 = log e means M < e
+        exact le_of_lt (Real.log_lt_iff_lt_exp (by positivity) |>.mp hlogM_lt1)
+    calc dist (f z) (f w) ≤ ‖f z‖ + ‖f w‖ := dist_le_norm_add_norm (f z) (f w)
+      _ ≤ Real.exp 1 + Real.exp 1 := add_le_add (bound_at z) (bound_at w)
+      _ = 2 * Real.exp 1 := by ring
+  -- By Liouville: f is constant
+  obtain ⟨c, hc⟩ := hf.exists_eq_const_of_bounded hf_bdd
+  -- But f ≠ 0
+  have hc_ne : c ≠ 0 := by
+    intro h; exact hf_ne (hc ▸ h ▸ rfl)
+  -- For constant f: maxModulus f r = ‖c‖ for r ≥ 0
+  -- The ratio log(log ‖c‖)/log r → 0, contradicting eventually ≤ b' < 0
+  -- Since f is bounded by e: ‖c‖ ≤ e
+  have hc_le : ‖c‖ ≤ Real.exp 1 := by
+    have := Metric.isBounded_range_iff.mp hf_bdd
+    obtain ⟨C, hC⟩ := this
+    have h0 := hC 0 0
+    simp at h0
+    have := norm_le_maxModulus f hf 0 1 one_pos (by simp)
+    rw [hc, Function.const_apply] at this
+    have bound := Metric.isBounded_range_iff.mp hf_bdd
+    -- Use the bound_at from above
+    sorry -- ‖c‖ ≤ e follows from the boundedness proof
+  sorry -- Complete: ratio → 0 contradicts ≤ b' < 0
+
 /-- The exponent of convergence of the zeros of f:
     λ(f) = inf { σ > 0 : Σ |z_n|^{-σ} < ∞ }
     where {z_n} are the nonzero zeros of f. -/
@@ -449,7 +546,18 @@ theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   obtain ⟨s, hs_eq, hs_pos, hs_summ⟩ :
       ∃ s : ℝ, (s : EReal) = σ ∧ 0 < s ∧
       Summable (fun z : { w : ℂ // f w = 0 ∧ w ≠ 0 } => ‖(z : ℂ)‖⁻¹ ^ s) := by
-    sorry -- Jensen + Abel summation (requires entireOrder f ≥ 0 and n(r)=O(r^s)⟹convergence)
+    -- Step 1: σ ≠ ⊥ and extract s
+    have hσ_ne_bot : σ ≠ ⊥ := (lt_of_le_of_lt bot_le hσ).ne'
+    -- Step 2: σ > 0 from entireOrder f ≥ 0
+    have hσ_pos : (0 : EReal) < σ :=
+      lt_of_le_of_lt (entireOrder_nonneg f hf hf_ne) hσ
+    -- Step 3: Extract s = σ.toReal
+    refine ⟨σ.toReal, EReal.coe_toReal hσ_top hσ_ne_bot,
+            EReal.toReal_pos hσ_pos hσ_top, ?_⟩
+    -- Step 4: Prove summability at exponent σ.toReal
+    -- Use summable_of_sum_le: bound all finite partial sums
+    apply summable_of_sum_le (fun z => rpow_nonneg (inv_nonneg.mpr (norm_nonneg _)) _)
+    sorry -- Counting function bound + annular decomposition
   rw [← hs_eq]
   exact csInf_le' ⟨by exact_mod_cast hs_pos, s, rfl, hs_summ⟩
 
