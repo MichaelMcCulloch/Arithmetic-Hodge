@@ -142,7 +142,8 @@ theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   have hα_gt_ρ : ρ < α_g := lt_max_of_lt_right (by linarith)
   obtain ⟨C_g, hC_pos, hg₁_bound⟩ :=
     weierstraß_quotient_growth f hf hf_ne hord m g₁ zeros p₀
-      hg₁_diff hg₁_eq hsumm α_g hα_gt_ρ
+      hg₁_diff hg₁_eq hsumm α_g hα_gt_ρ (by
+        apply lt_max_of_lt_left; norm_num)
   -- ============================================================
   -- Step 2: Growth bound + Cauchy estimates ⟹ g₁ is polynomial.
   -- ============================================================

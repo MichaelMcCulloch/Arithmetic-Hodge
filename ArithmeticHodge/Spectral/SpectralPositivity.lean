@@ -443,6 +443,91 @@ theorem cayleyTransform_surjective
   rw [hDx', hinj, hx]
 
 -- ============================================================
+-- Cayley Transform: Linearity, Packaging as Unitary Operator
+-- ============================================================
+
+/-- The resolvent map D - zI as a linear equivalence Dom(D) ≃ₗ[ℂ] H,
+    using bijectivity from the resolvent bound + surjectivity. -/
+private noncomputable def resolventEquiv
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (z : ℂ) (hz : z.im ≠ 0) : D.domain ≃ₗ[ℂ] H :=
+  LinearEquiv.ofBijective (resolventMap hD.1 hd z)
+    ⟨fun x y h => Subtype.ext (resolvent_injective hD hd z hz x y
+      (by rwa [← resolventMap_apply, ← resolventMap_apply])),
+     fun y => ⟨resolventInv hD hd z hz y, resolventInv_spec hD hd z hz y⟩⟩
+
+/-- The Cayley transform as a linear map H →ₗ[ℂ] H.
+    Defined as (D - iI) ∘ (D + iI)⁻¹, composed as linear maps. -/
+private noncomputable def cayleyTransformLM
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined) :
+    H →ₗ[ℂ] H :=
+  (resolventMap hD.1 hd Complex.I).comp
+    (resolventEquiv hD hd (-Complex.I) neg_I_im_ne_zero).symm.toLinearMap
+
+/-- The resolventEquiv.symm and resolventInv agree (as D.domain elements). -/
+private lemma resolventEquiv_symm_eq
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (z : ℂ) (hz : z.im ≠ 0) (y : H) :
+    (resolventEquiv hD hd z hz).symm y = resolventInv hD hd z hz y := by
+  ext
+  apply resolvent_injective hD hd z hz
+  -- Both satisfy D.toFun · - z • · = y
+  calc D.toFun ((resolventEquiv hD hd z hz).symm y) - z • ↑((resolventEquiv hD hd z hz).symm y)
+      _ = (resolventEquiv hD hd z hz) ((resolventEquiv hD hd z hz).symm y) := rfl
+      _ = y := (resolventEquiv hD hd z hz).apply_symm_apply y
+      _ = D.toFun (resolventInv hD hd z hz y) - z • ↑(resolventInv hD hd z hz y) :=
+            (resolventInv_spec hD hd z hz y).symm
+
+/-- `cayleyTransformLM` agrees with `cayleyTransform` as functions. -/
+private lemma cayleyTransformLM_eq
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined)
+    (y : H) : cayleyTransformLM hD hd y = cayleyTransform hD hd y := by
+  unfold cayleyTransformLM cayleyTransform
+  simp only [LinearMap.comp_apply, resolventMap_apply]
+  have h := resolventEquiv_symm_eq hD hd (-Complex.I) neg_I_im_ne_zero y
+  congr 1
+  · exact congr_arg D.toFun h
+  · exact congr_arg (fun x : D.domain => Complex.I • (x : H)) h
+
+/-- The Cayley transform as a `LinearIsometryEquiv`. -/
+noncomputable def cayleyTransformLIE
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined) :
+    H ≃ₗᵢ[ℂ] H :=
+  LinearIsometryEquiv.ofSurjective
+    ({ cayleyTransformLM hD hd with
+       norm_map' := fun y => by
+         rw [show cayleyTransformLM hD hd y = cayleyTransform hD hd y from
+           cayleyTransformLM_eq hD hd y]
+         exact cayleyTransform_isometry hD hd y } : H →ₗᵢ[ℂ] H)
+    (fun y => by
+      obtain ⟨w, hw⟩ := cayleyTransform_surjective hD hd y
+      exact ⟨w, show cayleyTransformLM hD hd w = y from
+        (cayleyTransformLM_eq hD hd w).trans hw⟩)
+
+/-- The Cayley transform as a `ContinuousLinearMap`. -/
+noncomputable def cayleyTransformCLM
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined) :
+    H →L[ℂ] H :=
+  (cayleyTransformLIE hD hd).toLinearIsometry.toContinuousLinearMap
+
+/-- The Cayley transform is unitary: star U * U = 1 and U * star U = 1.
+
+    Uses Mathlib's equivalence between `unitary (H →L[ℂ] H)` and `H ≃ₗᵢ[ℂ] H`. -/
+theorem cayleyTransform_unitary
+    {D : UnboundedOperator H} (hD : D.IsSelfAdjoint) (hd : D.IsDenselyDefined) :
+    cayleyTransformCLM hD hd ∈ unitary (H →L[ℂ] H) := by
+  -- The CLM is just the coercion of the linear isometry equiv
+  let e := cayleyTransformLIE hD hd
+  have hcoe : ∀ x, cayleyTransformCLM hD hd x = e x := fun _ => rfl
+  let u : (H →L[ℂ] H)ˣ :=
+    { val := cayleyTransformCLM hD hd
+      inv := (e.symm : H →L[ℂ] H)
+      val_inv := by ext x; simp [hcoe, LinearIsometryEquiv.apply_symm_apply]
+      inv_val := by ext x; simp [hcoe, LinearIsometryEquiv.symm_apply_apply] }
+  exact IsUnit.mem_unitary_of_star_mul_self ⟨u, rfl⟩ <|
+    (cayleyTransformCLM hD hd).norm_map_iff_adjoint_comp_self.mp
+      (fun x => by rw [hcoe]; exact e.norm_map x)
+-- ============================================================
 -- Existence of Spectral Calculus (The Spectral Theorem)
 -- ============================================================
 

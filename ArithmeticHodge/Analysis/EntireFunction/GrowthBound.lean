@@ -111,21 +111,15 @@ private lemma re_bound_of_factorization (f : ℂ → ℂ) (_hf : Differentiable 
 
 theorem weierstraß_quotient_growth (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf_ne : ¬ f = 0) (hfin : HasFiniteOrder f)
-    (hord_nn : (0 : EReal) ≤ entireOrder f)
     (m : ℕ) (g : ℂ → ℂ) (a : ℕ → ℂ) (p : ℕ)
     (hg_diff : Differentiable ℂ g)
     (hfact : ∀ z : ℂ, f z = z ^ m * Complex.exp (g z) *
       ∏' n, weierstraßElementary p (z / a n))
     (hsumm : Summable (fun n => (‖a n‖⁻¹) ^ ((p : ℝ) + 1)))
-    (α : ℝ) (hα : (entireOrder f).toReal < α) :
+    (α : ℝ) (hα : (entireOrder f).toReal < α) (hα_pos : 0 < α) :
     ∃ (C : ℝ), 0 < C ∧ ∀ z : ℂ, ‖g z‖ ≤ C * (1 + ‖z‖) ^ α := by
   obtain ⟨A, hA_pos, h_re⟩ := re_bound_of_factorization f hf hf_ne hfin m g a p
     hg_diff hfact hsumm α hα
-  -- 0 < α from entireOrder ≥ 0
-  have hα_pos : 0 < α := by
-    have hne_top : entireOrder f ≠ ⊤ := ne_of_lt hfin
-    have := EReal.toReal_nonneg hord_nn
-    linarith
   -- Apply Borel-Carathéodory pointwise
   set C₀ := 2 * A * 3 ^ α + 3 * ‖g 0‖
   refine ⟨max C₀ 1, lt_max_of_lt_right one_pos, fun z => ?_⟩

@@ -280,7 +280,7 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
     simp_rw [key]
     -- Extract Re from integral: (∫ t, ↑(r t)).re = ∫ t, r t
     symm
-    rw [integral_ofReal (𝕜 := ℂ), Complex.ofReal_re]
+    norm_cast
 
   -- ═══════════════════════════════════════════════════════════════
   -- Claim 3 (Evaluate): Re(∫ f dμ') = ∑' x, μ.real {x}²

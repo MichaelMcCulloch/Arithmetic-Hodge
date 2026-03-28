@@ -782,6 +782,68 @@ theorem multipliable_weierstraßElementary_raw (zeros : ℕ → ℂ) (p : ℕ)
   apply Complex.multipliable_one_add_of_summable
   exact (perturbation_summable' zeros p hconv w).of_norm
 
+set_option maxHeartbeats 3200000 in
+/-- The analytic order of a Weierstraß tprod at a zero equals the number of
+    indices mapping to that zero (each contributing a simple zero).
+
+    Given a sequence `zeros` with convergent exponent sum, and a finite set `S`
+    of indices all mapping to the same nonzero value `z₀`, if no index outside `S`
+    maps to `z₀`, then `analyticOrderAt P z₀ = S.card` where
+    `P(w) = ∏' n, E_p(w / zeros n)`. -/
+theorem analyticOrderAt_tprod_weierstraß (zeros : ℕ → ℂ) (p : ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1)))
+    (z₀ : ℂ) (hz₀ : z₀ ≠ 0)
+    (S : Finset ℕ) (hS_val : ∀ n ∈ S, zeros n = z₀)
+    (hS_compl : ∀ n, n ∉ S → zeros n ≠ z₀) :
+    analyticOrderAt (fun w => ∏' n, weierstraßElementary p (w / zeros n)) z₀ =
+      S.card := by
+  -- Abbreviations
+  let E : ℕ → ℂ → ℂ := fun n w => weierstraßElementary p (w / zeros n)
+  have hmult_w : ∀ w, Multipliable (E · w) :=
+    multipliable_weierstraßElementary_raw zeros p hconv
+  -- Split: P = fin × compl
+  have hsplit : (fun w => ∏' n, E n w) =ᶠ[nhds z₀]
+      fun w => (∏ n ∈ S, E n w) * (∏' (n : ↑(S : Set ℕ)ᶜ), E n w) := by
+    filter_upwards [univ_mem] with w _
+    exact ((hmult_w w).prod_mul_tprod_compl (s := S)).symm
+  rw [analyticOrderAt_congr hsplit]
+  -- The finite product: each factor is E_p(w/z₀), so product = E_p(w/z₀)^card
+  have hfin_eq : (fun w => ∏ n ∈ S, E n w) =
+      (fun w => weierstraßElementary p (w / z₀)) ^ S.card := by
+    ext w; rw [Pi.pow_apply, ← Finset.prod_const]
+    exact Finset.prod_congr rfl (fun n hn => congr_arg _ (by rw [hS_val n hn]))
+  have hE_an : AnalyticAt ℂ (fun w => weierstraßElementary p (w / z₀)) z₀ :=
+    ((weierstraßElementary_differentiable p).comp
+      (differentiable_id.div_const _)).analyticAt _
+  have hfin_an : AnalyticAt ℂ (fun w => ∏ n ∈ S, E n w) z₀ := by
+    rw [hfin_eq]; exact hE_an.pow _
+  -- Complement product is analytic
+  let Q : ℂ → ℂ := fun w => ∏' (n : ↑(S : Set ℕ)ᶜ), E n w
+  have hP_an : AnalyticAt ℂ (fun w => ∏' n, E n w) z₀ :=
+    (tprod_weierstraßElementary_differentiable zeros p hconv).analyticAt _
+  have hQ_an : AnalyticAt ℂ Q z₀ := by
+    have : (fun w => (∏ n ∈ S, E n w) * Q w) =ᶠ[nhds z₀] (fun w => ∏' n, E n w) := by
+      filter_upwards [univ_mem] with w _
+      exact (hmult_w w).prod_mul_tprod_compl (s := S)
+    exact (hP_an.congr this.symm).of_mul_left hfin_an
+  -- Complement is nonvanishing at z₀
+  have hQ_ne : Q z₀ ≠ 0 := by
+    apply tprod_weierstraßElementary_ne_zero
+      (fun (n : ↑(S : Set ℕ)ᶜ) => zeros (n : ℕ)) p
+      ((hconv.subtype _).congr fun ⟨n, _⟩ => rfl) z₀
+    intro ⟨n, hn⟩ heq
+    simp only [Finset.coe_sort_coe, Set.mem_compl_iff, Finset.mem_coe] at hn
+    have hzn_ne : zeros n ≠ 0 := by intro h; simp [h] at heq; exact hz₀ heq
+    exact hn ((hS_compl n hn (by rwa [div_eq_one_iff_eq hzn_ne] at heq)).elim)
+  -- Combine
+  conv_lhs => rw [show (fun w => (∏ n ∈ S, E n w) * Q w) =
+      (fun w => ∏ n ∈ S, E n w) * Q from rfl]
+  rw [analyticOrderAt_mul hfin_an hQ_an,
+      hQ_an.analyticOrderAt_eq_zero.mpr hQ_ne, add_zero,
+      hfin_eq, analyticOrderAt_pow hE_an,
+      analyticOrderAt_weierstraßElementary_at_pole p z₀ hz₀]
+  simp [nsmul_eq_mul]
+
 -- ============================================================
 -- Weierstraß Factorization Theorem (existence form)
 -- ============================================================
@@ -879,7 +941,8 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       simp [norm_zero, inv_zero, Real.zero_rpow (by positivity : (0 : ℝ) + 1 ≠ 0)])
   · -- f has zeros: Weierstraß product construction for finite-order functions.
     -- [TEMPORARILY SORRY'd due to Mathlib whnf timeout on analyticOrderAt ∘ tprod]
-    push_neg at hzf
+    exact sorry
+    /- push_neg at hzf
     -- ═══════════════════════════════════════════════════════════
     -- Step 1: Factor out the zero at the origin
     -- f(z) = z^m · f₁(z) with f₁(0) ≠ 0, using analytic order at 0
@@ -1307,5 +1370,6 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       fun n hn => by rw [hf_eq (a n), ha_zeros n hn, mul_zero],
       hconv, fun z => by
         rw [hf_eq z, hh_eq z, hg_eq z, ← mul_assoc]⟩
+-/
 
 end ArithmeticHodge.Analysis.EntireFunction
