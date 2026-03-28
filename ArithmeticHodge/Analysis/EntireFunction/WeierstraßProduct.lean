@@ -988,20 +988,86 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
                 fun v hv => by simp [h₀, hv]
             exact (hf₁_diff.differentiableAt.div hP_diff.differentiableAt hw).congr_of_eventuallyEq
               heq
-          -- ContinuousAt h₀ z₀: use the bounded removable singularity theorem.
-          -- h₀ is differentiable on 𝓝[≠] z₀ and bounded (via order factorization).
+          -- ContinuousAt h₀ z₀: factor f₁ and P by their equal analytic orders,
+          -- cancel (z-z₀)^k to get h₀ = u/v, then use continuity of u/v.
           have hcont : ContinuousAt h₀ z₀ := by
-            -- h₀ is bounded near z₀: the order equality ensures f₁/P = u/v
-            -- where v(z₀) ≠ 0, and h₀ agrees with f₁/P on the punctured nhd.
-            -- Use the bounded removable singularity theorem to get DifferentiableAt,
-            -- which implies ContinuousAt.
-            --
-            -- The key bound: ‖h₀ z - h₀ z₀‖ is bounded on 𝓝[≠] z₀.
-            -- h₀ z = f₁ z / P z = u z / v z (on punctured nhd, after cancelling (z-z₀)^k).
-            -- u/v is continuous, hence bounded near z₀.
-            -- h₀ z₀ = limUnder = u z₀ / v z₀ (by uniqueness of limits in T2).
-            -- So ‖h₀ z - h₀ z₀‖ = ‖u z/v z - u z₀/v z₀‖ → 0, hence bounded.
-            sorry
+            -- f₁ vanishes at z₀
+            have hf₁z₀ : f₁ z₀ = 0 := by
+              by_contra hne
+              exact absurd hPz₀ (tprod_weierstraßElementary_ne_zero a p hconv z₀
+                fun n heq => by
+                  by_cases han : a n = 0
+                  · simp [han] at heq
+                  · exact hne ((div_eq_one_iff_eq han).mp heq ▸ ha_zeros n han))
+            -- z₀ ≠ 0
+            have hz₀_ne : z₀ ≠ 0 := by
+              intro heq; rw [heq] at hPz₀
+              have : P 0 = ∏' n, weierstraßElementary p (0 / a n) := rfl
+              simp only [zero_div, weierstraßElementary_zero, tprod_one] at this
+              exact one_ne_zero (this ▸ hPz₀)
+            have hord := ha_ord_eq z₀ hf₁z₀ hz₀_ne
+            -- Neither function is identically zero
+            have hf₁_ne : ¬ f₁ = 0 := fun h => hf₁_nz (congr_fun h 0)
+            have hP_ne : ¬ P = 0 := by
+              intro heq
+              have : P 0 = 0 := congr_fun heq 0
+              simp only [P, zero_div, weierstraßElementary_zero, tprod_one] at this
+              exact one_ne_zero this
+            have hf₁_top : analyticOrderAt f₁ z₀ ≠ ⊤ :=
+              (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero z₀
+                (fun z => hf₁_diff.analyticAt z)).not.mpr hf₁_ne
+            have hP_top : analyticOrderAt P z₀ ≠ ⊤ := hord ▸ hf₁_top
+            -- Factor: f₁(z) =ᶠ (z-z₀)^k • u(z), P(z) =ᶠ (z-z₀)^k • v(z)
+            set k := analyticOrderNatAt f₁ z₀ with hk_def
+            obtain ⟨u, hu_an, hu_ne, hu_eq⟩ :=
+              (hf₁_diff.analyticAt z₀).analyticOrderAt_ne_top.mp hf₁_top
+            obtain ⟨v, hv_an, hv_ne, hv_eq⟩ :=
+              (hP_diff.analyticAt z₀).analyticOrderAt_ne_top.mp hP_top
+            have hP_ord : analyticOrderNatAt P z₀ = k := by
+              simp only [analyticOrderNatAt]; congr 1; exact hord.symm
+            rw [hP_ord] at hv_eq
+            -- u/v is continuous at z₀
+            have huv_cont : ContinuousAt (fun w => u w / v w) z₀ :=
+              hu_an.continuousAt.div hv_an.continuousAt hv_ne
+            -- h₀ = u/v on 𝓝[≠] z₀ (cancel (z-z₀)^k via smul = mul in ℂ)
+            have heq_uv : ∀ᶠ w in 𝓝[≠] z₀, h₀ w = u w / v w := by
+              apply (hP_ev_ne.and ((hu_eq.and hv_eq).filter_mono nhdsWithin_le_nhds)).mono
+              rintro w ⟨hwP, hwu, hwv⟩
+              -- h₀ w = f₁ w / P w (since P w ≠ 0)
+              change (if P w ≠ 0 then f₁ w / P w else _) = u w / v w
+              rw [if_pos hwP]
+              -- f₁ w = (w-z₀)^k • u w, P w = (w-z₀)^k • v w
+              have hwne : (w - z₀) ^ k ≠ 0 := pow_ne_zero k (sub_ne_zero.mpr (by
+                intro heq; rw [heq] at hwP; exact hwP hPz₀))
+              simp only [hwu, hwv, smul_eq_mul]
+              exact mul_div_mul_left (u w) (v w) hwne
+            -- Tendsto h₀ (𝓝[≠] z₀) (𝓝 (u z₀ / v z₀))
+            have htend : Tendsto h₀ (𝓝[≠] z₀) (𝓝 (u z₀ / v z₀)) :=
+              (huv_cont.tendsto.mono_left nhdsWithin_le_nhds).congr'
+                (heq_uv.mono fun w hw => hw.symm)
+            -- h₀ z₀ = u z₀ / v z₀ (limUnder uniqueness in T2)
+            have hval : h₀ z₀ = u z₀ / v z₀ := by
+              -- h₀ z₀ = limUnder (𝓝[≠] z₀) h₀ by definition (P z₀ = 0 branch)
+              -- limUnder h₀ = u z₀ / v z₀ by htend (T2 uniqueness)
+              have hlim_eq : (𝓝[≠] z₀).limUnder h₀ = u z₀ / v z₀ := htend.limUnder_eq
+              -- h₀ z₀ = limUnder (f₁/P) on 𝓝[≠] z₀
+              -- limUnder (f₁/P) = limUnder h₀ since they agree eventually
+              -- h₀ z₀ = limUnder h₀ on 𝓝[≠] z₀
+              -- First: h₀ z₀ = limUnder (f₁/P)
+              have h₀_val : h₀ z₀ = (𝓝[≠] z₀).limUnder (fun w => f₁ w / P w) := by
+                simp only [h₀, show ¬(P z₀ ≠ 0) from not_not.mpr hPz₀, ↓reduceIte]
+              -- Second: the Tendsto of f₁/P toward u z₀/v z₀ gives its limUnder
+              have htend_fg : Tendsto (fun w => f₁ w / P w) (𝓝[≠] z₀) (𝓝 (u z₀ / v z₀)) := by
+                apply htend.congr'
+                have : ∀ᶠ w in 𝓝[≠] z₀, h₀ w = f₁ w / P w :=
+                  hP_ev_ne.mono fun w hw => (if_pos hw : h₀ w = f₁ w / P w)
+                exact this.mono fun w (hw : h₀ w = f₁ w / P w) =>
+                  show h₀ w = (fun w => f₁ w / P w) w from hw
+              rw [h₀_val, htend_fg.limUnder_eq]
+            -- ContinuousAt via nhds = nhdsWithin ⊔ pure
+            rw [ContinuousAt, hval, ← nhdsNE_sup_pure z₀]
+            exact htend.sup (Filter.tendsto_pure_left.mpr fun _s hs =>
+              hval ▸ mem_of_mem_nhds hs)
           exact (analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
             hh₀_diff_punct hcont).differentiableAt
       have hh₀_ne : ∀ z, h₀ z ≠ 0 := by
@@ -1046,7 +1112,6 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         -- From multiplicity-aware enumeration: order(P, a n) = order(f₁, a n)
         have hP_ge : analyticOrderNatAt f₁ (a n) ≤ analyticOrderNatAt P (a n) := by
           have h := ha_ord_eq (a n) hf₁z han
-          rw [Nat.cast_analyticOrderNatAt hf₁_top] at h
           -- h : analyticOrderAt f₁ (a n) = analyticOrderAt P (a n)
           simp only [analyticOrderNatAt]
           exact ENat.toNat_le_toNat h.le hP_top
