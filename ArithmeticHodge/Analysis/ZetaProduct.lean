@@ -522,42 +522,92 @@ theorem zeta_logDeriv_growth (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
   obtain ⟨C₁, hC₁_pos, hC₁⟩ := nearby_zero_count_bound
   obtain ⟨C₂, hC₂_pos, hC₂⟩ := far_zero_sum_bound σ₁ σ₂ hσ
   obtain ⟨C₃, hC₃_pos, hC₃⟩ := arch_term_growth_bound σ₁ σ₂ hσ
-  -- Combined constant
-  refine ⟨C₁ + C₂ + C₃ + 1, by linarith, fun s hσ₁ hσ₂ him hζ => ?_⟩
+  -- Combined constant: includes Hadamard constants m, B alongside component bounds
+  refine ⟨C₁ + 2 * (↑hadamardM : ℝ) + 4 * ‖hadamardB‖ + 3 * C₂ + 2 * C₃ + 5,
+    by linarith [Nat.cast_nonneg (α := ℝ) hadamardM, norm_nonneg hadamardB],
+    fun s hσ₁ hσ₂ him hζ => ?_⟩
   -- Key observations: |Im(s)| ≥ 2 implies s ≠ 0 and s ≠ 1
-  have him_pos : 0 < |s.im| := lt_of_lt_of_le (by norm_num : (0 : ℝ) < 2) him
   have hs0 : s ≠ 0 := by
     intro h; simp [h] at him; linarith
   have hs1 : s ≠ 1 := by
     intro h; simp [h] at him; linarith
-  -- For s with ζ(s) ≠ 0, we need s ≠ hadamardZeros n for all n.
-  -- hadamardZeros are zeros of ξ, whose zeros in the critical strip are exactly
-  -- the nontrivial zeros of ζ. So ζ(s) ≠ 0 implies ξ(s) ≠ 0 implies s ≠ ρ_n.
   have hρ : ∀ n, s ≠ hadamardZeros n := by
     intro n heq
     have hzero := hadamardZeros_spec n
     rw [← heq] at hzero
-    -- ξ(s) = 0, but ξ zeros have 0 < Re < 1 (xiFunction_zero_re)
     have ⟨hre_pos, hre_lt⟩ := xiFunction_zero_re hzero
-    -- In the critical strip, ξ(s) = 0 ↔ ζ(s) = 0
     rw [xiFunction_zero_iff hre_pos hre_lt] at hzero
     exact hζ hzero
-  -- Apply the partial fraction expansion
-  obtain ⟨C_const, arch, hpf⟩ := zeta_logDeriv_partial_fraction s hs1 hs0 hζ hρ
-  -- Apply the xi log-derivative expansion for the zero sum
+  -- Apply the xi log-derivative expansion
   obtain ⟨hsumm, hxi⟩ := xi_logDeriv_expansion s hs0 hρ
-  -- Get the digamma bound
+  -- Get the archimedean term bound
   obtain ⟨dt, hdt_eq, hdt_bound⟩ := hC₃ s hσ₁ hσ₂ him hζ
-  -- Get the far zero sum bound
+  -- Get the far zero sum bound (splits Σ = near + far)
   obtain ⟨near, far, hsum_split, hnear_bound, hfar_bound⟩ := hC₂ s hσ₁ hσ₂ him hρ
-  -- The bound combines: ζ'/ζ = partial fraction pieces, each O(log|t|) or O(log²|t|)
-  -- Constant + 1/(s-1) terms are O(1) for |t| ≥ 2 with σ bounded
-  -- Zero sum: near part O(log|t|), far part O(log²|t|)
-  -- Digamma: O(log|t|)
-  -- Total: O(log²|t|)
-  -- The detailed norm estimates require combining the bounds above with
-  -- triangle inequality. Each O(log|t|) piece is ≤ O(log²|t|) since log|t| ≥ log 2 > 0.
-  sorry
+  -- Combine expansions: ζ'/ζ = (m-1)/s + B - 1/(s-1) + near + far + dt
+  have hsum_eq := hsum_split hsumm
+  have hcombined : deriv riemannZeta s / riemannZeta s =
+      ((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + near + far + dt := by
+    rw [hdt_eq, hxi, hsum_eq]; ring
+  rw [hcombined]
+  -- ── Triangle inequality (6 terms) ──
+  have htri : ‖((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + near + far + dt‖ ≤
+      ‖((↑hadamardM : ℂ) - 1) / s‖ + ‖hadamardB‖ + ‖(1 : ℂ) / (s - 1)‖ +
+      ‖near‖ + ‖far‖ + ‖dt‖ := by
+    have := norm_add_le (((↑hadamardM : ℂ) - 1) / s + hadamardB -
+      1 / (s - 1) + near + far) dt
+    have := norm_add_le (((↑hadamardM : ℂ) - 1) / s + hadamardB -
+      1 / (s - 1) + near) far
+    have := norm_add_le (((↑hadamardM : ℂ) - 1) / s + hadamardB -
+      1 / (s - 1)) near
+    have := norm_sub_le (((↑hadamardM : ℂ) - 1) / s + hadamardB) (1 / (s - 1))
+    have := norm_add_le (((↑hadamardM : ℂ) - 1) / s) hadamardB
+    linarith
+  -- ── Bound ‖(m-1)/s‖ ≤ (m+1)/2 ──
+  have hs_norm_ge : (2 : ℝ) ≤ ‖s‖ := le_trans him (Complex.abs_im_le_norm s)
+  have h_ms : ‖((↑hadamardM : ℂ) - 1) / s‖ ≤ ((↑hadamardM : ℝ) + 1) / 2 := by
+    rw [norm_div]
+    have hn : ‖(↑hadamardM : ℂ) - 1‖ ≤ (↑hadamardM : ℝ) + 1 :=
+      (norm_sub_le _ _).trans (by simp)
+    have hs_pos : (0 : ℝ) < ‖s‖ := by linarith
+    calc ‖(↑hadamardM : ℂ) - 1‖ / ‖s‖
+        ≤ ((↑hadamardM : ℝ) + 1) / ‖s‖ :=
+          div_le_div_of_nonneg_right hn (le_of_lt hs_pos)
+      _ ≤ ((↑hadamardM : ℝ) + 1) / 2 :=
+          div_le_div_of_nonneg_left (by positivity) (by norm_num) hs_norm_ge
+  -- ── Bound ‖1/(s-1)‖ ≤ 1/2 ──
+  have hs1_norm_ge : (2 : ℝ) ≤ ‖s - 1‖ := by
+    calc (2 : ℝ) ≤ |s.im| := him
+      _ = |(s - 1).im| := by simp
+      _ ≤ ‖s - 1‖ := Complex.abs_im_le_norm _
+  have h_s1 : ‖(1 : ℂ) / (s - 1)‖ ≤ 1 / 2 := by
+    rw [norm_div, norm_one]
+    exact div_le_div_of_nonneg_left (by norm_num) (by norm_num) hs1_norm_ge
+  -- ── log|t| > 1/2 ──
+  have hlog_half : (1 : ℝ) / 2 < Real.log |s.im| := by
+    have hexp_lt : Real.exp (1 / 2 : ℝ) < 2 := by
+      by_contra h; push_neg at h
+      have h4 : (4 : ℝ) ≤ Real.exp (1 / 2) ^ 2 := by nlinarith
+      rw [sq, ← Real.exp_add, show (1 : ℝ) / 2 + 1 / 2 = 1 from by norm_num] at h4
+      linarith [Real.exp_one_lt_three]
+    calc (1 : ℝ) / 2 = Real.log (Real.exp (1 / 2)) := (Real.log_exp _).symm
+      _ < Real.log 2 := Real.log_lt_log (Real.exp_pos _) hexp_lt
+      _ ≤ Real.log |s.im| := Real.log_le_log (by norm_num) him
+  -- ── Final assembly ──
+  -- Absorb constant terms via (log|t|)² > 1/4 and linear terms via log|t| > 1/2
+  set x := Real.log |s.im|
+  calc ‖((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + near + far + dt‖
+      ≤ ‖((↑hadamardM : ℂ) - 1) / s‖ + ‖hadamardB‖ + ‖(1 : ℂ) / (s - 1)‖ +
+        ‖near‖ + ‖far‖ + ‖dt‖ := htri
+    _ ≤ ((↑hadamardM : ℝ) + 1) / 2 + ‖hadamardB‖ + 1 / 2 +
+        C₂ * x + C₂ * x ^ 2 + C₃ * x := by
+        linarith [h_ms, h_s1, hnear_bound, hfar_bound, hdt_bound]
+    _ ≤ (C₁ + 2 * (↑hadamardM : ℝ) + 4 * ‖hadamardB‖ + 3 * C₂ + 2 * C₃ + 5) *
+        x ^ 2 := by
+        -- (x - 1/2)² ≥ 0 gives x² ≥ x - 1/4, hence x ≤ x² + 1/4
+        -- x(x - 1/2) ≥ 0 gives x² ≥ x/2, hence constant ≤ 4·constant·x²
+        nlinarith [sq_nonneg (x - 1 / 2), Nat.cast_nonneg (α := ℝ) hadamardM,
+                   norm_nonneg hadamardB, sq_nonneg x, hC₁_pos]
 
 /-- **Zero density estimate.**
     N(T) = #{ρ : 0 < Re(ρ) < 1, |Im(ρ)| ≤ T, ζ(ρ)=0} satisfies

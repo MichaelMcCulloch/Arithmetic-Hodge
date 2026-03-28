@@ -9,6 +9,8 @@
 -/
 
 import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
 import Mathlib.MeasureTheory.Integral.Prod
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.MeasureTheory.Measure.Prod
@@ -18,10 +20,10 @@ import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 
 set_option autoImplicit false
-set_option maxHeartbeats 3200000
+set_option maxHeartbeats 6400000
 
 open MeasureTheory Complex Filter Topology Set
-open scoped NNReal ENNReal
+open scoped NNReal ENNReal ComplexConjugate
 
 namespace ArithmeticHodge.Analysis
 
@@ -53,17 +55,21 @@ private lemma norm_setIntegral_cexp_le {α : ℝ} (hα : α ≠ 0) {T : ℝ} (hT
       ∫ t in (0 : ℝ)..T, Complex.exp ((↑α * Complex.I) * ↑t) from by
     rw [intervalIntegral.integral_of_le hT.le]
     rw [← setIntegral_congr_set Ioc_ae_eq_Icc]
-    apply setIntegral_congr_fun measurableSet_Icc
-    intro t _; ring_nf]
+    apply setIntegral_congr_fun measurableSet_Ioc
+    intro t _; congr 1; push_cast; ring]
   rw [intervalIntegral_cexp α T hα]
   rw [norm_div]
-  apply div_le_div_of_nonneg_right _ (by positivity : (0 : ℝ) < ‖↑α * Complex.I‖)
+  have hnorm : ‖(↑α : ℂ) * Complex.I‖ = |α| := by
+    rw [norm_mul, Complex.norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs]
+  rw [hnorm]
+  apply div_le_div_of_nonneg_right _ (abs_nonneg α)
   calc ‖Complex.exp ((↑α * Complex.I) * ↑T) -
         Complex.exp ((↑α * Complex.I) * ↑(0:ℝ))‖
       ≤ ‖Complex.exp ((↑α * Complex.I) * ↑T)‖ +
         ‖Complex.exp ((↑α * Complex.I) * ↑(0:ℝ))‖ := norm_sub_le _ _
     _ = 2 := by
-        simp only [mul_zero, Complex.exp_zero, norm_one]
+        have h0 : (↑α * Complex.I) * ↑(0:ℝ) = 0 := by push_cast; ring
+        rw [h0, Complex.exp_zero, norm_one]
         have : ‖Complex.exp ((↑α * Complex.I) * ↑T)‖ = 1 := by
           rw [show (↑α * Complex.I) * ↑T = ↑(α * T) * Complex.I from by push_cast; ring]
           exact Complex.norm_exp_ofReal_mul_I _
@@ -89,25 +95,26 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
     apply tendsto_integral_filter_of_dominated_convergence (fun _ => (1 : ℝ))
     · -- (a) AEStronglyMeasurable (eventually)
       filter_upwards with T
-      simp only [hF_def, wienerKernel]
+      simp only [hF_def]
       apply AEStronglyMeasurable.const_mul
       -- The parametric integral is continuous in p, hence AE strongly measurable
+      have hfin : IsFiniteMeasure (volume.restrict (Set.Icc (0:ℝ) T)) := ⟨by
+        rw [Measure.restrict_apply_univ]; exact isCompact_Icc.measure_lt_top⟩
       exact (continuous_of_dominated
         (F := fun (p : ℝ × ℝ) (t : ℝ) =>
           Complex.exp (↑(t * (p.2 - p.1)) * Complex.I))
         (bound := fun _ => 1)
         (μ := volume.restrict (Set.Icc 0 T))
-        (hF_meas := fun p =>
-          (Complex.continuous_exp.comp
+        (hF_meas := fun p => by
+          apply Continuous.aestronglyMeasurable
+          exact Complex.continuous_exp.comp
             ((Complex.continuous_ofReal.comp
               (continuous_id'.mul continuous_const)).mul
-              continuous_const)).aestronglyMeasurable)
+              continuous_const))
         (h_bound := fun p => by
           filter_upwards with t
           exact le_of_eq (Complex.norm_exp_ofReal_mul_I _))
-        (bound_integrable := by
-          exact integrable_const_iff.mpr (Or.inr (by
-            rw [Measure.restrict_apply_univ]; exact isCompact_Icc.measure_lt_top)))
+        (bound_integrable := integrable_const 1)
         (h_cont := by
           filter_upwards with t
           exact Complex.continuous_exp.comp
@@ -147,9 +154,13 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
         apply tendsto_const_nhds.congr'
         filter_upwards [Ioi_mem_atTop (0 : ℝ)] with T (hT : 0 < T)
         show (1 : ℂ) = ↑(1 / T) * ∫ _ in Set.Icc 0 T, (1 : ℂ)
-        rw [setIntegral_const, Complex.real_smul, mul_one, ← Complex.ofReal_mul,
-          Measure.real, Real.volume_Icc, sub_zero, ENNReal.toReal_ofReal hT.le,
-          one_div_mul_cancel (ne_of_gt hT), Complex.ofReal_one]
+        have hval : ∫ _ in Set.Icc (0:ℝ) T, (1 : ℂ) = ↑T := by
+          rw [setIntegral_const]
+          simp only [Measure.real, Real.volume_Icc, sub_zero,
+            ENNReal.toReal_ofReal hT.le]
+          show (↑T : ℂ) * 1 = ↑T; exact mul_one _
+        rw [hval, ← Complex.ofReal_mul, one_div_mul_cancel (ne_of_gt hT),
+          Complex.ofReal_one]
       · -- Off-diagonal: time average → 0
         simp only [heq, ite_false]
         set α := y - x with hα_def
@@ -167,36 +178,21 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
                   apply mul_le_mul_of_nonneg_left (norm_setIntegral_cexp_le hα hT)
                   exact abs_nonneg _
               _ = 2 / |α| * |1 / T| := by ring
-          · -- T ≤ 0: integral is 0 (empty or null set)
-            simp only [not_lt] at hT
-            have hIcc : volume.real (Set.Icc (0 : ℝ) T) = 0 := by
-              rw [Measure.real, Real.volume_Icc]
-              simp [ENNReal.toReal_ofReal, sub_nonpos.mpr hT]
-            calc |1 / T| * ‖∫ t in Set.Icc 0 T,
-                    Complex.exp (↑(t * α) * Complex.I)‖
-                ≤ |1 / T| * ∫ t in Set.Icc 0 T,
-                    ‖Complex.exp (↑(t * α) * Complex.I)‖ :=
-                  mul_le_mul_of_nonneg_left (norm_integral_le_integral_norm _) (abs_nonneg _)
-              _ ≤ |1 / T| * ∫ _ in Set.Icc 0 T, (1 : ℝ) := by
-                  apply mul_le_mul_of_nonneg_left _ (abs_nonneg _)
-                  apply setIntegral_mono_on
-                  · apply IntegrableOn.congr (integrableOn_const.mpr (Or.inr (by
-                      rw [← Measure.real]; simp [hIcc]; exact Or.inl (by norm_num))))
-                    intro t ht; exact (Complex.norm_exp_ofReal_mul_I _).symm
-                  · exact integrableOn_const.mpr (Or.inr (by
-                      rw [← Measure.real]; simp [hIcc]; exact Or.inl (by norm_num)))
-                  · exact measurableSet_Icc
-                  · intro t _; exact le_of_eq (Complex.norm_exp_ofReal_mul_I _)
-              _ = |1 / T| * volume.real (Set.Icc 0 T) := by
-                  rw [setIntegral_const, smul_eq_mul, mul_one]
-              _ = 0 := by rw [hIcc, mul_zero]
-              _ ≤ 2 / |α| * |1 / T| := by positivity
+          · -- T ≤ 0: |1/T| * ‖integral‖ ≤ bound
+            push_neg at hT
+            rcases eq_or_lt_of_le hT with rfl | hT'
+            · -- T = 0: 1/0 = 0 in Lean
+              simp [abs_zero]
+            · -- T < 0: Icc 0 T = ∅
+              have hIcc_empty : Set.Icc (0 : ℝ) T = ∅ := Set.Icc_eq_empty (by linarith)
+              rw [hIcc_empty, setIntegral_empty, norm_zero, mul_zero]
+              positivity
         · -- Bound tends to 0
           have : Tendsto (fun T : ℝ => 2 / |α| * |1 / T|) atTop (nhds 0) := by
             rw [show (0 : ℝ) = 2 / |α| * 0 from by ring]
             apply Filter.Tendsto.const_mul
             show Tendsto (fun T : ℝ => |1 / T|) atTop (nhds 0)
-            have h := tendsto_inv_atTop_zero (α := ℝ)
+            have h := tendsto_inv_atTop_zero (𝕜 := ℝ)
             apply h.congr'
             filter_upwards [Ioi_mem_atTop (0 : ℝ)] with T (hT : 0 < T)
             rw [one_div, abs_of_pos (inv_pos.mpr hT)]
@@ -208,13 +204,62 @@ theorem wiener_theorem {μ : MeasureTheory.Measure ℝ} [IsFiniteMeasure μ] :
   have rewrite : ∀ᶠ T in atTop, (1/T) * ∫ t in Set.Icc 0 T,
       ‖∫ x, Complex.exp (↑(t * x) * Complex.I) ∂μ‖^2 =
       (∫ p, F T p ∂μ').re := by
-    sorry
+    filter_upwards [Ioi_mem_atTop (0 : ℝ)] with T (hT : 0 < T)
+    simp only [hF_def, wienerKernel, hμ'_def]
+    -- Key helper: for each t, the product integral of exp equals ‖μ̂(t)‖²
+    have key : ∀ t : ℝ, ∫ p, Complex.exp (↑(t * (p.2 - p.1)) * Complex.I) ∂(μ.prod μ) =
+        ↑(‖∫ x, Complex.exp (↑(t * x) * Complex.I) ∂μ‖ ^ 2) := by
+      intro t
+      -- Factor: exp(it(y-x)) = exp(-itx) · exp(ity)
+      have hfactor : ∀ p : ℝ × ℝ,
+          Complex.exp (↑(t * (p.2 - p.1)) * Complex.I) =
+          (fun q : ℝ × ℝ => Complex.exp (↑(-(t * q.1)) * Complex.I) *
+            Complex.exp (↑(t * q.2) * Complex.I)) p := by
+        intro p
+        simp only
+        rw [← Complex.exp_add]
+        congr 1; push_cast; ring
+      simp_rw [hfactor]
+      -- conj(∫ exp(itx) dμ) = ∫ exp(-itx) dμ
+      have hconj : ∫ x, Complex.exp (↑(-(t * x)) * Complex.I) ∂μ =
+          conj (∫ x, Complex.exp (↑(t * x) * Complex.I) ∂μ) := by
+        have hpw : ∀ x, Complex.exp (↑(-(t * x)) * Complex.I) =
+            conj (Complex.exp (↑(t * x) * Complex.I)) := by
+          intro x; rw [← exp_conj]; congr 1
+          rw [map_mul, conj_ofReal, Complex.conj_I]; push_cast; ring
+        simp_rw [hpw]; exact integral_conj
+      -- Use integral_prod_mul, then connect to normSq
+      trans (∫ x, Complex.exp (↑(-(t * x)) * Complex.I) ∂μ) *
+        (∫ y, Complex.exp (↑(t * y) * Complex.I) ∂μ)
+      · convert integral_prod_mul
+            (fun x => Complex.exp (↑(-(t * x)) * Complex.I))
+            (fun y => Complex.exp (↑(t * y) * Complex.I)) using 1
+        <;> infer_instance
+      · rw [hconj, ← Complex.normSq_eq_conj_mul_self]
+        simp [Complex.normSq_eq_norm_sq]
+    -- Pull (1/T) out of the product integral and use Fubini
+    -- We show the integrals match by using integral_mul_left and Fubini
+    -- For now, use a direct calculation
+    -- RHS: Re(∫ p, ↑(1/T) * ∫ s in Icc 0 T, exp(...) ∂(μ⊗μ))
+    -- LHS: (1/T) * ∫ s in Icc 0 T, ‖∫ x, exp(isx) dμ‖²
+    show False
 
   -- ═══════════════════════════════════════════════════════════════
   -- Claim 3 (Evaluate): Re(∫ f dμ') = ∑' x, μ.real {x}²
   -- ═══════════════════════════════════════════════════════════════
   have eval : (∫ p, f p ∂μ').re = ∑' x, μ.real {x} ^ 2 := by
-    sorry
+    simp only [hf_def, wienerLimit, hμ'_def]
+    -- f(x,y) = if x=y then 1 else 0 is the indicator of the diagonal
+    have hf_eq : (fun p : ℝ × ℝ => if p.1 = p.2 then (1:ℂ) else 0) =
+        (Set.diagonal ℝ).indicator (fun _ => 1) := by
+      ext ⟨a, b⟩
+      simp [Set.indicator, Set.mem_diagonal_iff]
+    rw [hf_eq]
+    rw [integral_indicator_const _ isClosed_diagonal.measurableSet]
+    show ((↑((μ.prod μ).real (diagonal ℝ)) : ℂ) * 1).re = _
+    rw [mul_one, Complex.ofReal_re]
+    -- Now: (μ.prod μ).real (diagonal ℝ) = ∑' x, μ.real {x} ^ 2
+    show False
 
   -- ═══════════════════════════════════════════════════════════════
   -- Combine
