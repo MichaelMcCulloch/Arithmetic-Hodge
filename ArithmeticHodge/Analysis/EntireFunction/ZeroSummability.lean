@@ -137,7 +137,7 @@ theorem finite_order_zero_summable_weighted (f : ℂ → ℂ) (hf : Differentiab
     (a₀ : ℕ → ℂ) (ha₀ : ∀ k, a₀ k ≠ 0 → f (a₀ k) = 0)
     (mult : ℕ → ℕ) (hmult_zero : ∀ k, a₀ k = 0 → mult k = 0) :
     let p := Nat.floor (entireOrder f).toReal
-    Summable (fun k => (mult k : ℝ) * ‖a₀ k‖⁻¹ ^ ((p : ℝ) + 1)) := by
-  sorry
+    Summable (fun k => (mult k : ℝ) * ‖a₀ k‖⁻¹ ^ ((p : ℝ) + 1)) :=
+  finite_order_zero_summable_aux f hf hf_ne hfin a₀ ha₀ mult hmult_zero
 
 end ArithmeticHodge.Analysis.EntireFunction

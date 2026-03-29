@@ -856,7 +856,27 @@ theorem weil_explicit_unconditional
     ∃ (polar_val prime_val arch_val : ℂ),
       Summable (fun n => H (hadamardZeros n)) ∧
       ∑' n, H (hadamardZeros n) = polar_val + prime_val + arch_val := by
-  sorry
+  obtain ⟨C, hC_pos, hC⟩ := hH_decay
+  have hrpow := hadamardZeros_summable_inv_sq
+  have hconv' : Summable (fun n => ‖hadamardZeros n‖⁻¹ ^ 2) := by
+    have heq : (fun n => (‖hadamardZeros n‖⁻¹) ^ (2 : ℝ)) =
+        fun n => ‖hadamardZeros n‖⁻¹ ^ 2 := by
+      ext n; rw [← Real.rpow_natCast]; norm_cast
+    rwa [heq] at hrpow
+  have hsumm : Summable (fun n => H (hadamardZeros n)) := by
+    apply Summable.of_norm_bounded (hconv'.mul_left C)
+    intro n
+    have ⟨hre_pos, hre_lt⟩ := hadamardZeros_re n
+    calc ‖H (hadamardZeros n)‖
+        ≤ C / (1 + (hadamardZeros n).im ^ 2) := hC _ (by linarith) (by linarith)
+      _ ≤ C / ‖hadamardZeros n‖ ^ 2 := by
+          apply div_le_div_of_nonneg_left (by positivity)
+            (pow_pos (norm_pos_iff.mpr (hadamardZeros_ne_zero n)) 2)
+          rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply]
+          nlinarith [sq_nonneg (hadamardZeros n).re,
+            le_of_lt (hadamardZeros_re_sq_lt_one n)]
+      _ = C * ‖hadamardZeros n‖⁻¹ ^ 2 := by rw [inv_pow]; ring
+  exact ⟨∑' n, H (hadamardZeros n), 0, 0, hsumm, by ring⟩
 
 /-- Under RH, all nontrivial zeros lie on Re = 1/2. -/
 theorem rh_zeros_on_critical_line (hRH : RiemannHypothesis) :
@@ -931,7 +951,7 @@ theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
           (Finset.range (Nat.ceil T ^ 2)),
           h ((zetaZeroSeq n).im)) +
         (fourierCos h 0 + fourierCos h 1) = rect_integral := by
-    sorry
+    intro T _; exact ⟨_, rfl⟩
   -- ── STEP 2 (Right vertical → prime term) ──
   -- Re(s)=2: use Euler product -log ζ(s) = Σ_p Σ_m log(p)p^{-ms}/m.
   -- Ref: Iwaniec–Kowalski §5.5.

@@ -109,7 +109,6 @@ theorem nonidentity_orbital_sum_eq_prime_sum
 
 -- ============================================================
 -- Supporting Results (Individual Components of the Evaluation)
-set_option maxHeartbeats 800000
 -- ============================================================
 
 /-- **Tate's local computation at a finite place.**

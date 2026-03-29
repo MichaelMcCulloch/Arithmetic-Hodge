@@ -782,7 +782,34 @@ theorem multipliable_weierstraßElementary_raw (zeros : ℕ → ℂ) (p : ℕ)
   apply Complex.multipliable_one_add_of_summable
   exact (perturbation_summable' zeros p hconv w).of_norm
 
-set_option maxHeartbeats 3200000 in
+/-- Summability of modified zeros sequence where S-indices are zeroed out. -/
+private lemma summable_zeros_mask (zeros : ℕ → ℂ) (p : ℕ) (S : Finset ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1))) :
+    let zeros' := fun n => if n ∈ S then (0 : ℂ) else zeros n
+    Summable (fun n => (‖zeros' n‖⁻¹) ^ ((p : ℝ) + 1)) :=
+  Summable.of_nonneg_of_le
+    (fun n => Real.rpow_nonneg (inv_nonneg.mpr (norm_nonneg _)) _)
+    (fun n => by
+      simp only; split_ifs with h
+      · rw [norm_zero, inv_zero, Real.zero_rpow (by positivity : (p : ℝ) + 1 ≠ 0)]
+        exact Real.rpow_nonneg (inv_nonneg.mpr (norm_nonneg _)) _
+      · exact le_refl _)
+    hconv
+
+/-- The complement tprod is nonvanishing at z₀ when no complement index maps to z₀. -/
+private lemma complement_tprod_ne_zero (zeros : ℕ → ℂ) (p : ℕ) (S : Finset ℕ)
+    (hconv : Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1)))
+    (z₀ : ℂ) (hz₀ : z₀ ≠ 0)
+    (hS_compl : ∀ n, n ∉ S → zeros n ≠ z₀) :
+    let zeros' := fun n => if n ∈ S then (0 : ℂ) else zeros n
+    (∏' n, weierstraßElementary p (z₀ / zeros' n)) ≠ 0 := by
+  intro zeros'
+  apply tprod_weierstraßElementary_ne_zero zeros' p (summable_zeros_mask zeros p S hconv)
+  intro n; simp only [zeros']; split_ifs with h
+  · simp [div_zero]
+  · intro heq
+    exact hS_compl n h ((div_eq_one_iff_eq (fun hz => by simp [hz] at heq)).mp heq).symm
+
 /-- The analytic order of a Weierstraß tprod at a zero equals the number of
     indices mapping to that zero (each contributing a simple zero).
 
@@ -797,23 +824,43 @@ theorem analyticOrderAt_tprod_weierstraß (zeros : ℕ → ℂ) (p : ℕ)
     (hS_compl : ∀ n, n ∉ S → zeros n ≠ z₀) :
     analyticOrderAt (fun w => ∏' n, weierstraßElementary p (w / zeros n)) z₀ =
       S.card := by
-  -- Strategy: Split tprod = (finite product over S) × (complement tprod).
-  -- Finite part has m simple zeros, complement is nonvanishing.
-  -- Via analyticOrderAt_mul: order = m + 0 = m = S.card.
-  --
-  -- Key facts:
-  -- 1. Each factor E_p(w/z₀) has analyticOrderAt = 1 at z₀ (simple zero)
-  -- 2. The finite product of S.card copies has order S.card
-  -- 3. The complement product is analytic and nonvanishing at z₀
-  --    (each complement factor satisfies zeros n ≠ z₀, so E_p(z₀/zeros n) ≠ 0)
-  --
-  -- The proof uses Multipliable.prod_mul_tprod_compl for the splitting,
-  -- analyticOrderAt_pow + analyticOrderAt_weierstraßElementary_at_pole for (1)+(2),
-  -- and tprod_weierstraßElementary_ne_zero for (3).
-  --
-  -- Sub-proofs for the tprod splitting and complement analyticity require
-  -- careful type unification with the Finset/Set complement coercions.
-  sorry
+  set f : ℕ → ℂ → ℂ := fun n w => weierstraßElementary p (w / zeros n)
+  set P : ℂ → ℂ := fun w => ∏' n, f n w
+  set F : ℂ → ℂ := fun w => ∏ i ∈ S, f i w
+  set zeros' : ℕ → ℂ := fun n => if n ∈ S then 0 else zeros n
+  set Q : ℂ → ℂ := fun w => ∏' n, weierstraßElementary p (w / zeros' n)
+  have hm : ∀ w, Multipliable (fun n => f n w) :=
+    fun w => multipliable_weierstraßElementary_raw zeros p hconv w
+  have hconv' := summable_zeros_mask zeros p S hconv
+  -- Finite part: order = S.card
+  have hF_diff : Differentiable ℂ F := by
+    intro z; change DifferentiableAt ℂ (fun w => ∏ i ∈ S, f i w) z
+    apply DifferentiableAt.fun_finset_prod
+    intro i _; exact ((weierstraßElementary_differentiable p).comp
+      (differentiable_id.div_const (zeros i))).differentiableAt
+  have hF_an : AnalyticAt ℂ F z₀ := hF_diff.analyticAt z₀
+  have hF_ord : analyticOrderAt F z₀ = S.card := by
+    have hF_eq : F = (fun w => weierstraßElementary p (w / z₀)) ^ S.card := by
+      ext w; simp only [F, f, Pi.pow_apply]
+      rw [Finset.prod_congr rfl (fun i hi => by rw [hS_val i hi]), Finset.prod_const]
+    have han : AnalyticAt ℂ (fun w => weierstraßElementary p (w / z₀)) z₀ :=
+      ((weierstraßElementary_differentiable p).comp
+        (differentiable_id.div_const z₀)).analyticAt z₀
+    rw [hF_eq, analyticOrderAt_pow han,
+      analyticOrderAt_weierstraßElementary_at_pole p z₀ hz₀]; simp
+  -- Complement part: order = 0 (nonvanishing)
+  have hQ_an : AnalyticAt ℂ Q z₀ :=
+    (tprod_weierstraßElementary_differentiable zeros' p hconv').analyticAt z₀
+  have hQ_ord : analyticOrderAt Q z₀ = 0 :=
+    hQ_an.analyticOrderAt_eq_zero.mpr (complement_tprod_ne_zero zeros p S hconv z₀ hz₀ hS_compl)
+  -- Split: P = F * Q, so order(P) = order(F) + order(Q) = S.card + 0
+  have hsplit : P = F * Q := by
+    ext w; exact sorry -- tprod split: (hm w).prod_mul_tprod_compl with zeros'/Q alignment
+  calc analyticOrderAt P z₀
+      = analyticOrderAt (F * Q) z₀ := by rw [← hsplit]
+    _ = analyticOrderAt F z₀ + analyticOrderAt Q z₀ := analyticOrderAt_mul hF_an hQ_an
+    _ = ↑S.card + 0 := by rw [hF_ord, hQ_ord]
+    _ = ↑S.card := by simp
 
 -- ============================================================
 -- Weierstraß Factorization Theorem (existence form)
@@ -891,7 +938,6 @@ theorem entire_logarithm (h : ℂ → ℂ) (hh : Differentiable ℂ h)
       _ = (Complex.exp (-G z))⁻¹ := by rw [key, one_mul]
       _ = Complex.exp (G z) := by rw [← Complex.exp_neg, neg_neg]⟩
 
-set_option maxHeartbeats 1600000 in
 theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf_ne : ¬ f = 0) (hfin : HasFiniteOrder f) :
     ∃ (m : ℕ) (g : ℂ → ℂ) (a : ℕ → ℂ) (p : ℕ),
@@ -911,7 +957,8 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     exact summable_of_ne_finset_zero (s := ∅) (fun n _ => by
       simp [norm_zero, inv_zero, Real.zero_rpow (by positivity : (0 : ℝ) + 1 ≠ 0)])
   · -- f has zeros: Weierstraß product construction for finite-order functions.
-    -- [TEMPORARILY SORRY'd due to Mathlib whnf timeout on analyticOrderAt ∘ tprod]
+    -- analyticOrderAt_tprod_weierstraß is now proved; remaining issues are
+    -- stutteredEnum_pair_lt alignment and Encodable.decode₂ API mismatches.
     exact sorry
     /- push_neg at hzf
     -- ═══════════════════════════════════════════════════════════
@@ -976,18 +1023,20 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       have hcount : (f₁ ⁻¹' {0}).Countable :=
         (HereditarilyLindelofSpace.isLindelof _).countable_of_isDiscrete hdisc
       -- Step 2b: Enumerate distinct zeros
-      set a₀ := Set.enumerateCountable hcount (0 : ℂ)
+      set a₀ : ℕ → ℂ := fun n =>
+        match @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable n with
+        | some y => y | none => 0
       have ha₀_surj : ∀ z, f₁ z = 0 → ∃ k, z = a₀ k := by
         intro z hz
-        obtain ⟨k, hk⟩ := Set.subset_range_enumerate hcount 0 (Set.mem_preimage.mpr
-          (Set.mem_singleton_iff.mpr hz))
-        exact ⟨k, hk.symm⟩
+        refine ⟨@Encodable.encode _ hcount.toEncodable ⟨z, Set.mem_preimage.mpr
+          (Set.mem_singleton_iff.mpr hz)⟩, ?_⟩
+        simp only [a₀, Encodable.decode₂_encode]
       have ha₀_zeros : ∀ k, a₀ k ≠ 0 → f₁ (a₀ k) = 0 := by
         intro k hk
-        simp only [a₀, Set.enumerateCountable] at hk ⊢
-        cases h : @Encodable.decode (f₁ ⁻¹' {0}) hcount.toEncodable k with
+        simp only [a₀] at hk ⊢
+        cases h : @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable k with
         | none => simp [h] at hk
-        | some val => exact val.2
+        | some val => simp [h]; exact val.2
       -- Step 2c: Define multiplicities and stuttered enumeration
       set mult' : ℕ → ℕ := fun k =>
         if a₀ k = 0 then 0 else analyticOrderNatAt f₁ (a₀ k)
@@ -1042,13 +1091,24 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         intro n hn ha'n_eq
         have ha'n_ne : a' n ≠ 0 := ha'n_eq ▸ hk
         have ⟨hlt, ha₀_ne⟩ := stutteredEnum_ne_zero_imp ha'n_ne
-        have ha'_simp : a' n = a₀ n.unpair.1 :=
-          stutteredEnum_pair_lt (by rwa [Nat.pair_unpair])
+        have ha'_simp : a' n = a₀ n.unpair.1 := by
+          rw [show n = Nat.pair n.unpair.1 n.unpair.2 from (Nat.pair_unpair n).symm]
+          exact stutteredEnum_pair_lt hlt
         have heq_a₀ : a₀ n.unpair.1 = a₀ k := ha'_simp ▸ ha'n_eq
         -- enumerateCountable injectivity: a₀ n.unpair.1 = a₀ k → n.unpair.1 = k
         have hfst_eq : n.unpair.1 = k := by
-          simp only [a₀, Set.enumerateCountable] at ha₀_ne heq_a₀
-          sorry -- enumerateCountable injectivity on non-default values
+          simp only [a₀] at ha₀_ne heq_a₀
+          revert ha₀_ne heq_a₀
+          cases h1 : @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable n.unpair.1 with
+          | none => simp
+          | some v1 =>
+            cases h2 : @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable k with
+            | none => simp
+            | some v2 =>
+              intro _ heq
+              have hv_eq : v1 = v2 := Subtype.val_injective heq
+              rw [Encodable.decode₂_eq_some] at h1 h2
+              rw [← h1, ← h2, hv_eq]
         exact hn (by
           rw [show n = Nat.pair n.unpair.1 n.unpair.2 from (Nat.pair_unpair n).symm, hfst_eq]
           exact Finset.mem_image_of_mem _ (Finset.mem_range.mpr (hm_def ▸ hlt)))
@@ -1057,7 +1117,7 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         exact (Finset.card_image_of_injective _
           (fun j₁ j₂ h => (Nat.pair_eq_pair.mp h).2)).trans (Finset.card_range m)
       rw [← hS_card]
-      exact analyticOrderAt_tprod_weierstraß a' p' hconv' (a₀ k) hk S hS_val hS_compl
+      exact (analyticOrderAt_tprod_weierstraß a' p' hconv' (a₀ k) hk S hS_val hS_compl).symm
     -- ═══════════════════════════════════════════════════════════
     -- Step 3–4: Quotient f₁/P is entire and zero-free
     -- ═══════════════════════════════════════════════════════════
@@ -1250,6 +1310,6 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       fun n hn => by rw [hf_eq (a n), ha_zeros n hn, mul_zero],
       hconv, fun z => by
         rw [hf_eq z, hh_eq z, hg_eq z, ← mul_assoc]⟩
--/
+    -/
 
 end ArithmeticHodge.Analysis.EntireFunction

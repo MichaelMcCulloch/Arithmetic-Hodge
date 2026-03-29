@@ -24,6 +24,8 @@ import Mathlib.Analysis.Complex.Trigonometric
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
+import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
+import Mathlib.Analysis.Complex.RealDeriv
 
 open Complex Real Filter Topology MeasureTheory Set Finset
 open scoped NNReal ComplexConjugate
@@ -92,16 +94,94 @@ private lemma series_term_bound (s : ℂ) (n : ℕ) (hn : (n : ℝ) ≥ 2 * ‖s
         linarith [norm_nonneg s]
     _ = 2 * (‖s‖ + 1) / (n : ℝ) ^ 2 := by ring
 
-/-! ## Digamma growth bound
+/-! ## Derivative of log ‖Γ‖ and functional equation -/
 
-  We prove: ‖ψ(s)‖ ≤ C · log|Im(s)| for Re(s) in a bounded range, |Im(s)| ≥ 2.
+/-- Differentiability of σ ↦ Γ(σ + it) from ℝ to ℂ. -/
+private lemma hasDerivAt_Gamma_ofReal (σ : ℝ) (t : ℝ)
+    (hs : ∀ m : ℕ, (↑σ + ↑t * I : ℂ) ≠ -↑m) :
+    HasDerivAt (fun σ' : ℝ => Complex.Gamma (↑σ' + ↑t * I))
+      (deriv Complex.Gamma (↑σ + ↑t * I)) σ := by
+  have hd : DifferentiableAt ℂ Complex.Gamma (↑σ + ↑t * I) :=
+    Complex.differentiableAt_Gamma _ hs
+  have hlin : HasDerivAt (fun σ' : ℝ => (↑σ' + ↑t * I : ℂ)) 1 σ := by
+    convert (Complex.ofRealCLM.hasDerivAt).add (hasDerivAt_const σ (↑t * I : ℂ)) using 1
+    simp
+  have hcomp := HasDerivAt.comp σ (hd.hasDerivAt) hlin
+  simp at hcomp; exact hcomp
 
-  The proof proceeds by:
-  A. Bounding the partial sums log N - Σ_{j=0}^N 1/(s+j) by C·log|t|
-  B. Using the functional equation ψ(s+1) = ψ(s) + 1/s and ψ(1) = -γ
-  C. Applying the recurrence to reduce to Re(s) in a fixed range
-  D. Combining with the Gamma integral bound and reflection formula
--/
+/-- The function σ ↦ Real.log ‖Γ(σ + it)‖ has derivative Re(ψ(σ + it)).
+    Key tool for the MVT approach to Stirling/digamma bounds. -/
+private lemma hasDerivAt_log_norm_Gamma (σ : ℝ) (t : ℝ) (_ht : t ≠ 0)
+    (hs : ∀ m : ℕ, (↑σ + ↑t * I : ℂ) ≠ -↑m) :
+    HasDerivAt (fun σ' : ℝ => Real.log ‖Complex.Gamma (↑σ' + ↑t * I)‖)
+      (Complex.digamma (↑σ + ↑t * I)).re σ := by
+  set s := (↑σ + ↑t * I : ℂ) with hs_def
+  have hΓ_ne : Complex.Gamma s ≠ 0 := Complex.Gamma_ne_zero hs
+  have hψ_eq : Complex.digamma s = deriv Complex.Gamma s / Complex.Gamma s := rfl
+  obtain h_slit | h_slit := Complex.mem_slitPlane_or_neg_mem_slitPlane hΓ_ne
+  · -- Case 1: Γ(s) ∈ slitPlane
+    have hlog_deriv : HasDerivAt (fun w : ℂ => Complex.log (Complex.Gamma (w + ↑t * I)))
+        (Complex.digamma s) (↑σ) := by
+      have hlin : HasDerivAt (fun w : ℂ => w + ↑t * I) 1 (↑σ : ℂ) := by
+        have h1 := hasDerivAt_id (↑σ : ℂ)
+        have h2 := hasDerivAt_const (↑σ : ℂ) (↑t * I : ℂ)
+        convert h1.add h2 using 1; simp
+      have hΓ_at := (Complex.differentiableAt_Gamma s hs).hasDerivAt
+      have hcomp : HasDerivAt (fun w => Complex.Gamma (w + ↑t * I))
+          (deriv Complex.Gamma s) (↑σ) := by
+        have h := hΓ_at.comp (↑σ : ℂ) hlin; simp only [mul_one] at h; exact h
+      have hclog := hcomp.clog h_slit
+      rwa [hψ_eq]
+    have hre := hlog_deriv.real_of_complex
+    simp only [Complex.log_re] at hre
+    exact hre
+  · -- Case 2: -Γ(s) ∈ slitPlane. Use log(-Γ) which has same Re.
+    have hlog_deriv : HasDerivAt (fun w : ℂ => Complex.log (-Complex.Gamma (w + ↑t * I)))
+        (Complex.digamma s) (↑σ) := by
+      have hlin : HasDerivAt (fun w : ℂ => w + ↑t * I) 1 (↑σ : ℂ) := by
+        have h1 := hasDerivAt_id (↑σ : ℂ)
+        have h2 := hasDerivAt_const (↑σ : ℂ) (↑t * I : ℂ)
+        convert h1.add h2 using 1; simp
+      have hΓ_at := (Complex.differentiableAt_Gamma s hs).hasDerivAt
+      have hcomp : HasDerivAt (fun w => Complex.Gamma (w + ↑t * I))
+          (deriv Complex.Gamma s) (↑σ) := by
+        have h := hΓ_at.comp (↑σ : ℂ) hlin; simp only [mul_one] at h; exact h
+      have hneg : HasDerivAt (fun w => -Complex.Gamma (w + ↑t * I))
+          (-deriv Complex.Gamma s) (↑σ) := by
+        have h := hcomp.neg; simp at h; exact h
+      have hclog := hneg.clog h_slit
+      -- derivative is (-deriv Γ s) / (-Γ s) = deriv Γ s / Γ s = ψ(s)
+      simp only [neg_div_neg_eq] at hclog
+      rwa [hψ_eq]
+    have hre := hlog_deriv.real_of_complex
+    simp only [Complex.log_re, norm_neg] at hre
+    exact hre
+
+/-- Functional equation for log ‖Γ‖: from Γ(s+1) = s·Γ(s). -/
+private lemma log_norm_Gamma_add_one (s : ℂ) (hs : ∀ m : ℕ, s ≠ -↑m) :
+    Real.log ‖Complex.Gamma (s + 1)‖ = Real.log ‖s‖ + Real.log ‖Complex.Gamma s‖ := by
+  have hs0 : s ≠ 0 := by simpa using hs 0
+  have hΓ_ne : Complex.Gamma s ≠ 0 := Complex.Gamma_ne_zero hs
+  rw [Complex.Gamma_add_one s hs0, norm_mul, Real.log_mul (norm_ne_zero_iff.mpr hs0)
+    (norm_ne_zero_iff.mpr hΓ_ne)]
+
+/-- ContinuousOn for σ ↦ log ‖Γ(σ + it)‖ when t ≠ 0. -/
+private lemma continuousOn_log_norm_Gamma (t : ℝ) (ht : t ≠ 0) (a b : ℝ) :
+    ContinuousOn (fun σ : ℝ => Real.log ‖Complex.Gamma (↑σ + ↑t * I)‖) (Set.Icc a b) := by
+  have hne : ∀ σ : ℝ, ∀ m : ℕ, (↑σ + ↑t * I : ℂ) ≠ -↑m := by
+    intro σ m h; have := congr_arg Complex.im h; simp at this; exact ht this
+  apply ContinuousOn.log
+  · apply ContinuousOn.norm
+    intro σ hσ
+    show ContinuousWithinAt (fun σ' : ℝ => Complex.Gamma (↑σ' + ↑t * I)) (Set.Icc a b) σ
+    change ContinuousWithinAt ((Complex.Gamma) ∘ (fun σ' : ℝ => (↑σ' + ↑t * I : ℂ))) _ σ
+    exact ContinuousAt.comp_continuousWithinAt
+      (Complex.differentiableAt_Gamma _ (hne σ)).continuousAt
+      (by fun_prop : ContinuousWithinAt (fun σ' : ℝ => (↑σ' + ↑t * I : ℂ)) (Set.Icc a b) σ)
+  · intro σ _
+    exact norm_ne_zero_iff.mpr (Complex.Gamma_ne_zero (hne σ))
+
+/-! ## Digamma growth bound -/
 
 /-- The digamma function satisfies ‖ψ(s)‖ ≤ C · log|Im s| in vertical strips.
     This is the key growth estimate needed for the Stirling approximation. -/
@@ -200,7 +280,7 @@ private lemma norm_sq_Gamma_half_add (t : ℝ) :
   -- Therefore |Γ(s)|² = Γ(s)·conj(Γ(s)) = π/sin(π(1/2+it)) = π/cosh(πt)
   set s := (1/2 : ℂ) + ↑t * Complex.I
   have h1s : 1 - s = conj s := by
-    apply Complex.ext <;> simp [s] <;> ring
+    apply Complex.ext <;> (simp [s]; ring)
   have hΓ_eq : Complex.Gamma s * Complex.Gamma (1 - s) = ↑π / Complex.sin (↑π * s) :=
     Complex.Gamma_mul_Gamma_one_sub s
   rw [h1s, Complex.Gamma_conj] at hΓ_eq
@@ -336,14 +416,33 @@ theorem complex_stirling_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ ≤ σ₂) :
       |Real.log ‖Complex.Gamma s‖ -
         ((s.re - 1/2) * Real.log |s.im| -
          |s.im| * (Real.pi / 2))| ≤ C * Real.log |s.im| := by
-  -- Strategy: Use the functional equation Γ(s+1) = s·Γ(s) to shift Re(s) to [1/2, 3/2),
-  -- then use the reflection formula to bound |Γ| at Re = 1/2, and bound the shift terms.
+  -- Strategy: Use the functional equation Γ(s+1) = s·Γ(s) to shift Re(s) to 1/2,
+  -- then use log_norm_Gamma_half_approx at the base, accumulating O(log|t|) errors.
   --
-  -- The digamma bound gives us access to the mean value estimate, but we actually
-  -- prove the result directly via the functional equation + reflection formula.
-  obtain ⟨Cψ, hCψ_pos, hCψ⟩ := digamma_growth_bound (min σ₁ (1/2)) (max σ₂ (1/2))
-  refine ⟨Cψ * (|σ₂ - 1/2| + |σ₁ - 1/2| + 1) + |σ₂| + |σ₁| + 10,
-    by positivity, fun s hσ₁ hσ₂ him => ?_⟩
+  -- Each shift step uses log‖Γ(s+1)‖ = log‖s‖ + log‖Γ(s)‖, contributing a log‖s+k‖ term.
+  -- By log_norm_approx, |log‖s+k‖ - log|t|| ≤ C_σ, so each step's error is O(1) ≤ O(log|t|).
+  -- After N shifts (N depends on σ₁, σ₂), total error is N · O(log|t|) = O(log|t|).
+  --
+  -- Proof directly from functional equation + base case, NOT using digamma_growth_bound.
+  -- The constant C₀ absorbs: base case error, N shift errors, and log_norm_approx errors.
+  set N : ℕ := ⌈|σ₁| + |σ₂| + 2⌉₊
+  refine ⟨(N + 1) * (|σ₁| + |σ₂| + 10) + 10, by positivity, fun s hσ₁ hσ₂ him => ?_⟩
+  -- The full proof requires careful integer shift arithmetic.
+  -- For each s with σ₁ ≤ Re(s) ≤ σ₂ and |Im(s)| ≥ 2:
+  -- 1. Choose n ∈ ℤ with Re(s) + n = 1/2 (approximately)
+  --    Actually n must be integer, so Re(s+n) ∈ {1/2} only if Re(s) - 1/2 ∈ ℤ.
+  --    In general, shift to Re(s') ∈ [1/2, 3/2) or (-1/2, 1/2].
+  -- 2. Use functional equation n times.
+  -- 3. At the base, Re(s') ∈ [1/2, 3/2). If Re(s') = 1/2 exactly: use base case.
+  --    Otherwise: one more shift from s' to s'-1 ∈ (-1/2, 1/2),
+  --    use reflection Γ(s')·Γ(1-s') = π/sin(πs') to bound.
+  --    Or: shift s' to s'+1 at Re ∈ [3/2, 5/2) and use functional eq back.
+  --
+  -- This case analysis is lengthy. The bound holds because:
+  -- - The base case contributes O(1) ≤ O(log|t|)
+  -- - Each shift contributes log‖s+k‖ = log|t| + O(1), and the main term
+  --   (Re(s)-1/2)·log|t| is exactly the sum of these log|t| contributions
+  --   minus the base case's (Re(s')-1/2)·log|t| = 0 (when Re(s')=1/2).
   sorry
 
 /-! ## Crude Gamma bound for order estimates
@@ -358,17 +457,95 @@ reflection formula for Re(s) ≤ 0, plus real Stirling for Γ(x).
     Follows from the integral representation: |∫ t^{s-1} e^{-t} dt| ≤ ∫ t^{Re(s)-1} e^{-t} dt. -/
 private lemma norm_Gamma_le_Gamma_re {s : ℂ} (hs : 0 < s.re) :
     ‖Complex.Gamma s‖ ≤ Real.Gamma s.re := by
-  -- Γ(s) = ∫₀^∞ t^{s-1} e^{-t} dt, |Γ(s)| ≤ ∫ t^{Re(s)-1} e^{-t} dt = Γ(Re(s))
-  -- |Γ(s)| = |∫ t^{s-1} e^{-t} dt| ≤ ∫ t^{Re(s)-1} e^{-t} dt = Γ(Re(s))
-  -- Follows from: norm of integral ≤ integral of norms, and
-  -- |t^{s-1}| = t^{Re(s)-1} for t > 0 (since |t^z| = t^{Re z}).
-  sorry
+  rw [Complex.Gamma_eq_integral hs, Real.Gamma_eq_integral hs]
+  calc ‖Complex.GammaIntegral s‖
+      = ‖∫ x in Ioi (0 : ℝ), ↑((-x).exp) * (x : ℂ) ^ (s - 1)‖ := rfl
+    _ ≤ ∫ x in Ioi (0 : ℝ), ‖↑((-x).exp) * (x : ℂ) ^ (s - 1)‖ :=
+        norm_integral_le_integral_norm _
+    _ = ∫ x in Ioi (0 : ℝ), Real.exp (-x) * x ^ (s.re - 1) := by
+        apply setIntegral_congr_fun measurableSet_Ioi (fun x (hx : (0 : ℝ) < x) => ?_)
+        rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _),
+          Complex.norm_cpow_eq_rpow_re_of_pos hx, sub_re, one_re]
+
+/-- Γ(x) ≤ 1 for x ∈ [1, 2], from convexity + Γ(1) = Γ(2) = 1. -/
+private lemma Gamma_le_one_of_mem_Icc {x : ℝ} (h1 : 1 ≤ x) (h2 : x ≤ 2) :
+    Real.Gamma x ≤ 1 := by
+  have hx_pos : x ∈ Ioi (0 : ℝ) := by simp; linarith
+  have h1_pos : (1 : ℝ) ∈ Ioi (0 : ℝ) := by simp
+  have h2_pos : (2 : ℝ) ∈ Ioi (0 : ℝ) := by simp
+  have h_conv := Real.convexOn_Gamma
+  have ht1 : 0 ≤ 2 - x := by linarith
+  have ht2 : 0 ≤ x - 1 := by linarith
+  have hsum : 2 - x + (x - 1) = 1 := by ring
+  calc Real.Gamma x = Real.Gamma ((2 - x) * 1 + (x - 1) * 2) := by ring_nf
+    _ ≤ (2 - x) * Real.Gamma 1 + (x - 1) * Real.Gamma 2 :=
+        h_conv.2 h1_pos h2_pos ht1 ht2 hsum
+    _ = 1 := by rw [Real.Gamma_one, Real.Gamma_two]; ring
+
+/-- Helper: log Γ(x) ≤ x log x by induction on ⌊x⌋. -/
+private lemma log_Gamma_le_mul_log_aux :
+    ∀ n : ℕ, 2 ≤ n → ∀ x : ℝ, (n : ℝ) ≤ x → x ≤ (n : ℝ) + 1 →
+      Real.log (Real.Gamma x) ≤ x * Real.log x := by
+  intro n
+  induction n with
+  | zero => intro h; omega
+  | succ m ih =>
+    intro hm x hx_lo hx_hi
+    by_cases hm2 : m + 1 = 2
+    · -- Base case: n = 2, x ∈ [2, 3]
+      have hm_eq : m = 1 := by omega
+      subst hm_eq; push_cast at hx_lo hx_hi
+      have hx1_lo : 1 ≤ x - 1 := by linarith
+      have hx1_hi : x - 1 ≤ 2 := by linarith
+      have hΓ_le : Real.Gamma (x - 1) ≤ 1 := Gamma_le_one_of_mem_Icc hx1_lo hx1_hi
+      have hx_pos : 0 < x := by linarith
+      have hxm1_pos : 0 < x - 1 := by linarith
+      have hxm1_ne : x - 1 ≠ 0 := ne_of_gt hxm1_pos
+      have hΓ_eq : Real.Gamma x = (x - 1) * Real.Gamma (x - 1) := by
+        have := Real.Gamma_add_one hxm1_ne; rw [sub_add_cancel] at this; linarith
+      have hΓ_pos : 0 < Real.Gamma (x - 1) := Real.Gamma_pos_of_pos hxm1_pos
+      calc Real.log (Real.Gamma x)
+          = Real.log ((x - 1) * Real.Gamma (x - 1)) := by rw [hΓ_eq]
+        _ = Real.log (x - 1) + Real.log (Real.Gamma (x - 1)) :=
+            Real.log_mul hxm1_ne (ne_of_gt hΓ_pos)
+        _ ≤ Real.log (x - 1) + 0 := by gcongr; exact Real.log_nonpos hΓ_pos.le hΓ_le
+        _ = Real.log (x - 1) := add_zero _
+        _ ≤ Real.log x := Real.log_le_log hxm1_pos (by linarith)
+        _ = 1 * Real.log x := (one_mul _).symm
+        _ ≤ x * Real.log x :=
+            mul_le_mul_of_nonneg_right (by linarith) (Real.log_nonneg (by linarith))
+    · -- Inductive step: m + 1 ≥ 3, so m ≥ 2
+      have hm_ge2 : 2 ≤ m := by omega
+      have hx_ge3 : (3 : ℝ) ≤ x := by
+        have : (m + 1 : ℕ) ≥ 3 := by omega
+        exact le_trans (by exact_mod_cast this) hx_lo
+      have hx_pos : 0 < x := by linarith
+      have hxm1_pos : 0 < x - 1 := by linarith
+      have hxm1_ne : x - 1 ≠ 0 := ne_of_gt hxm1_pos
+      have hΓ_eq : Real.Gamma x = (x - 1) * Real.Gamma (x - 1) := by
+        have := Real.Gamma_add_one hxm1_ne; rw [sub_add_cancel] at this; linarith
+      have hΓ_pos : 0 < Real.Gamma (x - 1) := Real.Gamma_pos_of_pos hxm1_pos
+      have hxm1_lo : (m : ℝ) ≤ x - 1 := by push_cast at hx_lo ⊢; linarith
+      have hxm1_hi : x - 1 ≤ (m : ℝ) + 1 := by push_cast at hx_hi ⊢; linarith
+      have hih := ih hm_ge2 (x - 1) hxm1_lo hxm1_hi
+      calc Real.log (Real.Gamma x)
+          = Real.log ((x - 1) * Real.Gamma (x - 1)) := by rw [hΓ_eq]
+        _ = Real.log (x - 1) + Real.log (Real.Gamma (x - 1)) :=
+            Real.log_mul hxm1_ne (ne_of_gt hΓ_pos)
+        _ ≤ Real.log (x - 1) + (x - 1) * Real.log (x - 1) := by gcongr
+        _ = x * Real.log (x - 1) := by ring
+        _ ≤ x * Real.log x := by
+            apply mul_le_mul_of_nonneg_left _ (by linarith)
+            exact Real.log_le_log hxm1_pos (by linarith)
 
 /-- Crude bound: log Γ(x) ≤ x · log x for real x ≥ 2.
     From Stirling: Γ(x) = √(2π) · x^{x-1/2} · e^{-x} · (1 + O(1/x)).
     So log Γ(x) = (x-1/2)log x - x + (1/2)log(2π) + O(1/x) ≤ x · log x. -/
 private lemma log_Gamma_le_mul_log {x : ℝ} (hx : 2 ≤ x) :
     Real.log (Real.Gamma x) ≤ x * Real.log x := by
-  sorry
+  have hn := Nat.floor_le (by linarith : 0 ≤ x)
+  have hn_lt := Nat.lt_floor_add_one x
+  have hfl : 2 ≤ ⌊x⌋₊ := Nat.le_floor hx
+  exact log_Gamma_le_mul_log_aux ⌊x⌋₊ hfl x hn (le_of_lt hn_lt)
 
 end ArithmeticHodge.Analysis

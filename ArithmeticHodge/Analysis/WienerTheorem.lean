@@ -20,7 +20,6 @@ import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 
 set_option autoImplicit false
-set_option maxHeartbeats 6400000
 
 open MeasureTheory Complex Filter Topology Set
 open scoped NNReal ENNReal ComplexConjugate
