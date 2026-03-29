@@ -82,21 +82,37 @@
 | Category | Count | Description |
 |----------|-------|-------------|
 | PROVED from Mathlib/ZFC | ~75% | No sorry, no axiom. Verified by Lean kernel. |
-| Infrastructure sorry | 24 | Known textbook math, published proofs exist. |
+| Infrastructure sorry | 27 | Known textbook math, published proofs exist. |
 | Axiom (known math) | 3 | Stirling order, Selberg unfolding, Connes spectral |
 
 **Project builds clean: 3590 jobs, 0 errors.**
 
-## New Infrastructure Files (all sorry-free)
+### Sorry-free files (new infrastructure)
 
 | File | Content | Lines |
 |------|---------|-------|
 | `BorelCaratheodory.lean` | Wraps Mathlib's BC theorem with convenience API | ~50 |
 | `ResidueRectangle.lean` | Multi-pole residue theorem for circles + rectangle Cauchy-Goursat | ~180 |
 | `WienerTheorem.lean` | Wiener's L² ergodic theorem (Fubini + DCT + diagonal) | ~200 |
+| `SpectralPositivity.lean` | Cayley transform D→U→CFC, resolvent surjective, range dense | ~600 |
 | `ZeroSummability.lean` | Stuttered enumeration via Nat.unpair + summability transfer | ~140 |
-| `GrowthBound.lean` | Borel-Carathéodory growth bound for Weierstraß quotient | ~170 |
+| `GrowthBound.lean` | Borel-Carathéodory growth bound assembly (1 sorry in re_bound) | ~170 |
 | `Defs.lean` | Shared definitions (breaks import cycle) | ~60 |
+
+### Sorry inventory by file
+
+| File | Sorries | Key blockers |
+|------|---------|-------------|
+| ComplexStirling.lean | 5 | digamma bound, Stirling bound, crude Gamma bound |
+| ZetaProduct.lean | 7 | All blocked on Stirling + arg principle |
+| Order.lean | 5 | Abel summation, axiom (Stirling), divergence |
+| WeierstraßProduct.lean | 2 | ha_ord_eq (tprod order), enumerateCountable injectivity |
+| FourierTransform.lean | 2 | Weil positivity forward, Bombieri Thm 2 |
+| ResolventComputation.lean | 2 | Pre-existing (out of cookbook scope) |
+| CutoffHilbertSpace.lean | 1 | vacuumVector norm |
+| WeilExplicit.lean | 1 | Contour integration body |
+| GrowthBound.lean | 1 | Product lower bound (re_bound) |
+| ZeroSummability.lean | 1 | Jensen+Abel weighted summability |
 
 ## Critical Path
 
@@ -104,10 +120,18 @@
 
 | Blocker | Unblocks | Difficulty | Status |
 |---------|----------|------------|--------|
-| **Complex Stirling** | #5, #7, #9, #11 + 7 sorries | Hard | 2 sorries in ComplexStirling.lean |
-| **Abel summation** | #4, #8, #1 (summability chain) | Medium | 2 sorries in Order.lean |
-| **tprod order (ha_ord_eq)** | #8 (last WF sorry) | Medium | 1 sorry + timeout issue |
-| **𝕋→ℝ change of vars** | #17 (full spectral calculus) | Medium | Cayley built, needs mapping |
+| **Complex Stirling** | #5, #7, #9, #11 + 7 sorries | Hard | 5 sorries, all helpers proved |
+| **Abel summation** | #4, #8, #1 (summability chain) | Medium | 5 sorries in Order.lean |
+| **tprod order (ha_ord_eq)** | #8 (last WF sorry) | Medium | 1 sorry + timeout workaround needed |
+| **𝕋→ℝ change of vars** | #17 (full spectral calculus) | Medium | Cayley+CFC DONE, needs mapping |
+
+### Completed this session (Phase 1 infrastructure)
+- ✅ Borel-Carathéodory (wraps Mathlib)
+- ✅ Residue theorem for circles (multi-pole)
+- ✅ Wiener's L² ergodic theorem
+- ✅ Cayley transform → unitary → CFC connection
+- ✅ resolvent_surjective, range_dense
+- ✅ All ComplexStirling helpers (reflection formula, cosh bounds, series estimates)
 
 ### After infrastructure lands
 
