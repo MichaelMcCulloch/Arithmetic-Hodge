@@ -227,36 +227,11 @@ private lemma shift_sum_bound (s : ℂ) (N : ℕ) (him : 1 ≤ |s.im|) :
     _ = ↑N * |s.im|⁻¹ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
     _ = ↑N / |s.im| := by rw [div_eq_mul_inv]
 
-/-- Re(ψ(σ+it)) is bounded by C·log|t| for σ ∈ [1,2] and |t| ≥ 2,
-    using the MVT on log‖Γ‖ between σ and σ+1. -/
-private lemma re_digamma_bound_in_strip (t : ℝ) (ht : 2 ≤ |t|) (σ : ℝ) (hσ₁ : 1 ≤ σ) (hσ₂ : σ ≤ 2) :
-    |(Complex.digamma (↑σ + ↑t * I)).re| ≤ 3 * (Real.log |t| + 3) := by
-  -- Use MVT: ∃ c ∈ (σ, σ+1), Re(ψ(c+it)) = log‖Γ(σ+1+it)‖ - log‖Γ(σ+it)‖
-  -- Then |Re ψ(σ+it) - Re ψ(c+it)| ≤ |σ-c| · sup |Re ψ'| on the interval
-  -- But this requires second derivatives. Simpler: use the functional equation directly.
-  --
-  -- From log‖Γ(σ+1+it)‖ = log‖σ+it‖ + log‖Γ(σ+it)‖:
-  -- log‖Γ(σ+it)‖ = log‖Γ(σ+1+it)‖ - log‖σ+it‖
-  --
-  -- For σ ∈ [1,2], |t| ≥ 2: use Γ(σ+it) = (σ-1+it)·Γ(σ-1+it)·...
-  -- Actually, Re(ψ) = d/dσ log‖Γ‖, so by MVT on [σ, σ+1]:
-  -- |Re ψ(c+it)| = |log‖Γ(σ+1+it)‖ - log‖Γ(σ+it)‖| for some c.
-  -- But we want the bound AT σ, not at some c.
-  --
-  -- Simplest approach: use the recurrence + base case.
-  -- ψ(σ+it) = ψ(1+it) + Σ_{k=0}^{⌊σ⌋-1} (σ-k-1+it)⁻¹ + adjustment
-  -- Since σ ∈ [1,2], at most 1 recurrence step.
-  -- So |ψ(σ+it)| ≤ |ψ(1+it)| + 1/|t| + O(1)
-  --
-  -- For ψ(1+it) = ψ(it) + (it)⁻¹, and |ψ(it)| ...
-  -- This still requires a base case. Use the log‖Γ‖ approach instead.
-  sorry
 
-/-- Bound on ‖ψ(s)‖ for Re(s) ∈ [1, 2] and |Im s| ≥ 2 via the partial fraction
-    series. Uses: ψ(s) = -γ + Σ_{n=0}^{N} (1/(n+1) - 1/(s+n)) + ψ(s+N+1) - ψ(N+2).
-    The partial sum gives O(log|t|), the remainder → 0. -/
-private lemma digamma_bound_base_strip (t : ℝ) (ht : 2 ≤ |t|) (σ : ℝ) (hσ₁ : 1 ≤ σ) (hσ₂ : σ ≤ 2) :
-    ‖Complex.digamma (↑σ + ↑t * I)‖ ≤ 10 * (Real.log |t| + 3) := by
+/-- Bound on ‖ψ(s)‖ for Re(s) ≥ 1 and |Im s| ≥ 2.
+    Uses shift to large real part + harmonic sum bound. -/
+private lemma digamma_bound_re_ge_one (σ : ℝ) (t : ℝ) (hσ : 1 ≤ σ) (ht : 2 ≤ |t|) :
+    ‖Complex.digamma (↑σ + ↑t * I)‖ ≤ (2 * σ + 10) * (Real.log |t| + 3) := by
   -- The digamma series: ψ(s) = lim_{N→∞} [log N - Σ_{j=0}^{N} 1/(s+j)]
   -- = -γ + Σ_{n≥0} (1/(n+1) - 1/(s+n))
   --
@@ -289,12 +264,33 @@ private lemma digamma_bound_base_strip (t : ℝ) (ht : 2 ≤ |t|) (σ : ℝ) (h�
 theorem digamma_growth_bound (σ₁ σ₂ : ℝ) :
     ∃ C, 0 < C ∧ ∀ s : ℂ, σ₁ ≤ s.re → s.re ≤ σ₂ → 2 ≤ |s.im| →
       ‖Complex.digamma s‖ ≤ C * Real.log |s.im| := by
-  -- Proof outline (Titchmarsh, Theory of Functions §4.4):
-  -- 1. Shift s by N steps to Re ∈ [1,2] using digamma_shift
-  -- 2. Bound shift sum by N/|Im s| ≤ N/2 using shift_sum_bound
-  -- 3. Bound ψ in base strip by O(log|t|) using digamma_bound_base_strip
-  -- 4. Triangle inequality: ‖ψ(s)‖ ≤ O(log|t|) + O(1) = O(log|t|)
-  sorry
+  -- Shift right by N to get Re(s+N) ≥ 1, then apply digamma_bound_re_ge_one
+  set N : ℕ := max 1 ⌈1 - σ₁⌉₊
+  -- C must absorb: base bound (2·(σ₂+N)+10)·(log|t|+3) + shift sum N/|t|
+  -- Since log|t| ≥ log 2 > 0, we need C·log|t| ≥ (2σ₂+2N+10)·(log|t|+3) + N/2
+  -- Take C = (2|σ₂|+2N+10)·4 + N (generous to avoid edge cases)
+  set C : ℝ := (2 * |σ₂| + 2 * ↑N + 10) * 4 + ↑N + 1
+  refine ⟨C, by positivity, fun s hσ₁ hσ₂ him => ?_⟩
+  have ht_pos : 0 < |s.im| := by linarith
+  have hlog_pos : 0 < Real.log |s.im| := Real.log_pos (by linarith)
+  -- s is not at a non-positive integer
+  have him_ne : ∀ m : ℕ, s ≠ -↑m := by
+    intro m h; have := congr_arg Complex.im h; simp at this
+    rw [this, abs_zero] at him; linarith
+  -- All shifted points avoid non-positive integers
+  have hshift_ne : ∀ k : ℕ, k < N → ∀ m : ℕ, s + ↑k ≠ -↑m := by
+    intro k _ m h; have := congr_arg Complex.im h; simp at this
+    rw [this, abs_zero] at him; linarith
+  -- Re(s+N) ≥ 1
+  have hre_shifted : 1 ≤ (s + ↑N).re := by
+    simp only [add_re, natCast_re]
+    have : (1 : ℝ) - σ₁ ≤ ↑N := by
+      calc (1 : ℝ) - σ₁ ≤ max (1 - σ₁) 0 := le_max_left _ _
+        _ ≤ ↑⌈max (1 - σ₁) 0⌉₊ := Nat.le_ceil _
+        _ ≤ ↑(max 1 ⌈1 - σ₁⌉₊) := by
+          push_cast; sorry -- ceil/max arithmetic
+    linarith
+  sorry -- Assembly: triangle ineq with digamma_shift + shift_sum_bound + digamma_bound_re_ge_one
 
 /-! ## Complex Stirling bound
 
