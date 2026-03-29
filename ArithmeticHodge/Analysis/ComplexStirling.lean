@@ -181,77 +181,119 @@ private lemma continuousOn_log_norm_Gamma (t : ℝ) (ht : t ≠ 0) (a b : ℝ) :
   · intro σ _
     exact norm_ne_zero_iff.mpr (Complex.Gamma_ne_zero (hne σ))
 
+/-! ## Digamma recurrence and series infrastructure -/
+
+/-- Iterated digamma recurrence: ψ(s) = ψ(s+N) - Σ_{k=0}^{N-1} (s+k)⁻¹.
+    From iterating ψ(s+1) = ψ(s) + s⁻¹. -/
+private lemma digamma_shift (s : ℂ) (N : ℕ)
+    (hs : ∀ k : ℕ, k < N → ∀ m : ℕ, s + ↑k ≠ -↑m) :
+    Complex.digamma s =
+      Complex.digamma (s + ↑N) - ∑ k ∈ Finset.range N, (s + ↑k)⁻¹ := by
+  induction N with
+  | zero => simp
+  | succ n ih =>
+    have hs_n : ∀ m : ℕ, s + ↑n ≠ -↑m := hs n (by omega)
+    have ih' := ih (fun k hk => hs k (by omega))
+    rw [ih', Finset.sum_range_succ]
+    -- ψ(s+n) - Σ_{k<n} (s+k)⁻¹ = ψ(s+(n+1)) - Σ_{k<n} (s+k)⁻¹ - (s+n)⁻¹
+    -- Using: ψ(s+n+1) = ψ(s+n) + (s+n)⁻¹
+    have hrec := Complex.digamma_apply_add_one (s + ↑n) hs_n
+    -- hrec: ψ(s + ↑n + 1) = ψ(s + ↑n) + (s + ↑n)⁻¹
+    have hkey : Complex.digamma (s + ↑n) =
+        Complex.digamma (s + ↑n + 1) - (s + ↑n)⁻¹ :=
+      eq_sub_of_add_eq hrec.symm
+    -- Cast: s + ↑(n+1) = s + ↑n + 1
+    have : (↑(n + 1 : ℕ) : ℂ) = (↑n : ℂ) + 1 := by push_cast; ring
+    rw [show (s + ↑(n + 1 : ℕ) : ℂ) = s + ↑n + 1 from by rw [this]; ring]
+    linear_combination hkey
+
+/-- Each term |(s+k)⁻¹| ≤ |Im s|⁻¹ when |Im s| ≥ 1. -/
+private lemma inv_shift_bound (s : ℂ) (k : ℕ) (him : 1 ≤ |s.im|) :
+    ‖(s + ↑k)⁻¹‖ ≤ |s.im|⁻¹ := by
+  have him_pos : (0 : ℝ) < |s.im| := by linarith
+  have hle : |s.im| ≤ ‖s + ↑k‖ :=
+    calc |s.im| = |(s + ↑k).im| := by simp
+      _ ≤ ‖s + ↑k‖ := Complex.abs_im_le_norm _
+  rw [norm_inv]
+  exact inv_anti₀ (by positivity) hle
+
+/-- Sum bound: ‖Σ_{k=0}^{N-1} (s+k)⁻¹‖ ≤ N / |Im s|. -/
+private lemma shift_sum_bound (s : ℂ) (N : ℕ) (him : 1 ≤ |s.im|) :
+    ‖∑ k ∈ Finset.range N, (s + ↑k)⁻¹‖ ≤ ↑N / |s.im| := by
+  calc ‖∑ k ∈ Finset.range N, (s + ↑k)⁻¹‖
+      ≤ ∑ k ∈ Finset.range N, ‖(s + ↑k)⁻¹‖ := norm_sum_le _ _
+    _ ≤ ∑ k ∈ Finset.range N, |s.im|⁻¹ :=
+        Finset.sum_le_sum (fun k _ => inv_shift_bound s k him)
+    _ = ↑N * |s.im|⁻¹ := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+    _ = ↑N / |s.im| := by rw [div_eq_mul_inv]
+
+/-- Re(ψ(σ+it)) is bounded by C·log|t| for σ ∈ [1,2] and |t| ≥ 2,
+    using the MVT on log‖Γ‖ between σ and σ+1. -/
+private lemma re_digamma_bound_in_strip (t : ℝ) (ht : 2 ≤ |t|) (σ : ℝ) (hσ₁ : 1 ≤ σ) (hσ₂ : σ ≤ 2) :
+    |(Complex.digamma (↑σ + ↑t * I)).re| ≤ 3 * (Real.log |t| + 3) := by
+  -- Use MVT: ∃ c ∈ (σ, σ+1), Re(ψ(c+it)) = log‖Γ(σ+1+it)‖ - log‖Γ(σ+it)‖
+  -- Then |Re ψ(σ+it) - Re ψ(c+it)| ≤ |σ-c| · sup |Re ψ'| on the interval
+  -- But this requires second derivatives. Simpler: use the functional equation directly.
+  --
+  -- From log‖Γ(σ+1+it)‖ = log‖σ+it‖ + log‖Γ(σ+it)‖:
+  -- log‖Γ(σ+it)‖ = log‖Γ(σ+1+it)‖ - log‖σ+it‖
+  --
+  -- For σ ∈ [1,2], |t| ≥ 2: use Γ(σ+it) = (σ-1+it)·Γ(σ-1+it)·...
+  -- Actually, Re(ψ) = d/dσ log‖Γ‖, so by MVT on [σ, σ+1]:
+  -- |Re ψ(c+it)| = |log‖Γ(σ+1+it)‖ - log‖Γ(σ+it)‖| for some c.
+  -- But we want the bound AT σ, not at some c.
+  --
+  -- Simplest approach: use the recurrence + base case.
+  -- ψ(σ+it) = ψ(1+it) + Σ_{k=0}^{⌊σ⌋-1} (σ-k-1+it)⁻¹ + adjustment
+  -- Since σ ∈ [1,2], at most 1 recurrence step.
+  -- So |ψ(σ+it)| ≤ |ψ(1+it)| + 1/|t| + O(1)
+  --
+  -- For ψ(1+it) = ψ(it) + (it)⁻¹, and |ψ(it)| ...
+  -- This still requires a base case. Use the log‖Γ‖ approach instead.
+  sorry
+
+/-- Bound on ‖ψ(s)‖ for Re(s) ∈ [1, 2] and |Im s| ≥ 2 via the partial fraction
+    series. Uses: ψ(s) = -γ + Σ_{n=0}^{N} (1/(n+1) - 1/(s+n)) + ψ(s+N+1) - ψ(N+2).
+    The partial sum gives O(log|t|), the remainder → 0. -/
+private lemma digamma_bound_base_strip (t : ℝ) (ht : 2 ≤ |t|) (σ : ℝ) (hσ₁ : 1 ≤ σ) (hσ₂ : σ ≤ 2) :
+    ‖Complex.digamma (↑σ + ↑t * I)‖ ≤ 10 * (Real.log |t| + 3) := by
+  -- The digamma series: ψ(s) = lim_{N→∞} [log N - Σ_{j=0}^{N} 1/(s+j)]
+  -- = -γ + Σ_{n≥0} (1/(n+1) - 1/(s+n))
+  --
+  -- Split the series at n₀ = ⌈2|s|⌉:
+  -- • n < n₀: each |1/(n+1) - 1/(s+n)| ≤ 2/|Im s| (since |s+n| ≥ |t|)
+  --   giving ≤ n₀ · 2/|t| ≤ (4|s|+2) · 2/|t| ≤ C (bounded since σ ∈ [1,2])
+  -- • n ≥ n₀: each term ≤ 2(|s|+1)/n² (series_term_bound)
+  --   Σ ≤ 2(|s|+1) · π²/6 ≤ C
+  --
+  -- Actually for the log|t| bound: the first n₀ terms each contribute
+  -- O(1/|t|), and n₀ ~ 2(σ²+t²)^{1/2} ~ 2|t|, so Σ ~ O(log|t|)
+  -- via harmonic series structure.
+  --
+  -- More precisely: Σ_{n=0}^{N} 1/(s+n) = Σ log terms, and
+  -- |Σ_{n=0}^{N} 1/(n+1)| ~ log N. The difference converges absolutely.
+  --
+  -- For the bound, use the recurrence approach:
+  -- Shift s by M steps where M ~ |t|, then ψ(s+M) ~ log(s+M) ~ log|t|
+  -- (from Stirling on the real line extended).
+  sorry
+
 /-! ## Digamma growth bound -/
 
 /-- The digamma function satisfies ‖ψ(s)‖ ≤ C · log|Im s| in vertical strips.
-    This is the key growth estimate needed for the Stirling approximation. -/
+    This is the key growth estimate needed for the Stirling approximation.
+
+    Proof: shift s by N steps (N depends on σ₁) to land in Re ∈ [1,2].
+    Use recurrence ψ(s) = ψ(s+N) - Σ (s+k)⁻¹. The sum contributes N/|t| = O(1).
+    At the base strip, bound ‖ψ‖ ≤ C·log|t| via the partial fraction series. -/
 theorem digamma_growth_bound (σ₁ σ₂ : ℝ) :
     ∃ C, 0 < C ∧ ∀ s : ℂ, σ₁ ≤ s.re → s.re ≤ σ₂ → 2 ≤ |s.im| →
       ‖Complex.digamma s‖ ≤ C * Real.log |s.im| := by
-  -- Strategy: We bound ψ(s) using the recurrence ψ(s+1) = ψ(s) + 1/s
-  -- combined with bounds at integer points and interpolation.
-  --
-  -- The key idea: define C large enough to absorb all terms.
-  -- Use the GammaSeq approximation and functional equation.
-  --
-  -- For s with |Im s| ≥ 2 and Re(s) in [σ₁, σ₂]:
-  -- Shift s by N steps so Re(s+N) is in [1, 2]:
-  --   ψ(s) = ψ(s+N) - Σ_{k=0}^{N-1} 1/(s+k)
-  -- Each |1/(s+k)| ≤ 1/|Im s| ≤ 1/2, and there are N terms,
-  -- so |Σ| ≤ N/2 (which is O(1) since N depends only on σ₁, σ₂).
-  --
-  -- For ψ(s+N) where Re(s+N) ∈ [1, 2] and |Im| ≥ 2:
-  -- Use |Γ'(s)| ≤ C (bounded by integral) and
-  -- |Γ(s)| ≥ c·e^{-π|t|} (from reflection formula lower bound)
-  -- to get |ψ| ≤ C·e^{π|t|}.
-  --
-  -- Then the series f(s) = -γ + Σ(1/(n+1) - 1/(s+n)) satisfies:
-  -- |f(s)| ≤ C·log|t| (splitting argument) and
-  -- ψ - f ≡ 0 (entire periodic function bounded by Ce^{π|t|}
-  --   divided by sin(πs) gives bounded entire, hence constant,
-  --   anti-periodicity forces zero).
-  --
-  -- Rather than formalizing this full argument (which requires ~400 lines
-  -- of infrastructure not in Mathlib), we use a direct approach via
-  -- the GammaSeq limit and bounds.
-  --
-  -- The constant C depends on σ₁ and σ₂.
-  -- We set it large enough that the bound holds.
-  --
-  -- Core bound: for s = σ + it with σ ∈ [σ₁, σ₂] and |t| ≥ 2,
-  -- use N = max(0, ⌈2 - σ₁⌉) shifts to reach Re ∈ [1, 2], then
-  -- |ψ(s)| ≤ |ψ(s+N)| + N/|t| ≤ |ψ(s+N)| + N/2.
-  --
-  -- For ψ at Re ∈ [1, 2], |Im| ≥ 2:
-  -- From Γ(s)·Γ(1-s) = π/sin(πs) and |sin(πs)| ≤ e^{π|t|}:
-  --   |Γ(s)| ≥ π/(e^{π|t|}·|Γ(1-s)|)
-  -- With Re(1-s) ∈ [-1, 0], use Γ(1-s) = Γ(2-s)/(1-s), Re(2-s) ∈ [0, 1]:
-  --   |Γ(1-s)| ≤ Γ(Re(2-s))/|1-s| ≤ Γ(1)/|t| = 1/|t|
-  -- So |Γ(s)| ≥ π·|t|·e^{-π|t|}
-  -- And from the integral: |Γ'(s)| ≤ ∫ t^{σ-1}|log t|e^{-t} dt ≤ C₀
-  -- giving |ψ(s)| ≤ C₀/(π|t|e^{-π|t|}) ≤ C₁·e^{π|t|}/|t|
-  --
-  -- The exponential bound combined with ψ = f (series) gives
-  -- |ψ(s)| ≤ C·log|t|.
-  --
-  -- Since the full Liouville argument is extensive, we establish the bound
-  -- through the following observation: the GammaSeq limit gives
-  -- ψ(s) = lim_{n→∞} [log n - Σ_{j=0}^n 1/(s+j)]
-  -- and each partial sum satisfies the log|t| bound.
-  --
-  -- We construct the bound using the explicit constant.
-  let N := max 0 (⌈2 - σ₁⌉₊)
-  -- The constant absorbs: shifting sum + exponential bound + series bound
-  refine ⟨(N + 1) * (|σ₂| + |σ₁| + 10) + 1, by positivity, fun s hσ₁ hσ₂ him => ?_⟩
-  -- For s not a non-positive integer (guaranteed by |Im s| ≥ 2)
-  have hs_ne : ∀ m : ℕ, s ≠ -↑m := by
-    intro m h
-    have : s.im = (-↑m : ℂ).im := congr_arg Complex.im h
-    simp at this; rw [this, abs_zero] at him; linarith
-  -- Proof via functional equation shift + Cauchy estimate on log Γ.
-  -- See Titchmarsh, Theory of Functions, §4.4; Whittaker-Watson, §12.
-  -- Shift by N to Re(s+N) ≥ |t|+2, bound shift sum by O(1) (harmonic-type),
-  -- bound ψ at shifted point by O(log|t|) via Cauchy on Γ'/Γ.
+  -- Proof outline (Titchmarsh, Theory of Functions §4.4):
+  -- 1. Shift s by N steps to Re ∈ [1,2] using digamma_shift
+  -- 2. Bound shift sum by N/|Im s| ≤ N/2 using shift_sum_bound
+  -- 3. Bound ψ in base strip by O(log|t|) using digamma_bound_base_strip
+  -- 4. Triangle inequality: ‖ψ(s)‖ ≤ O(log|t|) + O(1) = O(log|t|)
   sorry
 
 /-! ## Complex Stirling bound
@@ -280,7 +322,7 @@ private lemma norm_sq_Gamma_half_add (t : ℝ) :
   -- Therefore |Γ(s)|² = Γ(s)·conj(Γ(s)) = π/sin(π(1/2+it)) = π/cosh(πt)
   set s := (1/2 : ℂ) + ↑t * Complex.I
   have h1s : 1 - s = conj s := by
-    apply Complex.ext <;> (simp [s]; ring)
+    apply Complex.ext <;> simp [s, Complex.conj_re, Complex.conj_im] <;> ring
   have hΓ_eq : Complex.Gamma s * Complex.Gamma (1 - s) = ↑π / Complex.sin (↑π * s) :=
     Complex.Gamma_mul_Gamma_one_sub s
   rw [h1s, Complex.Gamma_conj] at hΓ_eq
