@@ -17,6 +17,7 @@ import Mathlib.Analysis.SpecialFunctions.Stirling
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
+import Mathlib.Analysis.Complex.ExponentialBounds
 import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Complex.PhragmenLindelof
 import Mathlib.Analysis.Complex.RemovableSingularity
@@ -269,7 +270,7 @@ theorem digamma_growth_bound (σ₁ σ₂ : ℝ) :
   -- C must absorb: base bound (2·(σ₂+N)+10)·(log|t|+3) + shift sum N/|t|
   -- Since log|t| ≥ log 2 > 0, we need C·log|t| ≥ (2σ₂+2N+10)·(log|t|+3) + N/2
   -- Take C = (2|σ₂|+2N+10)·4 + N (generous to avoid edge cases)
-  set C : ℝ := (2 * |σ₂| + 2 * ↑N + 10) * 4 + ↑N + 1
+  set C : ℝ := (2 * |σ₂| + 2 * ↑N + 10) * 8 + ↑N + 1
   refine ⟨C, by positivity, fun s hσ₁ hσ₂ him => ?_⟩
   have ht_pos : 0 < |s.im| := by linarith
   have hlog_pos : 0 < Real.log |s.im| := Real.log_pos (by linarith)
@@ -288,9 +289,78 @@ theorem digamma_growth_bound (σ₁ σ₂ : ℝ) :
       calc (1 : ℝ) - σ₁ ≤ max (1 - σ₁) 0 := le_max_left _ _
         _ ≤ ↑⌈max (1 - σ₁) 0⌉₊ := Nat.le_ceil _
         _ ≤ ↑(max 1 ⌈1 - σ₁⌉₊) := by
-          push_cast; sorry -- ceil/max arithmetic
+          have : ⌈max (1 - σ₁) 0⌉₊ = ⌈1 - σ₁⌉₊ := by
+            rcases le_or_gt (1 - σ₁) 0 with h | h
+            · simp [max_eq_right h, Nat.ceil_eq_zero.mpr h]
+            · rw [max_eq_left h.le]
+          rw [this]; exact_mod_cast le_max_right 1 ⌈1 - σ₁⌉₊
     linarith
-  sorry -- Assembly: triangle ineq with digamma_shift + shift_sum_bound + digamma_bound_re_ge_one
+  -- Write s = σ + it, apply digamma_shift
+  have him1 : 1 ≤ |s.im| := by linarith
+  have hshift := digamma_shift s N hshift_ne
+  -- Im(s+N) = Im(s)
+  have him_shifted : (s + ↑N).im = s.im := by simp
+  -- s+N = ↑(s+N).re + ↑s.im * I
+  have hs_eq : s + ↑N = ↑(s + ↑N).re + ↑s.im * I := by
+    apply Complex.ext <;> simp
+  -- Bound ψ(s+N) via digamma_bound_re_ge_one
+  have hbase : ‖Complex.digamma (s + ↑N)‖ ≤
+      (2 * (s + ↑N).re + 10) * (Real.log |s.im| + 3) := by
+    have h := digamma_bound_re_ge_one (s + ↑N).re s.im hre_shifted him
+    -- h : ‖ψ(↑re + ↑im * I)‖ ≤ ..., need ‖ψ(s+N)‖ ≤ ...
+    rw [show (↑(s + ↑N).re : ℂ) + ↑s.im * I = s + ↑N from hs_eq.symm] at h
+    exact h
+  -- Bound the sum
+  have hsum := shift_sum_bound s N him1
+  -- log bounds
+  have hlog2 : Real.log 2 ≤ Real.log |s.im| := Real.log_le_log (by norm_num) him
+  have hlog2_pos : (0 : ℝ) < Real.log 2 := Real.log_pos (by norm_num)
+  have hlog_half : (1 : ℝ) / 2 < Real.log |s.im| := by
+    calc (1:ℝ)/2
+        = Real.log (Real.exp (1/2)) := (Real.log_exp _).symm
+      _ < Real.log 2 := by
+          apply Real.log_lt_log (Real.exp_pos _)
+          have he := Real.exp_one_lt_three
+          have hsq : Real.exp (1/2) * Real.exp (1/2) = Real.exp 1 := by
+            rw [← Real.exp_add]; norm_num
+          nlinarith [sq_nonneg (Real.exp (1/2))]
+      _ ≤ Real.log |s.im| := hlog2
+  -- 3 ≤ 6 · log|s.im| since log|s.im| > 1/2
+  have h3 : 3 ≤ 6 * Real.log |s.im| := by nlinarith
+  -- N/|s.im| ≤ N * log|s.im|
+  have hN_div : (↑N : ℝ) / |s.im| ≤ ↑N * Real.log |s.im| := by
+    calc (↑N : ℝ) / |s.im| ≤ ↑N / 2 := by gcongr
+      _ = ↑N * (1 / 2) := by ring
+      _ ≤ ↑N * Real.log |s.im| :=
+          mul_le_mul_of_nonneg_left (le_of_lt hlog_half) (Nat.cast_nonneg N)
+  -- σ₂ + N ≥ 1 (since Re(s+N) ≥ 1 and Re(s) ≤ σ₂)
+  have hσN : (1 : ℝ) ≤ σ₂ + ↑N := by
+    have : (s + ↑N).re = s.re + ↑N := by simp
+    linarith
+  -- Assembly via triangle inequality
+  rw [hshift]
+  -- Intermediate bound
+  have hre_le : (s + ↑N).re ≤ σ₂ + ↑N := by
+    simp only [Complex.add_re, Complex.natCast_re]; linarith
+  have hstep : (2 * (s + ↑N).re + 10) * (Real.log |s.im| + 3) + ↑N / |s.im| ≤
+      ((2 * σ₂ + 2 * ↑N + 10) * 7 + ↑N) * Real.log |s.im| := by
+    have hA_pos : (0 : ℝ) ≤ 2 * (σ₂ + ↑N) + 10 := by linarith
+    -- (s+N).re ≤ σ₂+N, so 2*(s+N).re + 10 ≤ 2*(σ₂+N) + 10
+    have h1 : 2 * (s + ↑N).re + 10 ≤ 2 * (σ₂ + ↑N) + 10 := by linarith
+    -- log + 3 ≤ 7*log since 3 ≤ 6*log (as log > 1/2)
+    have h2 : Real.log |s.im| + 3 ≤ 7 * Real.log |s.im| := by nlinarith
+    -- 2*(s+N).re + 10 ≥ 12 > 0
+    have h3' : (0 : ℝ) ≤ 2 * (s + ↑N).re + 10 := by linarith [hre_shifted]
+    nlinarith [hN_div, mul_le_mul h1 h2 (by nlinarith) hA_pos]
+  calc ‖Complex.digamma (s + ↑N) - ∑ k ∈ Finset.range N, (s + ↑k)⁻¹‖
+      ≤ ‖Complex.digamma (s + ↑N)‖ + ‖∑ k ∈ Finset.range N, (s + ↑k)⁻¹‖ := norm_sub_le _ _
+    _ ≤ (2 * (s + ↑N).re + 10) * (Real.log |s.im| + 3) + ↑N / |s.im| :=
+        add_le_add hbase hsum
+    _ ≤ ((2 * σ₂ + 2 * ↑N + 10) * 7 + ↑N) * Real.log |s.im| := hstep
+    _ ≤ C * Real.log |s.im| := by
+        apply mul_le_mul_of_nonneg_right _ (le_of_lt hlog_pos)
+        show _ ≤ (2 * |σ₂| + 2 * ↑N + 10) * 8 + ↑N + 1
+        nlinarith [le_abs_self σ₂, abs_nonneg σ₂]
 
 /-! ## Complex Stirling bound
 
