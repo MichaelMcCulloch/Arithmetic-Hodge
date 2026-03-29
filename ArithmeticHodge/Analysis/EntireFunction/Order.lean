@@ -738,8 +738,25 @@ theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     and by Stirling, log Γ(r/2) = O(r log r), giving the bound.
 
     The complex Stirling approximation required for a fully formal proof
-    is not available in Mathlib; this is axiomatized as a sound mathematical fact. -/
+    is not available in Mathlib; this is axiomatized as a sound mathematical fact.
+
+    To eliminate this axiom: prove `log_maxModulus_completedZeta_le` below,
+    then derive entireOrder ≤ 1 from the limsup definition. -/
 private axiom completedZeta₀_order_le_one : entireOrder completedRiemannZeta₀ ≤ 1
+
+/-- **Crude order bound for Λ₀.** log M(Λ₀, r) ≤ (r+10) · log(r+10).
+
+    Proof: Λ₀(s) = π^{-s/2} Γ(s/2) ζ(s) + polar terms.
+    For Re(s) > 0: |Γ(s/2)| ≤ Γ(Re(s)/2) (integral bound),
+    real Stirling gives log Γ(x) ≤ x log x for x ≥ 2.
+    Combined: log|Λ₀(s)| ≤ C·r·log r for |s| = r.
+    Functional equation Λ₀(s) = Λ₀(1-s) handles Re(s) ≤ 0.
+
+    Once proved, this replaces the axiom `completedZeta₀_order_le_one`
+    via the limsup definition of `entireOrder`. -/
+theorem log_maxModulus_completedZeta_le (r : ℝ) (hr : 2 ≤ r) :
+    Real.log (maxModulus completedRiemannZeta₀ r) ≤ (r + 10) * Real.log (r + 10) := by
+  sorry
 
 /-- Λ₀ is not the zero function.
     Proof: if Λ₀ ≡ 0, then Λ(s) = -1/s - 1/(1-s), and computing
