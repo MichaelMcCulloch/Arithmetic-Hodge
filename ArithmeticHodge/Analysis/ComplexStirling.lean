@@ -24,7 +24,6 @@ import Mathlib.Analysis.Complex.Trigonometric
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
-import ArithmeticHodge.Analysis.EntireFunction.Defs
 
 open Complex Real Filter Topology MeasureTheory Set Finset
 open scoped NNReal ComplexConjugate
@@ -43,7 +42,7 @@ private lemma log_abs_im_pos {t : ℝ} (ht : 2 ≤ |t|) : 0 < Real.log |t| :=
 private lemma series_term_eq (s : ℂ) (n : ℕ) (hs : s + ↑n ≠ 0) :
     (1 : ℂ) / (↑n + 1) - 1 / (s + ↑n) =
     (s - 1) / ((↑n + 1) * (s + ↑n)) := by
-  have h1 : (↑n : ℂ) + 1 ≠ 0 := by push_cast; exact_mod_cast Nat.succ_ne_zero n
+  have h1 : (↑n : ℂ) + 1 ≠ 0 := by exact_mod_cast Nat.succ_ne_zero n
   field_simp; ring
 
 /-- The series terms are O(1/n²) for n large relative to |s|. -/
@@ -62,7 +61,7 @@ private lemma series_term_bound (s : ℂ) (n : ℕ) (hn : (n : ℝ) ≥ 2 * ‖s
         _ ≤ ‖s + ↑n‖ + ‖-s‖ := norm_add_le _ _
         _ = ‖s + ↑n‖ + ‖s‖ := by rw [norm_neg]
     have h2 : ‖(↑n : ℂ)‖ = (n : ℝ) := by
-      simp [Complex.norm_natCast]
+      simp
     linarith
   have h_sn_ne : s + ↑n ≠ 0 := by
     intro h; rw [h, norm_zero] at h_sn; linarith
@@ -264,8 +263,7 @@ private lemma log_norm_Gamma_half_approx (t : ℝ) (ht : 2 ≤ |t|) :
   have hΓ_pos : 0 < ‖Complex.Gamma s‖ := by
     rw [norm_pos_iff]
     apply Complex.Gamma_ne_zero
-    intro m
-    intro h
+    intro m h
     have : s.im = (-↑m : ℂ).im := congr_arg Complex.im h
     simp [s] at this
     rw [this, abs_zero] at ht; linarith
@@ -371,20 +369,6 @@ private lemma norm_Gamma_le_Gamma_re {s : ℂ} (hs : 0 < s.re) :
     So log Γ(x) = (x-1/2)log x - x + (1/2)log(2π) + O(1/x) ≤ x · log x. -/
 private lemma log_Gamma_le_mul_log {x : ℝ} (hx : 2 ≤ x) :
     Real.log (Real.Gamma x) ≤ x * Real.log x := by
-  sorry
-
-/-- **Crude order bound for the completed zeta function.**
-
-    log M(Λ₀, r) = O(r · log r), hence entireOrder Λ₀ ≤ 1.
-
-    This avoids the sharp Stirling approximation by using only:
-    - |Γ(s)| ≤ Γ(Re(s)) for Re(s) > 0
-    - Real Stirling: log Γ(x) ≤ x · log x for x ≥ 2
-    - Functional equation: Λ₀(s) = Λ₀(1-s)
-    - ζ convergence: |ζ(s)| ≤ C for Re(s) ≥ 2 -/
-theorem log_maxModulus_completedZeta_le (r : ℝ) (hr : 2 ≤ r) :
-    Real.log (ArithmeticHodge.Analysis.EntireFunction.maxModulus completedRiemannZeta₀ r) ≤
-      (r + 10) * Real.log (r + 10) := by
   sorry
 
 end ArithmeticHodge.Analysis
