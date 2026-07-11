@@ -952,6 +952,34 @@ theorem cutoffEigenvalueSet_bounded (Λ : ℝ) (hΛ : 0 < Λ)
   rw [show r = 0 from by exact_mod_cast hr0, abs_zero]
   exact le_of_lt hΛ
 
+/-- Every eigenvalue of the current cutoff generator is zero.
+
+    This is not the desired arithmetic spectral realization: it records the
+    present definition `cutoffKoopmanOp = id`.  Keeping the theorem explicit
+    prevents later arguments from attributing nonzero spectral information to
+    that placeholder model. -/
+theorem cutoffEigenvalueSet_member_eq_zero (Λ r : ℝ)
+    (hr : r ∈ cutoffEigenvalueSet X Λ) : r = 0 := by
+  obtain ⟨x, hxne, heig⟩ := hr
+  have hgen_zero : (cutoffGenerator X Λ).toFun x = 0 :=
+    generatorOp_id_eq_zero x
+  rw [hgen_zero] at heig
+  have hr0 : (r : ℂ) = 0 := by
+    by_contra hr_ne
+    exact hxne (smul_eq_zero.mp heig.symm |>.resolve_left hr_ne)
+  exact_mod_cast hr0
+
+/-- The enumerated cutoff eigenvalue sequence is identically zero in the
+    current identity-Koopman model. -/
+theorem cutoffEigenvaluesOf_eq_zero (Λ : ℝ) (i : ℕ) :
+    cutoffEigenvaluesOf X Λ i = 0 := by
+  have hcount := cutoffEigenvalueSet_countable X Λ
+  show enumerateCountableReals (cutoffEigenvalueSet X Λ) hcount i = 0
+  rcases enumerateCountableReals_mem_or_zero (cutoffEigenvalueSet X Λ) hcount i with
+    hmem | hzero
+  · exact cutoffEigenvalueSet_member_eq_zero X Λ _ hmem
+  · exact hzero
+
 /-- Compact domain spectral theory: eigenvalues bounded by cutoff scale.
 
     Each cutoffEigenvaluesOf value is either an eigenvalue from cutoffEigenvalueSet
@@ -981,15 +1009,17 @@ theorem eigenvalues_bounded_by_cutoff (Λ : ℝ) (hΛ : 0 < Λ) (i : ℕ) :
     contributing to ζ(1 + iτ) for some real τ. If ζ(1 + iτ) ≠ 0
     for all τ, no such boundary eigenvalue can exist.
 
-    This axiom encapsulates the deep arithmetic input: the spectral
-    realization of zeta zeros as eigenvalues of the scaling generator
-    on the adèle class space (Connes' trace formula). -/
-axiom boundary_eigenvalue_implies_zeta_zero
+    In the current identity-Koopman model the premise is impossible, because
+    `cutoffEigenvaluesOf_eq_zero` proves every eigenvalue is zero.  Thus this
+    theorem is vacuous; a non-vacuous spectral-zeta correspondence still
+    requires replacing `cutoffKoopmanOp` by the genuine scaling action. -/
+theorem boundary_eigenvalue_implies_zeta_zero
     (X : Type*) [Adelic.AdeleClassSpaceData X]
-    (Λ : ℝ) (hΛ : 0 < Λ) (i : ℕ)
+    (Λ : ℝ) (_hΛ : 0 < Λ) (i : ℕ)
     (hne : cutoffEigenvaluesOf X Λ i ≠ 0)
-    (hbdy : |cutoffEigenvaluesOf X Λ i| = Λ) :
-    ∃ s : ℂ, 1 ≤ s.re ∧ riemannZeta s = 0
+    (_hbdy : |cutoffEigenvaluesOf X Λ i| = Λ) :
+    ∃ s : ℂ, 1 ≤ s.re ∧ riemannZeta s = 0 := by
+  exact (hne (cutoffEigenvaluesOf_eq_zero X Λ i)).elim
 
 /-- PNT implication: no nonzero eigenvalue sits at the boundary |λ| = Λ.
     ζ(1+it) ≠ 0 means a boundary eigenvalue would give a zeta zero on Re(s)=1.
