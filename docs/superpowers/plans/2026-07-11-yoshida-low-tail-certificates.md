@@ -237,6 +237,100 @@ end ArithmeticHodge.Analysis
   axiom-audit, inspect the exact two-file diff, and commit as
   `formalize coercive Riesz corrections`.
 
+### Task 4: Complex Hermitian coercivity through real Lax--Milgram
+
+**Files:**
+
+- Create: `ArithmeticHodge/Analysis/ComplexCoerciveRieszCorrection.lean`
+- Modify: `ArithmeticHodge.lean`
+- Test: `ComplexCoerciveRieszCorrectionScratch.lean` (temporary; delete before
+  commit)
+
+**Imports:**
+
+```lean
+import ArithmeticHodge.Analysis.CoerciveRieszCorrection
+```
+
+**Produces in `ArithmeticHodge.Analysis`:**
+
+```lean
+noncomputable def complexToRealForm
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    (B : E →L⋆[ℂ] E →L[ℂ] ℂ) : E →L[ℝ] E →L[ℝ] ℝ
+
+@[simp] theorem complexToRealForm_apply
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    (B : E →L⋆[ℂ] E →L[ℂ] ℂ) (x y : E) :
+    complexToRealForm B x y = (B x y).re
+
+theorem complexToRealForm_isCoercive
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    (B : E →L⋆[ℂ] E →L[ℂ] ℂ) {mu : ℝ} (hmu : 0 < mu)
+    (hcoercive : ∀ x, mu * ‖x‖ * ‖x‖ ≤ (B x x).re) :
+    IsCoercive (complexToRealForm B)
+
+noncomputable def realPartFunctional
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    (ell : StrongDual ℂ E) : StrongDual ℝ E
+
+@[simp] theorem realPartFunctional_apply
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    (ell : StrongDual ℂ E) (x : E) :
+    realPartFunctional ell x = (ell x).re
+
+noncomputable def complexLaxMilgramSolution
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    [CompleteSpace E] {B : E →L⋆[ℂ] E →L[ℂ] ℂ}
+    (hB : IsCoercive (complexToRealForm B))
+    (ell : StrongDual ℂ E) : E
+
+theorem complexLaxMilgramSolution_real_apply
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    [CompleteSpace E] {B : E →L⋆[ℂ] E →L[ℂ] ℂ}
+    (hB : IsCoercive (complexToRealForm B))
+    (ell : StrongDual ℂ E) (x : E) :
+    complexToRealForm B (complexLaxMilgramSolution hB ell) x =
+      (ell x).re
+
+theorem complexLaxMilgramSolution_apply
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    [CompleteSpace E] {B : E →L⋆[ℂ] E →L[ℂ] ℂ}
+    (hB : IsCoercive (complexToRealForm B))
+    (ell : StrongDual ℂ E) (x : E) :
+    B (complexLaxMilgramSolution hB ell) x = ell x
+
+theorem complexLaxMilgramSolution_apply_flip
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
+    [CompleteSpace E] {B : E →L⋆[ℂ] E →L[ℂ] ℂ}
+    (hB : IsCoercive (complexToRealForm B))
+    (hHerm : B.toLinearMap₁₂.IsSymm)
+    (ell : StrongDual ℂ E) (x : E) :
+    B x (complexLaxMilgramSolution hB ell) = star (ell x)
+```
+
+- [ ] Record strict missing-module RED with exact interface checks and a
+  closed-tail-subspace use.
+- [ ] Keep `NormedSpace.restrictScalars ℝ ℂ E`,
+  `InnerProductSpace.rclikeToReal ℂ E`, and
+  `RestrictScalars.isScalarTower ℝ ℂ E` as local instances only.
+- [ ] Construct `complexToRealForm` with `LinearMap.mk₂` followed by
+  `LinearMap.mkContinuous₂`; bound its value by
+  `‖B‖ * ‖x‖ * ‖y‖` using `Complex.abs_re_le_norm` and `B.le_opNorm₂`.
+- [ ] Package the complex functional's real part as
+  `Complex.reCLM.comp (ell.restrictScalars ℝ)` and construct the solution via
+  the real coercive correction/Lax--Milgram equivalence.
+- [ ] Recover the full complex identity by proving equality of real parts at
+  `x` and at `Complex.I • x`. Respect Mathlib's convention: the primary
+  identity is `B v x = ell x`; the Hermitian flipped identity is
+  `B x v = star (ell x)`, never `ell x` without conjugation.
+- [ ] Verify the closed-subspace specialization using
+  `hW.completeSpace_coe`, passing that instance explicitly if elaboration does
+  not discover an in-proof local instance.
+- [ ] Strict-compile scratch and production, delete scratch, full-build, scan,
+  axiom-audit, inspect the exact two-file diff, and commit as
+  `bridge complex coercivity to Lax-Milgram`.
+
 ## Downstream use
 
 Yoshida's analytic stages must produce corrected low modes orthogonal to the
