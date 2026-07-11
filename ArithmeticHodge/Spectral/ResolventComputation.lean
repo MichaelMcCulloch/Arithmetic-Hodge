@@ -1,37 +1,15 @@
 /-
   LAYER 6: Resolvent Computation — Trace Equals Orbital Integral Sum
 
-  The bridge between spectral theory and number theory:
-  Tr(h(D)) = orbitalIntegralSum(h, fourierCos(h))
+  This file contains a proposed resolvent-to-trace route, but its current
+  interfaces do not implement that route. The supporting Herglotz/Stieltjes
+  declarations merely conclude `True`; `SpectralCalculus` is disconnected from
+  its operator; and the two formerly sorry-bearing adelic statements quantify
+  an `AdeleClassSpaceData` instance whose fields have been proved inconsistent.
 
-  This is Step 1 of the trace formula rw chain. The argument
-  (Directive Step 6, Method B — bypassing Connes' co-trace):
-
-  1. D is self-adjoint (Stone's theorem — PROVED, 0 sorry).
-  2. The resolvent R(z) = (D−z)⁻¹ exists for z ∉ ℝ (self-adjointness
-     implies spec(D) ⊆ ℝ). R(z) is BOUNDED — no divergence.
-  3. ⟨R(z)x, x⟩ is a Herglotz function → unique spectral measure μ_x
-     (Herglotz representation theorem, 1911).
-  4. The resolvent kernel on 𝔸_ℚ/ℚ* unfolds by Selberg's method
-     into a sum over ℚ* (selberg_unfolding_lemma, SelbergUnfolding.lean).
-     Key: R(z) is bounded, so the kernel unfolds WITHOUT the diagonal
-     divergence that plagues the trace kernel.
-  5. Each term factors over places (restricted product of 𝔸_ℚ) and
-     evaluates to partial fractions of ζ'/ζ (Tate 1950).
-  6. Stieltjes inversion: spectral measure has atoms at zeta zeros γ_ρ.
-     μ_D({γ_ρ}) = |f̂(γ_ρ)|² (residue of the resolvent at the pole).
-  7. Therefore Tr(h(D)) = Σ_ρ h(γ_ρ).
-  8. Weil explicit formula: Σ_ρ h(γ_ρ) = W(h) (PROVED, 0 sorry).
-
-  Advantages over Connes' approach:
-  - No co-trace / von Neumann algebra framework (standard resolvent)
-  - No regularization needed (R(z) is bounded, Stieltjes is pointwise)
-  - No absorption spectrum (direct spectral measure identification)
-
-  Sorry surface:
-  - trace_as_orbital_sum: the combined resolvent computation chain
-  - resolvent_determines_spectral_measure: Herglotz (1911) (supporting)
-  - spectral_measure_identification: Stieltjes (1894) (supporting)
+  Those two signatures are now closed by eliminating the impossible instance.
+  This removes formal `sorry`s but does not establish the claimed PNT spectral
+  gap, RAGE theorem, or quantitative boundary estimate.
 -/
 
 import Mathlib.Analysis.InnerProductSpace.Basic
@@ -167,10 +145,7 @@ theorem zeta_nonvanishing_gives_spectral_gap
     (sc : SpectralCalculus H D hD)
     (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0) :
     SpectralGap sc := by
-  -- ζ(1+it) ≠ 0 means no character |·|^{it} is in the point spectrum.
-  -- Characters generate the spectral decomposition.
-  -- No such character ⟹ no spectral projection E({l₀}) is nonzero.
-  sorry
+  exact (Adelic.no_AdeleClassSpaceData X).elim
 
 -- ============================================================
 -- Step B: Spectral Gap → Mixing (RAGE Theorem)
@@ -325,14 +300,16 @@ theorem spectral_gap_gives_mixing
     The regularized trace Tr_Λ(h(D_Λ)) differs from W(h) by boundary
     terms where x or y is near ∂{|x| ≤ Λ}.
 
-    The present statement is false as parameterized.  Its trace term is
+    The present conclusion would be false without its inconsistent adelic
+    instance. Its trace term is
     independent of `Λ`, so the displayed `O(1/Λ)` conclusion is equivalent to
     exact trace equality (`boundary_control_iff_eq` below).  Moreover `sc` and
     `basis` are unrelated to `σ` and `μ`, and `mixing_zero_measure` shows that
     the mixing premise can be vacuous.  A sound version needs a `Λ`-dependent
     regularized trace, an explicit Koopman/kernel identification, and a
     quantitative boundary estimate; qualitative mixing alone supplies no
-    `O(1/Λ)` rate. -/
+    `O(1/Λ)` rate. The exact current signature is proved only by eliminating
+    `AdeleClassSpaceData`. -/
 theorem mixing_controls_boundary
     (X : Type*) [inst : Adelic.AdeleClassSpaceData X]
     (h : ℝ → ℝ) (hcont : Continuous h)
@@ -347,7 +324,7 @@ theorem mixing_controls_boundary
     ∃ (C : ℝ), 0 < C ∧ ∀ (Λ : ℝ), 0 < Λ →
       ‖operatorTrace (sc.apply (fun t => (h t : ℂ))) basis -
         Analysis.weilFunctionalFull h (Analysis.fourierCos h)‖ ≤ C / Λ := by
-  sorry
+  exact (Adelic.no_AdeleClassSpaceData X).elim
 
 -- ============================================================
 -- Step D: Boundary Control → Trace Convergence
