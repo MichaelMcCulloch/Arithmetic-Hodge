@@ -693,11 +693,12 @@ theorem weil_positivity_implies_rh_from_explicit :
 -- Weil Criterion Equivalence (combining both directions)
 -- ============================================================
 
-/-- **The Weil Positivity Criterion (1952) — PROVED.**
+/-- **Legacy Weil-criterion wrapper.**
 
     RH ⟺ W(f) ≥ 0 for all autocorrelation test functions f.
 
-    Both directions are now theorems:
+    Both directions are theorem declarations, but each still contains a direct
+    `sorry`; consequently this wrapper inherits `sorryAx`:
     - Forward: `rh_implies_weil_positivity_from_explicit`
     - Backward: `weil_positivity_implies_rh_from_explicit` -/
 theorem weil_criterion_equiv_proved : RiemannHypothesis ↔ WeilPositivity :=

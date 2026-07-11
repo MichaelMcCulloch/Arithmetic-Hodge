@@ -8,7 +8,8 @@
   and the geometry of the primes. It is the number-theoretic analogue
   of the Selberg trace formula.
 
-  PROVED from the Hadamard factorization infrastructure (Phase 1).
+  The current theorem is conditional on RH and inherits the unresolved
+  Hadamard and contour scaffolds from `ZetaProduct.lean`.
 -/
 
 import ArithmeticHodge.Analysis.WeilDefs
@@ -22,7 +23,7 @@ namespace ArithmeticHodge.Analysis
 -- The Weil Explicit Formula (THEOREM)
 -- ============================================================
 
-/-- **The Weil Explicit Formula.**
+/-- **Legacy conditional additive explicit-formula wrapper.**
 
     For any suitable test function h (Schwartz class, or with sufficient decay),
     the sum of h over the imaginary parts of the nontrivial zeta zeros
@@ -32,7 +33,13 @@ namespace ArithmeticHodge.Analysis
 
     where ρ ranges over nontrivial zeros of ζ (counted with multiplicity).
 
-    PROVED (conditional on RH) from the Hadamard factorization infrastructure:
+    The body delegates to two unresolved production theorems:
+    `xi_hadamard_product` and `weil_contour_identity`.  Its provenance field
+    says only that every sequence entry comes from some zero; it does not state
+    exhaustivity or analytic multiplicity.  It therefore must not be used as
+    an axiom-clean explicit formula yet.
+
+    Intended dependency chain:
     1. Analytic continuation of ζ (Mathlib: `completedRiemannZeta₀`)
     2. Hadamard product for ξ (`xi_hadamard_product`)
     3. ζ'/ζ partial fraction expansion (`zeta_logDeriv_partial_fraction`)

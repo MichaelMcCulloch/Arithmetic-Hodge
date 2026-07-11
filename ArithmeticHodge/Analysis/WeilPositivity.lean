@@ -151,12 +151,35 @@ theorem weil_criterion_forward_from_explicit
   rw [← hexpl]
   exact tsum_nonneg hterms
 
+/-- A correctly oriented conditional explicit-formula interface for the
+current `WeilPositivity` definition.  Its spectral side is `fourierCos f`, the
+quantity known to be nonnegative for autocorrelations. -/
+def FourierOrientedWeilExplicit : Prop :=
+  ∀ (f : ℝ → ℝ), IsAutocorrelation f → Continuous f →
+    (∀ x : ℝ, ‖f x‖ ≤ 1 / (1 + x ^ 2)) → RiemannHypothesis →
+      ∃ zeros : ℕ → ℝ,
+        Summable (fun n => fourierCos f (zeros n)) ∧
+        ∑' n, fourierCos f (zeros n) =
+          weilFunctionalFull f (fourierCos f)
+
+/-- With the spectral transform on the correct side, RH implies the current
+Weil-positivity predicate immediately from the conditional interface. -/
+theorem rh_implies_weilPositivity_of_fourierOrientedExplicit
+    (hexplicit : FourierOrientedWeilExplicit) :
+    RiemannHypothesis → WeilPositivity := by
+  intro hRH f hf hcont hdecay
+  obtain ⟨zeros, _hsumm, hexpl⟩ := hexplicit f hf hcont hdecay hRH
+  rw [← hexpl]
+  exact tsum_nonneg fun n => by
+    obtain ⟨g, hg, hg_sq, hfg⟩ := hf
+    exact fourierCos_autocorrelation_nonneg g hg hg_sq f hfg (zeros n)
+
 -- ============================================================
 -- Weil Positivity Predicate (defined in WeilDefs.lean)
 -- ============================================================
 
 -- ============================================================
--- The Weil Positivity Criterion (Axiomatized)
+-- The Weil Positivity Criterion (Unresolved legacy aliases)
 -- ============================================================
 
 /-- **The Weil Positivity Criterion (1952).**
@@ -164,7 +187,13 @@ theorem weil_criterion_forward_from_explicit
     The Riemann Hypothesis is equivalent to Weil positivity:
       RH ⟺ W(f) ≥ 0 for all autocorrelation test functions f
 
-    PROVED from the Hadamard factorization infrastructure:
+    This alias inherits `sorryAx` through both legacy directions in
+    `FourierTransform.lean`.  The forward direction has the spectral-transform
+    orientation mismatch formalized by
+    `exists_autocorrelation_with_negative_value`; the reverse direction rests
+    on the admitted `bombieriAutocorrelation_weil_neg` statement.
+
+    Intended proof:
     - Forward (RH → positivity): explicit formula + Fourier positivity
       of autocorrelations (FourierTransform.lean)
     - Backward (positivity → RH): contrapositive + Paley-Wiener
@@ -172,14 +201,12 @@ theorem weil_criterion_forward_from_explicit
 theorem weil_criterion_equiv : RiemannHypothesis ↔ WeilPositivity :=
   weil_criterion_equiv_proved
 
-/-- **Weil's Positivity Criterion — Forward Direction.**
-    RH implies Weil positivity. PROVED from axiom. -/
+/-- **Legacy forward alias.** Inherits the unresolved forward scaffold. -/
 theorem weil_criterion_forward :
     RiemannHypothesis → WeilPositivity :=
   weil_criterion_equiv.mp
 
-/-- **Weil's Positivity Criterion — Backward Direction.**
-    Weil positivity implies RH. PROVED from axiom. -/
+/-- **Legacy backward alias.** Inherits the unresolved converse scaffold. -/
 theorem weil_criterion_backward :
     WeilPositivity → RiemannHypothesis :=
   weil_criterion_equiv.mpr
@@ -190,7 +217,7 @@ theorem weil_criterion_backward :
     (i)  All nontrivial zeros of ζ have real part 1/2 (RH).
     (ii) The Weil functional W(f) ≥ 0 for every autocorrelation f.
 
-    PROVED from `weil_criterion_equiv` axiom. -/
+    This is currently only an alias of the unresolved legacy equivalence. -/
 theorem weil_criterion :
     RiemannHypothesis ↔ WeilPositivity :=
   weil_criterion_equiv
