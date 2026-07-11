@@ -1,0 +1,5 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilFiniteXiContour
+
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriMellin_differentiable
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriFiniteXiContour_of_boundary_zero_free
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriFiniteCriticalStripXiContour_of_horizontal_pair

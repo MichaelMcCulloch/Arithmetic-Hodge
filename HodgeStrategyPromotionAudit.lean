@@ -1,0 +1,13 @@
+import ArithmeticHodge.Arithmetic.HodgeIndex
+import ArithmeticHodge.Strategy.DetailedBalance
+
+namespace ArithmeticHodge
+
+#print axioms Arithmetic.degree_zero_spec_Z_self_intersection_eq_zero
+#print axioms Arithmetic.nonempty_arakelovIntersectionTheory_iff_weilPositivity
+#print axioms Strategy.symmetric_bounded_operator_exists
+#print axioms Strategy.workpacket_4_stones_theorem
+#print axioms Strategy.workpacket_5_goal_iff_weilPositivity
+#print axioms Strategy.chain_strategy_C_eq_weil_criterion_backward
+
+end ArithmeticHodge

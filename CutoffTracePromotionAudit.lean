@@ -1,0 +1,8 @@
+import ArithmeticHodge.Spectral.CutoffHilbertSpace
+
+#print axioms ArithmeticHodge.Spectral.Cutoff.vacuumWeights_tsum_eq_norm_sq
+#print axioms ArithmeticHodge.Spectral.Cutoff.norm_rawVacuumVector_eq_measure_rpow
+#print axioms ArithmeticHodge.Spectral.Cutoff.eventually_norm_vacuumVector_eq_one
+#print axioms ArithmeticHodge.Spectral.Cutoff.eventually_spectralPairingOf_eq_fourierCos_zero
+#print axioms ArithmeticHodge.Spectral.Cutoff.spectralPairingOf_tendsto_fourierCos_zero
+#print axioms ArithmeticHodge.Spectral.Cutoff.fourierCos_zero_eq_integral

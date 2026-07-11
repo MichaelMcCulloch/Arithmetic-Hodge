@@ -1,0 +1,13 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaIntegral
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#check bombieriDigammaKernel_integral
+#check bombieriDigammaKernel_mul_mellin_integrable
+#check normalized_integral_mellin_eq_apply_one
+#check bombieriDigammaKernel_sub_integral
+
+#print axioms bombieriDigammaKernel_integral
+#print axioms bombieriDigammaKernel_mul_mellin_integrable
+#print axioms normalized_integral_mellin_eq_apply_one
+#print axioms bombieriDigammaKernel_sub_integral

@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilQuadraticMellin
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms bombieriQuadraticConvolutionFubiniAt
+#print axioms bombieriQuadraticTestData_hasMellin

@@ -1,0 +1,5 @@
+import ArithmeticHodge.Analysis.XiZeroMultiplicity
+
+open ArithmeticHodge.Analysis
+
+#print axioms xiZeroMultiplicity_eq_analyticOrderNatAt

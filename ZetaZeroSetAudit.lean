@@ -1,0 +1,5 @@
+import ArithmeticHodge.Analysis.ZetaProduct
+
+#print axioms ArithmeticHodge.Analysis.xiFunction_eq_half_of_completedZeta_zero
+#print axioms ArithmeticHodge.Analysis.completedZeta_ne_zero_of_xiFunction_zero
+#print axioms ArithmeticHodge.Analysis.xiZeroSet_disjoint_completedZetaZeroSet

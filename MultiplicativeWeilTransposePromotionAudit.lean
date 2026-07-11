@@ -1,0 +1,9 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilTranspose
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms BombieriTest.transpose_hasCompactSupport
+#print axioms BombieriTest.transpose_tsupport_subset
+#print axioms BombieriTest.transpose_contDiff
+#print axioms transposeLinearMap
+#print axioms canonicalTransposeData

@@ -1,0 +1,9 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilDigamma
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#check bombieriDigammaKernel
+#check digamma_quarter_vertical_re_eq
+
+#print axioms bombieriDigammaKernel
+#print axioms digamma_quarter_vertical_re_eq

@@ -1,0 +1,6 @@
+import ArithmeticHodge.Spectral.ResolventComputation
+
+#print axioms ArithmeticHodge.Spectral.mixing_zero_measure
+#print axioms ArithmeticHodge.Spectral.boundary_control_iff_eq
+#print axioms ArithmeticHodge.Spectral.zeta_nonvanishing_gives_spectral_gap
+#print axioms ArithmeticHodge.Spectral.mixing_controls_boundary

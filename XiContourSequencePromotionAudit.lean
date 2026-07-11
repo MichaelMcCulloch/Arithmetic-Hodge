@@ -1,0 +1,3 @@
+import ArithmeticHodge.Analysis.XiContourSequence
+
+#print axioms ArithmeticHodge.Analysis.exists_xi_contour_sequence

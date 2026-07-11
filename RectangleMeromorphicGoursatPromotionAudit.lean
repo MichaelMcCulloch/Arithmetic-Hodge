@@ -1,0 +1,4 @@
+import ArithmeticHodge.Analysis.Contour.RectangleMeromorphicGoursat
+
+#print axioms ArithmeticHodge.Analysis.rectIntegral_congr_codiscreteWithin
+#print axioms ArithmeticHodge.Analysis.rectIntegral_eq_zero_of_meromorphicOrderAt_nonneg

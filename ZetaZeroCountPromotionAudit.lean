@@ -1,0 +1,16 @@
+import ArithmeticHodge.Analysis.ZetaZeroCount
+
+#print axioms ArithmeticHodge.Analysis.xiDivisor_nonneg
+#print axioms ArithmeticHodge.Analysis.mem_xiDivisor_support_iff
+#print axioms ArithmeticHodge.Analysis.xiZeroWeight_hasFiniteSupport
+#print axioms ArithmeticHodge.Analysis.xiZeroCount_eq_sum
+#print axioms ArithmeticHodge.Analysis.xiZeroCount_one_sub
+#print axioms ArithmeticHodge.Analysis.xiCriticalStripZeroCount_lower_eq_upper
+#print axioms ArithmeticHodge.Analysis.xiZeroCount_mul_log_two_le_integratedZeroCount
+#print axioms ArithmeticHodge.Analysis.xiZeroCount_le_logMax
+#print axioms ArithmeticHodge.Analysis.xiCriticalStripZeroCount_le_logMax
+#print axioms ArithmeticHodge.Analysis.xiCriticalStripZeroCount_eventually_le_rpow
+#print axioms ArithmeticHodge.Analysis.nontrivial_zeta_zero_re
+#print axioms ArithmeticHodge.Analysis.xiDivisorOnCriticalLine_iff_RH
+#print axioms ArithmeticHodge.Analysis.not_RH_iff_exists_xiZero_off_critical_line
+#print axioms ArithmeticHodge.Analysis.no_principal_log_Gamma_stirling_phase_at_100

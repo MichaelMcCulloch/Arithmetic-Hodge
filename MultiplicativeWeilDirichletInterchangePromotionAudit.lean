@@ -1,0 +1,9 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilDirichletInterchange
+
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.LSeries.vertical_continuous
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.LSeries.norm_vertical_le
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.BombieriTest.mellin_mul_LSeries_integrable
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.BombieriTest.coeffEval_summable
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriMellin_integral_mul_LSeries
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.BombieriTest.coeffEval_hasSum_verticalIntegral
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriMellin_integral_mul_vonMangoldt_LSeries

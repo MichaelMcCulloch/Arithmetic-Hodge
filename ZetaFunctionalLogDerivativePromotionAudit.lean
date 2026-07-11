@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.ZetaFunctionalLogDerivative
+
+open ArithmeticHodge.Analysis
+
+#print axioms xi_logDeriv_one_sub_add
+#print axioms neg_zeta_logDeriv_functional_pair

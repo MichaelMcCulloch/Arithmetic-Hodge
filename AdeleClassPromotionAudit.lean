@@ -1,0 +1,5 @@
+import ArithmeticHodge.Adelic.ClassSpace
+
+#print axioms ArithmeticHodge.Adelic.translated_window_product_mixing_inconsistent
+#print axioms ArithmeticHodge.Adelic.no_AdeleClassSpaceData
+#print axioms ArithmeticHodge.Adelic.AdeleClassSpaceData_isEmpty

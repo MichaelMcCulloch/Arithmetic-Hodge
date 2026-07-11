@@ -1,0 +1,12 @@
+import ArithmeticHodge.Analysis.EntireFunction.Hadamard
+
+namespace ArithmeticHodge.Analysis.EntireFunction
+
+#print axioms weierstraß_factorization_canonical
+#print axioms canonical_sequence_summable_of_order_lt
+#print axioms canonical_factorization_growth
+#print axioms affine_of_growth_lt_two
+#print axioms hadamard_factorization
+#print axioms hadamard_factorization_order_one
+
+end ArithmeticHodge.Analysis.EntireFunction

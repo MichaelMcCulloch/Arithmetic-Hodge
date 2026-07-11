@@ -1,0 +1,3 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilFiniteXiContour
+
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriFiniteOuterXiContour_of_horizontal_pair

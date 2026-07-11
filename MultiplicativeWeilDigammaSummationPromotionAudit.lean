@@ -1,0 +1,15 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaSummation
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#check abs_bombieriDigammaKernel_sub_inv_le
+#check summable_bombieriDigammaKernel_sub_inv
+#check bombieriMellin_one_add_sq_norm_integrable
+#check bombieriDigammaSeries_integrable
+#check bombieriDigamma_series_integral
+
+#print axioms abs_bombieriDigammaKernel_sub_inv_le
+#print axioms summable_bombieriDigammaKernel_sub_inv
+#print axioms bombieriMellin_one_add_sq_norm_integrable
+#print axioms bombieriDigammaSeries_integrable
+#print axioms bombieriDigamma_series_integral

@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.XiZeroFreeHeight
+
+#print axioms ArithmeticHodge.Analysis.exists_xi_zero_free_horizontal_pair_between
+#print axioms ArithmeticHodge.Analysis.exists_xi_zero_free_horizontal_pair
+#print axioms ArithmeticHodge.Analysis.xiZerosInRectangle_strict_interior_of_horizontal_pair
+#print axioms ArithmeticHodge.Analysis.exists_xi_zero_free_horizontal_pair_sequence

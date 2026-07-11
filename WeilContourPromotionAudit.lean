@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.WeilExplicit
+
+#print axioms ArithmeticHodge.Analysis.archimedeanKernel_eq_log_norm_Gamma
+#print axioms ArithmeticHodge.Analysis.contour_assembly_polar_sign
+#print axioms ArithmeticHodge.Analysis.sum_over_zeros_eq_contour
+#print axioms ArithmeticHodge.Analysis.weil_explicit_formula

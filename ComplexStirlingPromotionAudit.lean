@@ -1,0 +1,21 @@
+import ArithmeticHodge.Analysis.ComplexStirling
+
+open Complex Real
+
+namespace ArithmeticHodge.Analysis
+
+#check complex_Gamma_stirling_upper_bound
+#check norm_cos_le_exp_abs_im
+#check norm_Gamma_mul_cos_pi_half_le
+#check complex_Gamma_stirling_lower_bound
+#check Gammaℝ_stirling_lower_bound
+#check norm_Gammaℝ_inv_stirling_upper_bound
+
+#print axioms complex_Gamma_stirling_upper_bound
+#print axioms norm_cos_le_exp_abs_im
+#print axioms norm_Gamma_mul_cos_pi_half_le
+#print axioms complex_Gamma_stirling_lower_bound
+#print axioms Gammaℝ_stirling_lower_bound
+#print axioms norm_Gammaℝ_inv_stirling_upper_bound
+
+end ArithmeticHodge.Analysis

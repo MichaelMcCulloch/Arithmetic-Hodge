@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.Contour.XiRectangleArgumentPrinciple
+
+#print axioms ArithmeticHodge.Analysis.xi_meromorphicOrderAt_ne_zero_mem_xiZerosInRectangle
+#print axioms ArithmeticHodge.Analysis.xiZerosInRectangle_meromorphicOrderAt_eq_multiplicity
+#print axioms ArithmeticHodge.Analysis.xiZerosInRectangle_strictInterior_of_boundary_zero_free
+#print axioms ArithmeticHodge.Analysis.Contour.rectIntegral_xi_logDeriv_of_boundary_zero_free

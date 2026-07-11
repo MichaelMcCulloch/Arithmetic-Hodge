@@ -1,0 +1,11 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilQuadratic
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms bombieri_autocorrelation_contDiff
+#print axioms bombieri_autocorrelation_hasCompactSupport
+#print axioms bombieri_autocorrelation_tsupport_subset
+#print axioms bombieriQuadraticTest
+#print axioms bombieriQuadraticTest_apply_one
+#print axioms bombieriQuadraticTest_ne_zero
+#print axioms bombieriQuadraticTestData

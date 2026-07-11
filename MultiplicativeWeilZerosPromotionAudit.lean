@@ -1,0 +1,5 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilZeros
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms nonempty_zetaZeroEnumeration

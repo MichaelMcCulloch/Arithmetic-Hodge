@@ -1,0 +1,11 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilFunctional
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms mellinLinearMap
+#print axioms bombieriPolarLinearMap_transpose
+#print axioms bombieriArchIntegrand_transpose
+#print axioms bombieriArchTerm_transpose
+#print axioms bombieriFunctional
+#print axioms bombieriFunctional_transpose
+#print axioms bombieriZeroSumFormula_to_explicitFormula

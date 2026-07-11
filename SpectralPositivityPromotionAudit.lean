@@ -1,0 +1,12 @@
+import ArithmeticHodge.Spectral.SpectralPositivity
+
+open scoped InnerProductSpace InnerProduct
+
+namespace ArithmeticHodge.Spectral
+
+#print axioms apply_star_mul_self_eq_norm_sq
+#print axioms apply_star_mul_self_nonneg
+#print axioms not_summable_operatorTrace_id_l2_diagonal
+#print axioms operatorTrace_id_l2_eq_zero
+
+end ArithmeticHodge.Spectral

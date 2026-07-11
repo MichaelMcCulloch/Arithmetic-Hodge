@@ -1,0 +1,22 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeil
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms transpose_involutive_on_pos
+#print axioms transposeConjugate_involutive_on_pos
+#print axioms convolution_transposeConjugate_eq_autocorrelation
+#print axioms mellin_transpose
+#print axioms mellin_conjugate
+#print axioms mellin_transposeConjugate
+#print axioms mellin_convolution
+#print axioms mellinConvergent_convolution
+#print axioms hasMellin_convolution
+#print axioms mellin_quadraticConvolution
+#print axioms spectralTerm_eq_normSq_of_re_eq_half
+#print axioms finite_spectral_sum_re_nonneg
+#print axioms BombieriTest.mellinConvergent
+#print axioms BombieriTest.logarithmicPullback_hasCompactSupport
+#print axioms BombieriTest.logarithmicPullback_contDiff
+#print axioms BombieriTest.logarithmicPullbackSchwartz_apply
+#print axioms rh_bombieri_quadratic_eq_tsum_normSq
+#print axioms rh_implies_bombieri_nonneg

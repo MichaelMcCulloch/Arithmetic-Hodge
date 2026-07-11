@@ -1,0 +1,9 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilGammaIntegral
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#check digamma_quarter_vertical_re_mul_mellin_integrable
+#check bombieri_digamma_integral
+
+#print axioms digamma_quarter_vertical_re_mul_mellin_integrable
+#print axioms bombieri_digamma_integral

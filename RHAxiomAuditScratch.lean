@@ -1,0 +1,3 @@
+import ArithmeticHodge.Spectral.TraceFormula
+
+#print axioms ArithmeticHodge.riemann_hypothesis_from_trace

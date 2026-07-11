@@ -1,0 +1,3 @@
+import ArithmeticHodge.Analysis.Contour.RectangleWeightedArgumentPrinciple
+
+#print axioms ArithmeticHodge.Analysis.Contour.rectIntegral_weighted_logDeriv

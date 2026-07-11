@@ -1,0 +1,3 @@
+import ArithmeticHodge.Analysis.Contour.XiRectangleArgumentPrinciple
+
+#print axioms ArithmeticHodge.Analysis.Contour.rectIntegral_xi_logDeriv

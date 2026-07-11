@@ -1,0 +1,4 @@
+import ArithmeticHodge.Analysis.XiContourSequence
+
+#print axioms ArithmeticHodge.Analysis.xiZerosInRectangle_outer_eq_critical
+#print axioms ArithmeticHodge.Analysis.exists_xi_outer_contour_sequence

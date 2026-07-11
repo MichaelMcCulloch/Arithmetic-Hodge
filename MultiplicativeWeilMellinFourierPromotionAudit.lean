@@ -1,0 +1,8 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilMellinFourier
+
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriMellin_eq_fourier_logarithmicPullback
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriMellin_vertical_eq_fourier
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriMellin_vertical_rapidDecay
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.BombieriTest.mellin_verticalIntegrable
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.BombieriTest.mellinInv_mellin_eq
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriMellin_integral_mul_LSeriesTerm

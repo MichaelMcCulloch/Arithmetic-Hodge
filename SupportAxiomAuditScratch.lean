@@ -1,0 +1,5 @@
+import ArithmeticHodge.Analysis.EntireFunction.WeierstraßProduct
+
+#print axioms ArithmeticHodge.Analysis.EntireFunction.finite_nonzero_indices_norm_le
+#print axioms ArithmeticHodge.Analysis.EntireFunction.finite_nonzero_support_of_finite_zero_set
+#print axioms ArithmeticHodge.Analysis.EntireFunction.exists_nonzero_reindex_of_infinite_support

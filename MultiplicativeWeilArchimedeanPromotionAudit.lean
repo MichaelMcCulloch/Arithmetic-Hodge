@@ -1,0 +1,10 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilArchimedean
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms bombieriArchIntegrand_integrable
+#print axioms bombieriArchTerm
+#print axioms bombieriArchIntegralLinearMap
+#print axioms bombieriArchIntegralLinearMap_apply
+#print axioms bombieriArchTermLinearMap
+#print axioms bombieriArchTermLinearMap_apply

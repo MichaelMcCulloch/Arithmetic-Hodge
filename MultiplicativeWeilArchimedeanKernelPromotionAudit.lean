@@ -1,0 +1,14 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilArchimedeanKernel
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#check bombieriCauchyWeight
+#check bombieriCauchyWeight_apply_of_pos
+#check bombieriCauchyWeight_mellinConvergent
+#check bombieriMellin_cauchyKernel_integrable
+#check bombieriMellin_cauchyKernel_eq_weightedMellin
+
+#print axioms bombieriCauchyWeight_apply_of_pos
+#print axioms bombieriCauchyWeight_mellinConvergent
+#print axioms bombieriMellin_cauchyKernel_integrable
+#print axioms bombieriMellin_cauchyKernel_eq_weightedMellin

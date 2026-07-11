@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.ComplexStirling
+
+#print axioms ArithmeticHodge.Analysis.summable_digamma_partialFraction
+#print axioms ArithmeticHodge.Analysis.summable_digamma_partialFraction_of_nonneg_re
+#print axioms ArithmeticHodge.Analysis.digamma_eq_tsum_of_one_le_re
+#print axioms ArithmeticHodge.Analysis.digamma_eq_tsum_of_pos_re

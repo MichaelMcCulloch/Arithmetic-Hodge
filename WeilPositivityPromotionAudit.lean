@@ -1,0 +1,13 @@
+import ArithmeticHodge.Analysis.WeilPositivity
+
+#print axioms ArithmeticHodge.Analysis.rh_implies_weilPositivity_of_fourierOrientedExplicit
+#print axioms ArithmeticHodge.Analysis.rh_implies_weil_positivity_from_explicit
+#print axioms ArithmeticHodge.Analysis.bombieriTestFn_one_sub
+#print axioms ArithmeticHodge.Analysis.bombieriAutocorrelation_one_sub
+#print axioms ArithmeticHodge.Analysis.bombieriAutocorrelation_weil_neg_of_component_inequality
+#print axioms ArithmeticHodge.Analysis.exists_negative_weil_autocorrelation
+#print axioms ArithmeticHodge.Analysis.weil_positivity_implies_rh_from_explicit
+#print axioms ArithmeticHodge.Analysis.weil_criterion_equiv
+#print axioms ArithmeticHodge.Analysis.weil_criterion_forward
+#print axioms ArithmeticHodge.Analysis.weil_criterion_backward
+#print axioms ArithmeticHodge.Analysis.weil_criterion

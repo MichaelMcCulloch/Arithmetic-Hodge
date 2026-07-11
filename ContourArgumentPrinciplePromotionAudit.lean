@@ -1,0 +1,15 @@
+import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
+
+open ArithmeticHodge.Analysis.Contour
+
+#check circleIntegral_eq_zero_of_meromorphicOrderAt_nonneg
+#check analyticAt_logDeriv_of_analyticAt
+#check logDeriv_eventuallyEq_principalPart
+#check argumentPrinciple
+#check argumentPrinciple_local
+
+#print axioms circleIntegral_eq_zero_of_meromorphicOrderAt_nonneg
+#print axioms analyticAt_logDeriv_of_analyticAt
+#print axioms logDeriv_eventuallyEq_principalPart
+#print axioms argumentPrinciple
+#print axioms argumentPrinciple_local

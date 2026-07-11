@@ -1,0 +1,7 @@
+import ArithmeticHodge.Analysis.EntireFunction.CompletedZetaZeroExponent
+
+open ArithmeticHodge.Analysis.EntireFunction
+
+#print axioms completedZeta_zero_implies_xi_eq_half
+#print axioms completedZeta_weighted_zeros_not_summable
+#print axioms completedZetaWeightedZeroExponent_eq_one

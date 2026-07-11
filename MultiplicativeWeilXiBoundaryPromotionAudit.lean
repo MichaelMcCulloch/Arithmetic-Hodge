@@ -1,0 +1,3 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilXiBoundary
+
+#print axioms ArithmeticHodge.Analysis.rectIntegral_weighted_xi_logDeriv_eq_zeta_gamma_polar

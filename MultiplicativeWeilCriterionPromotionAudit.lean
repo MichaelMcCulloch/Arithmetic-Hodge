@@ -1,0 +1,13 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilCriterion
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms ZetaZeroEnumeration.zero_re_eq_half_of_rh
+#print axioms rh_bombieriFunctional_quadratic_eq_tsum_normSq
+#print axioms rh_implies_bombieriFunctional_quadratic_nonneg
+#print axioms bombieriSpectralSeparation_iff
+#print axioms rh_implies_bombieriFunctional_quadratic_strictPos
+#print axioms ZetaZeroEnumeration.spectralTerm_summable
+#print axioms bombieriOffCriticalNegativity_of_spectral
+#print axioms riemannHypothesis_iff_bombieriNonnegativity
+#print axioms riemannHypothesis_iff_bombieriStrictPositivity

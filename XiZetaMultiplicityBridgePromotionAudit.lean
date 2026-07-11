@@ -1,0 +1,4 @@
+import ArithmeticHodge.Analysis.XiZetaMultiplicityBridge
+
+#print axioms ArithmeticHodge.Analysis.xiZeroMultiplicity_eq_analyticOrderNatAt_riemannZeta
+#print axioms ArithmeticHodge.Analysis.finset_sum_xiZeroMultiplicity_nsmul_eq_analyticOrderNatAt_riemannZeta

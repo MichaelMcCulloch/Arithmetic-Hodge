@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilZeroSummability
+
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.BombieriTest.exists_mellin_norm_le_inv_norm_sq
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.analyticOrderNatAt_xiFunction_eq_riemannZeta
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.ZetaZeroEnumeration.summable_inv_norm_sq
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.ZetaZeroEnumeration.mellin_summable

@@ -1,0 +1,4 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilDistinctZeroSum
+
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.BombieriDistinctZeroSumFormula
+#print axioms ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriZeroSumFormula_iff_distinct

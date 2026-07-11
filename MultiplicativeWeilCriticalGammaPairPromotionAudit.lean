@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilCriticalGammaPair
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms bombieri_digamma_critical_pair
+#print axioms bombieri_neg_zeta_logDeriv_critical_pair

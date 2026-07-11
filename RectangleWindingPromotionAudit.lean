@@ -1,0 +1,6 @@
+import ArithmeticHodge.Analysis.Contour.RectangleWinding
+
+open ArithmeticHodge.Analysis.Contour
+
+#check rectIntegral_sub_inv_of_mem_rectangle
+#print axioms rectIntegral_sub_inv_of_mem_rectangle

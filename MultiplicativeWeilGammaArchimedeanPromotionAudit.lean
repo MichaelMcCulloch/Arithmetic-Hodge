@@ -1,0 +1,5 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilGammaArchimedean
+
+open ArithmeticHodge.Analysis.MultiplicativeWeil
+
+#print axioms bombieri_digamma_integral_sub_log_pi_eq_archTerm
