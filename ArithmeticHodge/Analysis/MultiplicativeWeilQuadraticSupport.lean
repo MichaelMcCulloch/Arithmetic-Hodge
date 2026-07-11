@@ -101,6 +101,20 @@ theorem primeSum_bombieriQuadraticTest_eq_zero_of_support_ratio_lt_two
     nlinarith
   exact ⟨hlower.trans_le hxIcc.1, hxIcc.2.trans_lt hratio⟩
 
+/-- On a support interval of multiplicative width below two, Bombieri's
+quadratic functional consists only of its polar and archimedean pieces. -/
+theorem bombieriFunctional_quadratic_eq_polar_add_arch_of_support_ratio_lt_two
+    (g : BombieriTest) {a b : ℝ} (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Icc a b) (hratio : b / a < 2) :
+    bombieriFunctional (bombieriQuadraticTest g) =
+      mellin (bombieriQuadraticTest g : ℝ → ℂ) 1 +
+        mellin (bombieriQuadraticTest g : ℝ → ℂ) 0 +
+          bombieriArchTerm (bombieriQuadraticTest g) := by
+  rw [bombieriFunctional_apply,
+    primeSum_bombieriQuadraticTest_eq_zero_of_support_ratio_lt_two
+      g ha hab hsupport hratio]
+  ring
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeil
