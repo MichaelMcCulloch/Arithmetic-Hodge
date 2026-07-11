@@ -254,19 +254,21 @@ theorem exists_inverse_quadratic_separated_xi_height_sequence :
     hconvert.trans hbase.2.1,
     hconvert.trans hbase.2.2⟩
 
-/-- Along a quantitatively separated height sequence, the xi logarithmic
-derivative has a uniform quartic bound on any fixed real-part strip, on both
-horizontal edges. -/
+/-- Along a quantitatively separated height sequence, both horizontal edges
+are zero-free and the xi logarithmic derivative has a uniform quartic bound
+on any fixed real-part strip. -/
 theorem exists_xi_logDeriv_quartic_height_sequence
     (sigmaLower sigmaUpper : ℝ) (hsigma : sigmaLower < sigmaUpper) :
     ∃ (K : ℝ) (N : ℕ) (T : ℕ → ℝ),
       0 < K ∧ Tendsto T atTop atTop ∧
       (∀ n : ℕ, (n : ℝ) < T n ∧ T n < (n : ℝ) + 1) ∧
       ∀ n : ℕ, N ≤ n → ∀ sigma ∈ Set.Icc sigmaLower sigmaUpper,
-        ‖logDeriv xiFunction ((sigma : ℂ) + T n * I)‖ ≤
-            K * (1 + |T n|) ^ 4 ∧
-        ‖logDeriv xiFunction ((sigma : ℂ) - T n * I)‖ ≤
-            K * (1 + |T n|) ^ 4 := by
+        (xiFunction ((sigma : ℂ) + T n * I) ≠ 0 ∧
+          ‖logDeriv xiFunction ((sigma : ℂ) + T n * I)‖ ≤
+            K * (1 + |T n|) ^ 4) ∧
+        (xiFunction ((sigma : ℂ) - T n * I) ≠ 0 ∧
+          ‖logDeriv xiFunction ((sigma : ℂ) - T n * I)‖ ≤
+            K * (1 + |T n|) ^ 4) := by
   classical
   obtain ⟨d, Nzero, T, hd, hTlim, hTbounds, hsep⟩ :=
     exists_inverse_quadratic_separated_xi_height_sequence
@@ -304,8 +306,9 @@ theorem exists_xi_logDeriv_quartic_height_sequence
   have hbound_at (t : ℝ) (htabs : |t| = T n)
       (hordinate : ∀ rho : ℂ, xiFunction rho = 0 →
         delta ≤ |t - rho.im|) :
-      ‖logDeriv xiFunction ((sigma : ℂ) + t * I)‖ ≤
-        K * (1 + |T n|) ^ 4 := by
+      xiFunction ((sigma : ℂ) + t * I) ≠ 0 ∧
+        ‖logDeriv xiFunction ((sigma : ℂ) + t * I)‖ ≤
+          K * (1 + |T n|) ^ 4 := by
     let s : ℂ := (sigma : ℂ) + t * I
     have hsre : s.re = sigma := by simp [s]
     have hsim : s.im = t := by simp [s]
@@ -336,6 +339,7 @@ theorem exists_xi_logDeriv_quartic_height_sequence
       rw [hdelta_inv]
       have hein : 0 ≤ e⁻¹ := (inv_pos.mpr he).le
       nlinarith [sq_nonneg (T n)]
+    refine ⟨hxi, ?_⟩
     calc
       ‖logDeriv xiFunction ((sigma : ℂ) + t * I)‖ =
           ‖logDeriv xiFunction s‖ := rfl
@@ -359,5 +363,4 @@ theorem exists_xi_logDeriv_quartic_height_sequence
     simpa only [ofReal_neg, neg_mul, sub_eq_add_neg] using hb
 
 end ArithmeticHodge.Analysis
-
 

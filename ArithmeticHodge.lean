@@ -59,6 +59,7 @@ import ArithmeticHodge.Analysis.EntireFunction.Hadamard
 import ArithmeticHodge.Analysis.ZetaProduct
 import ArithmeticHodge.Analysis.ZetaFunctionalLogDerivative
 import ArithmeticHodge.Analysis.MultiplicativeWeilXiBoundary
+import ArithmeticHodge.Analysis.MultiplicativeWeilXiHorizontalVanishing
 import ArithmeticHodge.Analysis.MultiplicativeWeilFiniteXiContour
 import ArithmeticHodge.Analysis.MultiplicativeWeilContourExhaustion
 import ArithmeticHodge.Analysis.MultiplicativeWeilZeros
