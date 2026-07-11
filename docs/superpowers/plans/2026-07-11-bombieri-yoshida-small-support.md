@@ -339,25 +339,52 @@ have not yet been combined.
 
 - [ ] **Step 2: Choose a support-width constant**
 
-Let `C` be the sum of the constants from Tasks 1 and 3.  By
-`Real.tendsto_log_nhdsGT_zero_atTop` and the slower growth of `log log`, choose
-`0 < δ₀ < min (log 2) 1` such that
+Obtain constants `C₁` and `C₃` from Tasks 1 and 3.  Derive
+`Tendsto (fun x ↦ x - Real.log x) atTop atTop` from
+`Real.isLittleO_log_id_atTop`.  Choose `T` far enough out, set
+`δ₀ = exp (-max T 4)`, and prove the uniform statement
 
 ```lean
-C + 4 * δ₀ * Real.cosh (δ₀ / 2) <
-  (1 / 2) * (Real.log (1 / δ₀) -
-    Real.log (Real.log (Real.exp 1 / δ₀)))
+∀ δ, 0 < δ → δ ≤ δ₀ →
+  C₁ + 4 * δ * Real.cosh (δ / 2) <
+    (1 / 2) * (Real.log (1 / δ) -
+      Real.log (Real.log (Real.exp 1 / δ)) - C₃)
 ```
 
-and define `R₀ = exp δ₀`.
+Use `log (1+x) ≤ log 2 + log x` for `x ≥ 1` and bound the polar
+penalty uniformly by `4 * exp (1/2)`.  This avoids relying on a nonexistent
+one-sided-log limit theorem and proves the estimate for every actual support
+width, not only at `δ₀`.
+
+Define `R₀ = min (exp δ₀) (3/2)`.  Then `1 < R₀ < 2`, while
+`b/a ≤ R₀` implies `log (b/a) ≤ δ₀`.
 
 - [ ] **Step 3: Combine the local form and estimates**
 
 For `b/a ≤ R₀`, set `δ = log(b/a)`.  Prime vanishing follows from
 `R₀ < 2`.  Apply the critical-line local form, the digamma bound, the
-uncertainty estimate, and the polar lower bound.  The result is a positive
-constant times the log-pullback `L²` norm.  Prove that norm is positive from
-`g ≠ 0` and the logarithmic coordinate equivalence.
+uncertainty estimate, and the polar lower bound.  Before Task 3, recenter the
+logarithmic support interval `[-log b,-log a]` at
+`c = (-log b - log a)/2`.
+
+Add a private normalized scaling bridge using `v = 2πξ`:
+
+```lean
+∫ ξ, Real.log (max 1 |ξ|) * |𝓕F ξ|² ≤
+  (1 / (2 * Real.pi)) *
+    ∫ v, Real.log (max 1 |v|) * |M g (1/2 + iv)|².
+```
+
+Its pointwise comparison is
+`log (max 1 |ξ|) ≤ log (max 1 |2πξ|)`; prove both weighted
+integrands are genuinely integrable from Schwartz decay before applying
+integral monotonicity.
+
+Prove directly that `g ≠ 0` makes the log-pullback norm-square integral
+strictly positive.  This also rules out `b/a = 1` (a zero-width support
+interval has measure zero), supplying the strict `0 < δ` required by Task 3.
+The combined local estimate is then a positive coefficient times that
+strictly positive `L²` mass.
 
 - [ ] **Step 4: Add reality and strict positivity**
 
