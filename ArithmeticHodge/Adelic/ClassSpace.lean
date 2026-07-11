@@ -155,8 +155,8 @@ theorem haar_invariant_of_trivial_haarChar
     - Second countable (for Haar measure uniqueness)
     - Borel σ-algebra
     - A Haar measure that is regular
-    - A scaling flow as continuous group automorphisms
-    - Product formula consequence: trivial Haar character for the scaling flow -/
+    - A scaling flow as Haar-preserving homeomorphic translations
+    - A proper real log-height translated by the scaling flow -/
 class AdeleClassSpaceData (X : Type*) extends
     TopologicalSpace X, CommGroup X, IsTopologicalGroup X,
     LocallyCompactSpace X, T2Space X,
@@ -167,38 +167,37 @@ class AdeleClassSpaceData (X : Type*) extends
   isHaar : haarMeasure.IsHaarMeasure
   /-- It is regular -/
   isRegular : haarMeasure.Regular
-  /-- The scaling flow as continuous group automorphisms -/
-  scalingFlow : ℝ → X ≃ₜ* X
+  /-- The scaling flow as homeomorphic translations.  A translation need not
+      fix the group identity, unlike a multiplicative automorphism. -/
+  scalingFlow : ℝ → X ≃ₜ X
   /-- The scaling flow at time 0 is the identity -/
   scalingFlow_zero : ∀ x, scalingFlow 0 x = x
   /-- The scaling flow satisfies the group law -/
   scalingFlow_add : ∀ s t x, scalingFlow (s + t) x = scalingFlow s (scalingFlow t x)
   /-- The scaling flow is jointly continuous in (t, x) -/
   scalingFlow_continuous : Continuous (fun p : ℝ × X => scalingFlow p.1 p.2)
-  /-- Product formula consequence: trivial Haar character for the scaling flow -/
-  trivialHaarChar : ∀ t, MeasureTheory.mulEquivHaarChar (scalingFlow t) = 1
-  /-- The height function |·| : X → ℝ (idèle norm on the adèle class space).
-      Used to define compact cutoffs {x : |x| ≤ Λ} for regularization. -/
+  /-- Haar measure is invariant under each translation in the flow. -/
+  scalingFlow_preservesHaar : ∀ t, Measure.map (scalingFlow t) haarMeasure = haarMeasure
+  /-- The real log-height on the adèle class space.  Compact regularization
+      uses symmetric sublevel sets `{x | |heightFn x| ≤ Λ}`. -/
   heightFn : X → ℝ
   /-- The height function is measurable -/
   heightFn_measurable : Measurable heightFn
   /-- The height function is continuous (the idèle norm is continuous on 𝔸_ℚ/ℚ*) -/
   heightFn_continuous : Continuous heightFn
-  /-- The height function is non-negative -/
-  heightFn_nonneg : ∀ x, 0 ≤ heightFn x
   /-- The identity has height 0 (|1| = 1 in the idèle norm, but we use log-height
       convention where the identity maps to 0) -/
   heightFn_one : heightFn 1 = 0
-  /-- The sublevel sets {x : heightFn x ≤ Λ} are compact (proper map) -/
-  heightFn_compact : ∀ Λ : ℝ, IsCompact {x : X | heightFn x ≤ Λ}
+  /-- Symmetric log-height sublevel sets are compact (properness). -/
+  heightFn_compact : ∀ Λ : ℝ, IsCompact {x : X | |heightFn x| ≤ Λ}
   /-- Boundary shells have uniformly bounded Haar measure. -/
   heightFn_shell_bound : ∃ (M : ℝ), 0 < M ∧ ∀ (Λ : ℝ), 1 < Λ →
-    haarMeasure {x : X | Λ - 1 ≤ heightFn x ∧ heightFn x ≤ Λ} ≤
+    haarMeasure {x : X | Λ - 1 ≤ |heightFn x| ∧ |heightFn x| ≤ Λ} ≤
       ENNReal.ofReal M
-  /-- Sublevel set volume grows at least linearly. -/
+  /-- Symmetric sublevel-set volume grows at least linearly. -/
   heightFn_volume_growth :
     ∃ c : ℝ, 0 < c ∧ ∀ Λ : ℝ, 1 ≤ Λ →
-      ENNReal.ofReal (c * Λ) ≤ haarMeasure {x : X | heightFn x ≤ Λ}
+      ENNReal.ofReal (c * Λ) ≤ haarMeasure {x : X | |heightFn x| ≤ Λ}
   /-- The height function translates under the scaling flow:
       heightFn(σ_t(x)) = heightFn(x) + t. This captures the fact
       that the idelic norm scales exponentially: |σ_t(x)| = e^t |x|,
@@ -222,16 +221,10 @@ class AdeleClassSpaceData (X : Type*) extends
       (fun t => ∫ x, f (scalingFlow t x) * starRingEnd ℂ (g x) ∂haarMeasure)
       Filter.atTop (nhds ((∫ x, f x ∂haarMeasure) * starRingEnd ℂ (∫ x, g x ∂haarMeasure)))
 
-/-- **Haar measure invariance from the AdeleClassSpaceData class.**
-    The product formula (axiomatized as trivialHaarChar) immediately gives
-    Haar measure invariance via `haar_invariant_of_trivial_haarChar`.
-    SORRY COUNT: 0 — proved from class axioms. -/
+/-- **Haar measure invariance from the AdeleClassSpaceData class.** -/
 theorem haar_invariant_from_class (X : Type*) [inst : AdeleClassSpaceData X] (t : ℝ) :
-    Measure.map (inst.scalingFlow t) inst.haarMeasure = inst.haarMeasure := by
-  haveI := inst.isHaar
-  haveI := inst.isRegular
-  exact haar_invariant_of_trivial_haarChar X inst.haarMeasure (inst.scalingFlow t)
-    (inst.trivialHaarChar t)
+    Measure.map (inst.scalingFlow t) inst.haarMeasure = inst.haarMeasure :=
+  inst.scalingFlow_preservesHaar t
 
 /-- **Haar Measure Invariance Under Scaling** (strengthened interface).
 

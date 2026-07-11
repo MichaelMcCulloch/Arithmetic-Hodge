@@ -2,7 +2,7 @@
   The Cutoff Hilbert Space and Spectral Pairing Construction
 
   For each cutoff Λ > 0, constructs L²(X, μ|_{S_Λ}) where
-  S_Λ = {x ∈ X : heightFn x ≤ Λ} is a compact subset of
+  S_Λ = {x ∈ X : |heightFn x| ≤ max 1 Λ} is a compact subset of
   the adèle class space.
 -/
 
@@ -37,17 +37,19 @@ section CutoffSet
 
 variable (X : Type*) [inst : Adelic.AdeleClassSpaceData X]
 
-/-- The cutoff set S_Λ = {x ∈ X : heightFn x ≤ Λ}. -/
+/-- The symmetric log-height cutoff.  The floor at radius `1` keeps the cutoff
+    Hilbert space nontrivial for every parameter while agreeing with radius
+    `Λ` throughout the asymptotic regime `1 < Λ`. -/
 def cutoffSet (Λ : ℝ) : Set X :=
-  {x : X | inst.heightFn x ≤ Λ}
+  {x : X | |inst.heightFn x| ≤ max 1 Λ}
 
 /-- The cutoff set is measurable. -/
 theorem cutoffSet_measurable (Λ : ℝ) : MeasurableSet (cutoffSet X Λ) :=
-  inst.heightFn_measurable measurableSet_Iic
+  inst.heightFn_measurable.norm measurableSet_Iic
 
 /-- The cutoff set is compact. -/
 theorem cutoffSet_compact (Λ : ℝ) : IsCompact (cutoffSet X Λ) :=
-  inst.heightFn_compact Λ
+  inst.heightFn_compact (max 1 Λ)
 
 /-- The cutoff set has finite Haar measure. -/
 theorem cutoffSet_measure_lt_top (Λ : ℝ) :
@@ -805,37 +807,8 @@ theorem cutoffHilbertBasis_infinite (Λ : ℝ) :
   have hpos : cutoffMeasure X Λ Set.univ > 0 := by
     simp only [cutoffMeasure, Measure.restrict_apply MeasurableSet.univ, Set.univ_inter]
     obtain ⟨c, hc_pos, hgrowth⟩ := inst.heightFn_volume_growth
-    by_cases hΛ : 1 ≤ Λ
-    · -- For Λ ≥ 1: use volume growth axiom directly
-      have h := hgrowth Λ hΛ
-      exact lt_of_lt_of_le (by positivity) h
-    · -- For Λ < 1: the cutoff set contains an open neighborhood of 1
-      -- since heightFn is continuous, heightFn(1) = 0, and 0 < Λ (when Λ > 0).
-      -- Haar measure is positive on nonempty open sets.
-      push_neg at hΛ
-      by_cases hΛ0 : 0 < Λ
-      · -- heightFn⁻¹(-∞, Λ) is open, contains 1, so has positive Haar measure
-        haveI := inst.isHaar
-        have h1 : (1 : X) ∈ {x : X | inst.heightFn x ≤ Λ} := by
-          simp only [Set.mem_setOf_eq, inst.heightFn_one]
-          exact le_of_lt hΛ0
-        have hopen : IsOpen (inst.heightFn ⁻¹' Set.Iio Λ) :=
-          inst.heightFn_continuous.isOpen_preimage _ isOpen_Iio
-        have h1_mem : (1 : X) ∈ inst.heightFn ⁻¹' Set.Iio Λ := by
-          simp only [Set.mem_preimage, Set.mem_Iio, inst.heightFn_one]
-          exact hΛ0
-        have hne : (inst.heightFn ⁻¹' Set.Iio Λ).Nonempty := ⟨1, h1_mem⟩
-        have hpos_open := (hopen.measure_pos inst.haarMeasure hne)
-        exact lt_of_lt_of_le hpos_open (measure_mono (fun x hx => by
-          simp only [Set.mem_preimage, Set.mem_Iio] at hx
-          exact le_of_lt hx))
-      · -- For Λ ≤ 0: derive contradiction from axiom inconsistency.
-        -- heightFn_nonneg + heightFn_scalingFlow + heightFn_one are inconsistent:
-        -- heightFn(σ_{-1}(1)) = heightFn(1) + (-1) = -1, but heightFn_nonneg says ≥ 0.
-        exfalso
-        have := inst.heightFn_nonneg (inst.scalingFlow (-1) 1)
-        rw [inst.heightFn_scalingFlow, inst.heightFn_one] at this
-        linarith
+    have h := hgrowth (max 1 Λ) (le_max_left _ _)
+    exact lt_of_lt_of_le (by positivity) h
   intro w b hb
   exact noAtoms_hilbertBasis_infinite (cutoffMeasure X Λ) hpos w b hb
 
@@ -1045,7 +1018,7 @@ theorem cutoff_spectral_gap
 
 /-- **Sub-lemma 5a: Boundary volume estimate.**
 
-    The boundary shell {Λ - 1 ≤ heightFn x ≤ Λ} has Haar measure
+    The boundary shell {Λ - 1 ≤ |heightFn x| ≤ Λ} has Haar measure
     bounded by a constant independent of Λ. Combined with the total
     volume of S_Λ growing like Λ, the relative boundary fraction is O(1/Λ).
 
@@ -1059,7 +1032,7 @@ theorem cutoff_spectral_gap
     this is pure measure geometry on the adele class space. -/
 theorem boundary_volume_estimate :
     ∃ (M : ℝ), 0 < M ∧ ∀ (Λ : ℝ), 1 < Λ →
-      inst.haarMeasure {x : X | Λ - 1 ≤ inst.heightFn x ∧ inst.heightFn x ≤ Λ} ≤
+      inst.haarMeasure {x : X | Λ - 1 ≤ |inst.heightFn x| ∧ |inst.heightFn x| ≤ Λ} ≤
         ENNReal.ofReal M := by
   exact inst.heightFn_shell_bound
 
@@ -1078,7 +1051,8 @@ theorem bulk_volume_lower_bound :
     ∃ (c : ℝ), 0 < c ∧ ∀ (Λ : ℝ), 1 < Λ →
       ENNReal.ofReal (c * Λ) ≤ inst.haarMeasure (cutoffSet X Λ) := by
   obtain ⟨c, hc, hgrowth⟩ := inst.heightFn_volume_growth
-  exact ⟨c, hc, fun Λ hΛ => hgrowth Λ (le_of_lt hΛ)⟩
+  refine ⟨c, hc, fun Λ hΛ => ?_⟩
+  simpa [cutoffSet, max_eq_right (le_of_lt hΛ)] using hgrowth Λ (le_of_lt hΛ)
 
 /-- **Sub-lemma 5c: Test function kernel bound.**
 
@@ -1348,7 +1322,7 @@ axiom selberg_unfolding_bound
     (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0)
     (K : ℝ) (hK : 0 < K) (hkernel : ∀ ξ : ℝ, |Analysis.fourierCos h ξ| ≤ K)
     (M : ℝ) (hM : 0 < M) (hbdry : ∀ (Λ : ℝ), 1 < Λ →
-      inst.haarMeasure {x : X | Λ - 1 ≤ inst.heightFn x ∧ inst.heightFn x ≤ Λ} ≤
+      inst.haarMeasure {x : X | Λ - 1 ≤ |inst.heightFn x| ∧ |inst.heightFn x| ≤ Λ} ≤
         ENNReal.ofReal M)
     (c : ℝ) (hc : 0 < c) (hbulk : ∀ (Λ : ℝ), 1 < Λ →
       ENNReal.ofReal (c * Λ) ≤ inst.haarMeasure (cutoffSet X Λ)) :
@@ -1372,7 +1346,7 @@ theorem selberg_boundary_integral_bound
     (hζ : ∀ s : ℂ, 1 ≤ s.re → riemannZeta s ≠ 0)
     (K : ℝ) (hK : 0 < K) (hkernel : ∀ ξ : ℝ, |Analysis.fourierCos h ξ| ≤ K)
     (M : ℝ) (hM : 0 < M) (hbdry : ∀ (Λ : ℝ), 1 < Λ →
-      inst.haarMeasure {x : X | Λ - 1 ≤ inst.heightFn x ∧ inst.heightFn x ≤ Λ} ≤
+      inst.haarMeasure {x : X | Λ - 1 ≤ |inst.heightFn x| ∧ |inst.heightFn x| ≤ Λ} ≤
         ENNReal.ofReal M)
     (c : ℝ) (hc : 0 < c) (hbulk : ∀ (Λ : ℝ), 1 < Λ →
       ENNReal.ofReal (c * Λ) ≤ inst.haarMeasure (cutoffSet X Λ)) :
