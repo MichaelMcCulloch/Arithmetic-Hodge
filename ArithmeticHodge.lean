@@ -84,6 +84,7 @@ import ArithmeticHodge.Analysis.ZetaZeroCount
 import ArithmeticHodge.Analysis.XiZeroMultiplicity
 import ArithmeticHodge.Analysis.XiRectangleContourData
 import ArithmeticHodge.Analysis.XiZeroFreeHeight
+import ArithmeticHodge.Analysis.XiLogDerivGrowth
 import ArithmeticHodge.Analysis.XiContourSequence
 import ArithmeticHodge.Analysis.XiZetaMultiplicityBridge
 import ArithmeticHodge.Analysis.XiZetaZeroEquiv
