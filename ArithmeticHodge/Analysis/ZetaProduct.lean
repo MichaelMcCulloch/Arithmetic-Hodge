@@ -11,6 +11,7 @@
 -/
 
 import ArithmeticHodge.Analysis.EntireFunction.Hadamard
+import ArithmeticHodge.Analysis.EntireFunction.Order
 import ArithmeticHodge.Analysis.ComplexStirling
 import ArithmeticHodge.Analysis.WeilDefs
 import Mathlib.NumberTheory.LSeries.RiemannZeta
@@ -184,6 +185,318 @@ theorem xiFunction_ne_const_zero : ¬ xiFunction = 0 := by
   intro h
   have : xiFunction 0 = 0 := congr_fun h 0
   rw [xiFunction_zero_val] at this; norm_num at this
+
+-- ============================================================
+-- Order of the xi function
+-- ============================================================
+
+private lemma xi_even_re_lower (k : ℕ) :
+    (2 : ℝ) ^ k ≤ (xiFunction ((2 * (k + 12) : ℕ) : ℂ)).re := by
+  have hLambda := EntireFunction.completedZeta₀_even_re_lower k
+  have hxi_re : (xiFunction ((2 * (k + 12) : ℕ) : ℂ)).re =
+      (1 / 2 : ℝ) * (2 * (k + 12)) * (2 * (k + 12) - 1) *
+        (completedRiemannZeta₀ ((2 * (k + 12) : ℕ) : ℂ)).re + 1 / 2 := by
+    rw [xiFunction]
+    norm_num [Complex.div_re, Complex.normSq_apply]
+  rw [hxi_re]
+  have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg k
+  have hcoeff : (1 : ℝ) ≤
+      (1 / 2 : ℝ) * (2 * (k + 12)) * (2 * (k + 12) - 1) := by
+    nlinarith
+  have hpow_nonneg : 0 ≤ (2 : ℝ) ^ k := by positivity
+  have hLambda_nonneg : 0 ≤
+      (completedRiemannZeta₀ ((2 * (k + 12) : ℕ) : ℂ)).re :=
+    hpow_nonneg.trans hLambda
+  have hscale := mul_le_mul_of_nonneg_right hcoeff hLambda_nonneg
+  nlinarith
+
+private lemma two_pow_le_maxModulus_xi (k : ℕ) :
+    (2 : ℝ) ^ k ≤ EntireFunction.maxModulus xiFunction (2 * ((k : ℝ) + 12)) := by
+  let z : ℂ := ((2 * (k + 12) : ℕ) : ℂ)
+  have hz_re : (2 : ℝ) ^ k ≤ (xiFunction z).re := by
+    simpa [z] using xi_even_re_lower k
+  have hz_radius : ‖z‖ ≤ 2 * ((k : ℝ) + 12) := by
+    dsimp [z]
+    rw [Complex.norm_natCast]
+    norm_cast
+  exact hz_re.trans ((Complex.re_le_norm _).trans
+    (EntireFunction.norm_le_maxModulus xiFunction differentiable_xiFunction z
+      (2 * ((k : ℝ) + 12)) (by positivity) hz_radius))
+
+private lemma xi_even_lower_scale_le (k : ℕ) (hk : 1 < k) :
+    Real.log ((k : ℝ) * Real.log 2) / Real.log (2 * ((k : ℝ) + 12)) ≤
+      Real.log (Real.log
+        (EntireFunction.maxModulus xiFunction (2 * ((k : ℝ) + 12)))) /
+        Real.log (2 * ((k : ℝ) + 12)) := by
+  have hpow_pos : 0 < (2 : ℝ) ^ k := pow_pos (by norm_num) _
+  have hM := two_pow_le_maxModulus_xi k
+  have hlog_le : Real.log ((2 : ℝ) ^ k) ≤ Real.log
+      (EntireFunction.maxModulus xiFunction (2 * ((k : ℝ) + 12))) :=
+    Real.log_le_log hpow_pos hM
+  have hlogpow : Real.log ((2 : ℝ) ^ k) = (k : ℝ) * Real.log 2 := by
+    rw [Real.log_pow]
+  have hlogpow_pos : 0 < Real.log ((2 : ℝ) ^ k) := by
+    rw [hlogpow]
+    exact mul_pos (by exact_mod_cast (lt_trans Nat.zero_lt_one hk)) (Real.log_pos one_lt_two)
+  have hloglog_le : Real.log ((k : ℝ) * Real.log 2) ≤ Real.log (Real.log
+      (EntireFunction.maxModulus xiFunction (2 * ((k : ℝ) + 12)))) := by
+    rw [← hlogpow]
+    exact Real.log_le_log hlogpow_pos hlog_le
+  have hden_pos : 0 < Real.log (2 * ((k : ℝ) + 12)) := by
+    apply Real.log_pos
+    have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg k
+    linarith
+  exact div_le_div_of_nonneg_right hloglog_le hden_pos.le
+
+private lemma tendsto_xi_even_radii :
+    Tendsto (fun k : ℕ => 2 * ((k : ℝ) + 12)) Filter.atTop Filter.atTop := by
+  have hmul : Tendsto (fun k : ℕ => 2 * (k : ℝ)) Filter.atTop Filter.atTop :=
+    tendsto_natCast_atTop_atTop.const_mul_atTop (by norm_num)
+  have hadd := tendsto_atTop_add_const_right Filter.atTop 24 hmul
+  apply hadd.congr'
+  exact Eventually.of_forall (fun k => by ring)
+
+private lemma xiFunction_order_ge_one :
+    (1 : EReal) ≤ EntireFunction.entireOrder xiFunction := by
+  unfold EntireFunction.entireOrder
+  apply le_limsup_of_le ⟨⊤, Eventually.of_forall (fun _ => le_top)⟩
+  intro b hb
+  by_cases hb_top : b = ⊤
+  · rw [hb_top]
+    exact le_top
+  have hbseq : ∀ᶠ k : ℕ in Filter.atTop,
+      (Real.log (Real.log (EntireFunction.maxModulus xiFunction
+        (2 * ((k : ℝ) + 12)))) / Real.log (2 * ((k : ℝ) + 12)) : EReal) ≤ b :=
+    tendsto_xi_even_radii.eventually hb
+  have hg_b : ∀ᶠ k : ℕ in Filter.atTop,
+      (Real.log ((k : ℝ) * Real.log 2) /
+        Real.log (2 * ((k : ℝ) + 12)) : EReal) ≤ b := by
+    filter_upwards [hbseq, Filter.eventually_gt_atTop (1 : ℕ)] with k hkb hk
+    exact (EReal.coe_le_coe_iff.mpr (xi_even_lower_scale_le k hk)).trans hkb
+  have hb_bot : b ≠ ⊥ := by
+    intro hbot
+    rw [hbot] at hg_b
+    obtain ⟨k, hk⟩ := hg_b.exists
+    exact (not_le_of_gt (EReal.bot_lt_coe _)) hk
+  have hb_coe : (b.toReal : EReal) = b := EReal.coe_toReal hb_top hb_bot
+  have hg_real : ∀ᶠ k : ℕ in Filter.atTop,
+      Real.log ((k : ℝ) * Real.log 2) /
+        Real.log (2 * ((k : ℝ) + 12)) ≤ b.toReal := by
+    apply hg_b.mono
+    intro k hk
+    rw [← hb_coe] at hk
+    exact EReal.coe_le_coe_iff.mp hk
+  have hone : (1 : ℝ) ≤ b.toReal :=
+    le_of_tendsto EntireFunction.tendsto_completedZeta_even_lower_scale hg_real
+  rw [← hb_coe]
+  exact_mod_cast hone
+
+private lemma maxModulus_completedZeta_le_rpow (r : ℝ) (hr : 26 ≤ r) :
+    EntireFunction.maxModulus completedRiemannZeta₀ r ≤ (r + 10) ^ (r + 10) := by
+  let z : ℂ := (24 : ℕ)
+  have hz_re : (1 : ℝ) ≤ (completedRiemannZeta₀ z).re := by
+    simpa [z] using EntireFunction.completedZeta₀_even_re_lower 0
+  have hz_radius : ‖z‖ ≤ r := by
+    dsimp [z]
+    norm_num
+    linarith
+  have hM_one : (1 : ℝ) ≤ EntireFunction.maxModulus completedRiemannZeta₀ r :=
+    hz_re.trans ((Complex.re_le_norm _).trans
+      (EntireFunction.norm_le_maxModulus completedRiemannZeta₀
+        differentiable_completedZeta₀ z r (by linarith) hz_radius))
+  have hlog := EntireFunction.log_maxModulus_completedZeta_le r (by linarith)
+  calc
+    EntireFunction.maxModulus completedRiemannZeta₀ r
+        = Real.exp (Real.log (EntireFunction.maxModulus completedRiemannZeta₀ r)) :=
+          (Real.exp_log (lt_of_lt_of_le zero_lt_one hM_one)).symm
+    _ ≤ Real.exp ((r + 10) * Real.log (r + 10)) := Real.exp_le_exp.mpr hlog
+    _ = (r + 10) ^ (r + 10) := by
+      rw [Real.rpow_def_of_pos (by linarith)]
+      congr 1
+      ring
+
+private lemma norm_xiFunction_le_rpow (r : ℝ) (hr : 26 ≤ r) (s : ℂ) (hs : ‖s‖ ≤ r) :
+    ‖xiFunction s‖ ≤ (r + 10) ^ (r + 13) := by
+  let R := r + 10
+  let L := R ^ R
+  have hr0 : 0 ≤ r := by linarith
+  have hR1 : (1 : ℝ) ≤ R := by dsimp [R]; linarith
+  have hRpos : 0 < R := zero_lt_one.trans_le hR1
+  have hL1 : (1 : ℝ) ≤ L := Real.one_le_rpow hR1 (by dsimp [R]; linarith)
+  have hLambda : ‖completedRiemannZeta₀ s‖ ≤ L := by
+    calc
+      ‖completedRiemannZeta₀ s‖ ≤
+          EntireFunction.maxModulus completedRiemannZeta₀ r :=
+        EntireFunction.norm_le_maxModulus completedRiemannZeta₀
+          differentiable_completedZeta₀ s r (by linarith) hs
+      _ ≤ (r + 10) ^ (r + 10) := maxModulus_completedZeta_le_rpow r hr
+      _ = L := by rfl
+  have hs1 : ‖s - 1‖ ≤ r + 1 := by
+    calc ‖s - 1‖ ≤ ‖s‖ + ‖(1 : ℂ)‖ := norm_sub_le _ _
+      _ ≤ r + 1 := by norm_num; linarith
+  have hcoeff : (1 / 2 : ℝ) * r * (r + 1) + 1 / 2 ≤ R ^ 3 := by
+    have hfirst : (1 / 2 : ℝ) * r * (r + 1) ≤ (1 / 2 : ℝ) * R ^ 3 := by
+      calc
+        (1 / 2 : ℝ) * r * (r + 1)
+            = (1 / 2 : ℝ) * r * (r + 1) * 1 := by ring
+        _ ≤ (1 / 2 : ℝ) * R * R * R := by
+          gcongr <;> dsimp [R] <;> linarith
+        _ = (1 / 2 : ℝ) * R ^ 3 := by ring
+    have hhalf : (1 / 2 : ℝ) ≤ (1 / 2 : ℝ) * R ^ 3 := by
+      calc
+        (1 / 2 : ℝ) = (1 / 2 : ℝ) * 1 := by ring
+        _ ≤ (1 / 2 : ℝ) * R ^ 3 :=
+          mul_le_mul_of_nonneg_left (one_le_pow₀ hR1) (by norm_num)
+    linarith
+  have hnorm : ‖xiFunction s‖ ≤
+      ((1 / 2 : ℝ) * r * (r + 1) + 1 / 2) * L := by
+    rw [xiFunction]
+    calc
+      ‖(1 / 2 : ℂ) * s * (s - 1) * completedRiemannZeta₀ s + 1 / 2‖
+          ≤ ‖(1 / 2 : ℂ) * s * (s - 1) * completedRiemannZeta₀ s‖ +
+              ‖(1 / 2 : ℂ)‖ := norm_add_le _ _
+      _ = (1 / 2 : ℝ) * ‖s‖ * ‖s - 1‖ * ‖completedRiemannZeta₀ s‖ + 1 / 2 := by
+        norm_num [norm_mul]
+      _ ≤ (1 / 2 : ℝ) * r * (r + 1) * L + 1 / 2 := by gcongr
+      _ ≤ ((1 / 2 : ℝ) * r * (r + 1) + 1 / 2) * L := by
+        nlinarith
+  calc
+    ‖xiFunction s‖ ≤ ((1 / 2 : ℝ) * r * (r + 1) + 1 / 2) * L := hnorm
+    _ ≤ R ^ 3 * L := mul_le_mul_of_nonneg_right hcoeff (by positivity)
+    _ = (r + 10) ^ (r + 13) := by
+      calc
+        R ^ 3 * L = R ^ 3 * R ^ R := by rfl
+        _ = R ^ (3 : ℝ) * R ^ R :=
+          congrArg (fun x : ℝ => x * R ^ R) (Real.rpow_natCast R 3).symm
+        _ = R ^ ((3 : ℝ) + R) := (Real.rpow_add hRpos (3 : ℝ) R).symm
+        _ = (r + 10) ^ (r + 13) := by
+          dsimp [R]
+          congr 1
+          ring
+
+private lemma log_maxModulus_xi_le (r : ℝ) (hr : 26 ≤ r) :
+    Real.log (EntireFunction.maxModulus xiFunction r) ≤
+      (r + 13) * Real.log (r + 10) := by
+  have hmax : EntireFunction.maxModulus xiFunction r ≤ (r + 10) ^ (r + 13) := by
+    unfold EntireFunction.maxModulus
+    apply ciSup_le
+    intro s
+    by_cases hs : ‖s‖ ≤ r
+    · rw [ciSup_pos hs]
+      exact norm_xiFunction_le_rpow r hr s hs
+    · rw [ciSup_neg hs, Real.sSup_empty]
+      exact Real.rpow_nonneg (by linarith) _
+  have hxi_one : (1 : ℝ) ≤ EntireFunction.maxModulus xiFunction r := by
+    let z : ℂ := (24 : ℕ)
+    have hz : (1 : ℝ) ≤ (xiFunction z).re := by simpa [z] using xi_even_re_lower 0
+    exact hz.trans ((Complex.re_le_norm _).trans
+      (EntireFunction.norm_le_maxModulus xiFunction differentiable_xiFunction z r
+        (by linarith) (by dsimp [z]; norm_num; linarith)))
+  calc
+    Real.log (EntireFunction.maxModulus xiFunction r)
+        ≤ Real.log ((r + 10) ^ (r + 13)) :=
+          Real.log_le_log (lt_of_lt_of_le zero_lt_one hxi_one) hmax
+    _ = (r + 13) * Real.log (r + 10) := Real.log_rpow (by linarith) _
+
+private lemma tendsto_xi_log_scale :
+    Tendsto (fun r : ℝ =>
+      Real.log ((r + 13) * Real.log (r + 13)) / Real.log r)
+      Filter.atTop (𝓝 1) := by
+  have hRtop : Tendsto (fun r : ℝ => r + 13) Filter.atTop Filter.atTop :=
+    tendsto_atTop_add_const_right Filter.atTop 13 tendsto_id
+  have hlogRtop : Tendsto (fun r : ℝ => Real.log (r + 13)) Filter.atTop Filter.atTop :=
+    Real.tendsto_log_atTop.comp hRtop
+  have hdelta := Real.tendsto_log_comp_add_sub_log 13
+  have hdelta_ratio : Tendsto
+      (fun r : ℝ => (Real.log (r + 13) - Real.log r) / Real.log r)
+      Filter.atTop (𝓝 0) := hdelta.div_atTop Real.tendsto_log_atTop
+  have hratio : Tendsto
+      (fun r : ℝ => Real.log (r + 13) / Real.log r) Filter.atTop (𝓝 1) := by
+    have h := (tendsto_const_nhds (x := (1 : ℝ))).add hdelta_ratio
+    have heq : (fun r : ℝ => 1 +
+        (Real.log (r + 13) - Real.log r) / Real.log r) =ᶠ[Filter.atTop]
+        (fun r : ℝ => Real.log (r + 13) / Real.log r) := by
+      filter_upwards [Filter.eventually_gt_atTop (1 : ℝ)] with r hr
+      have hlog_ne : Real.log r ≠ 0 := (Real.log_pos hr).ne'
+      field_simp
+      ring
+    simpa using h.congr' heq
+  have hloglog_over_logR : Tendsto
+      (fun r : ℝ => Real.log (Real.log (r + 13)) / Real.log (r + 13))
+      Filter.atTop (𝓝 0) :=
+    Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero.comp hlogRtop
+  have hloglog_over_log : Tendsto
+      (fun r : ℝ => Real.log (Real.log (r + 13)) / Real.log r)
+      Filter.atTop (𝓝 0) := by
+    have h := hloglog_over_logR.mul hratio
+    have heq : (fun r : ℝ =>
+        Real.log (Real.log (r + 13)) / Real.log (r + 13) *
+          (Real.log (r + 13) / Real.log r)) =ᶠ[Filter.atTop]
+        (fun r : ℝ => Real.log (Real.log (r + 13)) / Real.log r) := by
+      filter_upwards [Filter.eventually_gt_atTop (1 : ℝ),
+        Filter.eventually_gt_atTop (-12 : ℝ)] with r hr hrR
+      have hlog_ne : Real.log r ≠ 0 := (Real.log_pos hr).ne'
+      have hlogR_ne : Real.log (r + 13) ≠ 0 :=
+        (Real.log_pos (by linarith)).ne'
+      field_simp
+    simpa using h.congr' heq
+  have hsum := hratio.add hloglog_over_log
+  have heq : (fun r : ℝ => Real.log (r + 13) / Real.log r +
+      Real.log (Real.log (r + 13)) / Real.log r) =ᶠ[Filter.atTop]
+      (fun r : ℝ => Real.log ((r + 13) * Real.log (r + 13)) / Real.log r) := by
+    filter_upwards [Filter.eventually_gt_atTop (1 : ℝ),
+      Filter.eventually_gt_atTop (-12 : ℝ)] with r hr hrR
+    have hR_pos : 0 < r + 13 := by linarith
+    have hlogR_pos : 0 < Real.log (r + 13) := Real.log_pos (by linarith)
+    rw [Real.log_mul hR_pos.ne' hlogR_pos.ne']
+    ring
+  simpa using hsum.congr' heq
+
+private lemma xiFunction_order_le_one : EntireFunction.entireOrder xiFunction ≤ 1 := by
+  unfold EntireFunction.entireOrder
+  apply (Filter.limsup_le_iff).2
+  intro y hy
+  by_cases hy_top : y = ⊤
+  · subst y
+    exact Eventually.of_forall (fun _ => EReal.coe_lt_top _)
+  have hy_bot : y ≠ ⊥ := ne_of_gt ((EReal.bot_lt_coe (1 : ℝ)).trans hy)
+  set α := y.toReal
+  have hy_coe : (α : EReal) = y := EReal.coe_toReal hy_top hy_bot
+  have hα : 1 < α := by
+    rw [← hy_coe] at hy
+    exact_mod_cast hy
+  have hscale : ∀ᶠ r : ℝ in Filter.atTop,
+      Real.log ((r + 13) * Real.log (r + 13)) / Real.log r < α :=
+    tendsto_xi_log_scale.eventually (Iio_mem_nhds hα)
+  filter_upwards [hscale, Filter.eventually_ge_atTop (26 : ℝ)] with r hscale hr
+  have hr_one : 1 < r := by linarith
+  have hlogr : 0 < Real.log r := Real.log_pos hr_one
+  have hmax_two : (2 : ℝ) ≤ EntireFunction.maxModulus xiFunction r := by
+    let z : ℂ := (26 : ℕ)
+    have hz : (2 : ℝ) ≤ (xiFunction z).re := by simpa [z] using xi_even_re_lower 1
+    exact hz.trans ((Complex.re_le_norm _).trans
+      (EntireFunction.norm_le_maxModulus xiFunction differentiable_xiFunction z r
+        (by linarith) (by dsimp [z]; norm_num; linarith)))
+  have hlogM_pos : 0 < Real.log (EntireFunction.maxModulus xiFunction r) :=
+    Real.log_pos (lt_of_lt_of_le one_lt_two hmax_two)
+  have hlog_bound := log_maxModulus_xi_le r hr
+  have hlog_mono : Real.log (r + 10) ≤ Real.log (r + 13) :=
+    Real.log_le_log (by linarith) (by linarith)
+  have hB : Real.log (EntireFunction.maxModulus xiFunction r) ≤
+      (r + 13) * Real.log (r + 13) :=
+    hlog_bound.trans (mul_le_mul_of_nonneg_left hlog_mono (by linarith))
+  have hB_pos : 0 < (r + 13) * Real.log (r + 13) :=
+    mul_pos (by linarith) (Real.log_pos (by linarith))
+  have hloglog : Real.log (Real.log (EntireFunction.maxModulus xiFunction r)) ≤
+      Real.log ((r + 13) * Real.log (r + 13)) :=
+    Real.log_le_log hlogM_pos hB
+  rw [← hy_coe]
+  apply EReal.coe_lt_coe_iff.mpr
+  exact (div_le_div_of_nonneg_right hloglog hlogr.le).trans_lt hscale
+
+/-- The Riemann xi function has entire order exactly one. -/
+theorem xiFunction_order : EntireFunction.entireOrder xiFunction = 1 :=
+  le_antisymm xiFunction_order_le_one xiFunction_order_ge_one
 
 /-- ξ(s) = (1/2)·s·(s-1)·Λ(s) for s ≠ 0, 1. -/
 theorem xiFunction_eq_mul_completedZeta (s : ℂ) (hs : s ≠ 0) (hs' : s ≠ 1) :
