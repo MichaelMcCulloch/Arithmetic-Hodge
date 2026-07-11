@@ -24,7 +24,7 @@ import Mathlib.Analysis.Real.Pi.Bounds
 
 import ArithmeticHodge.Analysis.WeilExplicit
 
-open MeasureTheory Real Complex Filter Convolution
+open MeasureTheory Real Complex Filter Convolution Set
 
 namespace ArithmeticHodge.Analysis
 
@@ -305,11 +305,91 @@ theorem fourierCos_autocorrelation_nonneg (g : ℝ → ℝ)
   rw [fourierCos_autocorrelation_eq_sq g hg hg_sq f hf ξ]
   positivity
 
+/-! ### Autocorrelations need not be pointwise nonnegative -/
+
+/-- A signed compactly supported block used to test pointwise claims about
+    autocorrelations. -/
+private noncomputable def signedBlock (x : ℝ) : ℝ :=
+  (Ioc (0 : ℝ) 1).indicator (fun _ => 1) x -
+    (Ioc (1 : ℝ) 2).indicator (fun _ => 1) x
+
+private theorem signedBlock_integrable : Integrable signedBlock volume := by
+  unfold signedBlock
+  exact
+    ((integrableOn_const (s := Ioc (0 : ℝ) 1) (by simp [Real.volume_Ioc])).integrable_indicator
+      measurableSet_Ioc).sub
+      ((integrableOn_const (s := Ioc (1 : ℝ) 2) (by simp [Real.volume_Ioc])).integrable_indicator
+        measurableSet_Ioc)
+
+private theorem signedBlock_sq_integrable :
+    Integrable (fun x => signedBlock x ^ 2) volume := by
+  have hpoint : (fun x => signedBlock x ^ 2) =
+      (Ioc (0 : ℝ) 2).indicator (fun _ => 1) := by
+    funext x
+    by_cases h0 : 0 < x
+    · by_cases h1 : x ≤ 1
+      · have h2 : x ≤ 2 := by linarith
+        simp [signedBlock, Set.mem_Ioc, h0, h1, h2]
+      · have h1' : 1 < x := lt_of_not_ge h1
+        by_cases h2 : x ≤ 2
+        · simp [signedBlock, Set.mem_Ioc, h0, h1, h1', h2]
+        · have h2' : ¬ x ≤ 2 := h2
+          simp [signedBlock, Set.mem_Ioc, h0, h1, h1', h2']
+    · have h0' : ¬ 0 < x := h0
+      have h1' : ¬ 1 < x := by linarith
+      simp [signedBlock, Set.mem_Ioc, h0', h1']
+  rw [hpoint]
+  exact
+    (integrableOn_const (s := Ioc (0 : ℝ) 2) (by simp [Real.volume_Ioc])).integrable_indicator
+      measurableSet_Ioc
+
+private noncomputable def signedBlockAutocorrelation (x : ℝ) : ℝ :=
+  ∫ y : ℝ, signedBlock y * signedBlock (y + x)
+
+private theorem signedBlock_isAutocorrelation :
+    IsAutocorrelation signedBlockAutocorrelation := by
+  exact ⟨signedBlock, signedBlock_integrable, signedBlock_sq_integrable, fun _ => rfl⟩
+
+private theorem signedBlockAutocorrelation_one :
+    signedBlockAutocorrelation 1 = -1 := by
+  unfold signedBlockAutocorrelation
+  have hpoint : ∀ y : ℝ,
+      signedBlock y * signedBlock (y + 1) =
+        -(Ioc (0 : ℝ) 1).indicator (fun _ => 1) y := by
+    intro y
+    by_cases h0 : 0 < y
+    · by_cases h1 : y ≤ 1
+      · have hy1 : 1 < y + 1 := by linarith
+        have hy2 : y + 1 ≤ 2 := by linarith
+        simp [signedBlock, Set.mem_Ioc, h0, h1, hy1, hy2]
+      · have hy1 : ¬ y + 1 ≤ 2 := by linarith
+        simp [signedBlock, Set.mem_Ioc, h0, h1, hy1]
+    · have h0' : ¬ 0 < y := h0
+      by_cases hm1 : 0 < y + 1
+      · have hm2 : y + 1 ≤ 1 := by linarith
+        have hy1 : ¬ 1 < y := by linarith
+        simp [signedBlock, Set.mem_Ioc, h0', hm1, hm2, hy1]
+      · have hm1' : ¬ 0 < y + 1 := hm1
+        have hy1 : ¬ 1 < y := by linarith
+        simp [signedBlock, Set.mem_Ioc, h0', hm1', hy1]
+  simp_rw [hpoint]
+  rw [integral_neg]
+  simp
+
+/-- Autocorrelation means positive-definite, not pointwise nonnegative: a
+    concrete compactly supported `L¹ ∩ L²` witness has value `-1` at `1`.
+    Thus Fourier-side nonnegativity cannot justify replacing
+    `fourierCos f ξ` by `f ξ` in the Weil spectral sum. -/
+theorem exists_autocorrelation_with_negative_value :
+    ∃ f : ℝ → ℝ, IsAutocorrelation f ∧ f 1 = -1 :=
+  ⟨signedBlockAutocorrelation, signedBlock_isAutocorrelation,
+    signedBlockAutocorrelation_one⟩
+
 -- ============================================================
 -- Weil Criterion: Forward Direction (RH → Positivity)
 -- ============================================================
 
-/-- **RH implies Weil positivity, proved from the explicit formula.**
+/-- **RH implies Weil positivity: unresolved orientation bridge.**
 
     Under RH, all nontrivial zeros ρ satisfy Re(ρ) = 1/2, so γ_ρ = Im(ρ) is real.
     For an autocorrelation f = g ∗ g̃, the explicit formula gives:
@@ -318,7 +398,12 @@ theorem fourierCos_autocorrelation_nonneg (g : ℝ → ℝ)
     By `fourierCos_autocorrelation_nonneg`, each term is ≥ 0.
     Hence W(f) ≥ 0.
 
-    This uses `weil_explicit_formula` (now a theorem, not an axiom). -/
+    The current `weil_explicit_formula` sums `f(γ)`, whereas the proved
+    positivity theorem controls `fourierCos f γ`.  These cannot be identified:
+    `exists_autocorrelation_with_negative_value` gives an explicit
+    counterexample to pointwise nonnegativity.  A sound proof needs an explicit
+    formula whose spectral side has the Fourier/Mellin transform in the correct
+    convention. -/
 theorem rh_implies_weil_positivity_from_explicit :
     RiemannHypothesis → WeilPositivity := by
   intro hRH f hf_auto hf_cont hf_decay
@@ -554,7 +639,12 @@ theorem bombieriAutocorrelation_decay (σ₀ : ℝ) :
     -- Step 5: exp(-πx²/2) ≤ 1/(1+x²) via 1+x² ≤ exp(πx²/2)
     _ ≤ 1 / (1 + x ^ 2) := exp_neg_pi_half_sq_le_inv x
 
-/-- Core spectral negativity (Bombieri's Theorem 2). -/
+/-- Candidate Gaussian spectral-negativity statement.
+
+    This is not Bombieri's Theorem 2.  Bombieri's theorem states the full
+    explicit formula and the all-test-functions Weil criterion; its converse
+    construction uses Li functions, truncation, and smoothing rather than this
+    single modulated Gaussian family. -/
 theorem bombieriAutocorrelation_weil_neg
     (ρ₀ : NontrivialZetaZero) (hσ : ρ₀.val.re ≠ 1 / 2) :
     weilFunctionalFull (bombieriAutocorrelation ρ₀.val.re)
