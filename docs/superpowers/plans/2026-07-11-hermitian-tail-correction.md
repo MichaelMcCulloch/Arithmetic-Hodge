@@ -1,5 +1,13 @@
 # Hermitian Tail Correction Implementation Plan
 
+> **Status: superseded for the Yoshida critical path.** Do not execute this
+> plan as a direct construction on circle `L²`. Yoshida completes the
+> algebraic high-frequency tail in the Hermitian form norm before applying
+> Riesz representation; the local form is unbounded on ordinary `L²`.
+> Preserve these generic Lax--Milgram ideas for other bounded-form uses, and
+> follow the replacement architecture recorded in
+> [`../../research/yoshida-form-completion-audit-2026-07-11.md`](../../research/yoshida-form-completion-audit-2026-07-11.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > `superpowers:subagent-driven-development` to implement this plan task-by-task.
 > Steps use checkbox (`- [ ]`) syntax for tracking.
