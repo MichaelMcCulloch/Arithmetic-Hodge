@@ -12,7 +12,7 @@
   4. Growth estimates (Step 1.2) force g to be a polynomial of degree ≤ order
 -/
 
-import ArithmeticHodge.Analysis.EntireFunction.GrowthBound
+import ArithmeticHodge.Analysis.EntireFunction.CanonicalGrowth
 import Mathlib.Analysis.Complex.BorelCaratheodory
 import Mathlib.Analysis.Complex.AbsMax
 import Mathlib.Analysis.Complex.Liouville
@@ -121,29 +121,58 @@ theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
       ∀ z, f z = z ^ m * Complex.exp (Polynomial.aeval z P) *
         ∏' n, weierstraßElementary p (z / zeros n) := by
-  set p := Nat.floor (entireOrder f).toReal with hp_def
-  -- ============================================================
-  -- Step 1: Weierstraß factorization (gives summability).
-  -- ============================================================
-  obtain ⟨m, g₁, zeros, p₀, hg₁_diff, hzeros_cond, hsumm, hg₁_eq⟩ :=
-    weierstraß_factorization f hf hf_ne hord
-  -- ============================================================
-  -- Step 1b: Growth bound on g₁ via Borel-Carathéodory.
-  -- ============================================================
-  set ρ := (entireOrder f).toReal with hρ_def
+  -- The canonical construction exposes the genus and analytic multiplicity
+  -- data needed by the genuine growth theorem.
+  obtain ⟨m, g₁, zeros, p, hg₁_diff, hzeros_cond, hsumm, hg₁_eq,
+      hp_def, _hcover, horders⟩ :=
+    weierstraß_factorization_canonical f hf hf_ne hord
+  set ρ : ℝ := (entireOrder f).toReal with hρ_def
+  have hord_ne_top : entireOrder f ≠ ⊤ := ne_of_lt hord
+  have hord_ne_bot : entireOrder f ≠ ⊥ :=
+    ne_of_gt (lt_of_lt_of_le EReal.bot_lt_zero
+      (entireOrder_nonneg f hf hf_ne))
+  have hρ_coe : (ρ : EReal) = entireOrder f :=
+    EReal.coe_toReal hord_ne_top hord_ne_bot
+  have hρ_nonneg : 0 ≤ ρ :=
+    EReal.toReal_nonneg (entireOrder_nonneg f hf hf_ne)
+  have hp_le_ρ : (p : ℝ) ≤ ρ := by
+    rw [hp_def]
+    exact Nat.floor_le hρ_nonneg
   have hρ_lt_p1 : ρ < (p : ℝ) + 1 := by
-    rw [hp_def]; exact_mod_cast Nat.lt_floor_add_one ρ
-  set α_g := max (1 / 2 : ℝ) ((ρ + ((p : ℝ) + 1)) / 2) with hα_def
-  have hα_nn : (0 : ℝ) ≤ α_g := le_max_of_le_left (by norm_num)
+    rw [hp_def]
+    exact_mod_cast Nat.lt_floor_add_one ρ
+  set β : ℝ := (ρ + ((p : ℝ) + 1)) / 2 with hβ_def
+  set α_g : ℝ := (β + ((p : ℝ) + 1)) / 2 with hα_def
+  have hp_lt_β : (p : ℝ) < β := by
+    simp only [hβ_def]
+    linarith
+  have hρ_lt_β : ρ < β := by
+    simp only [hβ_def]
+    linarith
+  have hβ_lt_p1 : β < (p : ℝ) + 1 := by
+    simp only [hβ_def]
+    linarith
+  have hβ_lt_α : β < α_g := by
+    simp only [hα_def]
+    linarith
   have hα_lt : α_g < (p : ℝ) + 1 := by
-    apply max_lt
-    · linarith [show (0 : ℝ) ≤ (p : ℝ) from Nat.cast_nonneg p]
-    · linarith
-  have hα_gt_ρ : ρ < α_g := lt_max_of_lt_right (by linarith)
-  obtain ⟨C_g, hC_pos, hg₁_bound⟩ :=
-    weierstraß_quotient_growth f hf hf_ne hord m g₁ zeros p₀
-      hg₁_diff hg₁_eq hsumm α_g hα_gt_ρ (by
-        apply lt_max_of_lt_left; norm_num)
+    simp only [hα_def]
+    linarith
+  have hβ_pos : 0 < β :=
+    lt_of_le_of_lt (Nat.cast_nonneg p) hp_lt_β
+  have hα_nn : 0 ≤ α_g := (hβ_pos.trans hβ_lt_α).le
+  have horder_β : entireOrder f < (β : EReal) := by
+    rw [← hρ_coe]
+    exact EReal.coe_lt_coe_iff.mpr hρ_lt_β
+  have horder_α : entireOrder f < (α_g : EReal) := by
+    rw [← hρ_coe]
+    exact EReal.coe_lt_coe_iff.mpr (hρ_lt_β.trans hβ_lt_α)
+  have hsumm_β : Summable (fun n ↦ ‖zeros n‖⁻¹ ^ β) :=
+    canonical_sequence_summable_of_order_lt f hf hf_ne zeros p hzeros_cond
+      hsumm horders β hβ_pos horder_β
+  obtain ⟨C_g, hC_pos, hg₁_bound⟩ := canonical_factorization_growth
+    f hf m g₁ zeros p hg₁_diff hg₁_eq β α_g hp_lt_β hβ_lt_α
+      hβ_lt_p1 hsumm_β horder_α
   -- ============================================================
   -- Step 2: Growth bound + Cauchy estimates ⟹ g₁ is polynomial.
   -- ============================================================
@@ -261,8 +290,8 @@ theorem hadamard_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   -- Step 3: Apply polynomial_of_vanishing_iteratedDeriv.
   -- ============================================================
   obtain ⟨P, hP_deg, hP_eq⟩ := polynomial_of_vanishing_iteratedDeriv g₁ hg₁_diff p hvan
-  exact ⟨m, P, zeros, p₀, hP_deg, hzeros_cond, hsumm,
-    fun z => by rw [hg₁_eq z, hP_eq z]⟩
+  exact ⟨m, P, zeros, p, by simpa only [hp_def] using hP_deg,
+    hzeros_cond, hsumm, fun z => by rw [hg₁_eq z, hP_eq z]⟩
 
 /-- **Hadamard factorization specialized to order 1.**
 

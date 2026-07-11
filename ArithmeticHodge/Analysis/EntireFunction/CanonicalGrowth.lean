@@ -1,13 +1,14 @@
 /-
   Sound canonical-product growth infrastructure.
 
-  The legacy growth theorem in GrowthBound accepts arbitrary noncanonical
-  factorizations and is false. This module keeps that API isolated while
-  supplying the genus, multiplicity, separation, and summability data needed
-  for the genuine order-one Hadamard argument.
+  The former arbitrary-factorization growth theorem was false and has been
+  removed. This module supplies the genus, multiplicity, separation, and
+  summability data needed for the genuine Hadamard argument; `GrowthBound`
+  now preserves only module-import compatibility by re-exporting this API.
 -/
 
-import ArithmeticHodge.Analysis.EntireFunction.GrowthBound
+import ArithmeticHodge.Analysis.EntireFunction.WeierstraßProduct
+import ArithmeticHodge.Analysis.BorelCaratheodory
 import ArithmeticHodge.Analysis.EntireFunction.MinimumModulus
 import Mathlib.Analysis.SpecialFunctions.Log.Summable
 import Mathlib.Analysis.PSeries
@@ -1724,4 +1725,3 @@ theorem affine_of_growth_lt_two
     _ = g 0 + B * z := add_comm _ _
 
 end ArithmeticHodge.Analysis.EntireFunction
-
