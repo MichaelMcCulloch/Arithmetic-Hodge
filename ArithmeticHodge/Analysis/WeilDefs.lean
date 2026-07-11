@@ -58,13 +58,19 @@ noncomputable def weilPrimeTerm (f : ℝ → ℝ) : ℝ :=
     (Real.log (p : ℝ) / (p : ℝ) ^ ((m + 1 : ℝ) / 2)) *
     (f ((m + 1) * Real.log (p : ℝ)) + f (-((m + 1) * Real.log (p : ℝ))))
 
-/-- The archimedean kernel Ω(t) = Re[Γ'(1/4 + it/2) / Γ(1/4 + it/2)] + log π.
+/-- **Legacy implemented archimedean kernel.**
 
-    This encodes the contribution of the archimedean place (ℝ) to the
-    explicit formula. The digamma function Ψ = Γ'/Γ appears because
-    the local zeta factor at infinity is π^{-s/2} Γ(s/2). -/
+    This definition is `log ‖Γ(1/4 + it/2)‖ + log π`, not the real part
+    of the logarithmic derivative `Γ'/Γ`.  The latter uses
+    `Complex.digamma`; replacing this kernel requires fixing the surrounding
+    Fourier/Mellin convention at the same time. -/
 noncomputable def archimedeanKernel (t : ℝ) : ℝ :=
   (Complex.log (Complex.Gamma (1/4 + Complex.I * t/2))).re + Real.log π
+
+theorem archimedeanKernel_eq_log_norm_Gamma (t : ℝ) :
+    archimedeanKernel t =
+      Real.log ‖Complex.Gamma (1 / 4 + Complex.I * t / 2)‖ + Real.log Real.pi := by
+  rw [archimedeanKernel, Complex.log_re]
 
 /-- The archimedean (additive) term of the Weil functional:
     W_arch(f) = (1/2π) ∫ f̂(t) Ω(t) dt -/

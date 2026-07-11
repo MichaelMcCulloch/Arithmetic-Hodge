@@ -2004,6 +2004,16 @@ theorem rh_zeros_on_critical_line (hRH : RiemannHypothesis) :
     intro heq; rw [heq] at hre_lt; simp at hre_lt
   exact hRH (zetaZeroSeq n) hzero hne_triv hne_one
 
+/-- The polar sign forced by a residue equation of the form
+`spectral + polar = contour`: if the boundary evaluation is
+`contour = prime + arch`, then the spectral term is `prime + arch - polar`. -/
+theorem contour_assembly_polar_sign
+    {spectral polar contour prime arch : ℝ}
+    (hresidue : spectral + polar = contour)
+    (hboundary : contour = prime + arch) :
+    spectral = prime + arch - polar := by
+  linarith
+
 /-- **Weil explicit formula identity (conditional on RH).**
 
     Under RH, all nontrivial zeros ρ satisfy Re(ρ) = 1/2, so the spectral
@@ -2033,6 +2043,14 @@ theorem rh_zeros_on_critical_line (hRH : RiemannHypothesis) :
     (Mathlib has Cauchy–Goursat for rectangles but not residue sums),
     Euler product evaluation of vertical contour integrals,
     Stirling asymptotics for Γ'/Γ.
+
+    The current body is also only a scaffold: its residue existential is
+    tautological, the prime and archimedean placeholder conclusions are
+    `True`, and its horizontal bound is not attached to a contour integral.
+    Furthermore, the displayed residue equation has `spectral + polar` on the
+    left, so `contour_assembly_polar_sign` forces subtraction of `polar`; the
+    final comment below instead adds it.  A replacement must fix one of those
+    signs explicitly.
 
     Infrastructure proved in this file:
     - `zeta_logDeriv_partial_fraction` (partial fraction expansion)
@@ -2118,9 +2136,10 @@ theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
   --   right_vert_T → weilPrimeTerm h
   --   left_vert_T → weilArchimedean (fourierCos h)
   --   horizontal_T → 0
-  -- Therefore:
+  -- Therefore, from the equations as currently written:
   --   Σ h(Im ρ) + polar = weilPrimeTerm h + weilArchimedean (fourierCos h)
-  -- i.e. Σ h(Im ρ) = weilPolar + weilArchimedean + weilPrimeTerm = weilFunctionalFull
+  -- i.e. Σ h(Im ρ) = weilPrimeTerm + weilArchimedean - polar.
+  -- This does not match the `weilFunctionalFull` definition, which adds polar.
   sorry
 
 /-- **Key identity: sum over zeros via contour integration (under RH).**
