@@ -608,37 +608,163 @@ theorem zeta_logDeriv_partial_fraction (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
 -- Growth Estimates for ζ'/ζ
 -- ============================================================
 
-/-- Nearby zero count bound: for |t| ≥ 2, the number of nontrivial zeros ρ
-    with |Im(ρ) - t| ≤ 1 is O(log|t|).
-    Follows from zeta_zero_density: N(T+1) - N(T) = O(log T). -/
+/-- A bound for the finite prefix used by the current zero-counting API.
+
+    The Hadamard zero sequence is not known here to be ordered by height, so
+    `zeta_zero_density` cannot be subtracted at two heights to obtain a local
+    `O(log |t|)` count.  The unconditional statement available for this
+    arbitrary prefix is the elementary quadratic bound below. -/
 private theorem nearby_zero_count_bound :
     ∃ (C₁ : ℝ), 0 < C₁ ∧ ∀ (t : ℝ), 2 ≤ |t| →
       ((Finset.filter (fun n => |(hadamardZeros n).im - t| ≤ 1)
-          (Finset.range (Nat.ceil (|t| + 1) ^ 2))).card : ℝ) ≤ C₁ * Real.log |t| := by
-  -- From zeta_zero_density (proved below): N(T) = (T/2π)log(T/2πe) + O(log T)
-  -- So N(|t|+1) - N(|t|-1) = O(log|t|), and zeros with |Im(ρ)-t| ≤ 1
-  -- are contained in this count.
-  exact ⟨1, one_pos, fun t ht => by sorry⟩
+          (Finset.range (Nat.ceil (|t| + 1) ^ 2))).card : ℝ) ≤
+        C₁ * (1 + |t|) ^ 2 := by
+  refine ⟨4, by norm_num, fun t _ => ?_⟩
+  have hcard :
+      (Finset.filter (fun n => |(hadamardZeros n).im - t| ≤ 1)
+          (Finset.range (Nat.ceil (|t| + 1) ^ 2))).card ≤
+        Nat.ceil (|t| + 1) ^ 2 := by
+    simpa using Finset.card_filter_le (s := Finset.range (Nat.ceil (|t| + 1) ^ 2))
+      (p := fun n => |(hadamardZeros n).im - t| ≤ 1)
+  have hcard_real :
+      ((Finset.filter (fun n => |(hadamardZeros n).im - t| ≤ 1)
+          (Finset.range (Nat.ceil (|t| + 1) ^ 2))).card : ℝ) ≤
+        (Nat.ceil (|t| + 1) : ℝ) ^ 2 := by
+    exact_mod_cast hcard
+  have hceil : (Nat.ceil (|t| + 1) : ℝ) < |t| + 2 := by
+    have hceil' : (Nat.ceil (|t| + 1) : ℝ) < (|t| + 1) + 1 :=
+      Nat.ceil_lt_add_one (show 0 ≤ |t| + 1 by positivity)
+    linarith
+  have hceil_nonneg : (0 : ℝ) ≤ Nat.ceil (|t| + 1) := by positivity
+  calc
+    ((Finset.filter (fun n => |(hadamardZeros n).im - t| ≤ 1)
+        (Finset.range (Nat.ceil (|t| + 1) ^ 2))).card : ℝ)
+        ≤ (Nat.ceil (|t| + 1) : ℝ) ^ 2 := hcard_real
+    _ ≤ (|t| + 2) ^ 2 := by nlinarith
+    _ ≤ 4 * (1 + |t|) ^ 2 := by nlinarith [abs_nonneg t]
 
-/-- Sum over far zeros: for s with σ₁ ≤ Re(s) ≤ σ₂ and |Im(s)| ≥ 2,
-    Σ_{|Im(ρ)-t|>1} |1/(s-ρ) + 1/ρ| = O(log²|t|).
-    Uses partial summation against the zero counting function N(T). -/
-private theorem far_zero_sum_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
+/-- Bound the full Hadamard zero contribution under quantitative separation.
+
+    Only zeros in the closed unit ball about `s` need an explicit hypothesis:
+    when `0 < δ ≤ 1`, all other zeros are automatically at distance at least
+    `δ`.  The square-summability supplied by the Hadamard product then gives a
+    genuine polynomial bound.  A logarithmic bound would additionally require
+    a height-ordered, exhaustive zero-counting theorem, which is not available
+    for `hadamardZeros` in this file. -/
+private theorem far_zero_sum_bound (σ₁ σ₂ : ℝ) (_hσ : σ₁ < σ₂) :
     ∃ (C₂ : ℝ), 0 < C₂ ∧ ∀ (s : ℂ),
       σ₁ ≤ s.re → s.re ≤ σ₂ → 2 ≤ |s.im| →
-      (∀ n, s ≠ hadamardZeros n) →
-      ∃ (near far : ℂ),
-        (∀ hsumm : Summable (fun n => 1 / (s - hadamardZeros n) + 1 / hadamardZeros n),
-          ∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n) = near + far) ∧
-        ‖near‖ ≤ C₂ * Real.log |s.im| ∧
-        ‖far‖ ≤ C₂ * (Real.log |s.im|) ^ 2 := by
-  -- Split the sum at |Im(ρ) - Im(s)| ≤ 1 vs > 1.
-  -- Near: each |1/(s-ρ)| ≤ 1/|Im(s)-Im(ρ)| but we only count O(log T) terms,
-  --   and each 1/ρ is O(1/T) by zero density. Combined: O(log T).
-  -- Far: |1/(s-ρ)| ≤ 1/(|Im(ρ)-t|-1)² after combining with 1/ρ.
-  --   Partial summation against N(T) gives O(log² T).
-  -- Ref: Davenport, Multiplicative Number Theory, Ch. 15, Lemma 3.
-  exact ⟨1, one_pos, fun s _ _ _ _ => by sorry⟩
+      ∀ (δ : ℝ), 0 < δ → δ ≤ 1 →
+      (∀ n, ‖s - hadamardZeros n‖ ≤ 1 → δ ≤ ‖s - hadamardZeros n‖) →
+      Summable (fun n => 1 / (s - hadamardZeros n) + 1 / hadamardZeros n) →
+        ‖∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n)‖ ≤
+          C₂ * (1 + |s.im|) ^ 2 * (1 + δ⁻¹) := by
+  have hconv : Summable (fun n => ‖hadamardZeros n‖⁻¹ ^ 2) := by
+    have hconv_rpow := hadamardZeros_summable_inv_sq
+    have heq : (fun n => (‖hadamardZeros n‖⁻¹) ^ (2 : ℝ)) =
+        fun n => ‖hadamardZeros n‖⁻¹ ^ 2 := by
+      ext n
+      rw [← Real.rpow_natCast]
+      norm_cast
+    rwa [heq] at hconv_rpow
+  let S : ℝ := ∑' n, ‖hadamardZeros n‖⁻¹ ^ 2
+  let R : ℝ := |σ₁| + |σ₂| + 1
+  have hS_nonneg : 0 ≤ S := tsum_nonneg fun _ => sq_nonneg _
+  have hR_one : 1 ≤ R := by
+    dsimp [R]
+    linarith [abs_nonneg σ₁, abs_nonneg σ₂]
+  refine ⟨R ^ 2 * (S + 1), mul_pos (sq_pos_of_pos (lt_of_lt_of_le zero_lt_one hR_one))
+      (by linarith), fun s hσ₁ hσ₂ _ δ hδ hδ_one hsep hsumm => ?_⟩
+  have hre_abs : |s.re| ≤ |σ₁| + |σ₂| := by
+    rw [abs_le]
+    constructor <;> linarith [le_abs_self σ₁, neg_abs_le σ₁,
+      le_abs_self σ₂, neg_abs_le σ₂, abs_nonneg σ₁, abs_nonneg σ₂]
+  have hs_norm : ‖s‖ ≤ R * (1 + |s.im|) := by
+    calc
+      ‖s‖ = ‖(s.re : ℂ) + (s.im : ℂ) * Complex.I‖ := by rw [Complex.re_add_im]
+      _ ≤ ‖(s.re : ℂ)‖ + ‖(s.im : ℂ) * Complex.I‖ := norm_add_le _ _
+      _ = |s.re| + |s.im| := by simp [Real.norm_eq_abs]
+      _ ≤ (|σ₁| + |σ₂|) + |s.im| := by linarith
+      _ ≤ R * (1 + |s.im|) := by
+        dsimp [R]
+        nlinarith [abs_nonneg σ₁, abs_nonneg σ₂, abs_nonneg s.im]
+  have hsep_all : ∀ n, δ ≤ ‖s - hadamardZeros n‖ := by
+    intro n
+    by_cases hn : ‖s - hadamardZeros n‖ ≤ 1
+    · exact hsep n hn
+    · exact hδ_one.trans (le_of_lt (lt_of_not_ge hn))
+  have hterm : ∀ n,
+      ‖1 / (s - hadamardZeros n) + 1 / hadamardZeros n‖ ≤
+        ‖s‖ * (1 + ‖s‖ / δ) * ‖hadamardZeros n‖⁻¹ ^ 2 := by
+    intro n
+    have hρ_pos : 0 < ‖hadamardZeros n‖ := norm_pos_iff.mpr (hadamardZeros_ne_zero n)
+    have hdist_pos : 0 < ‖s - hadamardZeros n‖ := lt_of_lt_of_le hδ (hsep_all n)
+    have hdist_ne : s - hadamardZeros n ≠ 0 := norm_ne_zero_iff.mp (ne_of_gt hdist_pos)
+    have hρ_le : ‖hadamardZeros n‖ ≤ ‖s‖ + ‖s - hadamardZeros n‖ := by
+      calc
+        ‖hadamardZeros n‖ = ‖s - (s - hadamardZeros n)‖ := by ring_nf
+        _ ≤ ‖s‖ + ‖s - hadamardZeros n‖ := norm_sub_le _ _
+    have hs_div_le : ‖s‖ / ‖s - hadamardZeros n‖ ≤ ‖s‖ / δ := by
+      exact div_le_div_of_nonneg_left (norm_nonneg s) hδ (hsep_all n)
+    have hratio : ‖hadamardZeros n‖ / ‖s - hadamardZeros n‖ ≤
+        1 + ‖s‖ / δ := by
+      calc
+        ‖hadamardZeros n‖ / ‖s - hadamardZeros n‖
+            ≤ (‖s‖ + ‖s - hadamardZeros n‖) / ‖s - hadamardZeros n‖ :=
+              div_le_div_of_nonneg_right hρ_le hdist_pos.le
+        _ = 1 + ‖s‖ / ‖s - hadamardZeros n‖ := by field_simp; ring
+        _ ≤ 1 + ‖s‖ / δ := by linarith
+    rw [show (1 : ℂ) / (s - hadamardZeros n) + 1 / hadamardZeros n =
+        s / (hadamardZeros n * (s - hadamardZeros n)) by
+      field_simp [hadamardZeros_ne_zero n, hdist_ne]
+      ring]
+    rw [norm_div, norm_mul]
+    calc
+      ‖s‖ / (‖hadamardZeros n‖ * ‖s - hadamardZeros n‖) =
+          ‖s‖ * ‖hadamardZeros n‖⁻¹ ^ 2 *
+            (‖hadamardZeros n‖ / ‖s - hadamardZeros n‖) := by
+              field_simp [ne_of_gt hρ_pos, ne_of_gt hdist_pos]
+      _ ≤ ‖s‖ * ‖hadamardZeros n‖⁻¹ ^ 2 * (1 + ‖s‖ / δ) := by
+        exact mul_le_mul_of_nonneg_left hratio (mul_nonneg (norm_nonneg s) (sq_nonneg _))
+      _ = ‖s‖ * (1 + ‖s‖ / δ) * ‖hadamardZeros n‖⁻¹ ^ 2 := by ring
+  have hsum :
+      ‖∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n)‖ ≤
+        ‖s‖ * (1 + ‖s‖ / δ) * S := by
+    calc
+      ‖∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n)‖
+          ≤ ∑' n, ‖1 / (s - hadamardZeros n) + 1 / hadamardZeros n‖ :=
+            norm_tsum_le_tsum_norm hsumm.norm
+      _ ≤ ∑' n, ‖s‖ * (1 + ‖s‖ / δ) * ‖hadamardZeros n‖⁻¹ ^ 2 :=
+        hsumm.norm.tsum_le_tsum hterm (hconv.mul_left (‖s‖ * (1 + ‖s‖ / δ)))
+      _ = ‖s‖ * (1 + ‖s‖ / δ) * S := by rw [tsum_mul_left]
+  have hRq_nonneg : 0 ≤ R * (1 + |s.im|) := by positivity
+  have hRq_one : 1 ≤ R * (1 + |s.im|) := by
+    nlinarith [hR_one, abs_nonneg s.im,
+      mul_nonneg (sub_nonneg.mpr hR_one) (abs_nonneg s.im)]
+  have hfactor_nonneg : 0 ≤ 1 + ‖s‖ / δ := by positivity
+  have hfactor : 1 + ‖s‖ / δ ≤ R * (1 + |s.im|) * (1 + δ⁻¹) := by
+    calc
+      1 + ‖s‖ / δ ≤ 1 + (R * (1 + |s.im|)) / δ := by
+        linarith [div_le_div_of_nonneg_right hs_norm hδ.le]
+      _ ≤ R * (1 + |s.im|) + (R * (1 + |s.im|)) / δ := by
+        linarith [hRq_one]
+      _ = R * (1 + |s.im|) * (1 + δ⁻¹) := by
+        rw [inv_eq_one_div]
+        ring
+  have hprod : ‖s‖ * (1 + ‖s‖ / δ) ≤
+      (R * (1 + |s.im|)) * (R * (1 + |s.im|) * (1 + δ⁻¹)) :=
+    mul_le_mul hs_norm hfactor hfactor_nonneg hRq_nonneg
+  calc
+    ‖∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n)‖
+        ≤ ‖s‖ * (1 + ‖s‖ / δ) * S := hsum
+    _ ≤ ((R * (1 + |s.im|)) *
+          (R * (1 + |s.im|) * (1 + δ⁻¹))) * S :=
+      mul_le_mul_of_nonneg_right hprod hS_nonneg
+    _ ≤ ((R * (1 + |s.im|)) *
+          (R * (1 + |s.im|) * (1 + δ⁻¹))) * (S + 1) := by
+      apply mul_le_mul_of_nonneg_left (by linarith)
+      positivity
+    _ = (R ^ 2 * (S + 1)) * (1 + |s.im|) ^ 2 * (1 + δ⁻¹) := by ring
 
 /-- The digamma factor at `s / 2` has logarithmic growth for `|Im s| ≥ 2`.
 The range `2 ≤ |Im s| ≤ 4`, which rescales below the threshold in
@@ -805,64 +931,63 @@ private theorem arch_term_growth_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂)
           dsimp [C₃]
           nlinarith [hD_pos, hlog_pos]
 
-/-- **Growth bound for ζ'/ζ.**
+/-- **Separated growth bound for `ζ'/ζ`.**
 
-    ζ'(s)/ζ(s) = O(log²|t|) for σ in compact intervals away from
-    zeros and the pole, where s = σ + it.
-
-    This follows from the partial fraction form + zero density estimates
-    N(T+1) - N(T) = O(log T). -/
+    The bound is uniform only after specifying a quantitative distance `δ`
+    from the Hadamard zeros.  It is enough to check zeros in the closed unit
+    ball about `s`; the hypotheses `0 < δ ≤ 1` handle every other zero
+    automatically.  With the currently proved square-summability of the
+    Hadamard zeros this gives a polynomial bound.  The classical
+    `O(log² |t|)` refinement needs a genuine, exhaustive local zero-density
+    theorem, not merely the finite-prefix count currently stated below. -/
 theorem zeta_logDeriv_growth (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
-    ∃ (C : ℝ), 0 < C ∧ ∀ (s : ℂ),
+    ∃ (C : ℝ), 0 < C ∧ ∀ (s : ℂ) (δ : ℝ),
       σ₁ ≤ s.re → s.re ≤ σ₂ → 2 ≤ |s.im| →
       riemannZeta s ≠ 0 →
-      ‖deriv riemannZeta s / riemannZeta s‖ ≤ C * (Real.log |s.im|) ^ 2 := by
-  -- Obtain the three component bounds
-  obtain ⟨C₁, hC₁_pos, hC₁⟩ := nearby_zero_count_bound
+      0 < δ → δ ≤ 1 →
+      (∀ n, ‖s - hadamardZeros n‖ ≤ 1 → δ ≤ ‖s - hadamardZeros n‖) →
+      ‖deriv riemannZeta s / riemannZeta s‖ ≤
+        C * (1 + |s.im|) ^ 2 * (1 + δ⁻¹) := by
   obtain ⟨C₂, hC₂_pos, hC₂⟩ := far_zero_sum_bound σ₁ σ₂ hσ
   obtain ⟨C₃, hC₃_pos, hC₃⟩ := arch_term_growth_bound σ₁ σ₂ hσ
-  -- Combined constant: includes Hadamard constants m, B alongside component bounds
-  refine ⟨C₁ + 2 * (↑hadamardM : ℝ) + 4 * ‖hadamardB‖ + 3 * C₂ + 2 * C₃ + 5,
-    by linarith [Nat.cast_nonneg (α := ℝ) hadamardM, norm_nonneg hadamardB],
-    fun s hσ₁ hσ₂ him hζ => ?_⟩
-  -- Key observations: |Im(s)| ≥ 2 implies s ≠ 0 and s ≠ 1
+  let A : ℝ := (hadamardM : ℝ) + ‖hadamardB‖ + 2
+  refine ⟨A + C₂ + C₃, by
+      dsimp [A]
+      linarith [Nat.cast_nonneg (α := ℝ) hadamardM, norm_nonneg hadamardB],
+    fun s δ hσ₁ hσ₂ him hζ hδ hδ_one hsep => ?_⟩
   have hs0 : s ≠ 0 := by
     intro h; simp [h] at him; linarith
-  have hs1 : s ≠ 1 := by
-    intro h; simp [h] at him; linarith
+  have hsep_all : ∀ n, δ ≤ ‖s - hadamardZeros n‖ := by
+    intro n
+    by_cases hn : ‖s - hadamardZeros n‖ ≤ 1
+    · exact hsep n hn
+    · exact hδ_one.trans (le_of_lt (lt_of_not_ge hn))
   have hρ : ∀ n, s ≠ hadamardZeros n := by
     intro n heq
-    have hzero := hadamardZeros_spec n
-    rw [← heq] at hzero
-    have ⟨hre_pos, hre_lt⟩ := xiFunction_zero_re hzero
-    rw [xiFunction_zero_iff hre_pos hre_lt] at hzero
-    exact hζ hzero
-  -- Apply the xi log-derivative expansion
+    have := hsep_all n
+    rw [heq, sub_self, norm_zero] at this
+    linarith
   obtain ⟨hsumm, hxi⟩ := xi_logDeriv_expansion s hs0 hρ
-  -- Get the archimedean term bound
   obtain ⟨dt, hdt_eq, hdt_bound⟩ := hC₃ s hσ₁ hσ₂ him hζ
-  -- Get the far zero sum bound (splits Σ = near + far)
-  obtain ⟨near, far, hsum_split, hnear_bound, hfar_bound⟩ := hC₂ s hσ₁ hσ₂ him hρ
-  -- Combine expansions: ζ'/ζ = (m-1)/s + B - 1/(s-1) + near + far + dt
-  have hsum_eq := hsum_split hsumm
+  let zeroSum : ℂ := ∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n)
+  have hzeroSum : ‖zeroSum‖ ≤ C₂ * (1 + |s.im|) ^ 2 * (1 + δ⁻¹) :=
+    hC₂ s hσ₁ hσ₂ him δ hδ hδ_one hsep hsumm
   have hcombined : deriv riemannZeta s / riemannZeta s =
-      ((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + near + far + dt := by
-    rw [hdt_eq, hxi, hsum_eq]; ring
+      ((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + zeroSum + dt := by
+    rw [hdt_eq, hxi]
+    dsimp [zeroSum]
+    ring
   rw [hcombined]
-  -- ── Triangle inequality (6 terms) ──
-  have htri : ‖((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + near + far + dt‖ ≤
+  have htri : ‖((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + zeroSum + dt‖ ≤
       ‖((↑hadamardM : ℂ) - 1) / s‖ + ‖hadamardB‖ + ‖(1 : ℂ) / (s - 1)‖ +
-      ‖near‖ + ‖far‖ + ‖dt‖ := by
+      ‖zeroSum‖ + ‖dt‖ := by
     have := norm_add_le (((↑hadamardM : ℂ) - 1) / s + hadamardB -
-      1 / (s - 1) + near + far) dt
+      1 / (s - 1) + zeroSum) dt
     have := norm_add_le (((↑hadamardM : ℂ) - 1) / s + hadamardB -
-      1 / (s - 1) + near) far
-    have := norm_add_le (((↑hadamardM : ℂ) - 1) / s + hadamardB -
-      1 / (s - 1)) near
+      1 / (s - 1)) zeroSum
     have := norm_sub_le (((↑hadamardM : ℂ) - 1) / s + hadamardB) (1 / (s - 1))
     have := norm_add_le (((↑hadamardM : ℂ) - 1) / s) hadamardB
     linarith
-  -- ── Bound ‖(m-1)/s‖ ≤ (m+1)/2 ──
   have hs_norm_ge : (2 : ℝ) ≤ ‖s‖ := le_trans him (Complex.abs_im_le_norm s)
   have h_ms : ‖((↑hadamardM : ℂ) - 1) / s‖ ≤ ((↑hadamardM : ℝ) + 1) / 2 := by
     rw [norm_div]
@@ -874,7 +999,6 @@ theorem zeta_logDeriv_growth (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
           div_le_div_of_nonneg_right hn (le_of_lt hs_pos)
       _ ≤ ((↑hadamardM : ℝ) + 1) / 2 :=
           div_le_div_of_nonneg_left (by positivity) (by norm_num) hs_norm_ge
-  -- ── Bound ‖1/(s-1)‖ ≤ 1/2 ──
   have hs1_norm_ge : (2 : ℝ) ≤ ‖s - 1‖ := by
     calc (2 : ℝ) ≤ |s.im| := him
       _ = |(s - 1).im| := by simp
@@ -882,31 +1006,47 @@ theorem zeta_logDeriv_growth (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
   have h_s1 : ‖(1 : ℂ) / (s - 1)‖ ≤ 1 / 2 := by
     rw [norm_div, norm_one]
     exact div_le_div_of_nonneg_left (by norm_num) (by norm_num) hs1_norm_ge
-  -- ── log|t| > 1/2 ──
-  have hlog_half : (1 : ℝ) / 2 < Real.log |s.im| := by
-    have hexp_lt : Real.exp (1 / 2 : ℝ) < 2 := by
-      by_contra h; push_neg at h
-      have h4 : (4 : ℝ) ≤ Real.exp (1 / 2) ^ 2 := by nlinarith
-      rw [sq, ← Real.exp_add, show (1 : ℝ) / 2 + 1 / 2 = 1 from by norm_num] at h4
-      linarith [Real.exp_one_lt_three]
-    calc (1 : ℝ) / 2 = Real.log (Real.exp (1 / 2)) := (Real.log_exp _).symm
-      _ < Real.log 2 := Real.log_lt_log (Real.exp_pos _) hexp_lt
-      _ ≤ Real.log |s.im| := Real.log_le_log (by norm_num) him
-  -- ── Final assembly ──
-  -- Absorb constant terms via (log|t|)² > 1/4 and linear terms via log|t| > 1/2
-  set x := Real.log |s.im|
-  calc ‖((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + near + far + dt‖
+  let P : ℝ := (1 + |s.im|) ^ 2 * (1 + δ⁻¹)
+  have hδ_inv_pos : 0 < δ⁻¹ := inv_pos.mpr hδ
+  have hP_one : 1 ≤ P := by
+    dsimp [P]
+    have hq_sq : 1 ≤ (1 + |s.im|) ^ 2 := by nlinarith [sq_nonneg |s.im|]
+    have hδ_factor : 1 ≤ 1 + δ⁻¹ := by linarith
+    nlinarith [mul_nonneg (sub_nonneg.mpr hq_sq) (sub_nonneg.mpr hδ_factor)]
+  have him_le_P : |s.im| ≤ P := by
+    have him_le_sq : |s.im| ≤ (1 + |s.im|) ^ 2 := by
+      nlinarith [sq_nonneg |s.im|, abs_nonneg s.im]
+    have hmul : (1 + |s.im|) ^ 2 ≤ P := by
+      dsimp [P]
+      have := mul_le_mul_of_nonneg_left
+        (show (1 : ℝ) ≤ 1 + δ⁻¹ by linarith) (sq_nonneg (1 + |s.im|))
+      simpa using this
+    exact him_le_sq.trans hmul
+  have hlog_le_P : Real.log |s.im| ≤ P :=
+    (Real.log_le_self (abs_nonneg s.im)).trans him_le_P
+  have hA_nonneg : 0 ≤ A := by
+    dsimp [A]
+    linarith [Nat.cast_nonneg (α := ℝ) hadamardM, norm_nonneg hadamardB]
+  have hconst : ((↑hadamardM : ℝ) + 1) / 2 + ‖hadamardB‖ + 1 / 2 ≤ A := by
+    dsimp [A]
+    linarith [Nat.cast_nonneg (α := ℝ) hadamardM]
+  have hconst_P : ((↑hadamardM : ℝ) + 1) / 2 + ‖hadamardB‖ + 1 / 2 ≤ A * P := by
+    have hAP : A ≤ A * P := by
+      nlinarith [mul_nonneg hA_nonneg (sub_nonneg.mpr hP_one)]
+    exact hconst.trans hAP
+  have harch_P : C₃ * Real.log |s.im| ≤ C₃ * P :=
+    mul_le_mul_of_nonneg_left hlog_le_P hC₃_pos.le
+  calc ‖((↑hadamardM : ℂ) - 1) / s + hadamardB - 1 / (s - 1) + zeroSum + dt‖
       ≤ ‖((↑hadamardM : ℂ) - 1) / s‖ + ‖hadamardB‖ + ‖(1 : ℂ) / (s - 1)‖ +
-        ‖near‖ + ‖far‖ + ‖dt‖ := htri
+        ‖zeroSum‖ + ‖dt‖ := htri
     _ ≤ ((↑hadamardM : ℝ) + 1) / 2 + ‖hadamardB‖ + 1 / 2 +
-        C₂ * x + C₂ * x ^ 2 + C₃ * x := by
-        linarith [h_ms, h_s1, hnear_bound, hfar_bound, hdt_bound]
-    _ ≤ (C₁ + 2 * (↑hadamardM : ℝ) + 4 * ‖hadamardB‖ + 3 * C₂ + 2 * C₃ + 5) *
-        x ^ 2 := by
-        -- (x - 1/2)² ≥ 0 gives x² ≥ x - 1/4, hence x ≤ x² + 1/4
-        -- x(x - 1/2) ≥ 0 gives x² ≥ x/2, hence constant ≤ 4·constant·x²
-        nlinarith [sq_nonneg (x - 1 / 2), Nat.cast_nonneg (α := ℝ) hadamardM,
-                   norm_nonneg hadamardB, sq_nonneg x, hC₁_pos]
+        C₂ * P + C₃ * Real.log |s.im| := by
+          linarith [h_ms, h_s1, hzeroSum, hdt_bound]
+    _ ≤ (A + C₂ + C₃) * P := by
+      nlinarith [hconst_P, harch_P]
+    _ = (A + C₂ + C₃) * (1 + |s.im|) ^ 2 * (1 + δ⁻¹) := by
+      dsimp [P]
+      ring
 
 /-- **Zero density estimate.**
     N(T) = #{ρ : 0 < Re(ρ) < 1, |Im(ρ)| ≤ T, ζ(ρ)=0} satisfies
@@ -1214,7 +1354,8 @@ theorem rh_zeros_on_critical_line (hRH : RiemannHypothesis) :
     4. Residue at s=1, s=0 yield weilPolar
     5. Right vertical integral yields weilPrimeTerm (Euler product)
     6. Left vertical integral yields weilArchimedean (Stirling for Γ'/Γ)
-    7. Horizontal integrals → 0 by `zeta_logDeriv_growth` + test function decay
+    7. Horizontal integrals → 0 after choosing zero-separated heights and proving
+       the missing logarithmic refinement of `zeta_logDeriv_growth`
 
     KNOWN MATH: Weil (1952), Bombieri (2000), Davenport Ch. 16.
     Formal proof requires: residue theorem for meromorphic functions
@@ -1225,7 +1366,7 @@ theorem rh_zeros_on_critical_line (hRH : RiemannHypothesis) :
     Infrastructure proved in this file:
     - `zeta_logDeriv_partial_fraction` (partial fraction expansion)
     - `summable_over_zeros` (summability of test function over zeros)
-    - `zeta_logDeriv_growth` (growth bound for ζ'/ζ in strips) -/
+    - `zeta_logDeriv_growth` (a quantitatively separated polynomial bound) -/
 theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
     (hRH : RiemannHypothesis) :
@@ -1268,9 +1409,10 @@ theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
         True := by
     intro T hT; exact ⟨0, by simp; linarith, trivial⟩
   -- ── STEP 4 (Horizontal integrals vanish) ──
-  -- |H(σ±iT)| ≤ C/(1+T²) (hdecay) × |ζ'/ζ| ≤ C·log²T (zeta_logDeriv_growth).
-  -- Product O(log²T/T²) → 0.
-  -- USES: `zeta_logDeriv_growth` (proved).
+  -- The current `zeta_logDeriv_growth` is only a separated polynomial bound,
+  -- which does not by itself make the product with O(T⁻²) tend to zero.
+  -- This step still needs a zero-avoiding sequence of heights together with the
+  -- classical O(log² T) refinement from an exhaustive local zero count.
   have h_horiz_vanish : ∀ ε > 0, ∃ T₀ : ℝ, ∀ T ≥ T₀,
       (1 / (1 + T ^ 2)) * (3 : ℝ) ≤ ε := by
     intro ε hε
