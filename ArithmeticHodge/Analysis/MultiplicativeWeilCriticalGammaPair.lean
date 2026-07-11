@@ -61,4 +61,34 @@ theorem bombieri_digamma_critical_pair (v : ℝ) :
   rw [hfirst, hsecond, hconj]
   apply Complex.ext <;> simp <;> ring
 
+/-- Away from critical-line zeros, the paired negative zeta logarithmic
+derivatives are exactly Bombieri's real-part gamma kernel. -/
+theorem bombieri_neg_zeta_logDeriv_critical_pair
+    (v : ℝ)
+    (hzeta : riemannZeta ((1 / 2 : ℝ) + v * I) ≠ 0)
+    (hzetaOneSub :
+      riemannZeta (1 - ((1 / 2 : ℝ) + v * I)) ≠ 0) :
+    -(deriv riemannZeta ((1 / 2 : ℝ) + v * I) /
+        riemannZeta ((1 / 2 : ℝ) + v * I)) -
+      deriv riemannZeta (1 - ((1 / 2 : ℝ) + v * I)) /
+        riemannZeta (1 - ((1 / 2 : ℝ) + v * I)) =
+      (((Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+        Real.log Real.pi : ℝ) : ℂ) := by
+  let s : ℂ := (1 / 2 : ℝ) + v * I
+  have hs0 : s ≠ 0 := by
+    intro h
+    have hre := congrArg Complex.re h
+    simp [s] at hre
+  have hs1 : s ≠ 1 := by
+    intro h
+    have hre := congrArg Complex.re h
+    simp [s] at hre
+  rw [show -(deriv riemannZeta s / riemannZeta s) -
+      deriv riemannZeta (1 - s) / riemannZeta (1 - s) =
+        -(Real.log Real.pi : ℂ) + Complex.digamma (s / 2) / 2 +
+          Complex.digamma ((1 - s) / 2) / 2 by
+    exact ArithmeticHodge.Analysis.neg_zeta_logDeriv_functional_pair
+      s hs0 hs1 hzeta hzetaOneSub]
+  exact bombieri_digamma_critical_pair v
+
 end ArithmeticHodge.Analysis.MultiplicativeWeil
