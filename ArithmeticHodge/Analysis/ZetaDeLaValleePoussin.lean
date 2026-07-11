@@ -496,6 +496,44 @@ theorem exists_nontrivialZetaZero_two_sided_log_gap :
       Complex.one_re, sub_sub_cancel] using hreflected
   exact ⟨hleft, hright⟩
 
+/-- Norm-form zero-free region for summing endpoint corrections.  At high
+height the direct and reflected real parts are bounded below by reciprocal
+logarithms of the corresponding spectral norms. -/
+theorem exists_nontrivialZetaZero_two_sided_log_norm_gap :
+    ∃ C T : ℝ, 0 < C ∧ 1 ≤ T ∧ ∀ rho : NontrivialZetaZero,
+      T ≤ |rho.val.im| →
+        C / Real.log (‖rho.val‖ + 2) ≤ rho.val.re ∧
+        C / Real.log (‖1 - rho.val‖ + 2) ≤ (1 - rho.val).re := by
+  obtain ⟨C, T₀, hC, _hT₀, hgap⟩ :=
+    exists_nontrivialZetaZero_two_sided_log_gap
+  refine ⟨C, max T₀ 1, hC, le_max_right _ _, ?_⟩
+  intro rho hrho
+  have hheight : T₀ ≤ |rho.val.im| :=
+    (le_max_left T₀ 1).trans hrho
+  obtain ⟨hleft, hright⟩ := hgap rho hheight
+  have himArgPos : 0 < |rho.val.im| + 2 := by positivity
+  have himLogPos : 0 < Real.log (|rho.val.im| + 2) := by
+    exact Real.log_pos (by linarith [abs_nonneg rho.val.im])
+  have hnormArg : |rho.val.im| + 2 ≤ ‖rho.val‖ + 2 := by
+    linarith [Complex.abs_im_le_norm rho.val]
+  have hnormLog :
+      Real.log (|rho.val.im| + 2) ≤ Real.log (‖rho.val‖ + 2) :=
+    Real.log_le_log himArgPos hnormArg
+  have hreflectedArg : |rho.val.im| + 2 ≤ ‖1 - rho.val‖ + 2 := by
+    have him : |(1 - rho.val).im| ≤ ‖1 - rho.val‖ :=
+      Complex.abs_im_le_norm (1 - rho.val)
+    simp only [Complex.sub_im, Complex.one_im, zero_sub, abs_neg] at him
+    linarith
+  have hreflectedLog :
+      Real.log (|rho.val.im| + 2) ≤
+        Real.log (‖1 - rho.val‖ + 2) :=
+    Real.log_le_log himArgPos hreflectedArg
+  constructor
+  · exact (div_le_div_of_nonneg_left hC.le himLogPos hnormLog).trans hleft
+  · have hdiv :=
+      (div_le_div_of_nonneg_left hC.le himLogPos hreflectedLog).trans hright
+    simpa only [Complex.sub_re, Complex.one_re] using hdiv
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeil
