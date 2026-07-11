@@ -168,6 +168,75 @@ example : Matrix.PosDef
   production, delete scratch, full-build, scan, axiom-audit, inspect the exact
   two-file diff, and commit as `add rational positive-definite certificates`.
 
+### Task 3: Coercive Riesz correction through Lax--Milgram
+
+**Files:**
+
+- Create: `ArithmeticHodge/Analysis/CoerciveRieszCorrection.lean`
+- Modify: `ArithmeticHodge.lean`
+- Test: `CoerciveRieszCorrectionScratch.lean` (temporary; delete before
+  commit)
+
+**Imports:**
+
+```lean
+import Mathlib.Analysis.InnerProductSpace.LaxMilgram
+```
+
+**Produces:**
+
+```lean
+namespace ArithmeticHodge.Analysis
+
+noncomputable def coerciveRieszCorrection
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+    [CompleteSpace V]
+    {B : V →L[ℝ] V →L[ℝ] ℝ} (hB : IsCoercive B)
+    (ell : StrongDual ℝ V) : V
+
+theorem coerciveRieszCorrection_apply
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+    [CompleteSpace V]
+    {B : V →L[ℝ] V →L[ℝ] ℝ} (hB : IsCoercive B)
+    (ell : StrongDual ℝ V) (w : V) :
+    B (coerciveRieszCorrection hB ell) w = ell w
+
+theorem norm_coerciveRieszCorrection_le
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+    [CompleteSpace V]
+    {B : V →L[ℝ] V →L[ℝ] ℝ} (hB : IsCoercive B)
+    (ell : StrongDual ℝ V) {mu : ℝ} (hmu : 0 < mu)
+    (hcoercive : ∀ v, mu * ‖v‖ * ‖v‖ ≤ B v v) :
+    ‖coerciveRieszCorrection hB ell‖ ≤ ‖ell‖ / mu
+
+theorem coerciveRieszCorrection_energy_le
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+    [CompleteSpace V]
+    {B : V →L[ℝ] V →L[ℝ] ℝ} (hB : IsCoercive B)
+    (ell : StrongDual ℝ V) {mu : ℝ} (hmu : 0 < mu)
+    (hcoercive : ∀ v, mu * ‖v‖ * ‖v‖ ≤ B v v) :
+    B (coerciveRieszCorrection hB ell)
+      (coerciveRieszCorrection hB ell) ≤ ‖ell‖ ^ 2 / mu
+
+end ArithmeticHodge.Analysis
+```
+
+- [ ] Write a temporary scratch importing the absent production module and
+  checking all four interfaces; record the strict missing-module RED result.
+- [ ] Define the correction as the inverse Lax--Milgram image of the
+  Frechet--Riesz representative `(InnerProductSpace.toDual ℝ V).symm ell`.
+- [ ] Prove the evaluation identity from
+  `IsCoercive.continuousLinearEquivOfBilin_apply` and
+  `InnerProductSpace.toDual_symm_apply`.
+- [ ] Derive the norm bound by combining explicit coercivity with
+  `ContinuousLinearMap.le_opNorm` and cancelling the norm of a nonzero
+  correction; handle the zero correction separately.
+- [ ] Derive the energy bound from the evaluation identity, the dual norm
+  estimate, and the norm bound.
+- [ ] Strict-compile scratch and production, delete scratch, full-build, scan,
+  axiom-audit, inspect the exact two-file diff, and commit as
+  `formalize coercive Riesz corrections`.
+
 ## Downstream use
 
 Yoshida's analytic stages must produce corrected low modes orthogonal to the
