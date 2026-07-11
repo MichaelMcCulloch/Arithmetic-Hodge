@@ -284,7 +284,9 @@ private theorem bombieriArchPolarRegular_differentiableAt
     (differentiableAt_const (c := (Real.log Real.pi : ℂ) / 2))).add
       (hpsiComp.differentiableAt.div_const 2)
 
-private theorem bombieriArchPolar_differentiableAt
+/-- The archimedean/polar factor is differentiable in the positive half-plane
+away from its simple pole at one. -/
+theorem bombieriArchPolar_differentiableAt
     {s : ℂ} (hspos : 0 < s.re) (hs1 : s ≠ 1) :
     DifferentiableAt ℂ bombieriArchPolar s := by
   have hden : s - 1 ≠ 0 := sub_ne_zero.mpr hs1
@@ -369,5 +371,4 @@ theorem rectIntegral_bombieriTransposeMellin_mul_archPolar
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeil
-
 
