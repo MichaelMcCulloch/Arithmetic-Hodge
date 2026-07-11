@@ -17,9 +17,9 @@ open ArithmeticHodge.Analysis.YoshidaWeightedTailBounds
 
 This module packages the rational inequalities surrounding Yoshida's
 equations (6.7)--(6.9).  The high-frequency weighted tails and the two
-digamma values are discharged by kernel-checked certificates; the remaining
-low-interval tail is kept as an explicit input until its source parameter
-`tZero` is certified.
+digamma values are discharged by kernel-checked certificates.  The
+low-interval tails and a canonical positive Yoshida zero are certified in
+`YoshidaTZeroTailBounds`.
 -/
 
 def digammaQuarterVerticalRe (t : ℝ) : ℝ :=

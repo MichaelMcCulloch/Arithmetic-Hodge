@@ -131,6 +131,7 @@ import ArithmeticHodge.Analysis.DigammaNumericBounds
 import ArithmeticHodge.Analysis.YoshidaWeightedTailBounds
 import ArithmeticHodge.Analysis.YoshidaTZeroTailBounds
 import ArithmeticHodge.Analysis.YoshidaCoercivityNumerics
+import ArithmeticHodge.Analysis.YoshidaSectionSixAnalytic
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaLower
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaIntegral
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaSummation
