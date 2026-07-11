@@ -54,4 +54,28 @@ theorem exists_radius_avoiding_summable_intervals
     (ENNReal.ofReal_lt_ofReal_iff hwidth_pos).mpr hwidth
   exact (not_lt_of_ge (hmeasure.trans hunion_volume)) hstrict
 
+/-- For a zero sequence with summable exceptional radii, every sufficiently
+    large dyadic annulus `[2r, 4r]` contains a sphere separated from every
+    zero modulus by more than its exceptional radius. -/
+theorem canonicalProduct_exists_good_radius
+    (zeros : ℕ → ℂ) (α : ℝ)
+    (hsumm : Summable (fun n => ‖zeros n‖⁻¹ ^ α)) :
+    ∃ R₀ : ℝ, 0 < R₀ ∧ ∀ r ≥ R₀, ∃ R : ℝ,
+      2 * r ≤ R ∧ R ≤ 4 * r ∧
+      ∀ n, ‖zeros n‖⁻¹ ^ α < |R - ‖zeros n‖| := by
+  let radius : ℕ → ℝ := fun n => ‖zeros n‖⁻¹ ^ α
+  let S : ℝ := ∑' n, radius n
+  refine ⟨max 1 (S + 1), lt_of_lt_of_le zero_lt_one (le_max_left _ _), fun r hr => ?_⟩
+  have hS_lt_r : S < r := by
+    have hSr : S + 1 ≤ r := (le_max_right 1 (S + 1)).trans hr
+    linarith
+  have hwidth : 2 * ∑' n, radius n < 4 * r - 2 * r := by
+    change 2 * S < 4 * r - 2 * r
+    linarith
+  obtain ⟨R, hR, hsep⟩ := exists_radius_avoiding_summable_intervals
+    (fun n => ‖zeros n‖) radius
+    (fun n => Real.rpow_nonneg (inv_nonneg.mpr (norm_nonneg _)) _)
+    hsumm (2 * r) (4 * r) hwidth
+  exact ⟨R, hR.1, hR.2, hsep⟩
+
 end ArithmeticHodge.Analysis.EntireFunction
