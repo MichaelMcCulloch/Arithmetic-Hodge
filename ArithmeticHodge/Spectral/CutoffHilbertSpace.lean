@@ -1419,14 +1419,16 @@ theorem spectralPairing_abs_bound
     calc W ≤ W + 1 := le_add_of_nonneg_right zero_le_one
       _ ≤ max K (W + 1) := le_max_right K (W + 1)
 
-/-- **Global trace-formula axiom.**
+/-- **Vacuous global trace-formula interface.**
 
-    This postulates that the current cutoff spectral pairing converges to the
-    Weil functional with an `O(1 / Λ)` error.  It is the unresolved global
-    trace-formula content, not a consequence of the elementary boundary-volume
-    estimates below.
+    The displayed estimate is not established by the current cutoff model.
+    Its premise includes an `AdeleClassSpaceData X` instance, and
+    `Adelic.no_AdeleClassSpaceData` proves that the fields of that class are
+    inconsistent. Consequently the existing signature is provable only by
+    eliminating that impossible instance.
 
-    Concretely, the Selberg unfolding gives:
+    A genuine Selberg-unfolding theorem would instead have to derive an
+    identity of the form:
 
       spectralPairingOf X Λ h  =  weilFunctionalFull h ĥ
         + ∫_{boundary shell} K_h(x,x) dμ(x)
@@ -1443,18 +1445,17 @@ theorem spectralPairing_abs_bound
     and `spectralPairingOf_eq_zero_frequency` shows that its spectral side only
     samples frequency zero.  More strongly,
     `spectralPairingOf_tendsto_fourierCos_zero` proves that it converges to
-    `fourierCos h 0 = ∫ h`; combined with the later axiom-derived convergence,
+    `fourierCos h 0 = ∫ h`; combined with the later vacuous convergence,
     uniqueness of limits would force the full Weil functional to equal that
     ordinary integral for every admissible test function.  Therefore this
-    axiom must not be described as an already-established GL(1)/ℚ unfolding
-    theorem.
+    theorem must not be described as an established GL(1)/ℚ unfolding.
 
     The hypotheses ensure:
     - K bounds the kernel pointwise (from test function decay)
     - M bounds the boundary shell measure (from the height function geometry)
     - c·Λ lower-bounds the bulk volume (from volume growth)
     - hζ is currently only a supplied nonvanishing premise -/
-axiom selberg_unfolding_bound
+theorem selberg_unfolding_bound
     (X : Type*) [inst : Adelic.AdeleClassSpaceData X]
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
@@ -1467,7 +1468,8 @@ axiom selberg_unfolding_bound
       ENNReal.ofReal (c * Λ) ≤ inst.haarMeasure (cutoffSet X Λ)) :
     ∀ (Λ : ℝ), 1 < Λ →
       |spectralPairingOf X Λ h -
-        Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ K * M / (c * Λ)
+        Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ K * M / (c * Λ) := by
+  exact (Adelic.no_AdeleClassSpaceData X).elim
 
 /-- **Sub-lemma 5d: Selberg unfolding — boundary integral bound.**
 
@@ -1477,8 +1479,9 @@ axiom selberg_unfolding_bound
     - M bounds the boundary shell volume (sub-lemma 5a)
     - c is the bulk volume growth rate (sub-lemma 5b)
 
-    Proved from the `selberg_unfolding_bound` axiom, which captures the
-    analytic content of the Selberg trace formula unfolding identity. -/
+    This delegates to `selberg_unfolding_bound`, whose current proof eliminates
+    the inconsistent `AdeleClassSpaceData` instance. It therefore supplies no
+    analytic Selberg-unfolding content. -/
 theorem selberg_boundary_integral_bound
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
@@ -1494,31 +1497,16 @@ theorem selberg_boundary_integral_bound
         Analysis.weilFunctionalFull h (Analysis.fourierCos h)| ≤ K * M / (c * Λ) :=
   selberg_unfolding_bound X h hcont hdecay hζ K hK hkernel M hM hbdry c hc hbulk
 
-/-- **Step C: Mixing → Boundary control: O(1/Λ) rate.**
+/-- **Vacuous boundary-control consequence.**
 
-    Decomposed into four independently-attackable sub-lemmas:
+    The intended decomposition was:
     - 5a: Boundary shell has bounded measure (boundary_volume_estimate)
     - 5b: Bulk volume grows like Λ (bulk_volume_lower_bound)
     - 5c: Test function kernel is uniformly bounded (kernel_uniform_bound)
     - 5d: Selberg unfolding gives boundary integral bound (selberg_boundary_integral_bound)
 
-    The combination gives: the difference between the cutoff spectral
-    pairing and the full Weil functional is controlled by the boundary
-    contribution, which is (kernel bound) × (boundary volume / bulk volume)
-    = O(K · M / (c·Λ)) = O(1/Λ).
-
-    The spectral pairing on S_Λ differs from W(h) because:
-    - The spectral sum over S_Λ omits contributions from {heightFn > Λ}
-    - The omitted contribution is bounded by kernel_bound × boundary_measure
-    - The boundary measure is O(1/Λ) relative to the total
-
-    The zeta non-vanishing hypothesis (hζ) ensures the spectral gap
-    from Step A, which controls the rate of convergence of the
-    eigenvalue distribution.
-
-    SORRY COUNT: 0 in this body — the sorry is isolated in
-    selberg_boundary_integral_bound (sub-lemma 5d) and
-    spectralPairing_abs_bound (sub-lemma 5d'). -/
+    In the current code, sub-lemma 5d is proved only by eliminating the
+    inconsistent class instance, so this O(1/Λ) result is vacuous as well. -/
 theorem spectralPairing_boundary_control
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
@@ -1574,16 +1562,16 @@ theorem spectralPairing_boundary_control
         _ = C := mul_one C
     linarith
 
-/-- **Step B: Spectral gap implies mixing (RAGE theorem).**
+/-- **A vacuous ε-form consequence of boundary control.**
 
     No eigenvalue at the boundary → continuous spectral measure →
     correlations decay. The RAGE theorem (Ruelle-Amrein-Georgescu-Enss):
     for self-adjoint D with continuous spectrum and compact K,
       (1/T) ∫₀ᵀ ‖K·e^{itD}x‖² dt → 0 as T → ∞.
 
-    **NOW PROVED** from Step C (boundary control):
-    The O(1/Λ) rate from `spectralPairing_boundary_control` immediately
-    gives ε-convergence by choosing Λ large enough. -/
+    The elementary conversion from an O(1/Λ) bound to an ε statement is sound,
+    but the supplied bound comes through the impossible
+    `AdeleClassSpaceData` instance. This is not a proof of RAGE. -/
 theorem spectralPairing_cauchy
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2))
@@ -1631,19 +1619,15 @@ theorem tendsto_of_bound_div
         apply div_lt_div_of_pos_left hC (by positivity) (by linarith)
     _ = ε := by field_simp
 
-/-- **Convergence of the spectral pairing to the Weil functional.**
+/-- **Vacuous convergence of the placeholder pairing to the Weil functional.**
 
     As Λ → ∞: spectralPairingOf X Λ h → W(h).
 
-    This IS the GL(1)/ℚ trace formula.
-
-    Decomposed into four steps:
-    - Step A: PNT → spectral gap (`cutoff_spectral_gap`)
-    - Step B: Spectral gap → Cauchy (`spectralPairing_cauchy`)
-    - Step C: Mixing → O(1/Λ) bound (`spectralPairing_boundary_control`)
-    - Step D: O(1/Λ) → Tendsto (`tendsto_of_bound_div`) — PROVED
-
-    Sorry count: 3 targeted sorries (Steps A, B, C), down from 1 monolithic. -/
+    The limit manipulation after an O(1/Λ) estimate is valid. The estimate,
+    however, descends from `selberg_unfolding_bound`, whose proof eliminates an
+    inconsistent `AdeleClassSpaceData` instance. It is therefore not the
+    GL(1)/ℚ trace formula. Independently, the concrete placeholder pairing was
+    proved above to converge to `fourierCos h 0 = ∫ h`. -/
 theorem spectralPairingOf_tendsto_weil
     (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x, ‖h x‖ ≤ 1 / (1 + x ^ 2)) :
