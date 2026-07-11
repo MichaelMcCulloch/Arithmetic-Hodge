@@ -1993,35 +1993,23 @@ private lemma completedZeta₀_order_ge_one :
   rw [← hb_coe]
   exact_mod_cast hone
 
-/-- Legacy lower-exponent target for the zeros of `Λ₀`.
+/-- The distinct nonzero zeros of `completedRiemannZeta₀` have exponent of
+convergence one once their missing lower-density statement is supplied.
 
-    The old proof sketch incorrectly identified xi zeros with zeros of
-    `completedRiemannZeta₀`.  In fact, the defining identity gives
-    `completedRiemannZeta₀ z = 0 → xiFunction z = 1 / 2`, so the two zero sets
-    are disjoint.  This file also cannot invoke the later `zeta_zero_density`
-    theorem without creating an import cycle.  A sound proof needs an
-    independent lower-density theorem for the `xi = 1 / 2` level set, with a
-    deliberate choice between distinct and multiplicity-weighted counting. -/
-private lemma zetaZeros_not_summable_rpow_of_lt_one (s : ℝ) (hs₀ : 0 < s) (hs₁ : s < 1) :
-    ¬ Summable (fun z : { w : ℂ // completedRiemannZeta₀ w = 0 ∧ w ≠ 0 } =>
-      ‖(z : ℂ)‖⁻¹ ^ s) := by
-  -- Required future chain:
-  -- 1. Construct a divisor/count for zeros of `completedRiemannZeta₀` itself.
-  -- 2. Prove a lower count in growing disks without importing ZetaProduct.
-  -- 3. Relate multiplicity-weighted counts to this distinct-zero subtype, or
-  --    change `zeroExponent` to encode multiplicity explicitly.
-  -- 4. Apply Abel summation to obtain divergence for every `0 < s < 1`.
-  sorry
-
-/-- The zeros of Λ₀ = completedRiemannZeta₀ have exponent of convergence 1.
+These are points where `xiFunction = 1 / 2`, not zeros of `xiFunction`; the
+explicit hypothesis prevents the two zero sets from being conflated.
 
     **Upper bound** (λ ≤ 1): From `zeroExponent_le_order` and the Stirling bound
     `completedZeta₀_order_le_one`, we have λ ≤ ρ ≤ 1.
 
     **Lower bound** (λ ≥ 1): For any 0 < s < 1, the series over zero norms
-    diverges by `zetaZeros_not_summable_rpow_of_lt_one`, so every element of
-    the defining set { σ | Σ ‖z‖⁻σ < ∞ } satisfies σ ≥ 1. -/
-theorem zetaZero_exponent_of_convergence :
+    is assumed to diverge, so every element of the defining set
+    `{ σ | Σ ‖z‖⁻σ < ∞ }` satisfies σ ≥ 1. -/
+theorem completedZeta_zeroExponent_eq_one_of_not_summable
+    (hdiv : ∀ s : ℝ, 0 < s → s < 1 →
+      ¬ Summable
+        (fun z : {w : ℂ // completedRiemannZeta₀ w = 0 ∧ w ≠ 0} =>
+          ‖(z : ℂ)‖⁻¹ ^ s)) :
     zeroExponent completedRiemannZeta₀ = 1 := by
   apply le_antisymm
   · -- Upper bound: zeroExponent ≤ entireOrder ≤ 1
@@ -2043,7 +2031,7 @@ theorem zetaZero_exponent_of_convergence :
     have hs_pos : 0 < s := by
       have := hs_eq ▸ hσ_pos
       exact_mod_cast this
-    exact zetaZeros_not_summable_rpow_of_lt_one s hs_pos hs_lt hs_summ
+    exact hdiv s hs_pos hs_lt hs_summ
 
 /-- **Λ₀ has order 1.**
 
