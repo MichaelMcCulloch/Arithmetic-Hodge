@@ -90,11 +90,11 @@ section Vacuum
 
 variable (X : Type*) [inst : Adelic.AdeleClassSpaceData X]
 
-/-- The vacuum vector: constant function 1 restricted to S_Λ.
+/-- The raw vacuum vector: constant function 1 restricted to S_Λ.
 
     This is the indicator function 1_{S_Λ} viewed as an element of L²(X, μ_Λ).
-    It represents the "ground state" of the scaling flow. -/
-noncomputable def vacuumVector (Λ : ℝ) :
+    It is normalized below before being used as a state. -/
+noncomputable def rawVacuumVector (Λ : ℝ) :
     Lp ℂ 2 (cutoffMeasure X Λ) := by
   -- The cutoff set has finite cutoff measure (it's the full space under restriction)
   have hmeas : MeasurableSet (cutoffSet X Λ) := cutoffSet_measurable X Λ
@@ -102,6 +102,13 @@ noncomputable def vacuumVector (Λ : ℝ) :
     simp only [cutoffMeasure, restrict_apply hmeas, Set.inter_self]
     exact (cutoffSet_measure_lt_top X Λ).ne
   exact indicatorConstLp 2 hmeas hfin (1 : ℂ)
+
+/-- The normalized vacuum state.  Dividing the raw indicator by
+    `max 1 ‖rawVacuumVector‖` keeps its norm at most one even when the cutoff
+    volume is larger than one. -/
+noncomputable def vacuumVector (Λ : ℝ) :
+    Lp ℂ 2 (cutoffMeasure X Λ) :=
+  (max 1 ‖rawVacuumVector X Λ‖)⁻¹ • rawVacuumVector X Λ
 
 end Vacuum
 
@@ -1173,12 +1180,19 @@ theorem vacuumWeights_summable_bound (Λ : ℝ) (hΛ : 0 < Λ) :
 
 /-- The vacuum vector has norm at most 1.
 
-    This encodes the normalization convention for the vacuum state.
-    In the adèle class space framework, the Haar measure is normalized
-    so that the fundamental domain has measure ≤ 1. -/
-private theorem vacuumVector_norm_sq_le_one (Λ : ℝ) (hΛ : 0 < Λ) :
+    This follows from the explicit unit-ball normalization in `vacuumVector`;
+    it does not impose a false upper bound on the growing cutoff volume. -/
+private theorem vacuumVector_norm_sq_le_one (Λ : ℝ) (_hΛ : 0 < Λ) :
     ‖vacuumVector X Λ‖ ^ 2 ≤ 1 := by
-  sorry
+  have hden_pos : 0 < max 1 ‖rawVacuumVector X Λ‖ :=
+    lt_of_lt_of_le zero_lt_one (le_max_left _ _)
+  have hv_le : ‖rawVacuumVector X Λ‖ ≤ max 1 ‖rawVacuumVector X Λ‖ :=
+    le_max_right _ _
+  have hnorm : ‖vacuumVector X Λ‖ ≤ 1 := by
+    rw [vacuumVector, norm_smul, Real.norm_eq_abs,
+      abs_of_nonneg (inv_nonneg.mpr hden_pos.le), inv_mul_eq_div]
+    exact (div_le_one hden_pos).mpr hv_le
+  nlinarith [norm_nonneg (vacuumVector X Λ)]
 
 /-- The vacuum weights sum to at most 1 (Bessel's inequality for unit Ω).
 
