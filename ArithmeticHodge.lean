@@ -38,6 +38,7 @@ import ArithmeticHodge.Analysis.HermitianLowTail
 import ArithmeticHodge.Analysis.RationalPosDefCertificate
 import ArithmeticHodge.Analysis.CoerciveRieszCorrection
 import ArithmeticHodge.Analysis.ComplexCoerciveRieszCorrection
+import ArithmeticHodge.Analysis.CenteredAddCircleFourierBasic
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
