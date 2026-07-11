@@ -215,6 +215,24 @@ def logarithmicCenter (a b : ℝ) : ℝ :=
 def logarithmicHalfWidth (a b : ℝ) : ℝ :=
   (Real.log b - Real.log a) / 2
 
+theorem logarithmicHalfWidth_pos
+    {a b : ℝ} (ha : 0 < a) (hab : a < b) :
+    0 < logarithmicHalfWidth a b := by
+  rw [logarithmicHalfWidth, div_pos_iff]
+  left
+  refine ⟨sub_pos.mpr ?_, by norm_num⟩
+  exact Real.strictMonoOn_log ha (ha.trans hab) hab
+
+theorem logarithmicHalfWidth_le_log_two_half
+    {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) (hratio : b / a ≤ 2) :
+    logarithmicHalfWidth a b ≤ Real.log 2 / 2 := by
+  have hb : 0 < b := ha.trans_le hab
+  have hlog : Real.log (b / a) ≤ Real.log 2 :=
+    Real.log_le_log (div_pos hb ha) hratio
+  rw [Real.log_div hb.ne' ha.ne'] at hlog
+  simpa only [logarithmicHalfWidth, div_le_div_iff_of_pos_right
+    (by norm_num : (0 : ℝ) < 2)] using hlog
+
 theorem logarithmicCenter_pos (a b : ℝ) :
     0 < logarithmicCenter a b := by
   exact Real.exp_pos _
