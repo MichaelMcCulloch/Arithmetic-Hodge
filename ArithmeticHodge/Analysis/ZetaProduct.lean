@@ -1222,9 +1222,11 @@ private lemma gammaR_logDeriv_explicit (s : ℂ)
   rw [Complex.ofReal_log Real.pi_pos.le]
   field_simp
 
-/-- The archimedean term in `zeta_logDeriv_from_xi` is explicitly
-`(log π - ψ(s / 2)) / 2`. -/
-private lemma zeta_logDeriv_from_xi_explicit (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
+/-- **Exact connection between `ζ'/ζ` and `ξ'/ξ`.**
+
+The archimedean correction is `(log π - ψ(s / 2)) / 2`, with the two
+polar logarithmic derivatives displayed separately. -/
+theorem zeta_logDeriv_from_xi_explicit (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
     (hζ : riemannZeta s ≠ 0) :
     deriv riemannZeta s / riemannZeta s =
       deriv xiFunction s / xiFunction s - 1 / s - 1 / (s - 1) +
@@ -1308,6 +1310,26 @@ private lemma zeta_logDeriv_from_xi_explicit (s : ℂ) (hs1 : s ≠ 1) (hs0 : s 
   have hxi_log : deriv xiFunction s / xiFunction s = deriv P s / P s := by
     rw [hxiP.deriv_eq, hxiP.eq_of_nhds]
   rw [hxi_log, hP_log]
+  ring
+
+/-- **Exact partial fraction expansion of `-ζ'/ζ`.**
+
+This combines `xi_logDeriv_expansion` with the explicit gamma-factor
+correction in `zeta_logDeriv_from_xi_explicit`.  The series is the actual
+Hadamard-zero series, rather than an existentially packaged constant or
+archimedean term. -/
+theorem zeta_logDeriv_partial_fraction_explicit
+    (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
+    (hζ : riemannZeta s ≠ 0) (hρ : ∀ n, s ≠ hadamardZeros n) :
+    Summable (fun n => 1 / (s - hadamardZeros n) + 1 / hadamardZeros n) ∧
+      -(deriv riemannZeta s / riemannZeta s) =
+        -(hadamardM : ℂ) / s - hadamardB -
+          (∑' n, (1 / (s - hadamardZeros n) + 1 / hadamardZeros n)) +
+          1 / s + 1 / (s - 1) - (Real.log Real.pi : ℂ) / 2 +
+          Complex.digamma (s / 2) / 2 := by
+  obtain ⟨hsummable, hxi⟩ := xi_logDeriv_expansion s hs0 hρ
+  refine ⟨hsummable, ?_⟩
+  rw [zeta_logDeriv_from_xi_explicit s hs1 hs0 hζ, hxi]
   ring
 
 /-- **Full partial fraction for ζ'/ζ.**
