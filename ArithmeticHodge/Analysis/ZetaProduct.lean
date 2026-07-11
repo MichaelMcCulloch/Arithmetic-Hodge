@@ -1681,14 +1681,20 @@ theorem zeta_logDeriv_growth (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
       dsimp [P]
       ring
 
-/-- **Zero density estimate.**
-    N(T) = #{ρ : 0 < Re(ρ) < 1, |Im(ρ)| ≤ T, ζ(ρ)=0} satisfies
+/-- **Legacy zero-density target (unsound counting interface).**
+    The classical one-sided Riemann--von Mangoldt count satisfies
     N(T) = (T/2π)·log(T/2πe) + O(log T).
 
-    This is a classical result following from the argument principle
-    applied to ξ on the boundary of the critical strip.
+    The statement below instead filters an arbitrary finite prefix of
+    `hadamardZeros`; no height ordering or prefix-exhaustion theorem connects
+    that prefix to all zeros below `T`.  It also uses `|Im ρ| ≤ T`, which is a
+    two-sided count and therefore has twice the one-sided leading term when
+    multiplicities are counted correctly.
 
-    We state this in terms of the zero sequence enumeration. -/
+    `ZetaZeroCount.lean` supplies the sound replacement foundation:
+    `xiZeroCount` is enumeration-independent and multiplicity-aware.  A future
+    asymptotic theorem should be stated using that divisor count and an
+    unwrapped contour argument. -/
 theorem zeta_zero_density :
     ∃ (C : ℝ), 0 < C ∧ ∀ (T : ℝ), 2 ≤ T →
       |(Finset.filter (fun n => |(hadamardZeros n).im| ≤ T)
@@ -1756,9 +1762,12 @@ theorem zeta_zero_density :
   --   Ref: Davenport, Multiplicative Number Theory, Ch. 15, Theorem 1.
   --   [Requires: argument principle for meromorphic functions — not in Mathlib]
   --
-  -- STEP B (Stirling's approximation for complex Gamma):
-  --   Im log Γ(1/4 + iT/2) = (T/2)·log(T/2) - T/2 - π/4 + O(1/T)
-  --   from the Stirling series log Γ(z) = (z-1/2)log z - z + (1/2)log 2π + O(1/|z|).
+  -- STEP B (Stirling's approximation for an unwrapped Gamma phase):
+  --   A continuous branch of arg Γ(1/4 + iT/2), fixed along the contour,
+  --   equals (T/2)·log(T/2) - T/2 - π/4 + O(1/T).  This cannot be
+  --   represented by the pointwise principal value `Complex.log` below.
+  --   The asymptotic comes from the Stirling series
+  --   log Γ(z) = (z-1/2)log z - z + (1/2)log 2π + O(1/|z|).
   --   Ref: Olver, Asymptotics and Special Functions, Ch. 8.
   --   [Requires: Stirling for complex Gamma — Mathlib has only n! ~ √(2πn)(n/e)^n]
   --
@@ -1778,16 +1787,20 @@ theorem zeta_zero_density :
   --        = T/(2π)·[log(T/2) - 1 - log π] + O(log T)
   --        = T/(2π)·(log(T/2) - 1 - log π) + O(log T)
   --
-  -- COUNTING: The finset count matches N(T) up to O(1):
-  --   • hadamardZeros_surj: every zero appears in the enumeration
-  --   • ⌈T⌉² ≥ T² ≫ N(T) = O(T log T) for T ≥ 2 covers all indices
-  --   • Dummy entries (hadamardZeros n = 1/2, im=0) pass the filter but
-  --     their excess is compensated by encoding density.
+  -- COUNTING OBSTRUCTION: the finset expression below is not N(T).
+  -- `hadamardZeros` has no height ordering, and no theorem says that the first
+  -- `⌈T⌉²` entries exhaust the zeros below height `T`.  Its construction also
+  -- repeats zeros according to multiplicity rather than inserting compensating
+  -- dummy entries.  The enumeration-independent `xiZeroCount` API is the
+  -- appropriate replacement.
   --
   -- We axiomatize the combined Steps A–D and the counting argument as
   -- four precisely-scoped `have` lemmas, then close by triangle inequality.
 
-  -- (1) Stirling approximation for Im log Γ(1/4 + iT/2)
+  -- (1) This principal-log Stirling premise is false as stated.  The imaginary
+  --     part of `Complex.log` is bounded by π, while an unwrapped Gamma phase
+  --     grows like T log T.  `no_principal_log_Gamma_stirling_phase_at_100`
+  --     in ZetaZeroCount.lean gives a standard-axiom concrete contradiction.
   have h_stirling : ∃ (ε : ℝ), |ε| ≤ 1 ∧
       (Complex.log (Complex.Gamma (↑(1 / 4 : ℝ) + ↑(T / 2) * Complex.I))).im =
       T / 2 * Real.log (T / 2) - T / 2 - Real.pi / 4 + ε / T := by
@@ -1807,7 +1820,8 @@ theorem zeta_zero_density :
     -- Argument principle for ξ(s) on rectangle R(T), using ξ(s) = ξ(1-s) symmetry.
     -- Decomposition: Im log ξ(1/2+iT) = Im log Γ(1/4+iT/2) - (T/2)log π + Im log ζ(1/2+iT) + O(1)
     -- The O(1) polynomial contribution Im log[s(s-1)/2] is absorbed into ε.
-    -- The finset-count-to-N(T) matching uses hadamardZeros_surj and ⌈T⌉² ≥ N(T).
+    -- The displayed finset-count-to-N(T) matching is unavailable: the sequence
+    -- has neither a height ordering nor a prefix-exhaustion bound.
     -- Not yet formalizable: argument principle for meromorphic functions.
     sorry
   -- (3) Backlund–Titchmarsh: |arg ζ(1/2 + iT)| = O(log T)

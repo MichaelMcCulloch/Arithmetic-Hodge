@@ -238,4 +238,41 @@ theorem xiZeroCount_one_sub
       apply finsum_congr
       exact xiZeroWeight_one_sub sigmaLower sigmaUpper heightLower heightUpper
 
+/-! ### Principal logarithms do not encode unwrapped contour phase -/
+
+/-- The principal logarithm cannot satisfy the unwrapped Stirling-phase
+identity used by the legacy prefix-count proof.  At the concrete height
+`T = 100`, the proposed right-hand side is greater than `π`, whereas
+`Complex.log_im_le_pi` bounds the left-hand side by `π` for every input. -/
+theorem no_principal_log_Gamma_stirling_phase_at_100 :
+    ¬ ∃ ε : ℝ, |ε| ≤ 1 ∧
+      (Complex.log (Complex.Gamma
+        (↑(1 / 4 : ℝ) + ↑((100 : ℝ) / 2) * Complex.I))).im =
+        (100 : ℝ) / 2 * Real.log ((100 : ℝ) / 2) -
+          (100 : ℝ) / 2 - Real.pi / 4 + ε / 100 := by
+  rintro ⟨ε, hε, heq⟩
+  have hexp_three_lt_fifty : Real.exp 3 < 50 := by
+    calc
+      Real.exp 3 = Real.exp 1 ^ (3 : ℕ) := by
+        rw [show (3 : ℝ) = 1 + 1 + 1 by norm_num, Real.exp_add, Real.exp_add]
+        ring
+      _ < 3 ^ (3 : ℕ) := by
+        exact pow_lt_pow_left₀ Real.exp_one_lt_three (Real.exp_pos 1).le (by norm_num)
+      _ < 50 := by norm_num
+  have hlog_fifty : 3 < Real.log 50 := by
+    exact (Real.lt_log_iff_exp_lt (by norm_num : (0 : ℝ) < 50)).mpr
+      hexp_three_lt_fifty
+  have hε_lower : -1 ≤ ε := neg_le_of_abs_le hε
+  have hpi_upper : Real.pi < 4 := Real.pi_lt_four
+  have hphase_gt_pi : Real.pi <
+      (100 : ℝ) / 2 * Real.log ((100 : ℝ) / 2) -
+        (100 : ℝ) / 2 - Real.pi / 4 + ε / 100 := by
+    norm_num at hlog_fifty ⊢
+    nlinarith
+  have hprincipal := Complex.log_im_le_pi
+    (Complex.Gamma
+      (↑(1 / 4 : ℝ) + ↑((100 : ℝ) / 2) * Complex.I))
+  rw [heq] at hprincipal
+  exact (not_lt_of_ge hprincipal) hphase_gt_pi
+
 end ArithmeticHodge.Analysis
