@@ -996,8 +996,7 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
   · -- f has zeros: Weierstraß product construction for finite-order functions.
     -- analyticOrderAt_tprod_weierstraß is now proved; remaining issues are
     -- stutteredEnum_pair_lt alignment and Encodable.decode₂ API mismatches.
-    exact sorry
-    /- push_neg at hzf
+    push_neg at hzf
     -- ═══════════════════════════════════════════════════════════
     -- Step 1: Factor out the zero at the origin
     -- f(z) = z^m · f₁(z) with f₁(0) ≠ 0, using analytic order at 0
@@ -1059,6 +1058,7 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         rwa [Set.preimage_compl, compl_compl] at this
       have hcount : (f₁ ⁻¹' {0}).Countable :=
         (HereditarilyLindelofSpace.isLindelof _).countable_of_isDiscrete hdisc
+      letI : Encodable (f₁ ⁻¹' {0}) := hcount.toEncodable
       -- Step 2b: Enumerate distinct zeros
       set a₀ : ℕ → ℂ := fun n =>
         match @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable n with
@@ -1129,8 +1129,7 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         have ha'n_ne : a' n ≠ 0 := ha'n_eq ▸ hk
         have ⟨hlt, ha₀_ne⟩ := stutteredEnum_ne_zero_imp ha'n_ne
         have ha'_simp : a' n = a₀ n.unpair.1 := by
-          rw [show n = Nat.pair n.unpair.1 n.unpair.2 from (Nat.pair_unpair n).symm]
-          exact stutteredEnum_pair_lt hlt
+          simp only [a', stutteredEnum_apply, hlt, if_true]
         have heq_a₀ : a₀ n.unpair.1 = a₀ k := ha'_simp ▸ ha'n_eq
         -- enumerateCountable injectivity: a₀ n.unpair.1 = a₀ k → n.unpair.1 = k
         have hfst_eq : n.unpair.1 = k := by
@@ -1140,15 +1139,17 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
           | none => simp
           | some v1 =>
             cases h2 : @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable k with
-            | none => simp
+            | none => simp_all
             | some v2 =>
               intro _ heq
               have hv_eq : v1 = v2 := Subtype.val_injective heq
               rw [Encodable.decode₂_eq_some] at h1 h2
               rw [← h1, ← h2, hv_eq]
+        have hlt' : n.unpair.2 < m := by
+          simpa only [hm_def, hfst_eq] using hlt
         exact hn (by
           rw [show n = Nat.pair n.unpair.1 n.unpair.2 from (Nat.pair_unpair n).symm, hfst_eq]
-          exact Finset.mem_image_of_mem _ (Finset.mem_range.mpr (hm_def ▸ hlt)))
+          exact Finset.mem_image_of_mem _ (Finset.mem_range.mpr hlt'))
       have hS_card : S.card = m := by
         simp only [S]
         exact (Finset.card_image_of_injective _
@@ -1347,6 +1348,5 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       fun n hn => by rw [hf_eq (a n), ha_zeros n hn, mul_zero],
       hconv, fun z => by
         rw [hf_eq z, hh_eq z, hg_eq z, ← mul_assoc]⟩
-    -/
 
 end ArithmeticHodge.Analysis.EntireFunction
