@@ -59,7 +59,8 @@ def centeredLift (a : ℝ) [Fact (0 < 2 * a)] (f : ℝ → ℂ) :
     CenteredAddCircle a → ℂ :=
   AddCircle.liftIoc (2 * a) (-a) f
 
-def centeredFourierCoeff (ha : 0 < a) (f : ℝ → ℂ) (n : ℤ) : ℂ :=
+def centeredFourierCoeff {a : ℝ} (ha : 0 < a)
+    (f : ℝ → ℂ) (n : ℤ) : ℂ :=
   fourierCoeffOn (neg_lt_self ha) f n
 
 theorem centeredLift_apply_Ioc
@@ -70,7 +71,7 @@ theorem centeredLift_apply_Ioc
 theorem centeredFourierCoeff_eq_integral
     {a : ℝ} (ha : 0 < a) (f : ℝ → ℂ) (n : ℤ) :
     centeredFourierCoeff ha f n =
-      (1 / (2 * a)) • ∫ x in -a..a,
+      (1 / (2 * a) : ℝ) • ∫ x in -a..a,
         fourier (-n) (x : CenteredAddCircle a) • f x
 
 theorem centeredLift_memLp
@@ -105,6 +106,10 @@ theorem hasSum_centered_fourier_series_L2
   missing production module.
 - [ ] Implement centered endpoint arithmetic explicitly; simplify
   `-a + 2 * a` to `a` without changing the half-open seam convention.
+- [ ] For the explicit coefficient-integral theorem, use a local
+  `NormedSpace ℝ ℂ := NormedSpace.complexToReal` instance matching the
+  upstream interval theorem; after endpoint normalization, close the harmless
+  scalar-instance diamond by `Complex.ext` and reflexivity.
 - [ ] Obtain normalized-Haar `MemLp` via
   `MemLp.memLp_liftIoc.haarAddCircle`.
 - [ ] Relate the bundled Lp coefficient to `fourierCoeffOn` with
