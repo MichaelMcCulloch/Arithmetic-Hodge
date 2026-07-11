@@ -4,3 +4,4 @@ import ArithmeticHodge.Analysis.CenteredAddCircleFourierParity
 import ArithmeticHodge.Analysis.CenteredAddCircleFourierSymmetry
 import ArithmeticHodge.Analysis.CenteredAddCircleFourierTail
 import ArithmeticHodge.Analysis.YoshidaFourierModes
+import ArithmeticHodge.Analysis.YoshidaFourierDecomposition
