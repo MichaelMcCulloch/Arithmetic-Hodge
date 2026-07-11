@@ -11,6 +11,7 @@
 -/
 
 import ArithmeticHodge.Analysis.EntireFunction.Hadamard
+import ArithmeticHodge.Analysis.EntireFunction.CanonicalGrowth
 import ArithmeticHodge.Analysis.EntireFunction.Order
 import ArithmeticHodge.Analysis.ComplexStirling
 import ArithmeticHodge.Analysis.WeilDefs
@@ -1009,16 +1010,43 @@ theorem xi_hadamard_product :
       ∀ s, xiFunction s =
         s ^ m * Complex.exp (A + B * s) *
         ∏' n, EntireFunction.weierstraßElementary 1 (s / zeros n) := by
-  -- BLOCKED on three missing interfaces:
-  -- 1. `entireOrder xiFunction = 1` is not available here. The related theorem
-  --    `completedZeta_order` is in Order.lean, which imports this file.
-  -- 2. `hadamard_factorization_order_one` returns an existential genus `p` but does not expose
-  --    that its implementation chooses `p = floor 1 = 1`.
-  -- 3. Its zero sequence is padded by zero and only satisfies
-  --    `zeros n ≠ 0 → f (zeros n) = 0`; obtaining an everywhere-nonzero sequence requires
-  --    infinitude of the xi zeros and a padding-free reindexing theorem.
-  -- The preceding `xi_hadamard_product_of_order_one` closes the sound part of this chain.
-  sorry
+  have hfin : EntireFunction.HasFiniteOrder xiFunction := by
+    show EntireFunction.entireOrder xiFunction < ⊤
+    rw [xiFunction_order]
+    exact EReal.coe_lt_top 1
+  obtain ⟨m, g, a, p, hg, hzeros, hconv, hfact, hp, _hcover, horders⟩ :=
+    EntireFunction.weierstraß_factorization_canonical xiFunction differentiable_xiFunction
+      xiFunction_ne_const_zero hfin
+  have hp1 : p = 1 := by
+    rw [xiFunction_order] at hp
+    simpa using hp
+  rw [hp1] at hconv hfact horders
+  have hsumm_beta : Summable (fun n ↦ ‖a n‖⁻¹ ^ (3 / 2 : ℝ)) :=
+    EntireFunction.canonical_sequence_summable_of_order_lt
+      xiFunction differentiable_xiFunction xiFunction_ne_const_zero a 1
+      hzeros hconv horders (3 / 2 : ℝ) (by norm_num) (by
+        rw [xiFunction_order]
+        exact EReal.coe_lt_coe_iff.mpr (by norm_num))
+  obtain ⟨C, hC, hgrowth⟩ := EntireFunction.canonical_factorization_growth
+    xiFunction differentiable_xiFunction m g a 1 hg hfact
+      (3 / 2 : ℝ) (7 / 4 : ℝ)
+      (by norm_num) (by norm_num) (by norm_num) hsumm_beta (by
+        rw [xiFunction_order]
+        exact EReal.coe_lt_coe_iff.mpr (by norm_num))
+  obtain ⟨A, B, hg_affine⟩ := EntireFunction.affine_of_growth_lt_two
+    g hg C (7 / 4 : ℝ) hC (by norm_num) (by norm_num) hgrowth
+  have hm : m = 0 := by
+    by_contra hm
+    have h0 := hfact 0
+    rw [xiFunction_zero_val] at h0
+    simp [zero_pow hm] at h0
+  have hconv2 : Summable (fun n ↦ (‖a n‖⁻¹) ^ (2 : ℝ)) := by
+    simpa only [Nat.cast_one, one_add_one_eq_two] using hconv
+  have hfactorization : ∀ z, xiFunction z = Complex.exp (A + B * z) *
+      ∏' n, EntireFunction.weierstraßElementary 1 (z / a n) := by
+    intro z
+    simpa [hm, hg_affine z] using hfact z
+  exact xi_hadamard_product_reindex_bridge A B a hzeros hconv2 hfactorization
 
 /-- The vanishing order of ξ at 0. Expected to be 0 since ξ(0) = 1/2 ≠ 0. -/
 noncomputable def hadamardM : ℕ := xi_hadamard_product.choose
