@@ -810,6 +810,36 @@ private lemma complement_tprod_ne_zero (zeros : ℕ → ℂ) (p : ℕ) (S : Fins
   · intro heq
     exact hS_compl n h ((div_eq_one_iff_eq (fun hz => by simp [hz] at heq)).mp heq).symm
 
+/-- Split an infinite product into a finite set of factors and a full-indexed
+    complementary product whose factors on the finite set are `1`.  This
+    commutative-monoid formulation is needed for `ℂ`, where multiplication is
+    not a group because of zero factors. -/
+private lemma tprod_eq_finprod_mul_tprod_mask (f q : ℕ → ℂ) (S : Finset ℕ)
+    (hq : Multipliable q) (hq_eq : ∀ n, q n = if n ∈ S then 1 else f n) :
+    (∏' n, f n) = (∏ n ∈ S, f n) * ∏' n, q n := by
+  have hcomp : Multipliable (fun n : ↑((↑S : Set ℕ)ᶜ) ↦ f n) := by
+    change Multipliable (f ∘ ((↑) : ↑((↑S : Set ℕ)ᶜ) → ℕ))
+    rw [multipliable_subtype_iff_mulIndicator]
+    apply hq.congr
+    intro n
+    rw [hq_eq]
+    simp only [Set.mulIndicator, Set.mem_compl_iff, Finset.mem_coe]
+    split_ifs <;> rfl
+  have hs : Multipliable (fun n : (↑S : Set ℕ) ↦ f n) := S.multipliable f
+  have hsplit := Multipliable.tprod_mul_tprod_compl hs hcomp
+  calc
+    (∏' n, f n) = (∏' n : (↑S : Set ℕ), f n) *
+        ∏' n : ↑((↑S : Set ℕ)ᶜ), f n := hsplit.symm
+    _ = (∏ n ∈ S, f n) * ∏' n, q n := by
+      rw [Finset.tprod_subtype']
+      congr 1
+      rw [_root_.tprod_subtype]
+      apply tprod_congr
+      intro n
+      rw [hq_eq]
+      simp only [Set.mulIndicator, Set.mem_compl_iff, Finset.mem_coe]
+      split_ifs <;> rfl
+
 /-- The analytic order of a Weierstraß tprod at a zero equals the number of
     indices mapping to that zero (each contributing a simple zero).
 
@@ -855,7 +885,14 @@ theorem analyticOrderAt_tprod_weierstraß (zeros : ℕ → ℂ) (p : ℕ)
     hQ_an.analyticOrderAt_eq_zero.mpr (complement_tprod_ne_zero zeros p S hconv z₀ hz₀ hS_compl)
   -- Split: P = F * Q, so order(P) = order(F) + order(Q) = S.card + 0
   have hsplit : P = F * Q := by
-    ext w; exact sorry -- tprod split: (hm w).prod_mul_tprod_compl with zeros'/Q alignment
+    funext w
+    apply tprod_eq_finprod_mul_tprod_mask
+    · exact multipliable_weierstraßElementary_raw zeros' p hconv' w
+    · intro n
+      simp only [zeros', f]
+      split_ifs with hn
+      · simp [weierstraßElementary_zero]
+      · rfl
   calc analyticOrderAt P z₀
       = analyticOrderAt (F * Q) z₀ := by rw [← hsplit]
     _ = analyticOrderAt F z₀ + analyticOrderAt Q z₀ := analyticOrderAt_mul hF_an hQ_an
