@@ -32,6 +32,7 @@ import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Topology.DiscreteSubset
 import Mathlib.Data.Set.Countable
 import Mathlib.Topology.Compactness.Lindelof
+import Mathlib.SetTheory.Cardinal.Basic
 import ArithmeticHodge.Analysis.EntireFunction.Defs
 import ArithmeticHodge.Analysis.EntireFunction.ZeroSummability
 
@@ -1386,5 +1387,88 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       fun n hn => by rw [hf_eq (a n), ha_zeros n hn, mul_zero],
       hconv, fun z => by
         rw [hf_eq z, hh_eq z, hg_eq z, ← mul_assoc]⟩
+
+-- ============================================================
+-- Zero-padding support and reindexing
+-- ============================================================
+
+/-- Inverse-power summability forces local finiteness of the nonzero entries
+of a possibly zero-padded sequence. -/
+theorem finite_nonzero_indices_norm_le
+    (a : ℕ → ℂ) (beta : ℝ) (hbeta : 0 < beta)
+    (hsumm : Summable (fun n => ‖a n‖⁻¹ ^ beta))
+    (R : ℝ) (hR : 0 < R) :
+    Set.Finite {n : ℕ | a n ≠ 0 ∧ ‖a n‖ ≤ R} := by
+  let c : ℝ := R⁻¹ ^ beta
+  have hc : 0 < c := Real.rpow_pos_of_pos (inv_pos.mpr hR) beta
+  have hev : ∀ᶠ n in Filter.cofinite, ‖a n‖⁻¹ ^ beta < c :=
+    hsumm.tendsto_cofinite_zero.eventually_lt_const hc
+  have hfinite : Set.Finite {n : ℕ | c ≤ ‖a n‖⁻¹ ^ beta} := by
+    simpa only [Filter.eventually_cofinite, Set.mem_setOf_eq, not_lt] using hev
+  apply hfinite.subset
+  intro n hn
+  have han_pos : 0 < ‖a n‖ := norm_pos_iff.mpr hn.1
+  have hinv : R⁻¹ ≤ ‖a n‖⁻¹ :=
+    (inv_le_inv₀ hR han_pos).2 hn.2
+  exact Real.rpow_le_rpow (inv_nonneg.mpr hR.le) hinv hbeta.le
+
+/-- If every nonzero sequence entry is a zero of `f`, inverse-power
+summability and finiteness of the nonzero zero set force only finitely many
+nonzero entries. -/
+theorem finite_nonzero_support_of_finite_zero_set
+    (f : ℂ → ℂ) (a : ℕ → ℂ) (beta : ℝ) (hbeta : 0 < beta)
+    (hzeros : ∀ n, a n ≠ 0 → f (a n) = 0)
+    (hsumm : Summable (fun n => ‖a n‖⁻¹ ^ beta))
+    (hfinite : Set.Finite {z : ℂ | f z = 0 ∧ z ≠ 0}) :
+    Set.Finite {n : ℕ | a n ≠ 0} := by
+  let Z : Set ℂ := {z : ℂ | f z = 0 ∧ z ≠ 0}
+  have hZfinite : Z.Finite := hfinite
+  have hnormfinite : (norm '' Z).Finite := hZfinite.image norm
+  obtain ⟨M, hM⟩ : ∃ M : ℝ, ∀ r ∈ norm '' Z, r ≤ M := hnormfinite.bddAbove
+  let R : ℝ := max 1 M
+  have hR : 0 < R := zero_lt_one.trans_le (le_max_left 1 M)
+  have hsupport_bound : {n : ℕ | a n ≠ 0} ⊆
+      {n : ℕ | a n ≠ 0 ∧ ‖a n‖ ≤ R} := by
+    intro n hn
+    refine ⟨hn, ?_⟩
+    have haZ : a n ∈ Z := ⟨hzeros n hn, hn⟩
+    exact (hM ‖a n‖ ⟨a n, haZ, rfl⟩).trans (le_max_right 1 M)
+  exact (finite_nonzero_indices_norm_le a beta hbeta hsumm R hR).subset hsupport_bound
+
+/-- An infinitely supported padded zero sequence can be reindexed by `ℕ`
+without padding. Summability and every canonical product are preserved. -/
+theorem exists_nonzero_reindex_of_infinite_support
+    (a : ℕ → ℂ) (beta : ℝ)
+    (hsumm : Summable (fun n => ‖a n‖⁻¹ ^ beta))
+    (hinf : Set.Infinite {n : ℕ | a n ≠ 0}) :
+    ∃ b : ℕ → ℂ,
+      (∀ n, b n ≠ 0) ∧
+      Summable (fun n => ‖b n‖⁻¹ ^ beta) ∧
+      ∀ (p : ℕ) (z : ℂ),
+        ∏' n, weierstraßElementary p (z / b n) =
+          ∏' n, weierstraßElementary p (z / a n) := by
+  let S : Set ℕ := {n : ℕ | a n ≠ 0}
+  letI : Infinite S := hinf.to_subtype
+  letI : Denumerable S := Classical.choice (nonempty_denumerable S)
+  let e : ℕ ≃ S := (Denumerable.eqv S).symm
+  let b : ℕ → ℂ := fun n => a (e n)
+  refine ⟨b, ?_, ?_, ?_⟩
+  · intro n
+    exact (e n).property
+  · have hsub : Summable (fun i : S => ‖a i‖⁻¹ ^ beta) := hsumm.subtype S
+    exact e.summable_iff.mpr hsub
+  · intro p z
+    have hsupport : Function.mulSupport (fun n => weierstraßElementary p (z / a n)) ⊆ S := by
+      intro n hn
+      change a n ≠ 0
+      intro han
+      apply hn
+      simp [han, weierstraßElementary_zero]
+    calc
+      ∏' n, weierstraßElementary p (z / b n) =
+          ∏' i : S, weierstraßElementary p (z / a i) := by
+            exact e.tprod_eq (fun i : S => weierstraßElementary p (z / a i))
+      _ = ∏' n, weierstraßElementary p (z / a n) :=
+        tprod_subtype_eq_of_mulSupport_subset hsupport
 
 end ArithmeticHodge.Analysis.EntireFunction
