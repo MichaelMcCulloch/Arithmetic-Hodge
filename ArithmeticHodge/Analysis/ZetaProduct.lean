@@ -11,6 +11,7 @@
 -/
 
 import ArithmeticHodge.Analysis.EntireFunction.Hadamard
+import ArithmeticHodge.Analysis.ComplexStirling
 import ArithmeticHodge.Analysis.WeilDefs
 import Mathlib.NumberTheory.LSeries.RiemannZeta
 import Mathlib.NumberTheory.LSeries.Nonvanishing
@@ -421,6 +422,131 @@ theorem zeta_logDeriv_from_xi (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
     (deriv xiFunction s / xiFunction s
      - 1 / s - 1 / (s - 1)), by ring⟩
 
+/-- The logarithmic derivative of Deligne's real Gamma factor, away from its zeros. -/
+private lemma gammaR_logDeriv_explicit (s : ℂ)
+    (hs : ∀ m : ℕ, s / 2 ≠ -m) :
+    logDeriv Gammaℝ s =
+      -(Real.log Real.pi : ℂ) / 2 + Complex.digamma (s / 2) / 2 := by
+  have hlin : DifferentiableAt ℂ (fun z : ℂ => -z / 2) s :=
+    differentiableAt_id.neg.div_const 2
+  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+  have hpow : DifferentiableAt ℂ (fun z : ℂ => (Real.pi : ℂ) ^ (-z / 2)) s :=
+    hlin.const_cpow (Or.inl hpi)
+  have hhalf : DifferentiableAt ℂ (fun z : ℂ => z / 2) s :=
+    differentiableAt_id.div_const 2
+  have hGamma : DifferentiableAt ℂ Complex.Gamma (s / 2) :=
+    Complex.differentiableAt_Gamma (s / 2) hs
+  have hGammaComp : DifferentiableAt ℂ (fun z : ℂ => Complex.Gamma (z / 2)) s :=
+    hGamma.comp s hhalf
+  have hpow_ne : (Real.pi : ℂ) ^ (-s / 2) ≠ 0 := by simp [hpi]
+  have hGamma_ne : Complex.Gamma (s / 2) ≠ 0 := Complex.Gamma_ne_zero hs
+  rw [show Gammaℝ = fun z : ℂ => (Real.pi : ℂ) ^ (-z / 2) * Complex.Gamma (z / 2) by
+    funext z
+    exact Complex.Gammaℝ_def z]
+  rw [logDeriv_mul s hpow_ne hGamma_ne hpow hGammaComp]
+  have hpow_deriv : deriv (fun z : ℂ => (Real.pi : ℂ) ^ (-z / 2)) s =
+      (Real.pi : ℂ) ^ (-s / 2) * Complex.log (Real.pi : ℂ) * (-1 / 2) := by
+    convert (hlin.hasDerivAt.const_cpow (Or.inl hpi)).deriv using 1
+    all_goals simp
+  have hgamma_comp : logDeriv (fun z : ℂ => Complex.Gamma (z / 2)) s =
+      Complex.digamma (s / 2) / 2 := by
+    rw [show (fun z : ℂ => Complex.Gamma (z / 2)) =
+      Complex.Gamma ∘ fun z : ℂ => z / 2 by rfl]
+    rw [logDeriv_comp (f := Complex.Gamma) (g := fun z : ℂ => z / 2) (x := s)
+      hGamma hhalf, Complex.digamma_def]
+    simp [logDeriv_apply, div_eq_mul_inv]
+  rw [hgamma_comp, logDeriv_apply, hpow_deriv]
+  rw [Complex.ofReal_log Real.pi_pos.le]
+  field_simp
+
+/-- The archimedean term in `zeta_logDeriv_from_xi` is explicitly
+`(log π - ψ(s / 2)) / 2`. -/
+private lemma zeta_logDeriv_from_xi_explicit (s : ℂ) (hs1 : s ≠ 1) (hs0 : s ≠ 0)
+    (hζ : riemannZeta s ≠ 0) :
+    deriv riemannZeta s / riemannZeta s =
+      deriv xiFunction s / xiFunction s - 1 / s - 1 / (s - 1) +
+        ((Real.log Real.pi : ℂ) / 2 - Complex.digamma (s / 2) / 2) := by
+  have hsGamma : ∀ m : ℕ, s / 2 ≠ -m := by
+    intro m hm
+    cases m with
+    | zero =>
+        apply hs0
+        simpa using (div_eq_zero_iff.mp (by simpa using hm : s / 2 = 0)).resolve_right
+          (by norm_num : (2 : ℂ) ≠ 0)
+    | succ n =>
+        apply hζ
+        have hs_eq : s = -2 * (n + 1 : ℕ) := by
+          apply (div_left_inj' (by norm_num : (2 : ℂ) ≠ 0)).mp
+          rw [hm]
+          push_cast
+          ring
+        rw [hs_eq]
+        simpa [Nat.cast_succ] using riemannZeta_neg_two_mul_nat_add_one n
+  have hlin : DifferentiableAt ℂ (fun z : ℂ => -z / 2) s :=
+    differentiableAt_id.neg.div_const 2
+  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+  have hpow : DifferentiableAt ℂ (fun z : ℂ => (Real.pi : ℂ) ^ (-z / 2)) s :=
+    hlin.const_cpow (Or.inl hpi)
+  have hhalf : DifferentiableAt ℂ (fun z : ℂ => z / 2) s :=
+    differentiableAt_id.div_const 2
+  have hGamma : DifferentiableAt ℂ Complex.Gamma (s / 2) :=
+    Complex.differentiableAt_Gamma (s / 2) hsGamma
+  have hGammaComp : DifferentiableAt ℂ (fun z : ℂ => Complex.Gamma (z / 2)) s :=
+    hGamma.comp s hhalf
+  have hGammaRdiff : DifferentiableAt ℂ Gammaℝ s := by
+    rw [show Gammaℝ = fun z : ℂ => (Real.pi : ℂ) ^ (-z / 2) * Complex.Gamma (z / 2) by
+      funext z
+      exact Complex.Gammaℝ_def z]
+    exact hpow.mul hGammaComp
+  have hGammaR_ne : Gammaℝ s ≠ 0 := by
+    rw [Complex.Gammaℝ_def]
+    exact mul_ne_zero (by simp [hpi]) (Complex.Gamma_ne_zero hsGamma)
+  let P : ℂ → ℂ :=
+    fun z => (1 / 2 : ℂ) * z * (z - 1) * Gammaℝ z * riemannZeta z
+  have hxiP : xiFunction =ᶠ[𝓝 s] P := by
+    filter_upwards [eventually_ne_nhds hs0, eventually_ne_nhds hs1,
+      hGammaRdiff.continuousAt.eventually_ne hGammaR_ne] with z hz0 hz1 hzGamma
+    dsimp only [P]
+    rw [xiFunction_eq_mul_completedZeta z hz0 hz1, riemannZeta_def_of_ne_zero hz0]
+    field_simp
+  let f : ℂ → ℂ := fun z => (1 / 2 : ℂ) * z
+  let g : ℂ → ℂ := fun z => z - 1
+  let r : ℂ → ℂ := Gammaℝ
+  have hf_ne : f s ≠ 0 := mul_ne_zero (by norm_num) hs0
+  have hg_ne : g s ≠ 0 := sub_ne_zero.mpr hs1
+  have hr_ne : r s ≠ 0 := hGammaR_ne
+  have hf_diff : DifferentiableAt ℂ f s :=
+    (differentiableAt_const (c := (1 / 2 : ℂ))).mul differentiableAt_id
+  have hg_diff : DifferentiableAt ℂ g s :=
+    differentiableAt_id.sub (differentiableAt_const (c := (1 : ℂ)))
+  have hr_diff : DifferentiableAt ℂ r s := hGammaRdiff
+  have hζ_diff : DifferentiableAt ℂ riemannZeta s := differentiableAt_riemannZeta hs1
+  have hf_log : logDeriv f s = 1 / s := by
+    dsimp only [f]
+    rw [logDeriv_const_mul s (1 / 2 : ℂ) (by norm_num)]
+    exact logDeriv_id' s
+  have hg_log : logDeriv g s = 1 / (s - 1) := by
+    simp [g, logDeriv_apply]
+  have hr_log : logDeriv r s = -(Real.log Real.pi : ℂ) / 2 +
+      Complex.digamma (s / 2) / 2 := gammaR_logDeriv_explicit s hsGamma
+  have hP_log : deriv P s / P s =
+      1 / s + 1 / (s - 1) +
+        (-(Real.log Real.pi : ℂ) / 2 + Complex.digamma (s / 2) / 2) +
+        deriv riemannZeta s / riemannZeta s := by
+    change logDeriv (fun z => ((f z * g z) * r z) * riemannZeta z) s = _
+    rw [logDeriv_mul (f := fun z => (f z * g z) * r z) (g := riemannZeta) s
+      (mul_ne_zero (mul_ne_zero hf_ne hg_ne) hr_ne) hζ
+      ((hf_diff.mul hg_diff).mul hr_diff) hζ_diff]
+    rw [logDeriv_mul (f := fun z => f z * g z) (g := r) s
+      (mul_ne_zero hf_ne hg_ne) hr_ne (hf_diff.mul hg_diff) hr_diff]
+    rw [logDeriv_mul (f := f) (g := g) s hf_ne hg_ne hf_diff hg_diff]
+    rw [hf_log, hg_log, hr_log]
+    rfl
+  have hxi_log : deriv xiFunction s / xiFunction s = deriv P s / P s := by
+    rw [hxiP.deriv_eq, hxiP.eq_of_nhds]
+  rw [hxi_log, hP_log]
+  ring
+
 /-- **Full partial fraction for ζ'/ζ.**
 
     Combining xi_logDeriv_expansion and zeta_logDeriv_from_xi:
@@ -482,6 +608,110 @@ private theorem far_zero_sum_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
   -- Ref: Davenport, Multiplicative Number Theory, Ch. 15, Lemma 3.
   exact ⟨1, one_pos, fun s _ _ _ _ => by sorry⟩
 
+/-- The digamma factor at `s / 2` has logarithmic growth for `|Im s| ≥ 2`.
+The range `2 ≤ |Im s| ≤ 4`, which rescales below the threshold in
+`digamma_growth_bound`, is handled by continuity on two compact rectangles. -/
+private lemma digamma_half_growth_bound (σ₁ σ₂ : ℝ) (_hσ : σ₁ < σ₂) :
+    ∃ C : ℝ, 0 < C ∧ ∀ s : ℂ,
+      σ₁ ≤ s.re → s.re ≤ σ₂ → 2 ≤ |s.im| →
+      ‖Complex.digamma (s / 2)‖ ≤ C * Real.log |s.im| := by
+  obtain ⟨D, hD_pos, hD⟩ := digamma_growth_bound (σ₁ / 2) (σ₂ / 2)
+  let U : Set ℂ := {z | z.im ≠ 0}
+  have hU_open : IsOpen U := by
+    exact isOpen_ne.preimage Complex.continuous_im
+  have hGamma_diff : DifferentiableOn ℂ Complex.Gamma U := by
+    intro z hz
+    apply (Complex.differentiableAt_Gamma z _).differentiableWithinAt
+    intro m hm
+    have him_eq := congr_arg Complex.im hm
+    simp at him_eq
+    exact hz him_eq
+  have hGamma_ne : ∀ z ∈ U, Complex.Gamma z ≠ 0 := by
+    intro z hz
+    apply Complex.Gamma_ne_zero
+    intro m hm
+    have him_eq := congr_arg Complex.im hm
+    simp at him_eq
+    exact hz him_eq
+  have hdigamma_cont : ContinuousOn Complex.digamma U := by
+    simpa only [Complex.digamma_def, logDeriv, Pi.div_apply] using
+      (hGamma_diff.deriv hU_open).continuousOn.div hGamma_diff.continuousOn hGamma_ne
+  let Kpos : Set ℂ := Set.Icc (σ₁ / 2) (σ₂ / 2) ×ℂ Set.Icc 1 2
+  let Kneg : Set ℂ := Set.Icc (σ₁ / 2) (σ₂ / 2) ×ℂ Set.Icc (-2) (-1)
+  let K : Set ℂ := Kpos ∪ Kneg
+  have hK_compact : IsCompact K := by
+    exact (isCompact_Icc.reProdIm isCompact_Icc).union
+      (isCompact_Icc.reProdIm isCompact_Icc)
+  have hK_sub : K ⊆ U := by
+    rintro z (hz | hz)
+    · exact ne_of_gt (lt_of_lt_of_le zero_lt_one hz.2.1)
+    · exact ne_of_lt (lt_of_le_of_lt hz.2.2 (by norm_num))
+  have hbounded : BddAbove ((fun z : ℂ => ‖Complex.digamma z‖) '' K) :=
+    hK_compact.bddAbove_image ((hdigamma_cont.mono hK_sub).norm)
+  rw [bddAbove_def] at hbounded
+  obtain ⟨M, hM⟩ := hbounded
+  let C : ℝ := D + 2 * |M| + 1
+  refine ⟨C, by dsimp [C]; positivity, fun s hσ₁ hσ₂ him => ?_⟩
+  have hlog_half : (1 : ℝ) / 2 < Real.log |s.im| := by
+    have hexp_lt : Real.exp (1 / 2 : ℝ) < 2 := by
+      by_contra h
+      push_neg at h
+      have h4 : (4 : ℝ) ≤ Real.exp (1 / 2) ^ 2 := by nlinarith
+      rw [sq, ← Real.exp_add, show (1 : ℝ) / 2 + 1 / 2 = 1 by norm_num] at h4
+      linarith [Real.exp_one_lt_three]
+    calc
+      (1 : ℝ) / 2 = Real.log (Real.exp (1 / 2)) := (Real.log_exp _).symm
+      _ < Real.log 2 := Real.log_lt_log (Real.exp_pos _) hexp_lt
+      _ ≤ Real.log |s.im| := Real.log_le_log (by norm_num) him
+  have hlog_pos : 0 < Real.log |s.im| := by linarith
+  have hdiv_re : (s / 2).re = s.re / 2 := by norm_num [Complex.div_re]
+  have hdiv_im_abs : |(s / 2).im| = |s.im| / 2 := by
+    rw [show (s / 2).im = s.im / 2 by norm_num [Complex.div_im], abs_div]
+    norm_num
+  by_cases hlarge : 4 ≤ |s.im|
+  · have hz_re_lower : σ₁ / 2 ≤ (s / 2).re := by rw [hdiv_re]; linarith
+    have hz_re_upper : (s / 2).re ≤ σ₂ / 2 := by rw [hdiv_re]; linarith
+    have hz_im : 2 ≤ |(s / 2).im| := by rw [hdiv_im_abs]; linarith
+    have hbase := hD (s / 2) hz_re_lower hz_re_upper hz_im
+    have him_div_le : |(s / 2).im| ≤ |s.im| := by
+      rw [hdiv_im_abs]
+      linarith [abs_nonneg s.im]
+    have him_div_pos : 0 < |(s / 2).im| := by linarith
+    have hlog_le : Real.log |(s / 2).im| ≤ Real.log |s.im| :=
+      Real.log_le_log him_div_pos him_div_le
+    calc
+      ‖Complex.digamma (s / 2)‖ ≤ D * Real.log |(s / 2).im| := hbase
+      _ ≤ D * Real.log |s.im| := mul_le_mul_of_nonneg_left hlog_le hD_pos.le
+      _ ≤ C * Real.log |s.im| := by
+        apply mul_le_mul_of_nonneg_right _ hlog_pos.le
+        dsimp [C]
+        linarith [abs_nonneg M]
+  · have hsmall : |s.im| ≤ 4 := le_of_not_ge hlarge
+    have hz_re : (s / 2).re ∈ Set.Icc (σ₁ / 2) (σ₂ / 2) := by
+      rw [hdiv_re]
+      constructor <;> linarith
+    have hz_im_abs_lower : 1 ≤ |(s / 2).im| := by rw [hdiv_im_abs]; linarith
+    have hz_im_abs_upper : |(s / 2).im| ≤ 2 := by rw [hdiv_im_abs]; linarith
+    have hzK : s / 2 ∈ K := by
+      by_cases hpos : 0 ≤ (s / 2).im
+      · left
+        exact ⟨hz_re, by
+          rw [abs_of_nonneg hpos] at hz_im_abs_lower hz_im_abs_upper
+          exact ⟨hz_im_abs_lower, hz_im_abs_upper⟩⟩
+      · right
+        have hneg : (s / 2).im ≤ 0 := le_of_not_ge hpos
+        rw [abs_of_nonpos hneg] at hz_im_abs_lower hz_im_abs_upper
+        exact ⟨hz_re, by constructor <;> linarith⟩
+    have hM_bound : ‖Complex.digamma (s / 2)‖ ≤ M :=
+      hM _ ⟨s / 2, hzK, rfl⟩
+    calc
+      ‖Complex.digamma (s / 2)‖ ≤ |M| := hM_bound.trans (le_abs_self M)
+      _ ≤ 2 * |M| * Real.log |s.im| := by nlinarith [abs_nonneg M]
+      _ ≤ C * Real.log |s.im| := by
+        apply mul_le_mul_of_nonneg_right _ hlog_pos.le
+        dsimp [C]
+        linarith [abs_nonneg M]
+
 /-- Digamma/Stirling bound: Γ'/Γ(s/2) = O(log|t|) for σ bounded, |t| ≥ 2.
     This is the standard Stirling approximation for the digamma function. -/
 private theorem arch_term_growth_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂) :
@@ -494,17 +724,54 @@ private theorem arch_term_growth_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ < σ₂)
           - 1 / s - 1 / (s - 1)
           + arch_term ∧
         ‖arch_term‖ ≤ C₃ * Real.log |s.im| := by
-  -- The archimedean term captures the log derivative of (1/2)·s·(s-1)·Gammaℝ(s).
-  -- Stirling: Γ'/Γ(z) = log z - 1/(2z) + O(1/|z|²) for |arg z| < π.
-  -- For z = s/2 with σ bounded, |t| ≥ 2: Γ'/Γ(s/2) = O(log|t|).
-  -- The 1/s and 1/(s-1) terms from the s(s-1) factor are O(1).
-  exact ⟨1, one_pos, fun s _ _ him hζ => by
-    have hs0 : s ≠ 0 := by
-      intro h; simp [h] at him; linarith
-    have hs1 : s ≠ 1 := by
-      intro h; simp [h] at him; linarith
-    obtain ⟨dt, hdt⟩ := zeta_logDeriv_from_xi s hs1 hs0 hζ
-    exact ⟨dt, hdt, by sorry⟩⟩
+  obtain ⟨D, hD_pos, hD⟩ := digamma_half_growth_bound σ₁ σ₂ hσ
+  let C₃ : ℝ := Real.log Real.pi + D + 1
+  refine ⟨C₃, by
+    dsimp [C₃]
+    have : 0 < Real.log Real.pi := Real.log_pos (by linarith [Real.pi_gt_three])
+    positivity, fun s hσ₁ hσ₂ him hζ => ?_⟩
+  have hs0 : s ≠ 0 := by
+    intro h
+    simp [h] at him
+    linarith
+  have hs1 : s ≠ 1 := by
+    intro h
+    simp [h] at him
+    linarith
+  have hpsi := hD s hσ₁ hσ₂ him
+  have hlog_half : (1 : ℝ) / 2 < Real.log |s.im| := by
+    have hexp_lt : Real.exp (1 / 2 : ℝ) < 2 := by
+      by_contra h
+      push_neg at h
+      have h4 : (4 : ℝ) ≤ Real.exp (1 / 2) ^ 2 := by nlinarith
+      rw [sq, ← Real.exp_add, show (1 : ℝ) / 2 + 1 / 2 = 1 by norm_num] at h4
+      linarith [Real.exp_one_lt_three]
+    calc
+      (1 : ℝ) / 2 = Real.log (Real.exp (1 / 2)) := (Real.log_exp _).symm
+      _ < Real.log 2 := Real.log_lt_log (Real.exp_pos _) hexp_lt
+      _ ≤ Real.log |s.im| := Real.log_le_log (by norm_num) him
+  have hlog_pos : 0 < Real.log |s.im| := by linarith
+  have hlogpi_pos : 0 < Real.log Real.pi :=
+    Real.log_pos (by linarith [Real.pi_gt_three])
+  refine ⟨(Real.log Real.pi : ℂ) / 2 - Complex.digamma (s / 2) / 2,
+    zeta_logDeriv_from_xi_explicit s hs1 hs0 hζ, ?_⟩
+  calc
+    ‖(Real.log Real.pi : ℂ) / 2 - Complex.digamma (s / 2) / 2‖
+        ≤ ‖(Real.log Real.pi : ℂ) / 2‖ + ‖Complex.digamma (s / 2) / 2‖ :=
+          norm_sub_le _ _
+    _ = Real.log Real.pi / 2 + ‖Complex.digamma (s / 2)‖ / 2 := by
+          rw [norm_div, norm_div]
+          norm_num [abs_of_pos hlogpi_pos]
+    _ ≤ Real.log Real.pi * Real.log |s.im| +
+          D / 2 * Real.log |s.im| := by
+          have hconst : Real.log Real.pi / 2 ≤
+              Real.log Real.pi * Real.log |s.im| := by nlinarith
+          have hpsi_half : ‖Complex.digamma (s / 2)‖ / 2 ≤
+              D / 2 * Real.log |s.im| := by linarith
+          linarith
+    _ ≤ C₃ * Real.log |s.im| := by
+          dsimp [C₃]
+          nlinarith [hD_pos, hlog_pos]
 
 /-- **Growth bound for ζ'/ζ.**
 
