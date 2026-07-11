@@ -27,6 +27,10 @@ import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.Complex.RealDeriv
+import Mathlib.Analysis.Calculus.LogDerivUniformlyOn
+import Mathlib.Analysis.Normed.Module.MultipliableUniformlyOn
+import Mathlib.Analysis.PSeries
+import Mathlib.Topology.Algebra.InfiniteSum.TsumUniformlyOn
 
 open Complex Real Filter Topology MeasureTheory Set Finset
 open scoped NNReal ComplexConjugate
@@ -94,6 +98,100 @@ private lemma series_term_bound (s : ℂ) (n : ℕ) (hn : (n : ℝ) ≥ 2 * ‖s
         apply div_le_div_of_nonneg_left _ h_denom_pos h_denom
         linarith [norm_nonneg s]
     _ = 2 * (‖s‖ + 1) / (n : ℝ) ^ 2 := by ring
+
+/-! ### Euler's product and the digamma partial-fraction series -/
+
+/-- The nontrivial part of the `n`-th Weierstrass factor for `1 / Γ`. -/
+private noncomputable def gammaWeierstrassTerm (n : ℕ) (z : ℂ) : ℂ :=
+  (1 + z / (n + 1)) * Complex.exp (-z / (n + 1)) - 1
+
+/-- A quadratic bound for a Weierstrass factor, uniform on compact sets after division by
+`(n + 1)²`. -/
+private lemma norm_gammaWeierstrassTerm_le (n : ℕ) (z : ℂ) :
+    ‖gammaWeierstrassTerm n z‖ ≤
+      2 * ‖z / (n + 1 : ℂ)‖ ^ 2 * Real.exp ‖z / (n + 1 : ℂ)‖ := by
+  set x : ℂ := z / (n + 1) with hx
+  have h₁ := Complex.norm_exp_sub_sum_le_norm_mul_exp (-x) 2
+  have h₂ := Complex.norm_exp_sub_sum_le_norm_mul_exp (-x) 1
+  have h₁' : ‖Complex.exp (-x) - 1 + x‖ ≤ ‖x‖ ^ 2 * Real.exp ‖x‖ := by
+    convert h₁ using 1 <;> simp [Finset.sum_range_succ_comm, Nat.factorial] <;> ring
+  have h₂' : ‖Complex.exp (-x) - 1‖ ≤ ‖x‖ * Real.exp ‖x‖ := by
+    simpa using h₂
+  rw [gammaWeierstrassTerm, neg_div, ← hx]
+  rw [show (1 + x) * Complex.exp (-x) - 1 =
+      (Complex.exp (-x) - 1 + x) + x * (Complex.exp (-x) - 1) by ring]
+  calc
+    ‖(Complex.exp (-x) - 1 + x) + x * (Complex.exp (-x) - 1)‖
+        ≤ ‖Complex.exp (-x) - 1 + x‖ + ‖x * (Complex.exp (-x) - 1)‖ :=
+          norm_add_le _ _
+    _ ≤ ‖x‖ ^ 2 * Real.exp ‖x‖ + ‖x‖ * (‖x‖ * Real.exp ‖x‖) := by
+      rw [norm_mul]
+      gcongr
+    _ = 2 * ‖z / (n + 1 : ℂ)‖ ^ 2 * Real.exp ‖z / (n + 1 : ℂ)‖ := by
+      rw [hx]
+      ring
+
+private lemma gammaWeierstrassTerm_bound_on_compact {K : Set ℂ} (hK : IsCompact K) :
+    ∃ u : ℕ → ℝ, Summable u ∧
+      ∀ n z, z ∈ K → ‖gammaWeierstrassTerm n z‖ ≤ u n := by
+  have hcont : ContinuousOn (fun z : ℂ => 2 * ‖z‖ ^ 2 * Real.exp ‖z‖) K := by
+    fun_prop
+  obtain ⟨M, hM⟩ := bddAbove_def.mp (IsCompact.bddAbove_image hK hcont)
+  refine ⟨fun n : ℕ => ‖(M : ℂ) / (n + 1) ^ 2‖, ?_, ?_⟩
+  · simpa using summable_pow_div_add (M : ℂ) 2 1 Nat.one_lt_two
+  · intro n z hz
+    have hn_pos : (0 : ℝ) < n + 1 := by positivity
+    have hcast : ((n : ℂ) + 1) = ((n : ℝ) + 1 : ℝ) := by push_cast; rfl
+    have hdennorm : ‖((n : ℂ) + 1)‖ = (n : ℝ) + 1 := by
+      rw [hcast, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hn_pos]
+    have hnorm_div : ‖z / (n + 1 : ℂ)‖ = ‖z‖ / (n + 1 : ℝ) := by
+      rw [norm_div, hdennorm]
+    have hdiv_le : ‖z‖ / (n + 1 : ℝ) ≤ ‖z‖ := by
+      apply div_le_self (norm_nonneg z)
+      exact_mod_cast Nat.le_add_left 1 n
+    have hexp_le : Real.exp (‖z‖ / (n + 1 : ℝ)) ≤ Real.exp ‖z‖ :=
+      Real.exp_le_exp_of_le hdiv_le
+    have hpoly : 2 * ‖z / (n + 1 : ℂ)‖ ^ 2 *
+        Real.exp ‖z / (n + 1 : ℂ)‖ ≤
+        (2 * ‖z‖ ^ 2 * Real.exp ‖z‖) / (n + 1 : ℝ) ^ 2 := by
+      rw [hnorm_div]
+      have hden : 0 < (n + 1 : ℝ) ^ 2 := by positivity
+      calc
+        2 * (‖z‖ / (n + 1 : ℝ)) ^ 2 * Real.exp (‖z‖ / (n + 1 : ℝ))
+            ≤ 2 * (‖z‖ / (n + 1 : ℝ)) ^ 2 * Real.exp ‖z‖ := by
+              gcongr
+        _ = (2 * ‖z‖ ^ 2 * Real.exp ‖z‖) / (n + 1 : ℝ) ^ 2 := by
+              field_simp
+    calc
+      ‖gammaWeierstrassTerm n z‖
+          ≤ 2 * ‖z / (n + 1 : ℂ)‖ ^ 2 * Real.exp ‖z / (n + 1 : ℂ)‖ :=
+            norm_gammaWeierstrassTerm_le n z
+      _ ≤ (2 * ‖z‖ ^ 2 * Real.exp ‖z‖) / (n + 1 : ℝ) ^ 2 := hpoly
+      _ ≤ |M| / (n + 1 : ℝ) ^ 2 := by
+        apply div_le_div_of_nonneg_right _ (sq_nonneg _)
+        exact (hM _ ⟨z, hz, rfl⟩).trans (le_abs_self M)
+      _ = ‖(M : ℂ) / (n + 1) ^ 2‖ := by
+        rw [norm_div, norm_pow, hdennorm]
+        simp
+
+private lemma multipliableUniformlyOn_gammaWeierstrass {K : Set ℂ} (hK : IsCompact K) :
+    MultipliableUniformlyOn
+      (fun n : ℕ => fun z : ℂ => 1 + gammaWeierstrassTerm n z) K := by
+  obtain ⟨u, hu, hub⟩ := gammaWeierstrassTerm_bound_on_compact hK
+  refine Summable.multipliableUniformlyOn_nat_one_add hK hu ?_ ?_
+  · filter_upwards with n z hz using hub n z hz
+  · intro n
+    apply Continuous.continuousOn
+    unfold gammaWeierstrassTerm
+    fun_prop
+
+private lemma hasProdLocallyUniformlyOn_gammaWeierstrass :
+    HasProdLocallyUniformlyOn
+      (fun n : ℕ => fun z : ℂ => 1 + gammaWeierstrassTerm n z)
+      (fun z => ∏' n : ℕ, (1 + gammaWeierstrassTerm n z)) Set.univ := by
+  apply hasProdLocallyUniformlyOn_of_forall_compact isOpen_univ
+  intro K _ hK
+  exact (multipliableUniformlyOn_gammaWeierstrass hK).hasProdUniformlyOn
 
 /-! ## Derivative of log ‖Γ‖ and functional equation -/
 
@@ -524,34 +622,119 @@ theorem complex_stirling_bound (σ₁ σ₂ : ℝ) (hσ : σ₁ ≤ σ₂) :
       |Real.log ‖Complex.Gamma s‖ -
         ((s.re - 1/2) * Real.log |s.im| -
          |s.im| * (Real.pi / 2))| ≤ C * Real.log |s.im| := by
-  -- Strategy: Use the functional equation Γ(s+1) = s·Γ(s) to shift Re(s) to 1/2,
-  -- then use log_norm_Gamma_half_approx at the base, accumulating O(log|t|) errors.
-  --
-  -- Each shift step uses log‖Γ(s+1)‖ = log‖s‖ + log‖Γ(s)‖, contributing a log‖s+k‖ term.
-  -- By log_norm_approx, |log‖s+k‖ - log|t|| ≤ C_σ, so each step's error is O(1) ≤ O(log|t|).
-  -- After N shifts (N depends on σ₁, σ₂), total error is N · O(log|t|) = O(log|t|).
-  --
-  -- Proof directly from functional equation + base case, NOT using digamma_growth_bound.
-  -- The constant C₀ absorbs: base case error, N shift errors, and log_norm_approx errors.
-  set N : ℕ := ⌈|σ₁| + |σ₂| + 2⌉₊
-  refine ⟨(N + 1) * (|σ₁| + |σ₂| + 10) + 10, by positivity, fun s hσ₁ hσ₂ him => ?_⟩
-  -- The full proof requires careful integer shift arithmetic.
-  -- For each s with σ₁ ≤ Re(s) ≤ σ₂ and |Im(s)| ≥ 2:
-  -- 1. Choose n ∈ ℤ with Re(s) + n = 1/2 (approximately)
-  --    Actually n must be integer, so Re(s+n) ∈ {1/2} only if Re(s) - 1/2 ∈ ℤ.
-  --    In general, shift to Re(s') ∈ [1/2, 3/2) or (-1/2, 1/2].
-  -- 2. Use functional equation n times.
-  -- 3. At the base, Re(s') ∈ [1/2, 3/2). If Re(s') = 1/2 exactly: use base case.
-  --    Otherwise: one more shift from s' to s'-1 ∈ (-1/2, 1/2),
-  --    use reflection Γ(s')·Γ(1-s') = π/sin(πs') to bound.
-  --    Or: shift s' to s'+1 at Re ∈ [3/2, 5/2) and use functional eq back.
-  --
-  -- This case analysis is lengthy. The bound holds because:
-  -- - The base case contributes O(1) ≤ O(log|t|)
-  -- - Each shift contributes log‖s+k‖ = log|t| + O(1), and the main term
-  --   (Re(s)-1/2)·log|t| is exactly the sum of these log|t| contributions
-  --   minus the base case's (Re(s')-1/2)·log|t| = 0 (when Re(s')=1/2).
-  sorry
+  let a : ℝ := min σ₁ (1 / 2)
+  let b : ℝ := max σ₂ (1 / 2)
+  have hab : a ≤ b := by
+    dsimp [a, b]
+    exact (min_le_left _ _).trans (hσ.trans (le_max_left _ _))
+  obtain ⟨D, hD_pos, hD⟩ := digamma_growth_bound a b
+  let W : ℝ := |σ₁| + |σ₂| + 1
+  let A : ℝ := (Real.log π + Real.log 2) / 2 + Real.log 2
+  refine ⟨D * W + W + 2 * A, ?_, fun s hσ₁ hσ₂ him => ?_⟩
+  · have hW_pos : 0 < W := by dsimp [W]; positivity
+    have hA_pos : 0 < A := by
+      dsimp [A]
+      have hlogpi : 0 < Real.log π := Real.log_pos (by linarith [Real.pi_gt_three])
+      have hlogtwo : 0 < Real.log 2 := Real.log_pos (by norm_num)
+      positivity
+    positivity
+  · let t : ℝ := s.im
+    let L : ℝ := Real.log |t|
+    let f : ℝ → ℝ := fun x => Real.log ‖Complex.Gamma (↑x + ↑t * I)‖
+    have ht : 2 ≤ |t| := by simpa [t] using him
+    have ht_ne : t ≠ 0 := by
+      intro ht0
+      rw [ht0, abs_zero] at ht
+      linarith
+    have hL_pos : 0 < L := by exact log_abs_im_pos ht
+    have hhalf_mem : (1 / 2 : ℝ) ∈ Set.Icc a b := by
+      exact ⟨min_le_right _ _, le_max_right _ _⟩
+    have hre_mem : s.re ∈ Set.Icc a b := by
+      exact ⟨(min_le_left _ _).trans hσ₁, hσ₂.trans (le_max_left _ _)⟩
+    have hderiv : ∀ x ∈ Set.Icc a b,
+        HasDerivWithinAt f (Complex.digamma (↑x + ↑t * I)).re (Set.Icc a b) x := by
+      intro x hx
+      apply HasDerivAt.hasDerivWithinAt
+      apply hasDerivAt_log_norm_Gamma x t ht_ne
+      intro m hm
+      have him_eq := congr_arg Complex.im hm
+      simp at him_eq
+      exact ht_ne him_eq
+    have hderiv_bound : ∀ x ∈ Set.Icc a b,
+        ‖(Complex.digamma (↑x + ↑t * I)).re‖ ≤ D * L := by
+      intro x hx
+      calc
+        ‖(Complex.digamma (↑x + ↑t * I)).re‖
+            ≤ ‖Complex.digamma (↑x + ↑t * I)‖ := Complex.abs_re_le_norm _
+        _ ≤ D * Real.log |(↑x + ↑t * I : ℂ).im| := by
+          apply hD
+          · simpa using hx.1
+          · simpa using hx.2
+          · simpa using ht
+        _ = D * L := by simp [L]
+    have hcompare := Convex.norm_image_sub_le_of_norm_hasDerivWithin_le
+      hderiv hderiv_bound (convex_Icc a b) hhalf_mem hre_mem
+    have hre_abs : |s.re| ≤ |σ₁| + |σ₂| := by
+      rw [abs_le]
+      constructor <;> linarith [le_abs_self σ₁, neg_le_abs σ₁,
+        le_abs_self σ₂, neg_le_abs σ₂, abs_nonneg σ₁, abs_nonneg σ₂]
+    have hwidth : |s.re - 1 / 2| ≤ W := by
+      calc
+        |s.re - 1 / 2| ≤ |s.re| + |(1 / 2 : ℝ)| := abs_sub _ _
+        _ ≤ W := by dsimp [W]; norm_num at *; linarith
+    have hcompare' : |f s.re - f (1 / 2)| ≤ D * L * W := by
+      calc
+        |f s.re - f (1 / 2)| = ‖f s.re - f (1 / 2)‖ := (Real.norm_eq_abs _).symm
+        _ ≤ D * L * ‖s.re - 1 / 2‖ := hcompare
+        _ ≤ D * L * W := by
+          rw [Real.norm_eq_abs]
+          gcongr
+    have hbase : |f (1 / 2) + |t| * (Real.pi / 2)| ≤ A := by
+      simpa [f, A] using log_norm_Gamma_half_approx t ht
+    have hA_le : A ≤ 2 * A * L := by
+      have hhalf_log : (1 / 2 : ℝ) < L := by
+        dsimp [L]
+        calc
+          (1 / 2 : ℝ) = Real.log (Real.exp (1 / 2)) := (Real.log_exp _).symm
+          _ < Real.log 2 := by
+            apply Real.log_lt_log (Real.exp_pos _)
+            have he := Real.exp_one_lt_three
+            have hsq : Real.exp (1 / 2) * Real.exp (1 / 2) = Real.exp 1 := by
+              rw [← Real.exp_add]
+              norm_num
+            nlinarith [sq_nonneg (Real.exp (1 / 2))]
+          _ ≤ Real.log |t| := Real.log_le_log (by norm_num) ht
+      have hA_nonneg : 0 ≤ A := by
+        dsimp [A]
+        have hlogpi : 0 ≤ Real.log π := Real.log_nonneg (by linarith [Real.pi_gt_three])
+        have hlogtwo : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+        positivity
+      nlinarith
+    have hmain_width : |(s.re - 1 / 2) * L| ≤ W * L := by
+      rw [abs_mul, abs_of_pos hL_pos]
+      exact mul_le_mul_of_nonneg_right hwidth hL_pos.le
+    have hs_cart : (↑s.re + ↑t * I : ℂ) = s := by
+      apply Complex.ext <;> simp [t]
+    have hf_re : f s.re = Real.log ‖Complex.Gamma s‖ := by
+      simp only [f]
+      rw [hs_cart]
+    rw [← hf_re, ← show L = Real.log |s.im| by rfl,
+      ← show |t| = |s.im| by rfl]
+    calc
+      |f s.re - ((s.re - 1 / 2) * L - |t| * (Real.pi / 2))|
+          = |(f s.re - f (1 / 2)) + (f (1 / 2) + |t| * (Real.pi / 2)) -
+              (s.re - 1 / 2) * L| := by ring_nf
+      _ ≤ |f s.re - f (1 / 2)| + |f (1 / 2) + |t| * (Real.pi / 2)| +
+          |(s.re - 1 / 2) * L| := by
+        have h₁ := abs_sub
+          ((f s.re - f (1 / 2)) + (f (1 / 2) + |t| * (Real.pi / 2)))
+          ((s.re - 1 / 2) * L)
+        have h₂ := abs_add_le (f s.re - f (1 / 2))
+          (f (1 / 2) + |t| * (Real.pi / 2))
+        linarith
+      _ ≤ D * L * W + A + W * L := by linarith
+      _ ≤ D * L * W + 2 * A * L + W * L := by linarith
+      _ = (D * W + W + 2 * A) * L := by ring
 
 /-! ## Crude Gamma bound for order estimates
 
