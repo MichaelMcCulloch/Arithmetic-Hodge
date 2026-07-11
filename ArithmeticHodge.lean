@@ -121,6 +121,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilCriticalGammaPair
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigamma
 import ArithmeticHodge.Analysis.TrapezoidalErrorBounds
 import ArithmeticHodge.Analysis.DigammaTrapezoid
+import ArithmeticHodge.Analysis.DigammaTrapezoidBounds
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaLower
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaIntegral
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaSummation
