@@ -22,7 +22,7 @@ noncomputable section
 
 /-- The zero-independent correction in the explicit Hadamard partial
 fraction for `-zeta'/zeta`. -/
-private def zetaHadamardCorrection (sigma t : ℝ) : ℂ :=
+def zetaHadamardCorrection (sigma t : ℝ) : ℂ :=
   -(hadamardM : ℂ) / ((sigma : ℂ) + t * I) - hadamardB +
     1 / ((sigma : ℂ) + t * I) +
     1 / (((sigma : ℂ) + t * I) - 1) -
