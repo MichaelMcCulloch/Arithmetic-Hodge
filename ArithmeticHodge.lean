@@ -125,6 +125,7 @@ import ArithmeticHodge.Analysis.DigammaTrapezoid
 import ArithmeticHodge.Analysis.DigammaTrapezoidBounds
 import ArithmeticHodge.Analysis.DigammaNumericBounds
 import ArithmeticHodge.Analysis.YoshidaWeightedTailBounds
+import ArithmeticHodge.Analysis.YoshidaCoercivityNumerics
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaLower
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaIntegral
 import ArithmeticHodge.Analysis.MultiplicativeWeilDigammaSummation
