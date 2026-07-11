@@ -79,6 +79,7 @@ import ArithmeticHodge.Analysis.EntireFunction.CompletedZetaZeroExponent
 import ArithmeticHodge.Analysis.ZetaZeroCount
 import ArithmeticHodge.Analysis.XiZeroMultiplicity
 import ArithmeticHodge.Analysis.XiRectangleContourData
+import ArithmeticHodge.Analysis.XiZeroFreeHeight
 import ArithmeticHodge.Analysis.XiZetaMultiplicityBridge
 import ArithmeticHodge.Analysis.WeilExplicit
 import ArithmeticHodge.Analysis.FourierTransform
