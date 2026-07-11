@@ -31,6 +31,7 @@ import Mathlib.Analysis.Calculus.LogDerivUniformlyOn
 import Mathlib.Analysis.Normed.Module.MultipliableUniformlyOn
 import Mathlib.Analysis.PSeries
 import Mathlib.Topology.Algebra.InfiniteSum.TsumUniformlyOn
+import Mathlib.NumberTheory.Harmonic.Bounds
 
 open Complex Real Filter Topology MeasureTheory Set Finset
 open scoped NNReal ComplexConjugate
@@ -193,6 +194,313 @@ private lemma hasProdLocallyUniformlyOn_gammaWeierstrass :
   intro K _ hK
   exact (multipliableUniformlyOn_gammaWeierstrass hK).hasProdUniformlyOn
 
+private lemma gammaWeierstrass_partial_product_eq (z : ℂ) {n : ℕ} (hn : n ≠ 0) :
+    z * Complex.exp (((harmonic n : ℝ) - Real.log n) * z) *
+        (∏ k ∈ Finset.range n, (1 + gammaWeierstrassTerm k z)) =
+      (Complex.GammaSeq z n)⁻¹ := by
+  rw [Complex.GammaSeq, inv_div]
+  have hfactor (k : ℕ) : 1 + gammaWeierstrassTerm k z =
+      (1 + z / (k + 1 : ℂ)) * Complex.exp (-z / (k + 1 : ℂ)) := by
+    unfold gammaWeierstrassTerm
+    ring
+  simp_rw [hfactor, Finset.prod_mul_distrib]
+  rw [← Complex.exp_sum]
+  have hharm : (∑ k ∈ Finset.range n, -z / (k + 1 : ℂ)) = -(harmonic n : ℂ) * z := by
+    rw [harmonic]
+    push_cast
+    simp only [div_eq_mul_inv]
+    rw [← Finset.mul_sum]
+    ring
+  rw [hharm]
+  rw [show z * Complex.exp (((harmonic n : ℝ) - Real.log n) * z) *
+        ((∏ k ∈ Finset.range n, (1 + z / (k + 1 : ℂ))) *
+          Complex.exp (-(harmonic n : ℂ) * z)) =
+      z * (Complex.exp (((harmonic n : ℝ) - Real.log n) * z) *
+          Complex.exp (-(harmonic n : ℂ) * z)) *
+        (∏ k ∈ Finset.range n, (1 + z / (k + 1 : ℂ))) by ring,
+    ← Complex.exp_add]
+  have hpow : Complex.exp (-(Real.log n : ℂ) * z) = ((n : ℂ) ^ z)⁻¹ := by
+    rw [Complex.cpow_def_of_ne_zero (Nat.cast_ne_zero.mpr hn)]
+    have hlog : Complex.log (n : ℂ) = (Real.log n : ℂ) := by
+      change Complex.log ((n : ℝ) : ℂ) = (Real.log (n : ℝ) : ℂ)
+      exact (Complex.ofReal_log (Nat.cast_nonneg n)).symm
+    rw [hlog]
+    rw [← Complex.exp_neg]
+    congr 1
+    ring
+  rw [show (((harmonic n : ℝ) - Real.log n : ℂ) * z + -(harmonic n : ℂ) * z) =
+      -(Real.log n : ℂ) * z by push_cast; ring, hpow]
+  rw [show (∏ k ∈ Finset.range n, (1 + z / (k + 1 : ℂ))) =
+      (∏ k ∈ Finset.range n, (z + (k + 1 : ℂ))) / (Nat.factorial n : ℂ) by
+    have hone (k : ℕ) : 1 + z / (k + 1 : ℂ) =
+        (z + (k + 1 : ℂ)) / (k + 1 : ℂ) := by
+      field_simp
+      ring
+    simp_rw [hone, Finset.prod_div_distrib]
+    congr 1
+    norm_cast
+    exact Finset.prod_range_add_one_eq_factorial n]
+  rw [Finset.prod_range_succ']
+  simp only [Nat.cast_zero, add_zero]
+  push_cast
+  field_simp
+
+private lemma gamma_inv_eq_weierstrass (z : ℂ) (hz : 0 < z.re) :
+    (Complex.Gamma z)⁻¹ =
+      z * Complex.exp (Real.eulerMascheroniConstant * z) *
+        ∏' n : ℕ, (1 + gammaWeierstrassTerm n z) := by
+  let A : ℕ → ℂ := fun n =>
+    z * Complex.exp (((harmonic n : ℝ) - Real.log n) * z) *
+      ∏ k ∈ Finset.range n, (1 + gammaWeierstrassTerm k z)
+  have hcoeff : Tendsto
+      (fun n : ℕ => (((harmonic n : ℝ) - Real.log n : ℝ) : ℂ)) atTop
+      (𝓝 (Real.eulerMascheroniConstant : ℂ)) :=
+    Complex.continuous_ofReal.tendsto _ |>.comp Real.tendsto_harmonic_sub_log
+  have hexp : Tendsto
+      (fun n : ℕ => Complex.exp ((((harmonic n : ℝ) - Real.log n : ℝ) : ℂ) * z)) atTop
+      (𝓝 (Complex.exp ((Real.eulerMascheroniConstant : ℂ) * z))) :=
+    (hcoeff.mul_const z).cexp
+  have hprod : Tendsto
+      (fun n : ℕ => ∏ k ∈ Finset.range n, (1 + gammaWeierstrassTerm k z)) atTop
+      (𝓝 (∏' n : ℕ, (1 + gammaWeierstrassTerm n z))) :=
+    (hasProdLocallyUniformlyOn_gammaWeierstrass.hasProd (Set.mem_univ z)).tendsto_prod_nat
+  have hAprod : Tendsto A atTop
+      (𝓝 (z * Complex.exp (Real.eulerMascheroniConstant * z) *
+        ∏' n : ℕ, (1 + gammaWeierstrassTerm n z))) := by
+    simpa [A] using
+      (((tendsto_const_nhds : Tendsto (fun _ : ℕ => z) atTop (𝓝 z)).mul hexp).mul hprod)
+  have hpole : ∀ m : ℕ, z ≠ -↑m := by
+    intro m hm
+    have hre := congr_arg Complex.re hm
+    simp only [neg_re, natCast_re] at hre
+    linarith
+  have hAinv : Tendsto A atTop (𝓝 (Complex.Gamma z)⁻¹) := by
+    apply (Complex.GammaSeq_tendsto_Gamma z).inv₀ (Complex.Gamma_ne_zero hpole) |>.congr'
+    filter_upwards [eventually_ne_atTop 0] with n hn
+    exact (gammaWeierstrass_partial_product_eq z hn).symm
+  exact tendsto_nhds_unique hAinv hAprod
+
+private lemma norm_digammaSeriesTerm_le (s : ℂ) (hs : 1 ≤ s.re) (n : ℕ) :
+    ‖(1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)‖ ≤
+      ‖s‖ / (n + 1 : ℝ) ^ 2 := by
+  have hkpos : (0 : ℝ) < n + 1 := by positivity
+  have hk : (↑(n + 1 : ℕ) : ℂ) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero n
+  have hsk : s + (↑(n + 1 : ℕ) : ℂ) ≠ 0 := by
+    intro h
+    have hre := congr_arg Complex.re h
+    simp at hre
+    linarith
+  have hknorm : ‖(↑(n + 1 : ℕ) : ℂ)‖ = (n + 1 : ℝ) := by
+    rw [Complex.norm_natCast]
+    norm_cast
+  have hsknorm : (n + 1 : ℝ) ≤ ‖s + (↑(n + 1 : ℕ) : ℂ)‖ := by
+    calc
+      (n + 1 : ℝ) ≤ (s + (↑(n + 1 : ℕ) : ℂ)).re := by simp; linarith
+      _ ≤ |(s + (↑(n + 1 : ℕ) : ℂ)).re| := le_abs_self _
+      _ ≤ ‖s + (↑(n + 1 : ℕ) : ℂ)‖ := Complex.abs_re_le_norm _
+  rw [show (1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ) =
+      -s / ((↑(n + 1 : ℕ) : ℂ) * (s + (↑(n + 1 : ℕ) : ℂ))) by
+        field_simp [hk, hsk]
+        ring,
+    norm_div, norm_neg, norm_mul, hknorm]
+  have hden : (n + 1 : ℝ) ^ 2 ≤
+      (n + 1 : ℝ) * ‖s + (↑(n + 1 : ℕ) : ℂ)‖ := by
+    rw [pow_two]
+    gcongr
+  exact div_le_div_of_nonneg_left (norm_nonneg s) (sq_pos_of_pos hkpos) hden
+
+private lemma summable_digammaSeriesTerm (s : ℂ) (hs : 1 ≤ s.re) :
+    Summable (fun n : ℕ =>
+      (1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)) := by
+  have hmajorant : Summable (fun n : ℕ => ‖s‖ / (n + 1 : ℝ) ^ 2) := by
+    simpa [Nat.cast_add, Nat.cast_one] using
+      (summable_pow_div_add (‖s‖ : ℝ) 2 1 Nat.one_lt_two)
+  exact hmajorant.of_norm_bounded (norm_digammaSeriesTerm_le s hs)
+
+private lemma logDeriv_gammaWeierstrassFactor (s : ℂ) (n : ℕ)
+    (hs : s ≠ -(↑(n + 1 : ℕ) : ℂ)) :
+    logDeriv (fun z : ℂ => 1 + gammaWeierstrassTerm n z) s =
+      1 / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ) := by
+  have hk : (↑(n + 1 : ℕ) : ℂ) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero n
+  have hsk : s + (↑(n + 1 : ℕ) : ℂ) ≠ 0 := by
+    simpa [add_eq_zero_iff_eq_neg] using hs
+  push_cast at hs hk hsk ⊢
+  have hsk' : (n : ℂ) + 1 + s ≠ 0 := by
+    intro h
+    apply hsk
+    linear_combination h
+  have h₁ : HasDerivAt (fun z : ℂ => 1 + z / (n + 1 : ℂ))
+      (1 / (n + 1 : ℂ)) s := by
+    simpa only [Pi.add_apply, Pi.one_apply, id_eq, zero_add] using
+      (hasDerivAt_const s (1 : ℂ)).add
+        ((hasDerivAt_id s).div_const (n + 1 : ℂ))
+  have h₂ : HasDerivAt (fun z : ℂ => Complex.exp (-z / (n + 1 : ℂ)))
+      (Complex.exp (-s / (n + 1 : ℂ)) * (-1 / (n + 1 : ℂ))) s := by
+    simpa only [Pi.neg_apply, id_eq, neg_div, one_div, neg_mul] using
+      ((hasDerivAt_id s).neg.div_const (n + 1 : ℂ)).cexp
+  have hmul : HasDerivAt
+      (fun z : ℂ => (1 + z / (n + 1 : ℂ)) * Complex.exp (-z / (n + 1 : ℂ)))
+      ((1 / (n + 1 : ℂ)) * Complex.exp (-s / (n + 1 : ℂ)) +
+        (1 + s / (n + 1 : ℂ)) *
+          (Complex.exp (-s / (n + 1 : ℂ)) * (-1 / (n + 1 : ℂ)))) s := by
+    simpa only [Pi.mul_apply] using h₁.mul h₂
+  have hfun : (fun z : ℂ => 1 + gammaWeierstrassTerm n z) =
+      fun z : ℂ => (1 + z / (n + 1 : ℂ)) * Complex.exp (-z / (n + 1 : ℂ)) := by
+    funext z
+    unfold gammaWeierstrassTerm
+    ring
+  rw [hfun, logDeriv_apply, hmul.deriv]
+  field_simp [hk, hsk, hsk', Complex.exp_ne_zero]
+  ring
+
+private lemma digamma_series (s : ℂ) (hs : 1 ≤ s.re) :
+    Complex.digamma s =
+      -(1 / s + Real.eulerMascheroniConstant +
+        ∑' n : ℕ,
+          ((1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ))) := by
+  let P : ℂ → ℂ := fun z => ∏' n : ℕ, (1 + gammaWeierstrassTerm n z)
+  let E : ℂ → ℂ := fun z => Complex.exp (Real.eulerMascheroniConstant * z)
+  have hspos : 0 < s.re := lt_of_lt_of_le zero_lt_one hs
+  have hs0 : s ≠ 0 := by
+    intro h
+    rw [h, zero_re] at hs
+    linarith
+  have hpole : ∀ m : ℕ, s ≠ -↑m := by
+    intro m h
+    have hre := congr_arg Complex.re h
+    simp only [neg_re, natCast_re] at hre
+    linarith
+  have hGamma : Complex.Gamma s ≠ 0 := Complex.Gamma_ne_zero hpole
+  have hfactor_ne : ∀ n : ℕ, 1 + gammaWeierstrassTerm n s ≠ 0 := by
+    intro n
+    have hk : (n + 1 : ℂ) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero n
+    have hlin : 1 + s / (n + 1 : ℂ) ≠ 0 := by
+      intro h
+      apply hpole (n + 1)
+      field_simp [hk] at h
+      push_cast
+      linear_combination h
+    unfold gammaWeierstrassTerm
+    rw [show 1 + ((1 + s / (n + 1 : ℂ)) * Complex.exp (-s / (n + 1 : ℂ)) - 1) =
+      (1 + s / (n + 1 : ℂ)) * Complex.exp (-s / (n + 1 : ℂ)) by ring]
+    exact mul_ne_zero hlin (Complex.exp_ne_zero _)
+  have hP_ne : P s ≠ 0 := by
+    have hinv : (Complex.Gamma s)⁻¹ ≠ 0 := inv_ne_zero hGamma
+    rw [gamma_inv_eq_weierstrass s hspos] at hinv
+    simpa [P, E, hs0, Complex.exp_ne_zero] using hinv
+  have hP_diff : DifferentiableAt ℂ P s := by
+    apply (hasProdLocallyUniformlyOn_gammaWeierstrass.tendstoLocallyUniformlyOn_finsetRange
+      |>.differentiableOn ?_ isOpen_univ).differentiableAt
+    · exact isOpen_univ.mem_nhds (Set.mem_univ s)
+    · filter_upwards with N
+      apply Differentiable.differentiableOn
+      simp only [gammaWeierstrassTerm]
+      fun_prop
+  have hsum := summable_digammaSeriesTerm s hs
+  have hlogsum : Summable
+      (fun n : ℕ => logDeriv (fun z : ℂ => 1 + gammaWeierstrassTerm n z) s) :=
+    hsum.congr (fun n => (logDeriv_gammaWeierstrassFactor s n (hpole (n + 1))).symm)
+  have hP_logDeriv : logDeriv P s =
+      ∑' n : ℕ,
+        ((1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)) := by
+    have h := logDeriv_tprod_eq_tsum isOpen_univ (Set.mem_univ s) hfactor_ne
+      (fun n => by
+        unfold gammaWeierstrassTerm
+        fun_prop)
+      hlogsum
+      hasProdLocallyUniformlyOn_gammaWeierstrass.multipliableLocallyUniformlyOn hP_ne
+    change logDeriv (fun z => ∏' n : ℕ, (1 + gammaWeierstrassTerm n z)) s = _
+    rw [h]
+    apply tsum_congr
+    intro n
+    exact logDeriv_gammaWeierstrassFactor s n (hpole (n + 1))
+  have hfun_eq : (fun z : ℂ => (Complex.Gamma z)⁻¹) =ᶠ[𝓝 s]
+      (fun z : ℂ => z * E z * P z) := by
+    filter_upwards [Complex.continuous_re.continuousAt.eventually (Ioi_mem_nhds hspos)] with z hz
+    simpa [E, P] using gamma_inv_eq_weierstrass z hz
+  have hlogDeriv_eq : logDeriv (fun z : ℂ => (Complex.Gamma z)⁻¹) s =
+      logDeriv (fun z : ℂ => z * E z * P z) s := by
+    have hval : (Complex.Gamma s)⁻¹ = s * E s * P s := hfun_eq.self_of_nhds
+    simp only [logDeriv_apply]
+    rw [hfun_eq.deriv_eq, hval]
+  have hGamma_diff : DifferentiableAt ℂ Complex.Gamma s :=
+    Complex.differentiableAt_Gamma s hpole
+  have hinv_logDeriv : logDeriv (fun z : ℂ => (Complex.Gamma z)⁻¹) s =
+      -Complex.digamma s := by
+    have hcomp := logDeriv_comp (x := s) (f := fun z : ℂ => z⁻¹) (g := Complex.Gamma)
+      (differentiableAt_inv hGamma) hGamma_diff
+    change logDeriv (fun z : ℂ => (Complex.Gamma z)⁻¹) s = _ at hcomp
+    rw [hcomp, logDeriv_inv, Complex.digamma_def, logDeriv_apply]
+    ring
+  have hE_ne : E s ≠ 0 := Complex.exp_ne_zero _
+  have hE_diff : DifferentiableAt ℂ E s := by
+    dsimp [E]
+    fun_prop
+  have hE_logDeriv : logDeriv E s = Real.eulerMascheroniConstant := by
+    have hderiv : HasDerivAt E
+        (Complex.exp (Real.eulerMascheroniConstant * s) * Real.eulerMascheroniConstant) s := by
+      simpa only [E, id_eq, mul_one] using
+        ((hasDerivAt_id s).const_mul (Real.eulerMascheroniConstant : ℂ)).cexp
+    rw [logDeriv_apply, hderiv.deriv]
+    dsimp [E]
+    field_simp [Complex.exp_ne_zero]
+  have hinner : logDeriv (fun z : ℂ => z * E z) s =
+      1 / s + Real.eulerMascheroniConstant := by
+    have h := logDeriv_mul (x := s) (f := fun z : ℂ => z) (g := E)
+      hs0 hE_ne (by fun_prop) hE_diff
+    simpa only [Pi.mul_apply, logDeriv_id', hE_logDeriv] using h
+  have houter : logDeriv (fun z : ℂ => z * E z * P z) s =
+      1 / s + Real.eulerMascheroniConstant +
+        ∑' n : ℕ,
+          ((1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)) := by
+    have hinner_diff : DifferentiableAt ℂ (fun z : ℂ => z * E z) s :=
+      (show DifferentiableAt ℂ (fun z : ℂ => z) s by fun_prop).mul hE_diff
+    have h := logDeriv_mul (x := s) (f := fun z : ℂ => z * E z) (g := P)
+      (mul_ne_zero hs0 hE_ne) hP_ne hinner_diff hP_diff
+    simpa only [Pi.mul_apply, hinner, hP_logDeriv] using h
+  rw [hinv_logDeriv, houter] at hlogDeriv_eq
+  linear_combination -hlogDeriv_eq
+
+private lemma norm_digammaSeriesTerm_le_harmonic (s : ℂ) (n : ℕ)
+    (him : 1 ≤ |s.im|) :
+    ‖(1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)‖ ≤
+      |s.im|⁻¹ + (n + 1 : ℝ)⁻¹ := by
+  have himpos : 0 < |s.im| := by linarith
+  have hden : |s.im| ≤ ‖s + (↑(n + 1 : ℕ) : ℂ)‖ := by
+    calc
+      |s.im| = |(s + (↑(n + 1 : ℕ) : ℂ)).im| := by simp
+      _ ≤ ‖s + (↑(n + 1 : ℕ) : ℂ)‖ := Complex.abs_im_le_norm _
+  calc
+    ‖(1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)‖
+        ≤ ‖(1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ))‖ +
+          ‖(1 : ℂ) / (↑(n + 1 : ℕ) : ℂ)‖ := norm_sub_le _ _
+    _ = ‖s + (↑(n + 1 : ℕ) : ℂ)‖⁻¹ + (n + 1 : ℝ)⁻¹ := by
+      rw [one_div, one_div, norm_inv, norm_inv, Complex.norm_natCast]
+      norm_cast
+    _ ≤ |s.im|⁻¹ + (n + 1 : ℝ)⁻¹ := by
+      gcongr
+
+private lemma tsum_inv_sq_nat_add_le (N : ℕ) :
+    ∑' j : ℕ, (((N + j + 1 : ℕ) : ℝ) ^ 2)⁻¹ ≤ 2 / (N + 1 : ℝ) := by
+  apply Real.tsum_le_of_sum_range_le
+  · intro j
+    positivity
+  · intro m
+    calc
+      (∑ j ∈ Finset.range m, (((N + j + 1 : ℕ) : ℝ) ^ 2)⁻¹) =
+          ∑ i ∈ Finset.Ioo N (N + m + 1), ((i : ℝ) ^ 2)⁻¹ := by
+        rw [show Finset.Ioo N (N + m + 1) = Finset.Ico (N + 1) (N + m + 1) by
+          ext i
+          simp]
+        rw [Finset.sum_Ico_eq_sum_range]
+        have hsub : N + m + 1 - (N + 1) = m := by omega
+        rw [hsub]
+        apply Finset.sum_congr rfl
+        intro j _
+        congr 3
+        omega
+      _ ≤ 2 / (N + 1 : ℝ) := sum_Ioo_inv_sq_le N (N + m + 1)
+
 /-! ## Derivative of log ‖Γ‖ and functional equation -/
 
 /-- Differentiability of σ ↦ Γ(σ + it) from ℝ to ℂ. -/
@@ -331,26 +639,139 @@ private lemma shift_sum_bound (s : ℂ) (N : ℕ) (him : 1 ≤ |s.im|) :
     Uses shift to large real part + harmonic sum bound. -/
 private lemma digamma_bound_re_ge_one (σ : ℝ) (t : ℝ) (hσ : 1 ≤ σ) (ht : 2 ≤ |t|) :
     ‖Complex.digamma (↑σ + ↑t * I)‖ ≤ (2 * σ + 10) * (Real.log |t| + 3) := by
-  -- The digamma series: ψ(s) = lim_{N→∞} [log N - Σ_{j=0}^{N} 1/(s+j)]
-  -- = -γ + Σ_{n≥0} (1/(n+1) - 1/(s+n))
-  --
-  -- Split the series at n₀ = ⌈2|s|⌉:
-  -- • n < n₀: each |1/(n+1) - 1/(s+n)| ≤ 2/|Im s| (since |s+n| ≥ |t|)
-  --   giving ≤ n₀ · 2/|t| ≤ (4|s|+2) · 2/|t| ≤ C (bounded since σ ∈ [1,2])
-  -- • n ≥ n₀: each term ≤ 2(|s|+1)/n² (series_term_bound)
-  --   Σ ≤ 2(|s|+1) · π²/6 ≤ C
-  --
-  -- Actually for the log|t| bound: the first n₀ terms each contribute
-  -- O(1/|t|), and n₀ ~ 2(σ²+t²)^{1/2} ~ 2|t|, so Σ ~ O(log|t|)
-  -- via harmonic series structure.
-  --
-  -- More precisely: Σ_{n=0}^{N} 1/(s+n) = Σ log terms, and
-  -- |Σ_{n=0}^{N} 1/(n+1)| ~ log N. The difference converges absolutely.
-  --
-  -- For the bound, use the recurrence approach:
-  -- Shift s by M steps where M ~ |t|, then ψ(s+M) ~ log(s+M) ~ log|t|
-  -- (from Stirling on the real line extended).
-  sorry
+  let s : ℂ := ↑σ + ↑t * I
+  let a : ℕ → ℂ := fun n =>
+    (1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)
+  let N : ℕ := ⌈|t|⌉₊
+  have hsre : s.re = σ := by simp [s]
+  have hsim : s.im = t := by simp [s]
+  have hsre_one : 1 ≤ s.re := by simpa [hsre]
+  have him : 1 ≤ |s.im| := by simpa [hsim] using ht.trans' (by norm_num)
+  have htpos : 0 < |t| := by linarith
+  have hN_ge : |t| ≤ (N : ℝ) := by
+    exact Nat.le_ceil |t|
+  have hN_lt : (N : ℝ) < |t| + 1 := by
+    exact Nat.ceil_lt_add_one (abs_nonneg t)
+  have hN_pos : 0 < N := by
+    rw [Nat.ceil_pos]
+    exact htpos
+  have hN_div : (N : ℝ) * |t|⁻¹ ≤ 3 / 2 := by
+    rw [← div_eq_mul_inv]
+    calc
+      (N : ℝ) / |t| ≤ (|t| + 1) / |t| :=
+        div_le_div_of_nonneg_right hN_lt.le htpos.le
+      _ = 1 + 1 / |t| := by field_simp
+      _ ≤ 3 / 2 := by
+        have hinv : 1 / |t| ≤ (1 : ℝ) / 2 :=
+          one_div_le_one_div_of_le (by norm_num) ht
+        linarith
+  have hN_le : (N : ℝ) ≤ 2 * |t| := by linarith
+  have hlogN : Real.log (N : ℝ) ≤ Real.log |t| + 1 := by
+    have h := Real.log_le_log (by exact_mod_cast hN_pos) hN_le
+    rw [Real.log_mul (by norm_num) (ne_of_gt htpos)] at h
+    linarith [Real.log_two_lt_d9]
+  have hharm : (harmonic N : ℝ) ≤ Real.log |t| + 2 := by
+    exact (harmonic_le_one_add_log N).trans (by linarith)
+  have ha_sum : Summable a := by
+    simpa only [a] using summable_digammaSeriesTerm s hsre_one
+  have hlow : ‖∑ n ∈ Finset.range N, a n‖ ≤
+      (N : ℝ) * |t|⁻¹ + (harmonic N : ℝ) := by
+    calc
+      ‖∑ n ∈ Finset.range N, a n‖
+          ≤ ∑ n ∈ Finset.range N, ‖a n‖ := norm_sum_le _ _
+      _ ≤ ∑ n ∈ Finset.range N, (|t|⁻¹ + (n + 1 : ℝ)⁻¹) := by
+        apply Finset.sum_le_sum
+        intro n _
+        simpa only [a, hsim] using norm_digammaSeriesTerm_le_harmonic s n him
+      _ = (N : ℝ) * |t|⁻¹ + (harmonic N : ℝ) := by
+        have hh : (∑ n ∈ Finset.range N, (n + 1 : ℝ)⁻¹) = (harmonic N : ℝ) := by
+          rw [harmonic]
+          push_cast
+          rfl
+        rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul, hh]
+  have hlow' : ‖∑ n ∈ Finset.range N, a n‖ ≤ Real.log |t| + 4 := by
+    linarith
+  have ha_tail : Summable (fun j : ℕ => a (j + N)) :=
+    (summable_nat_add_iff N).2 ha_sum
+  have hinv_tail : Summable
+      (fun j : ℕ => (((N + j + 1 : ℕ) : ℝ) ^ 2)⁻¹) := by
+    have hbase : Summable (fun n : ℕ => ((((n + 1 : ℕ) : ℝ) ^ 2)⁻¹)) := by
+      simpa [one_div, Nat.cast_add, Nat.cast_one] using
+        (summable_pow_div_add (1 : ℝ) 2 1 Nat.one_lt_two)
+    have hshift := (summable_nat_add_iff N).2 hbase
+    simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hshift
+  have htail_point : ∀ j : ℕ,
+      ‖a (j + N)‖ ≤ ‖s‖ * (((N + j + 1 : ℕ) : ℝ) ^ 2)⁻¹ := by
+    intro j
+    have h := norm_digammaSeriesTerm_le s hsre_one (j + N)
+    dsimp only [a]
+    convert h using 1
+    all_goals push_cast
+    all_goals ring
+  have htail : ‖∑' j : ℕ, a (j + N)‖ ≤ ‖s‖ * (2 / (N + 1 : ℝ)) := by
+    calc
+      ‖∑' j : ℕ, a (j + N)‖ ≤ ∑' j : ℕ, ‖a (j + N)‖ :=
+        norm_tsum_le_tsum_norm ha_tail.norm
+      _ ≤ ∑' j : ℕ, ‖s‖ * (((N + j + 1 : ℕ) : ℝ) ^ 2)⁻¹ :=
+        ha_tail.norm.tsum_le_tsum htail_point (hinv_tail.mul_left ‖s‖)
+      _ = ‖s‖ * ∑' j : ℕ, (((N + j + 1 : ℕ) : ℝ) ^ 2)⁻¹ := tsum_mul_left
+      _ ≤ ‖s‖ * (2 / (N + 1 : ℝ)) :=
+        mul_le_mul_of_nonneg_left (tsum_inv_sq_nat_add_le N) (norm_nonneg s)
+  have hsnorm : ‖s‖ ≤ σ + |t| := by
+    calc
+      ‖s‖ ≤ ‖(σ : ℂ)‖ + ‖(t : ℂ) * I‖ := by
+        dsimp [s]
+        exact norm_add_le _ _
+      _ = σ + |t| := by simp [abs_of_nonneg (zero_le_one.trans hσ)]
+  have htail' : ‖∑' j : ℕ, a (j + N)‖ ≤ σ + 2 := by
+    calc
+      ‖∑' j : ℕ, a (j + N)‖ ≤ ‖s‖ * (2 / (N + 1 : ℝ)) := htail
+      _ ≤ ‖s‖ * (2 / |t|) := by
+        apply mul_le_mul_of_nonneg_left _ (norm_nonneg s)
+        exact div_le_div_of_nonneg_left (by norm_num) htpos (by linarith)
+      _ = 2 * ‖s‖ / |t| := by ring
+      _ ≤ σ + 2 := by
+        rw [div_le_iff₀ htpos]
+        nlinarith [mul_nonneg (zero_le_one.trans hσ) (sub_nonneg.mpr ht)]
+  have hsplit := ha_sum.sum_add_tsum_nat_add N
+  have hseries : ‖∑' n : ℕ, a n‖ ≤ Real.log |t| + σ + 6 := by
+    rw [← hsplit]
+    calc
+      ‖(∑ n ∈ Finset.range N, a n) + ∑' j : ℕ, a (j + N)‖
+          ≤ ‖∑ n ∈ Finset.range N, a n‖ + ‖∑' j : ℕ, a (j + N)‖ :=
+            norm_add_le _ _
+      _ ≤ Real.log |t| + σ + 6 := by linarith
+  have hs_im_norm : |t| ≤ ‖s‖ := by
+    rw [← hsim]
+    exact Complex.abs_im_le_norm s
+  have hinv : ‖(1 : ℂ) / s‖ ≤ (1 : ℝ) / 2 := by
+    rw [one_div, norm_inv]
+    calc
+      ‖s‖⁻¹ ≤ |t|⁻¹ := inv_anti₀ htpos hs_im_norm
+      _ ≤ (2 : ℝ)⁻¹ := inv_anti₀ (by norm_num) ht
+      _ = (1 : ℝ) / 2 := by norm_num
+  have hgamma : ‖(Real.eulerMascheroniConstant : ℂ)‖ ≤ (2 : ℝ) / 3 := by
+    have hgamma_pos : 0 < Real.eulerMascheroniConstant :=
+      (by norm_num : (0 : ℝ) < 1 / 2).trans Real.one_half_lt_eulerMascheroniConstant
+    rw [Complex.norm_real, Real.norm_eq_abs,
+      abs_of_pos hgamma_pos]
+    exact Real.eulerMascheroniConstant_lt_two_thirds.le
+  rw [digamma_series s hsre_one, norm_neg]
+  have htotal : ‖(1 : ℂ) / s + Real.eulerMascheroniConstant + ∑' n : ℕ, a n‖ ≤
+      Real.log |t| + σ + 8 := by
+    calc
+      ‖(1 : ℂ) / s + Real.eulerMascheroniConstant + ∑' n : ℕ, a n‖
+          ≤ ‖(1 : ℂ) / s + Real.eulerMascheroniConstant‖ + ‖∑' n : ℕ, a n‖ :=
+            norm_add_le _ _
+      _ ≤ (‖(1 : ℂ) / s‖ + ‖(Real.eulerMascheroniConstant : ℂ)‖) +
+          ‖∑' n : ℕ, a n‖ := by
+            gcongr
+            exact norm_add_le _ _
+      _ ≤ Real.log |t| + σ + 8 := by linarith
+  have hlogpos : 0 < Real.log |t| := log_abs_im_pos ht
+  have hnonneg : 0 ≤ (2 * σ + 9) * Real.log |t| :=
+    mul_nonneg (by linarith) hlogpos.le
+  exact htotal.trans (by nlinarith)
 
 /-! ## Digamma growth bound -/
 
