@@ -34,6 +34,7 @@
 
 import ArithmeticHodge.Algebra.DistributiveCoupling
 import ArithmeticHodge.Analysis.PoissonSummation
+import ArithmeticHodge.Analysis.HermitianLowTail
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
