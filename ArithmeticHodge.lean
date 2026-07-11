@@ -72,6 +72,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilZeroFiberSum
 import ArithmeticHodge.Analysis.MultiplicativeWeilZeroSummability
 import ArithmeticHodge.Analysis.EntireFunction.CompletedZetaZeroExponent
 import ArithmeticHodge.Analysis.ZetaZeroCount
+import ArithmeticHodge.Analysis.XiZeroMultiplicity
 import ArithmeticHodge.Analysis.WeilExplicit
 import ArithmeticHodge.Analysis.FourierTransform
 import ArithmeticHodge.Analysis.WeilPositivity
