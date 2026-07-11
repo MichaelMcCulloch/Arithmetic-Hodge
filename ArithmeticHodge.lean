@@ -61,6 +61,7 @@ import ArithmeticHodge.Analysis.EntireFunction.Order
 import ArithmeticHodge.Analysis.EntireFunction.Hadamard
 import ArithmeticHodge.Analysis.ZetaProduct
 import ArithmeticHodge.Analysis.ZetaZeroFreeRegionReduction
+import ArithmeticHodge.Analysis.ZetaNearOneBound
 import ArithmeticHodge.Analysis.ZetaLogDerivPositivity
 import ArithmeticHodge.Analysis.ZetaFunctionalLogDerivative
 import ArithmeticHodge.Analysis.MultiplicativeWeilXiBoundary
