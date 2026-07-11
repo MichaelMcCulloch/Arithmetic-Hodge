@@ -244,6 +244,39 @@ theorem xiCriticalStripZeroCount_lower_eq_upper (T : ℝ) :
     xiZeroCount 0 1 (-T) 0 = xiZeroCount 0 1 0 T := by
   simpa using xiZeroCount_one_sub 0 1 0 T
 
+/-! ### RH as a statement about the xi divisor -/
+
+/-- Every point of positive xi divisor multiplicity lies on the critical
+line.  This is an enumeration-independent formulation of RH. -/
+def XiDivisorOnCriticalLine : Prop :=
+  ∀ z : ℂ, 0 < xiZeroMultiplicity z → z.re = 1 / 2
+
+theorem xiDivisorOnCriticalLine_iff_RH :
+    XiDivisorOnCriticalLine ↔ RiemannHypothesis := by
+  constructor
+  · intro hline s hs_zero hs_not_trivial hs_ne_one
+    have hre := nontrivial_zeta_zero_re s hs_zero hs_not_trivial hs_ne_one
+    apply hline s
+    exact (xiZeroMultiplicity_pos_iff s).mpr
+      ((xiFunction_zero_iff hre.1 hre.2).mpr hs_zero)
+  · intro hRH z hmult
+    have hxi := (xiZeroMultiplicity_pos_iff z).mp hmult
+    have hre := xiFunction_zero_re hxi
+    have hzeta := (xiFunction_zero_iff hre.1 hre.2).mp hxi
+    apply hRH z hzeta
+    · rintro ⟨n, hn⟩
+      rw [hn] at hre
+      have htriv_re : (-2 * ((n : ℂ) + 1)).re =
+          -2 * ((n : ℝ) + 1) := by
+        simp [Complex.add_re, Complex.mul_re, Complex.neg_re,
+          Complex.one_re, Complex.one_im]
+      rw [htriv_re] at hre
+      have hn_nonneg : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+      linarith
+    · intro hz_one
+      rw [hz_one] at hre
+      norm_num at hre
+
 /-! ### Principal logarithms do not encode unwrapped contour phase -/
 
 /-- The principal logarithm cannot satisfy the unwrapped Stirling-phase
