@@ -1,9 +1,7 @@
 /-
   Shared definitions for entire function theory.
 
-  These definitions are used by both Order.lean and WeierstraßProduct.lean,
-  extracted here to break an import cycle:
-    WeierstraßProduct → Order → ZetaProduct → Hadamard → WeierstraßProduct
+  These definitions are shared by the generic entire-function modules.
 -/
 
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
@@ -39,24 +37,5 @@ noncomputable def entireOrder (f : ℂ → ℂ) : EReal :=
 /-- An entire function has finite order if its order is not +∞. -/
 def HasFiniteOrder (f : ℂ → ℂ) : Prop :=
   entireOrder f < ⊤
-
--- ============================================================
--- Cycle-breaking stubs
--- ============================================================
-
-/-- Multiplicity-weighted zero summability for finite-order entire functions.
-    Proved via Jensen's formula + Abel summation (Levin, Ch. 1).
-
-    This stub lives in Defs.lean to break the import cycle:
-      ZeroSummability → WeierstraßProduct → Order → ZetaProduct → Hadamard → WeierstraßProduct
-
-    The actual proof needs Jensen's formula infrastructure from Order.lean. -/
-theorem finite_order_zero_summable_aux (f : ℂ → ℂ) (hf : Differentiable ℂ f)
-    (hf_ne : ¬ f = 0) (hfin : HasFiniteOrder f)
-    (a₀ : ℕ → ℂ) (ha₀ : ∀ k, a₀ k ≠ 0 → f (a₀ k) = 0)
-    (mult : ℕ → ℕ) (hmult_zero : ∀ k, a₀ k = 0 → mult k = 0) :
-    let p := Nat.floor (entireOrder f).toReal
-    Summable (fun k => (mult k : ℝ) * ‖a₀ k‖⁻¹ ^ ((p : ℝ) + 1)) := by
-  sorry
 
 end ArithmeticHodge.Analysis.EntireFunction

@@ -1074,6 +1074,20 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         cases h : @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable k with
         | none => simp [h] at hk
         | some val => simp [h]; exact val.2
+      have ha₀_inj : Set.InjOn a₀ {k | a₀ k ≠ 0} := by
+        intro i hi j hj hij
+        simp only [a₀] at hi hj hij
+        cases hi_decode : @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable i with
+        | none => simp [hi_decode] at hi
+        | some vi =>
+          cases hj_decode : @Encodable.decode₂ (f₁ ⁻¹' {0}) hcount.toEncodable j with
+          | none => simp [hj_decode] at hj
+          | some vj =>
+            have hv : vi = vj := by
+              apply Subtype.ext
+              simpa [hi_decode, hj_decode] using hij
+            rw [Encodable.decode₂_eq_some] at hi_decode hj_decode
+            rw [← hi_decode, ← hj_decode, hv]
       -- Step 2c: Define multiplicities and stuttered enumeration
       set mult' : ℕ → ℕ := fun k =>
         if a₀ k = 0 then 0 else analyticOrderNatAt f₁ (a₀ k)
@@ -1086,6 +1100,30 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
             (fun z => hf₁_diff.analyticAt z)).not.mpr hf₁_ne⟩
       have hmult_zero : ∀ k, a₀ k = 0 → mult' k = 0 :=
         fun k hk => by simp [mult', hk]
+      have hmult_le : ∀ k, a₀ k ≠ 0 →
+          mult' k ≤ analyticOrderNatAt f (a₀ k) := by
+        intro k hk
+        simp only [mult', hk, ite_false]
+        apply le_of_eq
+        have hfun : f = (fun w : ℂ => w ^ m) * f₁ := by
+          funext w
+          exact hf_eq w
+        have hpow_an : AnalyticAt ℂ (fun w : ℂ => w ^ m) (a₀ k) :=
+          (differentiable_pow m).analyticAt (a₀ k)
+        have hpow_order_enat : analyticOrderAt (fun w : ℂ => w ^ m) (a₀ k) = 0 :=
+          hpow_an.analyticOrderAt_eq_zero.mpr (pow_ne_zero m hk)
+        have hpow_ne_top : analyticOrderAt (fun w : ℂ => w ^ m) (a₀ k) ≠ ⊤ := by
+          rw [hpow_order_enat]
+          exact ENat.zero_ne_top
+        have hf₁_ne_top : analyticOrderAt f₁ (a₀ k) ≠ ⊤ :=
+          (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero (a₀ k)
+            (fun w => hf₁_diff.analyticAt w)).not.mpr hf₁_ne
+        rw [hfun, analyticOrderNatAt_mul hpow_an (hf₁_diff.analyticAt (a₀ k))
+          hpow_ne_top hf₁_ne_top]
+        have hpow_order : analyticOrderNatAt (fun w : ℂ => w ^ m) (a₀ k) = 0 := by
+          rw [analyticOrderNatAt, hpow_order_enat]
+          rfl
+        rw [hpow_order, zero_add]
       set a' := stutteredEnum a₀ mult'
       set p' := Nat.floor (entireOrder f).toReal
       -- Step 2d: Verify properties
@@ -1101,7 +1139,7 @@ theorem weierstraß_factorization (f : ℂ → ℂ) (hf : Differentiable ℂ f)
         summable_stutteredEnum_of_weighted (Nat.cast_add_one_pos p')
           (finite_order_zero_summable_weighted f hf hf_ne hfin a₀
             (fun k hk => by have := ha₀_zeros k hk; rw [hf_eq]; simp [this])
-            mult' hmult_zero)
+            ha₀_inj mult' hmult_zero hmult_le)
       refine ⟨a', p', ha_zeros', hconv', ha_covers', ?_⟩
       -- Order equality: analytic order of Weierstraß product at each zero
       -- equals analyticOrderAt f₁ there.
