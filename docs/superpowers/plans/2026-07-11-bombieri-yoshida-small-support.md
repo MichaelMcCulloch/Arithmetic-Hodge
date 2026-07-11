@@ -69,7 +69,15 @@ private theorem harmonic_sum_lower_log (N : ℕ) :
       ∑ k ∈ Finset.range N, ((k + 1 : ℕ) : ℝ)⁻¹
 ```
 
-For `|v| ≥ 4`, take `N = ⌊Real.sqrt |v|⌋ₙ`.  Use the exact digamma series, discard its nonnegative tail, bound the first `N` rational kernels by `O(N²/v²)`, and use `N + 1 > sqrt |v|` to obtain one half of `log |v|`.  On `|v| ≤ 4`, use continuity on the compact interval and an existential lower bound.  Enlarge the constant to absorb `log π` and Euler's constant.
+First prove `bombieriDigammaKernel k v ≤ k⁻¹` for `1 ≤ k`, so every
+tail difference in the exact digamma series is nonnegative, and prove
+`bombieriDigammaKernel 0 v ≤ 4`.  For `|v| ≥ 1`, take
+`N = ⌊|v|⌋ₙ`; then `N ≤ |v| < N+1`, the harmonic partial sum is at
+least `log (N+1)`, and
+`∑ k=1..N bombieriDigammaKernel k v ≤ (2*N^2+3*N)/|v|^2 ≤ 5`.
+For `|v| < 1`, discard the entire nonnegative tail.  A single coarse constant
+absorbing `9`, `|eulerMascheroniConstant|`, and `|log pi|` proves the global
+statement (in fact with coefficient `1` in front of the logarithm).
 
 - [ ] **Step 4: Promote and verify**
 
