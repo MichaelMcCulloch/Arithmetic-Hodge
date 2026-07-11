@@ -1761,9 +1761,9 @@ private lemma Gammaℝ_two_mul_nat (n : ℕ) :
   push_cast
   field_simp [Real.pi_ne_zero]
 
-/-- The completed zeta grows at least exponentially along the positive even
-integers `2 * (k + 12)`. -/
-private lemma completedZeta₀_even_re_lower (k : ℕ) :
+/-- The pole-removed completed zeta grows at least exponentially along the
+positive even integers `2 * (k + 12)`. -/
+theorem completedZeta₀_even_re_lower (k : ℕ) :
     (2 : ℝ) ^ k ≤
       (completedRiemannZeta₀ ((2 * (k + 12) : ℕ) : ℂ)).re := by
   let s : ℂ := ((2 * (k + 12) : ℕ) : ℂ)
@@ -1834,7 +1834,8 @@ private lemma completedZeta₀_even_re_lower (k : ℕ) :
     simpa only [add_re] using hcorr
   linarith
 
-private lemma tendsto_completedZeta_even_lower_scale :
+/-- The logarithmic scale extracted from the positive-even lower bound tends to one. -/
+theorem tendsto_completedZeta_even_lower_scale :
     Tendsto (fun k : ℕ =>
       Real.log ((k : ℝ) * Real.log 2) /
         Real.log (2 * ((k : ℝ) + 12)))
