@@ -1710,6 +1710,289 @@ private lemma completedZeta₀_order_le_one : entireOrder completedRiemannZeta�
         exact Real.log_le_log (neg_pos.mpr hlogM_neg) hneg_le
       exact (div_le_div_of_nonneg_right hloglog_le hlogr.le).trans_lt hconst
 
+/-- A deliberately coarse factorial lower bound tailored to the values
+`completedRiemannZeta₀ (2 * (k + 12))`.  Starting at `11!`, every additional
+factor is at least `8`, which pays for one factor `4` from `π < 4` and one
+factor `2` of exponential growth. -/
+private lemma factorial_eleven_add_lower (k : ℕ) :
+    2 ^ (k + 1) * 4 ^ (k + 12) ≤ (k + 11).factorial := by
+  induction k with
+  | zero => norm_num [Nat.factorial]
+  | succ k ih =>
+      rw [Nat.factorial_succ]
+      calc
+        2 ^ (k + 1 + 1) * 4 ^ (k + 1 + 12)
+            = 8 * (2 ^ (k + 1) * 4 ^ (k + 12)) := by ring
+        _ ≤ (k + 12) * (k + 11).factorial := by
+          exact Nat.mul_le_mul (by omega) ih
+
+/-- On the positive real axis, the Dirichlet series gives `1 ≤ Re ζ(k)`.
+We only need this elementary first-term lower bound. -/
+private lemma one_le_riemannZeta_re_nat (k : ℕ) (hk : 1 < k) :
+    1 ≤ (riemannZeta (k : ℂ)).re := by
+  rw [zeta_nat_eq_tsum_of_gt_one hk]
+  have hcast : (∑' n : ℕ, 1 / (n : ℂ) ^ k) =
+      Complex.ofReal (∑' n : ℕ, 1 / (n : ℝ) ^ k) := by
+    rw [Complex.ofReal_tsum]
+    congr 1
+    funext n
+    push_cast
+    norm_cast
+  have hsumℝ : Summable (fun n : ℕ => 1 / (n : ℝ) ^ k) :=
+    summable_one_div_nat_pow.mpr hk
+  rw [hcast]
+  simp only [Complex.ofReal_re]
+  simpa using hsumℝ.sum_le_tsum {1} (fun n hn => by positivity)
+
+private lemma Gammaℝ_two_mul_nat (n : ℕ) :
+    Complex.Gammaℝ ((2 * (n + 1) : ℕ) : ℂ) =
+      (((n.factorial : ℝ) / Real.pi ^ (n + 1) : ℝ) : ℂ) := by
+  rw [Complex.Gammaℝ_def]
+  have hhalf : (((2 * (n + 1) : ℕ) : ℂ) / 2) = (n + 1 : ℕ) := by
+    push_cast
+    ring
+  have hneg : -(((2 * (n + 1) : ℕ) : ℂ)) / 2 = -((n + 1 : ℕ) : ℂ) := by
+    push_cast
+    ring
+  rw [hhalf, hneg]
+  rw [Complex.cpow_neg, Complex.cpow_natCast]
+  have hGamma : Complex.Gamma ((n + 1 : ℕ) : ℂ) = n.factorial := by
+    simpa only [Nat.cast_add, Nat.cast_one] using Complex.Gamma_nat_eq_factorial n
+  rw [hGamma]
+  push_cast
+  field_simp [Real.pi_ne_zero]
+
+/-- The completed zeta grows at least exponentially along the positive even
+integers `2 * (k + 12)`. -/
+private lemma completedZeta₀_even_re_lower (k : ℕ) :
+    (2 : ℝ) ^ k ≤
+      (completedRiemannZeta₀ ((2 * (k + 12) : ℕ) : ℂ)).re := by
+  let s : ℂ := ((2 * (k + 12) : ℕ) : ℂ)
+  have hs_re : 1 < s.re := by
+    dsimp [s]
+    norm_num
+    have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg k
+    linarith
+  have hs_ne : s ≠ 0 := fun h => by
+    rw [h] at hs_re
+    norm_num at hs_re
+  have hGamma_ne : Complex.Gammaℝ s ≠ 0 :=
+    Complex.Gammaℝ_ne_zero_of_re_pos (lt_trans zero_lt_one hs_re)
+  have hcompleted : riemannZeta s * Complex.Gammaℝ s = completedRiemannZeta s := by
+    rw [riemannZeta_def_of_ne_zero hs_ne, div_mul_cancel₀ _ hGamma_ne]
+  have hGamma : Complex.Gammaℝ s =
+      ((((k + 11).factorial : ℝ) / Real.pi ^ (k + 12) : ℝ) : ℂ) := by
+    simpa [s, Nat.add_assoc] using Gammaℝ_two_mul_nat (k + 11)
+  have hpi_pow : Real.pi ^ (k + 12) ≤ (4 : ℝ) ^ (k + 12) := by
+    exact pow_le_pow_left₀ Real.pi_pos.le (le_of_lt Real.pi_lt_four) _
+  have hfac :
+      (2 : ℝ) ^ (k + 1) * (4 : ℝ) ^ (k + 12) ≤ (k + 11).factorial := by
+    exact_mod_cast factorial_eleven_add_lower k
+  have hquot : (2 : ℝ) ^ (k + 1) ≤
+      ((k + 11).factorial : ℝ) / Real.pi ^ (k + 12) := by
+    rw [le_div_iff₀ (pow_pos Real.pi_pos _)]
+    exact (mul_le_mul_of_nonneg_left hpi_pow (pow_nonneg (by norm_num) _)).trans hfac
+  have hzeta : 1 ≤ (riemannZeta s).re := by
+    simpa [s] using one_le_riemannZeta_re_nat (2 * (k + 12)) (by omega)
+  have hquot_nonneg : 0 ≤ ((k + 11).factorial : ℝ) / Real.pi ^ (k + 12) := by positivity
+  have hLambda : (2 : ℝ) ^ (k + 1) ≤ (completedRiemannZeta s).re := by
+    rw [← hcompleted, hGamma]
+    simp only [mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero, sub_zero]
+    exact hquot.trans (le_mul_of_one_le_left hquot_nonneg hzeta)
+  have hcorr : (-1 : ℝ) ≤ (1 / s + 1 / (1 - s)).re := by
+    let S : ℝ := 2 * (k + 12)
+    have hcast : 1 / s + 1 / (1 - s) =
+        Complex.ofReal (1 / S + 1 / (1 - S)) := by
+      dsimp [s, S]
+      push_cast
+      norm_cast
+    rw [hcast, Complex.ofReal_re]
+    have hS : (2 : ℝ) ≤ S := by
+      dsimp [S]
+      have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg k
+      linarith
+    have hSpos : 0 < S := lt_of_lt_of_le zero_lt_two hS
+    have hden : (1 : ℝ) ≤ S - 1 := by linarith
+    have hinv : (S - 1)⁻¹ ≤ (1 : ℝ) :=
+      (inv_le_one₀ (by linarith)).2 hden
+    have hsecond : (-1 : ℝ) ≤ 1 / (1 - S) := by
+      rw [show 1 - S = -(S - 1) by ring, div_neg, one_div]
+      linarith
+    have hfirst : 0 ≤ 1 / S := by positivity
+    linarith
+  have hrewrite : completedRiemannZeta₀ s =
+      completedRiemannZeta s + 1 / s + 1 / (1 - s) := by
+    rw [completedRiemannZeta_eq]
+    ring
+  change (2 : ℝ) ^ k ≤ (completedRiemannZeta₀ s).re
+  rw [hrewrite]
+  simp only [add_re]
+  have hpow : (2 : ℝ) ^ k ≤ (2 : ℝ) ^ (k + 1) - 1 := by
+    rw [pow_succ]
+    have : (1 : ℝ) ≤ 2 ^ k := one_le_pow₀ (by norm_num)
+    nlinarith
+  have hcorr' : (-1 : ℝ) ≤ (1 / s).re + (1 / (1 - s)).re := by
+    simpa only [add_re] using hcorr
+  linarith
+
+private lemma tendsto_completedZeta_even_lower_scale :
+    Tendsto (fun k : ℕ =>
+      Real.log ((k : ℝ) * Real.log 2) /
+        Real.log (2 * ((k : ℝ) + 12)))
+      Filter.atTop (𝓝 1) := by
+  have hlog : Tendsto (fun k : ℕ => Real.log (k : ℝ))
+      Filter.atTop Filter.atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have hdelta : Tendsto (fun k : ℕ =>
+      Real.log ((k : ℝ) + 12) - Real.log (k : ℝ))
+      Filter.atTop (𝓝 0) :=
+    (Real.tendsto_log_comp_add_sub_log 12).comp tendsto_natCast_atTop_atTop
+  have hshift : Tendsto (fun k : ℕ =>
+      Real.log ((k : ℝ) + 12) / Real.log (k : ℝ))
+      Filter.atTop (𝓝 1) := by
+    have hzero := hdelta.div_atTop hlog
+    have h := (tendsto_const_nhds (x := (1 : ℝ))).add hzero
+    have heq : (fun k : ℕ => 1 +
+        (Real.log ((k : ℝ) + 12) - Real.log (k : ℝ)) / Real.log (k : ℝ)) =ᶠ[Filter.atTop]
+        (fun k : ℕ => Real.log ((k : ℝ) + 12) / Real.log (k : ℝ)) := by
+      filter_upwards [Filter.eventually_gt_atTop (1 : ℕ)] with k hk
+      have hlog_ne : Real.log (k : ℝ) ≠ 0 :=
+        (Real.log_pos (by exact_mod_cast hk)).ne'
+      field_simp
+      ring
+    simpa using h.congr' heq
+  have hconst : Tendsto (fun k : ℕ =>
+      Real.log (Real.log 2) / Real.log (k : ℝ))
+      Filter.atTop (𝓝 0) :=
+    tendsto_const_nhds.div_atTop hlog
+  have hnum : Tendsto (fun k : ℕ =>
+      Real.log ((k : ℝ) * Real.log 2) / Real.log (k : ℝ))
+      Filter.atTop (𝓝 1) := by
+    have h := (tendsto_const_nhds (x := (1 : ℝ))).add hconst
+    have heq : (fun k : ℕ => 1 + Real.log (Real.log 2) / Real.log (k : ℝ)) =ᶠ[Filter.atTop]
+        (fun k : ℕ => Real.log ((k : ℝ) * Real.log 2) / Real.log (k : ℝ)) := by
+      filter_upwards [Filter.eventually_gt_atTop (1 : ℕ)] with k hk
+      have hk0 : (k : ℝ) ≠ 0 := by
+        exact_mod_cast (by omega : k ≠ 0)
+      have hlog_ne : Real.log (k : ℝ) ≠ 0 :=
+        (Real.log_pos (by exact_mod_cast hk)).ne'
+      rw [Real.log_mul hk0 (Real.log_pos one_lt_two).ne']
+      field_simp
+    simpa using h.congr' heq
+  have hconst_two : Tendsto (fun k : ℕ =>
+      Real.log 2 / Real.log (k : ℝ)) Filter.atTop (𝓝 0) :=
+    tendsto_const_nhds.div_atTop hlog
+  have hden : Tendsto (fun k : ℕ =>
+      Real.log (2 * ((k : ℝ) + 12)) / Real.log (k : ℝ))
+      Filter.atTop (𝓝 1) := by
+    have h := hconst_two.add hshift
+    have heq : (fun k : ℕ => Real.log 2 / Real.log (k : ℝ) +
+        Real.log ((k : ℝ) + 12) / Real.log (k : ℝ)) =ᶠ[Filter.atTop]
+        (fun k : ℕ => Real.log (2 * ((k : ℝ) + 12)) / Real.log (k : ℝ)) := by
+      filter_upwards [Filter.eventually_gt_atTop (1 : ℕ)] with k hk
+      have hlog_ne : Real.log (k : ℝ) ≠ 0 :=
+        (Real.log_pos (by exact_mod_cast hk)).ne'
+      rw [Real.log_mul (by norm_num : (2 : ℝ) ≠ 0)
+        (by positivity : (k : ℝ) + 12 ≠ 0)]
+      field_simp
+    simpa using h.congr' heq
+  have hquot := hnum.div hden (by norm_num : (1 : ℝ) ≠ 0)
+  have heq : (fun k : ℕ =>
+      (Real.log ((k : ℝ) * Real.log 2) / Real.log (k : ℝ)) /
+        (Real.log (2 * ((k : ℝ) + 12)) / Real.log (k : ℝ))) =ᶠ[Filter.atTop]
+      (fun k : ℕ => Real.log ((k : ℝ) * Real.log 2) /
+        Real.log (2 * ((k : ℝ) + 12))) := by
+    filter_upwards [Filter.eventually_gt_atTop (1 : ℕ)] with k hk
+    have hlog_ne : Real.log (k : ℝ) ≠ 0 :=
+      (Real.log_pos (by exact_mod_cast hk)).ne'
+    field_simp
+  simpa using hquot.congr' heq
+
+private lemma two_pow_le_maxModulus_completedZeta (k : ℕ) :
+    (2 : ℝ) ^ k ≤
+      maxModulus completedRiemannZeta₀ (2 * ((k : ℝ) + 12)) := by
+  let z : ℂ := ((2 * (k + 12) : ℕ) : ℂ)
+  have hz_re : (2 : ℝ) ^ k ≤ (completedRiemannZeta₀ z).re := by
+    simpa [z] using completedZeta₀_even_re_lower k
+  have hz_norm : (completedRiemannZeta₀ z).re ≤ ‖completedRiemannZeta₀ z‖ :=
+    Complex.re_le_norm _
+  have hz_radius : ‖z‖ ≤ 2 * ((k : ℝ) + 12) := by
+    dsimp [z]
+    rw [Complex.norm_natCast]
+    norm_cast
+  exact hz_re.trans (hz_norm.trans
+    (norm_le_maxModulus completedRiemannZeta₀ differentiable_completedZeta₀ z
+      (2 * ((k : ℝ) + 12)) (by positivity) hz_radius))
+
+private lemma completedZeta_even_lower_scale_le (k : ℕ) (hk : 1 < k) :
+    Real.log ((k : ℝ) * Real.log 2) /
+        Real.log (2 * ((k : ℝ) + 12)) ≤
+      Real.log (Real.log
+        (maxModulus completedRiemannZeta₀ (2 * ((k : ℝ) + 12)))) /
+        Real.log (2 * ((k : ℝ) + 12)) := by
+  have hpow_pos : 0 < (2 : ℝ) ^ k := pow_pos (by norm_num) _
+  have hM := two_pow_le_maxModulus_completedZeta k
+  have hlog_le : Real.log ((2 : ℝ) ^ k) ≤ Real.log
+      (maxModulus completedRiemannZeta₀ (2 * ((k : ℝ) + 12))) :=
+    Real.log_le_log hpow_pos hM
+  have hlogpow : Real.log ((2 : ℝ) ^ k) = (k : ℝ) * Real.log 2 := by
+    rw [Real.log_pow]
+  have hlogpow_pos : 0 < Real.log ((2 : ℝ) ^ k) := by
+    rw [hlogpow]
+    exact mul_pos (by exact_mod_cast (lt_trans Nat.zero_lt_one hk)) (Real.log_pos one_lt_two)
+  have hloglog_le : Real.log ((k : ℝ) * Real.log 2) ≤ Real.log (Real.log
+      (maxModulus completedRiemannZeta₀ (2 * ((k : ℝ) + 12)))) := by
+    rw [← hlogpow]
+    exact Real.log_le_log hlogpow_pos hlog_le
+  have hden_pos : 0 < Real.log (2 * ((k : ℝ) + 12)) := by
+    apply Real.log_pos
+    have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg k
+    linarith
+  exact div_le_div_of_nonneg_right hloglog_le hden_pos.le
+
+private lemma tendsto_completedZeta_even_radii :
+    Tendsto (fun k : ℕ => 2 * ((k : ℝ) + 12)) Filter.atTop Filter.atTop := by
+  have hmul : Tendsto (fun k : ℕ => 2 * (k : ℝ)) Filter.atTop Filter.atTop :=
+    tendsto_natCast_atTop_atTop.const_mul_atTop (by norm_num)
+  have hadd := tendsto_atTop_add_const_right Filter.atTop 24 hmul
+  apply hadd.congr'
+  exact Eventually.of_forall (fun k => by ring)
+
+private lemma completedZeta₀_order_ge_one :
+    (1 : EReal) ≤ entireOrder completedRiemannZeta₀ := by
+  unfold entireOrder
+  apply le_limsup_of_le ⟨⊤, Eventually.of_forall (fun _ => le_top)⟩
+  intro b hb
+  by_cases hb_top : b = ⊤
+  · rw [hb_top]
+    exact le_top
+  have hbseq : ∀ᶠ k : ℕ in Filter.atTop,
+      (Real.log (Real.log (maxModulus completedRiemannZeta₀
+        (2 * ((k : ℝ) + 12)))) / Real.log (2 * ((k : ℝ) + 12)) : EReal) ≤ b :=
+    tendsto_completedZeta_even_radii.eventually hb
+  have hg_b : ∀ᶠ k : ℕ in Filter.atTop,
+      (Real.log ((k : ℝ) * Real.log 2) /
+        Real.log (2 * ((k : ℝ) + 12)) : EReal) ≤ b := by
+    filter_upwards [hbseq, Filter.eventually_gt_atTop (1 : ℕ)] with k hkb hk
+    exact (EReal.coe_le_coe_iff.mpr (completedZeta_even_lower_scale_le k hk)).trans hkb
+  have hb_bot : b ≠ ⊥ := by
+    intro hbot
+    rw [hbot] at hg_b
+    obtain ⟨k, hk⟩ := hg_b.exists
+    exact (not_le_of_gt (EReal.bot_lt_coe _)) hk
+  have hb_coe : (b.toReal : EReal) = b := EReal.coe_toReal hb_top hb_bot
+  have hg_real : ∀ᶠ k : ℕ in Filter.atTop,
+      Real.log ((k : ℝ) * Real.log 2) /
+        Real.log (2 * ((k : ℝ) + 12)) ≤ b.toReal := by
+    apply hg_b.mono
+    intro k hk
+    rw [← hb_coe] at hk
+    exact EReal.coe_le_coe_iff.mp hk
+  have hone : (1 : ℝ) ≤ b.toReal :=
+    le_of_tendsto tendsto_completedZeta_even_lower_scale hg_real
+  rw [← hb_coe]
+  exact_mod_cast hone
+
 /-- For 0 < s < 1, the series Σ_ρ ‖ρ‖⁻ˢ over zeros of Λ₀ diverges.
 
     The hadamardZeros sequence provides zeros of completedRiemannZeta₀.
@@ -1772,15 +2055,11 @@ theorem zetaZero_exponent_of_convergence :
 /-- **Λ₀ has order 1.**
 
     Upper bound: the theta-Mellin growth estimate `completedZeta₀_order_le_one`.
-    Lower bound: exponent of convergence = 1 ≤ order (via `zeroExponent_le_order`). -/
+    Lower bound: direct exponential growth on the positive even integers,
+    obtained from the factorial values of the Gamma factor. -/
 theorem completedZeta_order :
     entireOrder completedRiemannZeta₀ = 1 := by
-  apply le_antisymm
-  · exact completedZeta₀_order_le_one
-  · calc (1 : EReal)
-        = zeroExponent completedRiemannZeta₀ := zetaZero_exponent_of_convergence.symm
-      _ ≤ entireOrder completedRiemannZeta₀ :=
-          zeroExponent_le_order _ differentiable_completedZeta₀ completedZeta₀_ne_zero
+  exact le_antisymm completedZeta₀_order_le_one completedZeta₀_order_ge_one
 
 /-- **The genus of ξ is 1.**
     Since the order is 1, the Hadamard genus p = ⌊ρ⌋ = 1.
