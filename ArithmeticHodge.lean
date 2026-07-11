@@ -42,6 +42,7 @@ import ArithmeticHodge.Analysis.Contour.RectangleWinding
 import ArithmeticHodge.Analysis.Contour.RectangleFiniteResidues
 import ArithmeticHodge.Analysis.Contour.RectangleWeightedLogDeriv
 import ArithmeticHodge.Analysis.Contour.RectangleMeromorphicGoursat
+import ArithmeticHodge.Analysis.Contour.RectangleWeightedArgumentPrinciple
 import ArithmeticHodge.Analysis.WeilDefs
 import ArithmeticHodge.Analysis.MultiplicativeWeil
 import ArithmeticHodge.Analysis.MultiplicativeWeilTranspose
