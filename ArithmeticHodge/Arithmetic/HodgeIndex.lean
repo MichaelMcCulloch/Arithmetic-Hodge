@@ -1,18 +1,15 @@
 /-
   LAYER 6: The Arithmetic Hodge Index Theorem
 
-  THIS IS THE LEMMA. This is the summit of the formalization.
+  This file contains two different levels which must not be conflated.
+  The concrete `Spec(ℤ)` model is elementary: degree zero forces the sole
+  metric coordinate to vanish, so its self-intersection is zero. The abstract
+  `ArakelovIntersectionTheory` class, by contrast, includes both negative
+  semidefiniteness and a field that turns it into Weil positivity.
 
-  Statement: The arithmetic intersection pairing on ĈH¹₀(Spec(ℤ̄))
-  is negative-definite on the degree-zero subspace.
-
-  Equivalently: for any metrized line bundle L̂ of arithmetic degree zero,
-  the self-intersection L̂ · L̂ ≤ 0, with equality iff L̂ is torsion.
-
-  This is equivalent to the Riemann Hypothesis.
-
-  The chain of equivalences:
-    Arithmetic Hodge Index ⟺ Weil positivity ⟺ RH
+  `nonempty_arakelovIntersectionTheory_iff_weilPositivity` below proves that
+  inhabiting the current abstract class is exactly equivalent to assuming Weil
+  positivity; it is not an independently constructed Arakelov reduction.
 -/
 
 import ArithmeticHodge.Analysis.WeilPositivity
@@ -92,6 +89,14 @@ theorem hodge_index_spec_Z_complete (L : MetrizedLineBundle) :
     (arakelovSelfIntersection L = 0 ↔ L.logMetric = 0) :=
   ⟨hodge_index_spec_Z L, hodge_index_spec_Z_eq L⟩
 
+/-- In the concrete one-coordinate `Spec(ℤ)` model, degree zero makes the
+    self-intersection exactly zero. -/
+theorem degree_zero_spec_Z_self_intersection_eq_zero
+    (L : MetrizedLineBundle) (hL : isDegreeZero L) :
+    arakelovSelfIntersection L = 0 := by
+  have hmetric : L.logMetric = 0 := (isDegreeZero_iff L).mp hL
+  simp [arakelovSelfIntersection, hmetric]
+
 -- ============================================================
 -- The Full Arithmetic Hodge Index (Over ℤ̄ — THE SUMMIT)
 -- ============================================================
@@ -102,9 +107,9 @@ theorem hodge_index_spec_Z_complete (L : MetrizedLineBundle) :
     ĈH¹(Spec(𝒪_K)) over all number fields K/ℚ. We model it as
     a real inner product space structure on an abstract type.
 
-    This bundles the pairing with its basic algebraic properties
-    (symmetry, bilinearity). The Hodge Index Theorem is the
-    additional claim that this pairing is negative semi-definite.
+    The current class records symmetry, but not additivity or scalar
+    compatibility. Negative semidefiniteness is a field of the class rather
+    than a theorem derived from a separately constructed pairing.
 
     WHAT'S NEEDED for full formalization: Arakelov intersection theory.
     REFERENCE: Soulé, "Lectures on Arakelov Geometry" (Cambridge, 1992). -/
@@ -132,22 +137,46 @@ class ArakelovIntersectionTheory (α : Type*) where
   arakelov_weil_bridge :
     (∀ x : α, pairing x x ≤ 0) → Analysis.WeilPositivity
 
+/-- The current abstract Arakelov package is logically equivalent to Weil
+    positivity. The reverse implication equips any type with the zero pairing,
+    so class inhabitation does not constitute an independent geometric
+    construction. -/
+theorem nonempty_arakelovIntersectionTheory_iff_weilPositivity (α : Type*) :
+    Nonempty (ArakelovIntersectionTheory α) ↔ Analysis.WeilPositivity := by
+  constructor
+  · rintro ⟨inst⟩
+    exact inst.arakelov_weil_bridge inst.neg_semidef
+  · intro hwp
+    refine ⟨{
+      pairing := fun _ _ => 0
+      pairing_symm := ?_
+      neg_semidef := ?_
+      arakelov_weil_bridge := ?_
+    }⟩
+    · intro x y
+      rfl
+    · intro x
+      exact le_rfl
+    · intro _
+      exact hwp
+
 /-- An element of the arithmetic Chow group ĈH¹₀(Spec(ℤ̄)).
 
     The full arithmetic Chow group over the algebraic closure ℤ̄ is
     the colimit of ĈH¹(Spec(𝒪_K)) over all number fields K/ℚ.
     Elements are equivalence classes of metrized divisors of degree zero.
 
-    We model this abstractly as a type equipped with
-    a symmetric bilinear pairing via the ArakelovIntersectionTheory class. -/
+    The current model is only a natural-number index. The accompanying class
+    supplies a symmetric pairing but does not encode a group, quotient,
+    colimit, or bilinearity. -/
 structure ArakelovChowClass where
   /-- Abstract index into the Chow group -/
   idx : ℕ
 
 /-- The Arakelov intersection pairing on the full arithmetic Chow group.
 
-    Defined via the ArakelovIntersectionTheory class. The pairing is
-    a symmetric bilinear form on the degree-zero Chow group.
+    Defined via the `ArakelovIntersectionTheory` class. Only symmetry is
+    currently encoded; bilinearity is not part of the interface.
 
     SORRY COUNT: 0 — definition uses the class structure. -/
 noncomputable def arakelovPairing [inst : ArakelovIntersectionTheory ArakelovChowClass]
@@ -171,15 +200,14 @@ theorem arakelovPairing_symm [inst : ArakelovIntersectionTheory ArakelovChowClas
       ⟨α, α⟩ ≤ 0
     with equality if and only if α is torsion.
 
-    This is equivalent to RiemannHypothesis (as defined in Mathlib).
-
-    PROVED: from the `neg_semidef` axiom of the `ArakelovIntersectionTheory` class.
-    The mathematical content (≡ RH) is encoded in the class axioms:
+    This theorem simply projects the `neg_semidef` field of an already
+    inhabited `ArakelovIntersectionTheory`. The mathematical content is
+    encoded in the class fields:
     - `neg_semidef`: the pairing is negative semi-definite
     - `arakelov_weil_bridge`: negativity implies Weil positivity
 
-    The class represents the Arakelov intersection theory of Spec(ℤ̄),
-    whose construction is the number-theoretic content of RH. -/
+    By `nonempty_arakelovIntersectionTheory_iff_weilPositivity`, the current
+    package is exactly as strong as Weil positivity. -/
 theorem arithmetic_hodge_index [inst : ArakelovIntersectionTheory ArakelovChowClass]
     (α : ArakelovChowClass) :
     arakelovPairing α α ≤ 0 :=
@@ -193,7 +221,9 @@ theorem arithmetic_hodge_index [inst : ArakelovIntersectionTheory ArakelovChowCl
        Arakelov pairing to Weil positivity on autocorrelations.
     2. `weil_criterion_backward` converts Weil positivity to RH.
 
-    PROVED: from class axioms + `weil_criterion_equiv` axiom. -/
+    The final step currently inherits the unresolved backward direction of
+    the Weil criterion. Moreover, under the class instance the displayed
+    Hodge premise is already available as `neg_semidef`. -/
 theorem hodge_index_implies_RH [inst : ArakelovIntersectionTheory ArakelovChowClass] :
     (∀ α : ArakelovChowClass, arakelovPairing α α ≤ 0) →
     RiemannHypothesis := by

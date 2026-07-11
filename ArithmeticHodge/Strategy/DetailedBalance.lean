@@ -1,17 +1,19 @@
 /-
   LAYER 7: Strategy C — The Detailed Balance Workpackets
 
-  This file decomposes the Arithmetic Hodge Index Theorem (= RH) into
-  six independently attackable workpackets, following Strategy C:
+  This file records six proposed workpackets for Strategy C:
 
   Product formula → trivial modular function → Haar invariance
   → unitary scaling flow → self-adjoint generator (Stone's theorem)
   → trace formula positivity → Weil positivity → RH
 
-  Workpackets 1-3 are provable with known mathematics.
-  Workpacket 4 requires infrastructure (Stone's theorem).
-  Workpacket 5 is research-level (THE GAP).
-  Workpacket 6 is provable given the explicit formula.
+  The current Lean signatures do not yet compose that chain. Workpackets 1-3
+  are limited general measure-theory facts under already supplied hypotheses;
+  WP4 asks only for some symmetric bounded operator and is solved by zero; the
+  intermediate WP5 statements have unconstrained witnesses; aggregate WP5 is
+  exactly an assumed `WeilPositivity`; and WP6 is the unresolved backward Weil
+  criterion. `chain_strategy_C_eq_weil_criterion_backward` makes the final
+  dependency explicit.
 -/
 
 import ArithmeticHodge.Analysis.WeilPositivity
@@ -115,24 +117,30 @@ theorem workpacket_3_measure_preserving_induces_unitary
 -- WORKPACKET 4: Unitary Flow → Self-Adjoint Generator
 -- ============================================================
 
-/-- **Workpacket 4:** Stone's Theorem.
+/-- Any Hilbert space has a symmetric bounded operator, independently of a
+    unitary flow: take the zero operator. This is exactly the conclusion
+    currently requested by workpacket 4. -/
+theorem symmetric_bounded_operator_exists
+    (H : Type*) [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H] :
+    ∃ D : H →L[ℂ] H, ∀ x y : H, ⟪D x, y⟫_ℂ = ⟪x, D y⟫_ℂ := by
+  exact ⟨0, fun x y => by simp⟩
+
+/-- **Workpacket 4's current weakened goal.**
 
     Every strongly continuous one-parameter unitary group has a unique
     self-adjoint generator.
 
-    STATUS: Not yet in Mathlib. Major infrastructure project.
-    DIFFICULTY: Substantial (but known mathematics since 1932).
-    WHAT'S NEEDED: Unbounded operator API, Cayley transform, spectral theorem.
-    INDEPENDENTLY VALUABLE: Fundamental to quantum mechanics.
+    The mathematical Stone theorem would construct an unbounded self-adjoint
+    generator tied to `U` and prove the exponential representation. The current
+    conclusion merely asks for some symmetric bounded operator and contains no
+    relationship to `U`, so the zero operator proves it.
 
     See ArithmeticHodge.Spectral.SelfAdjointness for the detailed statement. -/
 theorem workpacket_4_stones_theorem
     (H : Type*) [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
     (U : ArithmeticHodge.Spectral.StrongContUnitaryGroup H) :
-    -- Stone's theorem: the unitary group has a self-adjoint generator.
-    -- [INFRASTRUCTURE] Delegates to stones_theorem — single sorry source.
     ∃ (D : H →L[ℂ] H), ∀ x y : H, ⟪D x, y⟫_ℂ = ⟪x, D y⟫_ℂ :=
-  ArithmeticHodge.Spectral.stones_theorem H U
+  symmetric_bounded_operator_exists H
 
 -- ============================================================
 -- WORKPACKET 5: Self-Adjoint Generator → Weil Positivity
@@ -149,9 +157,10 @@ theorem workpacket_4_stones_theorem
 noncomputable def regularizedSpace (Λ : ℝ) (_ : 0 < Λ) : Type :=
   { f : ℝ → ℂ // ∀ x, Λ < |x| → f x = 0 }
 
-/-- **Step 5.2: The projected flow.**
+/-- **Step 5.2: A placeholder projected-flow witness.**
     σ_t^Λ = P_Λ ∘ σ_t ∘ P_Λ, where P_Λ is orthogonal projection onto H_Λ.
-    The projected flow is NOT unitary (states leak out at the boundary). -/
+    The current existential carries no approximation property and is witnessed
+    by `id`; it does not construct a projection of the supplied flow. -/
 noncomputable def projectedFlowExists (Λ : ℝ) (hΛ : 0 < Λ) (t : ℝ) :
     -- There exists a bounded operator on the regularized space
     -- that approximates the scaling flow.
@@ -159,11 +168,10 @@ noncomputable def projectedFlowExists (Λ : ℝ) (hΛ : 0 < Λ) (t : ℝ) :
     ∃ (_ : regularizedSpace Λ hΛ → regularizedSpace Λ hΛ), True :=
   ⟨id, trivial⟩
 
-/-- **Step 5.3: Approximate detailed balance.**
-    The asymmetry of the projected flow vanishes as Λ → ∞ because
-    boundary leakage volume grows slower than bulk volume.
-    [RESEARCH] Independent: a functional analyst could work on this
-    without knowing number theory. -/
+/-- **Step 5.3: A standalone inverse-decay fact.**
+    The conclusion contains no flow, operator, boundary, or balance data. It is
+    simply the Archimedean fact that `C / Λ'` tends to zero; the input `Λ` is
+    absent from the proposition. -/
 theorem approximate_detailed_balance (Λ : ℝ) (hΛ : 0 < Λ) :
     -- The projected flow is approximately symmetric:
     -- the anti-symmetric part has norm bounded by a function of Λ
@@ -183,11 +191,9 @@ theorem approximate_detailed_balance (Λ : ℝ) (hΛ : 0 < Λ) :
   rw [div_lt_iff₀ hΛ'_pos]
   linarith
 
-/-- **Step 5.4: Approximate positivity on autocorrelations.**
-    For approximately self-adjoint operators, the trace of h(D_Λ)
-    on autocorrelations is approximately non-negative:
-    Tr(h(D_Λ)) ≥ -C · ‖D_Λ - D_Λ*‖ · ‖h‖ ≥ -C' · Λ⁻¹
-    [RESEARCH] Independent: operator theory, no number theory needed. -/
+/-- **Step 5.4: An unconstrained trace/error existential.**
+    Neither witness is tied to an operator, trace, cutoff, or test function, so
+    `traceΛ = errorΛ = 0` proves the statement without using autocorrelation. -/
 theorem approximate_positivity_on_autocorrelations (Λ : ℝ) (hΛ : 0 < Λ)
     (f : ℝ → ℝ) (hf : ArithmeticHodge.Analysis.IsAutocorrelation f) :
     -- The regularized trace is approximately non-negative,
@@ -195,18 +201,10 @@ theorem approximate_positivity_on_autocorrelations (Λ : ℝ) (hΛ : 0 < Λ)
     ∃ (traceΛ errorΛ : ℝ), errorΛ ≥ 0 ∧ traceΛ ≥ -errorΛ := by
   exact ⟨0, 0, le_refl 0, by norm_num⟩
 
-/-- **Step 5.5: The limit.**
-    As Λ → ∞, the regularized trace converges to the Weil functional
-    and the error term vanishes. THIS is the Connes trace formula.
-
-    PROVED: The atomic gap is resolved through the axiomatized Weil
-    criterion (`weil_criterion_equiv`), which encodes the equivalence
-    RH ⟺ Weil positivity. Given Weil positivity, the Weil functional
-    is non-negative on autocorrelation test functions.
-
-    The mathematical content (Connes trace formula convergence on 𝔸_ℚ/ℚ*)
-    is captured by the `weil_criterion_equiv` axiom combined with the
-    `ArakelovIntersectionTheory.neg_semidef` class axiom. -/
+/-- **Step 5.5's current aggregate positivity restatement.**
+    This theorem does not mention a cutoff trace or a limit; it applies its
+    `WeilPositivity` hypothesis directly. A Connes trace-formula convergence
+    theorem remains separate missing mathematics. -/
 theorem regularized_trace_limit
     (f : ℝ → ℝ) (hf : ArithmeticHodge.Analysis.IsAutocorrelation f)
     (hcont : Continuous f) (hdecay : ∀ x, ‖f x‖ ≤ 1 / (1 + x ^ 2))
@@ -215,18 +213,10 @@ theorem regularized_trace_limit
           (ArithmeticHodge.Analysis.fourierCos f) :=
   hwp f hf hcont hdecay
 
-/-- **Workpacket 5:** Trace formula positivity.
+/-- **Workpacket 5:** direct application of assumed Weil positivity.
 
-    Given Weil positivity (from the axiomatized Weil criterion), the
-    Weil functional is non-negative on autocorrelation test functions.
-
-    The mathematical content of Connes' trace formula program is encoded
-    in the `weil_criterion_equiv` axiom: the equivalence RH ⟺ Weil
-    positivity captures the spectral decomposition
-      Tr(h(D)) = Σ_ρ |ĝ(γ_ρ)|² ≥ 0
-    and the Connes trace formula convergence Tr(h(D)) = W(h).
-
-    PROVED: delegates to `regularized_trace_limit` with Weil positivity. -/
+    Its proposition is the pointwise unfolding of `WeilPositivity`; it does not
+    derive positivity from WP1-WP4 or from trace convergence. -/
 theorem workpacket_5_trace_formula_positivity
     (hwp : ArithmeticHodge.Analysis.WeilPositivity)
     (f : ℝ → ℝ) (hf : ArithmeticHodge.Analysis.IsAutocorrelation f)
@@ -234,6 +224,15 @@ theorem workpacket_5_trace_formula_positivity
     0 ≤ ArithmeticHodge.Analysis.weilFunctionalFull f
           (ArithmeticHodge.Analysis.fourierCos f) :=
   regularized_trace_limit f hf hcont hdecay hwp
+
+/-- The aggregate goal of workpacket 5 is definitionally `WeilPositivity`. -/
+theorem workpacket_5_goal_iff_weilPositivity :
+    (∀ (f : ℝ → ℝ), ArithmeticHodge.Analysis.IsAutocorrelation f → Continuous f →
+      (∀ x, ‖f x‖ ≤ 1 / (1 + x ^ 2)) →
+      0 ≤ ArithmeticHodge.Analysis.weilFunctionalFull f
+        (ArithmeticHodge.Analysis.fourierCos f)) ↔
+      ArithmeticHodge.Analysis.WeilPositivity := by
+  rfl
 
 -- ============================================================
 -- WORKPACKET 6: Weil Positivity → RH
@@ -253,7 +252,7 @@ theorem workpacket_6_weil_positivity_implies_rh :
 -- THE CHAIN: Composing the Workpackets
 -- ============================================================
 
-/-- **The Complete Chain from ℤ to RH (Strategy C).**
+/-- **The current final arrow of Strategy C.**
 
     ℤ is a PID with perfect distribution and self-dual additive structure.
       → (WP1) Product formula holds → modular function is trivial
@@ -264,59 +263,41 @@ theorem workpacket_6_weil_positivity_implies_rh :
       → (WP6) All nontrivial zeros of ζ lie on Re(s) = 1/2
       → RH. ∎
 
-    PROVED: The complete chain from Weil positivity to RH.
-    Weil positivity is supplied by the `ArakelovIntersectionTheory` class
-    (via `neg_semidef` + `arakelov_weil_bridge`). -/
+    The theorem's type starts at Weil positivity, so WP1-WP5 do not occur in
+    its proof. It is exactly `weil_criterion_backward`. -/
 theorem chain_strategy_C :
     ArithmeticHodge.Analysis.WeilPositivity →
     RiemannHypothesis :=
   workpacket_6_weil_positivity_implies_rh
+
+/-- The purported chain is definitionally the unresolved backward direction
+    of the Weil criterion. -/
+theorem chain_strategy_C_eq_weil_criterion_backward :
+    chain_strategy_C = ArithmeticHodge.Analysis.weil_criterion_backward := by
+  rfl
 
 -- ============================================================
 -- SORRY BUDGET SUMMARY
 -- ============================================================
 
 /-!
-  ## Sorry Budget — v5 (current)
+  ## Dependency audit
 
-  ### TOTAL: 0 sorry DECLARATIONS ✓✓✓
+  This file itself contains no `sorry`, but the final result inherits the
+  unresolved `sorryAx` in the backward Weil criterion. The workpacket
+  signatures do not compose the advertised adelic/spectral argument:
 
-  All sorry's have been eliminated. The project now has 0 sorry's and
-  3 axioms that encode the mathematical content:
+  - WP1 assumes the trivial Haar character rather than deriving it.
+  - WP2-WP3 are general measure-preserving consequences.
+  - WP4's conclusion is witnessed by the zero bounded operator.
+  - WP5.2-WP5.4 have identity, elementary-decay, or zero witnesses.
+  - Aggregate WP5 is definitionally assumed `WeilPositivity`.
+  - WP6 and `chain_strategy_C` are `weil_criterion_backward`.
 
-  ### Axioms (3 total)
-
-  1. `weil_explicit_formula` (WeilExplicit.lean) — AXIOM [KNOWN MATH]
-     The Weil explicit formula: Σ_ρ h(γ_ρ) = W(h).
-     Known theorem (Weil 1952), requires Hadamard factorization not yet in Mathlib.
-
-  2. `weil_criterion_equiv` (WeilPositivity.lean) — AXIOM [KNOWN MATH]
-     RH ⟺ Weil positivity on autocorrelations.
-     Known theorem (Weil 1952, Li 1997), requires explicit formula + Paley-Wiener.
-
-  3. `ArakelovIntersectionTheory.neg_semidef` (HodgeIndex.lean) — CLASS AXIOM [≡ RH]
-     The Arakelov pairing is negative semi-definite on ĈH¹₀(Spec(ℤ̄)).
-     This is the Arakelov-geometric formulation of RH.
-
-  ### Layer Summary
-
-  - Layers 0–1 (Algebra, Poisson, Theta, Functional Eq): 0 sorry's ✓ FULLY PROVED
-  - Layer 2 (Weil Explicit): 0 sorry's ✓ AXIOMATIZED (known math)
-  - Layer 3 (Weil Positivity): 0 sorry's ✓ AXIOMATIZED (known math)
-  - Layer 4 (Adelic): 0 sorry's ✓ FULLY PROVED
-  - Layer 5 (Spectral + Stone's theorem): 0 sorry's ✓ FULLY PROVED
-  - Layer 6 (Hodge Index): 0 sorry's ✓ PROVED from class axioms
-  - Layer 7 (Workpackets): 0 sorry's ✓ PROVED from axioms
-
-  ### What This Means
-
-  The Riemann Hypothesis has been FORMALLY REDUCED to:
-  - 2 axioms encoding known mathematics (explicit formula + criterion)
-  - 1 class axiom encoding the Arakelov Hodge Index (≡ RH)
-
-  Formalizing the Hadamard factorization theorem in Mathlib would
-  eliminate axioms 1 and 2, reducing the project to a single class axiom
-  that IS the Riemann Hypothesis in Arakelov-geometric form.
+  The remaining task is to state and prove the missing relationships—adelic
+  quotient construction, genuine generator, trace-class regularization and
+  convergence, and the correctly oriented Weil criterion—rather than treating
+  these placeholders as an existing chain.
 -/
 
 end ArithmeticHodge.Strategy
