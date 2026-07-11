@@ -27,6 +27,7 @@ import Mathlib.Order.Filter.Basic
 import Mathlib.Analysis.PSeries
 import Mathlib.Topology.Algebra.InfiniteSum.Real
 import Mathlib.Analysis.Complex.Liouville
+import ArithmeticHodge.Analysis.ComplexStirling
 import ArithmeticHodge.Analysis.ZetaProduct
 import ArithmeticHodge.Analysis.EntireFunction.Defs
 
@@ -1174,7 +1175,317 @@ theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
 -- Order of the Completed Zeta Function
 -- ============================================================
 
-/-- **Stirling upper bound on the order of Λ₀.**
+private lemma evenKernel_zero_tail_bound {x : ℝ} (hx : 1 ≤ x) :
+    |HurwitzZeta.evenKernel 0 x - 1| ≤ 4 * Real.exp (-x) := by
+  have hx_pos : 0 < x := lt_of_lt_of_le zero_lt_one hx
+  have hkernel : HurwitzZeta.evenKernel 0 x =
+      HurwitzKernelBounds.F_nat 0 0 x + HurwitzKernelBounds.F_nat 0 1 x := by
+    have hEF : HurwitzZeta.evenKernel 0 x = HurwitzKernelBounds.F_int 0 0 x := by
+      change HurwitzZeta.evenKernel (↑(0 : ℝ)) x = _
+      rw [← (HurwitzZeta.hasSum_int_evenKernel 0 hx_pos).tsum_eq]
+      simp only [HurwitzKernelBounds.F_int, HurwitzKernelBounds.f_int]
+      congr 1
+      funext n
+      simp
+    have hF := HurwitzKernelBounds.F_int_eq_of_mem_Icc 0
+      (a := (0 : ℝ)) (by constructor <;> norm_num) hx_pos
+    change HurwitzKernelBounds.F_int 0 (↑(0 : ℝ)) x = _ at hF
+    simpa using hEF.trans hF
+  have hzero := HurwitzKernelBounds.F_nat_zero_zero_sub_le hx_pos
+  have hone := HurwitzKernelBounds.F_nat_zero_le (a := (1 : ℝ)) zero_le_one hx_pos
+  have hq_lt_one : Real.exp (-Real.pi * x) < 1 := by
+    rw [Real.exp_lt_one_iff]
+    nlinarith [Real.pi_pos]
+  have hq_nonneg : 0 ≤ Real.exp (-Real.pi * x) / (1 - Real.exp (-Real.pi * x)) := by
+    exact div_nonneg (Real.exp_pos _).le (sub_nonneg.mpr hq_lt_one.le)
+  have htail : |HurwitzZeta.evenKernel 0 x - 1| ≤
+      2 * (Real.exp (-Real.pi * x) / (1 - Real.exp (-Real.pi * x))) := by
+    rw [hkernel]
+    calc
+      |HurwitzKernelBounds.F_nat 0 0 x + HurwitzKernelBounds.F_nat 0 1 x - 1|
+          = |(HurwitzKernelBounds.F_nat 0 0 x - 1) +
+              HurwitzKernelBounds.F_nat 0 1 x| := by ring_nf
+      _ ≤ |HurwitzKernelBounds.F_nat 0 0 x - 1| +
+            |HurwitzKernelBounds.F_nat 0 1 x| := abs_add_le _ _
+      _ ≤ Real.exp (-Real.pi * x) / (1 - Real.exp (-Real.pi * x)) +
+            Real.exp (-Real.pi * 1 ^ 2 * x) /
+              (1 - Real.exp (-Real.pi * x)) := add_le_add hzero hone
+      _ = 2 * (Real.exp (-Real.pi * x) / (1 - Real.exp (-Real.pi * x))) := by
+        ring_nf
+  have hpi : 1 ≤ Real.pi := le_trans (by norm_num) Real.pi_gt_three.le
+  have hq_le : Real.exp (-Real.pi * x) ≤ Real.exp (-x) := by
+    apply Real.exp_le_exp.mpr
+    nlinarith
+  have hexp_neg_le_half : Real.exp (-x) ≤ 1 / 2 := by
+    calc
+      Real.exp (-x) ≤ Real.exp (-1) := Real.exp_le_exp.mpr (by linarith)
+      _ ≤ 1 / 2 := by linarith [Real.exp_neg_one_lt_d9]
+  have hden : 1 / 2 ≤ 1 - Real.exp (-Real.pi * x) := by linarith
+  have hden_pos : 0 < 1 - Real.exp (-Real.pi * x) := lt_of_lt_of_le (by norm_num) hden
+  calc
+    |HurwitzZeta.evenKernel 0 x - 1|
+        ≤ 2 * (Real.exp (-Real.pi * x) / (1 - Real.exp (-Real.pi * x))) := htail
+    _ ≤ 2 * (Real.exp (-x) / (1 / 2)) := by
+      gcongr
+    _ = 4 * Real.exp (-x) := by ring
+
+private lemma norm_hurwitzEven_f_modif_zero_le {x : ℝ} (hx : 1 ≤ x) :
+    ‖(HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖ ≤ 4 * Real.exp (-x) := by
+  rcases hx.eq_or_lt with rfl | hx
+  · simp [WeakFEPair.f_modif]
+    positivity
+  · simp only [WeakFEPair.f_modif, Pi.add_apply,
+      Set.indicator_of_mem (Set.mem_Ioi.mpr hx),
+      Set.indicator_of_notMem (Set.notMem_Ioo_of_ge hx.le), add_zero,
+      HurwitzZeta.hurwitzEvenFEPair, Function.comp_apply]
+    change ‖(HurwitzZeta.evenKernel 0 x : ℂ) - 1‖ ≤ _
+    rw [← Complex.ofReal_one, ← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs]
+    exact evenKernel_zero_tail_bound hx.le
+
+private lemma hurwitzEven_g_modif_zero_eq_f_modif :
+    (HurwitzZeta.hurwitzEvenFEPair 0).g_modif =
+      (HurwitzZeta.hurwitzEvenFEPair 0).f_modif := by
+  funext x
+  simp only [WeakFEPair.g_modif, WeakFEPair.f_modif,
+    HurwitzZeta.hurwitzEvenFEPair, Function.comp_apply]
+  rw [HurwitzZeta.evenKernel_eq_cosKernel_of_zero]
+  simp
+
+private lemma norm_hurwitzEven_f_modif_zero_le_small {x : ℝ}
+    (hx_pos : 0 < x) (hx : x ≤ 1) :
+    ‖(HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖ ≤
+      4 * x ^ (-(1 / 2 : ℝ)) * Real.exp (-(1 / x)) := by
+  rcases hx.eq_or_lt with rfl | hx
+  · simp [WeakFEPair.f_modif]
+    positivity
+  · have hinv_pos : 0 < 1 / x := one_div_pos.mpr hx_pos
+    have hinv : 1 ≤ 1 / x := (le_div_iff₀ hx_pos).mpr (by simpa using hx.le)
+    have hFE := (HurwitzZeta.hurwitzEvenFEPair 0).hf_modif_FE (1 / x) hinv_pos
+    rw [one_div_div, hurwitzEven_g_modif_zero_eq_f_modif] at hFE
+    have hFE' : (HurwitzZeta.hurwitzEvenFEPair 0).f_modif x =
+        (↑((1 / x) ^ (1 / 2 : ℝ)) : ℂ) •
+          (HurwitzZeta.hurwitzEvenFEPair 0).f_modif (1 / x) := by
+      simpa only [div_one, HurwitzZeta.hurwitzEvenFEPair, one_mul] using hFE
+    rw [hFE', norm_smul]
+    have hscalar : ‖((1 : ℂ) * ↑((1 / x) ^ (1 / 2 : ℝ)))‖ =
+        x ^ (-(1 / 2 : ℝ)) := by
+      rw [one_mul, Complex.norm_real, Real.norm_eq_abs,
+        abs_of_pos (Real.rpow_pos_of_pos hinv_pos _), one_div,
+        Real.inv_rpow hx_pos.le, ← Real.rpow_neg hx_pos.le]
+    rw [show ‖(↑((1 / x) ^ (1 / 2 : ℝ)) : ℂ)‖ = x ^ (-(1 / 2 : ℝ)) by
+      simpa only [one_mul] using hscalar]
+    calc
+      x ^ (-(1 / 2 : ℝ)) * ‖(HurwitzZeta.hurwitzEvenFEPair 0).f_modif (1 / x)‖
+          ≤ x ^ (-(1 / 2 : ℝ)) * (4 * Real.exp (-(1 / x))) := by
+            gcongr
+            exact norm_hurwitzEven_f_modif_zero_le hinv
+      _ = 4 * x ^ (-(1 / 2 : ℝ)) * Real.exp (-(1 / x)) := by ring
+
+private lemma norm_completedZeta_mellin_integrand_le
+    (r : ℝ) (s : ℂ) (hs : ‖s‖ ≤ r) {x : ℝ} (hx_pos : 0 < x) :
+    ‖(x : ℂ) ^ (s / 2 - 1) • (HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖ ≤
+      4 * (x ^ (r / 2) * Real.exp (-x) +
+        x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) := by
+  have hs_re_upper : s.re ≤ r := (Complex.re_le_norm s).trans hs
+  have hs_re_lower : -r ≤ s.re := by
+    exact (neg_le_neg hs).trans (abs_le.mp (Complex.abs_re_le_norm s)).1
+  have hre : (s / 2 - 1).re = s.re / 2 - 1 := by
+    norm_num [Complex.div_re]
+  rw [norm_smul, Complex.norm_cpow_eq_rpow_re_of_pos hx_pos]
+  by_cases hx : x ≤ 1
+  · have hcpow : x ^ (s / 2 - 1).re ≤ x ^ (-r / 2 - 1) := by
+      apply Real.rpow_le_rpow_of_exponent_ge hx_pos hx
+      rw [hre]
+      nlinarith
+    have hfm := norm_hurwitzEven_f_modif_zero_le_small hx_pos hx
+    have hx_invhalf_le : x ^ (-(1 / 2 : ℝ)) ≤ x ^ (-1 : ℝ) := by
+      apply Real.rpow_le_rpow_of_exponent_ge hx_pos hx
+      norm_num
+    have hlow : x ^ (s / 2 - 1).re *
+          ‖(HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖ ≤
+        4 * (x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) := by
+      calc
+        x ^ (s / 2 - 1).re * ‖(HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖
+            ≤ x ^ (-r / 2 - 1) *
+                (4 * x ^ (-(1 / 2 : ℝ)) * Real.exp (-(1 / x))) := by gcongr
+        _ ≤ x ^ (-r / 2 - 1) *
+                (4 * x ^ (-1 : ℝ) * Real.exp (-(1 / x))) := by gcongr
+        _ = 4 * ((x ^ (-r / 2 - 1) * x ^ (-1 : ℝ)) *
+              Real.exp (-(1 / x))) := by ring
+        _ = 4 * (x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) := by
+          rw [← Real.rpow_add hx_pos]
+          congr 3
+          ring
+    calc
+      x ^ (s / 2 - 1).re * ‖(HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖
+          ≤ 4 * (x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) := hlow
+      _ ≤ 4 * (x ^ (r / 2) * Real.exp (-x) +
+          x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) := by
+            gcongr
+            exact le_add_of_nonneg_left (mul_nonneg (Real.rpow_nonneg hx_pos.le _)
+              (Real.exp_pos _).le)
+  · have hx_one : 1 ≤ x := le_of_not_ge hx
+    have hcpow : x ^ (s / 2 - 1).re ≤ x ^ (r / 2) := by
+      apply Real.rpow_le_rpow_of_exponent_le hx_one
+      rw [hre]
+      nlinarith
+    have hfm := norm_hurwitzEven_f_modif_zero_le hx_one
+    calc
+      x ^ (s / 2 - 1).re * ‖(HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖
+          ≤ x ^ (r / 2) * (4 * Real.exp (-x)) := by gcongr
+      _ = 4 * (x ^ (r / 2) * Real.exp (-x)) := by ring
+      _ ≤ 4 * (x ^ (r / 2) * Real.exp (-x) +
+          x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) := by
+            gcongr
+            exact le_add_of_nonneg_right (mul_nonneg (Real.rpow_nonneg hx_pos.le _)
+              (Real.exp_pos _).le)
+
+private lemma completedZeta_majorant_integrable (r : ℝ) (hr : 2 ≤ r) :
+    MeasureTheory.IntegrableOn
+      (fun x : ℝ => 4 * (x ^ (r / 2) * Real.exp (-x) +
+        x ^ (-r / 2 - 2) * Real.exp (-(1 / x)))) (Set.Ioi 0) := by
+  let g : ℝ → ℝ := fun x => x ^ (r / 2) * Real.exp (-x)
+  have harg : 0 < r / 2 + 1 := by linarith
+  have hg : MeasureTheory.IntegrableOn g (Set.Ioi 0) := by
+    have hΓ := Real.GammaIntegral_convergent harg
+    simpa only [g, show r / 2 + 1 - 1 = r / 2 by ring, mul_comm] using hΓ
+  have hlow : MeasureTheory.IntegrableOn
+      (fun x : ℝ => x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) (Set.Ioi 0) := by
+    have htrans := (MeasureTheory.integrableOn_Ioi_comp_rpow_iff g
+      (p := (-1 : ℝ)) (by norm_num)).mpr hg
+    refine htrans.congr_fun ?_ measurableSet_Ioi
+    intro x hx
+    have hx_pos : 0 < x := hx
+    simp only [abs_neg, abs_one, one_mul, one_div, smul_eq_mul, g]
+    rw [Real.rpow_neg_one, Real.inv_rpow hx_pos.le, ← Real.rpow_neg hx_pos.le]
+    rw [← mul_assoc, ← Real.rpow_add hx_pos]
+    congr 2
+    ring
+  exact (hg.add hlow).const_mul 4
+
+private lemma integral_completedZeta_majorant (r : ℝ) (hr : 2 ≤ r) :
+    (∫ x : ℝ in Set.Ioi 0, 4 * (x ^ (r / 2) * Real.exp (-x) +
+        x ^ (-r / 2 - 2) * Real.exp (-(1 / x)))) =
+      8 * Real.Gamma (r / 2 + 1) := by
+  let g : ℝ → ℝ := fun x => x ^ (r / 2) * Real.exp (-x)
+  have harg : 0 < r / 2 + 1 := by linarith
+  have hg : MeasureTheory.IntegrableOn g (Set.Ioi 0) := by
+    have hΓ := Real.GammaIntegral_convergent harg
+    simpa only [g, show r / 2 + 1 - 1 = r / 2 by ring, mul_comm] using hΓ
+  have hhigh : (∫ x : ℝ in Set.Ioi 0, g x) = Real.Gamma (r / 2 + 1) := by
+    rw [Real.Gamma_eq_integral harg]
+    apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioi
+    intro x _
+    simp only [g, show r / 2 + 1 - 1 = r / 2 by ring, mul_comm]
+  have hlow : MeasureTheory.IntegrableOn
+      (fun x : ℝ => x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) (Set.Ioi 0) := by
+    have htrans := (MeasureTheory.integrableOn_Ioi_comp_rpow_iff g
+      (p := (-1 : ℝ)) (by norm_num)).mpr hg
+    refine htrans.congr_fun ?_ measurableSet_Ioi
+    intro x hx
+    have hx_pos : 0 < x := hx
+    simp only [abs_neg, abs_one, one_mul, one_div, smul_eq_mul, g]
+    rw [Real.rpow_neg_one, Real.inv_rpow hx_pos.le, ← Real.rpow_neg hx_pos.le]
+    rw [← mul_assoc, ← Real.rpow_add hx_pos]
+    congr 2
+    ring
+  have hlow_int :
+      (∫ x : ℝ in Set.Ioi 0, x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) =
+        Real.Gamma (r / 2 + 1) := by
+    calc
+      (∫ x : ℝ in Set.Ioi 0, x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) =
+          ∫ x : ℝ in Set.Ioi 0, ((|(-1 : ℝ)| * x ^ ((-1 : ℝ) - 1)) •
+            g (x ^ (-1 : ℝ))) := by
+              apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioi
+              intro x hx
+              have hx_pos : 0 < x := hx
+              simp only [abs_neg, abs_one, one_mul, one_div, smul_eq_mul, g]
+              rw [Real.rpow_neg_one, Real.inv_rpow hx_pos.le, ← Real.rpow_neg hx_pos.le]
+              rw [← mul_assoc, ← Real.rpow_add hx_pos]
+              congr 2
+              ring
+      _ = ∫ y : ℝ in Set.Ioi 0, g y :=
+        MeasureTheory.integral_comp_rpow_Ioi g (p := (-1 : ℝ)) (by norm_num)
+      _ = Real.Gamma (r / 2 + 1) := hhigh
+  rw [MeasureTheory.integral_const_mul,
+    MeasureTheory.integral_add hg hlow, hhigh, hlow_int]
+  ring
+
+private lemma norm_completedRiemannZeta₀_le_gamma
+    (r : ℝ) (hr : 2 ≤ r) (s : ℂ) (hs : ‖s‖ ≤ r) :
+    ‖completedRiemannZeta₀ s‖ ≤ 4 * Real.Gamma (r / 2 + 1) := by
+  have hint : MeasureTheory.IntegrableOn
+      (fun x : ℝ => (x : ℂ) ^ (s / 2 - 1) •
+        (HurwitzZeta.hurwitzEvenFEPair 0).f_modif x) (Set.Ioi 0) := by
+    exact ((HurwitzZeta.hurwitzEvenFEPair 0).toStrongFEPair.hasMellin (s / 2)).1
+  have hmajor := completedZeta_majorant_integrable r hr
+  have hmono :
+      (∫ x : ℝ in Set.Ioi 0, ‖(x : ℂ) ^ (s / 2 - 1) •
+          (HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖) ≤
+        ∫ x : ℝ in Set.Ioi 0, 4 * (x ^ (r / 2) * Real.exp (-x) +
+          x ^ (-r / 2 - 2) * Real.exp (-(1 / x))) := by
+    apply MeasureTheory.setIntegral_mono_on hint.norm hmajor measurableSet_Ioi
+    intro x hx
+    exact norm_completedZeta_mellin_integrand_le r s hs hx
+  rw [completedRiemannZeta₀, HurwitzZeta.completedHurwitzZetaEven₀,
+    WeakFEPair.Λ₀, mellin]
+  rw [norm_div, Complex.norm_ofNat]
+  calc
+    ‖∫ x : ℝ in Set.Ioi 0, (x : ℂ) ^ (s / 2 - 1) •
+          (HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖ / 2
+        ≤ (∫ x : ℝ in Set.Ioi 0, ‖(x : ℂ) ^ (s / 2 - 1) •
+          (HurwitzZeta.hurwitzEvenFEPair 0).f_modif x‖) / 2 := by
+            gcongr
+            exact MeasureTheory.norm_integral_le_integral_norm _
+    _ ≤ (∫ x : ℝ in Set.Ioi 0, 4 * (x ^ (r / 2) * Real.exp (-x) +
+          x ^ (-r / 2 - 2) * Real.exp (-(1 / x)))) / 2 := by gcongr
+    _ = 4 * Real.Gamma (r / 2 + 1) := by
+      rw [integral_completedZeta_majorant r hr]
+      ring
+
+private lemma four_mul_Gamma_le_completedZeta_scale (r : ℝ) (hr : 2 ≤ r) :
+    4 * Real.Gamma (r / 2 + 1) ≤ (r + 10) ^ (r + 10) := by
+  let a := r / 2 + 1
+  let N := ⌈a⌉₊
+  let R := r + 10
+  have ha : 2 ≤ a := by dsimp [a]; linarith
+  have ha_pos : 0 < a := lt_of_lt_of_le zero_lt_two ha
+  have hN_ge : a ≤ (N : ℝ) := by exact Nat.le_ceil a
+  have hN_lt : (N : ℝ) < a + 1 := Nat.ceil_lt_add_one ha_pos.le
+  have hR : 12 ≤ R := by dsimp [R]; linarith
+  have hΓ : Real.Gamma a ≤ (N : ℝ) ^ N := by
+    calc
+      Real.Gamma a ≤ Real.Gamma ((N : ℝ) + 1) := by
+        apply Real.Gamma_strictMonoOn_Ici.monotoneOn
+        · exact ha
+        · simp only [Set.mem_Ici]
+          linarith
+        · linarith
+      _ = (N.factorial : ℝ) := Real.Gamma_nat_eq_factorial N
+      _ ≤ ((N ^ N : ℕ) : ℝ) := by exact_mod_cast N.factorial_le_pow
+      _ = (N : ℝ) ^ N := by norm_num
+  have hN_le_R : (N : ℝ) ≤ R := by
+    dsimp [a, R] at hN_lt ⊢
+    linarith
+  have hN_one_le_R : (N : ℝ) + 1 ≤ R := by
+    dsimp [a, R] at hN_lt ⊢
+    linarith
+  calc
+    4 * Real.Gamma (r / 2 + 1) = 4 * Real.Gamma a := by rfl
+    _ ≤ 4 * (N : ℝ) ^ N := by gcongr
+    _ ≤ R * R ^ N := by
+      apply mul_le_mul
+      · linarith
+      · exact pow_le_pow_left₀ (by positivity) hN_le_R N
+      · positivity
+      · linarith
+    _ = R ^ ((N : ℝ) + 1) := by
+      rw [Real.rpow_add (by linarith : 0 < R), Real.rpow_natCast, Real.rpow_one]
+      ring
+    _ ≤ R ^ R := Real.rpow_le_rpow_of_exponent_le (by linarith) hN_one_le_R
+    _ = (r + 10) ^ (r + 10) := rfl
+
+/- **Stirling upper bound on the order of Λ₀.**
 
     The growth of completedRiemannZeta₀ satisfies log M(Λ₀, r) = O(r log r),
     which gives entireOrder Λ₀ ≤ 1.
@@ -1185,12 +1496,8 @@ theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
       |Λ₀(s/2)| ≤ ∫₀^∞ |f(t)| · t^{r/2−1} dt ≤ Γ(r/2) / π^{r/2},
     and by Stirling, log Γ(r/2) = O(r log r), giving the bound.
 
-    The complex Stirling approximation required for a fully formal proof
-    is not available in Mathlib; this is axiomatized as a sound mathematical fact.
-
-    To eliminate this axiom: prove `log_maxModulus_completedZeta_le` below,
-    then derive entireOrder ≤ 1 from the limsup definition. -/
-private axiom completedZeta₀_order_le_one : entireOrder completedRiemannZeta₀ ≤ 1
+    We prove this below from the theta-kernel Mellin representation, then pass
+    to the limsup defining `entireOrder`. -/
 
 /-- **Crude order bound for Λ₀.** log M(Λ₀, r) ≤ (r+10) · log(r+10).
 
@@ -1200,11 +1507,90 @@ private axiom completedZeta₀_order_le_one : entireOrder completedRiemannZeta�
     Combined: log|Λ₀(s)| ≤ C·r·log r for |s| = r.
     Functional equation Λ₀(s) = Λ₀(1-s) handles Re(s) ≤ 0.
 
-    Once proved, this replaces the axiom `completedZeta₀_order_le_one`
-    via the limsup definition of `entireOrder`. -/
+    The theta-kernel Mellin estimate below feeds directly into the limsup
+    definition of `entireOrder`. -/
 theorem log_maxModulus_completedZeta_le (r : ℝ) (hr : 2 ≤ r) :
     Real.log (maxModulus completedRiemannZeta₀ r) ≤ (r + 10) * Real.log (r + 10) := by
-  sorry
+  have hR : 1 ≤ r + 10 := by linarith
+  have hmax_gamma : maxModulus completedRiemannZeta₀ r ≤
+      4 * Real.Gamma (r / 2 + 1) := by
+    unfold maxModulus
+    apply ciSup_le
+    intro s
+    by_cases hs : ‖s‖ ≤ r
+    · rw [ciSup_pos hs]
+      exact norm_completedRiemannZeta₀_le_gamma r hr s hs
+    · rw [ciSup_neg hs, Real.sSup_empty]
+      exact mul_nonneg (by norm_num) (Real.Gamma_pos_of_pos (by linarith)).le
+  have hmax : maxModulus completedRiemannZeta₀ r ≤ (r + 10) ^ (r + 10) :=
+    hmax_gamma.trans (four_mul_Gamma_le_completedZeta_scale r hr)
+  have hmax_nonneg : 0 ≤ maxModulus completedRiemannZeta₀ r := by
+    exact (norm_nonneg (completedRiemannZeta₀ 0)).trans
+      (norm_le_maxModulus completedRiemannZeta₀ differentiable_completedZeta₀ 0 r
+        (by linarith) (by simp; linarith))
+  by_cases hmax_pos : 0 < maxModulus completedRiemannZeta₀ r
+  · calc
+      Real.log (maxModulus completedRiemannZeta₀ r)
+          ≤ Real.log ((r + 10) ^ (r + 10)) := Real.log_le_log hmax_pos hmax
+      _ = (r + 10) * Real.log (r + 10) := Real.log_rpow (by linarith) _
+  · have hmax_zero : maxModulus completedRiemannZeta₀ r = 0 :=
+      le_antisymm (le_of_not_gt hmax_pos) hmax_nonneg
+    rw [hmax_zero, Real.log_zero]
+    exact mul_nonneg (by linarith) (Real.log_nonneg hR)
+
+private lemma tendsto_completedZeta_log_scale :
+    Tendsto (fun r : ℝ =>
+      Real.log ((r + 10) * Real.log (r + 10)) / Real.log r)
+      Filter.atTop (𝓝 1) := by
+  have hRtop : Tendsto (fun r : ℝ => r + 10) Filter.atTop Filter.atTop :=
+    tendsto_atTop_add_const_right Filter.atTop 10 tendsto_id
+  have hlogRtop : Tendsto (fun r : ℝ => Real.log (r + 10)) Filter.atTop Filter.atTop :=
+    Real.tendsto_log_atTop.comp hRtop
+  have hdelta := Real.tendsto_log_comp_add_sub_log 10
+  have hdelta_ratio : Tendsto
+      (fun r : ℝ => (Real.log (r + 10) - Real.log r) / Real.log r)
+      Filter.atTop (𝓝 0) := hdelta.div_atTop Real.tendsto_log_atTop
+  have hratio : Tendsto
+      (fun r : ℝ => Real.log (r + 10) / Real.log r) Filter.atTop (𝓝 1) := by
+    have h := (tendsto_const_nhds (x := (1 : ℝ))).add hdelta_ratio
+    have heq : (fun r : ℝ => 1 +
+        (Real.log (r + 10) - Real.log r) / Real.log r) =ᶠ[Filter.atTop]
+        (fun r : ℝ => Real.log (r + 10) / Real.log r) := by
+      filter_upwards [Filter.eventually_gt_atTop (1 : ℝ)] with r hr
+      have hlog_ne : Real.log r ≠ 0 := (Real.log_pos hr).ne'
+      field_simp
+      ring
+    simpa using h.congr' heq
+  have hloglog_over_logR : Tendsto
+      (fun r : ℝ => Real.log (Real.log (r + 10)) / Real.log (r + 10))
+      Filter.atTop (𝓝 0) :=
+    Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero.comp hlogRtop
+  have hloglog_over_log : Tendsto
+      (fun r : ℝ => Real.log (Real.log (r + 10)) / Real.log r)
+      Filter.atTop (𝓝 0) := by
+    have h := hloglog_over_logR.mul hratio
+    have heq : (fun r : ℝ =>
+        Real.log (Real.log (r + 10)) / Real.log (r + 10) *
+          (Real.log (r + 10) / Real.log r)) =ᶠ[Filter.atTop]
+        (fun r : ℝ => Real.log (Real.log (r + 10)) / Real.log r) := by
+      filter_upwards [Filter.eventually_gt_atTop (1 : ℝ),
+        Filter.eventually_gt_atTop (-9 : ℝ)] with r hr hrR
+      have hlog_ne : Real.log r ≠ 0 := (Real.log_pos hr).ne'
+      have hlogR_ne : Real.log (r + 10) ≠ 0 :=
+        (Real.log_pos (by linarith)).ne'
+      field_simp
+    simpa using h.congr' heq
+  have hsum := hratio.add hloglog_over_log
+  have heq : (fun r : ℝ => Real.log (r + 10) / Real.log r +
+      Real.log (Real.log (r + 10)) / Real.log r) =ᶠ[Filter.atTop]
+      (fun r : ℝ => Real.log ((r + 10) * Real.log (r + 10)) / Real.log r) := by
+    filter_upwards [Filter.eventually_gt_atTop (1 : ℝ),
+      Filter.eventually_gt_atTop (-9 : ℝ)] with r hr hrR
+    have hR_pos : 0 < r + 10 := by linarith
+    have hlogR_pos : 0 < Real.log (r + 10) := Real.log_pos (by linarith)
+    rw [Real.log_mul hR_pos.ne' hlogR_pos.ne']
+    ring
+  simpa using hsum.congr' heq
 
 /-- Λ₀ is not the zero function.
     Proof: if Λ₀ ≡ 0, then Λ(s) = -1/s - 1/(1-s), and computing
@@ -1253,6 +1639,76 @@ private lemma completedZeta₀_ne_zero : ¬ completedRiemannZeta₀ = 0 := by
       -- But π > 3
       exact absurd (Complex.ofReal_injective (by exact_mod_cast hpi3 : (↑Real.pi : ℂ) = ↑(3 : ℝ)))
         (ne_of_gt Real.pi_gt_three)
+
+private lemma completedZeta₀_order_le_one : entireOrder completedRiemannZeta₀ ≤ 1 := by
+  obtain ⟨z, hz⟩ : ∃ z : ℂ, completedRiemannZeta₀ z ≠ 0 := by
+    by_contra h
+    push_neg at h
+    exact completedZeta₀_ne_zero (funext h)
+  set m := ‖completedRiemannZeta₀ z‖
+  have hm_pos : 0 < m := norm_pos_iff.mpr hz
+  set C := max 1 |Real.log m|
+  have hC_one : 1 ≤ C := le_max_left _ _
+  have hC_pos : 0 < C := lt_of_lt_of_le zero_lt_one hC_one
+  have hconst_tendsto : Tendsto (fun r : ℝ => Real.log C / Real.log r)
+      Filter.atTop (𝓝 0) := tendsto_const_nhds.div_atTop Real.tendsto_log_atTop
+  unfold entireOrder
+  apply (Filter.limsup_le_iff).2
+  intro y hy
+  by_cases hy_top : y = ⊤
+  · subst y
+    exact Eventually.of_forall (fun _ => EReal.coe_lt_top _)
+  have hy_bot : y ≠ ⊥ := ne_of_gt ((EReal.bot_lt_coe (1 : ℝ)).trans hy)
+  set α := y.toReal
+  have hy_coe : (α : EReal) = y := EReal.coe_toReal hy_top hy_bot
+  have hα : 1 < α := by
+    rw [← hy_coe] at hy
+    exact_mod_cast hy
+  have hscale_lt : ∀ᶠ r : ℝ in Filter.atTop,
+      Real.log ((r + 10) * Real.log (r + 10)) / Real.log r < α :=
+    tendsto_completedZeta_log_scale.eventually (Iio_mem_nhds hα)
+  have hconst_lt : ∀ᶠ r : ℝ in Filter.atTop, Real.log C / Real.log r < α :=
+    hconst_tendsto.eventually (Iio_mem_nhds (lt_trans zero_lt_one hα))
+  filter_upwards [hscale_lt, hconst_lt,
+    Filter.eventually_ge_atTop (max 2 ‖z‖)] with r hscale hconst hr
+  have hr_two : 2 ≤ r := (le_max_left _ _).trans hr
+  have hr_z : ‖z‖ ≤ r := (le_max_right _ _).trans hr
+  have hr_one : 1 < r := lt_of_lt_of_le one_lt_two hr_two
+  have hlogr : 0 < Real.log r := Real.log_pos hr_one
+  have hm_le : m ≤ maxModulus completedRiemannZeta₀ r := by
+    exact norm_le_maxModulus completedRiemannZeta₀ differentiable_completedZeta₀ z r
+      (lt_trans zero_lt_one hr_one) hr_z
+  have hlogm_le : Real.log m ≤ Real.log (maxModulus completedRiemannZeta₀ r) :=
+    Real.log_le_log hm_pos hm_le
+  have hlogmax := log_maxModulus_completedZeta_le r hr_two
+  rw [← hy_coe]
+  apply EReal.coe_lt_coe_iff.mpr
+  by_cases hlogM_pos : 0 < Real.log (maxModulus completedRiemannZeta₀ r)
+  · have hscale_pos : 0 < (r + 10) * Real.log (r + 10) := by
+      exact mul_pos (by linarith) (Real.log_pos (by linarith))
+    have hloglog_le :
+        Real.log (Real.log (maxModulus completedRiemannZeta₀ r)) ≤
+          Real.log ((r + 10) * Real.log (r + 10)) :=
+      Real.log_le_log hlogM_pos hlogmax
+    exact (div_le_div_of_nonneg_right hloglog_le hlogr.le).trans_lt hscale
+  · have hlogM_nonpos : Real.log (maxModulus completedRiemannZeta₀ r) ≤ 0 :=
+      le_of_not_gt hlogM_pos
+    by_cases hlogM_zero : Real.log (maxModulus completedRiemannZeta₀ r) = 0
+    · rw [hlogM_zero, Real.log_zero, zero_div]
+      exact lt_trans zero_lt_one hα
+    · have hlogM_neg : Real.log (maxModulus completedRiemannZeta₀ r) < 0 :=
+        lt_of_le_of_ne hlogM_nonpos hlogM_zero
+      have hneg_le : -Real.log (maxModulus completedRiemannZeta₀ r) ≤ C := by
+        calc
+          -Real.log (maxModulus completedRiemannZeta₀ r) ≤ -Real.log m :=
+            neg_le_neg hlogm_le
+          _ ≤ |Real.log m| := neg_le_abs _
+          _ ≤ C := le_max_right _ _
+      have hloglog_le :
+          Real.log (Real.log (maxModulus completedRiemannZeta₀ r)) ≤ Real.log C := by
+        rw [← Real.log_neg_eq_log (Real.log (maxModulus completedRiemannZeta₀ r))]
+        exact Real.log_le_log (neg_pos.mpr hlogM_neg) hneg_le
+      exact (div_le_div_of_nonneg_right hloglog_le hlogr.le).trans_lt hconst
 
 /-- For 0 < s < 1, the series Σ_ρ ‖ρ‖⁻ˢ over zeros of Λ₀ diverges.
 
@@ -1315,7 +1771,7 @@ theorem zetaZero_exponent_of_convergence :
 
 /-- **Λ₀ has order 1.**
 
-    Upper bound: Stirling bound (axiomatized via `completedZeta₀_order_le_one`).
+    Upper bound: the theta-Mellin growth estimate `completedZeta₀_order_le_one`.
     Lower bound: exponent of convergence = 1 ≤ order (via `zeroExponent_le_order`). -/
 theorem completedZeta_order :
     entireOrder completedRiemannZeta₀ = 1 := by
