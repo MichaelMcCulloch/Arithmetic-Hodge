@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.DigammaTrapezoid
 import ArithmeticHodge.Analysis.YoshidaWeightedTailBounds
+import Mathlib.Analysis.Meromorphic.Complex
 import Mathlib.NumberTheory.Harmonic.EulerMascheroni
 
 set_option autoImplicit false
@@ -15,7 +16,8 @@ open YoshidaWeightedTailBounds
 open DigammaTrapezoid
 
 /-! Yoshida Section 6 defines `t₀` as the positive zero of
-`t ↦ Re ψ(1/4 + i t/2)` and reports `t₀ = 2.0320...`.
+`t ↦ Re ψ(1/4 + i t/2)` and reports `t₀ = 2.0320...`.  We prove that a
+positive zero exists and that every such zero lies below `51/25`.
 
 The rational endpoint `51/25 = 2.04` leaves enough room for exact weighted-tail
 certificates. -/
@@ -186,6 +188,106 @@ theorem digamma_quarter_vertical_re_51_div_25_pos :
   unfold quarterDigammaPartialApprox at hpartialPos
   norm_num at hpartialPos ⊢
   linarith
+
+private theorem quarterDigammaSeriesTerm_zero_nonneg (n : ℕ) :
+    0 ≤ quarterDigammaSeriesTerm 0 n := by
+  unfold quarterDigammaSeriesTerm shiftedReciprocalRealPart reciprocalRealPart
+  have hn : (0 : ℝ) < n + 1 := by positivity
+  field_simp
+  norm_num [Nat.cast_add, Nat.cast_one] at *
+  ring_nf
+  nlinarith [show (0 : ℝ) ≤ (n : ℝ) from Nat.cast_nonneg n]
+
+private theorem quarterDigammaSeriesTerm_zero_le_telescope (n : ℕ) :
+    quarterDigammaSeriesTerm 0 n ≤
+      1 / ((n + 1 : ℕ) : ℝ) - 1 / ((n + 2 : ℕ) : ℝ) := by
+  unfold quarterDigammaSeriesTerm shiftedReciprocalRealPart reciprocalRealPart
+  have hn1 : (0 : ℝ) < n + 1 := by positivity
+  have hn2 : (0 : ℝ) < n + 2 := by positivity
+  field_simp
+  norm_num [Nat.cast_add, Nat.cast_one] at *
+  ring_nf
+  nlinarith [show (0 : ℝ) ≤ (n : ℝ) from Nat.cast_nonneg n]
+
+theorem digamma_quarter_vertical_re_zero_neg :
+    (Complex.digamma (1 / 4 : ℂ)).re < 0 := by
+  have hpartial (N : ℕ) :
+      ∑ n ∈ Finset.range N, quarterDigammaSeriesTerm 0 n ≤ 1 := by
+    calc
+      ∑ n ∈ Finset.range N, quarterDigammaSeriesTerm 0 n ≤
+          ∑ n ∈ Finset.range N,
+            (1 / ((n + 1 : ℕ) : ℝ) - 1 / ((n + 2 : ℕ) : ℝ)) := by
+        exact Finset.sum_le_sum fun n _hn ↦
+          quarterDigammaSeriesTerm_zero_le_telescope n
+      _ = 1 - 1 / ((N + 1 : ℕ) : ℝ) := by
+        simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
+          (Finset.sum_range_sub'
+            (fun n : ℕ ↦ 1 / ((n + 1 : ℕ) : ℝ)) N)
+      _ ≤ 1 := by
+        have : 0 ≤ 1 / ((N + 1 : ℕ) : ℝ) := by positivity
+        linarith
+  have htsum : (∑' n : ℕ, quarterDigammaSeriesTerm 0 n) ≤ 1 :=
+    Real.tsum_le_of_sum_range_le quarterDigammaSeriesTerm_zero_nonneg hpartial
+  have hgamma := Real.one_half_lt_eulerMascheroniConstant
+  have hid := digamma_quarter_vertical_re_eq_trapezoid_series 0
+  norm_num [shiftedReciprocalRealPart, reciprocalRealPart] at hid
+  norm_num at htsum ⊢
+  linarith
+
+theorem continuous_digamma_quarter_vertical :
+    Continuous (fun v : ℝ ↦
+      Complex.digamma ((1 / 4 : ℝ) + (v / 2) * Complex.I)) := by
+  rw [continuous_iff_continuousAt]
+  intro v
+  let z : ℂ := (1 / 4 : ℝ) + (v / 2) * Complex.I
+  have havoid : ∀ m : ℕ, z ≠ -m := by
+    intro m hm
+    have hre := congrArg Complex.re hm
+    simp [z] at hre
+    have hmnonneg : 0 ≤ (m : ℝ) := Nat.cast_nonneg m
+    norm_num at hre
+    linarith
+  have hGammaDiff : DifferentiableAt ℂ Complex.Gamma z :=
+    Complex.differentiableAt_Gamma z havoid
+  have hGammaAnalytic : AnalyticAt ℂ Complex.Gamma z :=
+    (Meromorphic.Gamma z).analyticAt hGammaDiff.continuousAt
+  have hdigammaAnalytic : AnalyticAt ℂ Complex.digamma z := by
+    rw [Complex.digamma_def]
+    exact hGammaAnalytic.deriv.div hGammaAnalytic
+      (Complex.Gamma_ne_zero havoid)
+  exact hdigammaAnalytic.continuousAt.comp_of_eq
+    (by fun_prop : ContinuousAt
+      (fun v : ℝ ↦ ((1 / 4 : ℝ) + (v / 2) * Complex.I : ℂ)) v) rfl
+
+theorem continuous_re_digamma_quarter_vertical :
+    Continuous (fun v : ℝ ↦
+      (Complex.digamma ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re) :=
+  Complex.continuous_re.comp continuous_digamma_quarter_vertical
+
+theorem exists_yoshidaTZero : ∃ tZero : ℝ, IsYoshidaTZero tZero := by
+  let f : ℝ → ℝ := fun v ↦
+    (Complex.digamma ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re
+  have h0 : f 0 < 0 := by
+    simpa [f] using digamma_quarter_vertical_re_zero_neg
+  have h1 : 0 < f (51 / 25) := by
+    simpa [f] using digamma_quarter_vertical_re_51_div_25_pos
+  have himage := intermediate_value_Icc
+    (show (0 : ℝ) ≤ 51 / 25 by norm_num)
+    continuous_re_digamma_quarter_vertical.continuousOn
+    (show (0 : ℝ) ∈ Set.Icc (f 0) (f (51 / 25)) by
+      exact ⟨h0.le, h1.le⟩)
+  rcases himage with ⟨tZero, htIcc, htZero⟩
+  refine ⟨tZero, ?_, htZero⟩
+  have htNonneg : 0 ≤ tZero := htIcc.1
+  exact lt_of_le_of_ne htNonneg fun h ↦ by
+    subst tZero
+    linarith
+
+noncomputable def yoshidaTZero : ℝ :=
+  Classical.choose exists_yoshidaTZero
+
+theorem isYoshidaTZero_yoshidaTZero : IsYoshidaTZero yoshidaTZero :=
+  Classical.choose_spec exists_yoshidaTZero
 
 theorem shiftedReciprocalRealPart_antitone_abs
     (k : ℕ) {v w : ℝ} (hvw : |v| ≤ |w|) :
