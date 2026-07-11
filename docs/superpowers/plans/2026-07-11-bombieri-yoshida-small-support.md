@@ -189,26 +189,52 @@ theorem exists_fourier_log_weight_lower_of_intervalSupport :
 
 Run the strict Lean command and confirm no missing import/API error precedes the proof.
 
-- [ ] **Step 2: Formalize the sinc cutoff estimate**
+- [ ] **Step 2: Prove the direct low-frequency estimate**
 
-For `K > 1`, use
+Let `A = ∫ u, Complex.normSq (F u)`.  Hölder on the support interval gives
 
 ```lean
-∫ ξ in {ξ | K < |ξ|}, ‖𝓕 F ξ‖ ^ 2 =
-  ∫ ξ, ‖𝓕 F ξ‖ ^ 2 -
-    ∫ ξ in {ξ | |ξ| ≤ K}, ‖𝓕 F ξ‖ ^ 2
+(∫ u, ‖F u‖) ^ 2 ≤ δ * A.
 ```
 
-and bound the low-frequency integral by inserting the multiplier
-`sin (ξ / K) / ξ`.  Identify its inverse Fourier transform with convolution
-by the interval indicator `[-1/K,1/K]`, apply Cauchy--Schwarz, and use that the
-convolution support has length `δ + 2/K`.
+Combine this with `SchwartzMap.norm_fourier_apply_le_toLp_one` to obtain the
+pointwise bound `Complex.normSq (𝓕 F ξ) ≤ δ * A`.  Integrating over
+`Set.Icc (-K) K` gives
 
-- [ ] **Step 3: Choose Bombieri's scale**
+```lean
+∫ ξ in Set.Icc (-K) K, Complex.normSq (𝓕 F ξ) ≤ 2 * K * δ * A.
+```
 
-Set `K = δ⁻¹ * (1 + Real.log δ⁻¹)⁻¹`.  Prove `K > 1` after
-restricting to an explicit existential `0 < δ₀ < exp(-4)`.  Substitute into
-the preceding estimate and absorb bounded algebraic terms into `C`.
+Use Plancherel to express the complementary Fourier mass as `A` minus this
+low-frequency mass.  Since `log (max 1 |ξ|) ≥ log K` off `[-K,K]` for
+`K > 1`, deduce
+
+```lean
+Real.log K * (1 - 2 * K * δ) * A ≤
+  ∫ ξ, Real.log (max 1 |ξ|) * Complex.normSq (𝓕 F ξ).
+```
+
+Prove the logarithmically weighted Fourier norm-square is integrable from
+Schwartz decay before splitting it into the interval and its complement.
+
+- [ ] **Step 3: Choose Bombieri's scale with an explicit constant**
+
+Set
+
+```lean
+K = 1 / (δ * Real.log (Real.exp 1 / δ)).
+```
+
+For `0 < δ ≤ exp (-4)`, prove `K > 1` and
+
+```lean
+Real.log (1 / δ) - Real.log (Real.log (Real.exp 1 / δ)) - 2 ≤
+  Real.log K * (1 - 2 * K * δ).
+```
+
+Thus the public existential theorem has the explicit witness `C = 2`.  This
+route matches Mathlib's unitary `exp (-2π i x ξ)` Fourier normalization and
+does not require a separately normalized sinc/box transform identity.
 
 - [ ] **Step 4: Verify and commit**
 
