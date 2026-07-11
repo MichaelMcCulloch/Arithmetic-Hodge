@@ -48,6 +48,7 @@ import ArithmeticHodge.Analysis.WeilDefs
 import ArithmeticHodge.Analysis.MultiplicativeWeil
 import ArithmeticHodge.Analysis.MultiplicativeWeilTranspose
 import ArithmeticHodge.Analysis.MultiplicativeWeilVerticalBoundary
+import ArithmeticHodge.Analysis.MultiplicativeWeilArchPolarGrowth
 import ArithmeticHodge.Analysis.MultiplicativeWeilPrime
 import ArithmeticHodge.Analysis.MultiplicativeWeilArchimedean
 import ArithmeticHodge.Analysis.MultiplicativeWeilQuadratic
