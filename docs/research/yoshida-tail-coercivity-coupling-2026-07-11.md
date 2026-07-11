@@ -205,6 +205,54 @@ The following source-specific results are still missing:
    then combine the corrections with the exact finite Gram certificates and
    `HilbertTailSchur`.
 
+## Exact Section 6 substitution boundary and source typo
+
+The 426-line strict probe `/tmp/YoshidaCoercivityNumericsProbe.lean` has
+SHA-256
+`8f46260a97c36c98498b51d2570cb8cb8ce3820fe96bd31b72f5c9c7c2083143`.
+It formalizes the exact right side of (6.7), proves the two denominator-domain
+conditions, discharges elementary enclosures for `log 2`, `1/sqrt 2`,
+`A`, `pi^3`, `log pi`, and the oscillatory window, and reduces the final
+substitutions to named source-aligned certificates.
+
+For the odd case it proves that
+
+```text
+C(50) in [1609/500, 3219/1000],
+D_10(50) <= 283/500,
+D_10(t0) <= 77/200
+```
+
+imply the exact non-strict output `38/25 <= formValue`, once the analytic
+inequality (6.7) is supplied. For the even case it proves that
+
+```text
+C(700) in [5857/1000, 5858/1000],
+D_199(700) <= 53/2000,
+D_199(t0) <= 101/5000
+```
+
+imply `102/25 <= formValue`.
+
+Direct inspection of the primary PDF image at printed p. 305 confirms that
+the paper says both `t1 = 700` and `C = 5.9914...`, where immediately above
+`C = Re psi(1/4 + i t1/2)`. These values are incompatible:
+
+```text
+C(700) = 5.857933069449...,
+C(800) = 5.991464482003....
+```
+
+Thus this is almost certainly a source numerical typo, not OCR or a digamma
+convention change. The strict probe records the rational incompatibility and
+does not encode the printed `5.9914` as a valid lower bound. The honest
+interval `[5.857,5.858]` still has enough margin to prove `4.08` from (6.7).
+
+The remaining substitution certificates are the two digamma intervals, the
+four weighted-tail bounds, the `t0`/Gamma-argument low-interval certificate,
+and the upstream analytic derivation of (6.7). No floating-point value is a
+trusted premise of the Lean results.
+
 ## Recommended production order
 
 1. Promote generic tail-series lemmas and one canonical `C1/C2` certificate
