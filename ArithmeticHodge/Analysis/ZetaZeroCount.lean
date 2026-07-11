@@ -277,6 +277,14 @@ theorem xiDivisorOnCriticalLine_iff_RH :
       rw [hz_one] at hre
       norm_num at hre
 
+/-- A falsification certificate for RH is exactly a positive-multiplicity xi
+zero off the critical line. -/
+theorem not_RH_iff_exists_xiZero_off_critical_line :
+    ¬ RiemannHypothesis ↔
+      ∃ z : ℂ, 0 < xiZeroMultiplicity z ∧ z.re ≠ 1 / 2 := by
+  rw [← xiDivisorOnCriticalLine_iff_RH]
+  simp [XiDivisorOnCriticalLine]
+
 /-! ### Principal logarithms do not encode unwrapped contour phase -/
 
 /-- The principal logarithm cannot satisfy the unwrapped Stirling-phase
