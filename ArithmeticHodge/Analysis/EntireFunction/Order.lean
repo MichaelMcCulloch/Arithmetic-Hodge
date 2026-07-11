@@ -28,7 +28,6 @@ import Mathlib.Analysis.PSeries
 import Mathlib.Topology.Algebra.InfiniteSum.Real
 import Mathlib.Analysis.Complex.Liouville
 import ArithmeticHodge.Analysis.ComplexStirling
-import ArithmeticHodge.Analysis.ZetaProduct
 import ArithmeticHodge.Analysis.EntireFunction.Defs
 
 open Complex Filter Topology Real MeromorphicOn
