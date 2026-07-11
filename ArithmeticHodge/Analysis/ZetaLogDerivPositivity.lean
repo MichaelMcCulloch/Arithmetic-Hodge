@@ -9,12 +9,12 @@ namespace ArithmeticHodge.Analysis.MultiplicativeWeil
 
 noncomputable section
 
-theorem trig_341_nonneg_scratch (theta : ℝ) :
+theorem trig_341_nonneg (theta : ℝ) :
     0 ≤ 3 + 4 * Real.cos theta + Real.cos (2 * theta) := by
   rw [Real.cos_two_mul]
   nlinarith [sq_nonneg (Real.cos theta + 1)]
 
-private theorem re_vonMangoldt_term_scratch
+private theorem re_vonMangoldt_term
     (sigma t : ℝ) (k : ℕ) :
     (LSeries.term (fun n : ℕ ↦
         (ArithmeticFunction.vonMangoldt n : ℂ))
@@ -50,7 +50,7 @@ private theorem re_vonMangoldt_term_scratch
 
 /-- The logarithmic-derivative form of the classical `3-4-1` positivity
 inequality, proved termwise from the nonnegative von Mangoldt series. -/
-theorem negZetaLogDeriv_trig_nonneg_scratch
+theorem negZetaLogDeriv_trig_nonneg
     {sigma : ℝ} (hsigma : 1 < sigma) (t : ℝ) :
     0 ≤ 3 * (-(deriv riemannZeta (sigma : ℂ) /
           riemannZeta (sigma : ℂ))).re +
@@ -115,19 +115,19 @@ theorem negZetaLogDeriv_trig_nonneg_scratch
       ArithmeticFunction.vonMangoldt k * (k : ℝ) ^ (-sigma) *
         Real.cos (0 * Real.log k) by
       simpa [a] using
-        re_vonMangoldt_term_scratch sigma 0 k]
+        re_vonMangoldt_term sigma 0 k]
   rw [show (LSeries.term a ((sigma : ℂ) + t * I) k).re =
       ArithmeticFunction.vonMangoldt k * (k : ℝ) ^ (-sigma) *
         Real.cos (t * Real.log k) by
-      simpa only [a] using re_vonMangoldt_term_scratch sigma t k]
+      simpa only [a] using re_vonMangoldt_term sigma t k]
   rw [show (LSeries.term a ((sigma : ℂ) + (2 * t) * I) k).re =
       ArithmeticFunction.vonMangoldt k * (k : ℝ) ^ (-sigma) *
         Real.cos ((2 * t) * Real.log k) by
-      simpa [a] using re_vonMangoldt_term_scratch sigma (2 * t) k]
+      simpa [a] using re_vonMangoldt_term sigma (2 * t) k]
   have hLambda : 0 ≤ ArithmeticFunction.vonMangoldt k :=
     ArithmeticFunction.vonMangoldt_nonneg
   have hrpow : 0 ≤ (k : ℝ) ^ (-sigma) := Real.rpow_nonneg (Nat.cast_nonneg k) _
-  have htrig := trig_341_nonneg_scratch (t * Real.log k)
+  have htrig := trig_341_nonneg (t * Real.log k)
   rw [show (2 * t) * Real.log k = 2 * (t * Real.log k) by ring]
   calc
     0 ≤ (ArithmeticFunction.vonMangoldt k * (k : ℝ) ^ (-sigma)) *

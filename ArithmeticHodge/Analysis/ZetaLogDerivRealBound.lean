@@ -11,7 +11,7 @@ noncomputable section
 
 /-- The digamma factor is uniformly bounded on the real interval traversed
 by `s / 2` when `1 ≤ s ≤ 2`. -/
-theorem exists_digamma_half_real_bound_scratch :
+theorem exists_digamma_half_real_bound :
     ∃ C : ℝ, 0 < C ∧ ∀ sigma : ℝ,
       1 ≤ sigma → sigma ≤ 2 →
         ‖Complex.digamma (sigma / 2)‖ ≤ C := by

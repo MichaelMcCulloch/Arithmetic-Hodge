@@ -14,7 +14,7 @@ namespace ArithmeticHodge.Analysis.MultiplicativeWeil
 
 /-- The `3-4-1` inequality and three upper bounds imply a reciprocal lower
 bound for the distance from the zero to the line of evaluation. -/
-theorem gap_ge_of_logDeriv_341_bounds_scratch
+theorem gap_ge_of_logDeriv_341_bounds
     {x gap L Fzero Fone Ftwo Czero Cone Ctwo : ℝ}
     (hgap : 0 < gap)
     (h341 : 0 ≤ 3 * Fzero + 4 * Fone + Ftwo)
@@ -40,7 +40,7 @@ theorem gap_ge_of_logDeriv_341_bounds_scratch
 
 /-- Choosing the horizontal displacement `x = 1/L` turns the abstract
 repulsion inequality into the desired constant multiple of `1/L`. -/
-theorem gap_ge_inv_scale_of_logDeriv_341_bounds_scratch
+theorem gap_ge_inv_scale_of_logDeriv_341_bounds
     {gap L Fzero Fone Ftwo Czero Cone Ctwo : ℝ}
     (hgap : 0 < gap) (hL : 0 < L)
     (h341 : 0 ≤ 3 * Fzero + 4 * Fone + Ftwo)
@@ -55,7 +55,7 @@ theorem gap_ge_inv_scale_of_logDeriv_341_bounds_scratch
       0 < 3 / (1 / L) + (3 * Czero + 4 * Cone + Ctwo) * L := by
     rw [show 3 / (1 / L) = 3 * L by field_simp [hL.ne']]
     nlinarith [mul_pos hconstant hL]
-  have h := gap_ge_of_logDeriv_341_bounds_scratch
+  have h := gap_ge_of_logDeriv_341_bounds
     hgap h341 (by rw [hinvInv]; exact hzero)
       hone htwo hdenom
   convert h using 1

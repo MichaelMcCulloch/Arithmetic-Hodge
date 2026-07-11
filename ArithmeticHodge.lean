@@ -65,6 +65,7 @@ import ArithmeticHodge.Analysis.ZetaNearOneBound
 import ArithmeticHodge.Analysis.ZetaLogDerivPositivity
 import ArithmeticHodge.Analysis.ZetaLogDerivRealBound
 import ArithmeticHodge.Analysis.ZetaLogDerivRepulsionAlgebra
+import ArithmeticHodge.Analysis.ZetaHadamardZeroRepulsion
 import ArithmeticHodge.Analysis.ZetaFunctionalLogDerivative
 import ArithmeticHodge.Analysis.MultiplicativeWeilXiBoundary
 import ArithmeticHodge.Analysis.MultiplicativeWeilXiHorizontalVanishing

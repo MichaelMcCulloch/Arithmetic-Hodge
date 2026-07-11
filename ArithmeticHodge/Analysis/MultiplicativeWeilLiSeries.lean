@@ -23,7 +23,7 @@ theorem oneSubNontrivialZetaZero_val
     (rho : NontrivialZetaZero) :
     (oneSubNontrivialZetaZero rho).val = 1 - rho.val := rfl
 
-private theorem nontrivialZetaZero_ext_val_scratch
+private theorem nontrivialZetaZero_ext_val
     {rho sigma : NontrivialZetaZero} (h : rho.val = sigma.val) :
     rho = sigma := by
   cases rho with
@@ -39,7 +39,7 @@ theorem oneSubNontrivialZetaZero_involutive
     (rho : NontrivialZetaZero) :
     oneSubNontrivialZetaZero
       (oneSubNontrivialZetaZero rho) = rho := by
-  apply nontrivialZetaZero_ext_val_scratch
+  apply nontrivialZetaZero_ext_val
   simp
 
 /-- `rho |-> 1-rho` as an equivalence of the nontrivial-zero subtype. -/
@@ -112,7 +112,7 @@ def ZetaZeroEnumeration.oneSub
 
 /-- Inverse-square summability transfers to the reflected zeros without
 choosing a permutation of the enumeration. -/
-theorem ZetaZeroEnumeration.summable_one_sub_inv_norm_sq_scratch
+theorem ZetaZeroEnumeration.summable_one_sub_inv_norm_sq
     (zeros : ZetaZeroEnumeration) :
     Summable (fun k : ℕ ↦
       ‖1 - (zeros.zero k).val‖⁻¹ ^ (2 : ℝ)) := by
@@ -120,7 +120,7 @@ theorem ZetaZeroEnumeration.summable_one_sub_inv_norm_sq_scratch
     oneSubNontrivialZetaZero_val] using
       (zeros.oneSub.summable_inv_norm_sq)
 
-private theorem summable_pow_succ_of_summable_nonneg_scratch
+private theorem summable_pow_succ_of_summable_nonneg
     (a : ℕ → ℝ) (ha : Summable a) (ha0 : ∀ k, 0 ≤ a k)
     (m : ℕ) :
     Summable (fun k ↦ (a k) ^ (m + 1)) := by
@@ -136,7 +136,7 @@ private theorem summable_pow_succ_of_summable_nonneg_scratch
     exact mul_le_mul_of_nonneg_right
       (pow_le_pow_left₀ (ha0 k) (hakS k) m) (ha0 k)
 
-theorem liFunction_eq_finset_sum_scratch (n : ℕ) (s : ℂ) :
+theorem liFunction_eq_finset_sum (n : ℕ) (s : ℂ) :
     liFunction n s =
       ∑ m ∈ Finset.range n,
         (Nat.choose n (m + 1) : ℂ) * (-1 : ℂ) ^ m *
@@ -165,7 +165,7 @@ theorem liFunction_eq_finset_sum_scratch (n : ℕ) (s : ℂ) :
 
 /-- Fixed-index Li functions are square-summable along every complex sequence
 whose inverse squared norms are summable. -/
-theorem summable_norm_liFunction_sq_of_inv_norm_sq_scratch
+theorem summable_norm_liFunction_sq_of_inv_norm_sq
     (z : ℕ → ℂ)
     (hinv : Summable (fun k ↦ ‖z k‖⁻¹ ^ (2 : ℝ)))
     (n : ℕ) :
@@ -182,7 +182,7 @@ theorem summable_norm_liFunction_sq_of_inv_norm_sq_scratch
     dsimp only [b]
     positivity
   have hterm (m : ℕ) : Summable (fun k ↦ (b m k) ^ 2) := by
-    have hp := summable_pow_succ_of_summable_nonneg_scratch a ha ha0 m
+    have hp := summable_pow_succ_of_summable_nonneg a ha ha0 m
     have hc := hp.mul_left ((Nat.choose n (m + 1) : ℝ) ^ 2)
     apply hc.congr
     intro k
@@ -202,7 +202,7 @@ theorem summable_norm_liFunction_sq_of_inv_norm_sq_scratch
   · intro k
     have hnorm : ‖liFunction n (z k)‖ ≤
         ∑ m ∈ Finset.range n, b m k := by
-      rw [liFunction_eq_finset_sum_scratch]
+      rw [liFunction_eq_finset_sum]
       apply norm_sum_le_of_le
       intro m _hm
       dsimp only [b]
@@ -222,30 +222,30 @@ theorem summable_norm_liFunction_sq_of_inv_norm_sq_scratch
         rw [Finset.card_range]
 
 /-- The direct Li factors are square-summable over a zero enumeration. -/
-theorem ZetaZeroEnumeration.summable_norm_liFunction_sq_scratch
+theorem ZetaZeroEnumeration.summable_norm_liFunction_sq
     (zeros : ZetaZeroEnumeration) (n : ℕ) :
     Summable (fun k ↦ ‖liFunction n (zeros.zero k).val‖ ^ 2) := by
-  exact summable_norm_liFunction_sq_of_inv_norm_sq_scratch
+  exact summable_norm_liFunction_sq_of_inv_norm_sq
     (fun k ↦ (zeros.zero k).val) zeros.summable_inv_norm_sq n
 
 /-- The reflected Li factors are square-summable over the same enumeration. -/
-theorem ZetaZeroEnumeration.summable_norm_liFunction_one_sub_sq_scratch
+theorem ZetaZeroEnumeration.summable_norm_liFunction_one_sub_sq
     (zeros : ZetaZeroEnumeration) (n : ℕ) :
     Summable (fun k ↦
       ‖liFunction n (1 - (zeros.zero k).val)‖ ^ 2) := by
-  exact summable_norm_liFunction_sq_of_inv_norm_sq_scratch
+  exact summable_norm_liFunction_sq_of_inv_norm_sq
     (fun k ↦ 1 - (zeros.zero k).val)
-    zeros.summable_one_sub_inv_norm_sq_scratch n
+    zeros.summable_one_sub_inv_norm_sq n
 
 /-- Fixed-index products of the direct and reflected Li factors are
 absolutely summable. -/
-theorem ZetaZeroEnumeration.liFunction_product_summable_scratch
+theorem ZetaZeroEnumeration.liFunction_product_summable
     (zeros : ZetaZeroEnumeration) (n : ℕ) :
     Summable (fun k : ℕ ↦
       liFunction n (zeros.zero k).val *
         liFunction n (1 - (zeros.zero k).val)) := by
-  have hdirect := zeros.summable_norm_liFunction_sq_scratch n
-  have hreflected := zeros.summable_norm_liFunction_one_sub_sq_scratch n
+  have hdirect := zeros.summable_norm_liFunction_sq n
+  have hreflected := zeros.summable_norm_liFunction_one_sub_sq n
   apply (hdirect.add hreflected).of_norm_bounded
   intro k
   rw [norm_mul]
@@ -255,14 +255,14 @@ theorem ZetaZeroEnumeration.liFunction_product_summable_scratch
     ‖liFunction n (zeros.zero k).val‖
     ‖liFunction n (1 - (zeros.zero k).val)‖]
 
-private theorem nontrivialZetaZero_ne_zero_scratch
+private theorem nontrivialZetaZero_ne_zero
     (rho : NontrivialZetaZero) : rho.val ≠ 0 := by
   intro h
   have hpos := rho.re_pos
   rw [h] at hpos
   norm_num at hpos
 
-private theorem nontrivialZetaZero_ne_one_scratch
+private theorem nontrivialZetaZero_ne_one
     (rho : NontrivialZetaZero) : rho.val ≠ 1 := by
   intro h
   have hlt := rho.re_lt_one
@@ -271,16 +271,16 @@ private theorem nontrivialZetaZero_ne_one_scratch
 
 /-- Fixed-index Bombieri--Li paired terms are absolutely summable
 over any exact-multiplicity zeta-zero enumeration. -/
-theorem ZetaZeroEnumeration.liFunction_paired_summable_scratch
+theorem ZetaZeroEnumeration.liFunction_paired_summable
     (zeros : ZetaZeroEnumeration) (n : ℕ) :
     Summable (fun k : ℕ ↦
       liFunction n (zeros.zero k).val +
         liFunction n (1 - (zeros.zero k).val)) := by
-  apply (zeros.liFunction_product_summable_scratch n).congr
+  apply (zeros.liFunction_product_summable n).congr
   intro k
   exact liFunction_mul_one_sub n (zeros.zero k).val
-    (nontrivialZetaZero_ne_zero_scratch (zeros.zero k))
-    (nontrivialZetaZero_ne_one_scratch (zeros.zero k))
+    (nontrivialZetaZero_ne_zero (zeros.zero k))
+    (nontrivialZetaZero_ne_one (zeros.zero k))
 
 end
 
