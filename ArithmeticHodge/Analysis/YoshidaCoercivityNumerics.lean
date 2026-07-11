@@ -502,6 +502,34 @@ theorem even_form_value_ge_of_yoshidaTZero_and_equation6_7
     (102 / 25 : ℝ) ≤ formValue :=
   (even_section6_lowerBound_ge_of_yoshidaTZero ht).trans hequation6_7
 
+/-- The complete odd numerical substitution at the canonical Yoshida zero. -/
+theorem odd_section6_lowerBound_ge :
+    (38 / 25 : ℝ) ≤ section6LowerBound 10 yoshidaTZero 50 :=
+  odd_section6_lowerBound_ge_of_yoshidaTZero
+    isYoshidaTZero_yoshidaTZero
+
+/-- The complete even numerical substitution at the canonical Yoshida zero. -/
+theorem even_section6_lowerBound_ge :
+    (102 / 25 : ℝ) ≤ section6LowerBound 199 yoshidaTZero 700 :=
+  even_section6_lowerBound_ge_of_yoshidaTZero
+    isYoshidaTZero_yoshidaTZero
+
+/-- Once the odd instance of equation (6.7) is supplied, no numerical or
+root-existence hypothesis remains. -/
+theorem odd_form_value_ge_of_equation6_7
+    {formValue : ℝ}
+    (hequation6_7 : section6LowerBound 10 yoshidaTZero 50 ≤ formValue) :
+    (38 / 25 : ℝ) ≤ formValue :=
+  odd_section6_lowerBound_ge.trans hequation6_7
+
+/-- Once the even instance of equation (6.7) is supplied, no numerical or
+root-existence hypothesis remains. -/
+theorem even_form_value_ge_of_equation6_7
+    {formValue : ℝ}
+    (hequation6_7 : section6LowerBound 199 yoshidaTZero 700 ≤ formValue) :
+    (102 / 25 : ℝ) ≤ formValue :=
+  even_section6_lowerBound_ge.trans hequation6_7
+
 theorem source_printed_even_C_conflicts_with_5858_upper
     {C : ℝ} (hprinted : (59914 / 10000 : ℝ) ≤ C)
     (hcomputedUpper : C ≤ (5858 / 1000 : ℝ)) : False := by
