@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.HermitianLowTail
+import Mathlib.Data.Real.StarOrdered
 
 open Matrix
 open scoped ComplexConjugate ComplexOrder
@@ -24,5 +25,24 @@ theorem rationalLDL_posDef_complex
   intro i
   rw [Complex.pos_iff]
   simpa using hd i
+
+theorem rationalLDL_posDef_real
+    {n : Type*} [Fintype n] [DecidableEq n]
+    (A L : Matrix n n ℚ) (d : n → ℚ)
+    (hL : IsUnit L) (hd : ∀ i, 0 < d i)
+    (hA : A = L * Matrix.diagonal d * Lᴴ) :
+    Matrix.PosDef ((Rat.castHom ℝ).mapMatrix A) := by
+  rw [hA, map_mul, map_mul]
+  have hL' : IsUnit ((Rat.castHom ℝ).mapMatrix L) :=
+    hL.map (Rat.castHom ℝ).mapMatrix
+  rw [show (Rat.castHom ℝ).mapMatrix Lᴴ =
+      star ((Rat.castHom ℝ).mapMatrix L) by
+    ext i j
+    simp [RingHom.mapMatrix_apply]]
+  apply hL'.posDef_star_right_conjugate_iff.mpr
+  rw [RingHom.mapMatrix_apply, Matrix.diagonal_map (map_zero (Rat.castHom ℝ))]
+  apply Matrix.PosDef.diagonal
+  intro i
+  exact (Rat.cast_pos (K := ℝ)).2 (hd i)
 
 end ArithmeticHodge.Analysis
