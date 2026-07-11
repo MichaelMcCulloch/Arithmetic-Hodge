@@ -780,6 +780,53 @@ theorem xi_zero_set_infinite_of_genus_one_factorization
   exact xi_no_finite_genus_one_factorization
     ⟨A, B, a, hsupport, hfactorization⟩
 
+/-- Reindex a zero-padded genus-one factorization of xi into the public,
+padding-free Hadamard-product interface.  Zero membership of the reindexed
+sequence follows directly from the preserved product, so the original zero
+membership hypothesis is retained only to match the factorization interface. -/
+theorem xi_hadamard_product_reindex_bridge
+    (A B : ℂ) (a : ℕ → ℂ)
+    (_hzeros : ∀ n, a n ≠ 0 → xiFunction (a n) = 0)
+    (hsumm : Summable (fun n => (‖a n‖⁻¹) ^ (2 : ℝ)))
+    (hfactorization : ∀ z, xiFunction z = Complex.exp (A + B * z) *
+      ∏' n, EntireFunction.weierstraßElementary 1 (z / a n)) :
+    ∃ (m : ℕ) (A B : ℂ) (zeros : ℕ → ℂ),
+      (∀ n, zeros n ≠ 0) ∧
+      (∀ n, xiFunction (zeros n) = 0) ∧
+      Summable (fun n => (‖zeros n‖⁻¹) ^ (2 : ℝ)) ∧
+      ∀ s, xiFunction s =
+        s ^ m * Complex.exp (A + B * s) *
+        ∏' n, EntireFunction.weierstraßElementary 1 (s / zeros n) := by
+  have hinfiniteSupport : Set.Infinite {n : ℕ | a n ≠ 0} := by
+    intro hfiniteSupport
+    exact xi_no_finite_genus_one_factorization
+      ⟨A, B, a, hfiniteSupport, hfactorization⟩
+  obtain ⟨zeros, hzeros_ne, hzeros_summable, hproduct⟩ :=
+    EntireFunction.exists_nonzero_reindex_of_infinite_support
+      a (2 : ℝ) hsumm hinfiniteSupport
+  have hzeros_spec : ∀ n, xiFunction (zeros n) = 0 := by
+    intro n
+    have hfactor_zero :
+        EntireFunction.weierstraßElementary 1 (zeros n / zeros n) = 0 := by
+      rw [div_self (hzeros_ne n)]
+      simp [EntireFunction.weierstraßElementary]
+    have hproduct_zero :
+        ∏' k, EntireFunction.weierstraßElementary 1 (zeros n / zeros k) = 0 :=
+      tprod_of_exists_eq_zero ⟨n, hfactor_zero⟩
+    rw [hfactorization (zeros n), ← hproduct 1 (zeros n), hproduct_zero, mul_zero]
+  refine ⟨0, A, B, zeros, hzeros_ne, hzeros_spec, hzeros_summable, ?_⟩
+  intro s
+  calc
+    xiFunction s = Complex.exp (A + B * s) *
+        ∏' n, EntireFunction.weierstraßElementary 1 (s / a n) :=
+      hfactorization s
+    _ = Complex.exp (A + B * s) *
+        ∏' n, EntireFunction.weierstraßElementary 1 (s / zeros n) := by
+      rw [hproduct 1 s]
+    _ = s ^ (0 : ℕ) * Complex.exp (A + B * s) *
+        ∏' n, EntireFunction.weierstraßElementary 1 (s / zeros n) := by
+      rw [pow_zero, one_mul]
+
 /-- ξ doesn't vanish for Re(s) ≥ 1 (from the Euler product for ζ). -/
 theorem xiFunction_ne_zero_of_one_le_re {s : ℂ} (hs : 1 ≤ s.re) :
     xiFunction s ≠ 0 := by
