@@ -39,6 +39,7 @@ import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.WeilDefs
 import ArithmeticHodge.Analysis.MultiplicativeWeil
 import ArithmeticHodge.Analysis.MultiplicativeWeilTranspose
+import ArithmeticHodge.Analysis.MultiplicativeWeilPrime
 import ArithmeticHodge.Analysis.EntireFunction.WeierstraßProduct
 import ArithmeticHodge.Analysis.EntireFunction.MinimumModulus
 import ArithmeticHodge.Analysis.EntireFunction.Order
