@@ -169,6 +169,7 @@ git commit -m "connect Bombieri log support with Mellin Plancherel"
 theorem exists_fourier_log_weight_lower_of_intervalSupport :
     ∃ C : ℝ, 0 < C ∧ ∀ (F : SchwartzMap ℝ ℂ) (c δ : ℝ),
       0 < δ →
+      δ ≤ Real.exp (-4) →
       (∀ u ∉ Set.Icc (c - δ / 2) (c + δ / 2), F u = 0) →
       (Real.log (1 / δ) - Real.log (Real.log (Real.exp 1 / δ)) - C) *
           ∫ u : ℝ, Complex.normSq (F u) ≤
@@ -226,7 +227,7 @@ git commit -m "prove Fourier log uncertainty for compact support"
 theorem bombieriQuadratic_polar_re_lower_of_support
     (g : BombieriTest) {a b : ℝ} (ha : 0 < a) (hab : a ≤ b)
     (hsupport : tsupport g ⊆ Set.Icc a b) :
-    -4 * Real.sinh (Real.log (b / a) / 2) *
+    -4 * Real.log (b / a) * Real.cosh (Real.log (b / a) / 2) *
         ∫ u : ℝ, Complex.normSq (g.logarithmicPullbackSchwartz (1 / 2) u) ≤
       (mellin (bombieriQuadraticTest g : ℝ → ℂ) 1 +
         mellin (bombieriQuadraticTest g : ℝ → ℂ) 0).re
@@ -246,7 +247,8 @@ phase cancels in the real cross product.
 - [ ] **Step 3: Apply Cauchy--Schwarz and the exponential oscillation bound**
 
 Bound the negative part of twice the real cross product by
-`4*sinh(δ/2)*‖F‖²`.  Use `integral_norm_mul_le_L2`/Cauchy--Schwarz and the
+`4*δ*cosh(δ/2)*‖F‖²`, matching Bombieri's estimate (12.6).  Use
+`integral_norm_mul_le_L2`/Cauchy--Schwarz and the
 pointwise bounds of `exp(±u/2)` across an interval of length `δ`.
 
 - [ ] **Step 4: Verify and commit**
@@ -292,7 +294,7 @@ Let `C` be the sum of the constants from Tasks 1 and 3.  By
 `0 < δ₀ < min (log 2) 1` such that
 
 ```lean
-C + 4 * Real.sinh (δ₀ / 2) <
+C + 4 * δ₀ * Real.cosh (δ₀ / 2) <
   (1 / 2) * (Real.log (1 / δ₀) -
     Real.log (Real.log (Real.exp 1 / δ₀)))
 ```
