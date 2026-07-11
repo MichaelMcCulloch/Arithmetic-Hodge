@@ -238,6 +238,12 @@ theorem xiZeroCount_one_sub
       apply finsum_congr
       exact xiZeroWeight_one_sub sigmaLower sigmaUpper heightLower heightUpper
 
+/-- Functional-equation symmetry exchanges the upper and lower halves of the
+critical strip, with analytic multiplicities preserved. -/
+theorem xiCriticalStripZeroCount_lower_eq_upper (T : ℝ) :
+    xiZeroCount 0 1 (-T) 0 = xiZeroCount 0 1 0 T := by
+  simpa using xiZeroCount_one_sub 0 1 0 T
+
 /-! ### Principal logarithms do not encode unwrapped contour phase -/
 
 /-- The principal logarithm cannot satisfy the unwrapped Stirling-phase
