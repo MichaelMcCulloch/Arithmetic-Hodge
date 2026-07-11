@@ -1,13 +1,15 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilCriterion
 import ArithmeticHodge.Analysis.MultiplicativeWeilExplicitFormula
 import ArithmeticHodge.Analysis.MultiplicativeWeilLiDominantSeries
+import ArithmeticHodge.Analysis.MultiplicativeWeilLiCutoffTsum
 
 /-!
-# Closing the Bombieri converse from spectral Li approximation
+# Closing the Bombieri converse with Li cutoffs and smoothing
 
-The remaining analytic approximation is isolated in one sequence-level
-property.  Full paired Li negativity then produces the concrete nonzero
-Bombieri witness required by the criterion.
+The earlier sequence-level approximation interface is retained below, while
+the final section discharges it using the hard-cutoff and smoothing exchanges.
+Full paired Li negativity therefore produces the concrete nonzero Bombieri
+witness required by the criterion without any analytic hypothesis.
 -/
 
 set_option autoImplicit false
@@ -71,6 +73,63 @@ theorem riemannHypothesis_iff_bombieriNonnegativity_of_liApproximation
   riemannHypothesis_iff_bombieriNonnegativity zeros
     (bombieriZeroSumFormula zeros)
     (bombieriOffCriticalSpectralNegativity_of_liApproximation zeros happrox)
+
+/-! ## Unconditional closure -/
+
+/-- Bombieri's off-critical smooth witness construction, with both the hard
+cutoff and smoothing exchanges now discharged. -/
+theorem bombieriOffCriticalSpectralNegativity
+    (zeros : ZetaZeroEnumeration) :
+    BombieriOffCriticalSpectralNegativity zeros :=
+  bombieriOffCriticalSpectralNegativity_of_liKernelCutoffTsum zeros
+
+/-- The source-faithful Bombieri quadratic criterion is unconditional: its
+only remaining direction toward an actual proof of RH is proving the concrete
+quadratic functional nonnegative for every Bombieri test. -/
+theorem riemannHypothesis_iff_bombieriNonnegativity_unconditional
+    (zeros : ZetaZeroEnumeration) :
+    RiemannHypothesis ↔ BombieriNonnegativity :=
+  riemannHypothesis_iff_bombieriNonnegativity zeros
+    (bombieriZeroSumFormula zeros)
+    (bombieriOffCriticalSpectralNegativity zeros)
+
+/-- Exact real-valued terminal target: RH is equivalent to nonnegativity of
+the concrete Bombieri quadratic functional.  No separate imaginary-part
+hypothesis is needed for the backward implication. -/
+theorem riemannHypothesis_iff_bombieriQuadratic_re_nonnegative
+    (zeros : ZetaZeroEnumeration) :
+    RiemannHypothesis ↔
+      ∀ g : BombieriTest,
+        0 ≤ (bombieriFunctional (bombieriQuadraticTest g)).re := by
+  constructor
+  · intro hRH g
+    exact (rh_implies_bombieriFunctional_quadratic_nonneg
+      zeros (bombieriZeroSumFormula zeros) hRH g).2
+  · intro hnonnegative
+    by_contra hnot
+    obtain ⟨g, _hg, hnegative⟩ :=
+      bombieriOffCriticalNegativity_of_spectral zeros
+        (bombieriZeroSumFormula zeros)
+        (bombieriOffCriticalSpectralNegativity zeros) hnot
+    exact (not_lt_of_ge (hnonnegative g)) hnegative
+
+/-- Dual terminal target for falsification: RH fails exactly when a nonzero
+Bombieri test has strictly negative concrete quadratic value. -/
+theorem not_riemannHypothesis_iff_exists_bombieriQuadratic_re_negative
+    (zeros : ZetaZeroEnumeration) :
+    ¬ RiemannHypothesis ↔
+      ∃ g : BombieriTest, g ≠ 0 ∧
+        (bombieriFunctional (bombieriQuadraticTest g)).re < 0 := by
+  constructor
+  · intro hnot
+    exact bombieriOffCriticalNegativity_of_spectral zeros
+      (bombieriZeroSumFormula zeros)
+      (bombieriOffCriticalSpectralNegativity zeros) hnot
+  · rintro ⟨g, _hg, hnegative⟩ hRH
+    have hnonnegative :=
+      (rh_implies_bombieriFunctional_quadratic_nonneg
+        zeros (bombieriZeroSumFormula zeros) hRH g).2
+    exact (not_lt_of_ge hnonnegative) hnegative
 
 end
 
