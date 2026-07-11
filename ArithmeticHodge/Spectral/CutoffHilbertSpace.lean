@@ -57,6 +57,27 @@ theorem cutoffSet_measure_lt_top (Λ : ℝ) :
   haveI := inst.isHaar
   exact (cutoffSet_compact X Λ).measure_lt_top
 
+/-- A translated proper-height cutoff is not invariant under the scaling flow.
+
+    Consequently, restricting to `cutoffSet X Λ` cannot itself produce a
+    Koopman one-parameter group without changing the action or imposing new
+    boundary conditions.  This is why the current `cutoffKoopmanOp` below is
+    explicitly only an identity placeholder, rather than the compression of
+    the genuine scaling action. -/
+theorem cutoffSet_not_scaling_invariant (Λ : ℝ) :
+    ∃ (t : ℝ) (x : X), x ∈ cutoffSet X Λ ∧
+      inst.scalingFlow t x ∉ cutoffSet X Λ := by
+  let R : ℝ := max 1 Λ
+  refine ⟨R + 1, 1, ?_, ?_⟩
+  · change |inst.heightFn (1 : X)| ≤ R
+    rw [inst.heightFn_one, abs_zero]
+    exact le_max_of_le_left zero_le_one
+  · change ¬|inst.heightFn (inst.scalingFlow (R + 1) (1 : X))| ≤ R
+    rw [inst.heightFn_scalingFlow, inst.heightFn_one, zero_add]
+    have hR : 0 ≤ R := le_trans zero_le_one (le_max_left 1 Λ)
+    rw [abs_of_nonneg (by linarith)]
+    linarith
+
 end CutoffSet
 
 -- ============================================================
@@ -208,22 +229,17 @@ instance cutoffL2_secondCountableTopology (Λ : ℝ) :
 -- The Cutoff Koopman Operator and Generator
 -- ============================================================
 
-/-- **The projected Koopman operator on the cutoff L² space.**
+/-- **Identity placeholder for a cutoff Koopman operator.**
 
     For each t ∈ ℝ, the scaling flow σ_t on X defines a composition operator
-    U_t on L²(X, μ). On the compact cutoff S_Λ, we define the projected
-    Koopman P_Λ U_t P_Λ as a bounded operator on L²(X, μ_Λ).
+    U_t on the full L² space.  A compression `P_Λ U_t P_Λ` would be a bounded
+    operator, but it would not retain the group law on this non-invariant sharp
+    cutoff.
 
-    The construction uses the Koopman on full L² (PROVED isometric)
-    and the natural inclusion/restriction between L²(μ_Λ) and L²(μ).
-    On the cutoff space, P_Λ U_t P_Λ is a contraction (norm ≤ 1).
-
-    At t = 0 this is the identity (since σ₀ = id preserves S_Λ).
-
-    For the formal construction: L²(μ_Λ) = L²(μ|_{S_Λ}). A function
-    f ∈ L²(μ_Λ) is supported on S_Λ. The operator (P_Λ U_t f)(x) =
-    f(σ_t(x)) · 1_{S_Λ}(x) is well-defined and bounded on L²(μ_Λ)
-    since ‖P_Λ U_t f‖² = ∫_{S_Λ} |f(σ_t(x))|² dμ ≤ ∫ |f|² dμ = ‖f‖². -/
+    The intended compression `P_Λ U_t P_Λ` is not a one-parameter group:
+    `cutoffSet_not_scaling_invariant` proves that the scaling flow leaves the
+    sharp height cutoff.  The identity below preserves the interfaces needed
+    by the surrounding exploratory code, but carries no arithmetic spectrum. -/
 noncomputable def cutoffKoopmanOp (Λ : ℝ) (_ : ℝ) :
     Lp ℂ 2 (cutoffMeasure X Λ) →L[ℂ] Lp ℂ 2 (cutoffMeasure X Λ) :=
   ContinuousLinearMap.id ℂ _
@@ -980,6 +996,16 @@ theorem cutoffEigenvaluesOf_eq_zero (Λ : ℝ) (i : ℕ) :
   · exact cutoffEigenvalueSet_member_eq_zero X Λ _ hmem
   · exact hzero
 
+/-- The current cutoff spectral pairing samples only the zero Fourier
+    frequency.  This is an exact characterization of the identity-Koopman
+    placeholder, not the desired arithmetic trace formula. -/
+theorem spectralPairingOf_eq_zero_frequency (Λ : ℝ) (h : ℝ → ℝ) :
+    spectralPairingOf X Λ h =
+      Analysis.fourierCos h 0 * ∑' i, vacuumWeightOf X Λ i := by
+  rw [spectralPairingOf]
+  simp_rw [cutoffEigenvaluesOf_eq_zero X Λ]
+  exact tsum_mul_left
+
 /-- Compact domain spectral theory: eigenvalues bounded by cutoff scale.
 
     Each cutoffEigenvaluesOf value is either an eigenvalue from cutoffEigenvalueSet
@@ -1319,13 +1345,12 @@ theorem spectralPairing_abs_bound
     calc W ≤ W + 1 := le_add_of_nonneg_right zero_le_one
       _ ≤ max K (W + 1) := le_max_right K (W + 1)
 
-/-- **Selberg unfolding axiom.**
+/-- **Global trace-formula axiom.**
 
-    The Selberg trace formula equates the spectral side (sum over eigenvalues
-    of the cutoff Laplacian D_Λ) with the geometric side (orbital integrals =
-    Weil functional). When a sharp cutoff at height Λ is imposed, the two sides
-    agree on the bulk {heightFn ≤ Λ} and differ only by contributions from the
-    boundary shell {Λ - 1 ≤ heightFn ≤ Λ}.
+    This postulates that the current cutoff spectral pairing converges to the
+    Weil functional with an `O(1 / Λ)` error.  It is the unresolved global
+    trace-formula content, not a consequence of the elementary boundary-volume
+    estimates below.
 
     Concretely, the Selberg unfolding gives:
 
@@ -1336,15 +1361,20 @@ theorem spectralPairing_abs_bound
     (sup of kernel) × (boundary shell volume). Dividing by the bulk volume
     (which grows like c·Λ) gives the stated bound.
 
-    This axiom isolates exactly the analytic content of the Selberg unfolding
-    identity. It is verifiable for any concrete adèle class space where the
-    trace formula has been established (e.g., GL(1) over ℚ via Poisson summation).
+    Connes' actual cutoff trace uses the full scaling representation `U(h)` and
+    an orthogonal projection onto a simultaneous support/Fourier-support
+    subspace.  The global version is equivalent to RH in the cited construction
+    (Connes, Selecta Math. 5 (1999), Theorem VIII.5).  The present formal model
+    does not yet implement that projection: `cutoffKoopmanOp` is the identity,
+    and `spectralPairingOf_eq_zero_frequency` shows that its spectral side only
+    samples frequency zero.  Therefore this axiom must not be described as an
+    already-established GL(1)/ℚ unfolding theorem.
 
     The hypotheses ensure:
     - K bounds the kernel pointwise (from test function decay)
     - M bounds the boundary shell measure (from the height function geometry)
     - c·Λ lower-bounds the bulk volume (from volume growth)
-    - hζ provides the spectral gap controlling eigenvalue distribution -/
+    - hζ is currently only a supplied nonvanishing premise -/
 axiom selberg_unfolding_bound
     (X : Type*) [inst : Adelic.AdeleClassSpaceData X]
     (h : ℝ → ℝ) (hcont : Continuous h)

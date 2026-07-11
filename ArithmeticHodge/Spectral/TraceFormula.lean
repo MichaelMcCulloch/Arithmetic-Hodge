@@ -1,5 +1,5 @@
 /-
-  LAYER 6c: The Trace Formula Assembly (Spectral Pairing Approach)
+  LAYER 6c: Conditional Trace Formula Assembly (Spectral Pairing Approach)
 
   The missing operator: the SPECTRAL PAIRING ⟨ĥ(D_Λ)Ω, Ω⟩.
 
@@ -13,7 +13,7 @@
   - |⟨Ω, eᵢ⟩|² ≥ 0 (normSq)
   → spectralPairing ≥ 0 (PROVED)
   → W(h) ≥ 0 (limit, PROVED)
-  → RH (Weil criterion, PROVED)
+  → RH (conditional on the global trace-formula axiom and the Weil interface)
 -/
 
 import ArithmeticHodge.Spectral.SpectralPositivity
@@ -70,12 +70,17 @@ theorem spectralPairing_nonneg
 -- Sorry: Convergence (The Trace Formula)
 -- ============================================================
 
-/-- **The spectral pairing converges to the Weil functional.**
+/-- **The spectral pairing converges to the Weil functional, conditionally.**
 
     As Λ → ∞: spectralPairingOf X Λ h → W(h).
-    This IS the GL(1)/ℚ trace formula.
+    This is the convergence premise that the exploratory model intends to use
+    as a GL(1)/ℚ trace formula; the present cutoff operator does not establish
+    it.
 
-    SORRY: PNT + RAGE + Tate + convergence. -/
+    This delegates to `selberg_unfolding_bound`, the unresolved global
+    trace-formula axiom.  In the current identity-Koopman placeholder model,
+    `spectralPairingOf_eq_zero_frequency` shows that the spectral pairing only
+    samples Fourier frequency zero. -/
 theorem spectralPairing_tendsto_weil
     (X : Type*) [Adelic.AdeleClassSpaceData X]
     (h : ℝ → ℝ) (hcont : Continuous h)
@@ -112,15 +117,16 @@ theorem weil_positivity_from_spectral_pairing
 -- The Riemann Hypothesis
 -- ============================================================
 
-/-- **The Riemann Hypothesis.**
+/-- **Conditional Riemann Hypothesis wrapper.**
 
     Proved from the spectral pairing on the adèle class space:
       spectralPairing ≥ 0  [PROVED: Bochner + normSq]
-      spectralPairing → W  [sorry: trace formula]
+      spectralPairing → W  [global trace-formula axiom]
       ∴ W ≥ 0              [PROVED: ge_of_tendsto]
       ∴ RH                  [PROVED: weil_criterion_backward]
 
-    SORRY COUNT: 0 in this theorem body. -/
+    The theorem body has no `sorry`, but its dependency cone contains
+    `selberg_unfolding_bound`; it is not an unconditional proof of RH. -/
 theorem riemann_hypothesis_from_trace
     (X : Type*) [Adelic.AdeleClassSpaceData X] :
     RiemannHypothesis :=
