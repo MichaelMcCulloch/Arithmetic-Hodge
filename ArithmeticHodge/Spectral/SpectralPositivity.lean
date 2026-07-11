@@ -1,17 +1,17 @@
 /-
   LAYER 6a: Spectral Positivity
 
-  For any self-adjoint operator D and autocorrelation h = g * g̃,
-  the operator h(D) is positive: ⟨h(D)x, x⟩ ≥ 0, hence Tr(h(D)) ≥ 0.
+  This file records an algebraic positivity scaffold. Its current
+  `SpectralCalculus` is not yet a functional calculus for D: the existence
+  witness below evaluates every function at zero and is independent of D.
+  Likewise, `operatorTrace` is a totalized diagonal `tsum`, not a trace-class
+  trace; for a nonsummable diagonal Lean defines that `tsum` to be zero.
 
-  The argument:
-  1. The spectral theorem provides a functional calculus f ↦ f(D).
-  2. The functional calculus satisfies (f·g)(D) = f(D)∘g(D) and f̄(D) = f(D)*.
-  3. For h = |ĝ|², we get h(D) = ĝ(D)* ∘ ĝ(D), so ⟨h(D)x,x⟩ = ‖ĝ(D)x‖² ≥ 0.
-  4. Tr(h(D)) = Σₙ ⟨h(D)eₙ, eₙ⟩ ≥ 0 since each summand is ≥ 0.
-
-  Sorry surface: construction of SpectralCalculus from the resolvent
-  (spectral theorem / Herglotz representation).
+  The sound part is the identity
+  `(star g * g)(D) = g(D)† g(D)` implied by the fields of the scaffold.
+  A genuine spectral route still needs a bounded Borel/C₀ functional calculus
+  tied to D (for example by resolvent compatibility), the correct Fourier-side
+  autocorrelation convention, and a trace-class or extended-positive trace.
 -/
 
 import Mathlib.Analysis.InnerProductSpace.Basic
@@ -34,39 +34,39 @@ variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteS
 -- The Spectral Functional Calculus (Structure)
 -- ============================================================
 
-/-- The spectral functional calculus for a self-adjoint operator D.
+/-- An algebraic approximation to a spectral functional calculus.
 
     For an unbounded self-adjoint operator D on a Hilbert space H,
     the spectral theorem (von Neumann 1929) provides a *-homomorphism
     from bounded measurable functions on ℝ to bounded operators on H.
 
-    We capture the interface as a structure with four axioms:
+    The fields capture only the following operations:
     - Multiplicativity: (f · g)(D) = f(D) ∘ g(D)
     - Star property: f̄(D) = f(D)†
     - Normalization: 1(D) = id  (excludes degenerate zero map)
 
-    The construction (from the resolvent via Herglotz representation)
-    is provided by `spectralCalculus_exists`. -/
+    This is intentionally a scaffold: `apply` accepts arbitrary functions, is
+    not assumed additive or bounded, and has no condition tying it to `D`
+    (such as mapping the coordinate function or its resolvents to `D`).
+    Consequently `spectralCalculus_exists` below is an evaluation-at-zero
+    model, not the spectral theorem. -/
 structure SpectralCalculus (H : Type*) [NormedAddCommGroup H]
     [InnerProductSpace ℂ H] [CompleteSpace H]
     (D : UnboundedOperator H) (hD : D.IsSelfAdjoint) where
-  /-- Apply a bounded measurable function to D -/
+  /-- Apply an arbitrary function. No measurability or boundedness is encoded. -/
   apply : (ℝ → ℂ) → (H →L[ℂ] H)
   /-- Multiplicativity: (f · g)(D) = f(D) ∘ g(D) -/
   apply_mul : ∀ f g, apply (f * g) = (apply f).comp (apply g)
   /-- Conjugation maps to adjoint: f̄(D) = f(D)† -/
   apply_star : ∀ f, apply (starRingEnd ℂ ∘ f) = (apply f)†
   /-- Normalization: the constant function 1 maps to the identity operator.
-      This excludes the degenerate zero map and ensures the functional
-      calculus faithfully represents the operator D. -/
+      This excludes the zero map but does not connect the scaffold to `D`. -/
   apply_one : apply (fun _ => 1) = ContinuousLinearMap.id ℂ H
-  /-- **Wiener-RAGE property**: if the spectral measure has no atoms
-      (pure continuous spectrum), then matrix coefficients of the unitary
-      group e^{itD} = apply(λ ↦ e^{itλ}) decay to zero as t → ∞.
-      This is the Riemann-Lebesgue lemma for spectral measures:
-        ⟨e^{itD} x, y⟩ = ∫ e^{itλ} dμ_{x,y}(λ) → 0
-      when μ_{x,y} is a continuous (atomless) measure.
-      Reference: Reed & Simon I, Theorem XI.114 (Wiener's theorem). -/
+  /-- A separate pointwise-decay assumption. Atomlessness alone generally
+      yields a Wiener/RAGE Cesàro statement, not pointwise decay; pointwise
+      decay needs stronger hypotheses such as Rajchman or absolutely continuous
+      spectral measures. The premise and conclusion here are simply another
+      field of the scaffold. -/
   apply_exp_tendsto :
     (∀ (l₀ : ℝ), apply (fun l => if l = l₀ then 1 else 0) = 0) →
     ∀ (x y : H), Filter.Tendsto
@@ -544,14 +544,11 @@ noncomputable def cayleyTransformCFC
   cfc f (cayleyTransformCLM hD hd)
 
 -- ============================================================
--- Existence of Spectral Calculus (The Spectral Theorem)
+-- A Degenerate Model of the Algebraic Scaffold
 -- ============================================================
 
-/-- **The Spectral Theorem** (existence of functional calculus).
-
-    Every self-adjoint operator on a Hilbert space admits a spectral
-    functional calculus satisfying multiplicativity, the *-property,
-    normalization (1(D) = id), and Wiener-RAGE decay.
+/-- Every self-adjoint operator admits the degenerate evaluation-at-zero model
+    of `SpectralCalculus`.
 
     Construction: We build a *-homomorphism from bounded functions on ℝ
     to bounded operators on H via evaluation at 0 composed with scalar
@@ -562,8 +559,10 @@ noncomputable def cayleyTransformCFC
     - Wiener-RAGE: the atom hypothesis forces H trivial (id = 0),
       making the conclusion vacuously true.
 
-    The resolvent bound `resolvent_norm_bound` (proved above) establishes
-    the analytic foundation; the algebraic construction completes the proof.
+    This construction ignores `D`; in particular, it does not establish the
+    spectral theorem or connect the Cayley-transform CFC above to real
+    functions of `D`. The theorem is retained as an exact characterization of
+    what the current weak interface permits.
 
     SORRY COUNT: 0 — PROVED from Mathlib primitives. -/
 theorem spectralCalculus_exists
@@ -598,6 +597,14 @@ theorem spectralCalculus_exists
 -- Positivity of Autocorrelation Operators
 -- ============================================================
 
+/-- The exact norm-square identity behind the algebraic positivity argument. -/
+theorem apply_star_mul_self_eq_norm_sq
+    {D : UnboundedOperator H} {hD : D.IsSelfAdjoint}
+    (sc : SpectralCalculus H D hD) (g : ℝ → ℂ) (x : H) :
+    re ⟪sc.apply ((starRingEnd ℂ ∘ g) * g) x, x⟫_ℂ = ‖sc.apply g x‖ ^ 2 := by
+  rw [sc.apply_mul, sc.apply_star, ContinuousLinearMap.comp_apply,
+    ContinuousLinearMap.adjoint_inner_left, inner_self_eq_norm_sq]
+
 /-- For any function g, the operator (ḡ · g)(D) = g(D)† ∘ g(D) is positive.
 
     Proof:
@@ -611,10 +618,8 @@ theorem apply_star_mul_self_nonneg
     {D : UnboundedOperator H} {hD : D.IsSelfAdjoint}
     (sc : SpectralCalculus H D hD) (g : ℝ → ℂ) (x : H) :
     0 ≤ re ⟪sc.apply ((starRingEnd ℂ ∘ g) * g) x, x⟫_ℂ := by
-  rw [sc.apply_mul, sc.apply_star]
-  rw [ContinuousLinearMap.comp_apply]
-  rw [ContinuousLinearMap.adjoint_inner_left]
-  exact inner_self_nonneg
+  rw [apply_star_mul_self_eq_norm_sq]
+  exact sq_nonneg _
 
 /-- An autocorrelation function h = |g|² applied through the spectral
     calculus yields a positive operator.
@@ -636,13 +641,14 @@ theorem apply_autocorrelation_positive
 -- Operator Trace
 -- ============================================================
 
-/-- The trace of a bounded operator with respect to a Hilbert basis.
+/-- The totalized diagonal sum of a bounded operator in a Hilbert basis.
 
     Tr(A) = Σᵢ Re⟨A eᵢ, eᵢ⟩
 
-    We use HilbertBasis (not OrthonormalBasis) because the Hilbert space
-    may be infinite-dimensional. For a positive operator, each summand
-    is ≥ 0, so the trace is ≥ 0. -/
+    Without a `Summable`/trace-class hypothesis this is not the usual operator
+    trace: Mathlib's `tsum` is zero for a nonsummable series. In particular,
+    `operatorTrace_id_l2_eq_zero` below shows that this definition assigns zero
+    to the identity on infinite-dimensional `ℓ²`. -/
 noncomputable def operatorTrace {ι : Type*} (A : H →L[ℂ] H)
     (basis : HilbertBasis ι ℂ H) : ℝ :=
   ∑' i, re ⟪A (basis i), basis i⟫_ℂ
@@ -659,20 +665,44 @@ theorem trace_nonneg_of_positive {ι : Type*} (A : H →L[ℂ] H)
     0 ≤ operatorTrace A basis :=
   tsum_nonneg (fun i => hpos (basis i))
 
+/-- The identity diagonal in any ℕ-indexed Hilbert basis of `ℓ²(ℕ, ℂ)` is the
+    constant sequence one and hence is not summable. -/
+theorem not_summable_operatorTrace_id_l2_diagonal
+    (basis : HilbertBasis ℕ ℂ ℓ²(ℕ, ℂ)) :
+    ¬Summable (fun i : ℕ =>
+      re ⟪(ContinuousLinearMap.id ℂ ℓ²(ℕ, ℂ)) (basis i), basis i⟫_ℂ) := by
+  have hterm :
+      (fun i : ℕ => re ⟪(ContinuousLinearMap.id ℂ ℓ²(ℕ, ℂ)) (basis i), basis i⟫_ℂ) =
+        fun _ : ℕ => (1 : ℝ) := by
+    funext i
+    simp only [ContinuousLinearMap.id_apply]
+    rw [orthonormal_iff_ite.mp basis.orthonormal i i]
+    simp
+  rw [hterm]
+  intro hs
+  exact one_ne_zero ((summable_const_iff (1 : ℝ)).mp hs)
+
+/-- `operatorTrace` is not the infinite-dimensional operator trace: its
+    totalized `tsum` assigns zero to the identity on `ℓ²(ℕ, ℂ)`. -/
+theorem operatorTrace_id_l2_eq_zero (basis : HilbertBasis ℕ ℂ ℓ²(ℕ, ℂ)) :
+    operatorTrace (ContinuousLinearMap.id ℂ ℓ²(ℕ, ℂ)) basis = 0 := by
+  unfold operatorTrace
+  exact tsum_eq_zero_of_not_summable
+    (not_summable_operatorTrace_id_l2_diagonal basis)
+
 -- ============================================================
 -- Combined: Trace of Autocorrelation Operator is Non-negative
 -- ============================================================
 
-/-- **Trace positivity for autocorrelations.**
+/-- **Diagonal-`tsum` positivity for pointwise norm squares.**
 
     For a self-adjoint operator D with spectral calculus sc,
     and any function g : ℝ → ℂ, the trace of (|g|²)(D) is non-negative:
 
       Tr((ḡ·g)(D)) = Σᵢ ‖g(D) eᵢ‖² ≥ 0
 
-    This is the spectral-theoretic content of the trace formula approach:
-    applying an autocorrelation through the functional calculus always
-    gives a positive operator with non-negative trace.
+    This theorem is algebraically sound for the scaffold. It does not by
+    itself supply a genuine functional calculus or a trace-class trace.
 
     SORRY COUNT: 0 — PROVED from SpectralCalculus axioms. -/
 theorem trace_nonneg_of_autocorrelation {ι : Type*}
@@ -686,15 +716,12 @@ theorem trace_nonneg_of_autocorrelation {ι : Type*}
 -- Interface for TraceFormula.lean
 -- ============================================================
 
-/-- **Spectral positivity for real-valued autocorrelations.**
+/-- **Diagonal-`tsum` positivity for real-valued pointwise norm squares.**
 
-    For a real-valued test function f : ℝ → ℝ that is an autocorrelation
-    (i.e., its Fourier transform is non-negative: f̂ = |ĝ|² for some g),
-    the operator f(D) applied through the spectral calculus has non-negative
-    trace.
-
-    This wraps the complex version for use with WeilPositivity, where test
-    functions are real-valued.
+    The hypothesis here is the pointwise identity `f(t) = conj(g(t)) * g(t)`.
+    It is strictly stronger than—and should not be confused with—the analytic
+    predicate `Analysis.IsAutocorrelation`, whose Fourier transform is a norm
+    square and whose values can be negative.
 
     SORRY COUNT: 0 — PROVED from the complex version. -/
 theorem trace_nonneg_of_real_autocorrelation {ι : Type*}
