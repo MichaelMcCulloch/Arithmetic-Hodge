@@ -1197,7 +1197,7 @@ theorem rh_zeros_on_critical_line (hRH : RiemannHypothesis) :
 theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
     (hRH : RiemannHypothesis) :
-    ∑' n, h ((zetaZeroSeq n).im) = weilFunctionalFull h (fourierCos h) := by
+    ∑' n, h ((hadamardZeros n).im) = weilFunctionalFull h (fourierCos h) := by
   -- ── PROOF STRUCTURE (Iwaniec–Kowalski Thm 5.12, Davenport Ch. 16) ──
   -- Under RH, all ρ have Re(ρ) = 1/2, so γ_ρ = Im(ρ) ∈ ℝ.
   -- Integrate (1/2πi) ∮_{R(T)} H(s)·(-ζ'/ζ(s)) ds on rectangles
@@ -1214,9 +1214,9 @@ theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
   -- BLOCKED: Residue theorem for meromorphic functions (not in Mathlib).
   have h_residue_sum : ∀ T : ℝ, 2 ≤ T →
       ∃ (rect_integral : ℝ),
-        (∑ n ∈ Finset.filter (fun n => |(zetaZeroSeq n).im| ≤ T)
+        (∑ n ∈ Finset.filter (fun n => |(hadamardZeros n).im| ≤ T)
           (Finset.range (Nat.ceil T ^ 2)),
-          h ((zetaZeroSeq n).im)) +
+          h ((hadamardZeros n).im)) +
         (fourierCos h 0 + fourierCos h 1) = rect_integral := by
     intro T _; exact ⟨_, rfl⟩
   -- ── STEP 2 (Right vertical → prime term) ──
@@ -1289,7 +1289,7 @@ theorem sum_over_zeros_eq_contour (h : ℝ → ℝ)
     (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
     (hRH : RiemannHypothesis) :
     ∃ (contour_value : ℝ),
-      ∑' n, h ((zetaZeroSeq n).im) = contour_value ∧
+      ∑' n, h ((hadamardZeros n).im) = contour_value ∧
       contour_value = weilFunctionalFull h (fourierCos h) :=
   ⟨weilFunctionalFull h (fourierCos h), weil_contour_identity h hcont hdecay hRH, rfl⟩
 

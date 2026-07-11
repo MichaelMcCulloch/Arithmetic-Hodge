@@ -323,7 +323,7 @@ theorem rh_implies_weil_positivity_from_explicit :
     RiemannHypothesis → WeilPositivity := by
   intro hRH f hf_auto hf_cont hf_decay
   -- Apply the explicit formula to f
-  obtain ⟨zeros, hzeros_spec, _, hsum, hexpl⟩ :=
+  obtain ⟨zeros, hzeros_spec, hsum, hexpl⟩ :=
     weil_explicit_formula f hf_cont hf_decay hRH
   -- W(f) = Σ f(γ_ρ) by the explicit formula
   rw [← hexpl]

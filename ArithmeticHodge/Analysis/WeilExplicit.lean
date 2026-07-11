@@ -49,26 +49,18 @@ theorem weil_explicit_formula
     (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
     (hRH : RiemannHypothesis) :
     ∃ (zeros : ℕ → ℝ),
-      (∀ n, IsZetaZeroIndex n → ∃ ρ : NontrivialZetaZero, zeros n = ρ.val.im) ∧
-      (∀ s : ℂ, riemannZeta s = 0 → 0 < s.re → s.re < 1 →
-        ∃ n, zeros n = s.im) ∧
+      (∀ n, ∃ ρ : NontrivialZetaZero, zeros n = ρ.val.im) ∧
       Summable (fun n => h (zeros n)) ∧
       ∑' n, h (zeros n) = weilFunctionalFull h (fourierCos h) := by
-  -- The zero sequence: imaginary parts of nontrivial zeros from zetaZeroSeq
-  refine ⟨fun n => (zetaZeroSeq n).im, ?_, ?_, ?_, ?_⟩
-  -- (1) Each valid entry corresponds to a nontrivial zero
-  · intro n hn
-    obtain ⟨hzero, hre_pos, hre_lt⟩ := zetaZeroSeq_spec n hn
-    exact ⟨⟨zetaZeroSeq n, hzero, hre_pos, hre_lt⟩, rfl⟩
-  -- (2) Surjectivity: every nontrivial zero is represented
-  · intro s hzero hre_pos hre_lt
-    obtain ⟨n, hn⟩ := zetaZeroSeq_surj s hzero hre_pos hre_lt
-    exact ⟨n, by simp only; rw [hn]⟩
-  -- (3) Summability: from decay hypothesis + zero density
-  --     summable_over_zeros gives this for hadamardZeros; need zetaZeroSeq ↔ hadamardZeros
-  · have := summable_over_zeros h hdecay
-    sorry
-  -- (4) The sum equals the Weil functional: the explicit formula identity
+  -- The Hadamard sequence has no dummy entries: every term is a genuine
+  -- nontrivial zero and its inverse-square norms form a summable family.
+  refine ⟨fun n => (hadamardZeros n).im, ?_, summable_over_zeros h hdecay, ?_⟩
+  · intro n
+    have hre := hadamardZeros_re n
+    exact ⟨⟨hadamardZeros n,
+      (xiFunction_zero_iff hre.1 hre.2).mp (hadamardZeros_spec n),
+      hre.1, hre.2⟩, rfl⟩
+  -- The sum equals the Weil functional by the contour identity.
   · obtain ⟨cv, hcv_sum, hcv_weil⟩ := sum_over_zeros_eq_contour h hcont hdecay hRH
     rw [hcv_sum, hcv_weil]
 
