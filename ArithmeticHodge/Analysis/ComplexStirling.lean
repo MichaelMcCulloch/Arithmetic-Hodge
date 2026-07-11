@@ -280,7 +280,7 @@ private lemma gamma_inv_eq_weierstrass (z : ℂ) (hz : 0 < z.re) :
     exact (gammaWeierstrass_partial_product_eq z hn).symm
   exact tendsto_nhds_unique hAinv hAprod
 
-private lemma norm_digammaSeriesTerm_le (s : ℂ) (hs : 1 ≤ s.re) (n : ℕ) :
+private lemma norm_digammaSeriesTerm_le (s : ℂ) (hs : 0 ≤ s.re) (n : ℕ) :
     ‖(1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)‖ ≤
       ‖s‖ / (n + 1 : ℝ) ^ 2 := by
   have hkpos : (0 : ℝ) < n + 1 := by positivity
@@ -309,7 +309,7 @@ private lemma norm_digammaSeriesTerm_le (s : ℂ) (hs : 1 ≤ s.re) (n : ℕ) :
     gcongr
   exact div_le_div_of_nonneg_left (norm_nonneg s) (sq_pos_of_pos hkpos) hden
 
-private lemma summable_digammaSeriesTerm (s : ℂ) (hs : 1 ≤ s.re) :
+private lemma summable_digammaSeriesTerm (s : ℂ) (hs : 0 ≤ s.re) :
     Summable (fun n : ℕ =>
       (1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ)) := by
   have hmajorant : Summable (fun n : ℕ => ‖s‖ / (n + 1 : ℝ) ^ 2) := by
@@ -353,14 +353,14 @@ private lemma logDeriv_gammaWeierstrassFactor (s : ℂ) (n : ℕ)
   field_simp [hk, hsk, hsk', Complex.exp_ne_zero]
   ring
 
-private lemma digamma_series (s : ℂ) (hs : 1 ≤ s.re) :
+private lemma digamma_series (s : ℂ) (hs : 0 < s.re) :
     Complex.digamma s =
       -(1 / s + Real.eulerMascheroniConstant +
         ∑' n : ℕ,
           ((1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) - 1 / (↑(n + 1 : ℕ) : ℂ))) := by
   let P : ℂ → ℂ := fun z => ∏' n : ℕ, (1 + gammaWeierstrassTerm n z)
   let E : ℂ → ℂ := fun z => Complex.exp (Real.eulerMascheroniConstant * z)
-  have hspos : 0 < s.re := lt_of_lt_of_le zero_lt_one hs
+  have hspos : 0 < s.re := hs
   have hs0 : s ≠ 0 := by
     intro h
     rw [h, zero_re] at hs
@@ -396,7 +396,7 @@ private lemma digamma_series (s : ℂ) (hs : 1 ≤ s.re) :
       apply Differentiable.differentiableOn
       simp only [gammaWeierstrassTerm]
       fun_prop
-  have hsum := summable_digammaSeriesTerm s hs
+  have hsum := summable_digammaSeriesTerm s hs.le
   have hlogsum : Summable
       (fun n : ℕ => logDeriv (fun z : ℂ => 1 + gammaWeierstrassTerm n z) s) :=
     hsum.congr (fun n => (logDeriv_gammaWeierstrassFactor s n (hpole (n + 1))).symm)
@@ -460,6 +460,43 @@ private lemma digamma_series (s : ℂ) (hs : 1 ≤ s.re) :
     simpa only [Pi.mul_apply, hinner, hP_logDeriv] using h
   rw [hinv_logDeriv, houter] at hlogDeriv_eq
   linear_combination -hlogDeriv_eq
+
+/-- The absolutely convergent partial-fraction series for the digamma
+function in the half-plane `1 ≤ re s`. -/
+theorem summable_digamma_partialFraction (s : ℂ) (hs : 1 ≤ s.re) :
+    Summable (fun n : ℕ ↦
+      (1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) -
+        1 / (↑(n + 1 : ℕ) : ℂ)) :=
+  summable_digammaSeriesTerm s (zero_le_one.trans hs)
+
+/-- The digamma partial-fraction series converges throughout the closed
+right half-plane. -/
+theorem summable_digamma_partialFraction_of_nonneg_re
+    (s : ℂ) (hs : 0 ≤ s.re) :
+    Summable (fun n : ℕ ↦
+      (1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) -
+        1 / (↑(n + 1 : ℕ) : ℂ)) :=
+  summable_digammaSeriesTerm s hs
+
+/-- Euler's partial-fraction expansion of the digamma function in the
+half-plane `1 ≤ re s`. -/
+theorem digamma_eq_tsum_of_one_le_re (s : ℂ) (hs : 1 ≤ s.re) :
+    Complex.digamma s =
+      -(1 / s + Real.eulerMascheroniConstant +
+        ∑' n : ℕ,
+          ((1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) -
+            1 / (↑(n + 1 : ℕ) : ℂ))) :=
+  digamma_series s (zero_lt_one.trans_le hs)
+
+/-- Euler's partial-fraction expansion of the digamma function throughout
+the open right half-plane. -/
+theorem digamma_eq_tsum_of_pos_re (s : ℂ) (hs : 0 < s.re) :
+    Complex.digamma s =
+      -(1 / s + Real.eulerMascheroniConstant +
+        ∑' n : ℕ,
+          ((1 : ℂ) / (s + (↑(n + 1 : ℕ) : ℂ)) -
+            1 / (↑(n + 1 : ℕ) : ℂ))) :=
+  digamma_series s hs
 
 private lemma norm_digammaSeriesTerm_le_harmonic (s : ℂ) (n : ℕ)
     (him : 1 ≤ |s.im|) :
@@ -673,7 +710,8 @@ private lemma digamma_bound_re_ge_one (σ : ℝ) (t : ℝ) (hσ : 1 ≤ σ) (ht 
   have hharm : (harmonic N : ℝ) ≤ Real.log |t| + 2 := by
     exact (harmonic_le_one_add_log N).trans (by linarith)
   have ha_sum : Summable a := by
-    simpa only [a] using summable_digammaSeriesTerm s hsre_one
+    simpa only [a] using
+      summable_digammaSeriesTerm s (zero_le_one.trans hsre_one)
   have hlow : ‖∑ n ∈ Finset.range N, a n‖ ≤
       (N : ℝ) * |t|⁻¹ + (harmonic N : ℝ) := by
     calc
@@ -703,7 +741,8 @@ private lemma digamma_bound_re_ge_one (σ : ℝ) (t : ℝ) (hσ : 1 ≤ σ) (ht 
   have htail_point : ∀ j : ℕ,
       ‖a (j + N)‖ ≤ ‖s‖ * (((N + j + 1 : ℕ) : ℝ) ^ 2)⁻¹ := by
     intro j
-    have h := norm_digammaSeriesTerm_le s hsre_one (j + N)
+    have h := norm_digammaSeriesTerm_le s
+      (zero_le_one.trans hsre_one) (j + N)
     dsimp only [a]
     convert h using 1
     all_goals push_cast
@@ -756,7 +795,7 @@ private lemma digamma_bound_re_ge_one (σ : ℝ) (t : ℝ) (hσ : 1 ≤ σ) (ht 
     rw [Complex.norm_real, Real.norm_eq_abs,
       abs_of_pos hgamma_pos]
     exact Real.eulerMascheroniConstant_lt_two_thirds.le
-  rw [digamma_series s hsre_one, norm_neg]
+  rw [digamma_series s (zero_lt_one.trans_le hsre_one), norm_neg]
   have htotal : ‖(1 : ℂ) / s + Real.eulerMascheroniConstant + ∑' n : ℕ, a n‖ ≤
       Real.log |t| + σ + 8 := by
     calc
