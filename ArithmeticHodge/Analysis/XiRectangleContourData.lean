@@ -71,4 +71,23 @@ theorem xiZerosInRectangle_strictInterior_of_boundary_zero_free
     lt_of_le_of_ne him_lower him_lower_ne.symm,
     lt_of_le_of_ne him_upper him_upper_ne⟩
 
+/-- Enlarging the real sides beyond the critical strip does not change the
+finite xi-zero set at fixed heights. -/
+theorem xiZerosInRectangle_outer_eq_critical
+    {sigmaLower sigmaUpper heightLower heightUpper : ℝ}
+    (hlower : sigmaLower ≤ 0) (hupper : 1 ≤ sigmaUpper) :
+    xiZerosInRectangle sigmaLower sigmaUpper heightLower heightUpper =
+      xiZerosInRectangle 0 1 heightLower heightUpper := by
+  ext z
+  simp only [mem_xiZerosInRectangle_iff]
+  constructor
+  · rintro ⟨hzrect, hzero⟩
+    have hre := xiFunction_zero_re hzero
+    rw [xiZeroRectangle, mem_reProdIm] at hzrect ⊢
+    exact ⟨⟨⟨hre.1.le, hre.2.le⟩, hzrect.2⟩, hzero⟩
+  · rintro ⟨hzrect, hzero⟩
+    rw [xiZeroRectangle, mem_reProdIm] at hzrect ⊢
+    exact ⟨⟨⟨hlower.trans hzrect.1.1, hzrect.1.2.trans hupper⟩,
+      hzrect.2⟩, hzero⟩
+
 end ArithmeticHodge.Analysis
