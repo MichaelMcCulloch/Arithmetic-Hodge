@@ -253,6 +253,66 @@ four weighted-tail bounds, the `t0`/Gamma-argument low-interval certificate,
 and the upstream analytic derivation of (6.7). No floating-point value is a
 trusted premise of the Lean results.
 
+## Digamma intervals by certified trapezoidal error
+
+The 328-line strict probe `/tmp/DigammaTrapezoidProbe.lean`, SHA-256
+`d3cfff1ba8bb210656d483d20fcd3b25e9eb065dbcbc20602a1c960b1b9715d6`,
+establishes a source-independent route to the two missing `C(t)` intervals.
+It passes warning-as-error compilation and a forbidden-proof scan; every
+audited theorem uses only `[propext, Classical.choice, Quot.sound]`.
+
+For
+
+```text
+f_y(u) = u / (u^2 + y^2),
+```
+
+the probe proves the exact derivatives
+
+```text
+f_y'(u)  = (y^2-u^2)/(u^2+y^2)^2,
+f_y''(u) = 2*u*(u^2-3*y^2)/(u^2+y^2)^3.
+```
+
+It then proves, algebraically and without numerical evaluation,
+
+```text
+|f_y''(u)| <= 2/y^3                    for y > 0,
+|f_y''(u)| <= 2/u^3  if u > 0 and 3*y^2 <= u^2.
+```
+
+Mathlib's kernel theorem `trapezoidal_error_le_of_c2` therefore yields
+
+```text
+|TrapError(f_y; [n,n+1])| <= 1/(6*y^3)
+```
+
+and, for the shifted function `f_y(x+t)`, the decaying bound
+
+```text
+|TrapError(f_y(x+·); [n,n+1])| <= 1/(6*(x+n)^3)
+```
+
+past the explicit threshold `3*y^2 <= (x+n)^2`. The probe proves that the
+entire shifted trapezoidal-error series is summable by comparison with the
+`p = 3` series.
+
+The exact analytic identity targeted next is
+
+```text
+Re psi(x+i*y)
+  = log sqrt(x^2+y^2) - f_y(x)/2
+      - sum_{n=0}^infinity TrapError(f_y(x+·); [n,n+1]).
+```
+
+It follows from the already formalized digamma partial-fraction series,
+`tendsto_harmonic_sub_log`, the elementary antiderivative
+`log((x+t)^2+y^2)/2`, and telescoping adjacent trapezoidal errors. This limit
+identity, explicit finite-head evaluation, a rational `p = 3` tail bound, and
+rational logarithm enclosures remain to be formalized. The proved error scale
+is already sufficient at `x = 1/4`, `y = 25` and `y = 350`; no complex
+Stirling remainder or trusted floating-point digamma oracle is required.
+
 ## Recommended production order
 
 1. Promote generic tail-series lemmas and one canonical `C1/C2` certificate
