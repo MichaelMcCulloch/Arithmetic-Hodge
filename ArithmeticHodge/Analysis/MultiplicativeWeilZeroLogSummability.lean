@@ -124,7 +124,17 @@ theorem ZetaZeroEnumeration.summable_log_norm_add_two_pow_mul_inv_sq
   rw [Real.norm_eq_abs, abs_of_nonneg hterm0]
   simpa only [a, p] using log_add_two_pow_mul_inv_sq_le m hk
 
+/-- The same logarithmically weighted inverse-square estimate holds after
+reflecting every zero through `rho ↦ 1 - rho`. -/
+theorem ZetaZeroEnumeration.summable_log_one_sub_norm_add_two_pow_mul_inv_sq
+    (zeros : ZetaZeroEnumeration) (m : ℕ) :
+    Summable (fun k ↦
+      Real.log (‖1 - (zeros.zero k).val‖ + 2) ^ m *
+        ‖1 - (zeros.zero k).val‖⁻¹ ^ 2) := by
+  simpa only [ZetaZeroEnumeration.oneSub,
+    oneSubNontrivialZetaZero_val] using
+      zeros.oneSub.summable_log_norm_add_two_pow_mul_inv_sq m
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeil
-
