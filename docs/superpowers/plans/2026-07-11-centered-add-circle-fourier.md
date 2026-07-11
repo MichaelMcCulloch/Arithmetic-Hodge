@@ -259,7 +259,8 @@ theorem fourier_parseval_tail_tsum_tendsto_zero
   norm remainder.
 - [ ] Specialize interval Parseval with period `2 * a`, and prove coefficient
   tail convergence via `tendsto_tsum_compl_atTop_zero` and
-  `Finset.tendsto_Icc_neg`.
+  `Finset.tendsto_Icc_neg`; use `ring_nf` for the sole period-normalization
+  conversion so strict compilation stays silent.
 - [ ] Create the thin facade importing Basic, Symmetry, and Tail; add only the
   facade to `ArithmeticHodge.lean`; strict-compile all modules, full-build,
   scan/audit, and commit as `add centered Fourier partial sums and tails`.
