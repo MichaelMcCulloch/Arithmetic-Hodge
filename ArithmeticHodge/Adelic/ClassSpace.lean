@@ -21,9 +21,10 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.RingTheory.DedekindDomain.AdicValuation
 import Mathlib.RingTheory.Int.Basic
 import Mathlib.MeasureTheory.Measure.Haar.MulEquivHaarChar
+import Mathlib.MeasureTheory.Integral.Bochner.Basic
 
 open MeasureTheory Filter
-open scoped Topology
+open scoped Topology ENNReal
 
 namespace ArithmeticHodge.Adelic
 
@@ -143,14 +144,21 @@ theorem haar_invariant_of_trivial_haarChar
 -- Adèle Class Space Axioms
 -- ============================================================
 
-/-- **Axiomatized properties of the adèle class space.**
+/-- **Inconsistent prototype of axiomatized adèle-class-space properties.**
 
     These hold for 𝔸_ℚ/ℚ* but the construction is not yet in Mathlib.
     By packaging them as a class, we isolate the construction from the theory.
     The single sorry for the entire adelic infrastructure is relocated to
     instantiating this class for the actual adèle class space.
 
-    Properties axiomatized:
+    The current `scalingFlow_mixing` field uses the probability-space limit
+    `correlation -> product of unnormalized means`.  That is incompatible with
+    the infinite Haar measure, translated proper height, and positive finite
+    height windows also required here; `AdeleClassSpaceData_isEmpty` below
+    proves that no instance exists.  The mixing target should instead be zero
+    on an appropriate `L²` class.
+
+    Properties packaged by the prototype:
     - Locally compact Hausdorff topological group
     - Second countable (for Haar measure uniqueness)
     - Borel σ-algebra
@@ -207,7 +215,12 @@ class AdeleClassSpaceData (X : Type*) extends
       This holds for 𝔸_ℚ/ℚ* since ℚ* is discrete in 𝔸_ℚ but
       the quotient inherits the (nondiscrete) adelic topology. -/
   nondiscrete : (𝓝[≠] (1 : X)).NeBot
-  /-- **The scaling flow is mixing** with respect to Haar measure.
+  /-- **Probability-style mixing prototype.**
+
+      This product-of-means limit is not valid for the infinite Haar measure
+      described by the other fields.  It is retained temporarily so the
+      inconsistency and its downstream consequences remain explicit.
+
       This is a consequence of the RAGE theorem (Ruelle-Amrein-Georgescu-Enss):
       the Prime Number Theorem (ζ(1+it) ≠ 0 for all t ∈ ℝ) gives a spectral
       gap for the Koopman representation on L²(X, μ), Wiener's theorem converts
@@ -220,6 +233,91 @@ class AdeleClassSpaceData (X : Type*) extends
     Filter.Tendsto
       (fun t => ∫ x, f (scalingFlow t x) * starRingEnd ℂ (g x) ∂haarMeasure)
       Filter.atTop (nhds ((∫ x, f x ∂haarMeasure) * starRingEnd ℂ (∫ x, g x ∂haarMeasure)))
+
+/-- A positive finite height window whose translates eventually separate is
+incompatible with a product-of-unnormalized-means correlation limit. -/
+theorem translated_window_product_mixing_inconsistent
+    {X : Type*} [MeasurableSpace X]
+    (μ : Measure X) (σ : ℝ → X → X) (height : X → ℝ)
+    (hheight : Measurable height)
+    (hfinite : μ {x | |height x| ≤ 1} < ⊤)
+    (hpos : 0 < μ {x | |height x| ≤ 1})
+    (htranslate : ∀ t x, height (σ t x) = height x + t)
+    (hmixing : ∀ (f g : X → ℂ), Integrable f μ → Integrable g μ →
+      Tendsto
+        (fun t => ∫ x, f (σ t x) * starRingEnd ℂ (g x) ∂μ)
+        atTop
+        (nhds ((∫ x, f x ∂μ) * starRingEnd ℂ (∫ x, g x ∂μ)))) :
+    False := by
+  let A : Set X := {x | |height x| ≤ 1}
+  let f : X → ℂ := A.indicator (fun _ ↦ 1)
+  have hA_meas : MeasurableSet A := hheight.norm measurableSet_Iic
+  have hf : Integrable f μ := by
+    change Integrable (A.indicator (fun _ ↦ (1 : ℂ))) μ
+    rw [integrable_indicator_iff hA_meas]
+    exact integrableOn_const (C := (1 : ℂ)) hfinite.ne
+  have hcorr_zero : ∀ t : ℝ, 2 < t →
+      ∫ x, f (σ t x) * starRingEnd ℂ (f x) ∂μ = 0 := by
+    intro t ht
+    apply integral_eq_zero_of_ae
+    exact Eventually.of_forall fun x ↦ by
+      by_cases hx : x ∈ A
+      · have hflow_not : σ t x ∉ A := by
+          intro hflow
+          have hx_lower : -1 ≤ height x := (abs_le.mp hx).1
+          have hflow_upper : height (σ t x) ≤ 1 := (abs_le.mp hflow).2
+          rw [htranslate] at hflow_upper
+          linarith
+        change (if σ t x ∈ A then 1 else 0) *
+          starRingEnd ℂ (if x ∈ A then 1 else 0) = 0
+        simp [hflow_not, hx]
+      · change (if σ t x ∈ A then 1 else 0) *
+          starRingEnd ℂ (if x ∈ A then 1 else 0) = 0
+        simp [hx]
+  have htend_zero : Tendsto
+      (fun t ↦ ∫ x, f (σ t x) * starRingEnd ℂ (f x) ∂μ)
+      atTop (nhds 0) := by
+    exact tendsto_atTop_of_eventually_const (i₀ := 3) fun t ht ↦
+      hcorr_zero t (by linarith)
+  have hmix := hmixing f f hf hf
+  have htarget_zero :
+      (∫ x, f x ∂μ) * starRingEnd ℂ (∫ x, f x ∂μ) = 0 :=
+    (tendsto_nhds_unique htend_zero hmix).symm
+  have hintegral : ∫ x, f x ∂μ = (μ.real A : ℂ) := by
+    simp [f, hA_meas]
+    change ((μ.real A : ℂ) * (1 : ℂ)) = (μ.real A : ℂ)
+    ring
+  have hreal_pos : 0 < μ.real A :=
+    ENNReal.toReal_pos hpos.ne' hfinite.ne
+  rw [hintegral] at htarget_zero
+  norm_num at htarget_zero
+  exact hreal_pos.ne' htarget_zero
+
+/-- The fields of `AdeleClassSpaceData` are mutually inconsistent.  The proof
+uses only measurable proper-height windows, their positive finite Haar mass,
+height translation, and the probability-style mixing field. -/
+theorem no_AdeleClassSpaceData (X : Type*) [inst : AdeleClassSpaceData X] : False := by
+  apply translated_window_product_mixing_inconsistent
+    (μ := inst.haarMeasure)
+    (σ := fun t x => inst.scalingFlow t x)
+    (height := inst.heightFn)
+  · exact inst.heightFn_measurable
+  · haveI := inst.isHaar
+    exact (inst.heightFn_compact 1).measure_lt_top
+  · obtain ⟨c, hc, hvolume⟩ := inst.heightFn_volume_growth
+    have hle : ENNReal.ofReal c ≤
+        inst.haarMeasure {x : X | |inst.heightFn x| ≤ 1} := by
+      simpa using hvolume 1 le_rfl
+    exact lt_of_lt_of_le (ENNReal.ofReal_pos.mpr hc) hle
+  · exact inst.heightFn_scalingFlow
+  · intro f g hf hg
+    exact inst.scalingFlow_mixing f g hf hg
+
+theorem AdeleClassSpaceData_isEmpty (X : Type*) : IsEmpty (AdeleClassSpaceData X) := by
+  constructor
+  intro inst
+  letI : AdeleClassSpaceData X := inst
+  exact no_AdeleClassSpaceData X
 
 /-- **Haar measure invariance from the AdeleClassSpaceData class.** -/
 theorem haar_invariant_from_class (X : Type*) [inst : AdeleClassSpaceData X] (t : ℝ) :
