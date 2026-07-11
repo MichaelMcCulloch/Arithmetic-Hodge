@@ -131,6 +131,14 @@ def Mixing {X : Type*} [MeasurableSpace X] (σ : ℝ → X → X)
     Filter.Tendsto (fun t => ∫ x, f (σ t x) * starRingEnd ℂ (g x) ∂μ)
       Filter.atTop (nhds ((∫ x, f x ∂μ) * starRingEnd ℂ (∫ x, g x ∂μ)))
 
+/-- With no normalization or nontriviality condition on the measure, the
+current mixing predicate is always witnessed by the zero measure. -/
+theorem mixing_zero_measure {X : Type*} [MeasurableSpace X]
+    (σ : ℝ → X → X) :
+    Mixing σ (0 : MeasureTheory.Measure X) := by
+  intro f g hf hg
+  simp
+
 -- ============================================================
 -- Step A: PNT → Spectral Gap
 -- ============================================================
@@ -146,9 +154,12 @@ def Mixing {X : Type*} [MeasurableSpace X] (σ : ℝ → X → X)
     This is because each eigenvalue l₀ of D corresponds to a character
     |·|^{il₀} in L²(X, μ), and the PNT excludes all such characters.
 
-    SORRY: Translation from zeta nonvanishing to spectral projections.
-    Requires: Fourier analysis on L²(X, μ), identification of characters
-    with spectral projections of the scaling flow generator. -/
+    This statement is false with its present quantifiers: `sc` is arbitrary
+    and is not connected to `X`, its scaling flow, or zeta.  For example, a
+    one-dimensional evaluation calculus has an atom even though the PNT
+    premise holds.  A correct theorem must quantify a Koopman realization and
+    identify `D` as its scaling generator before using Fourier analysis to
+    connect characters with spectral projections. -/
 theorem zeta_nonvanishing_gives_spectral_gap
     (X : Type*) [inst : Adelic.AdeleClassSpaceData X]
     {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
@@ -314,14 +325,14 @@ theorem spectral_gap_gives_mixing
     The regularized trace Tr_Λ(h(D_Λ)) differs from W(h) by boundary
     terms where x or y is near ∂{|x| ≤ Λ}.
 
-    Mixing says: K_h(x,y) decays as |x-y| → ∞.
-    Boundary volume grows polynomially. Kernel decays exponentially.
-    Therefore: |Tr_Λ(h(D_Λ)) - W(h)| ≤ C/Λ.
-
-    Uses `approximate_detailed_balance` (PROVED, gives O(1/Λ) bound).
-
-    SORRY: Conversion of approximate_detailed_balance into trace convergence.
-    Requires: kernel estimates from mixing + boundary volume estimates. -/
+    The present statement is false as parameterized.  Its trace term is
+    independent of `Λ`, so the displayed `O(1/Λ)` conclusion is equivalent to
+    exact trace equality (`boundary_control_iff_eq` below).  Moreover `sc` and
+    `basis` are unrelated to `σ` and `μ`, and `mixing_zero_measure` shows that
+    the mixing premise can be vacuous.  A sound version needs a `Λ`-dependent
+    regularized trace, an explicit Koopman/kernel identification, and a
+    quantitative boundary estimate; qualitative mixing alone supplies no
+    `O(1/Λ)` rate. -/
 theorem mixing_controls_boundary
     (X : Type*) [inst : Adelic.AdeleClassSpaceData X]
     (h : ℝ → ℝ) (hcont : Continuous h)
@@ -365,6 +376,17 @@ theorem trace_eq_weil_of_boundary_control
   have h2 : C / (2 * C / d) = d / 2 := by field_simp
   linarith
 
+/-- A positive `C / Λ` bound for a quantity independent of `Λ` is exactly
+equality, not an intermediate convergence estimate. -/
+theorem boundary_control_iff_eq (traceVal weilVal : ℝ) :
+    (∃ (C : ℝ), 0 < C ∧ ∀ (Λ : ℝ), 0 < Λ →
+      ‖traceVal - weilVal‖ ≤ C / Λ) ↔ traceVal = weilVal := by
+  constructor
+  · exact trace_eq_weil_of_boundary_control traceVal weilVal
+  · intro h
+    refine ⟨1, zero_lt_one, fun Λ hΛ => ?_⟩
+    simp [h, le_of_lt hΛ]
+
 -- ============================================================
 -- Step E: Assembly — The Resolvent Computation Chain
 -- ============================================================
@@ -379,11 +401,10 @@ theorem trace_eq_weil_of_boundary_control
     3. Mixing → boundary control (O(1/Λ))
     4. Boundary control → trace = Weil (squeezing, PROVED)
 
-    The sorry's encode:
-    - Step A: PNT → spectral gap (translation, not new math)
-    - Step B: RAGE theorem (standard functional analysis, ~60 lines)
-    - Step C: Mixing → boundary control (kernel estimates)
-    None is the Riemann Hypothesis. Their combination is the trace formula. -/
+    The unresolved Step A and Step C statements are currently malformed as
+    documented above; they are not merely missing translations or kernel
+    estimates.  Their intended replacements require a common Koopman model and
+    a genuinely cutoff-dependent trace. -/
 theorem resolvent_spectral_trace_eq_weil
     (X : Type*) [inst : Adelic.AdeleClassSpaceData X]
     (h : ℝ → ℝ) (hcont : Continuous h)
