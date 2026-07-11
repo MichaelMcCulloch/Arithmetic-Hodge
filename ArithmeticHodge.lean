@@ -58,6 +58,7 @@ import ArithmeticHodge.Analysis.EntireFunction.Order
 import ArithmeticHodge.Analysis.EntireFunction.Hadamard
 import ArithmeticHodge.Analysis.ZetaProduct
 import ArithmeticHodge.Analysis.ZetaFunctionalLogDerivative
+import ArithmeticHodge.Analysis.MultiplicativeWeilXiBoundary
 import ArithmeticHodge.Analysis.MultiplicativeWeilZeros
 import ArithmeticHodge.Analysis.MultiplicativeWeilCriterion
 import ArithmeticHodge.Analysis.MultiplicativeWeilMellinFourier
