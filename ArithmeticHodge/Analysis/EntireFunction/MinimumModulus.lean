@@ -78,4 +78,18 @@ theorem canonicalProduct_exists_good_radius
     hsumm (2 * r) (4 * r) hwidth
   exact ⟨R, hR.1, hR.2, hsep⟩
 
+/-- The selected radius gives uniform geometric separation on the whole
+    sphere, by the reverse triangle inequality. -/
+theorem canonicalProduct_exists_good_sphere
+    (zeros : ℕ → ℂ) (α : ℝ)
+    (hsumm : Summable (fun n => ‖zeros n‖⁻¹ ^ α)) :
+    ∃ R₀ : ℝ, 0 < R₀ ∧ ∀ r ≥ R₀, ∃ R : ℝ,
+      2 * r ≤ R ∧ R ≤ 4 * r ∧
+      ∀ z : ℂ, ‖z‖ = R → ∀ n, ‖zeros n‖⁻¹ ^ α < ‖z - zeros n‖ := by
+  obtain ⟨R₀, hR₀, hgood⟩ := canonicalProduct_exists_good_radius zeros α hsumm
+  refine ⟨R₀, hR₀, fun r hr => ?_⟩
+  obtain ⟨R, hR_lower, hR_upper, hsep⟩ := hgood r hr
+  refine ⟨R, hR_lower, hR_upper, fun z hz n => (hsep n).trans_le ?_⟩
+  simpa [hz] using abs_norm_sub_norm_le z (zeros n)
+
 end ArithmeticHodge.Analysis.EntireFunction
