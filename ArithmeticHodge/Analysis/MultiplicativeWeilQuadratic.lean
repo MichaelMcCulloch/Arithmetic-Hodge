@@ -22,7 +22,7 @@ noncomputable section
 private def quadraticParametricKernel (g : BombieriTest) (p y : ℝ) : ℂ :=
   g (-p * y) * starRingEnd ℂ (g (-y))
 
-private def quadraticRatioSet (g : BombieriTest) : Set ℝ :=
+def quadraticRatioSet (g : BombieriTest) : Set ℝ :=
   (fun p : ℝ × ℝ ↦ p.1 / p.2) '' (tsupport g ×ˢ tsupport g)
 
 private theorem quadraticRatioSet_isCompact (g : BombieriTest) :
@@ -136,18 +136,22 @@ theorem bombieri_autocorrelation_hasCompactSupport (g : BombieriTest) :
   HasCompactSupport.intro (quadraticRatioSet_isCompact g)
     fun _x hx ↦ autocorrelation_eq_zero_of_not_mem_ratio g hx
 
-/-- The autocorrelation's topological support remains in `(0,∞)`. -/
-theorem bombieri_autocorrelation_tsupport_subset (g : BombieriTest) :
-    tsupport (autocorrelation (g : ℝ → ℂ)) ⊆ Ioi 0 := by
+/-- The support of the multiplicative autocorrelation consists of ratios of
+points from the support of the original test. -/
+theorem bombieri_autocorrelation_tsupport_subset_ratio (g : BombieriTest) :
+    tsupport (autocorrelation (g : ℝ → ℂ)) ⊆ quadraticRatioSet g := by
   have hsupp : Function.support (autocorrelation (g : ℝ → ℂ)) ⊆
       quadraticRatioSet g := by
     intro x hx
     by_contra hratio
     exact hx (autocorrelation_eq_zero_of_not_mem_ratio g hratio)
-  have hclosure : closure (Function.support (autocorrelation (g : ℝ → ℂ))) ⊆
-      quadraticRatioSet g :=
-    (quadraticRatioSet_isCompact g).isClosed.closure_subset_iff.mpr hsupp
-  exact hclosure.trans (quadraticRatioSet_subset_pos g)
+  exact (quadraticRatioSet_isCompact g).isClosed.closure_subset_iff.mpr hsupp
+
+/-- The autocorrelation's topological support remains in `(0,∞)`. -/
+theorem bombieri_autocorrelation_tsupport_subset (g : BombieriTest) :
+    tsupport (autocorrelation (g : ℝ → ℂ)) ⊆ Ioi 0 := by
+  exact (bombieri_autocorrelation_tsupport_subset_ratio g).trans
+    (quadraticRatioSet_subset_pos g)
 
 /-- The autocorrelation of a Bombieri test bundled as another Bombieri test. -/
 def bombieriQuadraticTest (g : BombieriTest) : BombieriTest :=
@@ -161,6 +165,11 @@ def bombieriQuadraticTest (g : BombieriTest) : BombieriTest :=
 @[simp]
 theorem bombieriQuadraticTest_apply (g : BombieriTest) (x : ℝ) :
     bombieriQuadraticTest g x = autocorrelation (g : ℝ → ℂ) x := rfl
+
+/-- Bundled form of the ratio-support bound. -/
+theorem bombieriQuadraticTest_tsupport_subset_ratio (g : BombieriTest) :
+    tsupport (bombieriQuadraticTest g) ⊆ quadraticRatioSet g :=
+  bombieri_autocorrelation_tsupport_subset_ratio g
 
 /-- At one, the quadratic test is the integral of the squared norm of `g`. -/
 theorem bombieriQuadraticTest_apply_one (g : BombieriTest) :
