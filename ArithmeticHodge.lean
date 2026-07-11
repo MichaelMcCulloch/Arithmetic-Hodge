@@ -35,6 +35,7 @@
 import ArithmeticHodge.Algebra.DistributiveCoupling
 import ArithmeticHodge.Analysis.PoissonSummation
 import ArithmeticHodge.Analysis.HermitianLowTail
+import ArithmeticHodge.Analysis.HilbertTailSchur
 import ArithmeticHodge.Analysis.RationalPosDefCertificate
 import ArithmeticHodge.Analysis.CoerciveRieszCorrection
 import ArithmeticHodge.Analysis.ComplexCoerciveRieszCorrection
