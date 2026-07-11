@@ -2,9 +2,9 @@
 
 Date: 2026-07-11
 
-Status: strict-compiling proof discovery. The exact production boundary is
-proved in a temporary probe and still needs to be split into focused repository
-modules.
+Status: projection, parity, and normalized-mode layers are in production.
+The coefficient-plus-tail decomposition and the clipped-mode pairing extension
+remain to be promoted.
 
 ## Result
 
@@ -218,9 +218,99 @@ Do not land the 1000-line probe as one module. Split it into:
 4. `YoshidaFourierDecomposition.lean`: span equalities and the final
    coefficient-plus-tail decompositions.
 
+The first three layers landed through commits `95e4e5d`, `1f0753d`, and
+`e8ed283`. The fourth is the remaining production port from the strict probe.
+
 The production port must import the existing centered Fourier facade rather
 than duplicating its symmetry or Parseval results, and must instantiate
 `T = 2 * a` behind the centered-circle boundary.
+
+## Exact Hermitian-pairing formula audit
+
+The independent 509-line strict probe
+`/tmp/YoshidaModePairingProbe.lean`, SHA-256
+`08ec08875bfaf46d4bdcf362a36d13bedf9a96a9b874af366390ce1c0e6abef6`,
+checks the normalization and algebra needed to connect the modes to Yoshida's
+source formulas. It passes warning-as-error compilation and a forbidden-proof
+scan; every audited theorem uses only
+`[propext, Classical.choice, Quot.sound]`.
+
+For `a = log 2 / 2`, write
+
+```text
+Delta = exp(a/2) - exp(-a/2),
+q_k   = 2k + 1/2,
+d_n   = 1 + (2*pi*n/a)^2,
+D_kn  = q_k^2 + (pi*n/a)^2,
+y_n   = Im psi(1/4 + pi*i*n/(2a)).
+```
+
+For distinct integers `n,m`, the audited endpoint specialization of (5.16)
+is
+
+```text
+(-1)^(n+m) <chi_n,chi_m>
+  = (4/a) Delta^2 (1 - 4*pi^2*n*m/a^2)/(d_n*d_m)
+    - (1/a) sum_k
+        ((q_k^2 - pi^2*n*m/a^2) exp(-2*a*q_k))/(D_kn*D_km)
+    + (y_n-y_m)/(2*pi*(n-m)).
+```
+
+At this endpoint the prime-power term really vanishes: the only possible
+term is `p = 2, e = 1`, and both relevant sine factors are integer multiples
+of `2*pi`. This is not an omitted hypothesis.
+
+For positive distinct indices, the probe then represents and algebraically
+reduces the odd formula (6.17) to
+
+```text
+(-1)^(n+m) <w_n^odd,w_m^odd>
+  = -(4/a) Delta^2 (8*pi^2*n*m/a^2)/(d_n*d_m)
+    + (2/a) sum_k
+        ((pi^2*n*m/a^2) exp(-2*a*q_k))/(D_kn*D_km)
+    + (y_n-y_m)/(2*pi*(n-m))
+    - (y_n+y_m)/(2*pi*(n+m)),
+```
+
+and the nonzero even formula (6.25) to
+
+```text
+(-1)^(n+m) <w_n^even,w_m^even>
+  = (4/a) Delta^2 2/(d_n*d_m)
+    - (2/a) sum_k
+        (q_k^2 exp(-2*a*q_k))/(D_kn*D_km)
+    + (y_n-y_m)/(2*pi*(n-m))
+    + (y_n+y_m)/(2*pi*(n+m)).
+```
+
+When one even index is zero, the right side has the additional exact factor
+`1/sqrt 2`; the probe proves this from the sesquilinear normalization rather
+than copying it as an unexplained constant. The first slot is consistently
+conjugate-linear and the second is linear.
+
+## Clipped-mode domain boundary
+
+The smooth Bombieri local critical form can now be polarized, but Yoshida's
+`chi_n` is a clipped exponential: it is smooth inside `(-a,a)` and jumps to
+zero outside `[-a,a]`. It belongs to Yoshida's extended space `K(a)`, not to
+the repository's smooth `BombieriTest` type. Consequently the new smooth form
+cannot simply be applied to `yoshidaChi n`, nor may boundedness on ordinary
+circle `L2` be assumed.
+
+The smallest honest analytic bridge is a theorem on an admissible compact-
+support domain containing the clipped exponentials:
+
+```text
+(-1)^(n+m) * B_K(chi_n,chi_m)
+  = eq516QBoundaryRhs(n,m),  n != m.
+```
+
+Once that theorem is available, the already checked odd/even reductions yield
+(6.17), (6.25), and the zero-mode factor. The source-faithful route is to
+define the explicit local distribution form on this larger admissible domain
+and prove agreement with the smooth Bombieri form where both are defined.
+Controlled approximation in the form topology is an alternative, but an
+ordinary-`L2` continuity claim would be false at this level of generality.
 
 ## Remaining critical obligations
 
