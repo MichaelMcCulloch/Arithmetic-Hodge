@@ -189,31 +189,34 @@ coercivity.
 
 ## Honest remaining obligations
 
-The following source-specific results are still missing:
+The ambient clipped form, concrete low modes, digamma intervals, all four
+weighted-tail constants, and the elementary Section 6 substitution have now
+been formalized.  The following source-specific results remain:
 
-1. Realize the full Fourier identity (6.5) for the actual smooth parity tails.
-2. Prove the paired denominator and integral estimate (6.6).
-3. Certify the special-function numerics and substitutions in (6.7), yielding
-   the non-strict coercivity theorems (6.8) and (6.9).
-4. Define the concrete ambient Yoshida Hermitian form and reconcile its
-   Lebesgue-normalized modes with the probability-Haar circle carrier.
-5. Prove pairing identities (5.16), (6.17), and (6.25), including the
+1. Realize the full Fourier multiplier identity (6.5) on the actual clipped
+   odd and even tails.
+2. Prove the paired denominator and integral estimate (6.6), thereby deriving
+   the analytic equation-(6.7) inequality for the concrete clipped form.
+3. Prove pairing identities (5.16), (6.17), and (6.25), including the
    digamma remainder used after (5.11).
-6. Derive the pointwise decays (6.18) and (6.26), thereby discharging the
+4. Derive the pointwise decays (6.18) and (6.26), thereby discharging the
    conditional source-sum hypotheses.
-7. Feed the concrete external low-mode functionals into the form completion,
-   then combine the corrections with the exact finite Gram certificates and
+5. Prove the 55 analytic odd Gram-entry comparisons and construct the even
+   interval-Schur certificate from certified moment enclosures.
+6. Feed the concrete external low-mode functionals into the form completion,
+   combine their Riesz corrections with the finite certificates, and apply
    `HilbertTailSchur`.
+7. Transport the resulting ratio-two positivity theorem to the full Bombieri
+   criterion without adding a support or positivity axiom.
 
 ## Exact Section 6 substitution boundary and source typo
 
-The 426-line strict probe `/tmp/YoshidaCoercivityNumericsProbe.lean` has
-SHA-256
-`8f46260a97c36c98498b51d2570cb8cb8ce3820fe96bd31b72f5c9c7c2083143`.
+The production module
+`ArithmeticHodge/Analysis/YoshidaCoercivityNumerics.lean` was introduced in
+`1798e0c` and fully discharged against a genuine Yoshida `t0` in `60efe6b`.
 It formalizes the exact right side of (6.7), proves the two denominator-domain
-conditions, discharges elementary enclosures for `log 2`, `1/sqrt 2`,
-`A`, `pi^3`, `log pi`, and the oscillatory window, and reduces the final
-substitutions to named source-aligned certificates.
+conditions, and certifies the elementary bounds for `log 2`, `1/sqrt 2`,
+`A`, `pi^3`, `log pi`, and the oscillatory window.
 
 For the odd case it proves that
 
@@ -234,6 +237,24 @@ D_199(t0) <= 101/5000
 
 imply `102/25 <= formValue`.
 
+Those six numerical enclosures are no longer premises.  The production chain
+now proves them in:
+
+```text
+DigammaTrapezoid.lean          exact digamma/trapezoid identity
+TrapezoidalErrorBounds.lean   signed Peano-kernel identities
+DigammaTrapezoidBounds.lean   certified signed error bounds
+DigammaNumericBounds.lean     C(50) and C(700) rational intervals
+YoshidaWeightedTailBounds.lean
+                              the t1 high-frequency tails
+YoshidaTZeroTailBounds.lean   t0 <= 51/25 and both low tails
+```
+
+For `IsYoshidaTZero t0`, the final theorems
+`odd_form_value_ge_of_yoshidaTZero_and_equation6_7` and
+`even_form_value_ge_of_yoshidaTZero_and_equation6_7` retain exactly one
+mathematical premise: the concrete analytic inequality (6.7).
+
 Direct inspection of the primary PDF image at printed p. 305 confirms that
 the paper says both `t1 = 700` and `C = 5.9914...`, where immediately above
 `C = Re psi(1/4 + i t1/2)`. These values are incompatible:
@@ -244,22 +265,22 @@ C(800) = 5.991464482003....
 ```
 
 Thus this is almost certainly a source numerical typo, not OCR or a digamma
-convention change. The strict probe records the rational incompatibility and
-does not encode the printed `5.9914` as a valid lower bound. The honest
+convention change. The production module records the rational
+incompatibility and does not encode the printed `5.9914` as a valid lower
+bound. The honest
 interval `[5.857,5.858]` still has enough margin to prove `4.08` from (6.7).
 
-The remaining substitution certificates are the two digamma intervals, the
-four weighted-tail bounds, the `t0`/Gamma-argument low-interval certificate,
-and the upstream analytic derivation of (6.7). No floating-point value is a
-trusted premise of the Lean results.
+The digamma and weighted-tail certificates are complete.  The remaining
+Section 6 obligation is the upstream analytic derivation of (6.7).  No
+floating-point value is a trusted premise of the Lean results.
 
 ## Digamma intervals by certified trapezoidal error
 
-The 328-line strict probe `/tmp/DigammaTrapezoidProbe.lean`, SHA-256
-`d3cfff1ba8bb210656d483d20fcd3b25e9eb065dbcbc20602a1c960b1b9715d6`,
-establishes a source-independent route to the two missing `C(t)` intervals.
-It passes warning-as-error compilation and a forbidden-proof scan; every
-audited theorem uses only `[propext, Classical.choice, Quot.sound]`.
+The route first prototyped in `/tmp/DigammaTrapezoidProbe.lean` is now a
+four-module production chain.  The exact identity landed in `0f8b3df`, the
+generic signed error identities in `4b75ffd`, the specialized bounds in
+`1e74b31`, and the final rational values in `4916bc5`.  Every audited theorem
+uses only `[propext, Classical.choice, Quot.sound]`.
 
 For
 
@@ -267,7 +288,7 @@ For
 f_y(u) = u / (u^2 + y^2),
 ```
 
-the probe proves the exact derivatives
+the production chain proves the exact derivatives
 
 ```text
 f_y'(u)  = (y^2-u^2)/(u^2+y^2)^2,
@@ -293,11 +314,11 @@ and, for the shifted function `f_y(x+t)`, the decaying bound
 |TrapError(f_y(x+·); [n,n+1])| <= 1/(6*(x+n)^3)
 ```
 
-past the explicit threshold `3*y^2 <= (x+n)^2`. The probe proves that the
-entire shifted trapezoidal-error series is summable by comparison with the
-`p = 3` series.
+past the explicit threshold `3*y^2 <= (x+n)^2`. It also proves that the entire
+shifted trapezoidal-error series is summable by comparison with the `p = 3`
+series.
 
-The exact analytic identity targeted next is
+The exact analytic identity now proved is
 
 ```text
 Re psi(x+i*y)
@@ -305,21 +326,17 @@ Re psi(x+i*y)
       - sum_{n=0}^infinity TrapError(f_y(x+·); [n,n+1]).
 ```
 
-It follows from the already formalized digamma partial-fraction series,
-`tendsto_harmonic_sub_log`, the elementary antiderivative
-`log((x+t)^2+y^2)/2`, and telescoping adjacent trapezoidal errors. This limit
-identity, explicit finite-head evaluation, a rational `p = 3` tail bound, and
-rational logarithm enclosures remain to be formalized. The proved error scale
-is already sufficient at `x = 1/4`, `y = 25` and `y = 350`; no complex
-Stirling remainder or trusted floating-point digamma oracle is required.
+It is combined with explicit finite-head evaluation, a rational cubic tail,
+and rational logarithm enclosures at `x = 1/4`, `y = 25` and `y = 350`.
+No complex Stirling remainder or trusted floating-point digamma oracle is
+used.
 
 ## Recommended production order
 
-1. Promote generic tail-series lemmas and one canonical `C1/C2` certificate
-   module.
-2. Prove the concrete parity multiplier and certified coercivity numerics
-   (6.5)--(6.9).
-3. Prove concrete mode pairings and decays (5.16), (6.17)--(6.18), and
+1. Prove the concrete parity multiplier and analytic estimate (6.5)--(6.7)
+   on `YoshidaClippedSmooth`.
+2. Prove concrete mode pairings and decays (5.16), (6.17)--(6.18), and
    (6.25)--(6.26).
+3. Certify the odd Gram comparisons and the even interval-Schur input box.
 4. Instantiate only the external-low-mode Riesz corrections, then assemble
    the odd and even Schur complements.

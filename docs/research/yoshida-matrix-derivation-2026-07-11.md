@@ -2,7 +2,8 @@
 
 Date: 2026-07-11
 
-Status: research result with a strict-compiling exact algebraic certificate.
+Status: exact odd algebraic certificate and generic comparison bridge are in
+production; analytic Gram-entry enclosures and the even certificate remain.
 This note does not prove Yoshida positivity or RH: analytic entry enclosures,
 tail estimates, and the comparison from the true Gram matrix remain open
 formal obligations.
@@ -156,36 +157,30 @@ unit-lower `LDL^T` factorization has positive pivots
 32550872422740888070024259/45932018999337042392147584.
 ```
 
-The complete matrix, unit-lower factor, and pivots currently live in the
-strict probe `/tmp/YoshidaMatrixDerivationProbe.lean`, SHA-256
+The complete matrix, unit-lower factor, and pivots now live in
+`ArithmeticHodge/Analysis/YoshidaOddComparisonCertificate.lean`, committed
+as `b224964`.  The original discovery probe was
+`/tmp/YoshidaMatrixDerivationProbe.lean`, SHA-256
 `ee408119554084877e804bb7206ee439ee8017cd089b8a45dfd8400fb2f029ef`.
-It proves
+Production proves both
 
 ```lean
-theorem yoshidaOddComparison10Certificate : Matrix.PosDef
+theorem yoshidaOddComparison10_posDef_real : Matrix.PosDef
+    ((Rat.castHom ℝ).mapMatrix yoshidaOddComparison10)
+
+theorem yoshidaOddComparison10_posDef_complex : Matrix.PosDef
     ((Rat.castHom ℂ).mapMatrix yoshidaOddComparison10)
 ```
 
-using production `rationalLDL_posDef_complex`. Root independently ran
-
-```text
-lake env lean -DwarningAsError=true /tmp/YoshidaMatrixDerivationProbe.lean
-```
-
-with exit zero. The theorem depends only on
+using the production rational `LDLᴴ` bridges.  The exact payload, triangular
+unit proof, positive pivots, and factorization have all passed independent
+review.  Both theorems depend only on
 `[propext, Classical.choice, Quot.sound]`.
 
-The existing certificate casts the rational matrix to `ℂ`, while the generic
-absolute-entry comparison naturally consumes a real matrix. A separate strict
-prototype `/tmp/RationalRealBridgeProbe.lean` now proves the analogous
-`rationalLDL_posDef_real` theorem after importing
-`Mathlib.Data.Real.StarOrdered`; it also uses only the standard three axioms.
-The production certificate should therefore expose both the real and complex
-positive-definiteness results from the same exact `A/L/d` payload.
-
-The next production task must copy this payload into a tracked module, add the
-real rational-LDL bridge, and replay both strict proofs; the `/tmp` locations
-are not durable artifacts.
+The real rational-LDL bridge landed in `ad1489e`.  The generic theorem
+`Matrix.posDef_of_abs_entry_comparison`, committed in `a2ed0ac`, consumes the
+real certificate and transfers it to a Hermitian complex Gram matrix once
+the 55 analytic entry bounds are proved.
 
 ## Exact remaining odd comparison obligations
 
@@ -216,8 +211,8 @@ enclosures should therefore target `10^-6` when practical.
 
 ## Formal work order
 
-1. Promote the exact odd `A/L/d` payload into a tracked Lean module.
-2. Prove the generic absolute-entry comparison theorem.
+1. ~~Promote the exact odd `A/L/d` payload into a tracked Lean module.~~
+2. ~~Prove the generic absolute-entry comparison theorem.~~
 3. Formalize sound rational interval arithmetic and interval-Schur
    elimination for the even block.
 4. Prove certified `S_n,D_n` enclosures using removable integrands and exact
@@ -226,5 +221,5 @@ enclosures should therefore target `10^-6` when practical.
 6. Combine these with the separately reviewed tail coercivity, coupling, and
    Riesz-correction theorems.
 
-Until steps 2--6 compile, the exact odd certificate is an algebraic milestone,
+Until steps 3--6 compile, the exact odd certificate is an algebraic milestone,
 not a proof of Yoshida ratio-two positivity or RH.
