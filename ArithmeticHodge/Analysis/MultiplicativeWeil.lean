@@ -574,7 +574,6 @@ theorem rh_implies_bombieri_nonneg
 
 The module does not hide the following RH-equivalent work:
 
-* construction of the bundled quadratic convolution on `BombieriTest`;
 * Fubini for the quadratic convolution at every zeta zero;
 * an exhaustive analytic-multiplicity zero enumeration;
 * the concrete prime/archimedean Bombieri functional and explicit formula;
