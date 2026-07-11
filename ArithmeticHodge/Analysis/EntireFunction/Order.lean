@@ -118,7 +118,7 @@ set_option autoImplicit false in
     We use `circleAverage_congr_codiscreteWithin` to replace `log ‖f ·‖` with a
     function that is pointwise bounded and agrees a.e. -/
 private lemma circleAverage_log_norm_le_log_maxModulus (f : ℂ → ℂ) (hf : Differentiable ℂ f)
-    (hf0 : f 0 ≠ 0) (r : ℝ) (hr : 0 < r) :
+    (hf_ne : ¬ f = 0) (r : ℝ) (hr : 0 < r) :
     circleAverage (Real.log ‖f ·‖) 0 r ≤ Real.log (maxModulus f r) := by
   have hf_an : AnalyticOnNhd ℂ f Set.univ := analyticOnNhd_univ_iff_differentiable.mpr hf
   -- Define g that agrees with log ‖f ·‖ where f ≠ 0 and is ≤ log(maxModulus) everywhere
@@ -137,12 +137,10 @@ private lemma circleAverage_log_norm_le_log_maxModulus (f : ℂ → ℂ) (hf : D
   -- g agrees with log ‖f ·‖ codiscretely on the sphere
   -- (they differ only at zeros of f, which form a codiscrete set)
   have hf_codiscrete : f ⁻¹' {0}ᶜ ∈ Filter.codiscreteWithin (Metric.sphere (0 : ℂ) |r|) := by
-    apply Filter.codiscreteWithin.mono Metric.sphere_subset_closedBall
-    have hcb : AnalyticOnNhd ℂ f (Metric.closedBall 0 |r|) :=
-      hf_an.mono (Set.subset_univ _)
-    exact AnalyticOnNhd.preimage_zero_mem_codiscreteWithin hcb hf0
-      (Metric.mem_closedBall_self (abs_nonneg r))
-      (Convex.isConnected (convex_closedBall 0 |r|) ⟨0, Metric.mem_closedBall_self (abs_nonneg r)⟩)
+    have hglobal : ∀ᶠ z in Filter.codiscreteWithin (Set.univ : Set ℂ), f z ≠ 0 :=
+      (hf_an.eqOn_zero_or_eventually_ne_zero_of_preconnected isPreconnected_univ).resolve_left
+        (fun hzero => hf_ne (funext fun z => hzero (Set.mem_univ z)))
+    exact hglobal.filter_mono (Filter.codiscreteWithin.mono (Set.subset_univ _))
   have hcongr : (Real.log ‖f ·‖) =ᶠ[Filter.codiscreteWithin (Metric.sphere (0 : ℂ) |r|)] g := by
     filter_upwards [hf_codiscrete] with z hz
     -- hz : z ∈ f ⁻¹' {0}ᶜ, i.e., f z ≠ 0
@@ -162,6 +160,35 @@ private lemma circleAverage_log_norm_le_log_maxModulus (f : ℂ → ℂ) (hf : D
         · exact hg_le
 
 set_option autoImplicit false in
+/-- Jensen's upper bound using the nonzero trailing coefficient at the origin.
+    This version also applies when `f 0 = 0`. -/
+private lemma jensen_zero_count_le_log_max_of_ne (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+    (hf_ne : ¬ f = 0) (r : ℝ) (hr : 0 < r) :
+    integratedZeroCount f r ≤ Real.log (maxModulus f r) -
+      Real.log ‖meromorphicTrailingCoeffAt f 0‖ := by
+  unfold integratedZeroCount
+  have hf_an : AnalyticOnNhd ℂ f Set.univ := analyticOnNhd_univ_iff_differentiable.mpr hf
+  have hf_mer : Meromorphic f := fun x => (hf_an x (Set.mem_univ x)).meromorphicAt
+  have hJensen :=
+    ValueDistribution.logCounting_zero_sub_logCounting_top_eq_circleAverage_sub_const
+      hf_mer (ne_of_gt hr)
+  have hdiv_nn : (0 : ℂ → ℤ) ≤ divisor f Set.univ :=
+    (hf_an.meromorphicNFOn.divisor_nonneg_iff_analyticOnNhd).mpr hf_an
+  have hno_poles : ValueDistribution.logCounting f (⊤ : WithTop ℂ) r = 0 := by
+    rw [ValueDistribution.logCounting_top]
+    have hneg_zero : (divisor f Set.univ)⁻ = 0 := by
+      ext z
+      exact sup_eq_right.mpr (neg_nonpos.mpr (hdiv_nn z))
+    rw [hneg_zero]
+    simp [Function.locallyFinsuppWithin.logCounting]
+  have hkey : ValueDistribution.logCounting f (0 : ℂ) r =
+      circleAverage (Real.log ‖f ·‖) 0 r -
+        Real.log ‖meromorphicTrailingCoeffAt f 0‖ := by
+    simpa only [Pi.sub_apply, hno_poles, sub_zero] using hJensen
+  rw [hkey]
+  linarith [circleAverage_log_norm_le_log_maxModulus f hf hf_ne r hr]
+
+set_option autoImplicit false in
 /-- **Jensen's formula** relates the integrated zero count to the average
     of log|f| on circles:
 
@@ -178,39 +205,11 @@ set_option autoImplicit false in
 theorem jensen_zero_count_le_log_max (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf0 : f 0 ≠ 0) (r : ℝ) (hr : 0 < r) :
     integratedZeroCount f r ≤ Real.log (maxModulus f r) - Real.log ‖f 0‖ := by
-  unfold integratedZeroCount
-  -- Step 1: Establish analytic/meromorphic hypotheses
   have hf_an : AnalyticOnNhd ℂ f Set.univ := analyticOnNhd_univ_iff_differentiable.mpr hf
-  have hf_mer : Meromorphic f := fun x => (hf_an x (Set.mem_univ x)).meromorphicAt
-  -- Step 2: For entire f with f 0 ≠ 0, meromorphicTrailingCoeffAt f 0 = f 0
   have htrailing : meromorphicTrailingCoeffAt f 0 = f 0 :=
     (hf_an 0 (Set.mem_univ 0)).meromorphicTrailingCoeffAt_of_ne_zero hf0
-  -- Step 3: Use the variant of Jensen's formula for ValueDistribution.logCounting
-  have hJensen :=
-    ValueDistribution.logCounting_zero_sub_logCounting_top_eq_circleAverage_sub_const
-      hf_mer (ne_of_gt hr)
-  -- Step 4: For entire f, logCounting f ⊤ = 0 (no poles)
-  have hdiv_nn : (0 : ℂ → ℤ) ≤ divisor f Set.univ :=
-    (hf_an.meromorphicNFOn.divisor_nonneg_iff_analyticOnNhd).mpr hf_an
-  have hno_poles : ValueDistribution.logCounting f (⊤ : WithTop ℂ) r = 0 := by
-    rw [ValueDistribution.logCounting_top]
-    have hneg_zero : (divisor f Set.univ)⁻ = 0 := by
-      ext z
-      -- Goal: (divisor f Set.univ z)⁻ = 0 (where ⁻ is negPart on ℤ)
-      -- Since divisor ≥ 0 for entire functions, negPart = 0
-      have hz := hdiv_nn z
-      exact sup_eq_right.mpr (neg_nonpos.mpr hz)
-    rw [hneg_zero]
-    simp [Function.locallyFinsuppWithin.logCounting]
-  -- Step 5: Derive logCounting f 0 r = circleAverage - log ‖f 0‖
-  have hkey : ValueDistribution.logCounting f (0 : ℂ) r =
-      circleAverage (Real.log ‖f ·‖) 0 r - Real.log ‖f 0‖ := by
-    have h := hJensen
-    simp only [Pi.sub_apply, hno_poles, sub_zero, htrailing] at h
-    exact h
-  -- Step 6: Bound circleAverage(log‖f‖) ≤ log(maxModulus f r)
-  rw [hkey]
-  linarith [circleAverage_log_norm_le_log_maxModulus f hf hf0 r hr]
+  have hf_ne : ¬ f = 0 := fun h => hf0 (congr_fun h 0)
+  simpa only [htrailing] using jensen_zero_count_le_log_max_of_ne f hf hf_ne r hr
 
 /-- The zero count is bounded by the max modulus growth:
     n(f, r) ≤ (1/log 2) · log(M(f, 2r) / |f(0)|)
@@ -417,6 +416,224 @@ theorem zeroCount_le_logMax (f : ℂ → ℂ) (hf : Differentiable ℂ f)
           div_le_div_of_nonneg_right chain hlog2_pos.le
     _ = 1 / Real.log 2 * (Real.log (maxModulus f (2 * r)) - Real.log ‖f 0‖) := by ring
 
+/-- The distinct zeros of a nonzero entire function in a closed ball form a finite set. -/
+private lemma zeroSet_finite (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+    (hf_ne : ¬ f = 0) (R : ℝ) (hR : 0 ≤ R) :
+    Set.Finite {z : ℂ | ‖z‖ ≤ R ∧ f z = 0} := by
+  let D := MeromorphicOn.divisor f Set.univ
+  have hf_an : AnalyticOnNhd ℂ f Set.univ := analyticOnNhd_univ_iff_differentiable.mpr hf
+  have hf_mer : MeromorphicOn f Set.univ := hf_an.meromorphicOn
+  have hzero_div : ∀ z : ℂ, f z = 0 → 1 ≤ D z := by
+    intro z hfz
+    rw [show D z = (meromorphicOrderAt f z).untop₀ by
+      simp [D, MeromorphicOn.divisor_apply hf_mer (Set.mem_univ z)]]
+    have han_z := hf_an z (Set.mem_univ z)
+    have hord_ne_zero : meromorphicOrderAt f z ≠ 0 := by
+      intro h
+      exact (han_z.meromorphicNFAt.meromorphicOrderAt_eq_zero_iff.mp h) hfz
+    have hord_pos : 0 < meromorphicOrderAt f z :=
+      lt_of_le_of_ne han_z.meromorphicOrderAt_nonneg (Ne.symm hord_ne_zero)
+    have hord_ne_top : meromorphicOrderAt f z ≠ ⊤ := by
+      rw [meromorphicOrderAt_ne_top_iff_eventually_ne_zero han_z.meromorphicAt]
+      rcases han_z.eventually_eq_zero_or_eventually_ne_zero with h | h
+      · exact (hf_ne (AnalyticOnNhd.eq_of_eventuallyEq hf_an analyticOnNhd_const h)).elim
+      · exact h
+    have h_eq := WithTop.coe_untop₀_of_ne_top hord_ne_top
+    rw [← h_eq] at hord_pos
+    exact_mod_cast hord_pos
+  have hsupp_fin := (Function.locallyFinsuppWithin.toClosedBall R D).finiteSupport
+    (isCompact_closedBall 0 |R|)
+  apply Set.Finite.subset (s := ↑hsupp_fin.toFinset) hsupp_fin.toFinset.finite_toSet
+  intro z hz
+  rw [Finset.mem_coe, hsupp_fin.mem_toFinset, Function.mem_support]
+  have hz_mem : z ∈ Metric.closedBall (0 : ℂ) |R| := by
+    simpa [Metric.mem_closedBall, abs_of_nonneg hR] using hz.1
+  rw [Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+  exact ne_of_gt (lt_of_lt_of_le Int.zero_lt_one (hzero_div z hz.2))
+
+/-- Every nonzero zero in the radius-`r` ball contributes at least `log 2` to
+    the logarithmic counting function at radius `2r`. -/
+private lemma nonzeroZeroCount_mul_log_two_le_integrated (f : ℂ → ℂ)
+    (hf : Differentiable ℂ f) (hf_ne : ¬ f = 0) (r : ℝ) (hr : 1 ≤ r) :
+    (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) * Real.log 2 ≤
+      integratedZeroCount f (2 * r) := by
+  unfold integratedZeroCount
+  change (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) * Real.log 2 ≤
+    ValueDistribution.logCounting f (0 : WithTop ℂ) (2 * r)
+  rw [ValueDistribution.logCounting_zero]
+  set D := (MeromorphicOn.divisor f Set.univ)⁺ with hD_def
+  have hf_an : AnalyticOnNhd ℂ f Set.univ := analyticOnNhd_univ_iff_differentiable.mpr hf
+  have hf_mer : MeromorphicOn f Set.univ := hf_an.meromorphicOn
+  have hdiv_nn : (0 : Function.locallyFinsupp ℂ ℤ) ≤ MeromorphicOn.divisor f Set.univ :=
+    (hf_an.meromorphicNFOn.divisor_nonneg_iff_analyticOnNhd).mpr hf_an
+  have hdiv_nn_z : ∀ z, 0 ≤ MeromorphicOn.divisor f Set.univ z := hdiv_nn
+  have hD_eq : ∀ z, D z = MeromorphicOn.divisor f Set.univ z := by
+    intro z
+    show (MeromorphicOn.divisor f Set.univ z)⁺ = MeromorphicOn.divisor f Set.univ z
+    exact posPart_eq_self.mpr (hdiv_nn_z z)
+  have hD_nn : (0 : Function.locallyFinsupp ℂ ℤ) ≤ D := by
+    intro z
+    rw [hD_eq]
+    exact hdiv_nn_z z
+  set R := 2 * r with hR_def
+  have hR_pos : 0 < R := by linarith
+  have hR_ge_one : 1 ≤ R := by linarith
+  have hlog2_pos : 0 < Real.log 2 := Real.log_pos one_lt_two
+  have hzero_div : ∀ z : ℂ, f z = 0 → 1 ≤ D z := by
+    intro z hfz
+    rw [hD_eq, MeromorphicOn.divisor_apply hf_mer (Set.mem_univ z)]
+    have han_z := hf_an z (Set.mem_univ z)
+    have hord_ne_zero : meromorphicOrderAt f z ≠ 0 := by
+      intro h
+      exact (han_z.meromorphicNFAt.meromorphicOrderAt_eq_zero_iff.mp h) hfz
+    have hord_pos : 0 < meromorphicOrderAt f z :=
+      lt_of_le_of_ne han_z.meromorphicOrderAt_nonneg (Ne.symm hord_ne_zero)
+    have hord_ne_top : meromorphicOrderAt f z ≠ ⊤ := by
+      rw [meromorphicOrderAt_ne_top_iff_eventually_ne_zero han_z.meromorphicAt]
+      rcases han_z.eventually_eq_zero_or_eventually_ne_zero with h | h
+      · exact (hf_ne (AnalyticOnNhd.eq_of_eventuallyEq hf_an analyticOnNhd_const h)).elim
+      · exact h
+    have h_eq := WithTop.coe_untop₀_of_ne_top hord_ne_top
+    rw [← h_eq] at hord_pos
+    exact_mod_cast hord_pos
+  show (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) * Real.log 2 ≤
+    D.logCounting R
+  unfold Function.locallyFinsuppWithin.logCounting
+  simp only [AddMonoidHom.coe_mk, ZeroHom.coe_mk]
+  have hsupp_fin := (Function.locallyFinsuppWithin.toClosedBall R D).finiteSupport
+    (isCompact_closedBall 0 |R|)
+  have habs_R : |R| = R := abs_of_pos hR_pos
+  have hzero_in_supp : ∀ z : ℂ, ‖z‖ ≤ r → f z = 0 → z ∈ hsupp_fin.toFinset := by
+    intro z hz hfz
+    rw [hsupp_fin.mem_toFinset, Function.mem_support]
+    have hz_mem : z ∈ Metric.closedBall (0 : ℂ) |R| := by
+      simp [Metric.mem_closedBall, habs_R]
+      linarith
+    rw [Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+    exact_mod_cast ne_of_gt (lt_of_lt_of_le Int.one_pos (hzero_div z hfz))
+  have hterm_nn : ∀ z ∈ hsupp_fin.toFinset,
+      0 ≤ ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+        Real.log (R * ‖z‖⁻¹) := by
+    intro z hz
+    have hz_mem : z ∈ Metric.closedBall (0 : ℂ) |R| :=
+      Function.locallyFinsuppWithin.toClosedBall_support_subset_closedBall D
+        (hsupp_fin.mem_toFinset.mp hz)
+    rw [Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+    by_cases hz0 : z = 0
+    · simp [hz0]
+    · apply mul_nonneg
+      · exact_mod_cast hD_nn z
+      · apply Real.log_nonneg
+        rw [habs_R, Metric.mem_closedBall, Complex.dist_eq, sub_zero] at hz_mem
+        rw [le_mul_inv_iff₀ (norm_pos_iff.mpr hz0)]
+        simpa using hz_mem
+  have hterm_ge : ∀ z : ℂ, ‖z‖ ≤ r → f z = 0 → z ≠ 0 →
+      Real.log 2 ≤ ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+        Real.log (R * ‖z‖⁻¹) := by
+    intro z hz hfz hz0
+    have hz_mem : z ∈ Metric.closedBall (0 : ℂ) |R| := by
+      simp [Metric.mem_closedBall, habs_R]
+      linarith
+    rw [Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+    have hDz := hzero_div z hfz
+    have hlog_ge : Real.log 2 ≤ Real.log (R * ‖z‖⁻¹) := by
+      apply Real.log_le_log (by positivity)
+      rw [le_mul_inv_iff₀ (norm_pos_iff.mpr hz0)]
+      linarith
+    calc
+      Real.log 2 = 1 * Real.log 2 := by ring
+      _ ≤ ↑(D z) * Real.log (R * ‖z‖⁻¹) := by
+        apply mul_le_mul
+        · exact_mod_cast hDz
+        · exact hlog_ge
+        · exact hlog2_pos.le
+        · exact_mod_cast le_trans (by norm_num : (0 : ℤ) ≤ 1) hDz
+  have hzero_finite : Set.Finite {z : ℂ | ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} :=
+    (zeroSet_finite f hf hf_ne r (by linarith)).subset (fun z hz => ⟨hz.1, hz.2.1⟩)
+  have hcard_eq : Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} =
+      hzero_finite.toFinset.card := Nat.card_eq_card_finite_toFinset hzero_finite
+  have hsubset : hzero_finite.toFinset ⊆ hsupp_fin.toFinset := by
+    intro z hz
+    rw [Set.Finite.mem_toFinset] at hz
+    exact hzero_in_supp z hz.1 hz.2.1
+  have hsum :
+      (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) * Real.log 2 ≤
+        ∑ᶠ z, ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+          Real.log (R * ‖z‖⁻¹) := by
+    rw [hcard_eq]
+    rw [finsum_eq_sum_of_support_subset _ (s := hsupp_fin.toFinset) (fun x hx => by
+      simp only [Finset.mem_coe, hsupp_fin.mem_toFinset, Function.mem_support]
+      intro h
+      exact (Function.mem_support.mp hx) (by simp [h]))]
+    calc
+      (hzero_finite.toFinset.card : ℝ) * Real.log 2 =
+          hzero_finite.toFinset.card • Real.log 2 := by rw [nsmul_eq_mul]
+      _ ≤ ∑ z ∈ hzero_finite.toFinset,
+          ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+            Real.log (R * ‖z‖⁻¹) := by
+        apply Finset.card_nsmul_le_sum
+        intro z hz
+        rw [Set.Finite.mem_toFinset] at hz
+        exact hterm_ge z hz.1 hz.2.1 hz.2.2
+      _ ≤ ∑ z ∈ hsupp_fin.toFinset,
+          ↑(Function.locallyFinsuppWithin.toClosedBall R D z) *
+            Real.log (R * ‖z‖⁻¹) :=
+        Finset.sum_le_sum_of_subset_of_nonneg hsubset (fun z hz _ => hterm_nn z hz)
+  apply le_trans hsum
+  apply le_add_of_nonneg_right
+  exact mul_nonneg (by exact_mod_cast hD_nn 0) (Real.log_nonneg hR_ge_one)
+
+/-- Jensen's bound for an arbitrary nonzero entire function. The additive `1`
+    accounts for the possible zero at the origin. -/
+private lemma zeroCount_le_logMax_add_one (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+    (hf_ne : ¬ f = 0) (r : ℝ) (hr : 1 ≤ r) :
+    (zeroCount f r : ℝ) ≤ 1 + (1 / Real.log 2) *
+      (Real.log (maxModulus f (2 * r)) -
+        Real.log ‖meromorphicTrailingCoeffAt f 0‖) := by
+  let allFinite := zeroSet_finite f hf hf_ne r (by linarith)
+  let nonzeroFinite : Set.Finite {z : ℂ | ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} :=
+    allFinite.subset (fun z hz => ⟨hz.1, hz.2.1⟩)
+  have hzc_eq : zeroCount f r = allFinite.toFinset.card := by
+    unfold zeroCount
+    exact Nat.card_eq_card_finite_toFinset allFinite
+  have hnz_eq : Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} =
+      nonzeroFinite.toFinset.card := Nat.card_eq_card_finite_toFinset nonzeroFinite
+  have hsub : allFinite.toFinset ⊆ insert 0 nonzeroFinite.toFinset := by
+    intro z hz
+    rw [Set.Finite.mem_toFinset] at hz
+    by_cases hz0 : z = 0
+    · simpa [hz0]
+    · apply Finset.mem_insert_of_mem
+      rw [Set.Finite.mem_toFinset]
+      exact ⟨hz.1, hz.2, hz0⟩
+  have hcount_le : (zeroCount f r : ℝ) ≤
+      (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) + 1 := by
+    rw [hzc_eq, hnz_eq]
+    exact_mod_cast (Finset.card_le_card hsub).trans (Finset.card_insert_le 0 _)
+  have h2r : 0 < 2 * r := by linarith
+  have hkey := nonzeroZeroCount_mul_log_two_le_integrated f hf hf_ne r hr
+  have hJensen := jensen_zero_count_le_log_max_of_ne f hf hf_ne (2 * r) h2r
+  have hchain :
+      (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) * Real.log 2 ≤
+        Real.log (maxModulus f (2 * r)) -
+          Real.log ‖meromorphicTrailingCoeffAt f 0‖ := hkey.trans hJensen
+  have hlog2_pos : 0 < Real.log 2 := Real.log_pos one_lt_two
+  have hnz_bound :
+      (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) ≤
+        (1 / Real.log 2) * (Real.log (maxModulus f (2 * r)) -
+          Real.log ‖meromorphicTrailingCoeffAt f 0‖) := by
+    calc
+      (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) =
+          (Nat.card {z : ℂ // ‖z‖ ≤ r ∧ f z = 0 ∧ z ≠ 0} : ℝ) *
+            Real.log 2 / Real.log 2 := by
+              rw [mul_div_cancel_right₀ _ hlog2_pos.ne']
+      _ ≤ (Real.log (maxModulus f (2 * r)) -
+          Real.log ‖meromorphicTrailingCoeffAt f 0‖) / Real.log 2 :=
+        div_le_div_of_nonneg_right hchain hlog2_pos.le
+      _ = (1 / Real.log 2) * (Real.log (maxModulus f (2 * r)) -
+          Real.log ‖meromorphicTrailingCoeffAt f 0‖) := by ring
+  linarith
+
 -- ============================================================
 -- Exponent of Convergence
 -- ============================================================
@@ -611,6 +828,59 @@ private lemma zeroCount_eventually_le_rpow (f : ℂ → ℂ) (hf : Differentiabl
         gcongr; linarith
     _ = C * r ^ α := by ring
 
+/-- The eventual power bound for the distinct zero count without assuming that
+    the origin is not a zero. -/
+private lemma zeroCount_eventually_le_rpow_of_ne (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+    (hf_ne : ¬ f = 0) (α : ℝ) (hα_pos : 0 < α)
+    (hα : entireOrder f < (α : EReal)) :
+    ∃ (C : ℝ) (R₀ : ℝ), 0 < C ∧ 1 ≤ R₀ ∧
+      ∀ r, R₀ ≤ r → (zeroCount f r : ℝ) ≤ C * r ^ α := by
+  obtain ⟨R₁, hR₁⟩ := Filter.eventually_atTop.mp (logMax_eventually_le_rpow f α hα)
+  set K := |Real.log ‖meromorphicTrailingCoeffAt f 0‖|
+  set R₀ := max R₁ (max 2 (K ^ (1 / α)))
+  set C := 1 + 1 / Real.log 2 * (2 ^ α + 1)
+  have hR₀_ge1 : (1 : ℝ) ≤ R₀ := by
+    dsimp [R₀]
+    linarith [le_max_left (2 : ℝ) (K ^ (1 / α)), le_max_right R₁ (max 2 (K ^ (1 / α)))]
+  have hC_pos : 0 < C := by
+    dsimp [C]
+    have hfactor : 0 < 1 / Real.log 2 := div_pos one_pos (Real.log_pos one_lt_two)
+    have hsum : 0 < (2 : ℝ) ^ α + 1 := by positivity
+    positivity
+  refine ⟨C, R₀, hC_pos, hR₀_ge1, fun r hr => ?_⟩
+  have hr_ge1 : (1 : ℝ) ≤ r := hR₀_ge1.trans hr
+  have hr_pos : 0 < r := zero_lt_one.trans_le hr_ge1
+  have hJ := zeroCount_le_logMax_add_one f hf hf_ne r hr_ge1
+  have hR₁_le : R₁ ≤ R₀ := le_max_left _ _
+  have h2r_logM : Real.log (maxModulus f (2 * r)) ≤ 2 ^ α * r ^ α := by
+    calc
+      Real.log (maxModulus f (2 * r)) ≤ (2 * r) ^ α :=
+        hR₁ (2 * r) (by linarith)
+      _ = 2 ^ α * r ^ α := Real.mul_rpow (by norm_num) hr_pos.le
+  have hr_ge_K1α : K ^ (1 / α) ≤ r := by
+    exact (le_max_right (2 : ℝ) _).trans ((le_max_right R₁ _).trans hr)
+  have hrα_ge_K : K ≤ r ^ α := by
+    calc
+      K = (K ^ (1 / α)) ^ α := by
+        rw [← Real.rpow_mul (abs_nonneg _), div_mul_cancel₀ 1 hα_pos.ne', Real.rpow_one]
+      _ ≤ r ^ α := Real.rpow_le_rpow (by positivity) hr_ge_K1α hα_pos.le
+  have hlog_bound : -Real.log ‖meromorphicTrailingCoeffAt f 0‖ ≤ r ^ α := by
+    calc
+      -Real.log ‖meromorphicTrailingCoeffAt f 0‖ ≤
+          |Real.log ‖meromorphicTrailingCoeffAt f 0‖| := neg_le_abs _
+      _ ≤ r ^ α := hrα_ge_K
+  have hone_le : (1 : ℝ) ≤ r ^ α := Real.one_le_rpow hr_ge1 hα_pos.le
+  calc
+    (zeroCount f r : ℝ) ≤ 1 + 1 / Real.log 2 *
+        (Real.log (maxModulus f (2 * r)) -
+          Real.log ‖meromorphicTrailingCoeffAt f 0‖) := hJ
+    _ ≤ 1 + 1 / Real.log 2 * (2 ^ α * r ^ α + r ^ α) := by
+      gcongr
+      linarith
+    _ ≤ r ^ α + 1 / Real.log 2 * (2 ^ α * r ^ α + r ^ α) := by
+      gcongr
+    _ = C * r ^ α := by ring
+
 /-- Summability of `‖z‖⁻ˢ` over nonzero zeros from counting bound + dyadic decomposition. -/
 private lemma summable_rpow_inv_of_counting_bound (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     (hf_ne : ¬ f = 0) (s α : ℝ) (hs : 0 < s) (hαs : α < s) (hα_pos : 0 < α)
@@ -641,7 +911,194 @@ private lemma summable_rpow_inv_of_counting_bound (f : ℂ → ℂ) (hf : Differ
   -- For any R, the ball of radius R contains finitely many zeros.
   -- The counting bound gives an explicit upper bound on the number in each ball.
   -- Dyadic decomposition + geometric series gives the summability.
-  sorry
+  classical
+  let Z := { w : ℂ // f w = 0 ∧ w ≠ 0 }
+  let D := MeromorphicOn.divisor f Set.univ
+  have hf_an : AnalyticOnNhd ℂ f Set.univ := analyticOnNhd_univ_iff_differentiable.mpr hf
+  have hf_mer : MeromorphicOn f Set.univ := hf_an.meromorphicOn
+  have hdiv_nn : ∀ z, 0 ≤ D z := by
+    intro z
+    exact (hf_an.meromorphicNFOn.divisor_nonneg_iff_analyticOnNhd.mpr hf_an) z
+  have hzero_div : ∀ z : ℂ, f z = 0 → 1 ≤ D z := by
+    intro z hfz
+    rw [show D z = (meromorphicOrderAt f z).untop₀ by
+      simp [D, MeromorphicOn.divisor_apply hf_mer (Set.mem_univ z)]]
+    have han_z := hf_an z (Set.mem_univ z)
+    have hord_ne_zero : meromorphicOrderAt f z ≠ 0 := by
+      intro h
+      exact (han_z.meromorphicNFAt.meromorphicOrderAt_eq_zero_iff.mp h) hfz
+    have hord_pos : 0 < meromorphicOrderAt f z :=
+      lt_of_le_of_ne han_z.meromorphicOrderAt_nonneg (Ne.symm hord_ne_zero)
+    have hord_ne_top : meromorphicOrderAt f z ≠ ⊤ := by
+      rw [meromorphicOrderAt_ne_top_iff_eventually_ne_zero han_z.meromorphicAt]
+      rcases han_z.eventually_eq_zero_or_eventually_ne_zero with h | h
+      · have hzero : f = 0 := AnalyticOnNhd.eq_of_eventuallyEq hf_an analyticOnNhd_const h
+        exact (hf_ne hzero).elim
+      · exact h
+    have h_eq := WithTop.coe_untop₀_of_ne_top hord_ne_top
+    rw [← h_eq] at hord_pos
+    exact_mod_cast hord_pos
+  have zero_finite : ∀ (R : ℝ), 0 ≤ R → Set.Finite {z : ℂ | ‖z‖ ≤ R ∧ f z = 0} := by
+    intro R hR
+    have hsupp_fin := (Function.locallyFinsuppWithin.toClosedBall R D).finiteSupport
+      (isCompact_closedBall 0 |R|)
+    apply Set.Finite.subset (s := ↑hsupp_fin.toFinset) hsupp_fin.toFinset.finite_toSet
+    intro z hz
+    rw [Finset.mem_coe, hsupp_fin.mem_toFinset, Function.mem_support]
+    have hz_mem : z ∈ Metric.closedBall (0 : ℂ) |R| := by
+      simpa [Metric.mem_closedBall, abs_of_nonneg hR] using hz.1
+    rw [Function.locallyFinsuppWithin.toClosedBall_eval_within _ hz_mem]
+    exact ne_of_gt (lt_of_lt_of_le Int.zero_lt_one (hzero_div z hz.2))
+  have card_le_zeroCount (u : Finset Z) (R : ℝ) (hR : 0 ≤ R)
+      (huR : ∀ z ∈ u, ‖(z : ℂ)‖ ≤ R) : u.card ≤ zeroCount f R := by
+    let e : Z ↪ ℂ := Function.Embedding.subtype _
+    have hfin := zero_finite R hR
+    have hsub : u.map e ⊆ hfin.toFinset := by
+      intro z hz
+      rw [Finset.mem_map] at hz
+      obtain ⟨w, hw, rfl⟩ := hz
+      rw [Set.Finite.mem_toFinset]
+      exact ⟨huR w hw, w.2.1⟩
+    calc
+      u.card = (u.map e).card := (Finset.card_map e).symm
+      _ ≤ hfin.toFinset.card := Finset.card_le_card hsub
+      _ = zeroCount f R := by
+        unfold zeroCount
+        exact (Nat.card_eq_card_finite_toFinset hfin).symm
+  have hR₀_pos : 0 < R₀ := lt_of_lt_of_le zero_lt_one hR₀
+  have htwo_pos : (0 : ℝ) < 2 := by norm_num
+  have htwo_nonneg : (0 : ℝ) ≤ 2 := htwo_pos.le
+  have hq_pos : 0 < (2 : ℝ) ^ (α - s) := Real.rpow_pos_of_pos htwo_pos _
+  have hq_lt_one : (2 : ℝ) ^ (α - s) < 1 :=
+    Real.rpow_lt_one_of_one_lt_of_neg one_lt_two (sub_neg.mpr hαs)
+  have hgeom : Summable (fun n : ℕ => ((2 : ℝ) ^ (α - s)) ^ n) := by
+    apply summable_geometric_of_norm_lt_one
+    simpa [Real.norm_eq_abs, abs_of_pos hq_pos] using hq_lt_one
+  have small_finite : Set.Finite {z : Z | ‖(z : ℂ)‖ ≤ R₀} := by
+    have hpre := (zero_finite R₀ hR₀_pos.le).preimage
+      (f := fun z : Z => (z : ℂ))
+      (Set.injOn_of_injective Subtype.val_injective)
+    convert hpre using 1
+    ext z
+    constructor
+    · intro hz
+      exact ⟨hz, z.2.1⟩
+    · exact fun hz => hz.1
+  let small : Finset Z := small_finite.toFinset
+  let smallSum : ℝ := ∑ z ∈ small, ‖(z : ℂ)‖⁻¹ ^ s
+  have hsmall_nonneg : 0 ≤ smallSum := by
+    apply Finset.sum_nonneg
+    intro z hz
+    positivity
+  have hex (z : Z) : ∃ n : ℕ, ‖(z : ℂ)‖ / R₀ < (2 : ℝ) ^ n :=
+    ((tendsto_pow_atTop_atTop_of_one_lt one_lt_two).eventually_gt_atTop
+      (‖(z : ℂ)‖ / R₀)).exists
+  let idx : Z → ℕ := fun z => Nat.find (hex z)
+  have hidx_upper (z : Z) : ‖(z : ℂ)‖ < R₀ * (2 : ℝ) ^ idx z := by
+    have h := Nat.find_spec (hex z)
+    simpa [mul_comm] using (div_lt_iff₀ hR₀_pos).mp h
+  have hidx_lower (z : Z) (n : ℕ) (hz : idx z = n + 1) :
+      R₀ * (2 : ℝ) ^ n ≤ ‖(z : ℂ)‖ := by
+    have hz' : Nat.find (hex z) = n + 1 := by simpa [idx] using hz
+    have hn : n < Nat.find (hex z) := by omega
+    have h := not_lt.mp (Nat.find_min (hex z) hn)
+    simpa [mul_comm] using (le_div_iff₀ hR₀_pos).mp h
+  let q : ℝ := (2 : ℝ) ^ (α - s)
+  let A : ℝ := C * R₀ ^ (α - s) * (2 : ℝ) ^ α
+  let bound : ℕ → ℝ
+    | 0 => smallSum
+    | n + 1 => A * q ^ n
+  have hA_nonneg : 0 ≤ A := by
+    dsimp [A]
+    positivity
+  have hbound_nonneg : ∀ n, 0 ≤ bound n := by
+    intro n
+    cases n with
+    | zero => simpa [bound] using hsmall_nonneg
+    | succ n =>
+        simp only [bound]
+        exact mul_nonneg hA_nonneg (pow_nonneg hq_pos.le _)
+  have hbound_summable : Summable bound := by
+    apply (summable_nat_add_iff 1).mp
+    simpa [bound, q] using hgeom.mul_left A
+  apply summable_of_sum_le
+  · intro z
+    positivity
+  · intro u
+    rw [← Finset.sum_fiberwise_of_maps_to (t := u.image idx)
+      (fun z hz => Finset.mem_image.mpr ⟨z, hz, rfl⟩)
+      (fun z : Z => ‖(z : ℂ)‖⁻¹ ^ s)]
+    calc
+      ∑ n ∈ u.image idx, ∑ z ∈ u with idx z = n, ‖(z : ℂ)‖⁻¹ ^ s
+          ≤ ∑ n ∈ u.image idx, bound n := by
+            apply Finset.sum_le_sum
+            intro n hn
+            cases n with
+            | zero =>
+                apply Finset.sum_le_sum_of_subset_of_nonneg
+                · intro z hz
+                  simp only [Finset.mem_filter] at hz
+                  have hz_lt : ‖(z : ℂ)‖ < R₀ := by
+                    have h := hidx_upper z
+                    rw [hz.2, pow_zero, mul_one] at h
+                    exact h
+                  simp only [small, Set.Finite.mem_toFinset]
+                  exact hz_lt.le
+                · intro z hz hnot
+                  positivity
+            | succ n =>
+                set v := u.filter (fun z => idx z = n + 1)
+                have hv_radius : ∀ z ∈ v,
+                    ‖(z : ℂ)‖ ≤ R₀ * (2 : ℝ) ^ (n + 1) := by
+                  intro z hz
+                  have h := hidx_upper z
+                  rw [(Finset.mem_filter.mp hz).2] at h
+                  exact h.le
+                have hv_card : (v.card : ℝ) ≤
+                    C * (R₀ * (2 : ℝ) ^ (n + 1)) ^ α := by
+                  have hcard : (v.card : ℝ) ≤
+                      (zeroCount f (R₀ * (2 : ℝ) ^ (n + 1)) : ℝ) := by
+                    exact_mod_cast card_le_zeroCount v _ (by positivity) hv_radius
+                  exact le_trans hcard (hcount _ (by
+                    have hp : (1 : ℝ) ≤ (2 : ℝ) ^ (n + 1) := one_le_pow₀ (by norm_num)
+                    calc
+                      R₀ = R₀ * 1 := by ring
+                      _ ≤ R₀ * (2 : ℝ) ^ (n + 1) :=
+                        mul_le_mul_of_nonneg_left hp hR₀_pos.le))
+                have hterm : ∀ z ∈ v,
+                    ‖(z : ℂ)‖⁻¹ ^ s ≤ (R₀ * (2 : ℝ) ^ n) ^ (-s) := by
+                  intro z hz
+                  have hz_lower := hidx_lower z n (Finset.mem_filter.mp hz).2
+                  rw [Real.inv_rpow (norm_nonneg (z : ℂ)), ← Real.rpow_neg (norm_nonneg (z : ℂ))]
+                  exact Real.rpow_le_rpow_of_exponent_nonpos (by positivity) hz_lower (by linarith)
+                calc
+                  ∑ z ∈ u with idx z = n + 1, ‖(z : ℂ)‖⁻¹ ^ s
+                      ≤ v.card • (R₀ * (2 : ℝ) ^ n) ^ (-s) :=
+                        Finset.sum_le_card_nsmul v _ _ hterm
+                  _ = (v.card : ℝ) * (R₀ * (2 : ℝ) ^ n) ^ (-s) := by
+                        rw [nsmul_eq_mul]
+                  _ ≤ C * (R₀ * (2 : ℝ) ^ (n + 1)) ^ α *
+                        (R₀ * (2 : ℝ) ^ n) ^ (-s) := by
+                        gcongr
+                  _ = bound (n + 1) := by
+                    simp only [bound, A, q]
+                    rw [Real.mul_rpow hR₀_pos.le (by positivity),
+                      Real.mul_rpow hR₀_pos.le (by positivity)]
+                    rw [show (((2 : ℝ) ^ (n + 1)) ^ α) = ((2 : ℝ) ^ α) ^ (n + 1) by
+                      rw [← Real.rpow_natCast, ← Real.rpow_mul htwo_nonneg,
+                        mul_comm, Real.rpow_mul htwo_nonneg, Real.rpow_natCast]]
+                    rw [show (((2 : ℝ) ^ n) ^ (-s)) = ((2 : ℝ) ^ (-s)) ^ n by
+                      rw [← Real.rpow_natCast, ← Real.rpow_mul htwo_nonneg,
+                        mul_comm, Real.rpow_mul htwo_nonneg, Real.rpow_natCast]]
+                    rw [pow_succ]
+                    rw [show R₀ ^ (α - s) = R₀ ^ α * R₀ ^ (-s) by
+                      rw [sub_eq_add_neg, Real.rpow_add hR₀_pos]]
+                    rw [show (2 : ℝ) ^ (α - s) = 2 ^ α * 2 ^ (-s) by
+                      rw [sub_eq_add_neg, Real.rpow_add htwo_pos]]
+                    rw [mul_pow]
+                    ring
+      _ ≤ ∑' n, bound n :=
+        hbound_summable.sum_le_tsum _ (fun n hn => hbound_nonneg n)
 
 /-- The exponent of convergence of the zeros of f:
     λ(f) = inf { σ > 0 : Σ |z_n|^{-σ} < ∞ }
@@ -706,19 +1163,10 @@ theorem zeroExponent_le_order (f : ℂ → ℂ) (hf : Differentiable ℂ f)
     have hα_ereal : entireOrder f < (α : EReal) := by
       rw [← EReal.coe_toReal hne_top hne_bot]
       exact EReal.coe_lt_coe_iff.mpr hα_gt_ρ
-    -- Handle f(0) = 0 case: use translation to reduce to f(0) ≠ 0
-    -- For now, apply the counting bound + summability lemma
-    by_cases hf0 : f 0 ≠ 0
-    · -- f(0) ≠ 0: direct application
-      obtain ⟨C, R₀, hC, hR₀, hcount⟩ :=
-        zeroCount_eventually_le_rpow f hf hf0 α hα_pos hα_ereal
-      exact summable_rpow_inv_of_counting_bound f hf hf_ne s α hs_pos hα_lt_s hα_pos
-        C R₀ hC hR₀ hcount
-    · -- f(0) = 0: translate by z₀ with f(z₀) ≠ 0, apply to g(z) = f(z+z₀)
-      push_neg at hf0
-      -- There exists z₀ with f(z₀) ≠ 0 (since f ≠ 0)
-      -- Define g = f ∘ (· + z₀), apply counting bound to g, transfer to f
-      sorry
+    obtain ⟨C, R₀, hC, hR₀, hcount⟩ :=
+      zeroCount_eventually_le_rpow_of_ne f hf hf_ne α hα_pos hα_ereal
+    exact summable_rpow_inv_of_counting_bound f hf hf_ne s α hs_pos hα_lt_s hα_pos
+      C R₀ hC hR₀ hcount
   rw [← hs_eq]
   exact csInf_le' ⟨by exact_mod_cast hs_pos, s, rfl, hs_summ⟩
 
