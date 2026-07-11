@@ -2,6 +2,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilCriterion
 import ArithmeticHodge.Analysis.MultiplicativeWeilExplicitFormula
 import ArithmeticHodge.Analysis.MultiplicativeWeilLiDominantSeries
 import ArithmeticHodge.Analysis.MultiplicativeWeilLiCutoffTsum
+import ArithmeticHodge.Analysis.MultiplicativeWeilQuadraticReality
 
 /-!
 # Closing the Bombieri converse with Li cutoffs and smoothing
@@ -92,6 +93,18 @@ theorem riemannHypothesis_iff_bombieriNonnegativity_unconditional
   riemannHypothesis_iff_bombieriNonnegativity zeros
     (bombieriZeroSumFormula zeros)
     (bombieriOffCriticalSpectralNegativity zeros)
+
+/-- Since quadratic values are unconditionally real, Bombieri
+nonnegativity is exactly its real scalar inequality. -/
+theorem bombieriNonnegativity_iff_quadratic_re_nonnegative :
+    BombieriNonnegativity ↔
+      ∀ g : BombieriTest,
+        0 ≤ (bombieriFunctional (bombieriQuadraticTest g)).re := by
+  constructor
+  · intro h g
+    exact (h g).2
+  · intro h g
+    exact ⟨bombieriFunctional_bombieriQuadraticTest_im_eq_zero g, h g⟩
 
 /-- Exact real-valued terminal target: RH is equivalent to nonnegativity of
 the concrete Bombieri quadratic functional.  No separate imaginary-part
