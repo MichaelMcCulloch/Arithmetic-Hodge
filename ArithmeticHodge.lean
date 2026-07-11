@@ -50,6 +50,7 @@ import ArithmeticHodge.Analysis.EntireFunction.Order
 import ArithmeticHodge.Analysis.EntireFunction.Hadamard
 import ArithmeticHodge.Analysis.ZetaProduct
 import ArithmeticHodge.Analysis.MultiplicativeWeilZeros
+import ArithmeticHodge.Analysis.MultiplicativeWeilCriterion
 import ArithmeticHodge.Analysis.EntireFunction.CompletedZetaZeroExponent
 import ArithmeticHodge.Analysis.ZetaZeroCount
 import ArithmeticHodge.Analysis.WeilExplicit

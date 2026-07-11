@@ -572,13 +572,14 @@ theorem rh_implies_bombieri_nonneg
 /-!
 ## Remaining analytic boundary
 
-The module does not hide the following RH-equivalent work:
+The downstream criterion does not hide the following genuine analytic work:
 
-* an exhaustive analytic-multiplicity zero enumeration;
-* the concrete prime/archimedean Bombieri functional and explicit formula;
-* strict positivity for nonzero tests, using zero density versus Mellin
-  exponential type;
-* the Li-function truncation and smoothing argument for the converse.
+* the concrete zero-sum explicit formula;
+* the Li-function truncation and smoothing construction of an off-critical
+  negative witness.
+
+Spectral separation (zero density versus Mellin exponential type) is needed
+only for the optional upgrade from semidefinite to strict positivity.
 -/
 
 end
