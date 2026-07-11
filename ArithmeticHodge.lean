@@ -85,6 +85,7 @@ import ArithmeticHodge.Analysis.XiRectangleContourData
 import ArithmeticHodge.Analysis.XiZeroFreeHeight
 import ArithmeticHodge.Analysis.XiContourSequence
 import ArithmeticHodge.Analysis.XiZetaMultiplicityBridge
+import ArithmeticHodge.Analysis.XiZetaZeroEquiv
 import ArithmeticHodge.Analysis.WeilExplicit
 import ArithmeticHodge.Analysis.FourierTransform
 import ArithmeticHodge.Analysis.WeilPositivity
