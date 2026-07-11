@@ -42,6 +42,7 @@ import ArithmeticHodge.Analysis.EntireFunction.MinimumModulus
 import ArithmeticHodge.Analysis.EntireFunction.Order
 import ArithmeticHodge.Analysis.EntireFunction.Hadamard
 import ArithmeticHodge.Analysis.ZetaProduct
+import ArithmeticHodge.Analysis.EntireFunction.CompletedZetaZeroExponent
 import ArithmeticHodge.Analysis.ZetaZeroCount
 import ArithmeticHodge.Analysis.WeilExplicit
 import ArithmeticHodge.Analysis.FourierTransform
