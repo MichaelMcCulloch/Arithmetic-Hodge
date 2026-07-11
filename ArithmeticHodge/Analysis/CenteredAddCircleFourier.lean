@@ -1,3 +1,4 @@
 import ArithmeticHodge.Analysis.CenteredAddCircleFourierBasic
+import ArithmeticHodge.Analysis.CenteredAddCircleFourierProjection
 import ArithmeticHodge.Analysis.CenteredAddCircleFourierSymmetry
 import ArithmeticHodge.Analysis.CenteredAddCircleFourierTail
