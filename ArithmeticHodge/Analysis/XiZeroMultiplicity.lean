@@ -37,4 +37,18 @@ theorem xiZeroMultiplicity_eq_analyticOrderNatAt (z : ℂ) :
     simp
   simp [xiZeroMultiplicity, hdiv]
 
+/-- The meromorphic order of the entire xi function is the integer embedding
+of its natural zero multiplicity. -/
+theorem meromorphicOrderAt_xiFunction_eq_xiZeroMultiplicity (z : ℂ) :
+    meromorphicOrderAt xiFunction z =
+      ((xiZeroMultiplicity z : ℤ) : WithTop ℤ) := by
+  have htop : analyticOrderAt xiFunction z ≠ ⊤ :=
+    (AnalyticOnNhd.analyticOrderAt_eq_top_iff_eq_zero z
+      (fun w => differentiable_xiFunction.analyticAt w)).not.mpr
+        xiFunction_ne_const_zero
+  rw [(differentiable_xiFunction.analyticAt z).meromorphicOrderAt_eq]
+  rw [← Nat.cast_analyticOrderNatAt htop]
+  rw [xiZeroMultiplicity_eq_analyticOrderNatAt]
+  rw [ENat.map_coe]
+
 end ArithmeticHodge.Analysis
