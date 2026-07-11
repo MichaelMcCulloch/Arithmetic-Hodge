@@ -39,6 +39,7 @@ import ArithmeticHodge.Analysis.HilbertTailSchur
 import ArithmeticHodge.Analysis.HermitianFormCompletion
 import ArithmeticHodge.Analysis.RationalPosDefCertificate
 import ArithmeticHodge.Analysis.MatrixAbsEntryComparison
+import ArithmeticHodge.Analysis.YoshidaOddComparisonCertificate
 import ArithmeticHodge.Analysis.CoerciveRieszCorrection
 import ArithmeticHodge.Analysis.ComplexCoerciveRieszCorrection
 import ArithmeticHodge.Analysis.CenteredAddCircleFourier
