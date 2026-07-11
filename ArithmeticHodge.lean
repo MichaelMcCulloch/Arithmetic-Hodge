@@ -37,6 +37,7 @@ import ArithmeticHodge.Analysis.PoissonSummation
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
+import ArithmeticHodge.Analysis.Contour.RectangleWinding
 import ArithmeticHodge.Analysis.WeilDefs
 import ArithmeticHodge.Analysis.MultiplicativeWeil
 import ArithmeticHodge.Analysis.MultiplicativeWeilTranspose
