@@ -255,6 +255,36 @@ theorem xiFunction_zero_iff {s : ℂ} (hre : 0 < s.re) (hre' : s.re < 1) :
 -- Hadamard Product for ξ(s)
 -- ============================================================
 
+/-- Conditional Hadamard factorization for `xiFunction` from its order-one statement.
+
+    This is the strongest conclusion supplied directly by
+    `EntireFunction.hadamard_factorization_order_one`: the polynomial in the exponential is
+    linear, and `xiFunction 0 ≠ 0` forces the origin multiplicity to vanish. The generic
+    factorization theorem does not identify its product genus with `1`, nor does it guarantee
+    that every entry in its zero sequence is nonzero. -/
+theorem xi_hadamard_product_of_order_one (hord : EntireFunction.entireOrder xiFunction = 1) :
+    ∃ (A B : ℂ) (zeros : ℕ → ℂ) (p : ℕ),
+      (∀ n, zeros n ≠ 0 → xiFunction (zeros n) = 0) ∧
+      Summable (fun n => (‖zeros n‖⁻¹) ^ ((p : ℝ) + 1)) ∧
+      ∀ s, xiFunction s =
+        Complex.exp (A + B * s) *
+          ∏' n, EntireFunction.weierstraßElementary p (s / zeros n) := by
+  obtain ⟨m, P, zeros, p, hP_deg, hzeros, hsumm, hfac⟩ :=
+    EntireFunction.hadamard_factorization_order_one xiFunction differentiable_xiFunction
+      xiFunction_ne_const_zero hord
+  have hm : m = 0 := by
+    by_contra hm
+    have h0 := hfac 0
+    rw [xiFunction_zero_val] at h0
+    simp [zero_pow hm] at h0
+  obtain ⟨B, A, hP⟩ := Polynomial.exists_eq_X_add_C_of_natDegree_le_one hP_deg
+  refine ⟨A, B, zeros, p, hzeros, hsumm, fun s => ?_⟩
+  rw [hfac s, hm, pow_zero, one_mul, hP]
+  simp only [map_add, map_mul, Polynomial.aeval_C, Polynomial.aeval_X,
+    Algebra.algebraMap_self_apply]
+  congr 2
+  ring
+
 /-- **Hadamard product for ξ(s).**
 
     ξ(s) = s^m · e^{A+Bs} · ∏_n E₁(s/ρ_n)
@@ -276,13 +306,15 @@ theorem xi_hadamard_product :
       ∀ s, xiFunction s =
         s ^ m * Complex.exp (A + B * s) *
         ∏' n, EntireFunction.weierstraßElementary 1 (s / zeros n) := by
-  -- Proof strategy:
-  -- 1. entireOrder xiFunction = 1 (from completedZeta_order in Order.lean;
-  --    sorry here breaks import cycle — the real proof exists)
-  -- 2. Apply hadamard_factorization_order_one to get (m, P, zeros, p)
-  -- 3. Extract A, B from P (degree ≤ 1)
-  -- 4. Show p = 1 (genus of order-1 function), giving summability exponent 2
-  -- 5. Show all zeros entries are nonzero (ξ has infinitely many zeros)
+  -- BLOCKED on three missing interfaces:
+  -- 1. `entireOrder xiFunction = 1` is not available here. The related theorem
+  --    `completedZeta_order` is in Order.lean, which imports this file.
+  -- 2. `hadamard_factorization_order_one` returns an existential genus `p` but does not expose
+  --    that its implementation chooses `p = floor 1 = 1`.
+  -- 3. Its zero sequence is padded by zero and only satisfies
+  --    `zeros n ≠ 0 → f (zeros n) = 0`; obtaining an everywhere-nonzero sequence requires
+  --    infinitude of the xi zeros and a padding-free reindexing theorem.
+  -- The preceding `xi_hadamard_product_of_order_one` closes the sound part of this chain.
   sorry
 
 /-- The vanishing order of ξ at 0. Expected to be 0 since ξ(0) = 1/2 ≠ 0. -/
