@@ -221,16 +221,18 @@ theorem arithmetic_hodge_index [inst : ArakelovIntersectionTheory ArakelovChowCl
        Arakelov pairing to Weil positivity on autocorrelations.
     2. `weil_criterion_backward` converts Weil positivity to RH.
 
-    The final step currently inherits the unresolved backward direction of
-    the Weil criterion. Moreover, under the class instance the displayed
-    Hodge premise is already available as `neg_semidef`. -/
-theorem hodge_index_implies_RH [inst : ArakelovIntersectionTheory ArakelovChowClass] :
+    The missing converse direction is the explicit `hcriterion` hypothesis.
+    Moreover, under the class instance the displayed Hodge premise is already
+    available as `neg_semidef`. -/
+theorem hodge_index_implies_RH
+    [inst : ArakelovIntersectionTheory ArakelovChowClass]
+    (hcriterion : Analysis.OffCriticalWeilWitness) :
     (∀ α : ArakelovChowClass, arakelovPairing α α ≤ 0) →
     RiemannHypothesis := by
   intro h_hodge
   -- Step 1: Arakelov negativity → Weil positivity (via the bridge axiom)
   have h_weil := inst.arakelov_weil_bridge (fun x => h_hodge x)
   -- Step 2: Weil positivity → RH (via Weil's criterion, backward direction)
-  exact Analysis.weil_criterion_backward h_weil
+  exact Analysis.weil_criterion_backward hcriterion h_weil
 
 end ArithmeticHodge.Arithmetic

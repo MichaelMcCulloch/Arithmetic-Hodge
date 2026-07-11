@@ -389,47 +389,28 @@ theorem exists_autocorrelation_with_negative_value :
 -- Weil Criterion: Forward Direction (RH → Positivity)
 -- ============================================================
 
-/-- **RH implies Weil positivity: unresolved orientation bridge.**
+/-- A correctly oriented explicit-formula obligation for the current additive
+`WeilPositivity` predicate.  The spectral side is `fourierCos f`, the quantity
+known to be nonnegative for autocorrelations. -/
+def FourierOrientedWeilExplicit : Prop :=
+  ∀ (f : ℝ → ℝ), IsAutocorrelation f → Continuous f →
+    (∀ x : ℝ, ‖f x‖ ≤ 1 / (1 + x ^ 2)) → RiemannHypothesis →
+      ∃ zeros : ℕ → ℝ,
+        Summable (fun n => fourierCos f (zeros n)) ∧
+        ∑' n, fourierCos f (zeros n) =
+          weilFunctionalFull f (fourierCos f)
 
-    Under RH, all nontrivial zeros ρ satisfy Re(ρ) = 1/2, so γ_ρ = Im(ρ) is real.
-    For an autocorrelation f = g ∗ g̃, the explicit formula gives:
-      W(f) = Σ_ρ f(γ_ρ) = Σ_ρ (fourierCos f)(γ_ρ)
-
-    By `fourierCos_autocorrelation_nonneg`, each term is ≥ 0.
-    Hence W(f) ≥ 0.
-
-    The current `weil_explicit_formula` sums `f(γ)`, whereas the proved
-    positivity theorem controls `fourierCos f γ`.  These cannot be identified:
-    `exists_autocorrelation_with_negative_value` gives an explicit
-    counterexample to pointwise nonnegativity.  A sound proof needs an explicit
-    formula whose spectral side has the Fourier/Mellin transform in the correct
-    convention. -/
-theorem rh_implies_weil_positivity_from_explicit :
+/-- With the spectral transform on the correct side, RH implies Weil
+positivity from the explicit-formula obligation. -/
+theorem rh_implies_weil_positivity_from_explicit
+    (hexplicit : FourierOrientedWeilExplicit) :
     RiemannHypothesis → WeilPositivity := by
-  intro hRH f hf_auto hf_cont hf_decay
-  -- Apply the explicit formula to f
-  obtain ⟨zeros, hzeros_spec, hsum, hexpl⟩ :=
-    weil_explicit_formula f hf_cont hf_decay hRH
-  -- W(f) = Σ f(γ_ρ) by the explicit formula
+  intro hRH f hf hcont hdecay
+  obtain ⟨zeros, _hsumm, hexpl⟩ := hexplicit f hf hcont hdecay hRH
   rw [← hexpl]
-  -- Each term f(γ_ρ) ≥ 0 for autocorrelations evaluated at real points
-  -- because fourierCos f γ = |ĝ(γ)|² ≥ 0
-  -- For an autocorrelation, f(x) = ∫ g(y) g(y+x) dy
-  -- and when x is real, f(x) = (autocorrelation evaluated at x) ≥ ... actually
-  -- we need: f = autocorrelation ⟹ f(x) ≥ 0 for all x? No, that's not true in general.
-  -- The correct argument: W(f) = Σ fourierCos(f)(γ_ρ) and fourierCos(f) ≥ 0.
-  -- But the explicit formula sums f(γ_ρ), not fourierCos(f)(γ_ρ).
-  -- Actually: the explicit formula says Σ h(γ_ρ) = W(h, fourierCos h)
-  -- where h is the TEST function. For Weil positivity, we need W(f) ≥ 0
-  -- where f is an autocorrelation. The W in WeilPositivity uses fourierCos f.
-  -- So W(f) = weilFunctionalFull f (fourierCos f) = Σ f(γ_ρ) by explicit formula.
-  -- And f(γ_ρ) for an autocorrelation f at a REAL point γ: f(γ) = ∫ g(y)g(y+γ) dy.
-  -- This is not necessarily ≥ 0 for all γ.
-  -- The actual forward direction argument is more subtle: it uses that
-  -- h = fourierCos f is the test function applied to the explicit formula,
-  -- and fourierCos(fourierCos f) evaluated at γ gives something ≥ 0.
-  -- For now, scaffold this.
-  sorry -- SCAFFOLD: RH + explicit formula + Fourier positivity of autocorrelations
+  exact tsum_nonneg fun n => by
+    obtain ⟨g, hg, hgSq, hfg⟩ := hf
+    exact fourierCos_autocorrelation_nonneg g hg hgSq f hfg (zeros n)
 
 -- ============================================================
 -- Weil Criterion: Backward Direction (Positivity → RH)
@@ -639,33 +620,61 @@ theorem bombieriAutocorrelation_decay (σ₀ : ℝ) :
     -- Step 5: exp(-πx²/2) ≤ 1/(1+x²) via 1+x² ≤ exp(πx²/2)
     _ ≤ 1 / (1 + x ^ 2) := exp_neg_pi_half_sq_le_inv x
 
-/-- Candidate Gaussian spectral-negativity statement.
+/-- Reflecting the parameter across the critical line does not change the
+modulated Gaussian. -/
+theorem bombieriTestFn_one_sub (σ : ℝ) :
+    bombieriTestFn (1 - σ) = bombieriTestFn σ := by
+  funext x
+  unfold bombieriTestFn
+  congr 1
+  rw [show 2 * Real.pi * (1 - σ - 1 / 2) * x =
+      -(2 * Real.pi * (σ - 1 / 2) * x) by ring]
+  exact Real.cos_neg _
 
-    This is not Bombieri's Theorem 2.  Bombieri's theorem states the full
-    explicit formula and the all-test-functions Weil criterion; its converse
-    construction uses Li functions, truncation, and smoothing rather than this
-    single modulated Gaussian family. -/
-theorem bombieriAutocorrelation_weil_neg
-    (ρ₀ : NontrivialZetaZero) (hσ : ρ₀.val.re ≠ 1 / 2) :
-    weilFunctionalFull (bombieriAutocorrelation ρ₀.val.re)
-      (fourierCos (bombieriAutocorrelation ρ₀.val.re)) < 0 := by
-  sorry -- Bombieri's Theorem 2: spectral negativity for off-line zeros
+/-- The Gaussian autocorrelation likewise sees only unsigned distance from
+the critical line. -/
+theorem bombieriAutocorrelation_one_sub (σ : ℝ) :
+    bombieriAutocorrelation (1 - σ) = bombieriAutocorrelation σ := by
+  unfold bombieriAutocorrelation
+  rw [bombieriTestFn_one_sub]
 
-/-- **Paley-Wiener test function construction.**
-    Given a zero off the critical line, construct an autocorrelation with W(f) < 0.
-    See Bombieri (2000) "Remarks on Weil's quadratic functional". -/
+/-- The exact scalar inequality needed to make the Gaussian candidate
+negative.  An off-line zeta zero by itself supplies none of these component
+estimates. -/
+theorem bombieriAutocorrelation_weil_neg_of_component_inequality
+    (σ : ℝ)
+    (hcomponents :
+      weilPolar
+          (fourierCos (bombieriAutocorrelation σ) 0)
+          (fourierCos (bombieriAutocorrelation σ) 1) +
+          weilArchimedean (fourierCos (bombieriAutocorrelation σ)) <
+        -weilPrimeTerm (bombieriAutocorrelation σ)) :
+    weilFunctionalFull (bombieriAutocorrelation σ)
+        (fourierCos (bombieriAutocorrelation σ)) < 0 := by
+  unfold weilFunctionalFull
+  linarith
+
+/-- The genuine missing converse obligation: every off-critical zero must
+produce some admissible autocorrelation on which the Weil functional is
+negative.  This does not assert that the single Gaussian family is such a
+witness. -/
+def OffCriticalWeilWitness : Prop :=
+  ∀ (ρ : NontrivialZetaZero), ρ.val.re ≠ 1 / 2 →
+    ∃ f : ℝ → ℝ,
+      IsAutocorrelation f ∧ Continuous f ∧
+      (∀ x : ℝ, ‖f x‖ ≤ 1 / (1 + x ^ 2)) ∧
+      weilFunctionalFull f (fourierCos f) < 0
+
+/-- Extract the negative test function once the converse obligation is
+supplied. -/
 theorem exists_negative_weil_autocorrelation
+    (hwitness : OffCriticalWeilWitness)
     (ρ₀ : NontrivialZetaZero) (hσ : ρ₀.val.re ≠ 1 / 2) :
-    ∃ (f : ℝ → ℝ),
-      IsAutocorrelation f ∧
-      Continuous f ∧
+    ∃ f : ℝ → ℝ,
+      IsAutocorrelation f ∧ Continuous f ∧
       (∀ x : ℝ, ‖f x‖ ≤ 1 / (1 + x ^ 2)) ∧
       weilFunctionalFull f (fourierCos f) < 0 :=
-  ⟨bombieriAutocorrelation ρ₀.val.re,
-   bombieriAutocorrelation_isAuto ρ₀.val.re,
-   bombieriAutocorrelation_continuous ρ₀.val.re,
-   bombieriAutocorrelation_decay ρ₀.val.re,
-   bombieriAutocorrelation_weil_neg ρ₀ hσ⟩
+  hwitness ρ₀ hσ
 
 /-- **Nontrivial zeros lie in the critical strip.** -/
 theorem nontrivial_zero_in_critical_strip (s : ℂ)
@@ -676,7 +685,8 @@ theorem nontrivial_zero_in_critical_strip (s : ℂ)
   nontrivial_zeta_zero_re s hs_zero hs_not_trivial hs_ne_one
 
 /-- **Weil positivity implies RH, proved by contrapositive.** -/
-theorem weil_positivity_implies_rh_from_explicit :
+theorem weil_positivity_implies_rh_from_explicit
+    (hwitness : OffCriticalWeilWitness) :
     WeilPositivity → RiemannHypothesis := by
   intro hWP s hs_zero hs_not_trivial hs_ne_one
   by_contra hσ
@@ -684,7 +694,7 @@ theorem weil_positivity_implies_rh_from_explicit :
     nontrivial_zero_in_critical_strip s hs_zero hs_not_trivial hs_ne_one
   let ρ₀ : NontrivialZetaZero := ⟨s, hs_zero, hs_re_pos, hs_re_lt⟩
   obtain ⟨f, hf_auto, hf_cont, hf_decay, hf_neg⟩ :=
-    exists_negative_weil_autocorrelation ρ₀ hσ
+    exists_negative_weil_autocorrelation hwitness ρ₀ hσ
   have hf_pos : 0 ≤ weilFunctionalFull f (fourierCos f) :=
     hWP f hf_auto hf_cont hf_decay
   linarith
@@ -693,15 +703,17 @@ theorem weil_positivity_implies_rh_from_explicit :
 -- Weil Criterion Equivalence (combining both directions)
 -- ============================================================
 
-/-- **Legacy Weil-criterion wrapper.**
+/-- **Conditional Weil-criterion wrapper.**
 
     RH ⟺ W(f) ≥ 0 for all autocorrelation test functions f.
 
-    Both directions are theorem declarations, but each still contains a direct
-    `sorry`; consequently this wrapper inherits `sorryAx`:
-    - Forward: `rh_implies_weil_positivity_from_explicit`
-    - Backward: `weil_positivity_implies_rh_from_explicit` -/
-theorem weil_criterion_equiv_proved : RiemannHypothesis ↔ WeilPositivity :=
-  ⟨rh_implies_weil_positivity_from_explicit, weil_positivity_implies_rh_from_explicit⟩
+    The forward and backward analytic inputs are explicit hypotheses, so the
+    wrapper adds no hidden mathematical assumption. -/
+theorem weil_criterion_equiv_proved
+    (hforward : FourierOrientedWeilExplicit)
+    (hbackward : OffCriticalWeilWitness) :
+    RiemannHypothesis ↔ WeilPositivity :=
+  ⟨rh_implies_weil_positivity_from_explicit hforward,
+    weil_positivity_implies_rh_from_explicit hbackward⟩
 
 end ArithmeticHodge.Analysis

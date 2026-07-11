@@ -1903,6 +1903,19 @@ theorem contour_assembly_polar_sign
     spectral = prime + arch - polar := by
   linarith
 
+/-- The missing real-line contour theorem, exposed as an analytic obligation.
+
+The earlier implementation admitted this statement after proving only
+tautological placeholders, and its residue equation used the opposite polar
+sign from `weilFunctionalFull`.  Keeping the obligation in the type prevents
+those placeholders from masquerading as a proof. -/
+def AdditiveWeilContourIdentity : Prop :=
+  ∀ (h : ℝ → ℝ), Continuous h →
+    (∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2)) →
+    RiemannHypothesis →
+      ∑' n, h ((hadamardZeros n).im) =
+        weilFunctionalFull h (fourierCos h)
+
 /-- **Weil explicit formula identity (conditional on RH).**
 
     Under RH, all nontrivial zeros ρ satisfy Re(ρ) = 1/2, so the spectral
@@ -1945,7 +1958,8 @@ theorem contour_assembly_polar_sign
     - `zeta_logDeriv_partial_fraction` (partial fraction expansion)
     - `summable_over_zeros` (summability of test function over zeros)
     - `zeta_logDeriv_growth` (a quantitatively separated polynomial bound) -/
-theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
+theorem weil_contour_identity (hidentity : AdditiveWeilContourIdentity)
+    (h : ℝ → ℝ) (hcont : Continuous h)
     (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
     (hRH : RiemannHypothesis) :
     ∑' n, h ((hadamardZeros n).im) = weilFunctionalFull h (fourierCos h) := by
@@ -2029,7 +2043,7 @@ theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
   --   Σ h(Im ρ) + polar = weilPrimeTerm h + weilArchimedean (fourierCos h)
   -- i.e. Σ h(Im ρ) = weilPrimeTerm + weilArchimedean - polar.
   -- This does not match the `weilFunctionalFull` definition, which adds polar.
-  sorry
+  exact hidentity h hcont hdecay hRH
 
 /-- **Key identity: sum over zeros via contour integration (under RH).**
 
@@ -2037,13 +2051,15 @@ theorem weil_contour_identity (h : ℝ → ℝ) (hcont : Continuous h)
     computed as a contour integral involving ζ'/ζ. Requires RH because
     our formulation uses h : ℝ → ℝ evaluated at Im(ρ), which is only
     the correct spectral parameter when Re(ρ) = 1/2. -/
-theorem sum_over_zeros_eq_contour (h : ℝ → ℝ)
+theorem sum_over_zeros_eq_contour (hidentity : AdditiveWeilContourIdentity)
+    (h : ℝ → ℝ)
     (hcont : Continuous h)
     (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
     (hRH : RiemannHypothesis) :
     ∃ (contour_value : ℝ),
       ∑' n, h ((hadamardZeros n).im) = contour_value ∧
       contour_value = weilFunctionalFull h (fourierCos h) :=
-  ⟨weilFunctionalFull h (fourierCos h), weil_contour_identity h hcont hdecay hRH, rfl⟩
+  ⟨weilFunctionalFull h (fourierCos h),
+    weil_contour_identity hidentity h hcont hdecay hRH, rfl⟩
 
 end ArithmeticHodge.Analysis

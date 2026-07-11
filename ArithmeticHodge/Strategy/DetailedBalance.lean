@@ -11,9 +11,9 @@
   are limited general measure-theory facts under already supplied hypotheses;
   WP4 asks only for some symmetric bounded operator and is solved by zero; the
   intermediate WP5 statements have unconstrained witnesses; aggregate WP5 is
-  exactly an assumed `WeilPositivity`; and WP6 is the unresolved backward Weil
-  criterion. `chain_strategy_C_eq_weil_criterion_backward` makes the final
-  dependency explicit.
+  exactly an assumed `WeilPositivity`; and WP6 takes the missing backward Weil
+  witness as an explicit hypothesis. `chain_strategy_C_eq_weil_criterion_backward`
+  makes the final dependency explicit.
 -/
 
 import ArithmeticHodge.Analysis.WeilPositivity
@@ -242,8 +242,10 @@ theorem workpacket_5_goal_iff_weilPositivity :
 
     If W(g ∗ g̃) ≥ 0 for all admissible g, then RH holds.
 
-    PROVED: delegates to `weil_criterion_backward` (from axiom). -/
+    This delegates to `weil_criterion_backward`; the negative-witness theorem
+    is an explicit argument. -/
 theorem workpacket_6_weil_positivity_implies_rh :
+    ArithmeticHodge.Analysis.OffCriticalWeilWitness →
     ArithmeticHodge.Analysis.WeilPositivity →
     RiemannHypothesis :=
   ArithmeticHodge.Analysis.weil_criterion_backward
@@ -259,18 +261,19 @@ theorem workpacket_6_weil_positivity_implies_rh :
       → (WP2) Haar measure on 𝔸_ℚ/ℚ* is scaling-invariant
       → (WP3) Scaling flow is unitary on L²(𝔸_ℚ/ℚ*, μ)
       → (WP4) Generator D of the scaling flow is self-adjoint (Stone)
-      → (WP5) Weil positivity on autocorrelations (from axiomatized criterion)
+      → (WP5) Weil positivity on autocorrelations (assumed by this signature)
       → (WP6) All nontrivial zeros of ζ lie on Re(s) = 1/2
       → RH. ∎
 
     The theorem's type starts at Weil positivity, so WP1-WP5 do not occur in
     its proof. It is exactly `weil_criterion_backward`. -/
-theorem chain_strategy_C :
+theorem chain_strategy_C
+    (hcriterion : ArithmeticHodge.Analysis.OffCriticalWeilWitness) :
     ArithmeticHodge.Analysis.WeilPositivity →
     RiemannHypothesis :=
-  workpacket_6_weil_positivity_implies_rh
+  workpacket_6_weil_positivity_implies_rh hcriterion
 
-/-- The purported chain is definitionally the unresolved backward direction
+/-- The purported chain is definitionally the conditional backward direction
     of the Weil criterion. -/
 theorem chain_strategy_C_eq_weil_criterion_backward :
     chain_strategy_C = ArithmeticHodge.Analysis.weil_criterion_backward := by
@@ -283,16 +286,17 @@ theorem chain_strategy_C_eq_weil_criterion_backward :
 /-!
   ## Dependency audit
 
-  This file itself contains no `sorry`, but the final result inherits the
-  unresolved `sorryAx` in the backward Weil criterion. The workpacket
-  signatures do not compose the advertised adelic/spectral argument:
+  This file contains no `sorry`; the backward Weil witness is now explicit.
+  The workpacket signatures still do not compose the advertised
+  adelic/spectral argument:
 
   - WP1 assumes the trivial Haar character rather than deriving it.
   - WP2-WP3 are general measure-preserving consequences.
   - WP4's conclusion is witnessed by the zero bounded operator.
   - WP5.2-WP5.4 have identity, elementary-decay, or zero witnesses.
   - Aggregate WP5 is definitionally assumed `WeilPositivity`.
-  - WP6 and `chain_strategy_C` are `weil_criterion_backward`.
+  - WP6 and `chain_strategy_C` are conditional applications of
+    `weil_criterion_backward`.
 
   The remaining task is to state and prove the missing relationships—adelic
   quotient construction, genuine generator, trace-class regularization and

@@ -8,8 +8,8 @@
   and the geometry of the primes. It is the number-theoretic analogue
   of the Selberg trace formula.
 
-  The current theorem is conditional on RH and inherits the unresolved
-  Hadamard and contour scaffolds from `ZetaProduct.lean`.
+  The current theorem is conditional on RH and takes the unresolved additive
+  contour identity as an explicit hypothesis.
 -/
 
 import ArithmeticHodge.Analysis.WeilDefs
@@ -33,11 +33,9 @@ namespace ArithmeticHodge.Analysis
 
     where ρ ranges over nontrivial zeros of ζ (counted with multiplicity).
 
-    The body delegates to two unresolved production theorems:
-    `xi_hadamard_product` and `weil_contour_identity`.  Its provenance field
-    says only that every sequence entry comes from some zero; it does not state
-    exhaustivity or analytic multiplicity.  It therefore must not be used as
-    an axiom-clean explicit formula yet.
+    The analytic contour identity is an explicit hypothesis.  The provenance
+    field says only that every sequence entry comes from some zero; it does not
+    itself state exhaustivity or analytic multiplicity.
 
     Intended dependency chain:
     1. Analytic continuation of ζ (Mathlib: `completedRiemannZeta₀`)
@@ -51,6 +49,7 @@ namespace ArithmeticHodge.Analysis
     The downstream consumer `rh_implies_weil_positivity_from_explicit` already
     has RH as a hypothesis, so this condition propagates cleanly. -/
 theorem weil_explicit_formula
+    (hidentity : AdditiveWeilContourIdentity)
     (h : ℝ → ℝ)
     (hcont : Continuous h)
     (hdecay : ∀ x : ℝ, ‖h x‖ ≤ 1 / (1 + x ^ 2))
@@ -68,7 +67,8 @@ theorem weil_explicit_formula
       (xiFunction_zero_iff hre.1 hre.2).mp (hadamardZeros_spec n),
       hre.1, hre.2⟩, rfl⟩
   -- The sum equals the Weil functional by the contour identity.
-  · obtain ⟨cv, hcv_sum, hcv_weil⟩ := sum_over_zeros_eq_contour h hcont hdecay hRH
+  · obtain ⟨cv, hcv_sum, hcv_weil⟩ :=
+      sum_over_zeros_eq_contour hidentity h hcont hdecay hRH
     rw [hcv_sum, hcv_weil]
 
 end ArithmeticHodge.Analysis

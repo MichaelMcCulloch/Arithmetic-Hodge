@@ -123,13 +123,16 @@ theorem weil_positivity_from_spectral_pairing
       spectralPairing ≥ 0  [PROVED: Bochner + normSq]
       spectralPairing → W  [global trace-formula axiom]
       ∴ W ≥ 0              [PROVED: ge_of_tendsto]
-      ∴ RH                  [PROVED: weil_criterion_backward]
+      ∴ RH                  [conditional: off-critical Weil witness]
 
-    The theorem body has no `sorry`, but its dependency cone contains
-    `selberg_unfolding_bound`; it is not an unconditional proof of RH. -/
+    The theorem body has no `sorry`; the missing Weil-converse input is the
+    explicit `hcriterion` argument.  The adèle class-space typeclass is also
+    currently uninhabited. -/
 theorem riemann_hypothesis_from_trace
-    (X : Type*) [Adelic.AdeleClassSpaceData X] :
+    (X : Type*) [Adelic.AdeleClassSpaceData X]
+    (hcriterion : Analysis.OffCriticalWeilWitness) :
     RiemannHypothesis :=
-  Analysis.weil_criterion_backward (weil_positivity_from_spectral_pairing X)
+  Analysis.weil_criterion_backward hcriterion
+    (weil_positivity_from_spectral_pairing X)
 
 end ArithmeticHodge
