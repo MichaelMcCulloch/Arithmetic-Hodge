@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilCriterion
+import ArithmeticHodge.Analysis.MultiplicativeWeilExplicitFormula
 import ArithmeticHodge.Analysis.MultiplicativeWeilLiDominantSeries
 
 /-!
@@ -60,7 +61,17 @@ theorem bombieriOffCriticalSpectralNegativity_of_liApproximation
     rfl
   simp [hcoe, spectralTerm, mellin, coefficientConjugate] at hj
 
+/-- With the now-unconditional explicit formula, Li spectral approximation is
+the sole remaining hypothesis in the concrete Bombieri nonnegativity
+criterion. -/
+theorem riemannHypothesis_iff_bombieriNonnegativity_of_liApproximation
+    (zeros : ZetaZeroEnumeration)
+    (happrox : BombieriLiSpectralApproximation zeros) :
+    RiemannHypothesis ↔ BombieriNonnegativity :=
+  riemannHypothesis_iff_bombieriNonnegativity zeros
+    (bombieriZeroSumFormula zeros)
+    (bombieriOffCriticalSpectralNegativity_of_liApproximation zeros happrox)
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeil
-
