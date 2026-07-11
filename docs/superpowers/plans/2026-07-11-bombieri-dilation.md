@@ -31,6 +31,10 @@ Bombieri-test and multiplicative-Weil modules.
 
 ### Task 1: Normalized dilation and logarithmic centering
 
+**Namespace:** All declarations below live in
+`ArithmeticHodge.Analysis.MultiplicativeWeil`, matching the existing
+Bombieri and multiplicative-Weil API. Do not add parent-namespace aliases.
+
 **Files:**
 
 - Create: `ArithmeticHodge/Analysis/MultiplicativeWeilDilation.lean`
