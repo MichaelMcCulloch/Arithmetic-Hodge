@@ -764,6 +764,22 @@ theorem xi_no_finite_genus_one_factorization :
     hfactorial.trans_lt (hrepack.trans_lt hn')
   exact (lt_irrefl _ this)
 
+/-- Any genus-one Hadamard factorization whose nonzero parameters are zeros
+of xi forces xi to have infinitely many nonzero zeros. -/
+theorem xi_zero_set_infinite_of_genus_one_factorization
+    (A B : ℂ) (a : ℕ → ℂ)
+    (hzeros : ∀ n, a n ≠ 0 → xiFunction (a n) = 0)
+    (hsumm : Summable (fun n => ‖a n‖⁻¹ ^ (2 : ℝ)))
+    (hfactorization : ∀ z, xiFunction z = Complex.exp (A + B * z) *
+      ∏' n, EntireFunction.weierstraßElementary 1 (z / a n)) :
+    Set.Infinite {z : ℂ | xiFunction z = 0 ∧ z ≠ 0} := by
+  intro hfinite
+  have hsupport : Set.Finite {n : ℕ | a n ≠ 0} :=
+    EntireFunction.finite_nonzero_support_of_finite_zero_set
+      xiFunction a 2 (by norm_num) hzeros hsumm hfinite
+  exact xi_no_finite_genus_one_factorization
+    ⟨A, B, a, hsupport, hfactorization⟩
+
 /-- ξ doesn't vanish for Re(s) ≥ 1 (from the Euler product for ζ). -/
 theorem xiFunction_ne_zero_of_one_le_re {s : ℂ} (hs : 1 ≤ s.re) :
     xiFunction s ≠ 0 := by
