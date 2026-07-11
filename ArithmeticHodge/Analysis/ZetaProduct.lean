@@ -165,6 +165,30 @@ theorem zetaZeroSeq_normSq_bound (n : ℕ) :
 noncomputable def xiFunction (s : ℂ) : ℂ :=
   (1 / 2 : ℂ) * s * (s - 1) * completedRiemannZeta₀ s + 1 / 2
 
+/-- A zero of the pole-removed completed zeta is a `1 / 2`-point of xi,
+not a zero of xi. -/
+theorem xiFunction_eq_half_of_completedZeta_zero {s : ℂ}
+    (hs : completedRiemannZeta₀ s = 0) :
+    xiFunction s = 1 / 2 := by
+  simp [xiFunction, hs]
+
+/-- In particular, the zero sets of xi and the pole-removed completed zeta
+are disjoint. -/
+theorem completedZeta_ne_zero_of_xiFunction_zero {s : ℂ}
+    (hs : xiFunction s = 0) :
+    completedRiemannZeta₀ s ≠ 0 := by
+  intro hcompleted
+  have hhalf := xiFunction_eq_half_of_completedZeta_zero hcompleted
+  rw [hs] at hhalf
+  norm_num at hhalf
+
+theorem xiZeroSet_disjoint_completedZetaZeroSet :
+    Disjoint {s : ℂ | xiFunction s = 0}
+      {s : ℂ | completedRiemannZeta₀ s = 0} := by
+  rw [Set.disjoint_left]
+  intro s hxi hcompleted
+  exact completedZeta_ne_zero_of_xiFunction_zero hxi hcompleted
+
 /-- ξ is entire. -/
 theorem differentiable_xiFunction : Differentiable ℂ xiFunction := by
   unfold xiFunction

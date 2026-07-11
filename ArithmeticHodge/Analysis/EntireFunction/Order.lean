@@ -1993,31 +1993,24 @@ private lemma completedZeta₀_order_ge_one :
   rw [← hb_coe]
   exact_mod_cast hone
 
-/-- For 0 < s < 1, the series Σ_ρ ‖ρ‖⁻ˢ over zeros of Λ₀ diverges.
+/-- Legacy lower-exponent target for the zeros of `Λ₀`.
 
-    The hadamardZeros sequence provides zeros of completedRiemannZeta₀.
-    From zeta_zero_density, there are ≥ c·T such zeros with |Im| ≤ T.
-    For 0 < s < 1, the finset partial sums grow like T^{1-s} → ∞,
-    contradicting summability. -/
+    The old proof sketch incorrectly identified xi zeros with zeros of
+    `completedRiemannZeta₀`.  In fact, the defining identity gives
+    `completedRiemannZeta₀ z = 0 → xiFunction z = 1 / 2`, so the two zero sets
+    are disjoint.  This file also cannot invoke the later `zeta_zero_density`
+    theorem without creating an import cycle.  A sound proof needs an
+    independent lower-density theorem for the `xi = 1 / 2` level set, with a
+    deliberate choice between distinct and multiplicity-weighted counting. -/
 private lemma zetaZeros_not_summable_rpow_of_lt_one (s : ℝ) (hs₀ : 0 < s) (hs₁ : s < 1) :
     ¬ Summable (fun z : { w : ℂ // completedRiemannZeta₀ w = 0 ∧ w ≠ 0 } =>
       ‖(z : ℂ)‖⁻¹ ^ s) := by
-  -- Strategy: hadamardZeros maps into the zero subtype (hadamardZeros_spec +
-  -- hadamardZeros_ne_zero). zeta_zero_density provides N(T) ≥ c·T zeros
-  -- with |Im| ≤ T. Each gives a distinct element of the subtype (modulo
-  -- multiplicity), and their ‖·‖⁻ˢ partial sums grow like T^{1-s} → ∞.
-  -- The Abel summation / finset partial sum bound connects this to
-  -- the summability definition. This requires zero density on hadamardZeros
-  -- (from zeta_zero_density) and the bound ‖z‖ ≤ C·(|Im z| + 1) for Λ₀ zeros.
-  --
-  -- DEPENDENCY: zeta_zero_density (ZetaProduct.lean)
-  -- The density estimate + Abel summation chain.
-  -- The key steps (each calling pre-existing sorry'd infrastructure):
-  -- 1. From zeta_zero_density: #{n < ⌈T⌉² : |Im(hadamardZeros n)| ≤ T} ≈ T·log T
-  -- 2. hadamardZeros n ∈ Z for all n (hadamardZeros_spec + hadamardZeros_ne_zero)
-  -- 3. The image Finset in Z has ≥ c·T distinct elements for large T
-  -- 4. Each has ‖z‖⁻ˢ bounded below (using Im² ≤ ‖z‖² ≤ Re² + Im²)
-  -- 5. Finset sum ≥ c·T·(something) → ∞ contradicts summability bound
+  -- Required future chain:
+  -- 1. Construct a divisor/count for zeros of `completedRiemannZeta₀` itself.
+  -- 2. Prove a lower count in growing disks without importing ZetaProduct.
+  -- 3. Relate multiplicity-weighted counts to this distinct-zero subtype, or
+  --    change `zeroExponent` to encode multiplicity explicitly.
+  -- 4. Apply Abel summation to obtain divergence for every `0 < s < 1`.
   sorry
 
 /-- The zeros of Λ₀ = completedRiemannZeta₀ have exponent of convergence 1.
