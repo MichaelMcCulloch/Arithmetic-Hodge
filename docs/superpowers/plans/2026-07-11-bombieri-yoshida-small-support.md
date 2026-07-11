@@ -275,15 +275,31 @@ Add the declaration to the scratch file and run strict Lean.
 
 Use the substitution `x = exp(-u)` to express `M g(1)` and `M g(0)` as
 integrals of `exp(−u/2)F(u)` and `exp(u/2)F(u)`.  Translate the support
-interval to length `δ = log(b/a)` and recenter it; the common translation
-phase cancels in the real cross product.
+interval to `[−log b, −log a]`, whose length is `δ = log(b/a)`.  The
+opposite positive real endpoint weights multiply to `exp(δ/2)`, so the
+center of the original multiplicative interval cancels from the product.
+Keep the two endpoint Mellin identities as private implementation helpers.
 
-- [ ] **Step 3: Apply Cauchy--Schwarz and the exponential oscillation bound**
+- [ ] **Step 3: Apply Hölder and the endpoint exponential bounds**
 
-Bound the negative part of twice the real cross product by
-`4*δ*cosh(δ/2)*‖F‖²`, matching Bombieri's estimate (12.6).  Use
-`integral_norm_mul_le_L2`/Cauchy--Schwarz and the
-pointwise bounds of `exp(±u/2)` across an interval of length `δ`.
+First prove on an interval `[l,r]` that
+
+```lean
+(∫ u in Set.Icc l r, ‖F u‖) ^ 2 ≤
+  (r - l) * ∫ u in Set.Icc l r, Complex.normSq (F u).
+```
+
+Use `Real.HolderConjugate.two_two` on the restricted measure.  Bound the two
+endpoint Mellin norms by `exp(-l/2)` and `exp(r/2)` times that interval
+`L¹` norm.  Their product is therefore at most
+`exp(δ/2) * δ * ‖F‖²`.  The real part of twice their cross product is at
+least minus twice this value, and
+
+```lean
+2 * Real.exp (δ / 2) ≤ 4 * Real.cosh (δ / 2)
+```
+
+gives the stated bound, matching Bombieri's estimate (12.6).
 
 - [ ] **Step 4: Verify and commit**
 
