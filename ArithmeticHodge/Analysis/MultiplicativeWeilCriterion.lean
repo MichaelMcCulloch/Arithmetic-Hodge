@@ -107,7 +107,7 @@ theorem rh_implies_bombieriFunctional_quadratic_strictPos
       (spectralTerm_eq_normSq_of_re_eq_half
         (g : ℝ → ℂ) (zeros.zero_re_eq_half_of_rh hRH n))
   have hsummC : Summable a :=
-    (hformula (bombieriQuadraticTest g)).1.congr hterm
+    (zeros.mellin_summable (bombieriQuadraticTest g)).congr hterm
   have heq : bombieriFunctional (bombieriQuadraticTest g) = ∑' n, a n :=
     rh_bombieriFunctional_quadratic_eq_tsum_normSq zeros hformula hRH g
   obtain ⟨n, hn⟩ := hseparate g hg
@@ -142,14 +142,21 @@ def BombieriNonnegativity : Prop :=
     (bombieriFunctional (bombieriQuadraticTest g)).im = 0 ∧
       0 ≤ (bombieriFunctional (bombieriQuadraticTest g)).re
 
+/-- The quadratic spectral series is absolutely summable without RH. -/
+theorem ZetaZeroEnumeration.spectralTerm_summable
+    (zeros : ZetaZeroEnumeration) (g : BombieriTest) :
+    Summable (fun n ↦
+      spectralTerm (g : ℝ → ℂ) (zeros.zero n).val) := by
+  exact (zeros.mellin_summable (bombieriQuadraticTest g)).congr fun n ↦
+    (bombieriQuadraticTestData_hasMellin g (zeros.zero n).val).2
+
 /-- The source-side converse obligation: off RH, a nonzero test makes the
-summable zero-side quadratic series negative.  This is the Li-function
+automatically summable zero-side quadratic series negative.  This is the Li-function
 truncation and smoothing step in Bombieri's argument. -/
 def BombieriOffCriticalSpectralNegativity
     (zeros : ZetaZeroEnumeration) : Prop :=
   ¬ RiemannHypothesis →
     ∃ g : BombieriTest, g ≠ 0 ∧
-      Summable (fun n ↦ spectralTerm (g : ℝ → ℂ) (zeros.zero n).val) ∧
       (∑' n, spectralTerm (g : ℝ → ℂ) (zeros.zero n).val).re < 0
 
 /-- The explicit formula transports a negative spectral witness to the
@@ -162,7 +169,7 @@ theorem bombieriOffCriticalNegativity_of_spectral
       ∃ g : BombieriTest, g ≠ 0 ∧
         (bombieriFunctional (bombieriQuadraticTest g)).re < 0 := by
   intro hRH
-  obtain ⟨g, hg, _hsumm, hneg⟩ := hnegative hRH
+  obtain ⟨g, hg, hneg⟩ := hnegative hRH
   refine ⟨g, hg, ?_⟩
   have hterm : ∀ n, mellin (bombieriQuadraticTest g : ℝ → ℂ)
       (zeros.zero n).val =
@@ -170,7 +177,7 @@ theorem bombieriOffCriticalNegativity_of_spectral
     (bombieriQuadraticTestData_hasMellin g (zeros.zero n).val).2
   have heq : bombieriFunctional (bombieriQuadraticTest g) =
       ∑' n, spectralTerm (g : ℝ → ℂ) (zeros.zero n).val := by
-    rw [(hformula (bombieriQuadraticTest g)).2]
+    rw [hformula (bombieriQuadraticTest g)]
     exact tsum_congr hterm
   rw [heq]
   exact hneg

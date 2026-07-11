@@ -9,6 +9,7 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilTranspose
 import ArithmeticHodge.Analysis.MultiplicativeWeilPrime
 import ArithmeticHodge.Analysis.MultiplicativeWeilArchimedean
+import ArithmeticHodge.Analysis.MultiplicativeWeilZeroSummability
 
 set_option autoImplicit false
 
@@ -109,12 +110,12 @@ theorem bombieriFunctional_transpose (f : BombieriTest) :
 
 /-- Given an exhaustive analytic-multiplicity zero enumeration, the remaining
 source-level explicit-formula assertion after constructing the concrete
-functional and its transpose symmetry. -/
+functional, proving its transpose symmetry, and proving absolute convergence
+of the zero side. -/
 def BombieriZeroSumFormula (zeros : ZetaZeroEnumeration) : Prop :=
   ∀ f : BombieriTest,
-    Summable (fun n ↦ mellin (f : ℝ → ℂ) (zeros.zero n).val) ∧
-      bombieriFunctional f =
-        ∑' n, mellin (f : ℝ → ℂ) (zeros.zero n).val
+    bombieriFunctional f =
+      ∑' n, mellin (f : ℝ → ℂ) (zeros.zero n).val
 
 /-- The zero-sum identity supplies the generic explicit-formula interface;
 transpose symmetry is already a theorem of the concrete functional. -/
@@ -122,7 +123,8 @@ theorem bombieriZeroSumFormula_to_explicitFormula
     (zeros : ZetaZeroEnumeration) (h : BombieriZeroSumFormula zeros) :
     BombieriExplicitFormula bombieriFunctional canonicalTransposeData zeros := by
   intro f
-  exact ⟨(h f).1, (bombieriFunctional_transpose f).symm, (h f).2⟩
+  exact ⟨zeros.mellin_summable f,
+    (bombieriFunctional_transpose f).symm, h f⟩
 
 end
 
