@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.DigammaNumericBounds
+import ArithmeticHodge.Analysis.YoshidaTZeroTailBounds
 import ArithmeticHodge.Analysis.YoshidaWeightedTailBounds
 
 noncomputable section
@@ -8,6 +9,7 @@ open scoped BigOperators
 namespace ArithmeticHodge.Analysis.YoshidaCoercivityNumerics
 
 open ArithmeticHodge.Analysis.DigammaNumericBounds
+open ArithmeticHodge.Analysis.YoshidaTZeroTailBounds
 open ArithmeticHodge.Analysis.YoshidaWeightedTailBounds
 
 /-!
@@ -392,6 +394,18 @@ theorem evenSourceAlignedEnclosures_of_lowTail
   weighted_tail_700_199_upper := even_weightedTail_upper
   weighted_tail_tZero_199_upper := hLow
 
+theorem oddSourceAlignedEnclosures_of_yoshidaTZero
+    {tZero : ℝ} (ht : IsYoshidaTZero tZero) :
+    OddSourceAlignedEnclosures tZero :=
+  oddSourceAlignedEnclosures_of_lowTail
+    (odd_weightedTail_at_yoshidaTZero ht)
+
+theorem evenSourceAlignedEnclosures_of_yoshidaTZero
+    {tZero : ℝ} (ht : IsYoshidaTZero tZero) :
+    EvenSourceAlignedEnclosures tZero :=
+  evenSourceAlignedEnclosures_of_lowTail
+    (even_weightedTail_at_yoshidaTZero ht)
+
 theorem odd_section6_lowerBound_ge_source
     {tZero : ℝ} (h : OddSourceAlignedEnclosures tZero) :
     (38 / 25 : ℝ) ≤ section6LowerBound 10 tZero 50 := by
@@ -463,6 +477,30 @@ theorem even_form_value_ge_of_lowTail_and_equation6_7
     (hequation6_7 : section6LowerBound 199 tZero 700 ≤ formValue) :
     (102 / 25 : ℝ) ≤ formValue :=
   (even_section6_lowerBound_ge_of_lowTail hLow).trans hequation6_7
+
+theorem odd_section6_lowerBound_ge_of_yoshidaTZero
+    {tZero : ℝ} (ht : IsYoshidaTZero tZero) :
+    (38 / 25 : ℝ) ≤ section6LowerBound 10 tZero 50 :=
+  odd_section6_lowerBound_ge_source
+    (oddSourceAlignedEnclosures_of_yoshidaTZero ht)
+
+theorem even_section6_lowerBound_ge_of_yoshidaTZero
+    {tZero : ℝ} (ht : IsYoshidaTZero tZero) :
+    (102 / 25 : ℝ) ≤ section6LowerBound 199 tZero 700 :=
+  even_section6_lowerBound_ge_source
+    (evenSourceAlignedEnclosures_of_yoshidaTZero ht)
+
+theorem odd_form_value_ge_of_yoshidaTZero_and_equation6_7
+    {tZero formValue : ℝ} (ht : IsYoshidaTZero tZero)
+    (hequation6_7 : section6LowerBound 10 tZero 50 ≤ formValue) :
+    (38 / 25 : ℝ) ≤ formValue :=
+  (odd_section6_lowerBound_ge_of_yoshidaTZero ht).trans hequation6_7
+
+theorem even_form_value_ge_of_yoshidaTZero_and_equation6_7
+    {tZero formValue : ℝ} (ht : IsYoshidaTZero tZero)
+    (hequation6_7 : section6LowerBound 199 tZero 700 ≤ formValue) :
+    (102 / 25 : ℝ) ≤ formValue :=
+  (even_section6_lowerBound_ge_of_yoshidaTZero ht).trans hequation6_7
 
 theorem source_printed_even_C_conflicts_with_5858_upper
     {C : ℝ} (hprinted : (59914 / 10000 : ℝ) ≤ C)
