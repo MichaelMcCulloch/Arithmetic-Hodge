@@ -46,6 +46,7 @@ import ArithmeticHodge.Analysis.YoshidaOddGramPrefix
 import ArithmeticHodge.Analysis.YoshidaClippedMomentBridge
 import ArithmeticHodge.Analysis.YoshidaClippedMomentBridgeFull
 import ArithmeticHodge.Analysis.YoshidaMomentIntegrability
+import ArithmeticHodge.Analysis.YoshidaMomentSeries
 import ArithmeticHodge.Analysis.YoshidaDigammaDistribution
 import ArithmeticHodge.Analysis.YoshidaCauchyPairing
 import ArithmeticHodge.Analysis.YoshidaOddModeRegularity
