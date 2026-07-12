@@ -1376,3 +1376,33 @@ separate from build logs: a green build is evidence, not a stage transition.
    below 0.71 GiB cgroup memory and 4.80 GiB summed RSS, the staged source hash
    was `5593ee4559715500a0a794ff6198cd31e773c121a99aef55e66c9d234e13c9b5`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `dd39c0f` — Sparse congruence machinery formalized
+
+1. **Theorems added.**  Sparse rational rows now evaluate a congruence entry
+   through their actual `Finsupp` supports and are proved equal to the matching
+   dense matrix expression.  A generic entrywise perturbation theorem bounds
+   `P*A*Pᵀ - P*C*Pᵀ` by the uniform source error times the two row L1 norms.
+   Lower-triangular sparse support and nonzero rational diagonal entries also
+   give a kernel-checked determinant product and matrix unit.
+2. **Gate hypothesis eliminated.**  The 762-coefficient Yoshida certificate
+   no longer needs an unproved bridge from its sparse exact arithmetic to the
+   dense real congruence used by positive definiteness.  The implementation
+   avoids the approximately 1.6-billion-term dense numerical reduction that
+   threatened to recreate the machine-hang failure mode.
+3. **Assumptions remaining.**  The generated sparse rows and weights, actual
+   source-interval radius checks, 200 weighted-dominance checks, rational-to-
+   real invertibility transport, and robust production PosDef endpoint remain.
+   The uniform diagonal enclosure and Gate 3 all-support step also remain.
+4. **Next make-or-break lemma.**  Emit the hashed 762-entry preconditioner and
+   200 weights as Lean data, then kernel-check the actual target radii and
+   sparse center-congruence margins in bounded row chunks.
+5. **Viability evidence.**  The 2,557-job build, fresh strict compile, sparse
+   `Fin 2` exact-value regression, and identity-preconditioner error regression
+   all pass.  Every public endpoint has exactly the standard three axioms;
+   forbidden and whitespace scans are empty.  Independent review checked sum
+   orientation, transpose placement, error factoring, `OrderDual` direction,
+   determinant reasoning, and the rational IsUnit endpoint.  Guarded usage
+   stayed below 0.57 GiB cgroup memory and 4.10 GiB summed RSS, the staged hash
+   was `7c050f10cb06180ba6855355d336bb6705241d514067beb89dc52b557c34b1f2`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
