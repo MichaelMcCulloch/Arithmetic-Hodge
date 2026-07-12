@@ -1591,3 +1591,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    source hash is
    `535c77f618c5c3d369e29341c6a8eabf269cefe7a61f8355007c750e70177791`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `53dd151` — Uniform diagonal derivative series bounded
+
+1. **Theorem added.**  For every positive height `y`, the derivative profile
+   `tsum` differs from the first-corrected Euler--Maclaurin main term by at
+   most `5 / (2 * y^4)`.  Its production normalization is rewritten exactly
+   as `5 * yoshidaLength^3 / (4 * pi^4 * n^4)` for every nonzero mode.
+2. **Gate hypothesis eliminated.**  The high-mode diagonal route no longer
+   assumes a derivative-series enclosure.  A public cubic-kernel remainder,
+   fourth-derivative majorant and primitive, finite telescope, and endpoint
+   limits now prove the required uniform decay.
+3. **Assumptions remaining.**  The digamma, derivative, and dyadic `Q` error
+   terms must still be combined into rational target intervals for the
+   canonical high modes.  The sparse finite-certificate lane still needs its
+   generic target-width theorem, structural row checks, dominance checks, and
+   robust PosDef endpoint; Gate 3 all-support localization remains open.
+4. **Next make-or-break lemma.**  Prove the generic base-cell width bound
+   `width (evenMomentIntervalGram targets i j) <= 1 / 50000`, then combine the
+   three uniform diagonal estimates against every required target interval.
+5. **Viability evidence.**  Fresh direct compilation, a 3,622-job target
+   build, and a concrete mode-1 production-frequency regression pass.  All
+   three public endpoints have exactly the standard three axioms; forbidden
+   and whitespace scans are empty.  Independent review approved every
+   derivative, kernel sign, telescope index, endpoint limit, and normalization.
+   Guarded fresh verification stayed below 2.08 GiB cgroup memory and 6.06 GiB
+   summed RSS, the production source hash is
+   `6d883dbe9c3ec48f0280d7b28fb15035fcda2de062bac91fa8823949df7d4cd4`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
