@@ -774,3 +774,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    the 3,607-job target, and umbrella pass; public endpoints use only
    `propext`, `Classical.choice`, and `Quot.sound`, and the 159 legacy files
    remain untouched.
+
+## `a8b10c0` — Actual infinite odd low/tail functionals bounded
+
+1. **Theorems added.**  Explicit normalized sine partial sums converge in the
+   faithful circle `L²` coordinate to every vector of the actual periodic
+   tenth odd tail.  Weighted `L²` control of the fixed low-mode digamma factor
+   proves the full Fourier/form interchange.  Consequently every production
+   low/tail pairing has squared form-norm at most `1/40`, and a completed Riesz
+   correction with squared norm at most `1/40` represents that exact pairing.
+2. **Gate hypothesis eliminated.**  The infinite odd low/tail cross term is no
+   longer conditional on an interchange or continuity premise.  The exact
+   committed coupling budget `19/500`, divided by the proved tail coercivity
+   `38/25`, supplies precisely the reserve constant required by the finite
+   ten-mode comparison matrix.
+3. **Assumptions remaining.**  The ten Riesz corrections must be assembled
+   into their Hermitian correction Gram, subtracted from the certified low
+   Gram, and completed-square positivity must be transported through the
+   actual odd low/tail decomposition.  The even lane remains open.
+4. **Next make-or-break lemma.**  Prove the Riesz correction Gram is entrywise
+   bounded by `1/40`, invoke the existing comparison reserve to keep the Schur
+   complement positive definite, and apply the Hilbert-tail complete-square
+   identity on the full completed odd tail.
+5. **Viability evidence.**  Deep independent review verified the actual tail
+   carrier, the `sqrt(4a)` normalization, conjugate-linear orientation,
+   absolute summability, polar and digamma continuity, noncircularity, and
+   the Riesz inner-product direction.  Strict direct and the 8,346-job target
+   pass; all 49 public declarations and critical dependencies use only
+   `propext`, `Classical.choice`, and `Quot.sound`.  The root legacy count is
+   still 159.
