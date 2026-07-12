@@ -104,7 +104,7 @@ private theorem summable_diagonalHighProfileCorrectionTerm (n : ℕ) :
   exact (summable_quarterDigammaSeriesTerm (yoshidaKappa n)).neg.congr
     (fun j ↦ (diagonalHighProfileCorrectionTerm_eq_neg_quarter n j).symm)
 
-private theorem diagonalHighProfileDeriv_abs_le (y : ℝ) (j : ℕ) :
+theorem diagonalHighProfileDeriv_abs_le (y : ℝ) (j : ℕ) :
     |diagonalHighProfileDeriv y (j + 1)| ≤
       1 / ((((j + 1 : ℕ) : ℝ) ^ 2)) := by
   let k : ℝ := ((j + 1 : ℕ) : ℝ)
@@ -141,7 +141,7 @@ private theorem diagonalHighProfileDeriv_abs_le (y : ℝ) (j : ℕ) :
         nlinarith [sq_nonneg y]
   simpa only [u, k, Nat.cast_add, Nat.cast_one] using hbound
 
-private theorem summable_diagonalHighDerivativeTerm (n : ℕ) :
+theorem summable_diagonalHighDerivativeTerm (n : ℕ) :
     Summable (diagonalHighDerivativeTerm n) := by
   have hmajor : Summable (fun j : ℕ ↦
       1 / ((((j + 1 : ℕ) : ℝ) ^ 2))) := by
