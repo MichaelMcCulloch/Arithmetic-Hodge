@@ -67,7 +67,6 @@ theorem norm_yoshidaEndpointRegularQuadratic_le
     have habs : |p.1 - p.2| ≤ 2 := by
       rw [abs_le]
       constructor <;> linarith [hp.1.1, hp.1.2, hp.2.1, hp.2.2]
-    have hlog : 0 ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
     have harg0 : 0 ≤ (Real.log 2 / 2) * |p.1 - p.2| :=
       mul_nonneg (by positivity) (abs_nonneg _)
     have harg2 : (Real.log 2 / 2) * |p.1 - p.2| ≤ Real.log 2 := by
