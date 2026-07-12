@@ -410,3 +410,37 @@ separate from build logs: a green build is evidence, not a stage transition.
    direct inhabitation of the downstream premise; forbidden scans are clean.
    The canonical integration build at `2327ad3` subsequently passed all 3,800
    jobs; the expensive diagonal enclosure was compiled once, in 818 seconds.
+
+## `b0fb4c3` — Odd digamma loss and global split closed
+
+1. **Theorems added.**  A kernel-checked 1,024-cell rational upper Riemann
+   certificate proves the source half-integral bound `2773/1000` for the
+   negative quarter-line digamma kernel.  It discharges the actual `N = 10`
+   low-digamma loss.  A separate global indicator split proves that unit
+   spectral mass, the exact high central-energy estimate, and that low loss
+   imply `ClippedSection6DigammaLowerEstimate`; the specialized wrapper
+   `oddTenTail_clippedSection6DigammaLowerEstimate` contains no numerical or
+   high-frequency premise.
+2. **Gate hypothesis eliminated.**  The low digamma half-integral, its
+   interpretation as a weighted loss, the monotonic high-frequency lower
+   bound, and the complete measure-theoretic assembly of Yoshida (6.4)--(6.7)
+   are all proof terms.  The odd coercivity lane no longer assumes an
+   equation-(6.7) digamma inequality.
+3. **Assumptions remaining.**  For arbitrary periodic odd-tail data, the
+   wrapper still exposes integrability of the spectral norm square,
+   integrability after the digamma weight, and the normalized Parseval
+   identity.  The polar lower estimate and the final archimedean/form
+   composition also remain before `38/25` coercivity is unconditional.
+4. **Next make-or-break lemma.**  Use pointwise oddness and periodic endpoint
+   cancellation to prove quadratic decay of the clipped Fourier transform;
+   derive both weighted spectral integrability and exact Plancherel for every
+   periodic odd tail.  If that regularity does not follow from the current
+   carrier, isolate the missing trace condition instead of assuming it.
+5. **Viability evidence.**  The exact rational replay, both analytic modules,
+   the composed split, and the umbrella strict-compile.  The targeted build
+   passes all 8,307 jobs.  Six audited endpoints use only `propext`,
+   `Classical.choice`, and `Quot.sound`; forbidden scans are clean.  Independent
+   review checked every cast, the series direction, all grid cells, evenness,
+   interval orientation, the three indicator cases, and the `1/(2*pi)`
+   normalization.  An independent numerical sanity check found certificate
+   value about `2.772105475`, below `2.773` by about `0.000894525`.
