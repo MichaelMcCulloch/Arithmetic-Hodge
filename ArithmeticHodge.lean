@@ -50,6 +50,7 @@ import ArithmeticHodge.Analysis.YoshidaDigammaDistribution
 import ArithmeticHodge.Analysis.YoshidaCauchyPairing
 import ArithmeticHodge.Analysis.YoshidaOddModeRegularity
 import ArithmeticHodge.Analysis.YoshidaOddFourierDecay
+import ArithmeticHodge.Analysis.YoshidaOddSpectralBridge
 import ArithmeticHodge.Analysis.YoshidaOddIntervalCertificate
 import ArithmeticHodge.Analysis.YoshidaOddMomentTargets
 import ArithmeticHodge.Analysis.CoerciveRieszCorrection
