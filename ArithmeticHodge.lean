@@ -45,6 +45,7 @@ import ArithmeticHodge.Analysis.YoshidaOddComparisonCertificate
 import ArithmeticHodge.Analysis.YoshidaOddGramPrefix
 import ArithmeticHodge.Analysis.YoshidaClippedMomentBridge
 import ArithmeticHodge.Analysis.YoshidaClippedMomentBridgeFull
+import ArithmeticHodge.Analysis.YoshidaOddModeRegularity
 import ArithmeticHodge.Analysis.YoshidaOddIntervalCertificate
 import ArithmeticHodge.Analysis.YoshidaOddMomentTargets
 import ArithmeticHodge.Analysis.CoerciveRieszCorrection
