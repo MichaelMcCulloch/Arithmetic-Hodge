@@ -46,6 +46,16 @@ theorem strict_log_thirtytwo_div_twentyfive_bounds :
   norm_num [Finset.sum_range_succ] at hlo hup ⊢
   constructor <;> linarith
 
+theorem strict_log_four_thirds_fine_bounds :
+    (28768207244 / 100000000000 : ℝ) < Real.log (4 / 3) ∧
+      Real.log (4 / 3) < (28768207246 / 100000000000 : ℝ) := by
+  have hlo := Real.sum_range_le_log_div (x := (1 / 7 : ℝ))
+    (by norm_num) (by norm_num) 8
+  have hup := Real.log_div_le_sum_range_add (x := (1 / 7 : ℝ))
+    (by norm_num) (by norm_num) 8
+  norm_num [Finset.sum_range_succ] at hlo hup ⊢
+  constructor <;> linarith
+
 private theorem log_one_add_inv_upper {t : ℝ} (ht : 0 < t) :
     Real.log ((t + 1) / t) ≤ (2 * t + 1) / (2 * t * (t + 1)) := by
   have hx0 : 0 ≤ (1 / (2 * t + 1) : ℝ) := by positivity
