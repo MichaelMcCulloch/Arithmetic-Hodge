@@ -195,3 +195,27 @@ separate from build logs: a green build is evidence, not a stage transition.
    build and the canonical 3,789-job build pass, and five audited public
    endpoints use only `propext`, `Classical.choice`, and `Quot.sound`.
    Forbidden-proof scans are clean and the root legacy inventory remains 159.
+
+## `dad1983` — Canonical even-tail reductions
+
+1. **Theorems added.**  Pointwise evenness now proves the polar energy is
+   nonnegative and discharges the Section 6 polar lower bound outright.  A
+   homogeneous equation-(6.7) inequality implies the exact even coercivity
+   bound `(102/25) * ‖f‖²_L2 ≤ B(f,f)`, and the concrete canonical `200+k`
+   low/tail pairings satisfy the full `51/25000` source budget whenever the
+   source pointwise (6.26) decay holds.
+2. **Gate hypothesis eliminated.**  The even lane no longer carries a polar
+   estimate as an analytic premise, and its infinite coupling sum, cutoff,
+   and correction arithmetic have been reduced to the single concrete
+   pointwise decay statement without enlarging the low block.
+3. **Assumptions remaining.**  The homogeneous analytic equation (6.7) and
+   pointwise (6.26) estimate are still premises; the module does not infer
+   either from its exact Laplace formula.  Even finite-block positivity and
+   the final form-completion/Schur assembly also remain open.
+4. **Next make-or-break lemma.**  Prove or refute (6.26) for the committed
+   removable-safe even pairing formula, while the parallel coercivity lane
+   derives homogeneous (6.7) on the actual periodic even tail.
+5. **Viability evidence.**  Direct strict compilation, the targeted build,
+   and the canonical 3,790-job build pass.  Five audited public endpoints use
+   only `propext`, `Classical.choice`, and `Quot.sound`; the forbidden-proof
+   scan is clean and the root legacy count remains 159.
