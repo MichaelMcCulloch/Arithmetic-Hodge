@@ -187,6 +187,12 @@ systemd-run --user --scope --quiet --expand-environment=no \
 - A resource-intensive validation that remains at full CPU is not evidence
   that it is safe to leave running. Monitor memory and terminate it before it
   threatens desktop responsiveness.
+- Monitor both the scope's cgroup `memory.current` and the aggregate RSS of
+  the workload's descendant processes.  Shared or file-backed mappings can
+  make process RSS materially exceed memory charged to a newly created
+  cgroup; never trust the smaller counter when the two disagree.  A manual
+  safety guard must terminate the workload when either counter reaches its
+  configured stop threshold.
 
 - Keep the root agent on the strongest unresolved lemma of the active gate.
 - Use subagents only for distinct bounded proofs, independent audits,
