@@ -803,3 +803,26 @@ separate from build logs: a green build is evidence, not a stage transition.
    pass; all 49 public declarations and critical dependencies use only
    `propext`, `Classical.choice`, and `Quot.sound`.  The root legacy count is
    still 159.
+
+## `b6e1f2c` — Third even sine moment certified
+
+1. **Theorems added.**  Five exact 256-term checkpoint boxes and the
+   accelerated analytic tail place the actual production moment `S_3` in
+   `[-152906/100000, -152905/100000]`.  The finite head covers exactly
+   `k = 0,...,1279`, and the infinite tail begins at 1280.
+2. **Gate hypothesis eliminated.**  Three of the 199 production even sine
+   boxes are now inhabited.  This certificate also demonstrates that the
+   required cutoff is governed by each target's edge clearance, not simply a
+   monotone multiple of the mode index: `S_3` closes with only five blocks.
+3. **Assumptions remaining.**  `S_4,...,S_199`, `D_3,...,D_199`, all remaining
+   Schur pivots, even-tail coercivity, and the exceptional coupling estimate
+   remain open.
+4. **Next make-or-break lemma.**  Continue mode-by-mode discovery with exact
+   checkpoint production while the independent odd Schur closure and even
+   infinite-tail estimates proceed in parallel.
+5. **Viability evidence.**  Independent exact replay verified every chunk,
+   the head/tail boundary, and the final enclosure
+   `[-1.529058395647323, -1.529050098834931]`.  Independent 90-digit
+   evaluation gives `-1.5290542483332791719595045124602537`.  Strict direct,
+   the 3,607-job target, and umbrella pass; the endpoint uses only `propext`,
+   `Classical.choice`, and `Quot.sound`, with all 159 legacy files preserved.
