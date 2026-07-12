@@ -510,3 +510,87 @@ separate from build logs: a green build is evidence, not a stage transition.
    odd-pair extraction, restricted-measure Cauchy normalization, exact
    hyperbolic identity, and final inequality direction; the root legacy count
    remains 159.
+
+## `43ea136` — Even zero diagonal moment certified
+
+1. **Theorems added.**  The production zero-mode diagonal moment now lies in
+   its exact target box `[18338/100000, 18339/100000]`.  The proof derives the
+   `n = 0` accelerated identity, bounds Euler's constant and `log pi` at the
+   required precision, replays four exact 256-term rational chunks through
+   index 1023, and bounds the analytic tail beginning at 1024.
+2. **Gate hypothesis eliminated.**  `D_0` is no longer a candidate numerical
+   target: its actual analytic moment inhabits the box consumed by the
+   200-mode interval matrix.  The constant term, geometric correction, head,
+   and tail are all checked in Lean.
+3. **Assumptions remaining.**  The positive diagonal boxes `D_1,...,D_199`,
+   all sine-moment boxes `S_1,...,S_199`, and the remaining exact Schur
+   checkpoints are still open.  This certificate does not address the
+   production distribution bridge or even-tail coercivity.
+4. **Next make-or-break lemma.**  Reuse the accelerated enclosure architecture
+   for `D_1`, then split the remaining positive diagonal indices into cached
+   certificate batches while separately beginning the sine-moment boxes.
+5. **Viability evidence.**  Independent review checked the integrand sign,
+   `k = 0` cancellation, accelerated identity, constant-bound directions, and
+   the gap-free `1..1023` plus `1024..` partition.  Direct warning-as-error,
+   the 3,625-job target, and the umbrella compile pass; both public endpoints
+   use only `propext`, `Classical.choice`, and `Quot.sound`.  Numerical sanity
+   gives approximately `0.183382657594389`, strictly inside the target box.
+
+## `7a12a2d` — Normalized odd-tail coercivity closed
+
+1. **Theorems added.**  Every clipped smooth carrier has integrable critical
+   norm square and digamma-weighted norm square.  Periodic tenth odd-tail
+   membership gives genuine pointwise oddness, endpoint cancellation and
+   continuity, while autocorrelation Fourier inversion proves exact spectral
+   mass equals interval energy.  Consequently every unit-energy tenth odd-tail
+   vector satisfies the production clipped-form lower bound `38/25` with no
+   auxiliary analytic premise.
+2. **Gate hypothesis eliminated.**  The four exposed assumptions of
+   `d87709c`—pointwise parity, unweighted integrability, digamma-weighted
+   integrability, and unit Parseval mass—are all discharged from the actual
+   infinite periodic-tail carrier.  This closes normalized odd Section 6
+   coercivity rather than a finite truncation.
+3. **Assumptions remaining.**  Homogeneous coercivity for arbitrary energy,
+   construction of the positive Hermitian tail form, its source-faithful form
+   completion, and low/odd-tail Schur recombination remain.  The even lane is
+   unaffected.
+4. **Next make-or-break lemma.**  Normalize a nonzero arbitrary tail vector by
+   the square root of its interval energy, handle the zero-energy case using
+   clipped-circle faithfulness, and use sesquilinearity to derive the exact
+   homogeneous lower bound.
+5. **Viability evidence.**  Independent review checked the clipped reflection
+   upgrade, endpoint representatives, Fourier inversion, and exact `v=2*pi*w`
+   scaling.  Direct strict compiles, the 8,313-job target, and the umbrella
+   pass.  All six relevant endpoints, including the composed unit-energy
+   theorem, use only `propext`, `Classical.choice`, and `Quot.sound`; forbidden
+   and diff scans are clean and the root legacy count remains 159.
+
+## `bba8386` — Even distribution bridge reduced to one critical-cross identity
+
+1. **Theorems added.**  Unified zero/cosine representatives now have exact
+   support, reflection, and all correlation branches.  Their complete polar
+   cross term is evaluated with the production normalization, the stable
+   geometric kernel is rewritten pointwise as the admissible kernel minus the
+   polar contribution, and every spectral product is proved integrable by an
+   endpoint-aware `O(v^-2)` estimate.  A single critical-cross distribution
+   identity now implies both the full admissible bridge and the moment bridge.
+2. **Gate hypothesis eliminated.**  Mode support, correlation orientation,
+   polar signs, factor two from whole-line folding, the `1/(2*pi)` scaling,
+   and ordinary cross-product integrability no longer sit inside the broad
+   40,000-entry interface.  The remaining statement concerns only the actual
+   digamma/stable critical-cross transform.
+3. **Assumptions remaining.**  `ClippedEvenCriticalCrossDistributionBridge`
+   is still open.  Because the zero-extended cosine modes jump at the
+   endpoints, the odd lane's global-continuity route and its stronger weighted
+   spectral premise are unavailable; a tailored interchange for ordinary
+   integrable `O(v^-2)` products is required.
+4. **Next make-or-break lemma.**  Prove a Cauchy/digamma distribution identity
+   under the already established product integrability, use the stable-minus-
+   polar kernel and compactly supported correlations, and instantiate it for
+   every unified even-mode pair.
+5. **Viability evidence.**  Independent symbolic and numerical review checked
+   every zero/positive/diagonal/off-diagonal branch, swap orientation, polar
+   sign, fold, and normalization to about `1e-16`.  Warning-as-error, the
+   3,600-job target, and umbrella compile pass; six public endpoints use only
+   `propext`, `Classical.choice`, and `Quot.sound`.  The residual bridge is
+   strictly narrower and does not reference either proposition it implies.
