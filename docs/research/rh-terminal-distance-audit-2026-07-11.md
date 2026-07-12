@@ -934,3 +934,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    the 3,607-job target, and umbrella checks pass; both public endpoints use
    only `propext`, `Classical.choice`, and `Quot.sound`, with all 159 legacy
    files preserved.
+
+## `3ce681f` — Higher diagonal tails made tractable
+
+1. **Theorems added.**  The production paired diagonal correction is expanded
+   exactly through its `k^-3`, `k^-4`, and `k^-5` terms.  The remaining
+   rational contribution has a certified sixth-order bound, the dyadic
+   endpoint has a ninth-order bound, and summed rational interval APIs now
+   enclose both the infinite tail and the full diagonal moment.
+2. **Gate hypothesis eliminated.**  The finite even block no longer depends
+   on extending the demonstrably unscalable old `O(k^-3)` tail estimator to
+   modes through 199.  This closes the named higher-order acceleration
+   prerequisite for generating the remaining diagonal target boxes.
+3. **Assumptions remaining.**  The actual boxes `D_4,...,D_199` still need
+   certified heads and instantiated accelerated tails; the complete pivot
+   theorem, exceptional coupling, even Schur closure, and parity recombination
+   remain open.
+4. **Next make-or-break lemma.**  Close the sharp imaginary-digamma remainder
+   and exact even pairing bridge, while the full 200-pivot computation decides
+   whether producing all remaining scalar boxes will actually close the
+   proposed finite Gram.
+5. **Viability evidence.**  The formal D3 regression encloses its exact tail
+   from `N=512` in `[-352,-350] * 10^-6`, a two-millionth box; the old
+   `N=18432` symmetric interval is formally wider than four millionths.  Deep
+   independent review replayed the coefficient identity, residual signs,
+   dyadic decay, tail indices, and full-moment subtraction.  Strict direct,
+   the 3,623-job target, umbrella, forbidden, and axiom checks pass; all 22
+   public endpoints use only `propext`, `Classical.choice`, and `Quot.sound`,
+   with all 159 legacy files preserved.
