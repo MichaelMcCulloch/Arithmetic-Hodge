@@ -80,6 +80,7 @@ import ArithmeticHodge.Analysis.YoshidaClippedParityOrthogonality
 import ArithmeticHodge.Analysis.YoshidaEvenPairingBridge
 import ArithmeticHodge.Analysis.YoshidaEvenTailReduction
 import ArithmeticHodge.Analysis.YoshidaEvenCouplingReduction
+import ArithmeticHodge.Analysis.YoshidaEvenHomogeneousCoercivity
 import ArithmeticHodge.Analysis.YoshidaOddLowHighDecay
 import ArithmeticHodge.Analysis.YoshidaOddHighSineBounds
 import ArithmeticHodge.Analysis.YoshidaOddCouplingClosed
