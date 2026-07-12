@@ -75,6 +75,7 @@ import ArithmeticHodge.Analysis.CenteredAddCircleFourier
 import ArithmeticHodge.Analysis.YoshidaClippedCircleBridge
 import ArithmeticHodge.Analysis.YoshidaClippedCircleFaithful
 import ArithmeticHodge.Analysis.YoshidaClippedPeriodicCore
+import ArithmeticHodge.Analysis.YoshidaRestrictedCoreBridge
 import ArithmeticHodge.Analysis.YoshidaClippedParityOrthogonality
 import ArithmeticHodge.Analysis.YoshidaEvenPairingBridge
 import ArithmeticHodge.Analysis.YoshidaEvenTailReduction
