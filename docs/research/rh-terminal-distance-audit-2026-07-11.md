@@ -219,3 +219,28 @@ separate from build logs: a green build is evidence, not a stage transition.
    and the canonical 3,790-job build pass.  Five audited public endpoints use
    only `propext`, `Classical.choice`, and `Quot.sound`; the forbidden-proof
    scan is clean and the root legacy count remains 159.
+
+## `2cc297f` — Odd coupling reduced to a scalar high-moment window
+
+1. **Theorems added.**  Every actual clipped odd high/low entry is identified
+   with its exact off-diagonal moment formula.  The certified first-ten sine
+   boxes, together with the single uniform scalar window
+   `-79/50 ≤ S_n ≤ -31/20` for `n ≥ 11`, imply Yoshida's concrete (6.18)
+   bound `(19/50)/n²` and the full infinite coupling budget `19/500` for each
+   of the ten low modes.
+2. **Gate hypothesis eliminated.**  The odd finite-to-tail correction no
+   longer depends on a mode-pairing identity, an abstract summability premise,
+   or ten separate decay arguments.  Its entire remaining analytic content is
+   the stated two-sided high sine-moment bound.
+3. **Assumptions remaining.**  `YoshidaOddHighSineBounds` is not yet proved.
+   Odd-tail coercivity at `38/25`, homogeneous equation (6.7), form-completion
+   assembly, and the even finite block remain open.  The scalar reduction does
+   not by itself establish any form boundedness.
+4. **Next make-or-break lemma.**  Prove the uniform high sine-moment window
+   from the exact Cauchy series by a monotone sum/integral enclosure, or produce
+   a certified counterexample.  In parallel, finish the homogeneous odd-tail
+   coercivity estimate.
+5. **Viability evidence.**  Direct warning-as-error compilation, the targeted
+   3,619-job build, and the canonical 3,791-job build pass.  Four audited public
+   endpoints use only `propext`, `Classical.choice`, and `Quot.sound`; the
+   forbidden-proof scan is clean and the root legacy count remains 159.
