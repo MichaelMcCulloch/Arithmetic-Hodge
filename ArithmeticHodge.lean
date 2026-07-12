@@ -52,6 +52,7 @@ import ArithmeticHodge.Analysis.YoshidaOddModeRegularity
 import ArithmeticHodge.Analysis.YoshidaOddFourierDecay
 import ArithmeticHodge.Analysis.YoshidaOddSpectralBridge
 import ArithmeticHodge.Analysis.YoshidaOddCorrelationFold
+import ArithmeticHodge.Analysis.YoshidaOddPolarCorrelation
 import ArithmeticHodge.Analysis.YoshidaRenormalizedGeometricKernel
 import ArithmeticHodge.Analysis.YoshidaShiftedGeometricSeries
 import ArithmeticHodge.Analysis.YoshidaOddCorrelationIntegrability
