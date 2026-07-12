@@ -594,3 +594,56 @@ separate from build logs: a green build is evidence, not a stage transition.
    3,600-job target, and umbrella compile pass; six public endpoints use only
    `propext`, `Classical.choice`, and `Quot.sound`.  The residual bridge is
    strictly narrower and does not reference either proposition it implies.
+
+## `8ae5103` — Infinite odd tail bundled as a coercive positive form
+
+1. **Theorems added.**  Exact scalar laws for clipped interval energy and the
+   diagonal critical form promote unit-energy coercivity to
+   `(38/25) * E(f) <= Q(f)` for every vector in the actual periodic tenth odd
+   tail.  Zero energy is shown to force the clipped function to vanish through
+   the exact circle norm identity and faithfulness.  Restricting the production
+   sesquilinear form therefore yields a bundled `PositiveHermitianForm` with
+   explicit source-`L²` coercivity.
+2. **Gate hypothesis eliminated.**  Odd-tail positivity and definiteness are
+   no longer assumptions or normalized-only statements.  The actual infinite
+   tail now carries the source-faithful form norm required by the committed
+   completion and Riesz-correction infrastructure.
+3. **Assumptions remaining.**  Each low-mode pairing must be proved bounded in
+   the form norm with the certified infinite coupling energy, and the resulting
+   Riesz correction must be combined with the positive ten-mode Gram reserve.
+   The final decomposition must then be transported back to every periodic
+   odd source vector.
+4. **Next make-or-break lemma.**  Expand a periodic odd-tail/low-mode pairing
+   in the normalized high sine basis, justify the infinite interchange, and
+   use the committed `19/500` squared coupling sum to construct the completed
+   low-mode functionals.
+5. **Viability evidence.**  Independent review checked both normalization
+   cases, sesquilinear scaling, circle faithfulness, nested subtype instances,
+   nonnegativity, and definiteness.  Direct strict and the 8,315-job focused
+   build pass; seven endpoints use only `propext`, `Classical.choice`, and
+   `Quot.sound`.  No form-positivity premise or theorem-shaped interface was
+   introduced, and the root legacy count remains 159.
+
+## `1f8e157` — First positive even diagonal moment certified
+
+1. **Theorems added.**  The actual production moment `D_1` now lies in
+   `[38331/100000, 38332/100000]`.  The accelerated series is enclosed by 32
+   exact checkpoint blocks: blocks 0--30 contain 256 terms each and the final
+   block contains 255, covering exactly `k = 1,...,8191`; the analytic tail
+   begins at 8192.
+2. **Gate hypothesis eliminated.**  The first nonconstant diagonal entry of
+   the 200-mode interval Gram is now an analytic theorem rather than a
+   discovery target.  Together with `D_0`, two of the 200 diagonal boxes are
+   inhabited by their production moments.
+3. **Assumptions remaining.**  `D_2,...,D_199`, all 199 sine boxes, and the
+   remaining exact Schur checkpoints are still open.  The existing accelerated
+   method is sound but its per-index replay cost motivates reusable batching.
+4. **Next make-or-break lemma.**  Certify `D_2` with the same checkpointed
+   architecture, then factor common head/tail lemmas so ranges of positive
+   diagonal indices can share analytic and kernel work.
+5. **Viability evidence.**  The exact enclosure is approximately
+   `[0.383313987787, 0.383318714995]`; independent evaluation gives
+   `0.3833159502715774`.  Independent review checked every block, subtraction
+   direction, constant bound, and the 8191/8192 boundary.  Direct strict took
+   about five minutes, the 3,625-job build passed, and the endpoint uses only
+   `propext`, `Classical.choice`, and `Quot.sound`.
