@@ -23,7 +23,10 @@ is harmless only if it rounds to exactly the same rational certificate.  The
 tool never writes files.  ``--emit-lean`` writes the complete Phase-A Lean
 data module to stdout, with the canonical payload represented once as
 computable ``(column, coefficient)`` lists and bridged to sparse ``Finsupp``
-rows; all audit diagnostics then go to stderr.
+rows.  The dominance-module batch and manifest modes render a strictly serial
+generated proof DAG to stdout as JSON; callers remain responsible for applying
+the returned content.  Audit diagnostics for the legacy emission modes go to
+stderr.
 """
 
 from __future__ import annotations
@@ -48,17 +51,20 @@ P_DENOMINATOR = 10_000
 WEIGHT_DENOMINATOR = 1_000
 UNIFORM_HALF_WIDTH = F(51, 100_000)
 BLOCK_BUDGET_DENOMINATOR = 1_000_000_000_000
+BLOCK_CHECKS_PER_MODULE = 8
+ROWS_PER_MODULE = 10
 
 TARGET_SOURCE = Path("ArithmeticHodge/Analysis/YoshidaEvenMomentTargets.lean")
-INTERVAL_SOURCE = Path(
-    "ArithmeticHodge/Analysis/YoshidaEvenIntervalCertificate.lean"
-)
+INTERVAL_SOURCE = Path("ArithmeticHodge/Analysis/YoshidaEvenIntervalCertificate.lean")
 
 EXPECTED_TARGETS_SHA256 = (
     "ff6bd4c66efdbfda0395f89f0e70263a1e6f1bc59778d2f833f4fbafbd265491"
 )
 EXPECTED_PAYLOAD_SHA256 = (
     "cdb37a48b2b2c28a71f266efdd84ed32bccd2d4c418037277b9bbd5a89dea9db"
+)
+EXPECTED_DOMINANCE_PAYLOAD_SHA256 = (
+    "bcf0a4fe6a3aad2ad41d7b6edbee0b9cfbb86e52895cf36c9859916a9589b406"
 )
 EXPECTED_MAX_HALF_WIDTH = F(41_214_331, 80_896_200_000)
 EXPECTED_MAX_HALF_WIDTH_LOCATION = (1, 1)
@@ -108,9 +114,7 @@ def _definition_body(source: str, name: str) -> str:
         body = source.split(marker, 1)[1]
     except IndexError as exc:
         raise ValueError(f"definition {name!r} was not found") from exc
-    boundary = re.search(
-        r"\n(?:def |theorem |private theorem |instance |end )", body
-    )
+    boundary = re.search(r"\n(?:def |theorem |private theorem |instance |end )", body)
     return body if boundary is None else body[: boundary.start()]
 
 
@@ -244,9 +248,7 @@ def base_interval_entry(data: dict[str, object], n: int, m: int) -> Interval:
     if m == 0:
         return base_interval_entry(data, 0, n)
     if n == m:
-        correction = interval_mul(
-            interval_mul(pure(F(1, 2 * n)), inv_pi), sine[n]
-        )
+        correction = interval_mul(interval_mul(pure(F(1, 2 * n)), inv_pi), sine[n])
         return interval_sub(diagonal[n], correction)
 
     coefficient = pure(F((-1) ** (n + m), n * n - m * m))
@@ -261,7 +263,9 @@ def build_interval_matrix(
     data: dict[str, object],
 ) -> tuple[list[list[Interval]], list[list[F]], list[list[F]], F, tuple[int, int]]:
     correction: F = data["correction"]  # type: ignore[assignment]
-    intervals: list[list[Interval]] = [[(F(0), F(0)) for _ in range(N)] for _ in range(N)]
+    intervals: list[list[Interval]] = [
+        [(F(0), F(0)) for _ in range(N)] for _ in range(N)
+    ]
     centers: list[list[F]] = [[F(0) for _ in range(N)] for _ in range(N)]
     radii: list[list[F]] = [[F(0) for _ in range(N)] for _ in range(N)]
     max_radius = F(-1)
@@ -305,9 +309,7 @@ def discover_preconditioner(
         [[float(q) for q in row] for row in centers], dtype=np.float64
     )
     cholesky = np.linalg.cholesky(center_float)
-    inverse_cholesky = np.linalg.solve(
-        cholesky, np.eye(N, dtype=np.float64)
-    )
+    inverse_cholesky = np.linalg.solve(cholesky, np.eye(N, dtype=np.float64))
 
     grid_rows: list[list[tuple[int, int]]] = []
     rational_rows: list[SparseRow] = []
@@ -328,9 +330,7 @@ def discover_preconditioner(
     return grid_rows, rational_rows
 
 
-def exact_congruence(
-    rows: list[SparseRow], centers: list[list[F]]
-) -> list[list[F]]:
+def exact_congruence(rows: list[SparseRow], centers: list[list[F]]) -> list[list[F]]:
     result = [[F(0) for _ in range(N)] for _ in range(N)]
     for i in range(N):
         for j in range(i, N):
@@ -346,12 +346,8 @@ def exact_congruence(
     return result
 
 
-def discover_weights(
-    congruence: list[list[F]], row_l1: list[F]
-) -> list[int]:
-    b = np.array(
-        [[float(q) for q in row] for row in congruence], dtype=np.float64
-    )
+def discover_weights(congruence: list[list[F]], row_l1: list[F]) -> list[int]:
+    b = np.array([[float(q) for q in row] for row in congruence], dtype=np.float64)
     a = np.array([float(q) for q in row_l1], dtype=np.float64)
     epsilon = float(UNIFORM_HALF_WIDTH)
     diagonal_lower = np.diag(b) - epsilon * a * a
@@ -369,9 +365,7 @@ def discover_weights(
     if np.min(vector) <= 0 or not np.all(np.isfinite(vector)):
         raise ValueError("Perron discovery vector is not strictly positive and finite")
     vector /= np.min(vector)
-    return [
-        max(1, int(np.rint(value * WEIGHT_DENOMINATOR))) for value in vector
-    ]
+    return [max(1, int(np.rint(value * WEIGHT_DENOMINATOR))) for value in vector]
 
 
 def build_payload(
@@ -412,21 +406,23 @@ def audit(repo_root: Path) -> dict[str, object]:
     triangular = all(j <= i for i, row in enumerate(rows) for j in row)
     positive_diagonal = all(rows[i].get(i, F(0)) > 0 for i in range(N))
     if nnz != EXPECTED_NNZ:
-        raise ValueError(f"preconditioner nnz drifted: expected {EXPECTED_NNZ}, got {nnz}")
+        raise ValueError(
+            f"preconditioner nnz drifted: expected {EXPECTED_NNZ}, got {nnz}"
+        )
     if min(support_sizes) != EXPECTED_SUPPORT_MIN:
         raise ValueError("minimum sparse-row support drifted")
     if max(support_sizes) != EXPECTED_SUPPORT_MAX:
         raise ValueError("maximum sparse-row support drifted")
     if not triangular or not positive_diagonal:
-        raise ValueError("preconditioner is not lower triangular with positive diagonal")
+        raise ValueError(
+            "preconditioner is not lower triangular with positive diagonal"
+        )
 
     congruence = exact_congruence(rows, centers)
     row_l1 = [sum((abs(q) for q in row.values()), F(0)) for row in rows]
     weight_grid = discover_weights(congruence, row_l1)
     if len(weight_grid) != N:
-        raise ValueError(
-            f"weight count drifted: expected {N}, got {len(weight_grid)}"
-        )
+        raise ValueError(f"weight count drifted: expected {N}, got {len(weight_grid)}")
     weights = [F(q, WEIGHT_DENOMINATOR) for q in weight_grid]
     if min(weight_grid) <= 0:
         raise ValueError("a rational weight is nonpositive")
@@ -435,16 +431,10 @@ def audit(repo_root: Path) -> dict[str, object]:
     ratios: list[float] = []
     diagonal_lowers: list[F] = []
     for i in range(N):
-        diagonal_lower = (
-            congruence[i][i]
-            - UNIFORM_HALF_WIDTH * row_l1[i] * row_l1[i]
-        )
+        diagonal_lower = congruence[i][i] - UNIFORM_HALF_WIDTH * row_l1[i] * row_l1[i]
         off_diagonal = sum(
             (
-                (
-                    abs(congruence[i][j])
-                    + UNIFORM_HALF_WIDTH * row_l1[i] * row_l1[j]
-                )
+                (abs(congruence[i][j]) + UNIFORM_HALF_WIDTH * row_l1[i] * row_l1[j])
                 * weights[j]
                 for j in range(N)
                 if j != i
@@ -482,23 +472,16 @@ def audit(repo_root: Path) -> dict[str, object]:
         for block in range(block_count):
             contribution = sum(
                 (
-                    (
-                        abs(congruence[i][j])
-                        + UNIFORM_HALF_WIDTH * row_l1[i] * row_l1[j]
-                    )
+                    (abs(congruence[i][j]) + UNIFORM_HALF_WIDTH * row_l1[i] * row_l1[j])
                     * weights[j]
                     for j in range(N)
                     if j != i and j % block_count == block
                 ),
                 F(0),
             )
-            budget = _round_up_fraction(
-                contribution, BLOCK_BUDGET_DENOMINATOR
-            )
+            budget = _round_up_fraction(contribution, BLOCK_BUDGET_DENOMINATOR)
             if contribution > budget:
-                raise ValueError(
-                    f"rounded block budget is unsound at ({i}, {block})"
-                )
+                raise ValueError(f"rounded block budget is unsound at ({i}, {block})")
             budgets.append(budget)
         rounded_margin = diagonal_lowers[i] * weights[i] - sum(budgets, F(0))
         if rounded_margin <= 0:
@@ -506,8 +489,17 @@ def audit(repo_root: Path) -> dict[str, object]:
         block_budgets.append(budgets)
         rounded_margins.append(rounded_margin)
 
+    if len(block_budgets) != N:
+        raise ValueError("dominance budget row count drifted")
+    if [len(budgets) for budgets in block_budgets] != support_sizes:
+        raise ValueError("dominance budget lengths do not match sparse supports")
+    if sum(map(len, block_budgets)) != EXPECTED_NNZ:
+        raise ValueError("dominance residue-block count drifted")
+
     payload = build_payload(
-        data["targets_sha256"], grid_rows, weight_grid  # type: ignore[arg-type]
+        data["targets_sha256"],
+        grid_rows,
+        weight_grid,  # type: ignore[arg-type]
     )
     canonical_payload = _canonical_json(payload)
     payload_sha256 = _sha256(canonical_payload)
@@ -515,6 +507,28 @@ def audit(repo_root: Path) -> dict[str, object]:
         raise ValueError(
             "canonical certificate payload drifted: "
             f"expected {EXPECTED_PAYLOAD_SHA256}, got {payload_sha256}"
+        )
+
+    dominance_payload = {
+        "base_payload_sha256": payload_sha256,
+        "block_budget_denominator": BLOCK_BUDGET_DENOMINATOR,
+        "block_budgets": [
+            [_fraction_pair(q) for q in budgets] for budgets in block_budgets
+        ],
+        "dimension": N,
+        "epsilon": _fraction_pair(UNIFORM_HALF_WIDTH),
+        "residue_rule": "j % len(p_rows[i])",
+        "schema": "yoshida-even-dominance-v1",
+    }
+    dominance_payload_sha256 = _sha256(_canonical_json(dominance_payload))
+    if (
+        EXPECTED_DOMINANCE_PAYLOAD_SHA256
+        and dominance_payload_sha256 != EXPECTED_DOMINANCE_PAYLOAD_SHA256
+    ):
+        raise ValueError(
+            "canonical dominance payload drifted: "
+            f"expected {EXPECTED_DOMINANCE_PAYLOAD_SHA256}, "
+            f"got {dominance_payload_sha256}"
         )
 
     minimum_margin_row = min(range(N), key=margins.__getitem__)
@@ -526,6 +540,8 @@ def audit(repo_root: Path) -> dict[str, object]:
         "congruence": congruence,
         "diagonal_lowers": diagonal_lowers,
         "duplicate_columns": duplicate_columns,
+        "dominance_payload": dominance_payload,
+        "dominance_payload_sha256": dominance_payload_sha256,
         "grid_rows": grid_rows,
         "margins": margins,
         "max_half_width": max_radius,
@@ -571,6 +587,10 @@ def print_report(result: dict[str, object], stream: TextIO) -> None:
     )
     print(f"source_targets_sha256={result['targets_sha256']}", file=stream)
     print(f"canonical_payload_sha256={result['payload_sha256']}", file=stream)
+    print(
+        f"dominance_payload_sha256={result['dominance_payload_sha256']}",
+        file=stream,
+    )
     print(
         f"max_interval_width={_fraction_text(2 * max_half_width)} "
         f"(~{float(2 * max_half_width):.18g})",
@@ -639,8 +659,7 @@ def _lean_fraction(numerator: int, denominator: int) -> str:
 
 def _lean_entry_term(column: int, numerator: int) -> str:
     return (
-        f"(({column} : YoshidaEvenIndex), "
-        f"{_lean_fraction(numerator, P_DENOMINATOR)})"
+        f"(({column} : YoshidaEvenIndex), {_lean_fraction(numerator, P_DENOMINATOR)})"
     )
 
 
@@ -651,7 +670,9 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
     max_half_width: F = result["max_half_width"]  # type: ignore[assignment]
 
     print("/-", file=stream)
-    print("Generated by scripts/generate_yoshida_even_sparse_congruence.py", file=stream)
+    print(
+        "Generated by scripts/generate_yoshida_even_sparse_congruence.py", file=stream
+    )
     print("Deterministic discovery seed: 0 (no PRNG)", file=stream)
     print(f"Source targets SHA-256: {result['targets_sha256']}", file=stream)
     print(f"Canonical payload schema: {result['payload']['schema']}", file=stream)  # type: ignore[index]
@@ -673,9 +694,17 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
         file=stream,
     )
     print(f"Minimum exact weighted margin row: {result['min_margin_row']}", file=stream)
-    print(f"Minimum exact weighted margin numerator: {min_margin.numerator}", file=stream)
-    print(f"Minimum exact weighted margin denominator: {min_margin.denominator}", file=stream)
-    print("Rows use exact numerator/10000 coefficients; weights use numerator/1000.", file=stream)
+    print(
+        f"Minimum exact weighted margin numerator: {min_margin.numerator}", file=stream
+    )
+    print(
+        f"Minimum exact weighted margin denominator: {min_margin.denominator}",
+        file=stream,
+    )
+    print(
+        "Rows use exact numerator/10000 coefficients; weights use numerator/1000.",
+        file=stream,
+    )
     print("-/", file=stream)
     print("", file=stream)
     print("import ArithmeticHodge.Analysis.SparseEntriesCertificate", file=stream)
@@ -686,7 +715,10 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
     print("open Matrix", file=stream)
     print("open scoped BigOperators", file=stream)
     print("", file=stream)
-    print("namespace ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceData", file=stream)
+    print(
+        "namespace ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceData",
+        file=stream,
+    )
     print("", file=stream)
     print("open RatInterval", file=stream)
     print("open SparseCongruenceCertificate", file=stream)
@@ -701,9 +733,15 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
     print("  inflatedEvenMomentIntervalGram evenCorrectionRadius", file=stream)
     print("    yoshidaEvenSineTargets yoshidaEvenDiagonalTargets", file=stream)
     print("", file=stream)
-    print("def evenTargetCenter : Matrix YoshidaEvenIndex YoshidaEvenIndex ℚ :=", file=stream)
+    print(
+        "def evenTargetCenter : Matrix YoshidaEvenIndex YoshidaEvenIndex ℚ :=",
+        file=stream,
+    )
     print("  fun i j ↦", file=stream)
-    print("    ((evenTargetInterval i j).lower + (evenTargetInterval i j).upper) / 2", file=stream)
+    print(
+        "    ((evenTargetInterval i j).lower + (evenTargetInterval i j).upper) / 2",
+        file=stream,
+    )
     print("", file=stream)
     print("def evenSparseEntries", file=stream)
     print("    (i : YoshidaEvenIndex) : SparseEntries YoshidaEvenIndex :=", file=stream)
@@ -716,13 +754,19 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
         print("    ]", file=stream)
     print("  | _ => []", file=stream)
     print("", file=stream)
-    print("def evenSparseRows (i : YoshidaEvenIndex) : SparseRow YoshidaEvenIndex :=", file=stream)
+    print(
+        "def evenSparseRows (i : YoshidaEvenIndex) : SparseRow YoshidaEvenIndex :=",
+        file=stream,
+    )
     print("  rowOfEntries (evenSparseEntries i)", file=stream)
     print("", file=stream)
     print("def evenSparseWeights (i : YoshidaEvenIndex) : ℚ :=", file=stream)
     print("  match i.val with", file=stream)
     for row_index, numerator in enumerate(weight_grid):
-        print(f"  | {row_index} => {_lean_fraction(numerator, WEIGHT_DENOMINATOR)}", file=stream)
+        print(
+            f"  | {row_index} => {_lean_fraction(numerator, WEIGHT_DENOMINATOR)}",
+            file=stream,
+        )
     print("  | _ => 1", file=stream)
     print("", file=stream)
     print("def evenSparseRowL1 (i : YoshidaEvenIndex) : ℚ :=", file=stream)
@@ -745,29 +789,28 @@ def emit_dominance_lean(result: dict[str, object], stream: TextIO) -> None:
     min_rounded_row = min(range(N), key=rounded_margins.__getitem__)
 
     print("/-", file=stream)
-    print("Generated by scripts/generate_yoshida_even_sparse_congruence.py", file=stream)
+    print(
+        "Generated by scripts/generate_yoshida_even_sparse_congruence.py", file=stream
+    )
     print(f"Canonical payload SHA-256: {result['payload_sha256']}", file=stream)
     print(f"Residue blocks: {sum(map(len, block_budgets))}", file=stream)
     print(f"Block budget denominator: {BLOCK_BUDGET_DENOMINATOR}", file=stream)
     print(f"Minimum rounded margin row: {min_rounded_row}", file=stream)
     print(
-        "Minimum rounded margin: "
-        f"{_fraction_text(rounded_margins[min_rounded_row])}",
+        f"Minimum rounded margin: {_fraction_text(rounded_margins[min_rounded_row])}",
         file=stream,
     )
     print("-/", file=stream)
     print("", file=stream)
     print(
-        "import ArithmeticHodge.Analysis."
-        "YoshidaEvenSparseCongruenceDominanceCore",
+        "import ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceDominanceCore",
         file=stream,
     )
     print("", file=stream)
     print("set_option autoImplicit false", file=stream)
     print("", file=stream)
     print(
-        "namespace ArithmeticHodge.Analysis."
-        "YoshidaEvenSparseCongruenceChecks",
+        "namespace ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceChecks",
         file=stream,
     )
     print("", file=stream)
@@ -786,10 +829,329 @@ def emit_dominance_lean(result: dict[str, object], stream: TextIO) -> None:
     print("  (evenSparseDominanceBlockBudgets i).getD b 0", file=stream)
     print("", file=stream)
     print(
-        "end ArithmeticHodge.Analysis."
-        "YoshidaEvenSparseCongruenceChecks",
+        "end ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceChecks",
         file=stream,
     )
+
+
+_DOMINANCE_STEM = "YoshidaEvenSparseCongruenceDominance"
+_ANALYSIS_DIRECTORY = Path("ArithmeticHodge/Analysis")
+_DOMINANCE_NAMESPACE = "ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceChecks"
+
+
+def _generated_path(stem: str) -> str:
+    return (_ANALYSIS_DIRECTORY / f"{stem}.lean").as_posix()
+
+
+def _module_name(path: str) -> str:
+    return path.removesuffix(".lean").replace("/", ".")
+
+
+def _generated_header(result: dict[str, object], description: str) -> list[str]:
+    return [
+        "/-",
+        "Generated by scripts/generate_yoshida_even_sparse_congruence.py",
+        f"Canonical payload SHA-256: {result['payload_sha256']}",
+        f"Dominance payload SHA-256: {result['dominance_payload_sha256']}",
+        description,
+        "-/",
+    ]
+
+
+def _render_block_module(
+    result: dict[str, object],
+    module_index: int,
+    predecessor: str,
+    checks: list[tuple[int, int]],
+) -> str:
+    lines = _generated_header(
+        result,
+        f"Residue-block check module {module_index:03d}; checks: {len(checks)}.",
+    )
+    lines.extend(
+        [
+            "",
+            f"import {predecessor}",
+            "",
+            "set_option autoImplicit false",
+            "",
+            f"namespace {_DOMINANCE_NAMESPACE}",
+            "",
+        ]
+    )
+    for row, block in checks:
+        lines.extend(
+            [
+                (f"theorem evenSparseDominanceBlock_row{row:03d}_{block:03d}_le :"),
+                (
+                    "    evenSparseDominanceBlockContribution "
+                    f"({row} : YoshidaEvenIndex) {block} ≤"
+                ),
+                (
+                    "      evenSparseDominanceBlockBudget "
+                    f"({row} : YoshidaEvenIndex) {block} := by"
+                ),
+                "  decide +kernel",
+                "",
+            ]
+        )
+    lines.append(f"end {_DOMINANCE_NAMESPACE}")
+    return "\n".join(lines) + "\n"
+
+
+def _render_row_theorems(row: int, block_count: int) -> list[str]:
+    suffix = f"row{row:03d}"
+    lines = [
+        f"private theorem evenSparseDominanceBudgetMargin_{suffix} :",
+        "    (∑ b ∈ Finset.range",
+        (f"        (evenSparseDominanceBlockCount ({row} : YoshidaEvenIndex)),"),
+        (f"      evenSparseDominanceBlockBudget ({row} : YoshidaEvenIndex) b) <"),
+        (f"        evenSparseDiagonalLowerEntries ({row} : YoshidaEvenIndex) *"),
+        f"          evenSparseWeights ({row} : YoshidaEvenIndex) := by",
+        "  decide +kernel",
+        "",
+        f"theorem evenSparseWeightedDominanceEntries_{suffix} :",
+        (f"    EvenSparseWeightedDominanceEntriesAt ({row} : YoshidaEvenIndex) := by"),
+        "  apply (evenSparseWeightedDominanceEntriesAt_iff_blocks _).2",
+        "  calc",
+        "    (∑ b ∈ Finset.range",
+        (f"        (evenSparseDominanceBlockCount ({row} : YoshidaEvenIndex)),"),
+        (f"      evenSparseDominanceBlockContribution ({row} : YoshidaEvenIndex) b) ≤"),
+        "        ∑ b ∈ Finset.range",
+        (f"          (evenSparseDominanceBlockCount ({row} : YoshidaEvenIndex)),"),
+        (
+            "          evenSparseDominanceBlockBudget "
+            f"({row} : YoshidaEvenIndex) b := by"
+        ),
+        "      apply Finset.sum_le_sum",
+        "      intro b hb",
+        "      have hcount :",
+        (
+            "          evenSparseDominanceBlockCount "
+            f"({row} : YoshidaEvenIndex) = {block_count} := by"
+        ),
+        "        decide +kernel",
+        f"      have hb{block_count} : b < {block_count} := by",
+        "        rw [hcount] at hb",
+        "        exact Finset.mem_range.mp hb",
+        "      interval_cases b",
+        "      all_goals first",
+    ]
+    for block in range(block_count):
+        lines.append(
+            f"        | exact evenSparseDominanceBlock_row{row:03d}_{block:03d}_le"
+        )
+    lines.extend(
+        [
+            (f"    _ < evenSparseDiagonalLowerEntries ({row} : YoshidaEvenIndex) *"),
+            f"          evenSparseWeights ({row} : YoshidaEvenIndex) :=",
+            f"      evenSparseDominanceBudgetMargin_{suffix}",
+            "",
+            f"theorem evenSparseWeightedDominance_{suffix} :",
+            (f"    EvenSparseWeightedDominanceAt ({row} : YoshidaEvenIndex) :="),
+            "  evenSparseWeightedDominanceAt_of_entries",
+            f"    evenSparseWeightedDominanceEntries_{suffix}",
+            "",
+        ]
+    )
+    return lines
+
+
+def _render_rows_module(
+    result: dict[str, object],
+    module_index: int,
+    predecessor: str,
+    rows: range,
+) -> str:
+    block_budgets: list[list[F]] = result["block_budgets"]  # type: ignore[assignment]
+    lines = _generated_header(
+        result,
+        (
+            f"Weighted-dominance row module {module_index:03d}; "
+            f"rows: {rows.start}..{rows.stop - 1}."
+        ),
+    )
+    lines.extend(
+        [
+            "",
+            f"import {predecessor}",
+            "",
+            "set_option autoImplicit false",
+            "",
+            "open scoped BigOperators",
+            "",
+            f"namespace {_DOMINANCE_NAMESPACE}",
+            "",
+            "open YoshidaEvenSparseCongruenceData",
+            "",
+        ]
+    )
+    for row in rows:
+        lines.extend(_render_row_theorems(row, len(block_budgets[row])))
+    lines.append(f"end {_DOMINANCE_NAMESPACE}")
+    return "\n".join(lines) + "\n"
+
+
+def _render_dominance_aggregate(result: dict[str, object], predecessor: str) -> str:
+    lines = _generated_header(
+        result,
+        "Universal weighted-dominance aggregation for all Fin 200 rows.",
+    )
+    lines.extend(
+        [
+            "",
+            f"import {predecessor}",
+            "",
+            "set_option autoImplicit false",
+            "",
+            f"namespace {_DOMINANCE_NAMESPACE}",
+            "",
+            "theorem evenSparseWeightedDominanceEntries :",
+            "    ∀ i : YoshidaEvenIndex,",
+            "      EvenSparseWeightedDominanceEntriesAt i := by",
+            "  intro i",
+            "  fin_cases i",
+            "  all_goals first",
+        ]
+    )
+    for row in range(N):
+        lines.append(f"    | exact evenSparseWeightedDominanceEntries_row{row:03d}")
+    lines.extend(
+        [
+            "",
+            "theorem evenSparseWeightedDominance :",
+            "    ∀ i : YoshidaEvenIndex, EvenSparseWeightedDominanceAt i := by",
+            "  intro i",
+            "  exact evenSparseWeightedDominanceAt_of_entries",
+            "    (evenSparseWeightedDominanceEntries i)",
+            "",
+            f"end {_DOMINANCE_NAMESPACE}",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def dominance_generated_modules(
+    result: dict[str, object],
+) -> list[dict[str, object]]:
+    """Render the complete serial dominance proof DAG without writing files."""
+    block_budgets: list[list[F]] = result["block_budgets"]  # type: ignore[assignment]
+    block_checks = [
+        (row, block)
+        for row, budgets in enumerate(block_budgets)
+        for block in range(len(budgets))
+    ]
+    if len(block_checks) != EXPECTED_NNZ:
+        raise ValueError("generated block theorem count drifted")
+
+    modules: list[dict[str, object]] = []
+
+    def append_module(
+        *, path: str, content: str, kind: str, index: int, predecessor: str
+    ) -> None:
+        modules.append(
+            {
+                "content": content,
+                "index": index,
+                "kind": kind,
+                "path": path,
+                "predecessor": predecessor,
+                "sha256": _sha256(content.encode("utf-8")),
+            }
+        )
+
+    block_module_count = (
+        len(block_checks) + BLOCK_CHECKS_PER_MODULE - 1
+    ) // BLOCK_CHECKS_PER_MODULE
+    predecessor = "ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceDominanceData"
+    for module_index in range(block_module_count):
+        start = module_index * BLOCK_CHECKS_PER_MODULE
+        checks = block_checks[start : start + BLOCK_CHECKS_PER_MODULE]
+        path = _generated_path(f"{_DOMINANCE_STEM}Blocks{module_index:03d}")
+        content = _render_block_module(result, module_index, predecessor, checks)
+        append_module(
+            path=path,
+            content=content,
+            kind="blocks",
+            index=module_index,
+            predecessor=predecessor,
+        )
+        predecessor = _module_name(path)
+
+    row_module_count = (N + ROWS_PER_MODULE - 1) // ROWS_PER_MODULE
+    for module_index in range(row_module_count):
+        start = module_index * ROWS_PER_MODULE
+        rows = range(start, min(start + ROWS_PER_MODULE, N))
+        path = _generated_path(f"{_DOMINANCE_STEM}Rows{module_index:03d}")
+        content = _render_rows_module(result, module_index, predecessor, rows)
+        append_module(
+            path=path,
+            content=content,
+            kind="rows",
+            index=module_index,
+            predecessor=predecessor,
+        )
+        predecessor = _module_name(path)
+
+    path = _generated_path(_DOMINANCE_STEM)
+    content = _render_dominance_aggregate(result, predecessor)
+    append_module(
+        path=path,
+        content=content,
+        kind="aggregate",
+        index=0,
+        predecessor=predecessor,
+    )
+    return modules
+
+
+def parse_module_batch(specification: str, module_count: int) -> tuple[int, int]:
+    """Parse a `START:COUNT` slice of the generated module sequence."""
+    pieces = specification.split(":")
+    if len(pieces) != 2:
+        raise ValueError("module batch must have the form START:COUNT")
+    try:
+        start, count = map(int, pieces)
+    except ValueError as exc:
+        raise ValueError("module batch bounds must be integers") from exc
+    if start < 0 or count <= 0 or start >= module_count:
+        raise ValueError("module batch bounds are outside the generated sequence")
+    if start + count > module_count:
+        raise ValueError("module batch extends past the generated sequence")
+    return start, count
+
+
+def emit_dominance_module_batch(
+    result: dict[str, object], specification: str, stream: TextIO
+) -> None:
+    modules = dominance_generated_modules(result)
+    start, count = parse_module_batch(specification, len(modules))
+    json.dump(
+        modules[start : start + count],
+        stream,
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
+    stream.write("\n")
+
+
+def emit_dominance_manifest(result: dict[str, object], stream: TextIO) -> None:
+    modules = dominance_generated_modules(result)
+    manifest = {
+        "block_checks": EXPECTED_NNZ,
+        "block_checks_per_module": BLOCK_CHECKS_PER_MODULE,
+        "dominance_payload_sha256": result["dominance_payload_sha256"],
+        "module_count": len(modules),
+        "modules": [
+            {key: value for key, value in module.items() if key != "content"}
+            for module in modules
+        ],
+        "rows": N,
+        "rows_per_module": ROWS_PER_MODULE,
+        "schema": "yoshida-even-dominance-modules-v1",
+    }
+    json.dump(manifest, stream, ensure_ascii=True, indent=2, sort_keys=True)
+    stream.write("\n")
 
 
 def main() -> int:
@@ -821,6 +1183,19 @@ def main() -> int:
         action="store_true",
         help="audit, then emit the canonical hashed JSON payload to stdout",
     )
+    output.add_argument(
+        "--emit-dominance-module-batch",
+        metavar="START:COUNT",
+        help=(
+            "audit, then emit a JSON batch from the serial generated "
+            "dominance-module sequence"
+        ),
+    )
+    output.add_argument(
+        "--emit-dominance-manifest",
+        action="store_true",
+        help="audit, then emit the serial dominance-module manifest",
+    )
     args = parser.parse_args()
 
     result = audit(args.repo_root.resolve())
@@ -833,6 +1208,13 @@ def main() -> int:
     elif args.emit_canonical_json:
         print_report(result, sys.stderr)
         sys.stdout.buffer.write(result["canonical_payload"])  # type: ignore[arg-type]
+    elif args.emit_dominance_module_batch:
+        emit_dominance_module_batch(
+            result, args.emit_dominance_module_batch, sys.stdout
+        )
+    elif args.emit_dominance_manifest:
+        print_report(result, sys.stderr)
+        emit_dominance_manifest(result, sys.stdout)
     else:
         print_report(result, sys.stdout)
     return 0
