@@ -697,3 +697,27 @@ separate from build logs: a green build is evidence, not a stage transition.
    endpoints use only `propext`, `Classical.choice`, and `Quot.sound`;
    numerical spectral/real-space errors on representative branches range
    from about `2.1e-11` to `1.5e-9`.
+
+## `a80978b` — Second positive even diagonal moment certified
+
+1. **Theorems added.**  The actual production moment `D_2` now lies in
+   `[106433/100000, 106434/100000]`.  Forty exact checkpoint blocks cover
+   precisely `k = 1,...,10239`—39 blocks of 256 corrections and a final block
+   of 255—while the proved analytic tail begins at 10240.
+2. **Gate hypothesis eliminated.**  `D_2` is now an analytic theorem rather
+   than a discovery target.  Together with `D_0` and `D_1`, three of the 200
+   production diagonal boxes required by the full even Gram are certified.
+3. **Assumptions remaining.**  `D_3,...,D_199`, `S_2,...,S_199`, the remaining
+   exact Schur pivots, even-tail coercivity, and the exceptional finite/tail
+   coupling estimate remain open.
+4. **Next make-or-break lemma.**  Finish the in-progress `D_3` certificate and
+   validate the accelerated, checkpointed sine architecture on `S_2`; then
+   batch the remaining scalar boxes without changing their production target
+   widths.
+5. **Viability evidence.**  Independent exact replay gives the enclosure
+   `[1.06433089932556, 1.06433981690207]`, while independent quadrature gives
+   approximately `1.0643351971246413`.  Review checked every block, sign,
+   constant, and the 10239/10240 boundary.  Fresh warning-as-error direct and
+   umbrella elaboration pass; the endpoint uses only `propext`,
+   `Classical.choice`, and `Quot.sound`, and all 159 legacy root artifacts
+   remain untouched.
