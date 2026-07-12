@@ -23,7 +23,9 @@ private def correctedTrapezoidFifthKernelFirst (a t : ℝ) : ℝ :=
   1 / 720 - (t - a) ^ 2 / 24 +
     (t - a) ^ 3 / 12 - (t - a) ^ 4 / 24
 
-private def correctedTrapezoidFifthKernelSecond (a t : ℝ) : ℝ :=
+/-- The cubic kernel for the unit-cell trapezoidal remainder after the first
+derivative endpoint correction. -/
+def correctedTrapezoidThirdKernel (a t : ℝ) : ℝ :=
   -(t - a) / 12 + (t - a) ^ 2 / 4 - (t - a) ^ 3 / 6
 
 private def correctedTrapezoidFifthKernelThird (a t : ℝ) : ℝ :=
@@ -41,8 +43,8 @@ private theorem hasDerivAt_correctedTrapezoidFifthKernel (a t : ℝ) :
 
 private theorem hasDerivAt_correctedTrapezoidFifthKernelFirst (a t : ℝ) :
     HasDerivAt (correctedTrapezoidFifthKernelFirst a)
-      (correctedTrapezoidFifthKernelSecond a t) t := by
-  unfold correctedTrapezoidFifthKernelFirst correctedTrapezoidFifthKernelSecond
+      (correctedTrapezoidThirdKernel a t) t := by
+  unfold correctedTrapezoidFifthKernelFirst correctedTrapezoidThirdKernel
   have hx := (hasDerivAt_id t).sub_const a
   convert ((((hasDerivAt_const t (1 / 720 : ℝ)).sub
     ((hx.pow 2).div_const 24)).add ((hx.pow 3).div_const 12)).sub
@@ -50,15 +52,119 @@ private theorem hasDerivAt_correctedTrapezoidFifthKernelFirst (a t : ℝ) :
   simp only [id_eq]
   ring
 
-private theorem hasDerivAt_correctedTrapezoidFifthKernelSecond (a t : ℝ) :
-    HasDerivAt (correctedTrapezoidFifthKernelSecond a)
+private theorem hasDerivAt_correctedTrapezoidThirdKernel (a t : ℝ) :
+    HasDerivAt (correctedTrapezoidThirdKernel a)
       (correctedTrapezoidFifthKernelThird a t) t := by
-  unfold correctedTrapezoidFifthKernelSecond correctedTrapezoidFifthKernelThird
+  unfold correctedTrapezoidThirdKernel correctedTrapezoidFifthKernelThird
   have hx := (hasDerivAt_id t).sub_const a
   convert (((hx.neg.div_const 12).add ((hx.pow 2).div_const 4)).sub
     ((hx.pow 3).div_const 6)) using 1
   simp only [id_eq]
   ring
+
+/-- The cubic first-correction kernel has a uniform absolute bound on its
+unit cell. -/
+theorem abs_correctedTrapezoidThirdKernel_le
+    {a t : ℝ} (ht : t ∈ Icc a (a + 1)) :
+    |correctedTrapezoidThirdKernel a t| ≤ 1 / 12 := by
+  let x : ℝ := t - a
+  have hx0 : 0 ≤ x := by
+    dsimp [x]
+    linarith [ht.1]
+  have hx1 : x ≤ 1 := by
+    dsimp [x]
+    linarith [ht.2]
+  have honeSub : 0 ≤ 1 - x := sub_nonneg.mpr hx1
+  have hthird : |1 - 2 * x| ≤ 1 := by
+    rw [abs_le]
+    constructor <;> linarith
+  have hprod : x * (1 - x) ≤ 1 := by
+    nlinarith [mul_nonneg hx0 honeSub]
+  have hfactor : correctedTrapezoidThirdKernel a t =
+      -(x * (1 - x) * (1 - 2 * x)) / 12 := by
+    dsimp [correctedTrapezoidThirdKernel, x]
+    ring
+  rw [hfactor, abs_div, abs_neg, abs_mul, abs_mul,
+    abs_of_nonneg hx0, abs_of_nonneg honeSub,
+    abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 12)]
+  calc
+    x * (1 - x) * |1 - 2 * x| / 12 ≤ 1 * 1 / 12 := by gcongr
+    _ = 1 / 12 := by ring
+
+/-- The exact unit-cell trapezoidal remainder after the first-derivative
+Euler--Maclaurin correction.  The remaining error is the integral of the
+supplied third derivative against `correctedTrapezoidThirdKernel`. -/
+theorem trapezoidal_error_one_sub_first_eq_integral_third
+    {f f1 f2 f3 : ℝ → ℝ} {a : ℝ}
+    (hf1 : ∀ t, HasDerivAt f (f1 t) t)
+    (hf2 : ∀ t, HasDerivAt f1 (f2 t) t)
+    (hf3 : ∀ t, HasDerivAt f2 (f3 t) t)
+    (hf3_int : IntervalIntegrable f3 volume a (a + 1)) :
+    trapezoidal_error f 1 a (a + 1) -
+          (f1 (a + 1) - f1 a) / 12 =
+      -(∫ t in a..a + 1, correctedTrapezoidThirdKernel a t * f3 t) := by
+  let C2 : ℝ → ℝ := correctedTrapezoidThirdKernel a
+  let C3 : ℝ → ℝ := correctedTrapezoidFifthKernelThird a
+  have hf1_cont : Continuous f1 :=
+    continuous_iff_continuousAt.mpr fun t ↦ (hf2 t).continuousAt
+  have hf2_cont : Continuous f2 :=
+    continuous_iff_continuousAt.mpr fun t ↦ (hf3 t).continuousAt
+  have hf1_int : IntervalIntegrable f1 volume a (a + 1) :=
+    hf1_cont.intervalIntegrable _ _
+  have hf2_int : IntervalIntegrable f2 volume a (a + 1) :=
+    hf2_cont.intervalIntegrable _ _
+  have hC2_deriv (t : ℝ) : HasDerivAt C2 (C3 t) t := by
+    exact hasDerivAt_correctedTrapezoidThirdKernel a t
+  have hC3_cont : Continuous C3 := by
+    change Continuous (fun t : ℝ ↦
+      -1 / 12 + (t - a) / 2 - (t - a) ^ 2 / 2)
+    fun_prop
+  have hC3_int : IntervalIntegrable C3 volume a (a + 1) :=
+    hC3_cont.intervalIntegrable _ _
+  have hbase :=
+    TrapezoidalErrorBounds.trapezoidal_error_one_eq_integral_secondDerivKernel
+      hf1 hf2 hf1_int hf2_int
+  have hderiv1 : deriv f1 = f2 := by
+    funext t
+    exact (hf2 t).deriv
+  have hint2 :
+      (∫ t in a..a + 1, f2 t) = f1 (a + 1) - f1 a := by
+    exact intervalIntegral.integral_deriv_eq_sub' f1 hderiv1
+      (fun t _ht ↦ (hf2 t).differentiableAt) hf2_cont.continuousOn
+  have hC3f2_int : IntervalIntegrable (fun t ↦ C3 t * f2 t)
+      volume a (a + 1) :=
+    hf2_int.continuousOn_mul hC3_cont.continuousOn
+  have hconstf2_int :
+      IntervalIntegrable (fun t ↦ (1 / 12 : ℝ) * f2 t)
+        volume a (a + 1) :=
+    hf2_int.const_mul (1 / 12 : ℝ)
+  have hbase_decomp :
+      trapezoidal_error f 1 a (a + 1) =
+        (f1 (a + 1) - f1 a) / 12 +
+          ∫ t in a..a + 1, C3 t * f2 t := by
+    rw [hbase]
+    rw [show (fun t ↦ ((t - a) * (a + 1 - t) / 2) * f2 t) =
+        fun t ↦ (1 / 12 : ℝ) * f2 t + C3 t * f2 t by
+      funext t
+      dsimp only [C3, correctedTrapezoidFifthKernelThird]
+      ring]
+    rw [intervalIntegral.integral_add hconstf2_int hC3f2_int,
+      intervalIntegral.integral_const_mul, hint2]
+    ring
+  have hparts := intervalIntegral.integral_mul_deriv_eq_deriv_mul
+    (u := C2) (u' := C3) (v := f2) (v' := f3)
+    (a := a) (b := a + 1)
+    (fun t _ht ↦ hC2_deriv t) (fun t _ht ↦ hf3 t) hC3_int hf3_int
+  have hC2_left : C2 a = 0 := by
+    simp [C2, correctedTrapezoidThirdKernel]
+  have hC2_right : C2 (a + 1) = 0 := by
+    simp [C2, correctedTrapezoidThirdKernel]
+    ring
+  simp only [hC2_left, hC2_right, zero_mul, sub_zero, zero_sub] at hparts
+  change trapezoidal_error f 1 a (a + 1) -
+      (f1 (a + 1) - f1 a) / 12 =
+    -(∫ t in a..a + 1, C2 t * f3 t)
+  linarith [hbase_decomp, hparts]
 
 /--
 The exact unit-cell trapezoidal remainder after the first- and third-derivative
@@ -79,7 +185,7 @@ theorem trapezoidal_error_one_sub_first_add_third_eq_integral_fifth
       -(∫ t in a..a + 1, correctedTrapezoidFifthKernel a t * f5 t) := by
   let C : ℝ → ℝ := correctedTrapezoidFifthKernel a
   let C1 : ℝ → ℝ := correctedTrapezoidFifthKernelFirst a
-  let C2 : ℝ → ℝ := correctedTrapezoidFifthKernelSecond a
+  let C2 : ℝ → ℝ := correctedTrapezoidThirdKernel a
   let C3 : ℝ → ℝ := correctedTrapezoidFifthKernelThird a
   have hf1_cont : Continuous f1 :=
     continuous_iff_continuousAt.mpr fun t ↦ (hf2 t).continuousAt
@@ -105,7 +211,7 @@ theorem trapezoidal_error_one_sub_first_add_third_eq_integral_fifth
     exact hasDerivAt_correctedTrapezoidFifthKernelFirst a t
   have hC2_deriv : ∀ t, HasDerivAt C2 (C3 t) t := by
     intro t
-    exact hasDerivAt_correctedTrapezoidFifthKernelSecond a t
+    exact hasDerivAt_correctedTrapezoidThirdKernel a t
   have hC1_cont : Continuous C1 :=
     continuous_iff_continuousAt.mpr fun t ↦ (hC1_deriv t).continuousAt
   have hC2_cont : Continuous C2 :=
@@ -153,9 +259,9 @@ theorem trapezoidal_error_one_sub_first_add_third_eq_integral_fifth
     (a := a) (b := a + 1)
     (fun t _ht ↦ hC2_deriv t) (fun t _ht ↦ hf3 t) hC3_int hf3_int
   have hC2_left : C2 a = 0 := by
-    simp [C2, correctedTrapezoidFifthKernelSecond]
+    simp [C2, correctedTrapezoidThirdKernel]
   have hC2_right : C2 (a + 1) = 0 := by
-    simp [C2, correctedTrapezoidFifthKernelSecond]
+    simp [C2, correctedTrapezoidThirdKernel]
     ring
   simp only [hC2_left, hC2_right, zero_mul, sub_zero, zero_sub] at hparts2
   have hparts1 := intervalIntegral.integral_mul_deriv_eq_deriv_mul
