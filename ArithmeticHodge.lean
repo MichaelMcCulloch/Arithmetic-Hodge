@@ -100,6 +100,7 @@ import ArithmeticHodge.Analysis.YoshidaEvenCriticalCrossBridge
 import ArithmeticHodge.Analysis.YoshidaEvenMomentTargets
 import ArithmeticHodge.Analysis.YoshidaEvenZeroMomentEnclosure
 import ArithmeticHodge.Analysis.YoshidaEvenDiagonalOneEnclosure
+import ArithmeticHodge.Analysis.YoshidaEvenDiagonalTwoEnclosure
 import ArithmeticHodge.Analysis.YoshidaEvenSineMomentOneEnclosure
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
