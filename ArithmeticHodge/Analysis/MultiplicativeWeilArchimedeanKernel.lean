@@ -22,10 +22,14 @@ namespace ArithmeticHodge.Analysis.MultiplicativeWeil
 
 noncomputable section
 
-private def laplaceKernel (a x : ℝ) : ℂ :=
+/-- The two-sided exponential kernel whose Fourier transform is the Cauchy
+kernel. -/
+def laplaceKernel (a x : ℝ) : ℂ :=
   Complex.exp (-(a : ℂ) * (↑|x| : ℂ))
 
-private theorem laplaceKernel_integrable (a : ℝ) (ha : 0 < a) :
+/-- The two-sided exponential kernel is integrable for every positive decay
+parameter. -/
+theorem laplaceKernel_integrable (a : ℝ) (ha : 0 < a) :
     Integrable (laplaceKernel a) := by
   have hleft : IntegrableOn (fun x : ℝ ↦ Complex.exp ((a : ℂ) * x)) (Iic 0) :=
     integrableOn_exp_mul_complex_Iic (by simpa using ha) 0
@@ -44,7 +48,9 @@ private theorem laplaceKernel_integrable (a : ℝ) (ha : 0 < a) :
   rw [← integrableOn_univ]
   simpa only [Iic_union_Ioi] using hleft'.union hright'
 
-private theorem fourier_laplaceKernel (a w : ℝ) (ha : 0 < a) :
+/-- Fourier transform of the two-sided exponential in Mathlib's `2π`
+normalization. -/
+theorem fourier_laplaceKernel (a w : ℝ) (ha : 0 < a) :
     FT (laplaceKernel a) w =
       (2 * a : ℂ) / ((a : ℂ) ^ 2 + (2 * Real.pi * w : ℂ) ^ 2) := by
   rw [fourier_real_eq_integral_exp_smul]
@@ -115,28 +121,31 @@ private theorem fourier_laplaceKernel (a w : ℝ) (ha : 0 < a) :
   rw [Complex.I_sq]
   ring
 
-private theorem fourier_fourier_schwartz_apply
-    (H : SchwartzMap ℝ ℂ) (x : ℝ) :
-    FT ((FT H : SchwartzMap ℝ ℂ) : ℝ → ℂ) x = H (-x) := by
+/-- Applying Mathlib's Fourier transform twice reflects an integrable,
+continuous function whose Fourier transform is also integrable. -/
+theorem fourier_fourier_apply_of_integrable
+    {H : ℝ → ℂ} (hH : Integrable H) (hFH : Integrable (FT H))
+    (hHcont : Continuous H) (x : ℝ) :
+    FT (FT H) x = H (-x) := by
   calc
-    FT ((FT H : SchwartzMap ℝ ℂ) : ℝ → ℂ) x =
-        IFT ((FT H : SchwartzMap ℝ ℂ) : ℝ → ℂ) (-x) := by
+    FT (FT H) x = IFT (FT H) (-x) := by
       rw [fourierInv_eq_fourier_neg]
       simp
-    _ = H (-x) := H.integrable.fourierInv_fourier_eq
-      (FT H).integrable H.continuous.continuousAt
+    _ = H (-x) := hH.fourierInv_fourier_eq hFH hHcont.continuousAt
 
-private theorem integral_fourier_laplace_mul_fourier
-    (H : SchwartzMap ℝ ℂ) (a : ℝ) (ha : 0 < a) :
+/-- Fourier pairing of the Cauchy kernel with an arbitrary integrable,
+continuous function whose Fourier transform is integrable. -/
+theorem integral_fourier_laplaceKernel_mul_fourier
+    {H : ℝ → ℂ} (hH : Integrable H) (hFH : Integrable (FT H))
+    (hHcont : Continuous H) (a : ℝ) (ha : 0 < a) :
     (∫ w : ℝ, FT (laplaceKernel a) w * FT H w) =
       ∫ x : ℝ, laplaceKernel a x * H x := by
   have hpair := VectorFourier.integral_fourierIntegral_smul_eq_flip
     (e := Real.fourierChar) (μ := volume) (ν := volume)
     (L := innerₗ ℝ) Real.continuous_fourierChar continuous_inner
-    (laplaceKernel_integrable a ha) (FT H).integrable
+    (laplaceKernel_integrable a ha) hFH
   have hpair' : (∫ w : ℝ, FT (laplaceKernel a) w * FT H w) =
-      ∫ x : ℝ, laplaceKernel a x *
-        FT ((FT H : SchwartzMap ℝ ℂ) : ℝ → ℂ) x := by
+      ∫ x : ℝ, laplaceKernel a x * FT (FT H) x := by
     simpa only [smul_eq_mul, flip_innerₗ] using hpair
   calc
     (∫ w : ℝ, FT (laplaceKernel a) w * FT H w) =
@@ -144,13 +153,20 @@ private theorem integral_fourier_laplace_mul_fourier
       rw [hpair']
       apply integral_congr_ae
       filter_upwards [] with x
-      rw [fourier_fourier_schwartz_apply]
+      rw [fourier_fourier_apply_of_integrable hH hFH hHcont]
     _ = ∫ x : ℝ, laplaceKernel a (-x) * H x := by
       simpa only [neg_neg] using
         (MeasureTheory.integral_neg_eq_self
           (fun x : ℝ ↦ laplaceKernel a (-x) * H x) volume)
     _ = _ := by
       simp [laplaceKernel]
+
+private theorem integral_fourier_laplace_mul_fourier
+    (H : SchwartzMap ℝ ℂ) (a : ℝ) (ha : 0 < a) :
+    (∫ w : ℝ, FT (laplaceKernel a) w * FT H w) =
+      ∫ x : ℝ, laplaceKernel a x * H x :=
+  integral_fourier_laplaceKernel_mul_fourier
+    H.integrable (FT H).integrable H.continuous a ha
 
 private theorem bombieriMellin_laplaceKernel_frequency
     (f : BombieriTest) (a : ℝ) (ha : 0 < a) :
