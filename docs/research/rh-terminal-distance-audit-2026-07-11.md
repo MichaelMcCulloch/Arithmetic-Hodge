@@ -2020,3 +2020,36 @@ separate from build logs: a green build is evidence, not a stage transition.
    `Classical.choice`, and `Quot.sound`, and the forbidden-proof scan is empty.
    The proof is an arbitrary finite-support basis argument rather than a
    calculation through a preselected number of modes.
+
+## `0e638fe` — Structural finite-energy completion reduced to projection algebra
+
+1. **Theorems added.**  `shiftedLegendreHilbertBasis` constructs a complete
+   normalized shifted-Legendre Hilbert basis of real `L²([0,1])` by
+   Stone--Weierstrass density and continuous-function density.  The finite
+   coefficient energies converge to the full norm, and
+   `two_mul_norm_sq_le_of_partialSpectralEnergy_le` turns uniform domination
+   of all finite spectral energies into the complete `L²` gap.  Separately,
+   `integral_sub_mul_unitIntervalRawPolynomialLogKernel_eq` proves the exact
+   raw cross-energy identity for every integrable function and polynomial,
+   and `polynomial_pairing_le_unitIntervalLogEnergy` proves domination by
+   expanding the nonnegative finite-energy residual.
+2. **Gate hypothesis eliminated.**  Completeness, Fubini, the diagonal-null
+   issue, cross-term signs, residual integrability, and lower-semicontinuous
+   form-domain reasoning no longer rely on a finite matrix or an unjustified
+   claim that the singular energy is continuous in the `L²` norm.
+3. **Assumptions remaining.**  The normalized finite Hilbert projection must
+   be packaged as an explicit polynomial and its `T`-pairing proved equal to
+   the corresponding harmonic-weighted coefficient sum.  This exact
+   projection algebra is the only missing bridge between the raw residual
+   theorem and the complete unit-interval finite-energy gap.
+4. **Next make-or-break lemma.**  For every finite-energy `f` and every `N`,
+   construct the shifted-Legendre projection polynomial `p_N` and prove
+   `integral f * T p_N = integral p_N * T p_N =`
+   `shiftedLegendrePartialSpectralEnergy f N`.  Then apply the already-proved
+   completion theorem and transport the result affinely to `[-1,1]`.
+5. **Viability evidence.**  Focused builds and independent high-risk reviews
+   pass for the Hilbert basis, coefficient completion, uniform quotient
+   bound, exact cross identity, and residual domination.  Their public axiom
+   footprints are exactly `propext`, `Classical.choice`, and `Quot.sound`;
+   the reviewed import closures contain no certificate, enclosure, cutoff,
+   enumeration, or forbidden proof construct.
