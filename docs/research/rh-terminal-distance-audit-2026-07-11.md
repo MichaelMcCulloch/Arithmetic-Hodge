@@ -444,3 +444,38 @@ separate from build logs: a green build is evidence, not a stage transition.
    interval orientation, the three indicator cases, and the `1/(2*pi)`
    normalization.  An independent numerical sanity check found certificate
    value about `2.772105475`, below `2.773` by about `0.000894525`.
+
+## `2385f22` — Clipped even correlations bridged to the moment model
+
+1. **Theorems added.**  The normalized positive cosine modes and separately
+   normalized zero mode now have exact one-sided correlations in every
+   zero/positive, positive/zero, diagonal, and off-diagonal case.  Their
+   removable admissible-distribution integrands agree almost everywhere with
+   the production sine and diagonal moment expressions.  Hence
+   `clippedEvenAdmissibleRealSpaceGram_eq_evenMomentGram` holds for all natural
+   frequency pairs, and one explicit distribution bridge implies the
+   production `ClippedEvenFullMomentBridge` on `Fin 200`.
+2. **Gate hypothesis eliminated.**  No cosine normalization, zero-mode
+   factor, correlation integral, removable endpoint, or scalar moment algebra
+   remains between an admissible real-space assembly and `evenMomentGram`.
+   The even finite-block bridge is no longer a collection of unchecked
+   formula cases.
+3. **Assumptions remaining.**  The named proposition
+   `ClippedEvenFullAdmissibleDistributionBridge` still packages the equality
+   of each production clipped critical pairing with its exact real-space
+   admissible-distribution value.  It is broad but explicit: the full
+   spectral/digamma/polar distribution assembly for all 40,000 entries.
+   Analytic moment containments, remaining Schur checkpoints, and even-tail
+   coercivity are also open.
+4. **Next make-or-break lemma.**  Prove the production distribution bridge by
+   connecting `clippedEvenFullGram` to the already formalized Cauchy/digamma
+   distribution and the unified correlations.  Keep this separate from the
+   numerical moment certificate so a failure identifies an analytic, not
+   matrix-arithmetic, obstruction.
+5. **Viability evidence.**  The 868-line module strict-compiles, its 3,596-job
+   target build and umbrella compile pass, and audited endpoints use only
+   `propext`, `Classical.choice`, and `Quot.sound`.  Forbidden and diff scans
+   are clean.  Independent review checked every normalization, sign, factor,
+   branch, and null-endpoint argument; independent numerical evaluations of
+   every correlation/moment branch agreed to floating-point precision.  The
+   root legacy inventory remains exactly 159 files.
