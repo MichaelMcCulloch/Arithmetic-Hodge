@@ -1826,3 +1826,17 @@ separate from build logs: a green build is evidence, not a stage transition.
    a 2.66 GiB cgroup / 6.78 GiB RSS peak.  Endpoint axioms remain the standard
    three; forbidden and whitespace scans pass, and all 159 legacy artifacts
    remain untouched.
+
+## `6ca40f2` — Sparse dominance blocks 032 through 039 certified
+
+1. **Theorems added.**  Another 64 residue-block bounds are proved, from row
+   45 block 0 through row 60 block 3.
+2. **Gate hypothesis eliminated.**  The kernel-checked total is now 320 of 762
+   block contributions.
+3. **Assumptions remaining.**  The other 442 blocks, all row aggregates, and
+   robust PosDef transport remain.
+4. **Next make-or-break lemma.**  Continue with modules `040` through `047`.
+5. **Viability evidence.**  The serial build passes in about 332 seconds with
+   a 2.73 GiB cgroup / 6.82 GiB RSS peak.  Endpoint axioms remain the standard
+   three; forbidden and whitespace scans pass, and all 159 legacy artifacts
+   remain untouched.
