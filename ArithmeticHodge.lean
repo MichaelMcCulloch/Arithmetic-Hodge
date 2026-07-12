@@ -43,6 +43,7 @@ import ArithmeticHodge.Analysis.RationalIntervalSchur
 import ArithmeticHodge.Analysis.MatrixAbsEntryComparison
 import ArithmeticHodge.Analysis.YoshidaOddComparisonCertificate
 import ArithmeticHodge.Analysis.YoshidaOddGramPrefix
+import ArithmeticHodge.Analysis.YoshidaClippedMomentBridge
 import ArithmeticHodge.Analysis.YoshidaOddIntervalCertificate
 import ArithmeticHodge.Analysis.YoshidaOddMomentTargets
 import ArithmeticHodge.Analysis.CoerciveRieszCorrection
