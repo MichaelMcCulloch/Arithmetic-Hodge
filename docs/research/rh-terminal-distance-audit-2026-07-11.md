@@ -1963,3 +1963,33 @@ separate from build logs: a green build is evidence, not a stage transition.
    measure-zero singleton; focused builds, warning-as-error checks, axiom
    audits, and independent reviews pass.  All new public theorems depend only
    on `propext`, `Classical.choice`, and `Quot.sound`.
+
+## `59e7a7d` — Exact shifted-Legendre spectrum and raw kernel bridge
+
+1. **Theorems added.**  `shiftedLogKernel_shiftedLegendreReal` proves
+   `T L_n = 2 H_n L_n` for every shifted Legendre polynomial.  The proof uses
+   uniform triangularity, exact self-adjointness, Rodrigues orthogonality, and
+   definiteness of the polynomial interval norm.  The shifted Legendre family
+   is an algebraic basis, and `eval_shiftedLogKernel_eq_integral_div_abs`
+   identifies `T p` pointwise with the original raw logarithmic-difference
+   integral for every polynomial.
+2. **Gate hypothesis eliminated.**  The logarithmic operator's complete
+   polynomial spectrum is now structural.  No low-mode table, matrix
+   diagonalization, sampled kernel, or certificate is needed to identify its
+   eigenvalues or eigenvectors.
+3. **Assumptions remaining.**  The algebraic basis must be normalized and
+   completed to a Hilbert basis of `L²([0,1])`.  Parseval and a finite-energy
+   projection argument must then extend the sharp gap from polynomials to the
+   full form domain.  The resulting unit-interval gap still needs affine
+   transport to `[-1,1]` and assembly with the endpoint potential, hyperbolic,
+   and regular-kernel terms.
+4. **Next make-or-break lemma.**  For every mean-zero finite-energy `L²`
+   function, prove the sharp structural bound
+   `∬ |f(x)-f(y)|²/|x-y| ≥ 4 ∫ |f|²` after transport to `[-1,1]`, using finite
+   Legendre projections and positivity of the residual energy.
+5. **Viability evidence.**  All component modules pass focused builds,
+   warning-as-error and axiom audits, and independent mathematical review.
+   The raw bridge removes only the measure-zero diagonal; all harmonic and
+   partial-fraction identities are uniform symbolic proofs.  A normalized
+   Hilbert-basis construction is now in progress, so the remaining step is
+   functional-analytic completion rather than computational exhaustion.
