@@ -121,8 +121,8 @@ def oddMomentIntervalGram (S D : ℕ → RatInterval) :
 entrywise. -/
 theorem oddMomentIntervalGram_contains
     (S D : ℕ → ℝ) (SI DI : ℕ → RatInterval)
-    (hS : ∀ n, (SI n).Contains (S n))
-    (hD : ∀ n, (DI n).Contains (D n)) :
+    (hS : ∀ n, 1 ≤ n → n ≤ 10 → (SI n).Contains (S n))
+    (hD : ∀ n, 1 ≤ n → n ≤ 10 → (DI n).Contains (D n)) :
     ∀ i j, (oddMomentIntervalGram SI DI i j).Contains
       (oddMomentFullGram S D i j) := by
   intro i j
@@ -130,11 +130,11 @@ theorem oddMomentIntervalGram_contains
   · subst j
     simp only [oddMomentIntervalGram, ↓reduceIte, oddMomentFullGram]
     rw [oddMomentGram_diagonal_rational]
-    · exact contains_add (hD (i.1 + 1))
+    · exact contains_add (hD (i.1 + 1) (by omega) (by omega))
         (contains_mul
           (contains_mul (contains_pure (oddDiagonalCoeffQ (i.1 + 1)))
             invPiInterval_contains)
-          (hS (i.1 + 1)))
+          (hS (i.1 + 1) (by omega) (by omega)))
     · omega
   · simp only [oddMomentIntervalGram, hij, ↓reduceIte, oddMomentFullGram]
     rw [oddMomentGram_offDiagonal_rational]
@@ -145,10 +145,10 @@ theorem oddMomentIntervalGram_contains
       · apply contains_sub
         · exact contains_mul
             (by simpa using contains_pure ((i.1 + 1 : ℕ) : ℚ))
-            (hS (j.1 + 1))
+            (hS (j.1 + 1) (by omega) (by omega))
         · exact contains_mul
             (by simpa using contains_pure ((j.1 + 1 : ℕ) : ℚ))
-            (hS (i.1 + 1))
+            (hS (i.1 + 1) (by omega) (by omega))
     · intro hnm
       apply hij
       apply Fin.ext
@@ -168,8 +168,8 @@ theorem oddPivotOrder_cover (i : YoshidaOddIndex) : i ∈ oddPivotOrder := by
 positive definiteness of the full real odd moment Gram. -/
 theorem oddMomentFullGram_posDef_of_intervalPivots
     (S D : ℕ → ℝ) (SI DI : ℕ → RatInterval)
-    (hS : ∀ n, (SI n).Contains (S n))
-    (hD : ∀ n, (DI n).Contains (D n))
+    (hS : ∀ n, 1 ≤ n → n ≤ 10 → (SI n).Contains (S n))
+    (hD : ∀ n, 1 ≤ n → n ≤ 10 → (DI n).Contains (D n))
     (hpos : RationalIntervalSchur.PositivePivots oddPivotOrder
       (oddMomentIntervalGram SI DI)) :
     (oddMomentFullGram S D).PosDef := by
@@ -200,8 +200,10 @@ certificate imply positive definiteness of the actual full clipped odd Gram. -/
 theorem clippedOddFullGram_posDef_of_bridge_and_intervalPivots
     (SI DI : ℕ → RatInterval)
     (hbridge : ClippedOddFullMomentBridge)
-    (hS : ∀ n, (SI n).Contains (yoshidaSineMoment n))
-    (hD : ∀ n, (DI n).Contains (yoshidaDiagonalMoment n))
+    (hS : ∀ n, 1 ≤ n → n ≤ 10 →
+      (SI n).Contains (yoshidaSineMoment n))
+    (hD : ∀ n, 1 ≤ n → n ≤ 10 →
+      (DI n).Contains (yoshidaDiagonalMoment n))
     (hpos : RationalIntervalSchur.PositivePivots oddPivotOrder
       (oddMomentIntervalGram SI DI)) :
     clippedOddFullGram.PosDef := by
