@@ -1711,3 +1711,26 @@ separate from build logs: a green build is evidence, not a stage transition.
    representation bridges and identified the conservative-`L¹` inequality
    required downstream.  All 159 inventoried legacy root Lean artifacts remain
    untouched.
+
+## `6e0bf5d` — Interval midpoint perturbation bound added
+
+1. **Theorem added.**  Every real point contained in a rational interval lies
+   within the interval's rational half-width of its rational midpoint.
+2. **Gate hypothesis eliminated.**  The robust finite-Gram endpoint can turn
+   each proved target containment directly into an absolute entrywise error
+   bound around `evenTargetCenter`; it no longer needs an ad hoc real interval
+   lemma.
+3. **Assumptions remaining.**  All 200 weighted-dominance rows, sparse `L¹`
+   specialization, real triangular invertibility, and the robust
+   congruence-to-PosDef endpoint remain, together with the analytic target
+   containments.
+4. **Next make-or-break lemma.**  Complete the bounded residue-block dominance
+   chain and its universal public aggregator.
+5. **Viability evidence.**  Fresh direct compilation and the 961-job target
+   build pass.  The public theorem has exactly the standard three axioms;
+   forbidden and whitespace scans are empty, and independent review approved
+   the cast directions, implicit validity argument, and perturbation
+   orientation.  Guarded verification stayed below 0.50 GiB cgroup memory and
+   3.11 GiB summed RSS.  The production source SHA-256 is
+   `174afaed6bcf65f0586492e5b8ade1d9b5af956ed1dbb01f9f3948140126a410`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
