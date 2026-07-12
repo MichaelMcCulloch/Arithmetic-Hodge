@@ -748,3 +748,29 @@ separate from build logs: a green build is evidence, not a stage transition.
    `(n,K)` pairs, including `n=10,K=256`.  Fresh strict direct, the 3,603-job
    target, and umbrella elaboration pass; all five public endpoints use only
    `propext`, `Classical.choice`, and `Quot.sound`.
+
+## `e50750c` — Checkpointed second even sine moment certified
+
+1. **Theorems added.**  A reusable checkpoint layer proves that shallow sums
+   of exact 256-term Cauchy boxes contain the production finite head and
+   compose soundly with the accelerated infinite tail.  Sixteen independently
+   certified boxes then place the actual production moment `S_2` in
+   `[-150869/100000, -150868/100000]`.
+2. **Gate hypothesis eliminated.**  `S_2` is no longer a discovery target, and
+   deep recursive head evaluation is no longer a blocker for later sine
+   modes.  The exact chunks cover `k = 0,...,4095` once each and the analytic
+   tail begins at 4096.
+3. **Assumptions remaining.**  `S_3,...,S_199`, `D_3,...,D_199`, the remaining
+   exact Schur pivots, even-tail coercivity, and the exceptional coupling
+   estimate remain open.  Checkpointing controls kernel depth but later modes
+   still require proportionally more finite terms with the present expansion.
+4. **Next make-or-break lemma.**  Certify representative higher sine modes to
+   establish the batch schedule, while continuing the diagonal sequence and
+   the infinite odd Schur recombination in parallel.
+5. **Viability evidence.**  Independent replay matched every one of the 16
+   stored boxes.  The final exact coarse enclosure is approximately
+   `[-1.508689876027952, -1.508689335690590]`; an independent 100-digit
+   calculation gives `-1.5086896058811014411562832571992367`.  Strict direct,
+   the 3,607-job target, and umbrella pass; public endpoints use only
+   `propext`, `Classical.choice`, and `Quot.sound`, and the 159 legacy files
+   remain untouched.
