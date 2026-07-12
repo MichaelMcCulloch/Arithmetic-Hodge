@@ -94,6 +94,7 @@ import ArithmeticHodge.Analysis.YoshidaOddCoercivityAssembly
 import ArithmeticHodge.Analysis.YoshidaEvenIntervalCertificate
 import ArithmeticHodge.Analysis.YoshidaClippedEvenMomentBridge
 import ArithmeticHodge.Analysis.YoshidaEvenMomentTargets
+import ArithmeticHodge.Analysis.YoshidaEvenZeroMomentEnclosure
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
