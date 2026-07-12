@@ -1909,3 +1909,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    a 2.73 GiB cgroup / 6.82 GiB RSS peak.  Endpoint axioms remain the standard
    three; forbidden and whitespace scans pass, and all 159 legacy artifacts
    remain untouched.
+
+## `31cd703` — Continuous regular-kernel remainder bounded structurally
+
+1. **Theorem added.**  `norm_yoshidaEndpointRegularQuadratic_le` proves on the
+   scaled endpoint interval that the norm of the full regular-kernel quadratic
+   form is at most one half of the `L²` mass.  The proof uses the structural
+   pointwise bound `0 ≤ h ≤ 1/4`, product-measure Fubini, and Hölder; it does
+   not discretize the operator.
+2. **Gate hypothesis eliminated.**  The `-a H_a` remainder in the exact
+   continuous Yoshida form is now controlled uniformly by `a/2 ‖f‖²`, with
+   no matrix, mode table, numerical enclosure, or finite certificate.
+3. **Assumptions remaining.**  The logarithmic difference energy still needs
+   its sharp infinite-dimensional Legendre spectral gap, and that gap must be
+   assembled with the even potential and rank-one hyperbolic terms.  The
+   zero-mode identity in `86ac05c` remains quarantined: audit found that its
+   summability proof passes through an `N = 16` rational enclosure and that
+   its imports reach certificate modules despite its clean axiom printout.
+4. **Next make-or-break lemma.**  Prove uniformly in `n` that the logarithmic
+   difference operator sends the shifted Legendre polynomial of degree `n` to
+   `2 * harmonic n` times that polynomial, then extend the resulting sharp
+   gap to every finite-energy mean-zero `L²` function without a finite-mode
+   cutoff.
+5. **Viability evidence.**  The focused module build and theorem axiom audit
+   pass with only `propext`, `Classical.choice`, and `Quot.sound`; an
+   independent review confirmed the exact `1/2` scaling and clean imports.
+   The monomial action is triangular with leading multiplier
+   `2 * harmonic n`, so the remaining route is a uniform polynomial identity
+   plus density/Parseval, not computational exhaustion.
