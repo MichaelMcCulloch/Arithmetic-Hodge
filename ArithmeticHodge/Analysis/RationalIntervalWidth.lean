@@ -20,6 +20,17 @@ theorem width_nonneg {I : RatInterval} (hI : I.Valid) :
     0 ≤ width I := by
   exact sub_nonneg.mpr hI
 
+/-- Every real point enclosed by an interval is within its rational
+half-width of the rational midpoint. -/
+theorem abs_sub_center_le_halfWidth
+    {I : RatInterval} {x : ℝ} (hx : I.Contains x) :
+    |x - ((((I.lower + I.upper) / 2 : ℚ) : ℝ))| ≤
+      ((((I.upper - I.lower) / 2 : ℚ) : ℝ)) := by
+  unfold Contains at hx
+  rw [abs_le]
+  norm_num at hx ⊢
+  constructor <;> linarith [hx.1, hx.2]
+
 theorem width_pure (q : ℚ) : width (pure q) = 0 := by
   change q - q = 0
   ring
