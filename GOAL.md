@@ -1,5 +1,9 @@
 # Arithmetic-Hodge Decisive RH Program
 
+This is the active goal for the autonomous run. It is intentionally stable at
+the program and stage-gate level; rapidly changing theorem-by-theorem status
+lives in the terminal-distance audit linked under **Current directive**.
+
 ## Terminal objective
 
 Continue autonomously in `/home/michael/Development/Arithmetic-Hodge` until the
