@@ -1763,3 +1763,22 @@ separate from build logs: a green build is evidence, not a stage transition.
    and 6.71 GiB summed RSS; a generated row template compiles at 0.53/4.82 GiB,
    both under guarded exact-48-GiB scopes.  All 159 inventoried legacy root
    Lean artifacts remain untouched.
+
+## `0e3a787` — First 64 sparse dominance blocks certified
+
+1. **Theorems added.**  Generated modules `Blocks000` through `Blocks007`
+   kernel-check the first 64 row-major residue-block bounds, covering every
+   block through row 9 and blocks 1 through 8 of row 10.
+2. **Gate hypothesis eliminated.**  These 64 exact off-diagonal contributions
+   no longer remain external numeric claims; each is bounded by its rounded
+   rational budget in Lean.
+3. **Assumptions remaining.**  The other 698 block bounds, all 200 row budget
+   margins/aggregates, and the robust PosDef endpoint remain.
+4. **Next make-or-break lemma.**  Continue the same strict import chain with
+   generated block modules `008` through `015`.
+5. **Viability evidence.**  The eight-module target build passes serially in
+   315 seconds, peaking at 2.83 GiB cgroup memory and 6.92 GiB summed RSS under
+   a 3.5/9 GiB guard inside the exact 48 GiB scope.  First/last endpoint axiom
+   audits report only the standard three axioms; forbidden and whitespace
+   scans are empty, generated source hashes match the manifest, and all 159
+   inventoried legacy root Lean artifacts remain untouched.
