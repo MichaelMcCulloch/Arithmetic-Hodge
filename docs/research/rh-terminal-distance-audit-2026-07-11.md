@@ -244,3 +244,30 @@ separate from build logs: a green build is evidence, not a stage transition.
    3,619-job build, and the canonical 3,791-job build pass.  Four audited public
    endpoints use only `propext`, `Classical.choice`, and `Quot.sound`; the
    forbidden-proof scan is clean and the root legacy count remains 159.
+
+## `208f6c6` — Restricted support bridged to the periodic core
+
+1. **Theorems added.**  A locally finite integer-translate periodization of a
+   globally smooth critical crop is constructed in Lean and shown to lie in
+   the clipped Yoshida periodic core.  After Bombieri normalization, every
+   test function supported in `[l,r]` with `r / l ≤ 2` maps into that fixed
+   carrier.  Subtracting either canonical finite low projection leaves a
+   residual in the same core.
+2. **Gate hypothesis eliminated.**  Gate 1 no longer assumes that the final
+   restricted-support Bombieri class belongs to the periodic source space on
+   which the odd/even spectral decomposition is carried out.  The low/tail
+   split is now closed inside that source space rather than merely asserted
+   for an unrelated circle function.
+3. **Assumptions remaining.**  Core membership alone proves neither
+   coercivity nor positivity.  Odd-tail coercivity at `38/25`, the high
+   sine-moment window needed for odd coupling, homogeneous even coercivity,
+   even pointwise coupling decay, even finite-block positivity, and the final
+   completed-form Schur assembly remain open.
+4. **Next make-or-break lemma.**  Promote the exact infinite critical-sampling
+   theorem and connect its paired positive-frequency estimate to the committed
+   odd weighted-tail functional; this is the shortest current route to the
+   actual infinite `K(10)` coercivity bound.
+5. **Viability evidence.**  The 282-line bridge warning-as-error compiles, all
+   seven audited public endpoints use only `propext`, `Classical.choice`, and
+   `Quot.sound`, and the canonical 3,792-job build passes.  The forbidden-proof
+   scan is clean and the root legacy count remains exactly 159.
