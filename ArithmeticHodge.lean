@@ -83,6 +83,7 @@ import ArithmeticHodge.Analysis.YoshidaOddLowHighDecay
 import ArithmeticHodge.Analysis.YoshidaInfiniteCriticalSample
 import ArithmeticHodge.Analysis.YoshidaOddTailPaired
 import ArithmeticHodge.Analysis.YoshidaEvenIntervalCertificate
+import ArithmeticHodge.Analysis.YoshidaEvenMomentTargets
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
