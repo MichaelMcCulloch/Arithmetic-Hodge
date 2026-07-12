@@ -1095,3 +1095,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    target, umbrella, forbidden, and axiom checks pass; both public endpoints
    use only `propext`, `Classical.choice`, and `Quot.sound`, with all 159 legacy
    files preserved.
+
+## `bf1efd5` — Actual even correction Gram proved real
+
+1. **Theorems added.**  Pointwise conjugation is carried from the clipped
+   periodic even tail through its positive Hermitian form and completion as an
+   involutive antiunitary operator.  Every actual low-mode Riesz correction is
+   fixed by that operator, so every entry of
+   `actualEvenTailCorrectionGram` is exactly the complex coercion of its real
+   part.
+2. **Gate hypothesis eliminated.**  The certified finite interval theorem is
+   a real-matrix perturbation theorem, while the production Schur correction
+   was previously only known to be complex Hermitian with norm at most
+   `1/2000`.  Entrywise reality now closes that type-and-semantics gap without
+   doubling the radius (which the exact pivot replay had shown would fail).
+3. **Assumptions remaining.**  The complete sine and diagonal target
+   enclosures and the memory-safe exact 200-pivot theorem still have to be
+   landed.  They must then be instantiated with the real correction Gram to
+   prove corrected finite positivity and the completed infinite even Schur
+   theorem.
+4. **Next make-or-break lemma.**  Finish and independently verify the
+   checkpointed sine, diagonal, and full-pivot certificates, then prove the
+   actual corrected `Fin 200` Gram positive definite using
+   `actualEvenTailCorrectionGram_eq_ofReal` and its existing `1/2000` bound.
+5. **Viability evidence.**  The focused 8,347-job build passes.  The public
+   reality, fixed-Riesz, and antiunitary endpoints use only `propext`,
+   `Classical.choice`, and `Quot.sound`.  Independent review checked the
+   Fourier sign change, HasSum orientation, real coupling reduction,
+   polarization sign, dense Riesz uniqueness, and final `ofReal` orientation;
+   the forbidden scan is empty and all 159 legacy root files remain untouched.
