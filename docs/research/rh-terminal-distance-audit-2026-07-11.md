@@ -298,3 +298,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    `Classical.choice`, and `Quot.sound`, and the canonical 3,793-job build
    passes.  The forbidden-proof scan is clean and the root legacy count
    remains exactly 159.
+
+## `6089f45` — Corrected full even interval-certificate interface
+
+1. **Theorems added.**  All `200 × 200` even moment-model entries, including
+   the separately normalized zero mode, now have exact rational-coefficient
+   formulas using only `1 / π`, `1 / sqrt 2`, and the shared sine and diagonal
+   moments.  Sound rational interval evaluation feeds the complete `Fin 200`
+   pivot order into the existing Schur checker.  A symmetric outward inflation
+   incorporates an arbitrary entrywise perturbation, with the source
+   correction radius fixed as `1/2000`.
+2. **Gate hypothesis eliminated.**  The even finite-block lane no longer lacks
+   a formal target connecting scalar moment enclosures and an entrywise
+   low/high correction budget to positive definiteness of the actual-sized
+   matrix.  No finite truncation larger or smaller than Yoshida's canonical
+   zero-plus-`1..199` block is substituted.
+3. **Assumptions remaining.**  The production file intentionally contains no
+   invented 200-mode numerical payload.  It still needs certified boxes for
+   `S_1,...,S_199` and `D_0,...,D_199`, a kernel-positive elimination trace
+   after `1/2000` inflation, and the analytic clipped-form/moment bridge.
+   Tail coercivity and the remaining analytic coupling bridges are separate
+   open obligations.
+4. **Next make-or-break lemma.**  Generate deterministic rational moment
+   targets from the committed series enclosures, evaluate all 200 inflated
+   pivots, and stop immediately if any interval crosses zero; a successful
+   trace must then be replayed with `decide +kernel`.
+5. **Viability evidence.**  The 400-line module warning-as-error compiles, its
+   targeted build and the canonical 3,794-job build pass, and seven audited
+   public endpoints use only `propext`, `Classical.choice`, and `Quot.sound`.
+   The forbidden-proof scan is clean and the root legacy count remains 159.
