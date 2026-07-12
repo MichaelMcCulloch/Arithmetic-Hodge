@@ -327,3 +327,86 @@ separate from build logs: a green build is evidence, not a stage transition.
    targeted build and the canonical 3,794-job build pass, and seven audited
    public endpoints use only `propext`, `Classical.choice`, and `Quot.sound`.
    The forbidden-proof scan is clean and the root legacy count remains 159.
+
+## `3b96277` — Even moment targets and checkpoint scaling
+
+1. **Theorems added.**  Exact rational target boxes now cover the canonical
+   sine moments `S_1,...,S_199` and diagonal moments `D_0,...,D_199`.  With
+   the source `1/2000` entrywise inflation, the first ten and first twenty-five
+   Schur pivots are kernel-positive.  The full pivot order is reducible and
+   generic pivot certificates can be split and recombined at named
+   checkpoints (`6496b75`, `dfa1e60`).
+2. **Gate uncertainty eliminated.**  The actual-sized target matrix is no
+   longer merely a floating-point sketch: its leading 25 elimination stages
+   replay exactly in Lean.  The experiment also falsified a monolithic replay
+   as the production format, without changing the canonical 200-mode block.
+3. **Assumptions remaining.**  The rational boxes are candidate witnesses,
+   not analytic enclosure theorems.  The remaining 175 pivots, checkpoint
+   matrices, `D_0` and all other moment containments, and the clipped-form to
+   moment-model bridge remain open.
+4. **Next make-or-break lemma.**  Prove the zero-mode diagonal enclosure and
+   emit a normalized 25-pivot checkpoint, then continue the exact elimination
+   in independently cached stages rather than recomputing the prefix.
+5. **Viability evidence.**  The 461-line target module strict-compiles; its
+   3,589-job target build completes and both pivot theorems use only `propext`,
+   `Classical.choice`, and `Quot.sound`.  The 25-pivot replay takes about
+   36--44 seconds.  A 50-pivot monolith was stopped after 7.5 minutes at
+   roughly 37 GB RSS; the root legacy count remains 159.
+
+## `22d283e` — Even coupling reduced to two source bridges
+
+1. **Theorems added.**  The rational, infinite-geometric, and digamma pieces
+   of the printed even formula (6.25) now satisfy the full `C₂/m` estimate for
+   every canonical low/high pair.  The zero row carries the required
+   `1/sqrt 2` normalization, the first row keeps a sharp `1/12` remainder,
+   and rows `n ≥ 2` close with the source's `1/10` consequence.  An exact
+   certificate proves `C₂² ≤ 10149/25000`, yielding the squared premise
+   consumed verbatim by `YoshidaEvenTailReduction`.
+2. **Gate hypothesis eliminated.**  Once actual pairings are identified with
+   (6.25) and the exceptional digamma remainder is supplied, no further
+   infinite summation, constant arithmetic, exceptional-index case, or
+   coupling-budget premise remains.
+3. **Assumptions remaining.**  `ActualEvenPairingEquation6_25` and
+   `SharpDigammaImagRemainder5_11` are explicit unproved interfaces.  The
+   latter is stronger than the literal simplified source consequence: source
+   (5.11) gives `1/12` relative to `log s - 1/(2s)`, but only `1/10` after the
+   asymptotic imaginary main term used here.  A sharper direct `n=1`
+   certificate or cancellation is therefore still required.
+4. **Next make-or-break lemma.**  Derive the actual (6.25) equality from the
+   removable-safe Laplace formula and prove the `n=1` digamma estimate
+   directly; the already sufficient `1/10` theorem should be used for every
+   other positive mode.
+5. **Viability evidence.**  The 1,208-line module strict-compiles and its
+   3,554-job target build passes.  Twenty-two public endpoints were audited
+   with only `propext`, `Classical.choice`, and `Quot.sound`; independent
+   formula, indexing, normalization, and downstream-composition review found
+   no hidden premise or semantic defect.  Forbidden-proof scans are clean.
+
+## `2327ad3` — Odd low/high coupling closed unconditionally
+
+1. **Theorems added.**  For every `n ≥ 11`, the exact Yoshida sine moment now
+   satisfies `-79/50 ≤ S_n ≤ -31/20`.  The proof bounds the complete
+   quarter-shifted Cauchy sum by a trapezoidal integral with split `M=2n`,
+   proves the total remainder is at most `7/5000`, and controls the polar and
+   dyadic corrections.  Consequently every actual clipped odd low/high entry
+   has the source square decay and each of the ten full infinite coupling
+   energies is at most `19/500`, with no premise.
+2. **Gate hypothesis eliminated.**  The scalar `YoshidaOddHighSineBounds`
+   interface introduced in `2cc297f` is completely discharged, closing the
+   odd finite-to-infinite coupling lane rather than merely reducing it.
+3. **Assumptions remaining.**  Odd-tail coercivity still requires the weighted
+   digamma high-frequency lower estimate and final critical-form assembly.
+   The low digamma integral certificate and the completed-form Schur/Riesz
+   recombination remain separate obligations.  This theorem alone does not
+   assert full restricted-support positivity.
+4. **Next make-or-break lemma.**  Finish the certified low digamma half-integral
+   and the high-frequency digamma lower estimate, then combine those losses
+   with the now-unconditional `19/500` coupling budget and the positive odd
+   low block.
+5. **Viability evidence.**  The 880-line analytic module and 35-line closure
+   module strict-compile; targeted builds pass.  All audited endpoints use
+   only `propext`, `Classical.choice`, and `Quot.sound`.  Independent review
+   checked the trapezoidal direction, constants, terminal arithmetic, and
+   direct inhabitation of the downstream premise; forbidden scans are clean.
+   The canonical integration build at `2327ad3` subsequently passed all 3,800
+   jobs; the expensive diagonal enclosure was compiled once, in 818 seconds.
