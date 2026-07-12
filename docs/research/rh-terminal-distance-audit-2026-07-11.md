@@ -138,3 +138,34 @@ separate from build logs: a green build is evidence, not a stage transition.
    It found positive truncated odd/even tail minima, Schur corrections below
    the source budgets, and coupling decay below the printed constants through
    mode `10^6`; these figures are recorded only as adversarial diagnostics.
+
+## `0cc0913` — Faithful clipped carrier and parity splitting
+
+1. **Theorems added.**  Yoshida's source-faithful carrier is now the submodule
+   of clipped functions admitting a globally smooth, `2*a`-periodic extension;
+   every clipped Fourier mode belongs to it and its odd/even tails are literal
+   comaps of the circle tails.  The clipped-to-circle coordinate is injective,
+   preserves the Lebesgue norm square exactly, and gives an explicit clipped
+   low-mode residual.  Finally, the local critical form's odd/even and
+   even/odd cross terms vanish exactly.
+2. **Gate hypothesis eliminated.**  Gate 1 no longer conflates arbitrary
+   interval-smooth clipped functions with Yoshida's periodic source space, no
+   longer needs faithfulness of the circle coordinate as an assumption, and
+   no longer needs an unproved parity-decoupling assertion when the odd and
+   even coercivity estimates are recombined.
+3. **Assumptions remaining.**  Neither parity tail is yet coercive in Lean.
+   The odd `K(10)` estimate with constant `38/25`, the even tail estimate, both
+   finite-to-tail coupling bounds, the even finite low block, the form-norm
+   completion step, and the link from the final restricted-support test class
+   into the periodic core all remain open.  The residual theorem constructs
+   only the tail of a given clipped function and does not assert surjectivity
+   onto arbitrary circle tails.
+4. **Next make-or-break lemma.**  Prove the source-faithful infinite odd-tail
+   coercivity at `38/25` and its uniform ten-low-mode coupling decay; in
+   parallel, expose and certify the corresponding even all-mode pairing and
+   tail interfaces starting at the actual post-low cutoff.
+5. **Viability evidence.**  Direct warning-as-error compiles, targeted builds,
+   and the canonical 3,788-job build pass.  The nine audited public endpoints
+   use only `propext`, `Classical.choice`, and `Quot.sound`; forbidden-proof
+   scans are clean.  The root legacy inventory remains exactly 159 untracked
+   Lean files.
