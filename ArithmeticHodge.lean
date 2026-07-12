@@ -82,6 +82,7 @@ import ArithmeticHodge.Analysis.YoshidaEvenPairingBridge
 import ArithmeticHodge.Analysis.YoshidaEvenTailReduction
 import ArithmeticHodge.Analysis.YoshidaEvenCouplingReduction
 import ArithmeticHodge.Analysis.YoshidaEvenDigammaImagRemainder
+import ArithmeticHodge.Analysis.YoshidaEvenPairingEquation
 import ArithmeticHodge.Analysis.YoshidaEvenHomogeneousCoercivity
 import ArithmeticHodge.Analysis.YoshidaOddLowHighDecay
 import ArithmeticHodge.Analysis.YoshidaOddHighSineBounds
