@@ -1619,3 +1619,29 @@ separate from build logs: a green build is evidence, not a stage transition.
    summed RSS, the production source hash is
    `6d883dbe9c3ec48f0280d7b28fb15035fcda2de062bac91fa8823949df7d4cd4`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `21f788d` — Rational interval width calculus added
+
+1. **Theorem added.**  Exact rational intervals now expose validity, symmetric
+   magnitude, and width composition lemmas.  In particular, valid intervals
+   with endpoint bounds `BI` and `BJ` satisfy
+   `width (I * J) <= BJ * width I + BI * width J`.
+2. **Gate hypothesis eliminated.**  Sparse-congruence target radii can now be
+   bounded compositionally instead of unfolding and normalizing every one of
+   the 40,000 exact four-corner products.  This is the memory-safe proof route
+   selected after the monolithic enumeration probe was rejected.
+3. **Assumptions remaining.**  The concrete sine, diagonal, and constant
+   interval tables still need uniform one-dimensional magnitude/width bounds,
+   followed by the generic Yoshida Gram-cell specialization, structural row
+   checks, dominance checks, and the robust PosDef endpoint.
+4. **Next make-or-break lemma.**  Specialize the generic product estimate to
+   prove `width (evenMomentIntervalGram targets i j) <= 1 / 50000` for all 200
+   by 200 target cells without cell-by-cell reduction.
+5. **Viability evidence.**  Fresh direct compilation, a 961-job module build,
+   a signed-interval multiplication regression, and an axiom audit pass.
+   `width_mul_le` has exactly the standard three axioms; forbidden and
+   whitespace scans are empty, and independent review approved the complete
+   center-radius/corner-hull argument.  Guarded verification stayed below
+   0.46 GiB cgroup memory and 3.07 GiB summed RSS, the source hash is
+   `c140869a71a92b1997c361d7d8a8d2c7274b8ee48d9555234ac927cbc539ea4f`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
