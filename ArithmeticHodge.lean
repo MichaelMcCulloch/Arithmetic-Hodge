@@ -111,6 +111,7 @@ import ArithmeticHodge.Analysis.YoshidaSineCheckpointedHead
 import ArithmeticHodge.Analysis.YoshidaEvenSineMomentOneEnclosure
 import ArithmeticHodge.Analysis.YoshidaEvenSineMomentTwoEnclosure
 import ArithmeticHodge.Analysis.YoshidaEvenSineMomentThreeEnclosure
+import ArithmeticHodge.Analysis.YoshidaEvenSineMomentFourEnclosure
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
