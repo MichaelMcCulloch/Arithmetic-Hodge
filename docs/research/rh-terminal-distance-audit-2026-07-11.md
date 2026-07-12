@@ -1471,3 +1471,34 @@ separate from build logs: a green build is evidence, not a stage transition.
    cgroup memory and 4.85 GiB summed RSS.  Ruff, forbidden, and whitespace
    scans are clean, independent review approved the encoding and replay, and
    all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `d31fd59` — Corrected trapezoid remainder formalized
+
+1. **Theorem added.**  A generic unit-cell Euler--Maclaurin identity now
+   expresses Mathlib's trapezoidal error after the `1/12` first-derivative and
+   `1/720` third-derivative endpoint corrections as the integral of a supplied
+   fifth derivative against the exact negative normalized Bernoulli kernel
+   `-B₅/120`.  The proof requires only a five-step derivative chain and
+   integrability of the fifth derivative.
+2. **Gate hypothesis eliminated.**  The uniform diagonal digamma estimate no
+   longer relies on an informal repeated-integration-by-parts calculation or
+   an unchecked remainder sign.  Three kernel integrations by parts, all
+   endpoint values, and both correction orientations are now kernel checked.
+3. **Assumptions remaining.**  The Yoshida reciprocal profile's third through
+   fifth derivatives, the kernel/fifth-derivative majorants, cell telescoping,
+   and the final `4/(3y^5)` digamma bound remain.  Sparse width/dominance check
+   modules and the robust finite-Schur bridge also remain active.
+4. **Next make-or-break lemma.**  Instantiate the generic identity on the
+   shifted reciprocal profile, bound the fifth derivative and kernel by a
+   sixth-power telescoping majorant, and derive the planned quarter-digamma
+   high-mode enclosure.
+5. **Viability evidence.**  The 2,659-job target build and fresh strict compile
+   pass.  A quartic zero-fifth-derivative regression closes exactly, and the
+   sign-sensitive sextic regression gives the corrected residual `+1/42`.
+   The public theorem has exactly the standard three axioms; forbidden and
+   whitespace scans are clean.  Independent review verified that the kernel
+   is `-B₅/120`, the theorem's outer minus, all endpoint values, and all three
+   integration-by-parts orientations.  Guarded usage stayed below 0.59 GiB
+   cgroup memory and 4.19 GiB summed RSS, the staged hash was
+   `68d007a6279f34268261486129dfcab2ebda7f626299b3de1db5000423f96ec5`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
