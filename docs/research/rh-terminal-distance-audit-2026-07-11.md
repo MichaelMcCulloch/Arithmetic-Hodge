@@ -1502,3 +1502,34 @@ separate from build logs: a green build is evidence, not a stage transition.
    cgroup memory and 4.19 GiB summed RSS, the staged hash was
    `68d007a6279f34268261486129dfcab2ebda7f626299b3de1db5000423f96ec5`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `a089bfa` — Uniform diagonal digamma remainder bounded
+
+1. **Theorem added.**  For every positive height `y`, the real part of
+   `digamma (1/4 + y i)` differs from the explicit fourth-order expression
+   `diagonalDigammaMain y` by at most `4 / (3 * y^5)`.  The proof includes the
+   exact first-through-fifth derivative chain, the normalized Bernoulli-kernel
+   bound, a sixth-power cell majorant, finite telescoping, endpoint limits, and
+   the exact `v = 2y` normalization needed by the production digamma identity.
+2. **Gate hypothesis eliminated.**  The high-mode diagonal route no longer
+   carries an informal quarter-digamma asymptotic or an unchecked remainder
+   sign.  Its dominant transcendental term now has a uniform kernel-checked
+   enclosure that shrinks as the fifth inverse power of the mode height.
+3. **Assumptions remaining.**  The derivative `tsum` and dyadic `Q` terms in
+   `yoshidaDiagonalMoment_eq_uniformSeries` still need sharp uniform bounds,
+   after which rational interval arithmetic must certify the canonical modes
+   and finite exceptions.  The sparse-congruence width/dominance checks and
+   robust finite PosDef endpoint remain the parallel finite-certificate
+   blocker; Gate 3 all-support localization remains open after Gate 1.
+4. **Next make-or-break lemma.**  Promote the first-correction trapezoid
+   remainder, prove the derivative-series radius `5 / (2 * y^4)`, and combine
+   it with the sharp geometric two-sided bound for `diagonalHighQ`; then test
+   the resulting rational enclosure against every canonical high-mode target.
+5. **Viability evidence.**  Fresh direct compilation, a concrete mode-16
+   regression, and the 3,621-job module build all pass.  The public theorem's
+   axiom footprint is exactly `propext`, `Classical.choice`, and `Quot.sound`;
+   forbidden and whitespace scans are empty, and independent sign/index/factor
+   review approved the endpoint.  Guarded direct verification peaked below
+   1.82 GiB cgroup memory and 6.01 GiB summed RSS, the production source hash
+   is `2064025f64521c7071da0425f8ccb44d5a29c1b79163820fd143084a394d411a`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
