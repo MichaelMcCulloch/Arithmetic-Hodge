@@ -1782,3 +1782,19 @@ separate from build logs: a green build is evidence, not a stage transition.
    audits report only the standard three axioms; forbidden and whitespace
    scans are empty, generated source hashes match the manifest, and all 159
    inventoried legacy root Lean artifacts remain untouched.
+
+## `669ce66` — Sparse dominance blocks 008 through 015 certified
+
+1. **Theorems added.**  The next 64 row-major residue-block bounds are
+   kernel-checked, from row 11 block 0 through row 19 block 4.
+2. **Gate hypothesis eliminated.**  A cumulative 128 of 762 exact block
+   contributions now have Lean proofs against their rational budgets.
+3. **Assumptions remaining.**  The other 634 blocks, 200 row aggregates, and
+   robust PosDef transport remain.
+4. **Next make-or-break lemma.**  Continue with generated modules `016` through
+   `023` after correcting the generator test's stale total-module boundary.
+5. **Viability evidence.**  All eight modules pass the serial target build in
+   about 315 seconds; the batch peaks at 2.74 GiB cgroup memory and 6.89 GiB
+   summed RSS.  The structurally heaviest near-term module (`011`) passed.
+   Boundary, forbidden, whitespace, and endpoint axiom audits pass, and all
+   159 inventoried legacy root Lean artifacts remain untouched.
