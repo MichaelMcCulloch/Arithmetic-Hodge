@@ -271,3 +271,30 @@ separate from build logs: a green build is evidence, not a stage transition.
    seven audited public endpoints use only `propext`, `Classical.choice`, and
    `Quot.sound`, and the canonical 3,792-job build passes.  The forbidden-proof
    scan is clean and the root legacy count remains exactly 159.
+
+## `67bae28` — Exact infinite critical-sample expansion
+
+1. **Theorems added.**  Every clipped smooth function's critical sample is an
+   exact unordered sum over all centered Fourier modes, with each coefficient
+   multiplied by the removable-safe Section 6 interval-exponential quotient.
+   The proof realizes one fixed sample as a bounded circle-`L²` Riesz
+   functional and applies it to the genuine Fourier `HasSum`.
+2. **Gate hypothesis eliminated.**  The odd-tail analytic lane no longer needs
+   to assume an infinite mode expansion or interchange a conditionally
+   presented formal series with critical evaluation.  Resonant modes are also
+   covered by the same theorem rather than excluded by division.
+3. **Assumptions remaining.**  This is pointwise continuity of one critical
+   sample, not boundedness of the full Yoshida form.  The paired odd estimate
+   must still be connected to the committed weighted-tail energy and
+   integrated against the Section 6 measure.  Both parity coercivity bounds,
+   both coupling estimates, even finite-block positivity, and completed-form
+   assembly remain open.
+4. **Next make-or-break lemma.**  Pair the positive and negative frequencies
+   for an odd periodic-core tail, bound the resulting sample by the existing
+   `weightedTail 10` quantity, and integrate that exact bound to obtain—or
+   refute—the source constant `38/25`.
+5. **Viability evidence.**  The 203-line module warning-as-error compiles, its
+   target build passes, all four audited public endpoints use only `propext`,
+   `Classical.choice`, and `Quot.sound`, and the canonical 3,793-job build
+   passes.  The forbidden-proof scan is clean and the root legacy count
+   remains exactly 159.
