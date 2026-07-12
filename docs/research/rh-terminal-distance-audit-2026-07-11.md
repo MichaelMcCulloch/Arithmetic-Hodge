@@ -169,3 +169,29 @@ separate from build logs: a green build is evidence, not a stage transition.
    use only `propext`, `Classical.choice`, and `Quot.sound`; forbidden-proof
    scans are clean.  The root legacy inventory remains exactly 159 untracked
    Lean files.
+
+## `00803f0` — Exact all-mode even pairing bridge
+
+1. **Theorem added.**  Every clipped even/even critical-form entry now has an
+   exact removable-safe formula through `yoshidaIntervalExpQuotient`.  Public
+   consequences cover all modes, the normalized zero mode, the canonical
+   `Fin 200` low block against every tail mode, and the Hermitian reverse
+   orientation.
+2. **Gate hypothesis eliminated.**  Gate 1 no longer lacks an exact analytic
+   target for the even finite-to-infinite coupling calculation.  The bridge
+   also resolves an indexing ambiguity: the repository's `YoshidaEvenIndex`
+   is zero plus modes `1, ..., 199`, so its canonical first tail mode is `200`,
+   not `201`.
+3. **Assumptions remaining.**  The formula is an identity, not a decay or
+   positivity estimate.  No even analogue of the odd admissible-distribution,
+   correlation-fold, or real-space assembly stack yet proves the source tail
+   coercivity, the low/high square-sum bound, or the even finite block's
+   positivity.  Infinite interchange and form-completion obligations remain.
+4. **Next make-or-break lemma.**  Derive a uniform summable bound for the exact
+   canonical even low/tail entries and construct the corresponding even
+   real-space tail coercivity theorem; abandon the route if their certified
+   constants exceed the available Schur budget.
+5. **Viability evidence.**  The 288-line module strict-compiles, its targeted
+   build and the canonical 3,789-job build pass, and five audited public
+   endpoints use only `propext`, `Classical.choice`, and `Quot.sound`.
+   Forbidden-proof scans are clean and the root legacy inventory remains 159.
