@@ -190,10 +190,28 @@ change the mathematical mechanism or formalize the obstruction.
 
 ## Current directive
 
-Finish Gate 0 cleanly because it is close and supplies firm ground. Then move
-immediately to Gate 1. The next major success criterion is not a larger finite
-matrix; it is a Lean theorem that converts the certified finite block and
-coercive tail into positivity for the entire restricted-support space.
+Gate 0 closed at `1ea80bc`; treat it as immutable firm ground and do not reopen
+or enlarge its ten-mode certificate without a specific Gate 1 dependency.
+Gate 1 is active.  The next major success criterion is not a larger finite
+matrix: it is a Lean theorem that converts the certified low blocks, genuinely
+infinite coercive tails, and controlled couplings into positivity for the
+entire restricted-support space.
+
+The current Gate 1 critical path is:
+
+1. finish odd-tail spectral regularity, Parseval, polar control, and `38/25`
+   coercivity, then combine it with the closed odd coupling budget and finite
+   block through the completed-form Schur/Riesz argument;
+2. finish the even clipped-form/distribution bridge, analytic moment
+   enclosures and checkpointed `Fin 200` certificate, exceptional coupling
+   estimate, and `102/25` infinite-tail coercivity; and
+3. assemble both parities and every closure/density step into one quantified
+   restricted-support positivity theorem, or formalize the exact obstruction
+   if any required inequality or extension fails.
+
+The live theorem-by-theorem position and next make-or-break lemma are recorded
+in `docs/research/rh-terminal-distance-audit-2026-07-11.md`; that audit, rather
+than this stable program, carries rapidly changing commit-level status.
 
 No restricted-support or finite-dimensional result is terminal. The program
 exists to force each such result into the next quantified theorem—or to expose
