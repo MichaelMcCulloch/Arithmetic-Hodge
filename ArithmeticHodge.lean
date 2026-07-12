@@ -81,6 +81,7 @@ import ArithmeticHodge.Analysis.YoshidaEvenPairingBridge
 import ArithmeticHodge.Analysis.YoshidaEvenTailReduction
 import ArithmeticHodge.Analysis.YoshidaOddLowHighDecay
 import ArithmeticHodge.Analysis.YoshidaInfiniteCriticalSample
+import ArithmeticHodge.Analysis.YoshidaOddTailPaired
 import ArithmeticHodge.Analysis.YoshidaEvenIntervalCertificate
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
