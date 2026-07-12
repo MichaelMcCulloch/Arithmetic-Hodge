@@ -1533,3 +1533,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    1.82 GiB cgroup memory and 6.01 GiB summed RSS, the production source hash
    is `2064025f64521c7071da0425f8ccb44d5a29c1b79163820fd143084a394d411a`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `202db55` — First-correction trapezoid remainder promoted
+
+1. **Theorem added.**  The unit-cell trapezoidal error after its `1/12`
+   first-derivative endpoint correction is now exactly the negative integral
+   of a supplied third derivative against the public cubic kernel
+   `correctedTrapezoidThirdKernel`.  The kernel also has the reusable bound
+   `|K| ≤ 1/12` on every unit cell.
+2. **Gate hypothesis eliminated.**  The derivative-series part of the uniform
+   diagonal route no longer needs a duplicated or informal one-correction
+   Euler--Maclaurin step; its remainder can be bounded directly by the fourth
+   derivative already exposed by the digamma module.
+3. **Assumptions remaining.**  The Yoshida profile specialization, telescoped
+   fourth-derivative majorant, normalized derivative `tsum` bound, and dyadic
+   `Q` enclosure remain before the high-mode diagonal targets can be closed.
+   Sparse-congruence checks and the robust PosDef endpoint remain parallel.
+4. **Next make-or-break lemma.**  Prove
+   `|Σ f'(j+1) - (-f(1)+f'(1)/2-f''(1)/12)| ≤ 5/(2y^4)` and combine its
+   normalized form with the sharp geometric `Q` bounds.
+5. **Viability evidence.**  Fresh direct compilation and the 2,659-job module
+   build pass.  A quartic sign-oriented specialization and a concrete kernel
+   bound compile; the public theorem has exactly the standard three axioms.
+   Forbidden and whitespace scans are empty, independent review approved the
+   integration-by-parts orientation and assumptions, guarded verification
+   stayed below 0.63 GiB cgroup memory and 4.24 GiB summed RSS, the production
+   source hash is
+   `786c6ce93885848dff4b85c9e5e6e4e2cc3a78db276a03d130ea3a53ef864f62`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
