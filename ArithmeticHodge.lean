@@ -83,6 +83,7 @@ import ArithmeticHodge.Analysis.YoshidaEvenCouplingReduction
 import ArithmeticHodge.Analysis.YoshidaOddLowHighDecay
 import ArithmeticHodge.Analysis.YoshidaInfiniteCriticalSample
 import ArithmeticHodge.Analysis.YoshidaOddTailPaired
+import ArithmeticHodge.Analysis.YoshidaOddDigammaLoss
 import ArithmeticHodge.Analysis.YoshidaEvenIntervalCertificate
 import ArithmeticHodge.Analysis.YoshidaEvenMomentTargets
 import ArithmeticHodge.Analysis.ThetaFunction
