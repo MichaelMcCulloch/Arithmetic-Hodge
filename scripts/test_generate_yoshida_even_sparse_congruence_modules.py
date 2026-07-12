@@ -73,12 +73,24 @@ class DominanceModuleGenerationTests(unittest.TestCase):
         self.assertIn("theorem evenSparseWeightedDominance :", final)
 
     def test_module_batch_parser(self) -> None:
-        self.assertEqual(generator.parse_module_batch("0:5", 98), (0, 5))
-        self.assertEqual(generator.parse_module_batch("97:1", 98), (97, 1))
-        for invalid in ("", "0", "-1:1", "0:0", "97:2", "98:1"):
+        module_count = len(self.modules)
+        last = module_count - 1
+        self.assertEqual(generator.parse_module_batch("0:5", module_count), (0, 5))
+        self.assertEqual(
+            generator.parse_module_batch(f"{last}:1", module_count), (last, 1)
+        )
+        invalid_batches = (
+            "",
+            "0",
+            "-1:1",
+            "0:0",
+            f"{last}:2",
+            f"{module_count}:1",
+        )
+        for invalid in invalid_batches:
             with self.subTest(invalid=invalid):
                 with self.assertRaises(ValueError):
-                    generator.parse_module_batch(invalid, 98)
+                    generator.parse_module_batch(invalid, module_count)
 
 
 if __name__ == "__main__":
