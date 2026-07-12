@@ -1937,3 +1937,29 @@ separate from build logs: a green build is evidence, not a stage transition.
    The monomial action is triangular with leading multiplier
    `2 * harmonic n`, so the remaining route is a uniform polynomial identity
    plus density/Parseval, not computational exhaustion.
+
+## `b9d2b2d` — Uniform shifted-Legendre foundation established
+
+1. **Theorems added.**  The exact logarithmic-difference operator on every
+   monomial is derived from its raw `|x-y|` kernel and shown triangular with
+   leading multiplier `2 * harmonic n`.  A uniform `n`-fold integration by
+   parts theorem, endpoint root-multiplicity argument, and mapped Rodrigues
+   formula prove shifted-Legendre orthogonality against every lower-degree
+   polynomial.  The polynomial `L²[0,1]` pairing is also proved definite.
+2. **Gate hypothesis eliminated.**  The finite-mode tables formerly used to
+   guess low spectral behavior are no longer needed for the polynomial core:
+   the monomial action and all-degree orthogonality are exact structural
+   theorems quantified over `n`.
+3. **Assumptions remaining.**  Self-adjointness of the polynomial log-kernel
+   must be combined with triangularity and orthogonality to prove the exact
+   shifted-Legendre eigenidentity.  Completeness/Parseval and the
+   finite-energy projection argument are then required for the full `L²`
+   gap.
+4. **Next make-or-break lemma.**  Prove
+   `shiftedLogKernel (shiftedLegendreReal n) =
+   C (2 * harmonic n) * shiftedLegendreReal n` uniformly in `n`, with no
+   coefficient enumeration.
+5. **Viability evidence.**  The raw diagonal is removed only as a
+   measure-zero singleton; focused builds, warning-as-error checks, axiom
+   audits, and independent reviews pass.  All new public theorems depend only
+   on `propext`, `Classical.choice`, and `Quot.sound`.
