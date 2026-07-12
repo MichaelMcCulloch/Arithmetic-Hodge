@@ -881,3 +881,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    `1.46725368447731640474998212945`.  Strict direct, the 3,625-job target, and
    umbrella pass; the endpoint uses only `propext`, `Classical.choice`, and
    `Quot.sound`, with all 159 legacy files preserved.
+
+## `6df5367` — Infinite even tail coercivity closed
+
+1. **Theorems added.**  The actual production clipped form is now coercive on
+   the entire canonical even tail whose Fourier modes through 199 vanish:
+   `(102 / 25) * intervalEnergy ≤ clippedCriticalFormValue`.  The result is
+   homogenized, transported back to the source periodic carrier, and bundled
+   as a positive-definite Hermitian form.
+2. **Gate hypothesis eliminated.**  Gate 1's genuinely infinite even-tail
+   estimate is unconditional.  Endpoint behavior, clipped Plancherel,
+   pointwise parity, paired sampling, Parseval normalization, weighted
+   high-frequency mass, and the low digamma loss are all discharged inside
+   the theorem; no Section 6 estimate remains as a premise.
+3. **Assumptions remaining.**  The 200-mode even finite block, its actual
+   low/tail coupling, the completed even Schur argument, and final parity
+   recombination remain open.  Their scalar certificate inputs still require
+   `D_4,...,D_199` and `S_4,...,S_199` unless a more compressed exact pivot
+   route is proved.
+4. **Next make-or-break lemma.**  Close the exceptional actual even low/tail
+   pairing with the sharp digamma remainder and exact pairing identity, while
+   testing the full 200-pivot target certificate and accelerating the diagonal
+   moments enough to make the finite block tractable.
+5. **Viability evidence.**  Independent review checked the exact carrier and
+   mode cutoff, endpoint-safe distributional Plancherel, circle-to-pointwise
+   parity bridge, every Fourier scaling factor, the Section 6 constants, and
+   homogenization.  The conservative certified margin over `102/25` is
+   `0.006`.  Strict direct, the 8,318-job focused target, and umbrella checks
+   pass; all public endpoints use only `propext`, `Classical.choice`, and
+   `Quot.sound`, and all 159 legacy root artifacts remain untouched.
