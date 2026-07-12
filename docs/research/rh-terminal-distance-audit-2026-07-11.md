@@ -1016,3 +1016,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    agreed to about 80 digits.  Strict direct, the 3,621-job target, umbrella,
    forbidden, and axiom checks pass; the public endpoint uses only `propext`,
    `Classical.choice`, and `Quot.sound`, with all 159 legacy files preserved.
+
+## `583a845` — Restricted parity recombination closed
+
+1. **Theorems added.**  Pointwise reflection preserves the actual clipped
+   periodic core, agrees with circle reflection, and produces canonical even
+   and odd parts in the existing production carriers.  The two parts sum
+   exactly to the source vector, both clipped-form cross terms vanish, and the
+   diagonal form splits exactly.  Strict positivity on the two parity carriers
+   therefore implies strict positivity on the whole periodic core.
+2. **Gate hypothesis eliminated.**  Gate 1's endpoint-safe parity,
+   orthogonality, decomposition, and final algebraic recombination obligations
+   are discharged.  The specialized theorem consumes the already committed
+   infinite odd theorem and leaves exactly actual even-carrier positivity as
+   its sole mathematical premise.
+3. **Assumptions remaining.**  The full even `Fin 200` scalar enclosures and
+   pivots must be certified, the actual even tail correction must be fitted
+   into that finite Gram, and the completed even Schur positivity theorem must
+   be assembled.  No additional parity or closure premise remains afterward.
+4. **Next make-or-break lemma.**  Finish the scalable full-pivot soundness
+   proof and actual even Riesz correction radius, then generate the remaining
+   scalar target enclosures needed to inhabit the finite Gram certificate.
+5. **Viability evidence.**  Independent review checked the identified endpoint
+   case, pointwise/circle normalization, `1/2` projections, carrier membership,
+   both conjugate cross-term orientations, all nonzero cases, and the exact
+   specialization signature.  Strict direct, the 8,358-job target, umbrella,
+   forbidden, and axiom checks pass; all 20 public endpoints use only
+   `propext`, `Classical.choice`, and `Quot.sound`, with all 159 legacy files
+   preserved.
