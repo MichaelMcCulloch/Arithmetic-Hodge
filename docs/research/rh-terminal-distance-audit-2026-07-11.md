@@ -647,3 +647,53 @@ separate from build logs: a green build is evidence, not a stage transition.
    direction, constant bound, and the 8191/8192 boundary.  Direct strict took
    about five minutes, the 3,625-job build passed, and the endpoint uses only
    `propext`, `Classical.choice`, and `Quot.sound`.
+
+## `a2300bd` — First even sine moment certified
+
+1. **Theorems added.**  The actual production sine moment `S_1` now lies in
+   `[-145119/100000, -145118/100000]`.  The exact series enclosure uses the
+   finite head `k = 0,...,1535` and an analytic infinite tail beginning at
+   1536; `sum_add_tsum_nat_add` proves the split is exhaustive and disjoint.
+2. **Gate hypothesis eliminated.**  One of the 199 sine target boxes consumed
+   by the even interval Gram is now inhabited by its analytic moment.  The
+   theorem is not a numerical truncation: every remaining series term is
+   covered by a proved tail inequality.
+3. **Assumptions remaining.**  `S_2,...,S_199`, `D_2,...,D_199`, and the full
+   Schur replay remain.  The 1,536-term direct head shows the existing tail
+   estimate is correct but too expensive to scale naively across all modes.
+4. **Next make-or-break lemma.**  Retain additional terms of the Cauchy-tail
+   asymptotic expansion and build checkpointed head accumulation so later
+   sine boxes can use shorter analytic tails without deep recursive replay.
+5. **Viability evidence.**  Direct strict and the 3,604-job focused build
+   pass.  Independent review checked the subinterval direction and exact
+   1535/1536 boundary; independent quadrature gives
+   `-1.4511874810319608966`, inside the target.  Both endpoints use only
+   `propext`, `Classical.choice`, and `Quot.sound`.
+
+## `71503de` — Even critical-cross and full moment bridges closed
+
+1. **Theorems added.**  Measurable Fourier convolution identifies every
+   endpoint-jumping even spectral product with a continuous compactly
+   supported correlation.  Ordinary-`L¹` Cauchy evaluation, finite monotone
+   digamma partial sums, an index-independent dominator, and the renormalized
+   real-space limit prove the critical-cross distribution identity for every
+   pair of natural modes.  Premise-free wrappers then prove both the full
+   40,000-entry admissible-distribution bridge and `ClippedEvenFullMomentBridge`.
+2. **Gate hypothesis eliminated.**  The last analytic interface between the
+   production clipped even Gram and `evenMomentFullGram` is gone.  Endpoint
+   jumps do not require the false odd-style weighted integrability premise;
+   the actual `O(v^-2)` product decay suffices.
+3. **Assumptions remaining.**  Analytic containment of the remaining 396
+   scalar moment targets, completion of the 200 exact Schur pivots, even-tail
+   coercivity, and finite-to-tail coupling/recombination remain.  The moment
+   bridge itself is unconditional.
+4. **Next make-or-break lemma.**  Continue the diagonal and sine enclosure
+   batches, then use those actual boxes to finish checkpointed pivot replay;
+   in parallel, close the endpoint-compatible even-tail Section 6 estimate.
+5. **Viability evidence.**  Deep independent review checked convolution
+   orientation, angular `1/(2*pi)`, Cauchy signs, rate, fold, digamma
+   monotonicity, domination, and every renormalized constant.  Strict direct,
+   the 3,604-job target, and umbrella compile pass.  Final and downstream
+   endpoints use only `propext`, `Classical.choice`, and `Quot.sound`;
+   numerical spectral/real-space errors on representative branches range
+   from about `2.1e-11` to `1.5e-9`.
