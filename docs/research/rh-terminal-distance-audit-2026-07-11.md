@@ -1438,3 +1438,36 @@ separate from build logs: a green build is evidence, not a stage transition.
    4.89 GiB summed RSS, the staged hash was
    `7f0e18886d2331143ae2dc43d54415552a5a275b63d55e70f667036257287b29`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `6d965fb` — Reproducible sparse Yoshida data landed
+
+1. **Definitions added.**  A tracked deterministic generator now emits the
+   complete 200-row rational preconditioner and 200 positive weights as actual
+   sparse `Finsupp` rows, together with the exact target interval, its actual
+   Lean-source midpoint, row L1 norms, and sparse center-congruence evaluator.
+   The generated module records the source-target and canonical-payload hashes
+   and the exact discovery margins as provenance, without asserting them as
+   theorems.
+2. **Gate hypothesis eliminated.**  The robust finite certificate no longer
+   depends on an ignored handoff, floating-point state, dense row conversion,
+   or an unreproducible coefficient table.  Every later kernel check reduces
+   through only 1--10 true support entries per row rather than scanning 200
+   columns or unfolding dense matrix products.
+3. **Assumptions remaining.**  Lean must still kernel-check all actual target
+   half-widths, center symmetry, structural row/weight facts, and all 200
+   weighted-dominance margins in bounded modules.  Only then can the robust
+   real PosDef endpoint and production finite-Schur bridge be proved.
+4. **Next make-or-break lemma.**  Probe one row and then five-row blocks for
+   actual-source width and sparse dominance reduction; if they stay below the
+   stop thresholds, assemble ten opaque 20-row check modules and their global
+   endpoints.
+5. **Viability evidence.**  The generator audit independently replays exactly
+   200 rows, 762 nonzeros, support sizes 1--10, no duplicate columns, positive
+   diagonal, and 200 positive weights.  Its canonical payload hash remains
+   `cdb37a48b2b2c28a71f266efdd84ed32bccd2d4c418037277b9bbd5a89dea9db`;
+   fresh emitted Lean is byte-identical to the committed module with hash
+   `fcb07929c0a310eae4a3f8d6db161a43e4ed63d8bb6ade31ffaded69021b582c`.
+   The 3,592-job data build and concrete reduction scratch pass below 0.70 GiB
+   cgroup memory and 4.85 GiB summed RSS.  Ruff, forbidden, and whitespace
+   scans are clean, independent review approved the encoding and replay, and
+   all 159 inventoried legacy root Lean artifacts remain untouched.
