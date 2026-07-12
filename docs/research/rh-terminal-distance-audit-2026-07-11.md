@@ -1072,3 +1072,26 @@ separate from build logs: a green build is evidence, not a stage transition.
    direct, the 8,346-job target, umbrella, forbidden, and axiom checks pass;
    all 40 public endpoints use only `propext`, `Classical.choice`, and
    `Quot.sound`, with all 159 legacy files preserved.
+
+## `bf81fbd` — Fifth even sine moment certified
+
+1. **Theorems added.**  Eleven outward-rounded exact 256-term checkpoints and
+   the accelerated analytic tail place the production moment `S_5` in its
+   unchanged target `[-154565/100000,-154564/100000]`.  The head covers
+   exactly `k=0,...,2815`; the tail begins at 2816.
+2. **Gate hypothesis eliminated.**  Six of the 200 even sine target boxes
+   (`S_0,...,S_5`) are now inhabited for the full finite Gram certificate.
+3. **Assumptions remaining.**  `S_6,...,S_199`, `D_4,...,D_199`, and the exact
+   full-pivot theorem remain before the corrected finite Gram can close.  A
+   scalable high-mode sine route is now being developed to avoid repeating
+   long Cauchy heads mode by mode.
+4. **Next make-or-break lemma.**  Replace most remaining sine checkpoints by
+   a uniform digamma/dyadic high-mode enclosure while completing the rounded
+   pivot soundness theorem.
+5. **Viability evidence.**  Independent exact replay verified all eleven
+   chunks, head/tail boundary, subtraction signs, and final enclosure
+   `[-1.545643105602420,-1.545640248036182]`.  Independent 90-digit evaluation
+   gives `-1.545641676991735984091352555...`.  Strict direct, the 3,607-job
+   target, umbrella, forbidden, and axiom checks pass; both public endpoints
+   use only `propext`, `Classical.choice`, and `Quot.sound`, with all 159 legacy
+   files preserved.
