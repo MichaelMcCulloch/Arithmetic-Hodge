@@ -854,6 +854,30 @@ separate from build logs: a green build is evidence, not a stage transition.
    conjugations, correction norm algebra, unconditional reserve inputs,
    complete-square expansion, completion embedding, physical-form equality,
    exact Fourier decomposition, and nested-subtype nonzero proof.  Strict
-   direct, the 8,357-job target, and umbrella pass; all 14 public endpoints use
-   only `propext`, `Classical.choice`, and `Quot.sound`, and all 159 legacy root
-   artifacts remain untouched.
+   direct, the 8,357-job target, umbrella, and fresh 8,432-job full repository
+   build pass; all 14 public endpoints use only `propext`, `Classical.choice`,
+   and `Quot.sound`, and all 159 legacy root artifacts remain untouched.
+
+## `f37e990` — Third positive even diagonal moment certified
+
+1. **Theorems added.**  The actual production moment `D_3` now lies in
+   `[146725/100000, 146726/100000]`.  Seventy-two exact checkpoint blocks—71
+   of length 256 and a final block of length 255—cover precisely
+   `k = 1,...,18431`; the analytic accelerated tail begins at 18432.
+2. **Gate hypothesis eliminated.**  `D_0,...,D_3` are now analytic theorems,
+   so four of the 200 diagonal boxes required by the full even Gram are
+   inhabited.
+3. **Assumptions remaining.**  `D_4,...,D_199`, `S_4,...,S_199`, the remaining
+   exact Schur pivots, infinite even-tail coercivity, and the exceptional
+   finite/tail coupling remain open.  The large D3 cutoff confirms that the
+   present `O(k^-3)` diagonal tail should not be extended naively to mode 199.
+4. **Next make-or-break lemma.**  Replace the current diagonal tail by a
+   rigorously higher-order acceleration before producing the next large batch;
+   continue the sine boxes and even-tail analytic closure in parallel.
+5. **Viability evidence.**  Independent exact replay verified all 72 boxes,
+   the final enclosure
+   `[1.467250565760867, 1.467257361783651]`, and positive margins inside the
+   target.  Independent high-precision quadrature gives
+   `1.46725368447731640474998212945`.  Strict direct, the 3,625-job target, and
+   umbrella pass; the endpoint uses only `propext`, `Classical.choice`, and
+   `Quot.sound`, with all 159 legacy files preserved.
