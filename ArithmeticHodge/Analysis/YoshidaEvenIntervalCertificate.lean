@@ -301,13 +301,14 @@ theorem inflatedEvenMomentIntervalGram_contains
     (evenMomentIntervalGram_contains S D SI DI hS hD i j)
     (hclose i j)
 
-def evenPivotOrder : List YoshidaEvenIndex := Finset.univ.toList
+def evenPivotOrder : List YoshidaEvenIndex :=
+  List.ofFn fun i : YoshidaEvenIndex ↦ i
 
 theorem evenPivotOrder_nodup : evenPivotOrder.Nodup := by
-  exact Finset.nodup_toList Finset.univ
+  exact List.nodup_ofFn.mpr Function.injective_id
 
 theorem evenPivotOrder_cover (i : YoshidaEvenIndex) : i ∈ evenPivotOrder := by
-  exact Finset.mem_toList.mpr (Finset.mem_univ i)
+  exact List.mem_ofFn.mpr ⟨i, rfl⟩
 
 theorem evenMomentFullGram_posDef_of_intervalPivots
     (S D : ℕ → ℝ) (SI DI : ℕ → RatInterval)
