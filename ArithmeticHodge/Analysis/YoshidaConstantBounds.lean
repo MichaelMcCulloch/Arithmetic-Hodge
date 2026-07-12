@@ -310,5 +310,3 @@ theorem yoshida_log_pi_bounds :
   exact strict_log_pi_bounds
 
 end ArithmeticHodge.Analysis.YoshidaConstantBounds
-
-
