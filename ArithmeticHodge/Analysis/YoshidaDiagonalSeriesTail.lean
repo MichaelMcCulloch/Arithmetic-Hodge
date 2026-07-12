@@ -455,6 +455,73 @@ theorem one_div_cube_tail_bound (N : ℕ) (hN : 1 ≤ N) :
   have hle := hf.tsum_le_tsum hfg hg.summable
   simpa only [f, g, hg.tsum_eq] using hle
 
+/-- A sharper telescoping estimate once the tail starts beyond the analytic
+threshold used by the diagonal correction bound. -/
+theorem one_div_cube_tail_bound_sharp (N : ℕ) (hN : 16 ≤ N) :
+    ∑' j : ℕ, (1 : ℝ) / ((N + j : ℕ) : ℝ) ^ 3 ≤
+      11 / (20 * (N : ℝ) ^ 2) := by
+  let f : ℕ → ℝ := fun j ↦ (1 : ℝ) / ((N + j : ℕ) : ℝ) ^ 3
+  let g : ℕ → ℝ := fun j ↦ (11 / 20 : ℝ) *
+    ((1 : ℝ) / ((N + j : ℕ) : ℝ) ^ 2 -
+      1 / ((N + j + 1 : ℕ) : ℝ) ^ 2)
+  have htel := (hasSum_inv_sq_telescope N (by omega)).mul_left (11 / 20 : ℝ)
+  have hg : HasSum g (11 / (20 * (N : ℝ) ^ 2)) := by
+    dsimp only [g]
+    convert htel using 1
+    ring
+  have hf0 : ∀ j, 0 ≤ f j := by intro j; positivity
+  have hfg : ∀ j, f j ≤ g j := by
+    intro j
+    dsimp only [f, g]
+    simp only [Nat.cast_add, Nat.cast_one]
+    let m : ℝ := (N : ℝ) + (j : ℝ)
+    have hm : 16 ≤ m := by
+      dsimp [m]
+      exact_mod_cast (by omega : 16 ≤ N + j)
+    have hm0 : 0 < m := by linarith
+    have hm10 : 0 < m + 1 := by linarith
+    change 1 / m ^ 3 ≤ (11 / 20 : ℝ) *
+      (1 / m ^ 2 - 1 / (m + 1) ^ 2)
+    field_simp [hm0.ne', hm10.ne']
+    nlinarith [mul_nonneg (sub_nonneg.mpr hm)
+      (show 0 ≤ 2 * m + 3 by linarith)]
+  have hf : Summable f := hg.summable.of_nonneg_of_le hf0 hfg
+  have hle := hf.tsum_le_tsum hfg hg.summable
+  simpa only [f, g, hg.tsum_eq] using hle
+
+theorem summable_abs_diagonalDyadicPairedCorrection_tail
+    {L p : ℝ} {N : ℕ}
+    (hLlo : (69 / 100 : ℝ) ≤ L) (hLhi : L ≤ 7 / 10)
+    (hp : 0 ≤ p) (hN : 16 ≤ N) (hpN : p ≤ (N : ℝ) ^ 2) :
+    Summable (fun j : ℕ ↦
+      |diagonalDyadicPairedCorrection L p (N + j)|) := by
+  let f : ℕ → ℝ := fun j ↦ (1 : ℝ) / ((N + j : ℕ) : ℝ) ^ 3
+  let C : ℝ := 2 * p + 2
+  let g : ℕ → ℝ := fun j ↦ C * f j
+  have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg N
+  have hpoint : ∀ j : ℕ,
+      |diagonalDyadicPairedCorrection L p (N + j)| ≤ g j := by
+    intro j
+    have hk : 16 ≤ N + j := by omega
+    have hcast : (N : ℝ) ≤ (N + j : ℕ) := by
+      exact_mod_cast Nat.le_add_right N j
+    have hsq : (N : ℝ) ^ 2 ≤ ((N + j : ℕ) : ℝ) ^ 2 :=
+      pow_le_pow_left₀ hN0 hcast 2
+    have hpk : p ≤ ((N + j : ℕ) : ℝ) ^ 2 := hpN.trans hsq
+    have h := diagonalDyadicPairedCorrection_abs_le hLlo hLhi hp hk hpk
+    dsimp only [g, C, f]
+    simpa only [div_eq_mul_inv, one_mul] using h
+  have hall : Summable (fun n : ℕ ↦ (1 : ℝ) / (n : ℝ) ^ 3) := by
+    simpa only [one_div] using
+      (Real.summable_nat_pow_inv.mpr (by norm_num : 1 < (3 : ℕ)))
+  have hf : Summable f := by
+    have hshift := (summable_nat_add_iff N).2 hall
+    simpa only [f, Nat.add_comm] using hshift
+  have hg : Summable g := by
+    dsimp only [g]
+    exact hf.mul_left C
+  exact hg.of_nonneg_of_le (fun j ↦ abs_nonneg _) hpoint
+
 /-- Absolute dyadic correction tail for arbitrary frequency square `p`. -/
 theorem diagonalDyadicPairedCorrection_abs_tail_le
     {L p : ℝ} {N : ℕ}
@@ -503,6 +570,56 @@ theorem diagonalDyadicPairedCorrection_abs_tail_le
       dsimp [C]
       ring
 
+/-- Sharpened absolute correction tail, using the asymptotically optimal
+telescoping scale up to a factor `11/10`. -/
+theorem diagonalDyadicPairedCorrection_abs_tail_le_sharp
+    {L p : ℝ} {N : ℕ}
+    (hLlo : (69 / 100 : ℝ) ≤ L) (hLhi : L ≤ 7 / 10)
+    (hp : 0 ≤ p) (hN : 16 ≤ N) (hpN : p ≤ (N : ℝ) ^ 2) :
+    (∑' j : ℕ, |diagonalDyadicPairedCorrection L p (N + j)|) ≤
+      11 * (p + 1) / (10 * (N : ℝ) ^ 2) := by
+  let f : ℕ → ℝ := fun j ↦ (1 : ℝ) / ((N + j : ℕ) : ℝ) ^ 3
+  let C : ℝ := 2 * p + 2
+  let g : ℕ → ℝ := fun j ↦ C * f j
+  have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg N
+  have hpoint : ∀ j : ℕ,
+      |diagonalDyadicPairedCorrection L p (N + j)| ≤ g j := by
+    intro j
+    have hk : 16 ≤ N + j := by omega
+    have hcast : (N : ℝ) ≤ (N + j : ℕ) := by
+      exact_mod_cast Nat.le_add_right N j
+    have hsq : (N : ℝ) ^ 2 ≤ ((N + j : ℕ) : ℝ) ^ 2 :=
+      pow_le_pow_left₀ hN0 hcast 2
+    have hpk : p ≤ ((N + j : ℕ) : ℝ) ^ 2 := hpN.trans hsq
+    have h := diagonalDyadicPairedCorrection_abs_le hLlo hLhi hp hk hpk
+    dsimp only [g, C, f]
+    simpa only [div_eq_mul_inv, one_mul] using h
+  have hall : Summable (fun n : ℕ ↦ (1 : ℝ) / (n : ℝ) ^ 3) := by
+    simpa only [one_div] using
+      (Real.summable_nat_pow_inv.mpr (by norm_num : 1 < (3 : ℕ)))
+  have hf : Summable f := by
+    have hshift := (summable_nat_add_iff N).2 hall
+    simpa only [f, Nat.add_comm] using hshift
+  have hC : 0 ≤ C := by dsimp [C]; linarith
+  have hg : Summable g := by
+    dsimp only [g]
+    exact hf.mul_left C
+  have habs : Summable (fun j : ℕ ↦
+      |diagonalDyadicPairedCorrection L p (N + j)|) :=
+    hg.of_nonneg_of_le (fun j ↦ abs_nonneg _) hpoint
+  have hle := habs.tsum_le_tsum hpoint hg
+  calc
+    (∑' j : ℕ, |diagonalDyadicPairedCorrection L p (N + j)|) ≤
+        ∑' j : ℕ, g j := hle
+    _ = C * ∑' j : ℕ, f j := by
+      exact hf.tsum_mul_left C
+    _ ≤ C * (11 / (20 * (N : ℝ) ^ 2)) := by
+      apply mul_le_mul_of_nonneg_left _ hC
+      exact one_div_cube_tail_bound_sharp N hN
+    _ = 11 * (p + 1) / (10 * (N : ℝ) ^ 2) := by
+      dsimp [C]
+      ring
+
 theorem yoshidaLength_coarse_bounds :
     (69 / 100 : ℝ) ≤ yoshidaLength ∧ yoshidaLength ≤ 7 / 10 := by
   rw [yoshidaLength]
@@ -535,6 +652,20 @@ theorem yoshidaKappa_sq_le_hundred_mul_sq (n : ℕ) :
 def yoshidaDiagonalDyadicPairedCorrection (n k : ℕ) : ℝ :=
   diagonalDyadicPairedCorrection yoshidaLength (yoshidaKappa n ^ 2) k
 
+theorem summable_abs_yoshidaDiagonalDyadicPairedCorrection_tail
+    {n N : ℕ} (hN : 16 ≤ N) (hmode : 10 * n ≤ N) :
+    Summable (fun j : ℕ ↦
+      |yoshidaDiagonalDyadicPairedCorrection n (N + j)|) := by
+  have hL := yoshidaLength_coarse_bounds
+  have hp : 0 ≤ yoshidaKappa n ^ 2 := sq_nonneg _
+  have hpN : yoshidaKappa n ^ 2 ≤ (N : ℝ) ^ 2 := by
+    have hkappa := yoshidaKappa_sq_le_hundred_mul_sq n
+    have hcast : (10 : ℝ) * n ≤ N := by exact_mod_cast hmode
+    have hsquare := pow_le_pow_left₀ (by positivity : (0 : ℝ) ≤ 10 * n) hcast 2
+    nlinarith
+  simpa only [yoshidaDiagonalDyadicPairedCorrection] using
+    summable_abs_diagonalDyadicPairedCorrection_tail hL.1 hL.2 hp hN hpN
+
 theorem yoshidaDiagonalDyadicPairedCorrection_abs_tail_le
     {n N : ℕ} (hN : 16 ≤ N) (hmode : 10 * n ≤ N) :
     (∑' j : ℕ, |yoshidaDiagonalDyadicPairedCorrection n (N + j)|) ≤
@@ -548,6 +679,20 @@ theorem yoshidaDiagonalDyadicPairedCorrection_abs_tail_le
     nlinarith
   simpa only [yoshidaDiagonalDyadicPairedCorrection] using
     diagonalDyadicPairedCorrection_abs_tail_le hL.1 hL.2 hp hN hpN
+
+theorem yoshidaDiagonalDyadicPairedCorrection_abs_tail_le_sharp
+    {n N : ℕ} (hN : 16 ≤ N) (hmode : 10 * n ≤ N) :
+    (∑' j : ℕ, |yoshidaDiagonalDyadicPairedCorrection n (N + j)|) ≤
+      11 * (yoshidaKappa n ^ 2 + 1) / (10 * (N : ℝ) ^ 2) := by
+  have hL := yoshidaLength_coarse_bounds
+  have hp : 0 ≤ yoshidaKappa n ^ 2 := sq_nonneg _
+  have hpN : yoshidaKappa n ^ 2 ≤ (N : ℝ) ^ 2 := by
+    have hkappa := yoshidaKappa_sq_le_hundred_mul_sq n
+    have hcast : (10 : ℝ) * n ≤ N := by exact_mod_cast hmode
+    have hsquare := pow_le_pow_left₀ (by positivity : (0 : ℝ) ≤ 10 * n) hcast 2
+    nlinarith
+  simpa only [yoshidaDiagonalDyadicPairedCorrection] using
+    diagonalDyadicPairedCorrection_abs_tail_le_sharp hL.1 hL.2 hp hN hpN
 
 /-- Uniform rational tail budget for all ten target modes. -/
 theorem yoshida_first_ten_diagonal_tail_le_three_div_twenty_thousand
