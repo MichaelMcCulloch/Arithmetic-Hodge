@@ -1315,3 +1315,34 @@ separate from build logs: a green build is evidence, not a stage transition.
    scan is empty, the staged source hash is
    `a8bc3601491a069714c51c12f83b2b735b80d5d54d356922adc6435c48ad3290`,
    and all 159 legacy root Lean artifacts remain untouched.
+
+## `deade56` — Weighted diagonal dominance formalized
+
+1. **Theorem added.**  A Hermitian real matrix is now proved positive definite
+   from positive weights, symmetric nonnegative off-diagonal entry bounds,
+   lower bounds on its diagonal, and strict weighted row dominance.  The proof
+   is kernel checked: weighted Young inequalities control every ordered cross
+   term, symmetry reindexes the second half, and a nonzero coordinate supplies
+   the strict quadratic-form contribution.
+2. **Gate hypothesis eliminated.**  The sparse-congruence route no longer has
+   an informal matrix-theory step between its exact rational dominance margins
+   and positive definiteness.  It can certify the transformed Yoshida matrix
+   directly, without reconstructing the resource-infeasible interval-pivot
+   trace.
+3. **Assumptions remaining.**  The generic sparse evaluator, congruence-error
+   bound, lower-triangular invertibility proof, generated 200-row Yoshida
+   certificate, and production finite-Schur bridge remain to be formalized.
+   The complete diagonal target proposition also remains; the sine proposition
+   is already discharged.  Gate 3 all-support localization remains open after
+   Gate 1 becomes unconditional.
+4. **Next make-or-break lemma.**  Prove sparse evaluation equals the matching
+   dense congruence entry and bound each transformed entry under a uniform
+   source-matrix error, then feed the 762-coefficient exact certificate through
+   the new weighted-dominance theorem.
+5. **Viability evidence.**  The strict production build and the exact `Fin 2`
+   regression both pass.  The public theorem's axiom footprint is exactly
+   `propext`, `Classical.choice`, and `Quot.sound`; the forbidden scan and
+   whitespace checks are empty.  Independent review verified both weight
+   ratios, ordered-pair double counting, symmetry orientation, and strictness.
+   Guarded runs peaked below 0.59 GiB cgroup memory and 4.11 GiB summed RSS,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
