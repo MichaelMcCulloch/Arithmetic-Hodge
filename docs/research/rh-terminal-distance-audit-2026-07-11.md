@@ -1734,3 +1734,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    3.11 GiB summed RSS.  The production source SHA-256 is
    `174afaed6bcf65f0586492e5b8ade1d9b5af956ed1dbb01f9f3948140126a410`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `3f3b600` — Serialized dominance proof generator added
+
+1. **Artifact added.**  The exact sparse-certificate generator now hashes the
+   complete dominance payload and renders, without writing files, a serial
+   Lean proof DAG: 96 residue-block modules with at most eight kernel checks,
+   20 ten-row aggregation modules, and one universal endpoint module.  Every
+   module imports exactly its generated predecessor.
+2. **Gate hypothesis eliminated.**  No mathematical positivity hypothesis is
+   discharged by this infrastructure commit alone.  It removes the resource
+   obstruction that made a monolithic 200-row or 40,000-cell replay unsafe:
+   the remaining 762 exact inequalities now have a deterministic,
+   restart-safe, non-fan-out compilation route.
+3. **Assumptions remaining.**  The generated block and row theorems must still
+   be materialized, kernel-checked, aggregated, and transported through the
+   robust congruence-to-PosDef endpoint.  Analytic target containments and the
+   infinite even Schur assembly remain downstream.
+4. **Next make-or-break lemma.**  Compile the complete serial block chain and
+   derive `evenSparseWeightedDominance` for every `Fin 200` row.
+5. **Viability evidence.**  Three generator unit tests cover unique ordered
+   paths, immediate-predecessor imports, content hashes, all 762 block theorem
+   names, all 200 row theorem pairs, universal endpoints, and batch-bound
+   rejection.  Ruff, formatting, deterministic audit, and independent source
+   review pass.  The dominance payload SHA-256 is
+   `bcf0a4fe6a3aad2ad41d7b6edbee0b9cfbb86e52895cf36c9859916a9589b406`.
+   An exact generated eight-check module compiles at 2.61 GiB cgroup memory
+   and 6.71 GiB summed RSS; a generated row template compiles at 0.53/4.82 GiB,
+   both under guarded exact-48-GiB scopes.  All 159 inventoried legacy root
+   Lean artifacts remain untouched.
