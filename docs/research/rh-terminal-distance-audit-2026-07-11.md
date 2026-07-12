@@ -1286,3 +1286,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    peak.  Public endpoints use only `propext`, `Classical.choice`, and
    `Quot.sound`; forbidden scans are empty and all 159 legacy files remain
    untouched.
+
+## `d30ae30` — Complete even sine target enclosure landed
+
+1. **Theorem added.**  `yoshidaEvenSineTargetEnclosures` now inhabits the
+   production `YoshidaEvenSineTargetEnclosures` proposition for every
+   canonical mode `S₁,...,S₁₉₉`.  Modes 1--5 reuse committed enclosures,
+   modes 6--17 use bounded checkpoint or corrected-trapezoid proofs, and one
+   analytic high-mode theorem covers 18--199.
+2. **Gate hypothesis eliminated.**  The sine premise of
+   `actualEvenTailCorrectedGram_posDef_of_certificates`, the infinite even
+   Schur theorem, and the ratio-two Bombieri transport now has a verified
+   premise-free inhabitant.  It no longer blocks unconditional specialization.
+3. **Assumptions remaining.**  The complete diagonal target proposition and
+   the exact full 200-pivot proposition remain.  The pivot source has been
+   split into bounded payload/chunk modules; the diagonal lane is switching
+   from per-mode high checkpoints to the uniform analytic program recorded at
+   `624306a`, with finite fallback only for modes 4, 5, 6, 7, 8, 11, 14, and
+   15.
+4. **Next make-or-break lemma.**  Strict-build the split pivot chunk chain and
+   prove the first exact uniform diagonal ramp/profile identity.  If that
+   identity compiles, continue to the production series decomposition; if it
+   fails, the already generated checkpoint sources remain a bounded fallback.
+5. **Viability evidence.**  The actual 3,624-job Lake target passed in 745
+   seconds with a 2,487,734,272-byte cgroup peak and a 6,438,952,960-byte
+   summed-RSS peak, below the 8/12 GiB manual guards.  The endpoint axiom audit
+   is exactly `propext`, `Classical.choice`, and `Quot.sound`; the forbidden
+   scan is empty, the staged source hash is
+   `a8bc3601491a069714c51c12f83b2b735b80d5d54d356922adc6435c48ad3290`,
+   and all 159 legacy root Lean artifacts remain untouched.
