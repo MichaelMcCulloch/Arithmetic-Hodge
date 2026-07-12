@@ -1,10 +1,10 @@
 import Mathlib.NumberTheory.Harmonic.Int
-import Mathlib.RingTheory.Polynomial.ShiftedLegendre
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+import Mathlib.MeasureTheory.Measure.Typeclasses.NoAtoms
 
 set_option autoImplicit false
 
-open Finset Polynomial
+open Finset Polynomial Set
 
 namespace ArithmeticHodge.Analysis.ShiftedLegendreLogKernel
 
@@ -37,6 +37,14 @@ theorem monomialDifferenceQuotient_eq_div (k : ℕ) {x y : ℝ} (hxy : x ≠ y) 
   apply (eq_div_iff (sub_ne_zero.mpr hxy)).2
   rw [mul_comm]
   exact sub_mul_monomialDifferenceQuotient k x y
+
+theorem neg_monomialDifferenceQuotient_eq_div_rev
+    (k : ℕ) {x y : ℝ} (hxy : x ≠ y) :
+    -monomialDifferenceQuotient k x y = (x ^ k - y ^ k) / (y - x) := by
+  rw [monomialDifferenceQuotient_eq_div k hxy]
+  rw [show y - x = -(x - y) by ring]
+  simp only [div_eq_mul_inv, inv_neg]
+  ring
 
 /-- Below the diagonal the removable quotient agrees with division by the
 absolute distance. -/
@@ -98,6 +106,83 @@ halves of `[0,1]`, the preceding lemmas identify its integrands with
 def shiftedLogKernelMonomialIntegral (k : ℕ) (x : ℝ) : ℝ :=
   (∫ y in 0..x, monomialDifferenceQuotient k x y) -
     ∫ y in x..1, monomialDifferenceQuotient k x y
+
+/-- The unregularized split integral, written with the denominator carrying
+the correct sign on each side of the diagonal. -/
+def rawShiftedLogKernelMonomialIntegral (k : ℕ) (x : ℝ) : ℝ :=
+  (∫ y in 0..x, (x ^ k - y ^ k) / (x - y)) +
+    ∫ y in x..1, (x ^ k - y ^ k) / (y - x)
+
+/-- Replacing the diagonal by the removable geometric quotient does not
+change the split interval integral.  The proof explicitly discards the
+singleton diagonal as a volume-null set. -/
+theorem shiftedLogKernelMonomialIntegral_eq_rawSplit (k : ℕ) (x : ℝ) :
+    shiftedLogKernelMonomialIntegral k x =
+      rawShiftedLogKernelMonomialIntegral k x := by
+  have hne : ∀ᵐ y : ℝ, y ≠ x := by
+    exact MeasureTheory.Measure.ae_ne MeasureTheory.volume x
+  have hlower :
+      (∫ y in 0..x, monomialDifferenceQuotient k x y) =
+        ∫ y in 0..x, (x ^ k - y ^ k) / (x - y) := by
+    apply intervalIntegral.integral_congr_ae
+    filter_upwards [hne] with y hy
+    intro _
+    exact monomialDifferenceQuotient_eq_div k hy.symm
+  have hupper :
+      (∫ y in x..1, -monomialDifferenceQuotient k x y) =
+        ∫ y in x..1, (x ^ k - y ^ k) / (y - x) := by
+    apply intervalIntegral.integral_congr_ae
+    filter_upwards [hne] with y hy
+    intro _
+    exact neg_monomialDifferenceQuotient_eq_div_rev k hy.symm
+  rw [shiftedLogKernelMonomialIntegral, rawShiftedLogKernelMonomialIntegral,
+    sub_eq_add_neg, ← intervalIntegral.integral_neg, hlower, hupper]
+
+/-- On `[0,1]`, the regularized split is exactly the original
+absolute-distance integral.  The only point not covered by the strict
+off-diagonal identities is `y = x`, which is removed explicitly as a
+volume-null singleton. -/
+theorem shiftedLogKernelMonomialIntegral_eq_integral_div_abs
+    (k : ℕ) {x : ℝ} (hx : x ∈ Set.Icc (0 : ℝ) 1) :
+    shiftedLogKernelMonomialIntegral k x =
+      ∫ y in 0..1, (x ^ k - y ^ k) / |x - y| := by
+  have hne : ∀ᵐ y : ℝ, y ≠ x :=
+    MeasureTheory.Measure.ae_ne MeasureTheory.volume x
+  have hcont : Continuous (fun y : ℝ ↦ monomialDifferenceQuotient k x y) := by
+    unfold monomialDifferenceQuotient
+    exact continuous_finset_sum _ fun j _ ↦
+      continuous_const.mul (continuous_id.pow (k - 1 - j))
+  have hlowerAE :
+      (fun y : ℝ ↦ monomialDifferenceQuotient k x y) =ᵐ[
+        MeasureTheory.volume.restrict (Set.uIoc 0 x)]
+        (fun y ↦ (x ^ k - y ^ k) / |x - y|) := by
+    filter_upwards [MeasureTheory.ae_restrict_of_ae hne,
+      MeasureTheory.ae_restrict_mem measurableSet_uIoc] with y hy hmem
+    rw [Set.uIoc_of_le hx.1] at hmem
+    have hyx : y < x := lt_of_le_of_ne hmem.2 hy
+    exact monomialDifferenceQuotient_eq_div_abs_of_lt k hyx
+  have hupperAE :
+      (fun y : ℝ ↦ -monomialDifferenceQuotient k x y) =ᵐ[
+        MeasureTheory.volume.restrict (Set.uIoc x 1)]
+        (fun y ↦ (x ^ k - y ^ k) / |x - y|) := by
+    filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with y hmem
+    rw [Set.uIoc_of_le hx.2] at hmem
+    exact neg_monomialDifferenceQuotient_eq_div_abs_of_lt k hmem.1
+  have habsLower : IntervalIntegrable
+      (fun y : ℝ ↦ (x ^ k - y ^ k) / |x - y|)
+      MeasureTheory.volume 0 x :=
+    (hcont.intervalIntegrable 0 x).congr_ae hlowerAE
+  have habsUpper : IntervalIntegrable
+      (fun y : ℝ ↦ (x ^ k - y ^ k) / |x - y|)
+      MeasureTheory.volume x 1 :=
+    (hcont.neg.intervalIntegrable x 1).congr_ae hupperAE
+  have hlowerIntegral :=
+    intervalIntegral.integral_congr_ae_restrict hlowerAE
+  have hupperIntegral :=
+    intervalIntegral.integral_congr_ae_restrict hupperAE
+  rw [shiftedLogKernelMonomialIntegral, sub_eq_add_neg,
+    ← intervalIntegral.integral_neg, hlowerIntegral, hupperIntegral]
+  exact intervalIntegral.integral_add_adjacent_intervals habsLower habsUpper
 
 /-- Exact symbolic evaluation of the split logarithmic-difference integral. -/
 theorem shiftedLogKernelMonomialIntegral_eq (k : ℕ) (x : ℝ) :
