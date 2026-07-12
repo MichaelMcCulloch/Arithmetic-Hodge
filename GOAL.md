@@ -12,7 +12,7 @@ repository contains one of the following fully verified Lean artifacts:
 1. an axiom-free theorem proving the repository's canonical
    `RiemannHypothesis` statement for every required Bombieri/Weil test
    function; or
-2. an explicit admissible test-function or zero witness whose verified
+1. an explicit admissible test-function or zero witness whose verified
    properties imply `¬ RiemannHypothesis`.
 
 Do not claim that RH is proved or falsified before one of those terminal
@@ -41,8 +41,8 @@ work, not decisive progress, unless a current gate explicitly requires them.
 
 Every task must be expressible in this form before work begins:
 
-> If this succeeds, it discharges **[specific obligation]** in **[current
-> gate]**; if it fails, the failure decides **[specific route or bound]**.
+> If this succeeds, it discharges **[specific obligation]** in **\[current
+> gate\]**; if it fails, the failure decides **[specific route or bound]**.
 
 ## Firm-ground and loose-end policy
 
@@ -67,10 +67,10 @@ research program.
   enumeration, pivot/Cholesky replay, and `decide +kernel` evaluation of a
   discovered certificate may be used to find conjectures or counterexamples,
   but no terminal-path theorem may import or depend on them.
-- This restriction is retroactive.  Audit every theorem previously called
+- This restriction is retroactive. Audit every theorem previously called
   firm ground through all of its imports; if its weakest lemma is computational
   rather than structural, reclassify the theorem as exploratory evidence and
-  reopen the obligation.  Closed scalar arithmetic after a structural
+  reopen the obligation. Closed scalar arithmetic after a structural
   reduction is acceptable only when it does not encode an enumerated family
   of cases or a discovered numeric certificate.
 - Preserve the 159 inventoried legacy Lean artifacts, their archive ref, and
@@ -90,7 +90,7 @@ probes only when they clarify whether the active route is viable.
 ### Gate 0 — Structuralize the restricted Yoshida foundation
 
 Reopen every claimed odd/even restricted-support result whose dependency graph
-passes through finite numeric certificates.  Replace the weakest such lemma by
+passes through finite numeric certificates. Replace the weakest such lemma by
 one structural theorem that works uniformly in the Fourier dimension, for
 example through the real-space correlation form, a coercive operator
 decomposition, a positive integral/rank-one representation, or an exact
@@ -148,9 +148,9 @@ preserve the exact Bombieri functional.
 For each candidate mechanism:
 
 1. state the complete theorem that would imply all-test positivity;
-2. isolate its strongest genuinely new lemma;
-3. try to prove that lemma before building auxiliary infrastructure; and
-4. in parallel, search for a counterexample to the lemma and its quantitative
+1. isolate its strongest genuinely new lemma;
+1. try to prove that lemma before building auxiliary infrastructure; and
+1. in parallel, search for a counterexample to the lemma and its quantitative
    bounds.
 
 The gate closes only with either an all-support Bombieri positivity theorem or
@@ -199,7 +199,8 @@ just guarded <other-lean-related-command> [args...]
 These recipes run the workload in a transient user systemd scope capped at
 exactly 48 GiB. The guarded runner also terminates the workload's complete
 process group if either the scope's cgroup `memory.current` or the summed RSS
-of the workload's descendant tree reaches 40 GiB.
+of the workload's descendant tree reaches 40 GiB. You may amend the justfile
+if you find something to be lacking
 
 - Ordinary non-Lean commands such as `git`, `rg`, and `git diff` run directly;
   they do not need or benefit from a systemd scope.
@@ -219,7 +220,6 @@ of the workload's descendant tree reaches 40 GiB.
 - The guarded recipes monitor both counters because shared or file-backed
   mappings can make process RSS materially exceed memory charged to a newly
   created cgroup; never trust the smaller counter when the two disagree.
-
 - Keep the root agent on the strongest unresolved lemma of the active gate.
 - Use subagents only for distinct bounded proofs, independent audits,
   counterexample searches, source verification, or certificate generation.
@@ -239,10 +239,10 @@ of the workload's descendant tree reaches 40 GiB.
 After every coherent increment, record a terminal-distance audit:
 
 1. theorem or obstruction added;
-2. active-gate hypothesis eliminated;
-3. assumptions still remaining;
-4. exact next make-or-break lemma; and
-5. evidence that the current route remains viable.
+1. active-gate hypothesis eliminated;
+1. assumptions still remaining;
+1. exact next make-or-break lemma; and
+1. evidence that the current route remains viable.
 
 If repeated attempts merely restate the same unresolved lemma, stop generating
 nearby lemmas. Produce a route audit, test the lemma adversarially, and either
@@ -250,17 +250,17 @@ change the mathematical mechanism or formalize the obstruction.
 
 ## Current directive
 
-Gate 0 is reopened by the structural-proof requirement.  The results formerly
+Gate 0 is reopened by the structural-proof requirement. The results formerly
 treated as closed at `1ea80bc` and `a038238`, together with all full-pivot,
 sparse-dominance, target-enclosure, and generated block modules, are
 quarantined evidence until a transitive dependency audit proves that no
-computational certificate supports them.  They are not admissible premises for
+computational certificate supports them. They are not admissible premises for
 the terminal theorem.
 
 The current critical path is:
 
-Primary-source audit fixes the endpoint obligation sharply.  The structural
-``sufficiently small support'' theorems stop strictly before
+Primary-source audit fixes the endpoint obligation sharply. The structural
+\`\`sufficiently small support'' theorems stop strictly before
 `a = log 2 / 2`; published results at the endpoint return to finite spectral
 or matrix computations and are therefore evidence, not admissible premises.
 Suzuki's scaled real-space identity reduces the endpoint to a continuous
@@ -274,20 +274,20 @@ L(w) = (1/4) integral integral |w(x)-w(y)|^2 / |x-y|
 minus the smooth kernel perturbation
 `a * Re integral integral r''(a*(x-y))*w(y)*conj(w(x))` must dominate
 `(log(2*pi) + EulerGamma - log(2/log 2)) * ||w||_2^2`, with
-`a = log 2 / 2`, on the exact production domain.  The prime-translation term
-has zero-length overlap at this endpoint.  A proof of this inequality, or a
+`a = log 2 / 2`, on the exact production domain. The prime-translation term
+has zero-length overlap at this endpoint. A proof of this inequality, or a
 structural counterexample to it, is the current make-or-break lemma; replacing
 it by a discretized spectral calculation is not progress under this program.
 
 1. express the production clipped quadratic form on arbitrary finite Fourier
    combinations directly through its real-space correlation or spectral
    operator, without expanding a finite matrix;
-2. prove a dimension-free coercive/positive decomposition, or isolate a
+1. prove a dimension-free coercive/positive decomposition, or isolate a
    concrete structural obstruction to such a decomposition;
-3. derive odd, even, tail, coupling, and parity results as restrictions or
+1. derive odd, even, tail, coupling, and parity results as restrictions or
    Schur complements of that one operator theorem rather than from certified
    low blocks; and
-4. audit the resulting theorem's complete import closure before it is restored
+1. audit the resulting theorem's complete import closure before it is restored
    to firm ground and advanced toward the Bombieri/Weil all-support gate.
 
 The live theorem-by-theorem position and next make-or-break lemma are recorded
