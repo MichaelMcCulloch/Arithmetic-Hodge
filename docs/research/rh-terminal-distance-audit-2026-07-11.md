@@ -910,3 +910,27 @@ separate from build logs: a green build is evidence, not a stage transition.
    `0.006`.  Strict direct, the 8,318-job focused target, and umbrella checks
    pass; all public endpoints use only `propext`, `Classical.choice`, and
    `Quot.sound`, and all 159 legacy root artifacts remain untouched.
+
+## `e1da7db` — Fourth even sine moment certified
+
+1. **Theorems added.**  Seven exact 256-term checkpoint boxes plus the
+   accelerated analytic tail place the actual production sine moment `S_4`
+   in `[-153940/100000, -153939/100000]`.  The head covers exactly
+   `k = 0,...,1791`, and the tail starts at 1792.
+2. **Gate hypothesis eliminated.**  Five of the 200 even sine target boxes
+   (`S_0,...,S_4`) are now inhabited for the proposed full finite Gram
+   certificate.
+3. **Assumptions remaining.**  `S_5,...,S_199`, `D_4,...,D_199`, the full
+   exact pivot proof, exceptional actual low/tail coupling, completed even
+   Schur theorem, and parity recombination remain open.
+4. **Next make-or-break lemma.**  Decide whether the complete 200 target-box
+   Gram has the claimed positive pivots before producing the remaining scalar
+   boxes; in parallel, close the exceptional coupling and higher-order
+   diagonal tail needed to make those boxes feasible.
+5. **Viability evidence.**  Independent exact-rational replay verified all
+   seven chunks, the head/tail boundary, and the final enclosure
+   `[-1.539399684870142, -1.539394040171665]`.  Independent 100-digit
+   evaluation gives `-1.539396863056599606000028124188...`.  Strict direct,
+   the 3,607-job target, and umbrella checks pass; both public endpoints use
+   only `propext`, `Classical.choice`, and `Quot.sound`, with all 159 legacy
+   files preserved.
