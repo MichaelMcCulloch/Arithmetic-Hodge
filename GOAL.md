@@ -203,16 +203,17 @@ The current Gate 1 critical path is:
    form on the entire genuinely infinite periodic odd carrier—as immutable
    firm ground; do not reopen its ten-mode certificate, tail estimate, or
    Schur constants without a specific downstream failure;
-2. use the unconditional even clipped-form-to-moment bridge, the growing
-   certified scalar-box set, and reusable accelerated/checkpointed enclosures
-   to finish the canonical `Fin 200` boxes and Schur pivots; in parallel close
-   the endpoint-safe `102/25` infinite even-tail coercivity and exceptional
-   finite/tail coupling estimate, then perform the completed even Schur
-   recombination; and
-3. combine the closed odd and eventual even components, prove the remaining
-   parity and closure/density identities on the actual restricted-support
-   carrier, and expose one quantified positivity theorem—or formalize the
-   exact obstruction if any required extension fails.
+2. treat the endpoint-safe `102/25` infinite even-tail coercivity, exact
+   equation-(6.25) pairing, sharp digamma remainder, `51/25000` coupling
+   budget, and `1/2000` actual Riesz-correction radius as closed firm ground;
+3. finish the canonical `Fin 200` sine/diagonal target enclosures and the
+   sound exact full-pivot certificate, use them to prove positivity of the
+   corrected finite Gram, and perform the completed infinite even Schur
+   assembly; and
+4. feed that single remaining even-carrier theorem into the already proved
+   endpoint-safe parity recombination theorem, yielding positivity on the
+   whole restricted periodic core—or formalize the exact obstruction if the
+   finite certificate or Schur assembly fails.
 
 The live theorem-by-theorem position and next make-or-break lemma are recorded
 in `docs/research/rh-terminal-distance-audit-2026-07-11.md`; that audit, rather
