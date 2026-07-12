@@ -1645,3 +1645,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    0.46 GiB cgroup memory and 3.07 GiB summed RSS, the source hash is
    `c140869a71a92b1997c361d7d8a8d2c7274b8ee48d9555234ac927cbc539ea4f`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `7781c66` — Generic sparse target radius proved
+
+1. **Theorem added.**  Every entry of the canonical `Fin 200` inflated even
+   target matrix has half-width at most `51 / 100000`.  The proof kernel-checks
+   the two one-dimensional target tables, then treats the zero, diagonal, and
+   off-diagonal Gram formulas symbolically using compositional width bounds.
+2. **Gate hypothesis eliminated.**  `EvenTargetRadiusBoundAt i j` is now
+   unconditional for all 40,000 index pairs.  The sparse robust certificate no
+   longer needs a monolithic exact-cell enumeration or any assumed entrywise
+   radius package.
+3. **Assumptions remaining.**  Positivity and triangularity of the sparse
+   factor, symmetry of target centers, all 200 weighted-dominance inequalities,
+   and the robust congruence-to-PosDef endpoint remain.  The analytic sine and
+   diagonal target containments must also be completed before the finite block
+   can enter the infinite even Schur assembly.
+4. **Next make-or-break lemma.**  Kernel-check the sparse row-structure and
+   center-symmetry propositions, then prove every exact weighted-dominance row
+   without recreating the rejected high-memory elaboration pattern.
+5. **Viability evidence.**  Fresh strict compilation, a 3,595-job target
+   build, and concrete zero/diagonal/off-diagonal branch regressions pass.
+   Both public radius theorems have exactly the standard three axioms;
+   forbidden and whitespace scans are empty.  Independent exact-rational
+   review verified the four branch bounds and the final inflation identity.
+   Guarded verification stayed below 0.94 GiB cgroup memory and 5.21 GiB summed
+   RSS.  The definition and proof source hashes are respectively
+   `e516dd0c541b7de9d558d1f9cb1fc62c153f31e707e5505b2b46eeec45534202`
+   and `8007b6c8fdee3c4961618d85ed0a643b9753f1ebc8c47eef17918e6e8df76845`;
+   all 159 inventoried legacy root Lean artifacts remain untouched.
