@@ -14,10 +14,11 @@ open MultiplicativeWeil
 # Abstract digamma distribution against weighted spectral products
 
 This module lifts Bombieri's harmonic-subtracted digamma interchange from a
-specific smooth Mellin transform to an arbitrary spectral product `M`.  The
-single analytic hypothesis is integrability of `(1 + v ^ 2) * ‖M v‖`; the
-resulting interface reduces the local critical kernel to Cauchy-kernel values
-and the zero-frequency Fourier integral.
+specific smooth Mellin transform to an arbitrary integrable spectral product
+`M`.  In addition to ordinary integrability, the weighted-decay hypothesis is
+integrability of `(1 + v ^ 2) * ‖M v‖`; the resulting interface reduces the
+local critical kernel to Cauchy-kernel values and the zero-frequency Fourier
+integral.
 -/
 
 /-- The harmonic-subtracted digamma-series term against an abstract spectral
