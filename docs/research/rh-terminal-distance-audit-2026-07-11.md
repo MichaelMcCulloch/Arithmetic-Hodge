@@ -962,3 +962,30 @@ separate from build logs: a green build is evidence, not a stage transition.
    the 3,623-job target, umbrella, forbidden, and axiom checks pass; all 22
    public endpoints use only `propext`, `Classical.choice`, and `Quot.sound`,
    with all 159 legacy files preserved.
+
+## `e3b17d5` — Sharp even digamma remainder closed
+
+1. **Theorems added.**  Every production imaginary digamma sample is exactly
+   the positive quarter-shifted Cauchy series.  A corrected trapezoid identity
+   and third-derivative total-variation estimate prove Yoshida's unweakened
+   equation-(5.11) remainder with constant `1/12` for every positive mode,
+   together with the exact zero-mode identity.
+2. **Gate hypothesis eliminated.**  `SharpDigammaImagRemainder5_11` is now
+   inhabited unconditionally.  This removes one of exactly two assumptions in
+   the exceptional even low/high pairing decay theorem, including its delicate
+   first positive row.
+3. **Assumptions remaining.**  The exact actual-pairing/equation-(6.25)
+   identity is the only remaining assumption in that decay theorem.  Beyond
+   coupling, the 200-mode scalar boxes and pivots, completed even Schur
+   closure, and parity recombination remain open.
+4. **Next make-or-break lemma.**  Land the independently proved exact pairing
+   identity and feed both unconditional bridges into the actual `51/25000`
+   even low/tail coupling and Riesz-correction construction.
+5. **Viability evidence.**  Deep independent review checked the digamma-series
+   sign and indexing, all three derivatives, Peano kernel orientation,
+   telescoping, the `3/y^3` variation bound, all infinite limits, endpoint
+   algebra, and the final production normalization.  At `n=1` the actual
+   remainder uses only about 4.20 percent of the certified bound.  Strict
+   direct, the 3,556-job target, umbrella, forbidden, and axiom checks pass;
+   all four public endpoints use only `propext`, `Classical.choice`, and
+   `Quot.sound`, with all 159 legacy files preserved.
