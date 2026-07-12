@@ -1856,6 +1856,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    passes in 48 seconds.  Endpoint axioms remain the standard three; scans
    pass, and all 159 legacy artifacts remain untouched.
 
+## `fe20d6d` — Structural-proof dependency rule adopted
+
+1. **Obstruction identified.**  The formerly unconditional odd-carrier theorem
+   `periodicOddCore_clippedCriticalForm_re_pos` reaches
+   `actualOddTailCorrectedGram_posDef`, whose proof imports computed sine and
+   diagonal target enclosures and a finite interval-matrix certificate.  Its
+   weakest lemma is therefore nonstructural.  The unfinished even route has
+   the same defect more visibly through target tables, full pivots, and sparse
+   residue-block enumeration.
+2. **Gate status corrected.**  Gate 0 and every downstream theorem relying on
+   those artifacts are reopened.  The 512 already checked sparse block bounds
+   are quarantined evidence, not terminal-path lemmas; the remaining replay was
+   stopped and its uncommitted files removed.
+3. **Assumptions remaining.**  No odd/even restricted-support positivity
+   theorem is currently admitted as firm ground until its full import closure
+   is structural.  The all-support Bombieri/RH gates remain untouched.
+4. **Next make-or-break lemma.**  Prove a dimension-free lower bound for the
+   production clipped quadratic operator on the full odd/even parity carrier,
+   directly from its real-space correlation or spectral representation, or
+   formalize a structural obstruction to that bound.
+5. **Viability evidence.**  Source inspection gives the exact weak dependency
+   edge rather than an inferred concern.  All long certificate jobs are
+   terminated, no such process remains, and the active goal now bans
+   computational exhaustion throughout the terminal dependency closure.
+
 ## `d8bc843` — Sparse dominance blocks 040 through 047 certified
 
 1. **Theorems added.**  Another 64 residue-block bounds are proved, from row
