@@ -166,6 +166,28 @@ these obligations.
 
 ## Anti-drift operating rules
 
+### Resource-safety invariant
+
+Every shell workload run by the root agent or a subagent—including Lean,
+Lake, builds, tests, certificate replays, generators, and numerical probes—must
+run in a transient user systemd scope capped at exactly 48 GiB of RAM:
+
+```text
+systemd-run --user --scope --quiet --expand-environment=no \
+  -p MemoryMax=48G -- <command> <args...>
+```
+
+- Never launch a potentially nontrivial workload outside that scope.
+- Do not run multiple high-memory scopes concurrently merely because each has
+  its own 48 GiB cap; protect the machine from aggregate memory pressure too.
+- Propagate this rule explicitly in every subagent task.
+- If a required proof or computation reaches the cap, treat that as a design
+  failure: checkpoint, reduce, or reformulate it. Do not raise or bypass the
+  cap without the user's explicit permission.
+- A resource-intensive validation that remains at full CPU is not evidence
+  that it is safe to leave running. Monitor memory and terminate it before it
+  threatens desktop responsiveness.
+
 - Keep the root agent on the strongest unresolved lemma of the active gate.
 - Use subagents only for distinct bounded proofs, independent audits,
   counterexample searches, source verification, or certificate generation.
