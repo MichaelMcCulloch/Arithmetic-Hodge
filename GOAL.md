@@ -199,18 +199,20 @@ entire restricted-support space.
 
 The current Gate 1 critical path is:
 
-1. use the now-proved homogeneous `38/25` coercivity and bundled positive
-   Hermitian form on the actual infinite tenth odd tail to prove that every
-   production low/tail pairing is form-norm bounded; then combine its Riesz
-   corrections with the closed coupling budget and ten-mode Gram reserve;
-2. use the now-unconditional even clipped-form-to-moment bridge, the certified
-   `D_0`, `D_1`, and `S_1` boxes, and reusable accelerated/checkpointed
-   enclosures to finish the remaining canonical `Fin 200` scalar boxes and
-   Schur pivots; in parallel close the exceptional coupling estimate and
-   `102/25` infinite even-tail coercivity; and
-3. assemble both parities and every closure/density step into one quantified
-   restricted-support positivity theorem, or formalize the exact obstruction
-   if any required inequality or extension fails.
+1. treat the theorem at `a038238`—strict positivity of the production clipped
+   form on the entire genuinely infinite periodic odd carrier—as immutable
+   firm ground; do not reopen its ten-mode certificate, tail estimate, or
+   Schur constants without a specific downstream failure;
+2. use the unconditional even clipped-form-to-moment bridge, the growing
+   certified scalar-box set, and reusable accelerated/checkpointed enclosures
+   to finish the canonical `Fin 200` boxes and Schur pivots; in parallel close
+   the endpoint-safe `102/25` infinite even-tail coercivity and exceptional
+   finite/tail coupling estimate, then perform the completed even Schur
+   recombination; and
+3. combine the closed odd and eventual even components, prove the remaining
+   parity and closure/density identities on the actual restricted-support
+   carrier, and expose one quantified positivity theorem—or formalize the
+   exact obstruction if any required extension fails.
 
 The live theorem-by-theorem position and next make-or-break lemma are recorded
 in `docs/research/rh-terminal-distance-audit-2026-07-11.md`; that audit, rather
