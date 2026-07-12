@@ -58,7 +58,10 @@ research program.
 - Do not advance a theorem by replacing `sorry` with an axiom, typeclass
   bridge, circular RH-equivalent assumption, `unsafe`, `native_decide`, or any
   other proof bypass.
-- Preserve the 159 inventoried legacy Lean artifacts and their archive ref.
+- Preserve the 159 inventoried legacy Lean artifacts, their archive ref, and
+  the separately identified untracked fallback modules byte-for-byte: do not
+  edit, rename, move, stage, or delete them unless the user explicitly changes
+  this directive.
 
 Firm ground means strict compilation, a full `lake build`, forbidden-proof and
 naming scans, dependency and axiom audits, and independent review proportional
@@ -177,7 +180,9 @@ systemd-run --user --scope --quiet --expand-environment=no \
   -p MemoryMax=48G -- <command> <args...>
 ```
 
-- Never launch a potentially nontrivial workload outside that scope.
+- Never launch any shell command outside that exact scope, including read-only
+  inspection commands.  Do not weaken, abbreviate, or silently omit the scope
+  for work believed to be trivial.
 - Do not run multiple high-memory scopes concurrently merely because each has
   its own 48 GiB cap; protect the machine from aggregate memory pressure too.
 - Propagate this rule explicitly in every subagent task.
@@ -187,12 +192,15 @@ systemd-run --user --scope --quiet --expand-environment=no \
 - A resource-intensive validation that remains at full CPU is not evidence
   that it is safe to leave running. Monitor memory and terminate it before it
   threatens desktop responsiveness.
-- Monitor both the scope's cgroup `memory.current` and the aggregate RSS of
-  the workload's descendant processes.  Shared or file-backed mappings can
-  make process RSS materially exceed memory charged to a newly created
-  cgroup; never trust the smaller counter when the two disagree.  A manual
-  safety guard must terminate the workload when either counter reaches its
-  configured stop threshold.
+- Every Lean, Lake, build, generator, certificate replay, or numerical
+  workload that can grow materially or outlive an interactive inspection must
+  run under a guard that repeatedly monitors both the scope's cgroup
+  `memory.current` and the summed RSS of every descendant process rooted at
+  the launched workload.  Shared or file-backed mappings can make process RSS
+  materially exceed memory charged to a newly created cgroup; never trust the
+  smaller counter when the two disagree.  Configure both stop thresholds
+  below the 48 GiB hard cap and below the machine's responsiveness boundary,
+  and terminate the complete descendant tree when either threshold is met.
 
 - Keep the root agent on the strongest unresolved lemma of the active gate.
 - Use subagents only for distinct bounded proofs, independent audits,
@@ -206,7 +214,9 @@ systemd-run --user --scope --quiet --expand-environment=no \
   existing interface and characterization tests protect the change.
 - Use primary sources when they sharpen a named obligation; do not substitute
   literature collection for proving the obligation.
-- Commit each coherent verified increment, staging only its intended files.
+- As soon as a coherent increment passes its verification gates, commit it
+  before beginning the next mutable increment, staging only its intended
+  files by explicit path.
 
 After every coherent increment, record a terminal-distance audit:
 
@@ -238,10 +248,13 @@ The current Gate 1 critical path is:
 2. treat the endpoint-safe `102/25` infinite even-tail coercivity, exact
    equation-(6.25) pairing, sharp digamma remainder, `51/25000` coupling
    budget, and `1/2000` actual Riesz-correction radius as closed firm ground;
-3. finish the canonical `Fin 200` sine/diagonal target enclosures and the
-   sound exact full-pivot certificate, use them to prove positivity of the
-   corrected finite Gram, and perform the completed infinite even Schur
-   assembly; and
+3. finish the canonical `Fin 200` sine/diagonal target enclosures; complete the
+   canonical pair-list-to-`Finsupp` sparse-congruence bridge and all bounded
+   residue-block checks; derive weighted diagonal dominance, triangular
+   invertibility, and robust positivity of the corrected finite Gram; then
+   perform the completed infinite even Schur assembly.  The superseded
+   monolithic full-pivot replay remains quarantined unless the sparse route
+   fails with a formalized obstruction; and
 4. feed that single remaining even-carrier theorem into the already proved
    endpoint-safe parity recombination theorem, yielding positivity on the
    whole restricted periodic core—or formalize the exact obstruction if the
