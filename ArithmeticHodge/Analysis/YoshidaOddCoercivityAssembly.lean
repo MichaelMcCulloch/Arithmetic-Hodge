@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaOddDigammaSplit
 import ArithmeticHodge.Analysis.YoshidaOddPolarBound
+import ArithmeticHodge.Analysis.YoshidaOddSpectralMassBridge
 
 set_option autoImplicit false
 
@@ -12,6 +13,7 @@ namespace ArithmeticHodge.Analysis.YoshidaOddCoercivityAssembly
 open YoshidaCoercivityNumerics
 open YoshidaOddDigammaSplit
 open YoshidaOddPolarBound
+open YoshidaOddSpectralMassBridge
 open YoshidaSectionSixAnalytic
 open YoshidaTZeroTailBounds
 open YoshidaWeightedTailBounds
@@ -63,5 +65,28 @@ theorem oddTenTail_clipped_form_value_ge_38_div_25
     (f : YoshidaClippedSmooth yoshidaA) hodd henergy
   exact odd_canonical_clipped_form_value_ge_38_div_25
     (f : YoshidaClippedSmooth yoshidaA) hPolar hArch
+
+/-- The actual normalized tenth odd tail satisfies Yoshida's Section 6
+coercivity threshold.  Periodic odd-tail membership supplies pointwise
+oddness and exact Parseval mass; the clipped carrier supplies both spectral
+integrability statements. -/
+theorem oddTenTail_clipped_form_value_ge_38_div_25_of_unit_energy
+    (f : YoshidaClippedPeriodicCore yoshidaA)
+    (hf : f ∈ yoshidaPeriodicCoreOddTailSubmodule yoshidaA_pos 10)
+    (henergy :
+      (∫ x : ℝ in -yoshidaA..yoshidaA,
+        ‖((f : YoshidaClippedSmooth yoshidaA) : ℝ → ℂ) x‖ ^ 2) = 1) :
+    (38 / 25 : ℝ) ≤
+      clippedCriticalFormValue yoshidaA yoshidaA_pos
+        (f : YoshidaClippedSmooth yoshidaA) := by
+  exact oddTenTail_clipped_form_value_ge_38_div_25 f hf
+    (oddTail_pointwise_odd yoshidaA_pos 10 f hf)
+    henergy
+    (integrable_normSq_yoshidaCriticalSample yoshidaA_pos
+      (f : YoshidaClippedSmooth yoshidaA))
+    (integrable_digammaQuarterVerticalRe_mul_normSq_yoshidaCriticalSample
+      yoshidaA_pos (f : YoshidaClippedSmooth yoshidaA))
+    (oddTail_clippedSpectralMass_eq_one
+      yoshidaA_pos 10 f hf henergy)
 
 end ArithmeticHodge.Analysis.YoshidaOddCoercivityAssembly
