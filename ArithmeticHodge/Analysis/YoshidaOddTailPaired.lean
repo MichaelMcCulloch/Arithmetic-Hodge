@@ -24,12 +24,14 @@ This module proves the infinite-mode odd half of Yoshida's equations
 positive and negative Fourier coefficients, carries Parseval's exact interval
 normalization through an infinite Cauchy--Schwarz estimate, compares the full
 paired-denominator sum with the committed weighted-tail functional, and
-specializes the result to the production low-interval penalty at N = 10.
+specializes the resulting central-energy scalar bound to the expression used
+by the production low-interval penalty at N = 10.
 
 The nonresonance window and unit-energy hypothesis remain explicit.  Nothing
 here asserts boundedness of the local critical form on ordinary L2, exchanges
-that form with an infinite Fourier sum, or proves the remaining polar and
-high-frequency digamma estimates.
+that form with an infinite Fourier sum, or bounds the negative digamma-weighted
+integral.  In particular, `2773 / 1000` is not used here as a pointwise
+digamma bound; its source role requires a separate half-integral certificate.
 -/
 
 theorem intervalExpQuotient_critical_eq_section6
@@ -679,8 +681,9 @@ theorem oddTail_paired_central_energy_estimate6_6
   · exact hwindow
 
 /-- On the certified low interval, Yoshida's oscillatory window is at most
-two.  This is the exact elementary estimate that converts (6.6) into the
-repository's `lowIntervalPenalty` normalization. -/
+two.  This converts the unweighted central-energy form of (6.6) into the same
+scalar expression as `lowIntervalPenalty`; it does not control the negative
+digamma-weighted integral. -/
 theorem oscillatoryWindow_le_two_of_isYoshidaTZero
     {tZero : ℝ} (ht : YoshidaTZeroTailBounds.IsYoshidaTZero tZero) :
     tZero - Real.sin (2 * yoshidaA * tZero) / (2 * yoshidaA) ≤ 2 := by
@@ -726,9 +729,12 @@ theorem oscillatoryWindow_le_two_of_isYoshidaTZero
           mul_le_mul hhalf htLower (by norm_num) (by positivity)
     linarith
 
-/-- The complete low-interval odd `(6.5)--(6.6)` consequence at `N = 10`:
-the normalized central sample energy is bounded by the exact production
-penalty used in the certified `38/25` substitution. -/
+/-- A scalar central-energy corollary of odd `(6.5)--(6.6)` at `N = 10`.
+
+This sound inequality lands at the expression named `lowIntervalPenalty`, but
+is not itself the source's low digamma-loss estimate: that estimate must bound
+the integral of `-Re digamma` and interpret `2773 / 1000` as a half-integral
+bound, never as a pointwise bound. -/
 theorem oddTenTail_central_energy_le_lowIntervalPenalty
     {tZero : ℝ} (ht : YoshidaTZeroTailBounds.IsYoshidaTZero tZero)
     (f : YoshidaClippedPeriodicCore yoshidaA)
