@@ -479,3 +479,34 @@ separate from build logs: a green build is evidence, not a stage transition.
    branch, and null-endpoint argument; independent numerical evaluations of
    every correlation/moment branch agreed to floating-point precision.  The
    root legacy inventory remains exactly 159 files.
+
+## `d87709c` — Odd polar loss and coercivity assembly closed
+
+1. **Theorems added.**  Pointwise oddness identifies the negative clipped
+   polar sample with the hyperbolic-sine functional.  Cauchy--Schwarz on the
+   clipped interval then proves the exact lower bound
+   `-(1 / sqrt 2 - log 2)` for unit interval energy.  Composing this with the
+   certified digamma split and archimedean bridge gives the source threshold
+   `38/25` for every normalized tenth odd-tail vector satisfying the explicit
+   spectral regularity and Parseval inputs.
+2. **Gate hypothesis eliminated.**  The polar term, its sign, the factor two
+   from paired samples, the identity
+   `2 * (sinh yoshidaA - yoshidaA) = 1 / sqrt 2 - log 2`, and the final
+   Section 6 numerical substitution are now proof terms.  No separate polar
+   estimate or final coercivity-arithmetic premise remains on the odd lane.
+3. **Assumptions remaining.**  The normalized theorem still exposes
+   pointwise oddness, integrability of the spectral norm square, integrability
+   after the digamma weight, and exact unit spectral mass.  Homogeneity and
+   completed-form recombination are still needed after those analytic facts
+   are discharged.
+4. **Next make-or-break lemma.**  Derive parity, both integrability statements,
+   and exact Parseval mass directly from periodic-core odd-tail membership and
+   unit interval energy, then instantiate the assembled `38/25` theorem with
+   no auxiliary analytic premise.
+5. **Viability evidence.**  Both new modules strict-compile, the targeted
+   8,310-job build and umbrella compile pass, and the six audited endpoints
+   use only `propext`, `Classical.choice`, and `Quot.sound`.  Forbidden and
+   diff scans are clean.  Independent review verified the Laplace sign,
+   odd-pair extraction, restricted-measure Cauchy normalization, exact
+   hyperbolic identity, and final inequality direction; the root legacy count
+   remains 159.
