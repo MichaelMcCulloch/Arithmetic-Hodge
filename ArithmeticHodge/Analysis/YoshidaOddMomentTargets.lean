@@ -16,26 +16,27 @@ open YoshidaOddIntervalCertificate
 /-!
 # Kernel-checked targets for the full odd moment block
 
-These millesimal rational boxes contain the independently evaluated values of
-Yoshida's first ten sine and diagonal moments.  The finite arithmetic theorem
-below proves that the boxes are already narrow enough for every interval Schur
-pivot to be positive.  Containment of the analytic moments in the boxes
-remains an explicit proof obligation.
+These rational boxes contain the independently evaluated values of Yoshida's
+first ten sine and diagonal moments.  The sine boxes deliberately retain about
+one centesimal of analytic slack: the finite arithmetic theorem below proves
+that this still leaves every interval Schur pivot positive, while permitting a
+shorter exact Cauchy-series certificate.  Containment of the analytic moments
+in the boxes remains an explicit proof obligation.
 -/
 
 /-- Target enclosures for `S_1, ..., S_10`.  Values outside that finite range
 are irrelevant to the full odd Gram and are set to the singleton zero. -/
 def yoshidaOddSineIntervals : ℕ → RatInterval
-  | 1 => ⟨-1452 / 1000, -1450 / 1000⟩
-  | 2 => ⟨-1510 / 1000, -1507 / 1000⟩
-  | 3 => ⟨-1531 / 1000, -1528 / 1000⟩
-  | 4 => ⟨-1541 / 1000, -1538 / 1000⟩
-  | 5 => ⟨-1547 / 1000, -1544 / 1000⟩
-  | 6 => ⟨-1551 / 1000, -1548 / 1000⟩
-  | 7 => ⟨-1554 / 1000, -1551 / 1000⟩
-  | 8 => ⟨-1557 / 1000, -1553 / 1000⟩
-  | 9 => ⟨-1559 / 1000, -1555 / 1000⟩
-  | 10 => ⟨-1560 / 1000, -1557 / 1000⟩
+  | 1 => ⟨-1461 / 1000, -1441 / 1000⟩
+  | 2 => ⟨-1519 / 1000, -1498 / 1000⟩
+  | 3 => ⟨-1540 / 1000, -1518 / 1000⟩
+  | 4 => ⟨-1550 / 1000, -1528 / 1000⟩
+  | 5 => ⟨-1556 / 1000, -1535 / 1000⟩
+  | 6 => ⟨-1560 / 1000, -1539 / 1000⟩
+  | 7 => ⟨-1563 / 1000, -1542 / 1000⟩
+  | 8 => ⟨-1565 / 1000, -1544 / 1000⟩
+  | 9 => ⟨-1567 / 1000, -1545 / 1000⟩
+  | 10 => ⟨-1568 / 1000, -1547 / 1000⟩
   | _ => pure 0
 
 /-- Target enclosures for `D_1, ..., D_10`. -/
