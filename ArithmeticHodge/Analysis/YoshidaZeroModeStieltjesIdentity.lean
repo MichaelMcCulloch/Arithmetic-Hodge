@@ -244,7 +244,7 @@ private theorem zeroStieltjesTerm_zero :
 
 /-- The even zero-mode diagonal is the zero-node Stieltjes energy minus a
 closed archimedean constant. -/
-theorem yoshidaDiagonalMoment_zero_eq_stieltjesProfile_zero_sub_constant :
+theorem structuralYoshidaDiagonalMoment_zero_eq_stieltjesProfile_zero_sub_constant :
     structuralYoshidaDiagonalMoment 0 =
       structuralYoshidaStieltjesProfile 0 / structuralYoshidaLength -
         (Real.eulerMascheroniConstant + Real.log Real.pi +
