@@ -55,3 +55,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    arithmetic reproduced every checkpoint, direct integration of the original
    diagonal integrand agreed with the accelerated route, and the public axiom
    audit found only `propext`, `Classical.choice`, and `Quot.sound`.
+
+## `1ea80bc` — Gate 0 closed
+
+1. **Theorem added.**  The zero-hypothesis theorem
+   `YoshidaOddGramPosDef.clippedOddFullGram_posDef` proves
+   `clippedOddFullGram.PosDef`, where `clippedOddFullGram` is the actual clipped
+   critical-form Gram on `Fin 10` and odd frequencies `1, …, 10`.
+2. **Gate hypothesis eliminated.**  Every Gate 0 hypothesis is discharged:
+   the exact clipped/moment bridge, all sine and diagonal target enclosures,
+   and all ten interval Schur pivots are unconditional proof terms.  Gate 0 is
+   passed; a larger finite matrix is not an allowed substitute for Gate 1.
+3. **Assumptions remaining.**  Gate 1 still requires positivity on the complete
+   infinite-dimensional restricted-support space.  In particular, the current
+   theorem does not yet control the full odd/even Fourier tail or the finite-to-
+   tail cross terms for arbitrary admissible restricted-support data.  Gates
+   2–4 remain blocked by Gate 1.
+4. **Next make-or-break lemma.**  Establish an exact representation bridge
+   from arbitrary restricted-support clipped test functions to the parity-
+   split circle/Fourier Hilbert space on which a finite low block, a coercive
+   infinite tail, and their cross terms can be combined by a Schur or operator
+   argument.  If that bridge or the needed tail coercivity is false, produce a
+   verified obstruction rather than increasing the truncation.
+5. **Viability evidence.**  The canonical full project build succeeds with
+   3,784 jobs; the final module and umbrella build cleanly; the top theorem has
+   no explicit or implicit hypotheses and uses only `propext`,
+   `Classical.choice`, and `Quot.sound`.  A 117-module recursive dependency
+   audit found no import cycle, proof bypass, or logical dependence of the
+   analytic enclosures on positivity.  The preserved root legacy inventory is
+   still exactly 159 untracked Lean files.
