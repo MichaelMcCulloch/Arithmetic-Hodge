@@ -1993,3 +1993,30 @@ separate from build logs: a green build is evidence, not a stage transition.
    partial-fraction identities are uniform symbolic proofs.  A normalized
    Hilbert-basis construction is now in progress, so the remaining step is
    functional-analytic completion rather than computational exhaustion.
+
+## `5f9aeec` — Uniform polynomial logarithmic spectral gap
+
+1. **Theorem added.**
+   `shiftedLogKernel_polynomial_spectral_gap` proves for every real polynomial
+   of zero mean that its logarithmic-difference energy on `[0,1]` is at least
+   twice its squared `L²` norm.  The proof expands through the algebraic
+   shifted-Legendre basis, removes the constant coefficient exactly via the
+   mean, and uses `H_n ≥ 1` uniformly for every `n > 0`.
+2. **Gate hypothesis eliminated.**  The sharp first-positive-mode gap is now
+   structural on the full polynomial subspace, with no maximum degree,
+   enumerated mode family, matrix diagonalization, or numeric certificate.
+3. **Assumptions remaining.**  Polynomial density alone does not yet prove the
+   singular-kernel form inequality on its complete domain.  The Legendre
+   family must be completed in `L²([0,1])`, and the finite projections must be
+   related to the raw energy by a justified residual-positivity or closed-form
+   argument.  Affine transport and endpoint-form assembly remain downstream.
+4. **Next make-or-break lemma.**  Prove the same gap for every zero-mean
+   finite-energy `L²` function without assuming a priori that the singular
+   energy is continuous in the `L²` norm.  Finite Legendre projections must
+   converge in `L²`, while the residual energy stays nonnegative and all cross
+   pairings with the projection are evaluated structurally.
+5. **Viability evidence.**  The focused module build completes successfully;
+   the public theorem's axiom footprint is exactly `propext`,
+   `Classical.choice`, and `Quot.sound`, and the forbidden-proof scan is empty.
+   The proof is an arbitrary finite-support basis argument rather than a
+   calculation through a preselected number of modes.
