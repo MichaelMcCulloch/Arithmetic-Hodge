@@ -826,3 +826,34 @@ separate from build logs: a green build is evidence, not a stage transition.
    evaluation gives `-1.5290542483332791719595045124602537`.  Strict direct,
    the 3,607-job target, and umbrella pass; the endpoint uses only `propext`,
    `Classical.choice`, and `Quot.sound`, with all 159 legacy files preserved.
+
+## `a038238` — Entire periodic odd component proved strictly positive
+
+1. **Theorems added.**  The ten actual low/tail Riesz vectors form a Hermitian
+   correction Gram whose every entry has norm at most `1/40`.  Subtracting it
+   from the actual clipped ten-mode Gram preserves positive definiteness by
+   the certified comparison reserve.  The Hilbert-tail complete-square
+   identity then proves strict positivity for every nonzero low coefficient
+   vector plus every point of the completed infinite tenth odd tail.  Finally,
+   every circle-odd periodic-core vector is decomposed exactly into modes
+   `1,...,10` plus the actual periodic tenth odd tail, yielding unconditional
+   strict positivity of the production clipped form on the entire carrier.
+2. **Gate hypothesis eliminated.**  The odd parity component of Gate 1 is now
+   closed at the genuinely infinite level.  No finite truncation, tail
+   premise, interchange premise, or moment-box premise remains in its public
+   theorem.
+3. **Assumptions remaining.**  The even periodic component is still open: its
+   remaining scalar boxes and Schur pivots, `102/25` infinite-tail coercivity,
+   and exceptional finite/tail coupling must be closed.  The final parity
+   recombination and transport to the complete restricted-support carrier
+   also remain.
+4. **Next make-or-break lemma.**  Prove the endpoint-safe homogeneous even-tail
+   Section 6 estimate while continuing exact even scalar certificates; then
+   repeat the completed Schur argument for the canonical 200-mode even block.
+5. **Viability evidence.**  Deep independent review checked the Riesz
+   conjugations, correction norm algebra, unconditional reserve inputs,
+   complete-square expansion, completion embedding, physical-form equality,
+   exact Fourier decomposition, and nested-subtype nonzero proof.  Strict
+   direct, the 8,357-job target, and umbrella pass; all 14 public endpoints use
+   only `propext`, `Classical.choice`, and `Quot.sound`, and all 159 legacy root
+   artifacts remain untouched.
