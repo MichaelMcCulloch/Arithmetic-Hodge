@@ -1406,3 +1406,35 @@ separate from build logs: a green build is evidence, not a stage transition.
    stayed below 0.57 GiB cgroup memory and 4.10 GiB summed RSS, the staged hash
    was `7c050f10cb06180ba6855355d336bb6705241d514067beb89dc52b557c34b1f2`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `e8f2f47` — Uniform diagonal series decomposed exactly
+
+1. **Theorem added.**  Every nonzero Yoshida diagonal moment is now rewritten
+   exactly as the real quarter-shifted digamma value, the negative-polar ramp,
+   the zero-profile term, a derivative `tsum`, and a dyadically weighted
+   rational `tsum`.  Supporting theorems establish the pointwise accelerated-
+   correction split and summability of every component.
+2. **Gate hypothesis eliminated.**  The diagonal route no longer depends on
+   a mode-by-mode accelerated-series head or an informal cancellation ledger.
+   Lean now checks the `j ↦ k=j+1` shift, ramp-endpoint term, quarter-digamma
+   sign, Euler-constant cancellation, `log(4/3)` cancellation, zeta-two
+   cancellation, and final derivative/Q signs uniformly in the mode.
+3. **Assumptions remaining.**  Quantitative corrected-trapezoid, derivative-
+   tail, and dyadic-Q bounds still have to enclose the exact uniform series;
+   rational target arithmetic and eight finite exceptions then remain.  In
+   parallel, the sparse generated data/check modules and robust PosDef bridge
+   must still eliminate the finite pivot premise.
+4. **Next make-or-break lemma.**  Prove the fourth-order quarter-digamma
+   remainder and the derivative/dyadic tail bounds with their planned
+   asymmetric constants, while data-only sparse certificate generation is
+   validated against the actual Lean target matrix.
+5. **Viability evidence.**  The 3,619-job targeted build, exact RED/GREEN
+   regression, and fresh diagnostic-free strict compile pass.  Both public
+   uniform endpoints have exactly `propext`, `Classical.choice`, and
+   `Quot.sound`; forbidden and whitespace scans are empty.  Independent review
+   verified the implemented pointwise split, p-series derivative majorant,
+   noncircular Q summability, all index shifts, and every constant/sign
+   cancellation.  Guarded usage stayed below 0.72 GiB cgroup memory and
+   4.89 GiB summed RSS, the staged hash was
+   `7f0e18886d2331143ae2dc43d54415552a5a275b63d55e70f667036257287b29`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
