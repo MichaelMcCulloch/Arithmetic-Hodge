@@ -99,6 +99,7 @@ import ArithmeticHodge.Analysis.YoshidaEvenDistributionReduction
 import ArithmeticHodge.Analysis.YoshidaEvenMomentTargets
 import ArithmeticHodge.Analysis.YoshidaEvenZeroMomentEnclosure
 import ArithmeticHodge.Analysis.YoshidaEvenDiagonalOneEnclosure
+import ArithmeticHodge.Analysis.YoshidaEvenSineMomentOneEnclosure
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
