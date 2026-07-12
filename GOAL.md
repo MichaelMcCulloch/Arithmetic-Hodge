@@ -199,12 +199,15 @@ entire restricted-support space.
 
 The current Gate 1 critical path is:
 
-1. finish odd-tail spectral regularity, Parseval, polar control, and `38/25`
-   coercivity, then combine it with the closed odd coupling budget and finite
-   block through the completed-form Schur/Riesz argument;
-2. finish the even clipped-form/distribution bridge, analytic moment
-   enclosures and checkpointed `Fin 200` certificate, exceptional coupling
-   estimate, and `102/25` infinite-tail coercivity; and
+1. use the now-proved homogeneous `38/25` coercivity and bundled positive
+   Hermitian form on the actual infinite tenth odd tail to prove that every
+   production low/tail pairing is form-norm bounded; then combine its Riesz
+   corrections with the closed coupling budget and ten-mode Gram reserve;
+2. use the now-unconditional even clipped-form-to-moment bridge, the certified
+   `D_0`, `D_1`, and `S_1` boxes, and reusable accelerated/checkpointed
+   enclosures to finish the remaining canonical `Fin 200` scalar boxes and
+   Schur pivots; in parallel close the exceptional coupling estimate and
+   `102/25` infinite even-tail coercivity; and
 3. assemble both parities and every closure/density step into one quantified
    restricted-support positivity theorem, or formalize the exact obstruction
    if any required inequality or extension fails.
