@@ -1203,3 +1203,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    nonvanishing, support centering, dilation arithmetic, both functional
    equalities and their orientation, and exact endpoint inclusion.  The
    forbidden scan is empty and all 159 legacy root files remain untouched.
+
+## `889001d` — Common diagonal base sharpened for the full certificate
+
+1. **Theorems added.**  Reusable asymmetric rational intervals now certify
+   `5772155/10^7 < γ < 5772159/10^7` and
+   `11447298/10^7 < log π < 1144730/10^6`.  They give a single generic
+   `fineDiagonalBaseInterval` containing the exact accelerated diagonal base
+   at every Fourier mode.
+2. **Gate hypothesis eliminated.**  The former common base interval was about
+   `3·10^-4` wide, already thirty times wider than each canonical diagonal
+   target.  The sharpened base removes that structural obstruction from every
+   remaining `D_4,...,D_199` enclosure; increasing the finite cutoff alone
+   could never have repaired it.
+3. **Assumptions remaining.**  Each remaining mode still needs its exact
+   checkpointed finite head and higher-order analytic tail fitted inside the
+   unchanged `10^-5` target.  The sine package and full pivot replay also
+   await isolated final validation before the three certificate propositions
+   can be specialized away.
+4. **Next make-or-break lemma.**  Certify the mode-190 pilot with the fine base
+   and cutoff `N=16384`, then distribute the remaining modes across bounded
+   checkpoint modules; independently finish the memory-safe full-pivot build.
+5. **Viability evidence.**  Exact-rational margin analysis is positive for
+   modes 190--197 and 199 at `N=16384`, and for mode 198 at `N=32768`.
+   The focused 3,623-job build passes; the three public containment endpoints
+   use only `propext`, `Classical.choice`, and `Quot.sound`.  Independent
+   review checked both logarithm identities, gamma approximation orientations,
+   strict log monotonicity, all interval signs, and generic-mode coverage.
+   Forbidden scans are empty and all 159 legacy root files remain untouched.
