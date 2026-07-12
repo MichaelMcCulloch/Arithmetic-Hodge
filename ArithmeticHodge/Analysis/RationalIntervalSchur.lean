@@ -98,7 +98,7 @@ theorem realPositivePivots_of_interval
 section PosDef
 
 open Matrix
-open scoped BigOperators
+open scoped BigOperators ComplexOrder
 
 variable [Fintype n]
 
@@ -287,6 +287,107 @@ theorem posDef_of_intervalPositivePivots
     (hM : ∀ i j, (M i j).Contains (A i j)) : A.PosDef :=
   posDef_of_realPositivePivots A hA ps
     (realPositivePivots_of_interval ps M A hpos hM) hnodup hcover
+
+/-- Entrywise coercion of a real matrix to a complex matrix. -/
+def complexOfRealMatrix (A : Matrix n n ℝ) : Matrix n n ℂ :=
+  fun i j ↦ (A i j : ℂ)
+
+omit [Fintype n] in
+/-- A Hermitian real matrix remains Hermitian after entrywise coercion to
+complex scalars. -/
+theorem complexOfRealMatrix_isHermitian
+    {A : Matrix n n ℝ} (hA : A.IsHermitian) :
+    (complexOfRealMatrix A).IsHermitian := by
+  apply Matrix.IsHermitian.ext
+  intro i j
+  simp only [complexOfRealMatrix]
+  rw [Complex.star_def, Complex.conj_ofReal]
+  norm_cast
+  simpa using hA.apply i j
+
+private theorem star_mul_ofReal_mul_re (z w : ℂ) (a : ℝ) :
+    (star z * (a : ℂ) * w).re =
+      a * (z.re * w.re + z.im * w.im) := by
+  rw [Complex.star_def]
+  simp only [Complex.mul_re, Complex.mul_im, Complex.conj_re,
+    Complex.conj_im, Complex.ofReal_re, Complex.ofReal_im]
+  ring
+
+/-- The complex quadratic form of a real matrix splits into its real- and
+imaginary-coordinate real quadratic forms. -/
+theorem complexOfRealMatrix_quadratic_re
+    (A : Matrix n n ℝ) (z : n → ℂ) :
+    (star z ⬝ᵥ (complexOfRealMatrix A *ᵥ z)).re =
+      realQuadratic A (fun i ↦ (z i).re) +
+        realQuadratic A (fun i ↦ (z i).im) := by
+  have hleft :
+      (star z ⬝ᵥ (complexOfRealMatrix A *ᵥ z)).re =
+        ∑ i, ∑ j, (star (z i) * (A i j : ℂ) * z j).re := by
+    simp only [dotProduct, mulVec, complexOfRealMatrix, Finset.mul_sum,
+      Complex.re_sum, Pi.star_apply]
+    apply Finset.sum_congr rfl
+    intro i _hi
+    apply Finset.sum_congr rfl
+    intro j _hj
+    congr 1
+    ring
+  rw [hleft]
+  simp_rw [star_mul_ofReal_mul_re]
+  unfold realQuadratic
+  simp only [dotProduct, mulVec]
+  simp_rw [Finset.mul_sum]
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro i _hi
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro j _hj
+  ring
+
+/-- Real positive definiteness implies complex positive definiteness after
+entrywise coercion. -/
+theorem Matrix.PosDef.complexOfReal
+    {A : Matrix n n ℝ} (hA : A.PosDef) :
+    (complexOfRealMatrix A).PosDef := by
+  refine Matrix.PosDef.of_dotProduct_mulVec_pos
+    (complexOfRealMatrix_isHermitian hA.1) fun z hz ↦ ?_
+  apply RCLike.pos_iff.mpr
+  refine ⟨?_,
+    (complexOfRealMatrix_isHermitian hA.1).im_star_dotProduct_mulVec_self z⟩
+  change 0 < (star z ⬝ᵥ (complexOfRealMatrix A *ᵥ z)).re
+  rw [complexOfRealMatrix_quadratic_re]
+  by_cases hre : (fun i ↦ (z i).re) = 0
+  · have him : (fun i ↦ (z i).im) ≠ 0 := by
+      intro him
+      apply hz
+      funext i
+      apply Complex.ext
+      · exact congr_fun hre i
+      · exact congr_fun him i
+    have hreZero : realQuadratic A (fun i ↦ (z i).re) = 0 := by
+      rw [hre]
+      simp [realQuadratic]
+    rw [hreZero, zero_add]
+    simpa [realQuadratic] using hA.re_dotProduct_pos him
+  · have himNonneg : 0 ≤ realQuadratic A (fun i ↦ (z i).im) := by
+      by_cases him : (fun i ↦ (z i).im) = 0
+      · rw [him]
+        simp [realQuadratic]
+      · exact (hA.re_dotProduct_pos him).le
+    exact add_pos_of_pos_of_nonneg
+      (by simpa [realQuadratic] using hA.re_dotProduct_pos hre) himNonneg
+
+/-- A rational interval Schur certificate for a real Hermitian matrix also
+certifies positive definiteness of its complex entrywise coercion. -/
+theorem complexPosDef_of_intervalPositivePivots
+    (M : Matrix n n RatInterval) (A : Matrix n n ℝ)
+    (hA : A.IsHermitian) (ps : List n)
+    (hpos : PositivePivots ps M) (hnodup : ps.Nodup)
+    (hcover : ∀ i, i ∈ ps)
+    (hM : ∀ i j, (M i j).Contains (A i j)) :
+    (complexOfRealMatrix A).PosDef :=
+  Matrix.PosDef.complexOfReal
+    (posDef_of_intervalPositivePivots M A hA ps hpos hnodup hcover hM)
 
 end PosDef
 
