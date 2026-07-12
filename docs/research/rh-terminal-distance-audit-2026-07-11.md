@@ -1044,3 +1044,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    forbidden, and axiom checks pass; all 20 public endpoints use only
    `propext`, `Classical.choice`, and `Quot.sound`, with all 159 legacy files
    preserved.
+
+## `181cad7` — Actual even tail corrections closed
+
+1. **Theorems added.**  The unconditional equation-(6.26) decay is summed to
+   the exact `51/25000` coupling budget for every one of the 200 canonical low
+   modes.  Endpoint-safe cosine Fourier convergence and production-form
+   interchange then bound the actual low/tail functional by
+   `(1/2000) * ‖x‖²`.  Its Riesz vectors have squared norm at most `1/2000`,
+   represent the exact clipped pairing, and form a Hermitian correction Gram
+   whose entries are bounded by the declared `evenCorrectionRadius`.
+2. **Gate hypothesis eliminated.**  Gate 1's exceptional even finite/tail
+   coupling and Schur-correction-radius obligations are now unconditional.
+   No pairing, digamma, convergence, interchange, or continuity premise
+   remains in the exported correction theorem.
+3. **Assumptions remaining.**  The actual 200-mode moment boxes and complete
+   pivot theorem still have to certify the corrected finite Gram.  After that,
+   only the completed even Schur assembly is needed before the already closed
+   parity recombination yields full restricted-core positivity.
+4. **Next make-or-break lemma.**  Prove the scalable rounded-pivot computation
+   refines the exact `YoshidaEvenFullTargetPivots` proposition, and finish the
+   remaining sine/diagonal target enclosures it consumes.
+5. **Viability evidence.**  Independent review checked `Fin 200`/`200+k`
+   indexing, cosine normalization, Parseval mass, the exact
+   `51/25000 -> 1/2000` arithmetic, all limit/interchange steps, Riesz
+   conjugation, Gram Hermiticity, and absence of circular Schur use.  Strict
+   direct, the 8,346-job target, umbrella, forbidden, and axiom checks pass;
+   all 40 public endpoints use only `propext`, `Classical.choice`, and
+   `Quot.sound`, with all 159 legacy files preserved.
