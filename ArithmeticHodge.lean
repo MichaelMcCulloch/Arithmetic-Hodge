@@ -90,6 +90,7 @@ import ArithmeticHodge.Analysis.YoshidaOddDigammaRationalCertificate
 import ArithmeticHodge.Analysis.YoshidaOddDigammaIntegralCertificate
 import ArithmeticHodge.Analysis.YoshidaOddDigammaSplit
 import ArithmeticHodge.Analysis.YoshidaEvenIntervalCertificate
+import ArithmeticHodge.Analysis.YoshidaClippedEvenMomentBridge
 import ArithmeticHodge.Analysis.YoshidaEvenMomentTargets
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
