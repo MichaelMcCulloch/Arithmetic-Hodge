@@ -1231,3 +1231,30 @@ separate from build logs: a green build is evidence, not a stage transition.
    review checked both logarithm identities, gamma approximation orientations,
    strict log monotonicity, all interval signs, and generic-mode coverage.
    Forbidden scans are empty and all 159 legacy root files remain untouched.
+
+## `f6b6ae5` — Naive Gate 3 localization route characterized
+
+1. **Obstruction recorded.**  A dyadically separated pair of disjoint
+   ratio-two bumps has a strictly positive prime-`2` autocorrelation cross
+   term.  The production functional subtracts that term, so positivity of the
+   diagonal pieces cannot be summed while silently discarding cross terms.
+2. **Gate hypothesis eliminated.**  The proposed all-support route may not
+   assume that disjoint multiplicative support bands are orthogonal.  The
+   audit isolates the exact surviving orientation, transpose factor two, von
+   Mangoldt coefficient, and functional sign, while explicitly leaving open
+   compensation by polar and archimedean cross terms.
+3. **Assumptions remaining.**  This is a source-level route audit, not yet a
+   Lean obstruction theorem.  Production polarization and reconstruction,
+   the dyadic cross-prime identity, a finite smooth log-support partition,
+   and a genuine localization-Gram bound remain to be formalized.
+4. **Next make-or-break lemma.**  After Gate 1 is specialized
+   unconditionally, test the two-band production Schur inequality
+   `normSq B(η,h) ≤ Q(η)Q(h)` before building general partition machinery.
+   Under Hermitian reconstruction this inequality is exactly positivity on
+   every phase combination of the dyadic pair.
+5. **Viability evidence.**  Independent source review checked dilation and
+   autocorrelation orientation, support-hull arithmetic, the sole integer-2
+   contribution, transpose indexing, coefficient and sign, polarization
+   convention, and the necessary hypotheses for two-band and finite-Gram
+   sufficiency.  No current theorem is misrepresented as unconditional or
+   formally proved.
