@@ -721,3 +721,30 @@ separate from build logs: a green build is evidence, not a stage transition.
    umbrella elaboration pass; the endpoint uses only `propext`,
    `Classical.choice`, and `Quot.sound`, and all 159 legacy root artifacts
    remain untouched.
+
+## `3842119` — Accelerated analytic sine tails certified
+
+1. **Theorems added.**  Exact telescoping potentials enclose the shifted
+   inverse-power tails for powers 2, 4, and 6.  Expanding
+   `y / (t^2 + y^2)` through the cubic term with a proved positive fifth-order
+   remainder yields two-sided bounds for the full Cauchy tail, including the
+   correctly signed dyadic correction.  Rational interval wrappers compose
+   those bounds with the exact finite head and production sine moment.
+2. **Gate hypothesis eliminated.**  Sine-moment certification no longer
+   depends on the coarse first-order `O(y/K)` tail.  The stronger analytic
+   tail already reduces the `S_2` head requirement to 4096 and closes the
+   `S_10` discovery target at 8192, making checkpointed scalar certificates
+   practical without changing any target interval.
+3. **Assumptions remaining.**  The accelerated layer does not itself inhabit
+   `S_2,...,S_199`; each finite head still needs exact compact checkpoints and
+   a final target subinterval theorem.  The diagonal, Schur, even-tail, and
+   exceptional-coupling obligations are unchanged.
+4. **Next make-or-break lemma.**  Prove a reusable theorem that a shallow sum
+   of certified 256-term boxes contains the exact production head, then use it
+   to certify `S_2` end to end and measure scaling at higher modes.
+5. **Viability evidence.**  Independent review checked all telescoping limits,
+   remainder signs, endpoint directions, the dyadic subtraction, and the
+   exact finite-head/tail split.  Hurwitz-zeta sanity checks enclose multiple
+   `(n,K)` pairs, including `n=10,K=256`.  Fresh strict direct, the 3,603-job
+   target, and umbrella elaboration pass; all five public endpoints use only
+   `propext`, `Classical.choice`, and `Quot.sound`.
