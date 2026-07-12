@@ -1674,3 +1674,40 @@ separate from build logs: a green build is evidence, not a stage transition.
    `e516dd0c541b7de9d558d1f9cb1fc62c153f31e707e5505b2b46eeec45534202`
    and `8007b6c8fdee3c4961618d85ed0a643b9753f1ebc8c47eef17918e6e8df76845`;
    all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `fa82b87` — Sparse representation and first dominance row certified
+
+1. **Theorems added.**  A canonical computable pair-list representation now
+   generates the sparse `Finsupp` rows, with proved accumulated-value,
+   conservative `L¹`, and exact congruence bridges.  The target center is
+   symmetric, every sparse row is lower triangular with positive diagonal and
+   positive weight, residue blocks exactly partition every weighted
+   off-diagonal sum, and row 9 satisfies the original public weighted
+   dominance predicate.
+2. **Gate hypothesis eliminated.**  Sparse row structure and center symmetry
+   are no longer external certificate assumptions.  More importantly, the
+   exact dominance computation no longer enters `Finsupp.single`'s classical
+   equality machinery: bounded `decide +kernel` checks operate on the one
+   canonical pair-list payload and transport symbolically to the public
+   predicate.
+3. **Assumptions remaining.**  The other 199 weighted-dominance rows, the
+   pair-list `L¹` upper-bound specialization used by the perturbation argument,
+   triangular invertibility over `ℝ`, and the robust congruence-to-PosDef
+   endpoint remain.  The analytic sine and diagonal target containments also
+   remain before the finite block can enter the infinite even Schur assembly.
+4. **Next make-or-break lemma.**  Generate and kernel-check all 762 residue
+   block inequalities in serial modules containing at most ten checks, derive
+   all 200 public weighted-dominance rows, and expose their universal
+   aggregator without any monolithic 40,000-cell reduction.
+5. **Viability evidence.**  The deterministic exact-rational generator audit
+   passes with canonical payload SHA-256
+   `cdb37a48b2b2c28a71f266efdd84ed32bccd2d4c418037277b9bbd5a89dea9db`;
+   fresh emissions are byte-identical to both generated modules.  Structure
+   and row-9 target builds pass, six public endpoint audits report exactly
+   `propext`, `Classical.choice`, and `Quot.sound`, and forbidden/whitespace
+   scans are empty.  The expensive ten-block rebuild peaked at 2.64 GiB cgroup
+   memory and 6.83 GiB summed descendant RSS under a 3/8 GiB safety guard,
+   inside the exact 48 GiB systemd scope.  Independent review approved the
+   representation bridges and identified the conservative-`L¹` inequality
+   required downstream.  All 159 inventoried legacy root Lean artifacts remain
+   untouched.
