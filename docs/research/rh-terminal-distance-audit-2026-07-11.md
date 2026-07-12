@@ -84,3 +84,57 @@ separate from build logs: a green build is evidence, not a stage transition.
    audit found no import cycle, proof bypass, or logical dependence of the
    analytic enclosures on positivity.  The preserved root legacy inventory is
    still exactly 159 untracked Lean files.
+
+## `8672247` — Clipped-to-circle Fourier coordinate bridge
+
+1. **Theorem added.**  Every `YoshidaClippedSmooth a` function now has a
+   linear coordinate in `CircleL2 (T := 2*a)` with exact centered Fourier
+   coefficients and Fourier-series convergence.  Clipped exponentials and all
+   normalized odd/even low modes map to the matching circle modes with no sign
+   or scale change.  Every clipped function receives the canonical even
+   200-mode-plus-tail and odd 10-mode-plus-tail `L²` decomposition.
+2. **Gate hypothesis eliminated.**  Gate 1 no longer lacks a rigorous map from
+   the clipped carrier to the existing parity/Fourier decomposition.  This is
+   a coordinate theorem only: it deliberately does not assume or claim that
+   the critical form is bounded on ordinary `L²`.
+3. **Assumptions remaining.**  Bare `YoshidaClippedSmooth` is larger than
+   Yoshida's source space because endpoint jets may fail to match.  A source-
+   faithful periodic clipped core, explicit clipped residuals, genuine odd
+   and even tail coercivity, low/high coupling bounds, form-norm completion,
+   and the even finite block remain open.
+4. **Next make-or-break lemma.**  Define the clipped periodic-core submodule
+   and its odd/even tail comaps, prove supported critical pullbacks and finite-
+   low residuals lie in it, then prove `odd_K10_coercive` with the exact source
+   constant `38/25`.
+5. **Viability evidence.**  All thirteen public bridge theorems strict-compile
+   and use only `propext`, `Classical.choice`, and `Quot.sound`; the full build
+   succeeds with 3,785 jobs.  The production module explicitly excludes
+   injectivity, form continuity, periodic-core membership, and surjectivity
+   onto arbitrary closed `L²` tails, preventing those facts from being smuggled
+   through the coordinate construction.
+
+## Gate 1 bounded falsification lane
+
+1. **Result.**  No negative direction or violation of Yoshida's printed tail
+   and coupling constants was found within the fixed search caps.  A rigorous
+   one-dimensional saturation model does falsify one tempting weakening:
+   `(19/500)/(3/2) = 1/40 + 1/3000`, while
+   `(19/500)/(38/25) = 1/40` exactly.
+2. **False route eliminated.**  Odd coercivity cannot be weakened from
+   `38/25` to `3/2` before the Schur/Riesz correction.  In addition, the
+   unit-`L²` diagonal values grow like `log n`; hence the critical form cannot
+   be extended as a bounded sesquilinear form on ordinary circle `L²`.  Gate 1
+   must retain `38/25` through correction and use the form-norm completion.
+3. **Assumptions remaining.**  The diagnostic eigenvalue and coupling scans
+   are not certified enclosures and do not prove positivity.  The analytic
+   coercivity and decay statements, especially their infinite interchanges,
+   remain formal obligations.
+4. **Next make-or-break lemma.**  Prove the source-faithful periodic-tail
+   coercivity and the uniform odd low/high pairing decay; do not pursue an
+   ordinary-`L²` bounded-form abstraction or the weakened `3/2` budget.
+5. **Viability evidence.**  Reproducible scratch script
+   `/tmp/gate1_falsification_lane.py` has SHA-256
+   `9d0d7d52edf986ea2334d0eb9f09cc579234bd78be65959cca781b8b11728fa8`.
+   It found positive truncated odd/even tail minima, Schur corrections below
+   the source budgets, and coupling decay below the printed constants through
+   mode `10^6`; these figures are recorded only as adversarial diagnostics.
