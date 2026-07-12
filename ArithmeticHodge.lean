@@ -77,6 +77,7 @@ import ArithmeticHodge.Analysis.YoshidaClippedCircleFaithful
 import ArithmeticHodge.Analysis.YoshidaClippedPeriodicCore
 import ArithmeticHodge.Analysis.YoshidaClippedParityOrthogonality
 import ArithmeticHodge.Analysis.YoshidaEvenPairingBridge
+import ArithmeticHodge.Analysis.YoshidaEvenTailReduction
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
