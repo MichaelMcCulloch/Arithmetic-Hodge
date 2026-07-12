@@ -1798,3 +1798,17 @@ separate from build logs: a green build is evidence, not a stage transition.
    summed RSS.  The structurally heaviest near-term module (`011`) passed.
    Boundary, forbidden, whitespace, and endpoint axiom audits pass, and all
    159 inventoried legacy root Lean artifacts remain untouched.
+
+## `7e2aadd` — Sparse dominance blocks 016 through 023 certified
+
+1. **Theorems added.**  Another 64 exact residue-block bounds are proved, from
+   row 19 block 5 through row 31 block 1.
+2. **Gate hypothesis eliminated.**  The kernel-checked total is now 192 of 762
+   block contributions.
+3. **Assumptions remaining.**  The other 570 blocks, all row aggregates, and
+   robust PosDef transport remain.
+4. **Next make-or-break lemma.**  Continue with modules `024` through `031`.
+5. **Viability evidence.**  The serial build passes in about 315 seconds with
+   a 2.74 GiB cgroup / 6.89 GiB RSS peak.  Endpoint axioms remain the standard
+   three; forbidden and whitespace scans pass, and all 159 legacy root Lean
+   artifacts remain untouched.
