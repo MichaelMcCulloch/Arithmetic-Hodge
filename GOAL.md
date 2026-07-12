@@ -58,33 +58,47 @@ research program.
 - Do not advance a theorem by replacing `sorry` with an axiom, typeclass
   bridge, circular RH-equivalent assumption, `unsafe`, `native_decide`, or any
   other proof bypass.
+- The terminal theorem's complete transitive dependency closure must consist
+  of structural proofs: analytic identities and estimates, algebraic or
+  operator-theoretic arguments, and uniform quantified reductions that explain
+  why the result holds.
+- Exhaustive finite computation is not a proof ingredient for this program.
+  Generated numeric tables, mode-by-mode target boxes, matrix-cell or row/block
+  enumeration, pivot/Cholesky replay, and `decide +kernel` evaluation of a
+  discovered certificate may be used to find conjectures or counterexamples,
+  but no terminal-path theorem may import or depend on them.
+- This restriction is retroactive.  Audit every theorem previously called
+  firm ground through all of its imports; if its weakest lemma is computational
+  rather than structural, reclassify the theorem as exploratory evidence and
+  reopen the obligation.  Closed scalar arithmetic after a structural
+  reduction is acceptable only when it does not encode an enumerated family
+  of cases or a discovered numeric certificate.
 - Preserve the 159 inventoried legacy Lean artifacts, their archive ref, and
   the separately identified untracked fallback modules byte-for-byte: do not
   edit, rename, move, stage, or delete them unless the user explicitly changes
   this directive.
 
-Firm ground means strict compilation, a full `lake build`, forbidden-proof and
-naming scans, dependency and axiom audits, and independent review proportional
-to mathematical risk.
+Firm ground means a structural-proof dependency audit first, followed by strict
+compilation, a full `lake build`, forbidden-proof and naming scans, axiom
+audits, and independent review proportional to mathematical risk.
 
 ## Active stage gates
 
 Work on the earliest unclosed gate. Later gates may receive bounded exploratory
 probes only when they clarify whether the active route is viable.
 
-### Gate 0 — Close the current finite Yoshida certificate
+### Gate 0 — Structuralize the restricted Yoshida foundation
 
-Complete the current ten-mode odd-block work as one checked artifact:
+Reopen every claimed odd/even restricted-support result whose dependency graph
+passes through finite numeric certificates.  Replace the weakest such lemma by
+one structural theorem that works uniformly in the Fourier dimension, for
+example through the real-space correlation form, a coercive operator
+decomposition, a positive integral/rank-one representation, or an exact
+structural obstruction.
 
-- exact accelerated diagonal moment identity;
-- sound rational finite-head evaluation and certified analytic tail;
-- all ten diagonal and sine target enclosures;
-- unconditional positive definiteness of the actual ten-mode odd Gram block;
-- full build, scan, dependency, axiom, and independent-review evidence.
-
-Once this gate closes, stop increasing the matrix dimension, tightening its
-constants, or reorganizing its certificate unless Gate 1 proves that a
-specific refinement is necessary.
+The deliverable is a dependency-audited theorem or falsification result with no
+mode table, target enclosure family, finite Gram certificate, or enumerated
+matrix inequality in its transitive imports.
 
 ### Gate 1 — Prove or refute infinite-mode restricted-support positivity
 
@@ -93,8 +107,8 @@ restricted-support space, not another truncation. The proof must assemble:
 
 - the required parity components and Fourier-circle normalization;
 - a genuinely infinite coercive-tail estimate;
-- the certified finite low-mode block;
-- a sound Schur-complement or equivalent finite-to-infinite argument; and
+- a structural treatment of the low modes that is uniform in dimension;
+- a sound operator Schur-complement or equivalent infinite-space argument; and
 - all cross terms, convergence statements, and closure/density steps.
 
 The deliverable is either:
@@ -232,33 +246,25 @@ change the mathematical mechanism or formalize the obstruction.
 
 ## Current directive
 
-Gate 0 closed at `1ea80bc`; treat it as immutable firm ground and do not reopen
-or enlarge its ten-mode certificate without a specific Gate 1 dependency.
-Gate 1 is active.  The next major success criterion is not a larger finite
-matrix: it is a Lean theorem that converts the certified low blocks, genuinely
-infinite coercive tails, and controlled couplings into positivity for the
-entire restricted-support space.
+Gate 0 is reopened by the structural-proof requirement.  The results formerly
+treated as closed at `1ea80bc` and `a038238`, together with all full-pivot,
+sparse-dominance, target-enclosure, and generated block modules, are
+quarantined evidence until a transitive dependency audit proves that no
+computational certificate supports them.  They are not admissible premises for
+the terminal theorem.
 
-The current Gate 1 critical path is:
+The current critical path is:
 
-1. treat the theorem at `a038238`—strict positivity of the production clipped
-   form on the entire genuinely infinite periodic odd carrier—as immutable
-   firm ground; do not reopen its ten-mode certificate, tail estimate, or
-   Schur constants without a specific downstream failure;
-2. treat the endpoint-safe `102/25` infinite even-tail coercivity, exact
-   equation-(6.25) pairing, sharp digamma remainder, `51/25000` coupling
-   budget, and `1/2000` actual Riesz-correction radius as closed firm ground;
-3. finish the canonical `Fin 200` sine/diagonal target enclosures; complete the
-   canonical pair-list-to-`Finsupp` sparse-congruence bridge and all bounded
-   residue-block checks; derive weighted diagonal dominance, triangular
-   invertibility, and robust positivity of the corrected finite Gram; then
-   perform the completed infinite even Schur assembly.  The superseded
-   monolithic full-pivot replay remains quarantined unless the sparse route
-   fails with a formalized obstruction; and
-4. feed that single remaining even-carrier theorem into the already proved
-   endpoint-safe parity recombination theorem, yielding positivity on the
-   whole restricted periodic core—or formalize the exact obstruction if the
-   finite certificate or Schur assembly fails.
+1. express the production clipped quadratic form on arbitrary finite Fourier
+   combinations directly through its real-space correlation or spectral
+   operator, without expanding a finite matrix;
+2. prove a dimension-free coercive/positive decomposition, or isolate a
+   concrete structural obstruction to such a decomposition;
+3. derive odd, even, tail, coupling, and parity results as restrictions or
+   Schur complements of that one operator theorem rather than from certified
+   low blocks; and
+4. audit the resulting theorem's complete import closure before it is restored
+   to firm ground and advanced toward the Bombieri/Weil all-support gate.
 
 The live theorem-by-theorem position and next make-or-break lemma are recorded
 in `docs/research/rh-terminal-distance-audit-2026-07-11.md`; that audit, rather
