@@ -81,6 +81,8 @@ import ArithmeticHodge.Analysis.YoshidaEvenPairingBridge
 import ArithmeticHodge.Analysis.YoshidaEvenTailReduction
 import ArithmeticHodge.Analysis.YoshidaEvenCouplingReduction
 import ArithmeticHodge.Analysis.YoshidaOddLowHighDecay
+import ArithmeticHodge.Analysis.YoshidaOddHighSineBounds
+import ArithmeticHodge.Analysis.YoshidaOddCouplingClosed
 import ArithmeticHodge.Analysis.YoshidaInfiniteCriticalSample
 import ArithmeticHodge.Analysis.YoshidaOddTailPaired
 import ArithmeticHodge.Analysis.YoshidaOddDigammaLoss
