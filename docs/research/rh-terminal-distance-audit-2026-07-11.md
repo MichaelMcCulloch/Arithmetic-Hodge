@@ -1124,3 +1124,82 @@ separate from build logs: a green build is evidence, not a stage transition.
    Fourier sign change, HasSum orientation, real coupling reduction,
    polarization sign, dense Riesz uniqueness, and final `ofReal` orientation;
    the forbidden scan is empty and all 159 legacy root files remain untouched.
+
+## `c7c9b49` — Actual corrected finite even Gram connected
+
+1. **Theorems added.**  The real part of the actual Riesz-correction Gram is
+   bundled as a real Hermitian matrix, the production Schur complement is
+   identified exactly with its complexification, and the three canonical
+   sine/diagonal/pivot certificate propositions imply positive definiteness
+   of `clippedEvenFullGram - actualEvenTailCorrectionGram`.
+2. **Gate hypothesis eliminated.**  No unproved semantic step remains between
+   the interval certificate's real entrywise perturbation theorem and the
+   actual complex production correction.  The exact `1/2000` norm bound is
+   used unchanged as the real entrywise radius.
+3. **Assumptions remaining.**  The result consumes exactly
+   `YoshidaEvenSineTargetEnclosures`,
+   `YoshidaEvenDiagonalTargetEnclosures`, and
+   `YoshidaEvenFullTargetPivots`; their premise-free inhabitants still have to
+   be landed and verified.
+4. **Next make-or-break lemma.**  Finish the scalable diagonal enclosure
+   package and memory-safe pivot replay, then instantiate
+   `actualEvenTailCorrectedGram_posDef_of_certificates`.
+5. **Viability evidence.**  The focused 8,349-job build passes and the public
+   endpoints use only `propext`, `Classical.choice`, and `Quot.sound`.
+   Independent review checked real Hermiticity, complex reconstruction,
+   correction sign, exact radius, and certificate argument order; the
+   forbidden scan is empty and all 159 legacy files are preserved.
+
+## `4d9241d` — Conditional infinite even Schur and parity closure assembled
+
+1. **Theorems added.**  The actual even low/tail functional is extended to the
+   form completion, the corrected finite Gram is fed through Hilbert-space
+   square completion, and every periodic even vector is decomposed exactly
+   into its `Fin 200` low part plus the genuine mode-`200` tail.  Combining
+   this with the committed odd theorem and parity split yields strict
+   production-form positivity on the whole periodic core from the same three
+   finite certificate propositions.
+2. **Gate hypothesis eliminated.**  Gate 1's completed infinite Schur,
+   algebraic-to-completion, full-even-carrier, nonzero-transfer, and final
+   parity-recombination steps are closed.  After the certificates are
+   inhabited, no additional analytic, density, or closure premise remains.
+3. **Assumptions remaining.**  Only the sine, diagonal, and full-pivot
+   certificate propositions remain in the exported Gate 1 theorem.  The sine
+   source proof is complete but awaiting its isolated build; the diagonal and
+   memory-safe pivot packages remain active.
+4. **Next make-or-break lemma.**  Produce premise-free inhabitants of the
+   diagonal and pivot propositions within the resource cap, then export an
+   unconditional specialization of
+   `periodicCore_clippedCriticalForm_re_pos_of_certificates`.
+5. **Viability evidence.**  The focused 8,373-job build passes; all audited
+   endpoints use only the standard three axioms.  Independent review checked
+   Riesz orientation, both cross terms, Hilbert completion, exact `0..199`
+   plus tail-`200` indexing, source equality, nonzero transfer, and parity
+   specialization.  Forbidden scans are empty and all legacy files remain
+   untouched.
+
+## `5e84e6e` — Conditional ratio-two Bombieri positivity transported
+
+1. **Theorems added.**  A supported critical pullback is proved nonzero after
+   clipping whenever its Bombieri test is nonzero.  Normalized logarithmic
+   centering, periodic-core positivity, the exact crop/local-form bridge, and
+   dilation invariance then give real-valued strict Bombieri positivity for
+   every nonzero test supported in `[l,r]` with `0<l`, `l≤r`, and `r/l≤2`.
+2. **Gate hypothesis eliminated.**  All transport obligations between the
+   restricted periodic-core theorem and the production Bombieri functional
+   are discharged, including the inclusive ratio-two endpoint.  Thus the
+   same three finite certificate propositions now imply the intended
+   quantified restricted-support Bombieri theorem directly.
+3. **Assumptions remaining.**  The three Gate 1 certificate propositions are
+   still explicit inputs.  Even after they are discharged, restricted-support
+   positivity is not RH; the all-support mechanism of Gate 3 remains open.
+4. **Next make-or-break lemma.**  Finish the finite certificates, specialize
+   this theorem unconditionally, and then test the strongest candidate
+   all-support localization/decomposition statement together with its cross
+   terms.
+5. **Viability evidence.**  The focused 8,374-job build passes; the strict
+   positivity, real-part, and crop-injectivity endpoints use only `propext`,
+   `Classical.choice`, and `Quot.sound`.  Independent review checked crop
+   nonvanishing, support centering, dilation arithmetic, both functional
+   equalities and their orientation, and exact endpoint inclusion.  The
+   forbidden scan is empty and all 159 legacy root files remain untouched.
