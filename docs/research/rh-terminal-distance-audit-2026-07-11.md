@@ -1258,3 +1258,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    convention, and the necessary hypotheses for two-band and finite-Gram
    sufficiency.  No current theorem is misrepresented as unconditional or
    formally proved.
+
+## `6adfc6b` — Full diagonal checkpoint architecture validated at mode 190
+
+1. **Theorem added.**  The exact production moment `D_190` lies in its
+   unchanged canonical target.  The proof uses the sharpened common base,
+   1,024 outward-rounded 16-term head checkpoints covering exactly
+   `k=1,...,16383`, 128 exact octet aggregates, and the higher-order infinite
+   tail beginning at `N=16384`.
+2. **Gate hypothesis eliminated.**  Mode 190 no longer remains in
+   `YoshidaEvenDiagonalTargetEnclosures`.  More importantly, the complete
+   bounded-memory chunk-to-octet architecture and its reusable soundness
+   lemmas are now compiled firm ground for the other diagonal modes.
+3. **Assumptions remaining.**  Diagonal modes `D_4,...,D_189` and
+   `D_191,...,D_199` still require checked inhabitants before the full
+   diagonal proposition closes.  The sine and split full-pivot packages also
+   await their final builds and commits.
+4. **Next make-or-break lemma.**  Validate the generated modes 191--199
+   sequentially under the memory guard while exact cutoff scanning determines
+   the cheapest sound schedule below mode 190; in parallel, build the split
+   pivot payload one module at a time.
+5. **Viability evidence.**  Exact independent replay checked all 1,024 chunk
+   boxes, 128 octets, head equality, series signs, and final interval
+   `[5.61353634160711,5.613538621153664]` inside
+   `[5.61353,5.61354]`.  The actual 3,627-job Lake target passes with no local
+   diagnostics, no safety stop, 1.47 GiB cgroup peak, and 5.27 GiB summed-RSS
+   peak.  Public endpoints use only `propext`, `Classical.choice`, and
+   `Quot.sound`; forbidden scans are empty and all 159 legacy files remain
+   untouched.
