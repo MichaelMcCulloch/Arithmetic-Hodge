@@ -73,6 +73,9 @@ import ArithmeticHodge.Analysis.CoerciveRieszCorrection
 import ArithmeticHodge.Analysis.ComplexCoerciveRieszCorrection
 import ArithmeticHodge.Analysis.CenteredAddCircleFourier
 import ArithmeticHodge.Analysis.YoshidaClippedCircleBridge
+import ArithmeticHodge.Analysis.YoshidaClippedCircleFaithful
+import ArithmeticHodge.Analysis.YoshidaClippedPeriodicCore
+import ArithmeticHodge.Analysis.YoshidaClippedParityOrthogonality
 import ArithmeticHodge.Analysis.ThetaFunction
 import ArithmeticHodge.Analysis.ZetaFunctionalEquation
 import ArithmeticHodge.Analysis.Contour.ArgumentPrinciple
