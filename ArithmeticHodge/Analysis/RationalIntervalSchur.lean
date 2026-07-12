@@ -54,6 +54,28 @@ def PositivePivots : List n → Matrix n n RatInterval → Prop
   | p :: ps, M =>
       0 < (M p p).lower ∧ PositivePivots ps (intervalSchurStep p M)
 
+/-- Split a pivot certificate at a checkpoint.  This lets large generated
+eliminations cache independently verified stages instead of asking one
+monolithic reduction to replay the whole prefix. -/
+theorem positivePivots_append
+    (ps qs : List n) (M : Matrix n n RatInterval) :
+    PositivePivots (ps ++ qs) M ↔
+      PositivePivots ps M ∧
+        PositivePivots qs (intervalEliminate ps M) := by
+  induction ps generalizing M with
+  | nil => simp [PositivePivots, intervalEliminate]
+  | cons p ps ih =>
+      simp only [List.cons_append, PositivePivots, intervalEliminate]
+      rw [ih]
+      tauto
+
+theorem PositivePivots.append
+    {ps qs : List n} {M : Matrix n n RatInterval}
+    (hps : PositivePivots ps M)
+    (hqs : PositivePivots qs (intervalEliminate ps M)) :
+    PositivePivots (ps ++ qs) M :=
+  (positivePivots_append ps qs M).2 ⟨hps, hqs⟩
+
 instance positivePivotsDecidable
     (ps : List n) (M : Matrix n n RatInterval) :
     Decidable (PositivePivots ps M) := by
