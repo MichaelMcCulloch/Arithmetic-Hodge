@@ -989,3 +989,30 @@ separate from build logs: a green build is evidence, not a stage transition.
    direct, the 3,556-job target, umbrella, forbidden, and axiom checks pass;
    all four public endpoints use only `propext`, `Classical.choice`, and
    `Quot.sound`, with all 159 legacy files preserved.
+
+## `58c4398` — Exact even pairing equation closed
+
+1. **Theorems added.**  The actual production clipped low/high pairing formula
+   is proved equal to Yoshida's normalized equation-(6.25) right-hand side for
+   every canonical low index `i : Fin 200` and every high index `200+k`.
+   The proof includes the zero row's exact `1/sqrt 2` normalization, removable
+   divided differences, outer parity sign, polar term, dyadic correction, and
+   imaginary-digamma contribution.
+2. **Gate hypothesis eliminated.**  `ActualEvenPairingEquation6_25` is now
+   inhabited unconditionally.  Together with `e3b17d5`, both assumptions of
+   `even_low_high_pairing_sq_decay_of_bridges` are discharged, so the exact
+   source decay and `51/25000` coupling budget are available without premises.
+3. **Assumptions remaining.**  The unconditional decay still must be promoted
+   through the actual even-tail functional and Riesz correction into the Schur
+   radius used by the finite block.  The scalar boxes/pivots, completed even
+   Schur closure, and parity recombination remain open.
+4. **Next make-or-break lemma.**  Complete the actual even low/tail Riesz
+   construction and prove its correction-Gram entry bound fits the finite
+   interval certificate's declared `evenCorrectionRadius`.
+5. **Viability evidence.**  Independent review traced the equality from the
+   clipped distributional pairing through real-space moments, verified the
+   `+,-,+` divided-difference signs, zero-row normalization, `(-1)^(n+m)`
+   parity, and exact `199/200+k` boundary.  Four independent numerical samples
+   agreed to about 80 digits.  Strict direct, the 3,621-job target, umbrella,
+   forbidden, and axiom checks pass; the public endpoint uses only `propext`,
+   `Classical.choice`, and `Quot.sound`, with all 159 legacy files preserved.
