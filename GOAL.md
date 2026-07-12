@@ -255,6 +255,26 @@ the terminal theorem.
 
 The current critical path is:
 
+Primary-source audit fixes the endpoint obligation sharply.  The structural
+``sufficiently small support'' theorems stop strictly before
+`a = log 2 / 2`; published results at the endpoint return to finite spectral
+or matrix computations and are therefore evidence, not admissible premises.
+Suzuki's scaled real-space identity reduces the endpoint to a continuous
+operator inequality on `[-1, 1]`: the fractional logarithmic energy
+
+```text
+L(w) = (1/4) integral integral |w(x)-w(y)|^2 / |x-y|
+       - (1/2) integral |w(x)|^2 log(1-x^2)
+```
+
+minus the smooth kernel perturbation
+`a * Re integral integral r''(a*(x-y))*w(y)*conj(w(x))` must dominate
+`(log(2*pi) + EulerGamma - log(2/log 2)) * ||w||_2^2`, with
+`a = log 2 / 2`, on the exact production domain.  The prime-translation term
+has zero-length overlap at this endpoint.  A proof of this inequality, or a
+structural counterexample to it, is the current make-or-break lemma; replacing
+it by a discretized spectral calculation is not progress under this program.
+
 1. express the production clipped quadratic form on arbitrary finite Fourier
    combinations directly through its real-space correlation or spectral
    operator, without expanding a finite matrix;
