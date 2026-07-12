@@ -49,6 +49,7 @@ import ArithmeticHodge.Analysis.YoshidaMomentIntegrability
 import ArithmeticHodge.Analysis.YoshidaCauchyTailBounds
 import ArithmeticHodge.Analysis.YoshidaMomentSeries
 import ArithmeticHodge.Analysis.YoshidaSineSeriesTail
+import ArithmeticHodge.Analysis.YoshidaSineMomentEnclosures
 import ArithmeticHodge.Analysis.YoshidaDigammaDistribution
 import ArithmeticHodge.Analysis.YoshidaCauchyPairing
 import ArithmeticHodge.Analysis.YoshidaOddModeRegularity
