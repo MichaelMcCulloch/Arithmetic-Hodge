@@ -13,7 +13,7 @@ Minimum exact weighted margin denominator: 8164804466535006251770664380902865880
 Rows use exact numerator/10000 coefficients; weights use numerator/1000.
 -/
 
-import ArithmeticHodge.Analysis.SparseCongruenceCertificate
+import ArithmeticHodge.Analysis.SparseEntriesCertificate
 import ArithmeticHodge.Analysis.YoshidaEvenMomentTargets
 
 set_option autoImplicit false
@@ -23,10 +23,9 @@ open scoped BigOperators
 
 namespace ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceData
 
-noncomputable section
-
 open RatInterval
 open SparseCongruenceCertificate
+open SparseEntriesCertificate
 open YoshidaEvenIntervalCertificate
 open YoshidaEvenMomentTargets
 
@@ -41,971 +40,1175 @@ def evenTargetCenter : Matrix YoshidaEvenIndex YoshidaEvenIndex ℚ :=
   fun i j ↦
     ((evenTargetInterval i j).lower + (evenTargetInterval i j).upper) / 2
 
-def evenSparseRows (i : YoshidaEvenIndex) : SparseRow YoshidaEvenIndex :=
+def evenSparseEntries
+    (i : YoshidaEvenIndex) : SparseEntries YoshidaEvenIndex :=
   match i.val with
-  | 0 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((23352 : ℚ) / 10000)
-  | 1 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((98806 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((55474 : ℚ) / 10000)
-  | 2 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-124293 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-62085 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((14809 : ℚ) / 10000)
-  | 3 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((110834 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((54944 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-7348 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((9860 : ℚ) / 10000)
-  | 4 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-87516 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-43200 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((5719 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-2256 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((8181 : ℚ) / 10000)
-  | 5 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((67571 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((33253 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-4368 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((1705 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-901 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((7396 : ℚ) / 10000)
-  | 6 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-52814 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-25928 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((3383 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-1308 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((683 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((-414 : ℚ) / 10000) +
-        Finsupp.single (6 : YoshidaEvenIndex) ((6946 : ℚ) / 10000)
-  | 7 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((42167 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((20659 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-2680 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((1027 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-530 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((317 : ℚ) / 10000) +
-        Finsupp.single (6 : YoshidaEvenIndex) ((-207 : ℚ) / 10000) +
-        Finsupp.single (7 : YoshidaEvenIndex) ((6648 : ℚ) / 10000)
-  | 8 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-34403 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-16825 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((2172 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-825 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((421 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((-249 : ℚ) / 10000) +
-        Finsupp.single (6 : YoshidaEvenIndex) ((160 : ℚ) / 10000) +
-        Finsupp.single (7 : YoshidaEvenIndex) ((-109 : ℚ) / 10000) +
-        Finsupp.single (8 : YoshidaEvenIndex) ((6432 : ℚ) / 10000)
-  | 9 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((28625 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((13977 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-1796 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((677 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-342 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((199 : ℚ) / 10000) +
-        Finsupp.single (6 : YoshidaEvenIndex) ((-126 : ℚ) / 10000) +
-        Finsupp.single (7 : YoshidaEvenIndex) ((84 : ℚ) / 10000) +
-        Finsupp.single (8 : YoshidaEvenIndex) ((-57 : ℚ) / 10000) +
-        Finsupp.single (9 : YoshidaEvenIndex) ((6266 : ℚ) / 10000)
-  | 10 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-24227 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-11812 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((1511 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-566 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((283 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((-162 : ℚ) / 10000) +
-        Finsupp.single (6 : YoshidaEvenIndex) ((101 : ℚ) / 10000) +
-        Finsupp.single (7 : YoshidaEvenIndex) ((-65 : ℚ) / 10000) +
-        Finsupp.single (10 : YoshidaEvenIndex) ((6131 : ℚ) / 10000)
-  | 11 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((20808 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((10132 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-1291 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((480 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-238 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((134 : ℚ) / 10000) +
-        Finsupp.single (6 : YoshidaEvenIndex) ((-82 : ℚ) / 10000) +
-        Finsupp.single (7 : YoshidaEvenIndex) ((52 : ℚ) / 10000) +
-        Finsupp.single (11 : YoshidaEvenIndex) ((6018 : ℚ) / 10000)
-  | 12 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-18100 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-8803 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((1118 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-413 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((202 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((-113 : ℚ) / 10000) +
-        Finsupp.single (6 : YoshidaEvenIndex) ((67 : ℚ) / 10000) +
-        Finsupp.single (12 : YoshidaEvenIndex) ((5922 : ℚ) / 10000)
-  | 13 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((15916 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((7732 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-978 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((359 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-174 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((96 : ℚ) / 10000) +
-        Finsupp.single (6 : YoshidaEvenIndex) ((-56 : ℚ) / 10000) +
-        Finsupp.single (13 : YoshidaEvenIndex) ((5838 : ℚ) / 10000)
-  | 14 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-14130 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-6857 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((865 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-316 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((152 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((-82 : ℚ) / 10000) +
-        Finsupp.single (14 : YoshidaEvenIndex) ((5765 : ℚ) / 10000)
-  | 15 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((12649 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((6133 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-771 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((280 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-133 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((71 : ℚ) / 10000) +
-        Finsupp.single (15 : YoshidaEvenIndex) ((5699 : ℚ) / 10000)
-  | 16 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-11406 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-5525 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((693 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-250 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((118 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((-62 : ℚ) / 10000) +
-        Finsupp.single (16 : YoshidaEvenIndex) ((5639 : ℚ) / 10000)
-  | 17 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((10352 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((5010 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-626 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((225 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-105 : ℚ) / 10000) +
-        Finsupp.single (5 : YoshidaEvenIndex) ((55 : ℚ) / 10000) +
-        Finsupp.single (17 : YoshidaEvenIndex) ((5585 : ℚ) / 10000)
-  | 18 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-9450 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-4570 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((570 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-204 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((95 : ℚ) / 10000) +
-        Finsupp.single (18 : YoshidaEvenIndex) ((5536 : ℚ) / 10000)
-  | 19 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((8671 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((4190 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-521 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((185 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-85 : ℚ) / 10000) +
-        Finsupp.single (19 : YoshidaEvenIndex) ((5490 : ℚ) / 10000)
-  | 20 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-7993 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-3859 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((479 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-170 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((77 : ℚ) / 10000) +
-        Finsupp.single (20 : YoshidaEvenIndex) ((5448 : ℚ) / 10000)
-  | 21 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((7399 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((3570 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-442 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((156 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-71 : ℚ) / 10000) +
-        Finsupp.single (21 : YoshidaEvenIndex) ((5409 : ℚ) / 10000)
-  | 22 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-6875 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-3315 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((409 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-144 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((65 : ℚ) / 10000) +
-        Finsupp.single (22 : YoshidaEvenIndex) ((5373 : ℚ) / 10000)
-  | 23 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((6411 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((3089 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-381 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((133 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-59 : ℚ) / 10000) +
-        Finsupp.single (23 : YoshidaEvenIndex) ((5339 : ℚ) / 10000)
-  | 24 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-5996 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-2888 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((355 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-124 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((55 : ℚ) / 10000) +
-        Finsupp.single (24 : YoshidaEvenIndex) ((5307 : ℚ) / 10000)
-  | 25 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((5626 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((2708 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-332 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((115 : ℚ) / 10000) +
-        Finsupp.single (4 : YoshidaEvenIndex) ((-51 : ℚ) / 10000) +
-        Finsupp.single (25 : YoshidaEvenIndex) ((5277 : ℚ) / 10000)
-  | 26 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-5292 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-2545 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((312 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-108 : ℚ) / 10000) +
-        Finsupp.single (26 : YoshidaEvenIndex) ((5248 : ℚ) / 10000)
-  | 27 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((4990 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((2399 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-293 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((101 : ℚ) / 10000) +
-        Finsupp.single (27 : YoshidaEvenIndex) ((5221 : ℚ) / 10000)
-  | 28 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-4716 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-2266 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((277 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-95 : ℚ) / 10000) +
-        Finsupp.single (28 : YoshidaEvenIndex) ((5195 : ℚ) / 10000)
-  | 29 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((4467 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((2146 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-262 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((89 : ℚ) / 10000) +
-        Finsupp.single (29 : YoshidaEvenIndex) ((5171 : ℚ) / 10000)
-  | 30 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-4240 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-2035 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((248 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-84 : ℚ) / 10000) +
-        Finsupp.single (30 : YoshidaEvenIndex) ((5148 : ℚ) / 10000)
-  | 31 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((4031 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1934 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-235 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((80 : ℚ) / 10000) +
-        Finsupp.single (31 : YoshidaEvenIndex) ((5126 : ℚ) / 10000)
-  | 32 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-3840 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-1842 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((223 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-76 : ℚ) / 10000) +
-        Finsupp.single (32 : YoshidaEvenIndex) ((5105 : ℚ) / 10000)
-  | 33 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((3663 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1756 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-213 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((72 : ℚ) / 10000) +
-        Finsupp.single (33 : YoshidaEvenIndex) ((5084 : ℚ) / 10000)
-  | 34 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-3500 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-1677 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((203 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-68 : ℚ) / 10000) +
-        Finsupp.single (34 : YoshidaEvenIndex) ((5065 : ℚ) / 10000)
-  | 35 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((3349 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1604 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-194 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((65 : ℚ) / 10000) +
-        Finsupp.single (35 : YoshidaEvenIndex) ((5046 : ℚ) / 10000)
-  | 36 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-3209 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-1536 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((185 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-62 : ℚ) / 10000) +
-        Finsupp.single (36 : YoshidaEvenIndex) ((5028 : ℚ) / 10000)
-  | 37 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((3078 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1473 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-178 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((59 : ℚ) / 10000) +
-        Finsupp.single (37 : YoshidaEvenIndex) ((5011 : ℚ) / 10000)
-  | 38 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-2957 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-1415 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((170 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-57 : ℚ) / 10000) +
-        Finsupp.single (38 : YoshidaEvenIndex) ((4994 : ℚ) / 10000)
-  | 39 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((2843 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1360 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-163 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((54 : ℚ) / 10000) +
-        Finsupp.single (39 : YoshidaEvenIndex) ((4978 : ℚ) / 10000)
-  | 40 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-2737 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-1309 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((157 : ℚ) / 10000) +
-        Finsupp.single (3 : YoshidaEvenIndex) ((-52 : ℚ) / 10000) +
-        Finsupp.single (40 : YoshidaEvenIndex) ((4963 : ℚ) / 10000)
-  | 41 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((2637 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1261 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-151 : ℚ) / 10000) +
-        Finsupp.single (41 : YoshidaEvenIndex) ((4948 : ℚ) / 10000)
-  | 42 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-2544 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-1216 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((146 : ℚ) / 10000) +
-        Finsupp.single (42 : YoshidaEvenIndex) ((4933 : ℚ) / 10000)
-  | 43 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((2456 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1173 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-140 : ℚ) / 10000) +
-        Finsupp.single (43 : YoshidaEvenIndex) ((4919 : ℚ) / 10000)
-  | 44 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-2373 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-1133 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((135 : ℚ) / 10000) +
-        Finsupp.single (44 : YoshidaEvenIndex) ((4906 : ℚ) / 10000)
-  | 45 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((2295 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1096 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-131 : ℚ) / 10000) +
-        Finsupp.single (45 : YoshidaEvenIndex) ((4893 : ℚ) / 10000)
-  | 46 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-2222 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-1060 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((126 : ℚ) / 10000) +
-        Finsupp.single (46 : YoshidaEvenIndex) ((4880 : ℚ) / 10000)
-  | 47 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((2152 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((1027 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-122 : ℚ) / 10000) +
-        Finsupp.single (47 : YoshidaEvenIndex) ((4867 : ℚ) / 10000)
-  | 48 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-2086 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-995 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((118 : ℚ) / 10000) +
-        Finsupp.single (48 : YoshidaEvenIndex) ((4855 : ℚ) / 10000)
-  | 49 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((2023 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((965 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-115 : ℚ) / 10000) +
-        Finsupp.single (49 : YoshidaEvenIndex) ((4844 : ℚ) / 10000)
-  | 50 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1964 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-936 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((111 : ℚ) / 10000) +
-        Finsupp.single (50 : YoshidaEvenIndex) ((4832 : ℚ) / 10000)
-  | 51 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1908 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((909 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-108 : ℚ) / 10000) +
-        Finsupp.single (51 : YoshidaEvenIndex) ((4821 : ℚ) / 10000)
-  | 52 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1854 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-883 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((105 : ℚ) / 10000) +
-        Finsupp.single (52 : YoshidaEvenIndex) ((4810 : ℚ) / 10000)
-  | 53 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1803 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((859 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-102 : ℚ) / 10000) +
-        Finsupp.single (53 : YoshidaEvenIndex) ((4800 : ℚ) / 10000)
-  | 54 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1754 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-836 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((99 : ℚ) / 10000) +
-        Finsupp.single (54 : YoshidaEvenIndex) ((4790 : ℚ) / 10000)
-  | 55 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1708 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((813 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-96 : ℚ) / 10000) +
-        Finsupp.single (55 : YoshidaEvenIndex) ((4780 : ℚ) / 10000)
-  | 56 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1664 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-792 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((94 : ℚ) / 10000) +
-        Finsupp.single (56 : YoshidaEvenIndex) ((4770 : ℚ) / 10000)
-  | 57 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1621 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((772 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-91 : ℚ) / 10000) +
-        Finsupp.single (57 : YoshidaEvenIndex) ((4760 : ℚ) / 10000)
-  | 58 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1581 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-752 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((89 : ℚ) / 10000) +
-        Finsupp.single (58 : YoshidaEvenIndex) ((4751 : ℚ) / 10000)
-  | 59 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1542 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((734 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-87 : ℚ) / 10000) +
-        Finsupp.single (59 : YoshidaEvenIndex) ((4742 : ℚ) / 10000)
-  | 60 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1505 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-716 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((84 : ℚ) / 10000) +
-        Finsupp.single (60 : YoshidaEvenIndex) ((4733 : ℚ) / 10000)
-  | 61 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1470 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((699 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-82 : ℚ) / 10000) +
-        Finsupp.single (61 : YoshidaEvenIndex) ((4724 : ℚ) / 10000)
-  | 62 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1436 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-683 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((80 : ℚ) / 10000) +
-        Finsupp.single (62 : YoshidaEvenIndex) ((4716 : ℚ) / 10000)
-  | 63 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1403 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((667 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-78 : ℚ) / 10000) +
-        Finsupp.single (63 : YoshidaEvenIndex) ((4707 : ℚ) / 10000)
-  | 64 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1371 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-652 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((77 : ℚ) / 10000) +
-        Finsupp.single (64 : YoshidaEvenIndex) ((4699 : ℚ) / 10000)
-  | 65 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1341 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((637 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-75 : ℚ) / 10000) +
-        Finsupp.single (65 : YoshidaEvenIndex) ((4691 : ℚ) / 10000)
-  | 66 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1312 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-623 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((73 : ℚ) / 10000) +
-        Finsupp.single (66 : YoshidaEvenIndex) ((4683 : ℚ) / 10000)
-  | 67 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1284 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((610 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-72 : ℚ) / 10000) +
-        Finsupp.single (67 : YoshidaEvenIndex) ((4676 : ℚ) / 10000)
-  | 68 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1257 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-597 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((70 : ℚ) / 10000) +
-        Finsupp.single (68 : YoshidaEvenIndex) ((4668 : ℚ) / 10000)
-  | 69 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1231 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((585 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-68 : ℚ) / 10000) +
-        Finsupp.single (69 : YoshidaEvenIndex) ((4661 : ℚ) / 10000)
-  | 70 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1206 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-573 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((67 : ℚ) / 10000) +
-        Finsupp.single (70 : YoshidaEvenIndex) ((4653 : ℚ) / 10000)
-  | 71 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1182 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((561 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-66 : ℚ) / 10000) +
-        Finsupp.single (71 : YoshidaEvenIndex) ((4646 : ℚ) / 10000)
-  | 72 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1159 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-550 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((64 : ℚ) / 10000) +
-        Finsupp.single (72 : YoshidaEvenIndex) ((4639 : ℚ) / 10000)
-  | 73 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1136 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((539 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-63 : ℚ) / 10000) +
-        Finsupp.single (73 : YoshidaEvenIndex) ((4632 : ℚ) / 10000)
-  | 74 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1115 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-529 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((62 : ℚ) / 10000) +
-        Finsupp.single (74 : YoshidaEvenIndex) ((4626 : ℚ) / 10000)
-  | 75 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1094 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((519 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-61 : ℚ) / 10000) +
-        Finsupp.single (75 : YoshidaEvenIndex) ((4619 : ℚ) / 10000)
-  | 76 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1073 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-509 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((59 : ℚ) / 10000) +
-        Finsupp.single (76 : YoshidaEvenIndex) ((4613 : ℚ) / 10000)
-  | 77 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1054 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((500 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-58 : ℚ) / 10000) +
-        Finsupp.single (77 : YoshidaEvenIndex) ((4606 : ℚ) / 10000)
-  | 78 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-1035 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-491 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((57 : ℚ) / 10000) +
-        Finsupp.single (78 : YoshidaEvenIndex) ((4600 : ℚ) / 10000)
-  | 79 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((1016 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((482 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-56 : ℚ) / 10000) +
-        Finsupp.single (79 : YoshidaEvenIndex) ((4594 : ℚ) / 10000)
-  | 80 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-998 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-473 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((55 : ℚ) / 10000) +
-        Finsupp.single (80 : YoshidaEvenIndex) ((4588 : ℚ) / 10000)
-  | 81 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((981 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((465 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-54 : ℚ) / 10000) +
-        Finsupp.single (81 : YoshidaEvenIndex) ((4582 : ℚ) / 10000)
-  | 82 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-964 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-457 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((53 : ℚ) / 10000) +
-        Finsupp.single (82 : YoshidaEvenIndex) ((4576 : ℚ) / 10000)
-  | 83 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((948 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((449 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-52 : ℚ) / 10000) +
-        Finsupp.single (83 : YoshidaEvenIndex) ((4570 : ℚ) / 10000)
-  | 84 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-932 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-442 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((51 : ℚ) / 10000) +
-        Finsupp.single (84 : YoshidaEvenIndex) ((4564 : ℚ) / 10000)
-  | 85 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((917 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((434 : ℚ) / 10000) +
-        Finsupp.single (2 : YoshidaEvenIndex) ((-50 : ℚ) / 10000) +
-        Finsupp.single (85 : YoshidaEvenIndex) ((4559 : ℚ) / 10000)
-  | 86 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-902 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-427 : ℚ) / 10000) +
-        Finsupp.single (86 : YoshidaEvenIndex) ((4553 : ℚ) / 10000)
-  | 87 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((888 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((420 : ℚ) / 10000) +
-        Finsupp.single (87 : YoshidaEvenIndex) ((4548 : ℚ) / 10000)
-  | 88 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-873 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-414 : ℚ) / 10000) +
-        Finsupp.single (88 : YoshidaEvenIndex) ((4543 : ℚ) / 10000)
-  | 89 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((860 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((407 : ℚ) / 10000) +
-        Finsupp.single (89 : YoshidaEvenIndex) ((4537 : ℚ) / 10000)
-  | 90 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-847 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-401 : ℚ) / 10000) +
-        Finsupp.single (90 : YoshidaEvenIndex) ((4532 : ℚ) / 10000)
-  | 91 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((834 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((395 : ℚ) / 10000) +
-        Finsupp.single (91 : YoshidaEvenIndex) ((4527 : ℚ) / 10000)
-  | 92 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-821 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-389 : ℚ) / 10000) +
-        Finsupp.single (92 : YoshidaEvenIndex) ((4522 : ℚ) / 10000)
-  | 93 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((809 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((383 : ℚ) / 10000) +
-        Finsupp.single (93 : YoshidaEvenIndex) ((4517 : ℚ) / 10000)
-  | 94 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-797 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-377 : ℚ) / 10000) +
-        Finsupp.single (94 : YoshidaEvenIndex) ((4512 : ℚ) / 10000)
-  | 95 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((785 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((372 : ℚ) / 10000) +
-        Finsupp.single (95 : YoshidaEvenIndex) ((4507 : ℚ) / 10000)
-  | 96 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-774 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-366 : ℚ) / 10000) +
-        Finsupp.single (96 : YoshidaEvenIndex) ((4502 : ℚ) / 10000)
-  | 97 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((763 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((361 : ℚ) / 10000) +
-        Finsupp.single (97 : YoshidaEvenIndex) ((4498 : ℚ) / 10000)
-  | 98 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-752 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-356 : ℚ) / 10000) +
-        Finsupp.single (98 : YoshidaEvenIndex) ((4493 : ℚ) / 10000)
-  | 99 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((742 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((351 : ℚ) / 10000) +
-        Finsupp.single (99 : YoshidaEvenIndex) ((4488 : ℚ) / 10000)
-  | 100 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-732 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-346 : ℚ) / 10000) +
-        Finsupp.single (100 : YoshidaEvenIndex) ((4484 : ℚ) / 10000)
-  | 101 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((722 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((341 : ℚ) / 10000) +
-        Finsupp.single (101 : YoshidaEvenIndex) ((4479 : ℚ) / 10000)
-  | 102 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-712 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-337 : ℚ) / 10000) +
-        Finsupp.single (102 : YoshidaEvenIndex) ((4475 : ℚ) / 10000)
-  | 103 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((702 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((332 : ℚ) / 10000) +
-        Finsupp.single (103 : YoshidaEvenIndex) ((4471 : ℚ) / 10000)
-  | 104 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-693 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-328 : ℚ) / 10000) +
-        Finsupp.single (104 : YoshidaEvenIndex) ((4466 : ℚ) / 10000)
-  | 105 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((684 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((323 : ℚ) / 10000) +
-        Finsupp.single (105 : YoshidaEvenIndex) ((4462 : ℚ) / 10000)
-  | 106 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-675 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-319 : ℚ) / 10000) +
-        Finsupp.single (106 : YoshidaEvenIndex) ((4458 : ℚ) / 10000)
-  | 107 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((667 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((315 : ℚ) / 10000) +
-        Finsupp.single (107 : YoshidaEvenIndex) ((4454 : ℚ) / 10000)
-  | 108 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-658 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-311 : ℚ) / 10000) +
-        Finsupp.single (108 : YoshidaEvenIndex) ((4450 : ℚ) / 10000)
-  | 109 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((650 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((307 : ℚ) / 10000) +
-        Finsupp.single (109 : YoshidaEvenIndex) ((4446 : ℚ) / 10000)
-  | 110 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-642 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-303 : ℚ) / 10000) +
-        Finsupp.single (110 : YoshidaEvenIndex) ((4442 : ℚ) / 10000)
-  | 111 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((634 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((299 : ℚ) / 10000) +
-        Finsupp.single (111 : YoshidaEvenIndex) ((4438 : ℚ) / 10000)
-  | 112 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-626 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-296 : ℚ) / 10000) +
-        Finsupp.single (112 : YoshidaEvenIndex) ((4434 : ℚ) / 10000)
-  | 113 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((619 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((292 : ℚ) / 10000) +
-        Finsupp.single (113 : YoshidaEvenIndex) ((4430 : ℚ) / 10000)
-  | 114 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-611 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-289 : ℚ) / 10000) +
-        Finsupp.single (114 : YoshidaEvenIndex) ((4426 : ℚ) / 10000)
-  | 115 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((604 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((285 : ℚ) / 10000) +
-        Finsupp.single (115 : YoshidaEvenIndex) ((4422 : ℚ) / 10000)
-  | 116 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-597 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-282 : ℚ) / 10000) +
-        Finsupp.single (116 : YoshidaEvenIndex) ((4419 : ℚ) / 10000)
-  | 117 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((590 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((279 : ℚ) / 10000) +
-        Finsupp.single (117 : YoshidaEvenIndex) ((4415 : ℚ) / 10000)
-  | 118 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-583 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-275 : ℚ) / 10000) +
-        Finsupp.single (118 : YoshidaEvenIndex) ((4411 : ℚ) / 10000)
-  | 119 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((577 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((272 : ℚ) / 10000) +
-        Finsupp.single (119 : YoshidaEvenIndex) ((4408 : ℚ) / 10000)
-  | 120 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-570 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-269 : ℚ) / 10000) +
-        Finsupp.single (120 : YoshidaEvenIndex) ((4404 : ℚ) / 10000)
-  | 121 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((564 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((266 : ℚ) / 10000) +
-        Finsupp.single (121 : YoshidaEvenIndex) ((4401 : ℚ) / 10000)
-  | 122 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-557 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-263 : ℚ) / 10000) +
-        Finsupp.single (122 : YoshidaEvenIndex) ((4397 : ℚ) / 10000)
-  | 123 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((551 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((260 : ℚ) / 10000) +
-        Finsupp.single (123 : YoshidaEvenIndex) ((4394 : ℚ) / 10000)
-  | 124 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-545 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-257 : ℚ) / 10000) +
-        Finsupp.single (124 : YoshidaEvenIndex) ((4390 : ℚ) / 10000)
-  | 125 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((539 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((254 : ℚ) / 10000) +
-        Finsupp.single (125 : YoshidaEvenIndex) ((4387 : ℚ) / 10000)
-  | 126 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-534 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-252 : ℚ) / 10000) +
-        Finsupp.single (126 : YoshidaEvenIndex) ((4383 : ℚ) / 10000)
-  | 127 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((528 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((249 : ℚ) / 10000) +
-        Finsupp.single (127 : YoshidaEvenIndex) ((4380 : ℚ) / 10000)
-  | 128 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-522 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-246 : ℚ) / 10000) +
-        Finsupp.single (128 : YoshidaEvenIndex) ((4377 : ℚ) / 10000)
-  | 129 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((517 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((244 : ℚ) / 10000) +
-        Finsupp.single (129 : YoshidaEvenIndex) ((4374 : ℚ) / 10000)
-  | 130 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-512 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-241 : ℚ) / 10000) +
-        Finsupp.single (130 : YoshidaEvenIndex) ((4370 : ℚ) / 10000)
-  | 131 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((506 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((239 : ℚ) / 10000) +
-        Finsupp.single (131 : YoshidaEvenIndex) ((4367 : ℚ) / 10000)
-  | 132 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-501 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-236 : ℚ) / 10000) +
-        Finsupp.single (132 : YoshidaEvenIndex) ((4364 : ℚ) / 10000)
-  | 133 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((496 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((234 : ℚ) / 10000) +
-        Finsupp.single (133 : YoshidaEvenIndex) ((4361 : ℚ) / 10000)
-  | 134 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-491 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-232 : ℚ) / 10000) +
-        Finsupp.single (134 : YoshidaEvenIndex) ((4358 : ℚ) / 10000)
-  | 135 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((486 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((229 : ℚ) / 10000) +
-        Finsupp.single (135 : YoshidaEvenIndex) ((4355 : ℚ) / 10000)
-  | 136 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-481 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-227 : ℚ) / 10000) +
-        Finsupp.single (136 : YoshidaEvenIndex) ((4352 : ℚ) / 10000)
-  | 137 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((477 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((225 : ℚ) / 10000) +
-        Finsupp.single (137 : YoshidaEvenIndex) ((4349 : ℚ) / 10000)
-  | 138 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-472 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-223 : ℚ) / 10000) +
-        Finsupp.single (138 : YoshidaEvenIndex) ((4346 : ℚ) / 10000)
-  | 139 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((468 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((220 : ℚ) / 10000) +
-        Finsupp.single (139 : YoshidaEvenIndex) ((4343 : ℚ) / 10000)
-  | 140 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-463 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-218 : ℚ) / 10000) +
-        Finsupp.single (140 : YoshidaEvenIndex) ((4340 : ℚ) / 10000)
-  | 141 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((459 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((216 : ℚ) / 10000) +
-        Finsupp.single (141 : YoshidaEvenIndex) ((4337 : ℚ) / 10000)
-  | 142 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-454 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-214 : ℚ) / 10000) +
-        Finsupp.single (142 : YoshidaEvenIndex) ((4334 : ℚ) / 10000)
-  | 143 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((450 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((212 : ℚ) / 10000) +
-        Finsupp.single (143 : YoshidaEvenIndex) ((4331 : ℚ) / 10000)
-  | 144 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-446 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-210 : ℚ) / 10000) +
-        Finsupp.single (144 : YoshidaEvenIndex) ((4328 : ℚ) / 10000)
-  | 145 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((442 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((208 : ℚ) / 10000) +
-        Finsupp.single (145 : YoshidaEvenIndex) ((4325 : ℚ) / 10000)
-  | 146 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-438 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-206 : ℚ) / 10000) +
-        Finsupp.single (146 : YoshidaEvenIndex) ((4323 : ℚ) / 10000)
-  | 147 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((434 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((204 : ℚ) / 10000) +
-        Finsupp.single (147 : YoshidaEvenIndex) ((4320 : ℚ) / 10000)
-  | 148 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-430 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-203 : ℚ) / 10000) +
-        Finsupp.single (148 : YoshidaEvenIndex) ((4317 : ℚ) / 10000)
-  | 149 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((426 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((201 : ℚ) / 10000) +
-        Finsupp.single (149 : YoshidaEvenIndex) ((4315 : ℚ) / 10000)
-  | 150 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-422 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-199 : ℚ) / 10000) +
-        Finsupp.single (150 : YoshidaEvenIndex) ((4312 : ℚ) / 10000)
-  | 151 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((419 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((197 : ℚ) / 10000) +
-        Finsupp.single (151 : YoshidaEvenIndex) ((4309 : ℚ) / 10000)
-  | 152 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-415 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-195 : ℚ) / 10000) +
-        Finsupp.single (152 : YoshidaEvenIndex) ((4307 : ℚ) / 10000)
-  | 153 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((411 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((194 : ℚ) / 10000) +
-        Finsupp.single (153 : YoshidaEvenIndex) ((4304 : ℚ) / 10000)
-  | 154 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-408 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-192 : ℚ) / 10000) +
-        Finsupp.single (154 : YoshidaEvenIndex) ((4301 : ℚ) / 10000)
-  | 155 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((404 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((190 : ℚ) / 10000) +
-        Finsupp.single (155 : YoshidaEvenIndex) ((4299 : ℚ) / 10000)
-  | 156 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-401 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-189 : ℚ) / 10000) +
-        Finsupp.single (156 : YoshidaEvenIndex) ((4296 : ℚ) / 10000)
-  | 157 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((398 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((187 : ℚ) / 10000) +
-        Finsupp.single (157 : YoshidaEvenIndex) ((4294 : ℚ) / 10000)
-  | 158 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-394 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-186 : ℚ) / 10000) +
-        Finsupp.single (158 : YoshidaEvenIndex) ((4291 : ℚ) / 10000)
-  | 159 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((391 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((184 : ℚ) / 10000) +
-        Finsupp.single (159 : YoshidaEvenIndex) ((4289 : ℚ) / 10000)
-  | 160 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-388 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-182 : ℚ) / 10000) +
-        Finsupp.single (160 : YoshidaEvenIndex) ((4286 : ℚ) / 10000)
-  | 161 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((384 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((181 : ℚ) / 10000) +
-        Finsupp.single (161 : YoshidaEvenIndex) ((4284 : ℚ) / 10000)
-  | 162 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-381 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-180 : ℚ) / 10000) +
-        Finsupp.single (162 : YoshidaEvenIndex) ((4281 : ℚ) / 10000)
-  | 163 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((378 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((178 : ℚ) / 10000) +
-        Finsupp.single (163 : YoshidaEvenIndex) ((4279 : ℚ) / 10000)
-  | 164 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-375 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-177 : ℚ) / 10000) +
-        Finsupp.single (164 : YoshidaEvenIndex) ((4277 : ℚ) / 10000)
-  | 165 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((372 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((175 : ℚ) / 10000) +
-        Finsupp.single (165 : YoshidaEvenIndex) ((4274 : ℚ) / 10000)
-  | 166 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-369 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-174 : ℚ) / 10000) +
-        Finsupp.single (166 : YoshidaEvenIndex) ((4272 : ℚ) / 10000)
-  | 167 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((366 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((172 : ℚ) / 10000) +
-        Finsupp.single (167 : YoshidaEvenIndex) ((4270 : ℚ) / 10000)
-  | 168 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-363 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-171 : ℚ) / 10000) +
-        Finsupp.single (168 : YoshidaEvenIndex) ((4267 : ℚ) / 10000)
-  | 169 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((361 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((170 : ℚ) / 10000) +
-        Finsupp.single (169 : YoshidaEvenIndex) ((4265 : ℚ) / 10000)
-  | 170 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-358 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-168 : ℚ) / 10000) +
-        Finsupp.single (170 : YoshidaEvenIndex) ((4263 : ℚ) / 10000)
-  | 171 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((355 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((167 : ℚ) / 10000) +
-        Finsupp.single (171 : YoshidaEvenIndex) ((4260 : ℚ) / 10000)
-  | 172 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-352 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-166 : ℚ) / 10000) +
-        Finsupp.single (172 : YoshidaEvenIndex) ((4258 : ℚ) / 10000)
-  | 173 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((350 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((165 : ℚ) / 10000) +
-        Finsupp.single (173 : YoshidaEvenIndex) ((4256 : ℚ) / 10000)
-  | 174 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-347 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-163 : ℚ) / 10000) +
-        Finsupp.single (174 : YoshidaEvenIndex) ((4254 : ℚ) / 10000)
-  | 175 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((344 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((162 : ℚ) / 10000) +
-        Finsupp.single (175 : YoshidaEvenIndex) ((4251 : ℚ) / 10000)
-  | 176 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-342 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-161 : ℚ) / 10000) +
-        Finsupp.single (176 : YoshidaEvenIndex) ((4249 : ℚ) / 10000)
-  | 177 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((339 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((160 : ℚ) / 10000) +
-        Finsupp.single (177 : YoshidaEvenIndex) ((4247 : ℚ) / 10000)
-  | 178 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-337 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-158 : ℚ) / 10000) +
-        Finsupp.single (178 : YoshidaEvenIndex) ((4245 : ℚ) / 10000)
-  | 179 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((334 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((157 : ℚ) / 10000) +
-        Finsupp.single (179 : YoshidaEvenIndex) ((4243 : ℚ) / 10000)
-  | 180 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-332 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-156 : ℚ) / 10000) +
-        Finsupp.single (180 : YoshidaEvenIndex) ((4241 : ℚ) / 10000)
-  | 181 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((330 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((155 : ℚ) / 10000) +
-        Finsupp.single (181 : YoshidaEvenIndex) ((4239 : ℚ) / 10000)
-  | 182 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-327 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-154 : ℚ) / 10000) +
-        Finsupp.single (182 : YoshidaEvenIndex) ((4236 : ℚ) / 10000)
-  | 183 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((325 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((153 : ℚ) / 10000) +
-        Finsupp.single (183 : YoshidaEvenIndex) ((4234 : ℚ) / 10000)
-  | 184 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-323 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-152 : ℚ) / 10000) +
-        Finsupp.single (184 : YoshidaEvenIndex) ((4232 : ℚ) / 10000)
-  | 185 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((320 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((151 : ℚ) / 10000) +
-        Finsupp.single (185 : YoshidaEvenIndex) ((4230 : ℚ) / 10000)
-  | 186 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-318 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-150 : ℚ) / 10000) +
-        Finsupp.single (186 : YoshidaEvenIndex) ((4228 : ℚ) / 10000)
-  | 187 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((316 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((148 : ℚ) / 10000) +
-        Finsupp.single (187 : YoshidaEvenIndex) ((4226 : ℚ) / 10000)
-  | 188 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-314 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-147 : ℚ) / 10000) +
-        Finsupp.single (188 : YoshidaEvenIndex) ((4224 : ℚ) / 10000)
-  | 189 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((311 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((146 : ℚ) / 10000) +
-        Finsupp.single (189 : YoshidaEvenIndex) ((4222 : ℚ) / 10000)
-  | 190 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-309 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-145 : ℚ) / 10000) +
-        Finsupp.single (190 : YoshidaEvenIndex) ((4220 : ℚ) / 10000)
-  | 191 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((307 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((144 : ℚ) / 10000) +
-        Finsupp.single (191 : YoshidaEvenIndex) ((4218 : ℚ) / 10000)
-  | 192 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-305 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-143 : ℚ) / 10000) +
-        Finsupp.single (192 : YoshidaEvenIndex) ((4216 : ℚ) / 10000)
-  | 193 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((303 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((142 : ℚ) / 10000) +
-        Finsupp.single (193 : YoshidaEvenIndex) ((4214 : ℚ) / 10000)
-  | 194 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-301 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-141 : ℚ) / 10000) +
-        Finsupp.single (194 : YoshidaEvenIndex) ((4212 : ℚ) / 10000)
-  | 195 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((299 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((141 : ℚ) / 10000) +
-        Finsupp.single (195 : YoshidaEvenIndex) ((4211 : ℚ) / 10000)
-  | 196 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-297 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-140 : ℚ) / 10000) +
-        Finsupp.single (196 : YoshidaEvenIndex) ((4209 : ℚ) / 10000)
-  | 197 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((295 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((139 : ℚ) / 10000) +
-        Finsupp.single (197 : YoshidaEvenIndex) ((4207 : ℚ) / 10000)
-  | 198 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((-293 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((-138 : ℚ) / 10000) +
-        Finsupp.single (198 : YoshidaEvenIndex) ((4205 : ℚ) / 10000)
-  | 199 =>
-      Finsupp.single (0 : YoshidaEvenIndex) ((291 : ℚ) / 10000) +
-        Finsupp.single (1 : YoshidaEvenIndex) ((137 : ℚ) / 10000) +
-        Finsupp.single (199 : YoshidaEvenIndex) ((4203 : ℚ) / 10000)
-  | _ => 0
+  | 0 => [
+      ((0 : YoshidaEvenIndex), ((23352 : ℚ) / 10000))
+    ]
+  | 1 => [
+      ((0 : YoshidaEvenIndex), ((98806 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((55474 : ℚ) / 10000))
+    ]
+  | 2 => [
+      ((0 : YoshidaEvenIndex), ((-124293 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-62085 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((14809 : ℚ) / 10000))
+    ]
+  | 3 => [
+      ((0 : YoshidaEvenIndex), ((110834 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((54944 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-7348 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((9860 : ℚ) / 10000))
+    ]
+  | 4 => [
+      ((0 : YoshidaEvenIndex), ((-87516 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-43200 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((5719 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-2256 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((8181 : ℚ) / 10000))
+    ]
+  | 5 => [
+      ((0 : YoshidaEvenIndex), ((67571 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((33253 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-4368 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((1705 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-901 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((7396 : ℚ) / 10000))
+    ]
+  | 6 => [
+      ((0 : YoshidaEvenIndex), ((-52814 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-25928 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((3383 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-1308 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((683 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((-414 : ℚ) / 10000)),
+      ((6 : YoshidaEvenIndex), ((6946 : ℚ) / 10000))
+    ]
+  | 7 => [
+      ((0 : YoshidaEvenIndex), ((42167 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((20659 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-2680 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((1027 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-530 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((317 : ℚ) / 10000)),
+      ((6 : YoshidaEvenIndex), ((-207 : ℚ) / 10000)),
+      ((7 : YoshidaEvenIndex), ((6648 : ℚ) / 10000))
+    ]
+  | 8 => [
+      ((0 : YoshidaEvenIndex), ((-34403 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-16825 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((2172 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-825 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((421 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((-249 : ℚ) / 10000)),
+      ((6 : YoshidaEvenIndex), ((160 : ℚ) / 10000)),
+      ((7 : YoshidaEvenIndex), ((-109 : ℚ) / 10000)),
+      ((8 : YoshidaEvenIndex), ((6432 : ℚ) / 10000))
+    ]
+  | 9 => [
+      ((0 : YoshidaEvenIndex), ((28625 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((13977 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-1796 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((677 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-342 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((199 : ℚ) / 10000)),
+      ((6 : YoshidaEvenIndex), ((-126 : ℚ) / 10000)),
+      ((7 : YoshidaEvenIndex), ((84 : ℚ) / 10000)),
+      ((8 : YoshidaEvenIndex), ((-57 : ℚ) / 10000)),
+      ((9 : YoshidaEvenIndex), ((6266 : ℚ) / 10000))
+    ]
+  | 10 => [
+      ((0 : YoshidaEvenIndex), ((-24227 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-11812 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((1511 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-566 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((283 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((-162 : ℚ) / 10000)),
+      ((6 : YoshidaEvenIndex), ((101 : ℚ) / 10000)),
+      ((7 : YoshidaEvenIndex), ((-65 : ℚ) / 10000)),
+      ((10 : YoshidaEvenIndex), ((6131 : ℚ) / 10000))
+    ]
+  | 11 => [
+      ((0 : YoshidaEvenIndex), ((20808 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((10132 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-1291 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((480 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-238 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((134 : ℚ) / 10000)),
+      ((6 : YoshidaEvenIndex), ((-82 : ℚ) / 10000)),
+      ((7 : YoshidaEvenIndex), ((52 : ℚ) / 10000)),
+      ((11 : YoshidaEvenIndex), ((6018 : ℚ) / 10000))
+    ]
+  | 12 => [
+      ((0 : YoshidaEvenIndex), ((-18100 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-8803 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((1118 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-413 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((202 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((-113 : ℚ) / 10000)),
+      ((6 : YoshidaEvenIndex), ((67 : ℚ) / 10000)),
+      ((12 : YoshidaEvenIndex), ((5922 : ℚ) / 10000))
+    ]
+  | 13 => [
+      ((0 : YoshidaEvenIndex), ((15916 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((7732 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-978 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((359 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-174 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((96 : ℚ) / 10000)),
+      ((6 : YoshidaEvenIndex), ((-56 : ℚ) / 10000)),
+      ((13 : YoshidaEvenIndex), ((5838 : ℚ) / 10000))
+    ]
+  | 14 => [
+      ((0 : YoshidaEvenIndex), ((-14130 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-6857 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((865 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-316 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((152 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((-82 : ℚ) / 10000)),
+      ((14 : YoshidaEvenIndex), ((5765 : ℚ) / 10000))
+    ]
+  | 15 => [
+      ((0 : YoshidaEvenIndex), ((12649 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((6133 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-771 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((280 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-133 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((71 : ℚ) / 10000)),
+      ((15 : YoshidaEvenIndex), ((5699 : ℚ) / 10000))
+    ]
+  | 16 => [
+      ((0 : YoshidaEvenIndex), ((-11406 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-5525 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((693 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-250 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((118 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((-62 : ℚ) / 10000)),
+      ((16 : YoshidaEvenIndex), ((5639 : ℚ) / 10000))
+    ]
+  | 17 => [
+      ((0 : YoshidaEvenIndex), ((10352 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((5010 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-626 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((225 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-105 : ℚ) / 10000)),
+      ((5 : YoshidaEvenIndex), ((55 : ℚ) / 10000)),
+      ((17 : YoshidaEvenIndex), ((5585 : ℚ) / 10000))
+    ]
+  | 18 => [
+      ((0 : YoshidaEvenIndex), ((-9450 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-4570 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((570 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-204 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((95 : ℚ) / 10000)),
+      ((18 : YoshidaEvenIndex), ((5536 : ℚ) / 10000))
+    ]
+  | 19 => [
+      ((0 : YoshidaEvenIndex), ((8671 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((4190 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-521 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((185 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-85 : ℚ) / 10000)),
+      ((19 : YoshidaEvenIndex), ((5490 : ℚ) / 10000))
+    ]
+  | 20 => [
+      ((0 : YoshidaEvenIndex), ((-7993 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-3859 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((479 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-170 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((77 : ℚ) / 10000)),
+      ((20 : YoshidaEvenIndex), ((5448 : ℚ) / 10000))
+    ]
+  | 21 => [
+      ((0 : YoshidaEvenIndex), ((7399 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((3570 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-442 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((156 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-71 : ℚ) / 10000)),
+      ((21 : YoshidaEvenIndex), ((5409 : ℚ) / 10000))
+    ]
+  | 22 => [
+      ((0 : YoshidaEvenIndex), ((-6875 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-3315 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((409 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-144 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((65 : ℚ) / 10000)),
+      ((22 : YoshidaEvenIndex), ((5373 : ℚ) / 10000))
+    ]
+  | 23 => [
+      ((0 : YoshidaEvenIndex), ((6411 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((3089 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-381 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((133 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-59 : ℚ) / 10000)),
+      ((23 : YoshidaEvenIndex), ((5339 : ℚ) / 10000))
+    ]
+  | 24 => [
+      ((0 : YoshidaEvenIndex), ((-5996 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-2888 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((355 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-124 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((55 : ℚ) / 10000)),
+      ((24 : YoshidaEvenIndex), ((5307 : ℚ) / 10000))
+    ]
+  | 25 => [
+      ((0 : YoshidaEvenIndex), ((5626 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((2708 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-332 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((115 : ℚ) / 10000)),
+      ((4 : YoshidaEvenIndex), ((-51 : ℚ) / 10000)),
+      ((25 : YoshidaEvenIndex), ((5277 : ℚ) / 10000))
+    ]
+  | 26 => [
+      ((0 : YoshidaEvenIndex), ((-5292 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-2545 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((312 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-108 : ℚ) / 10000)),
+      ((26 : YoshidaEvenIndex), ((5248 : ℚ) / 10000))
+    ]
+  | 27 => [
+      ((0 : YoshidaEvenIndex), ((4990 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((2399 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-293 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((101 : ℚ) / 10000)),
+      ((27 : YoshidaEvenIndex), ((5221 : ℚ) / 10000))
+    ]
+  | 28 => [
+      ((0 : YoshidaEvenIndex), ((-4716 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-2266 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((277 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-95 : ℚ) / 10000)),
+      ((28 : YoshidaEvenIndex), ((5195 : ℚ) / 10000))
+    ]
+  | 29 => [
+      ((0 : YoshidaEvenIndex), ((4467 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((2146 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-262 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((89 : ℚ) / 10000)),
+      ((29 : YoshidaEvenIndex), ((5171 : ℚ) / 10000))
+    ]
+  | 30 => [
+      ((0 : YoshidaEvenIndex), ((-4240 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-2035 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((248 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-84 : ℚ) / 10000)),
+      ((30 : YoshidaEvenIndex), ((5148 : ℚ) / 10000))
+    ]
+  | 31 => [
+      ((0 : YoshidaEvenIndex), ((4031 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1934 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-235 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((80 : ℚ) / 10000)),
+      ((31 : YoshidaEvenIndex), ((5126 : ℚ) / 10000))
+    ]
+  | 32 => [
+      ((0 : YoshidaEvenIndex), ((-3840 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-1842 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((223 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-76 : ℚ) / 10000)),
+      ((32 : YoshidaEvenIndex), ((5105 : ℚ) / 10000))
+    ]
+  | 33 => [
+      ((0 : YoshidaEvenIndex), ((3663 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1756 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-213 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((72 : ℚ) / 10000)),
+      ((33 : YoshidaEvenIndex), ((5084 : ℚ) / 10000))
+    ]
+  | 34 => [
+      ((0 : YoshidaEvenIndex), ((-3500 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-1677 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((203 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-68 : ℚ) / 10000)),
+      ((34 : YoshidaEvenIndex), ((5065 : ℚ) / 10000))
+    ]
+  | 35 => [
+      ((0 : YoshidaEvenIndex), ((3349 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1604 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-194 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((65 : ℚ) / 10000)),
+      ((35 : YoshidaEvenIndex), ((5046 : ℚ) / 10000))
+    ]
+  | 36 => [
+      ((0 : YoshidaEvenIndex), ((-3209 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-1536 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((185 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-62 : ℚ) / 10000)),
+      ((36 : YoshidaEvenIndex), ((5028 : ℚ) / 10000))
+    ]
+  | 37 => [
+      ((0 : YoshidaEvenIndex), ((3078 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1473 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-178 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((59 : ℚ) / 10000)),
+      ((37 : YoshidaEvenIndex), ((5011 : ℚ) / 10000))
+    ]
+  | 38 => [
+      ((0 : YoshidaEvenIndex), ((-2957 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-1415 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((170 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-57 : ℚ) / 10000)),
+      ((38 : YoshidaEvenIndex), ((4994 : ℚ) / 10000))
+    ]
+  | 39 => [
+      ((0 : YoshidaEvenIndex), ((2843 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1360 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-163 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((54 : ℚ) / 10000)),
+      ((39 : YoshidaEvenIndex), ((4978 : ℚ) / 10000))
+    ]
+  | 40 => [
+      ((0 : YoshidaEvenIndex), ((-2737 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-1309 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((157 : ℚ) / 10000)),
+      ((3 : YoshidaEvenIndex), ((-52 : ℚ) / 10000)),
+      ((40 : YoshidaEvenIndex), ((4963 : ℚ) / 10000))
+    ]
+  | 41 => [
+      ((0 : YoshidaEvenIndex), ((2637 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1261 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-151 : ℚ) / 10000)),
+      ((41 : YoshidaEvenIndex), ((4948 : ℚ) / 10000))
+    ]
+  | 42 => [
+      ((0 : YoshidaEvenIndex), ((-2544 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-1216 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((146 : ℚ) / 10000)),
+      ((42 : YoshidaEvenIndex), ((4933 : ℚ) / 10000))
+    ]
+  | 43 => [
+      ((0 : YoshidaEvenIndex), ((2456 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1173 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-140 : ℚ) / 10000)),
+      ((43 : YoshidaEvenIndex), ((4919 : ℚ) / 10000))
+    ]
+  | 44 => [
+      ((0 : YoshidaEvenIndex), ((-2373 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-1133 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((135 : ℚ) / 10000)),
+      ((44 : YoshidaEvenIndex), ((4906 : ℚ) / 10000))
+    ]
+  | 45 => [
+      ((0 : YoshidaEvenIndex), ((2295 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1096 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-131 : ℚ) / 10000)),
+      ((45 : YoshidaEvenIndex), ((4893 : ℚ) / 10000))
+    ]
+  | 46 => [
+      ((0 : YoshidaEvenIndex), ((-2222 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-1060 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((126 : ℚ) / 10000)),
+      ((46 : YoshidaEvenIndex), ((4880 : ℚ) / 10000))
+    ]
+  | 47 => [
+      ((0 : YoshidaEvenIndex), ((2152 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((1027 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-122 : ℚ) / 10000)),
+      ((47 : YoshidaEvenIndex), ((4867 : ℚ) / 10000))
+    ]
+  | 48 => [
+      ((0 : YoshidaEvenIndex), ((-2086 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-995 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((118 : ℚ) / 10000)),
+      ((48 : YoshidaEvenIndex), ((4855 : ℚ) / 10000))
+    ]
+  | 49 => [
+      ((0 : YoshidaEvenIndex), ((2023 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((965 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-115 : ℚ) / 10000)),
+      ((49 : YoshidaEvenIndex), ((4844 : ℚ) / 10000))
+    ]
+  | 50 => [
+      ((0 : YoshidaEvenIndex), ((-1964 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-936 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((111 : ℚ) / 10000)),
+      ((50 : YoshidaEvenIndex), ((4832 : ℚ) / 10000))
+    ]
+  | 51 => [
+      ((0 : YoshidaEvenIndex), ((1908 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((909 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-108 : ℚ) / 10000)),
+      ((51 : YoshidaEvenIndex), ((4821 : ℚ) / 10000))
+    ]
+  | 52 => [
+      ((0 : YoshidaEvenIndex), ((-1854 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-883 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((105 : ℚ) / 10000)),
+      ((52 : YoshidaEvenIndex), ((4810 : ℚ) / 10000))
+    ]
+  | 53 => [
+      ((0 : YoshidaEvenIndex), ((1803 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((859 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-102 : ℚ) / 10000)),
+      ((53 : YoshidaEvenIndex), ((4800 : ℚ) / 10000))
+    ]
+  | 54 => [
+      ((0 : YoshidaEvenIndex), ((-1754 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-836 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((99 : ℚ) / 10000)),
+      ((54 : YoshidaEvenIndex), ((4790 : ℚ) / 10000))
+    ]
+  | 55 => [
+      ((0 : YoshidaEvenIndex), ((1708 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((813 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-96 : ℚ) / 10000)),
+      ((55 : YoshidaEvenIndex), ((4780 : ℚ) / 10000))
+    ]
+  | 56 => [
+      ((0 : YoshidaEvenIndex), ((-1664 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-792 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((94 : ℚ) / 10000)),
+      ((56 : YoshidaEvenIndex), ((4770 : ℚ) / 10000))
+    ]
+  | 57 => [
+      ((0 : YoshidaEvenIndex), ((1621 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((772 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-91 : ℚ) / 10000)),
+      ((57 : YoshidaEvenIndex), ((4760 : ℚ) / 10000))
+    ]
+  | 58 => [
+      ((0 : YoshidaEvenIndex), ((-1581 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-752 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((89 : ℚ) / 10000)),
+      ((58 : YoshidaEvenIndex), ((4751 : ℚ) / 10000))
+    ]
+  | 59 => [
+      ((0 : YoshidaEvenIndex), ((1542 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((734 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-87 : ℚ) / 10000)),
+      ((59 : YoshidaEvenIndex), ((4742 : ℚ) / 10000))
+    ]
+  | 60 => [
+      ((0 : YoshidaEvenIndex), ((-1505 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-716 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((84 : ℚ) / 10000)),
+      ((60 : YoshidaEvenIndex), ((4733 : ℚ) / 10000))
+    ]
+  | 61 => [
+      ((0 : YoshidaEvenIndex), ((1470 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((699 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-82 : ℚ) / 10000)),
+      ((61 : YoshidaEvenIndex), ((4724 : ℚ) / 10000))
+    ]
+  | 62 => [
+      ((0 : YoshidaEvenIndex), ((-1436 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-683 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((80 : ℚ) / 10000)),
+      ((62 : YoshidaEvenIndex), ((4716 : ℚ) / 10000))
+    ]
+  | 63 => [
+      ((0 : YoshidaEvenIndex), ((1403 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((667 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-78 : ℚ) / 10000)),
+      ((63 : YoshidaEvenIndex), ((4707 : ℚ) / 10000))
+    ]
+  | 64 => [
+      ((0 : YoshidaEvenIndex), ((-1371 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-652 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((77 : ℚ) / 10000)),
+      ((64 : YoshidaEvenIndex), ((4699 : ℚ) / 10000))
+    ]
+  | 65 => [
+      ((0 : YoshidaEvenIndex), ((1341 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((637 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-75 : ℚ) / 10000)),
+      ((65 : YoshidaEvenIndex), ((4691 : ℚ) / 10000))
+    ]
+  | 66 => [
+      ((0 : YoshidaEvenIndex), ((-1312 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-623 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((73 : ℚ) / 10000)),
+      ((66 : YoshidaEvenIndex), ((4683 : ℚ) / 10000))
+    ]
+  | 67 => [
+      ((0 : YoshidaEvenIndex), ((1284 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((610 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-72 : ℚ) / 10000)),
+      ((67 : YoshidaEvenIndex), ((4676 : ℚ) / 10000))
+    ]
+  | 68 => [
+      ((0 : YoshidaEvenIndex), ((-1257 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-597 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((70 : ℚ) / 10000)),
+      ((68 : YoshidaEvenIndex), ((4668 : ℚ) / 10000))
+    ]
+  | 69 => [
+      ((0 : YoshidaEvenIndex), ((1231 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((585 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-68 : ℚ) / 10000)),
+      ((69 : YoshidaEvenIndex), ((4661 : ℚ) / 10000))
+    ]
+  | 70 => [
+      ((0 : YoshidaEvenIndex), ((-1206 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-573 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((67 : ℚ) / 10000)),
+      ((70 : YoshidaEvenIndex), ((4653 : ℚ) / 10000))
+    ]
+  | 71 => [
+      ((0 : YoshidaEvenIndex), ((1182 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((561 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-66 : ℚ) / 10000)),
+      ((71 : YoshidaEvenIndex), ((4646 : ℚ) / 10000))
+    ]
+  | 72 => [
+      ((0 : YoshidaEvenIndex), ((-1159 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-550 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((64 : ℚ) / 10000)),
+      ((72 : YoshidaEvenIndex), ((4639 : ℚ) / 10000))
+    ]
+  | 73 => [
+      ((0 : YoshidaEvenIndex), ((1136 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((539 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-63 : ℚ) / 10000)),
+      ((73 : YoshidaEvenIndex), ((4632 : ℚ) / 10000))
+    ]
+  | 74 => [
+      ((0 : YoshidaEvenIndex), ((-1115 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-529 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((62 : ℚ) / 10000)),
+      ((74 : YoshidaEvenIndex), ((4626 : ℚ) / 10000))
+    ]
+  | 75 => [
+      ((0 : YoshidaEvenIndex), ((1094 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((519 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-61 : ℚ) / 10000)),
+      ((75 : YoshidaEvenIndex), ((4619 : ℚ) / 10000))
+    ]
+  | 76 => [
+      ((0 : YoshidaEvenIndex), ((-1073 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-509 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((59 : ℚ) / 10000)),
+      ((76 : YoshidaEvenIndex), ((4613 : ℚ) / 10000))
+    ]
+  | 77 => [
+      ((0 : YoshidaEvenIndex), ((1054 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((500 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-58 : ℚ) / 10000)),
+      ((77 : YoshidaEvenIndex), ((4606 : ℚ) / 10000))
+    ]
+  | 78 => [
+      ((0 : YoshidaEvenIndex), ((-1035 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-491 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((57 : ℚ) / 10000)),
+      ((78 : YoshidaEvenIndex), ((4600 : ℚ) / 10000))
+    ]
+  | 79 => [
+      ((0 : YoshidaEvenIndex), ((1016 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((482 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-56 : ℚ) / 10000)),
+      ((79 : YoshidaEvenIndex), ((4594 : ℚ) / 10000))
+    ]
+  | 80 => [
+      ((0 : YoshidaEvenIndex), ((-998 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-473 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((55 : ℚ) / 10000)),
+      ((80 : YoshidaEvenIndex), ((4588 : ℚ) / 10000))
+    ]
+  | 81 => [
+      ((0 : YoshidaEvenIndex), ((981 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((465 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-54 : ℚ) / 10000)),
+      ((81 : YoshidaEvenIndex), ((4582 : ℚ) / 10000))
+    ]
+  | 82 => [
+      ((0 : YoshidaEvenIndex), ((-964 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-457 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((53 : ℚ) / 10000)),
+      ((82 : YoshidaEvenIndex), ((4576 : ℚ) / 10000))
+    ]
+  | 83 => [
+      ((0 : YoshidaEvenIndex), ((948 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((449 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-52 : ℚ) / 10000)),
+      ((83 : YoshidaEvenIndex), ((4570 : ℚ) / 10000))
+    ]
+  | 84 => [
+      ((0 : YoshidaEvenIndex), ((-932 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-442 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((51 : ℚ) / 10000)),
+      ((84 : YoshidaEvenIndex), ((4564 : ℚ) / 10000))
+    ]
+  | 85 => [
+      ((0 : YoshidaEvenIndex), ((917 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((434 : ℚ) / 10000)),
+      ((2 : YoshidaEvenIndex), ((-50 : ℚ) / 10000)),
+      ((85 : YoshidaEvenIndex), ((4559 : ℚ) / 10000))
+    ]
+  | 86 => [
+      ((0 : YoshidaEvenIndex), ((-902 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-427 : ℚ) / 10000)),
+      ((86 : YoshidaEvenIndex), ((4553 : ℚ) / 10000))
+    ]
+  | 87 => [
+      ((0 : YoshidaEvenIndex), ((888 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((420 : ℚ) / 10000)),
+      ((87 : YoshidaEvenIndex), ((4548 : ℚ) / 10000))
+    ]
+  | 88 => [
+      ((0 : YoshidaEvenIndex), ((-873 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-414 : ℚ) / 10000)),
+      ((88 : YoshidaEvenIndex), ((4543 : ℚ) / 10000))
+    ]
+  | 89 => [
+      ((0 : YoshidaEvenIndex), ((860 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((407 : ℚ) / 10000)),
+      ((89 : YoshidaEvenIndex), ((4537 : ℚ) / 10000))
+    ]
+  | 90 => [
+      ((0 : YoshidaEvenIndex), ((-847 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-401 : ℚ) / 10000)),
+      ((90 : YoshidaEvenIndex), ((4532 : ℚ) / 10000))
+    ]
+  | 91 => [
+      ((0 : YoshidaEvenIndex), ((834 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((395 : ℚ) / 10000)),
+      ((91 : YoshidaEvenIndex), ((4527 : ℚ) / 10000))
+    ]
+  | 92 => [
+      ((0 : YoshidaEvenIndex), ((-821 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-389 : ℚ) / 10000)),
+      ((92 : YoshidaEvenIndex), ((4522 : ℚ) / 10000))
+    ]
+  | 93 => [
+      ((0 : YoshidaEvenIndex), ((809 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((383 : ℚ) / 10000)),
+      ((93 : YoshidaEvenIndex), ((4517 : ℚ) / 10000))
+    ]
+  | 94 => [
+      ((0 : YoshidaEvenIndex), ((-797 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-377 : ℚ) / 10000)),
+      ((94 : YoshidaEvenIndex), ((4512 : ℚ) / 10000))
+    ]
+  | 95 => [
+      ((0 : YoshidaEvenIndex), ((785 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((372 : ℚ) / 10000)),
+      ((95 : YoshidaEvenIndex), ((4507 : ℚ) / 10000))
+    ]
+  | 96 => [
+      ((0 : YoshidaEvenIndex), ((-774 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-366 : ℚ) / 10000)),
+      ((96 : YoshidaEvenIndex), ((4502 : ℚ) / 10000))
+    ]
+  | 97 => [
+      ((0 : YoshidaEvenIndex), ((763 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((361 : ℚ) / 10000)),
+      ((97 : YoshidaEvenIndex), ((4498 : ℚ) / 10000))
+    ]
+  | 98 => [
+      ((0 : YoshidaEvenIndex), ((-752 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-356 : ℚ) / 10000)),
+      ((98 : YoshidaEvenIndex), ((4493 : ℚ) / 10000))
+    ]
+  | 99 => [
+      ((0 : YoshidaEvenIndex), ((742 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((351 : ℚ) / 10000)),
+      ((99 : YoshidaEvenIndex), ((4488 : ℚ) / 10000))
+    ]
+  | 100 => [
+      ((0 : YoshidaEvenIndex), ((-732 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-346 : ℚ) / 10000)),
+      ((100 : YoshidaEvenIndex), ((4484 : ℚ) / 10000))
+    ]
+  | 101 => [
+      ((0 : YoshidaEvenIndex), ((722 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((341 : ℚ) / 10000)),
+      ((101 : YoshidaEvenIndex), ((4479 : ℚ) / 10000))
+    ]
+  | 102 => [
+      ((0 : YoshidaEvenIndex), ((-712 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-337 : ℚ) / 10000)),
+      ((102 : YoshidaEvenIndex), ((4475 : ℚ) / 10000))
+    ]
+  | 103 => [
+      ((0 : YoshidaEvenIndex), ((702 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((332 : ℚ) / 10000)),
+      ((103 : YoshidaEvenIndex), ((4471 : ℚ) / 10000))
+    ]
+  | 104 => [
+      ((0 : YoshidaEvenIndex), ((-693 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-328 : ℚ) / 10000)),
+      ((104 : YoshidaEvenIndex), ((4466 : ℚ) / 10000))
+    ]
+  | 105 => [
+      ((0 : YoshidaEvenIndex), ((684 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((323 : ℚ) / 10000)),
+      ((105 : YoshidaEvenIndex), ((4462 : ℚ) / 10000))
+    ]
+  | 106 => [
+      ((0 : YoshidaEvenIndex), ((-675 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-319 : ℚ) / 10000)),
+      ((106 : YoshidaEvenIndex), ((4458 : ℚ) / 10000))
+    ]
+  | 107 => [
+      ((0 : YoshidaEvenIndex), ((667 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((315 : ℚ) / 10000)),
+      ((107 : YoshidaEvenIndex), ((4454 : ℚ) / 10000))
+    ]
+  | 108 => [
+      ((0 : YoshidaEvenIndex), ((-658 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-311 : ℚ) / 10000)),
+      ((108 : YoshidaEvenIndex), ((4450 : ℚ) / 10000))
+    ]
+  | 109 => [
+      ((0 : YoshidaEvenIndex), ((650 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((307 : ℚ) / 10000)),
+      ((109 : YoshidaEvenIndex), ((4446 : ℚ) / 10000))
+    ]
+  | 110 => [
+      ((0 : YoshidaEvenIndex), ((-642 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-303 : ℚ) / 10000)),
+      ((110 : YoshidaEvenIndex), ((4442 : ℚ) / 10000))
+    ]
+  | 111 => [
+      ((0 : YoshidaEvenIndex), ((634 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((299 : ℚ) / 10000)),
+      ((111 : YoshidaEvenIndex), ((4438 : ℚ) / 10000))
+    ]
+  | 112 => [
+      ((0 : YoshidaEvenIndex), ((-626 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-296 : ℚ) / 10000)),
+      ((112 : YoshidaEvenIndex), ((4434 : ℚ) / 10000))
+    ]
+  | 113 => [
+      ((0 : YoshidaEvenIndex), ((619 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((292 : ℚ) / 10000)),
+      ((113 : YoshidaEvenIndex), ((4430 : ℚ) / 10000))
+    ]
+  | 114 => [
+      ((0 : YoshidaEvenIndex), ((-611 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-289 : ℚ) / 10000)),
+      ((114 : YoshidaEvenIndex), ((4426 : ℚ) / 10000))
+    ]
+  | 115 => [
+      ((0 : YoshidaEvenIndex), ((604 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((285 : ℚ) / 10000)),
+      ((115 : YoshidaEvenIndex), ((4422 : ℚ) / 10000))
+    ]
+  | 116 => [
+      ((0 : YoshidaEvenIndex), ((-597 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-282 : ℚ) / 10000)),
+      ((116 : YoshidaEvenIndex), ((4419 : ℚ) / 10000))
+    ]
+  | 117 => [
+      ((0 : YoshidaEvenIndex), ((590 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((279 : ℚ) / 10000)),
+      ((117 : YoshidaEvenIndex), ((4415 : ℚ) / 10000))
+    ]
+  | 118 => [
+      ((0 : YoshidaEvenIndex), ((-583 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-275 : ℚ) / 10000)),
+      ((118 : YoshidaEvenIndex), ((4411 : ℚ) / 10000))
+    ]
+  | 119 => [
+      ((0 : YoshidaEvenIndex), ((577 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((272 : ℚ) / 10000)),
+      ((119 : YoshidaEvenIndex), ((4408 : ℚ) / 10000))
+    ]
+  | 120 => [
+      ((0 : YoshidaEvenIndex), ((-570 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-269 : ℚ) / 10000)),
+      ((120 : YoshidaEvenIndex), ((4404 : ℚ) / 10000))
+    ]
+  | 121 => [
+      ((0 : YoshidaEvenIndex), ((564 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((266 : ℚ) / 10000)),
+      ((121 : YoshidaEvenIndex), ((4401 : ℚ) / 10000))
+    ]
+  | 122 => [
+      ((0 : YoshidaEvenIndex), ((-557 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-263 : ℚ) / 10000)),
+      ((122 : YoshidaEvenIndex), ((4397 : ℚ) / 10000))
+    ]
+  | 123 => [
+      ((0 : YoshidaEvenIndex), ((551 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((260 : ℚ) / 10000)),
+      ((123 : YoshidaEvenIndex), ((4394 : ℚ) / 10000))
+    ]
+  | 124 => [
+      ((0 : YoshidaEvenIndex), ((-545 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-257 : ℚ) / 10000)),
+      ((124 : YoshidaEvenIndex), ((4390 : ℚ) / 10000))
+    ]
+  | 125 => [
+      ((0 : YoshidaEvenIndex), ((539 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((254 : ℚ) / 10000)),
+      ((125 : YoshidaEvenIndex), ((4387 : ℚ) / 10000))
+    ]
+  | 126 => [
+      ((0 : YoshidaEvenIndex), ((-534 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-252 : ℚ) / 10000)),
+      ((126 : YoshidaEvenIndex), ((4383 : ℚ) / 10000))
+    ]
+  | 127 => [
+      ((0 : YoshidaEvenIndex), ((528 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((249 : ℚ) / 10000)),
+      ((127 : YoshidaEvenIndex), ((4380 : ℚ) / 10000))
+    ]
+  | 128 => [
+      ((0 : YoshidaEvenIndex), ((-522 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-246 : ℚ) / 10000)),
+      ((128 : YoshidaEvenIndex), ((4377 : ℚ) / 10000))
+    ]
+  | 129 => [
+      ((0 : YoshidaEvenIndex), ((517 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((244 : ℚ) / 10000)),
+      ((129 : YoshidaEvenIndex), ((4374 : ℚ) / 10000))
+    ]
+  | 130 => [
+      ((0 : YoshidaEvenIndex), ((-512 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-241 : ℚ) / 10000)),
+      ((130 : YoshidaEvenIndex), ((4370 : ℚ) / 10000))
+    ]
+  | 131 => [
+      ((0 : YoshidaEvenIndex), ((506 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((239 : ℚ) / 10000)),
+      ((131 : YoshidaEvenIndex), ((4367 : ℚ) / 10000))
+    ]
+  | 132 => [
+      ((0 : YoshidaEvenIndex), ((-501 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-236 : ℚ) / 10000)),
+      ((132 : YoshidaEvenIndex), ((4364 : ℚ) / 10000))
+    ]
+  | 133 => [
+      ((0 : YoshidaEvenIndex), ((496 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((234 : ℚ) / 10000)),
+      ((133 : YoshidaEvenIndex), ((4361 : ℚ) / 10000))
+    ]
+  | 134 => [
+      ((0 : YoshidaEvenIndex), ((-491 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-232 : ℚ) / 10000)),
+      ((134 : YoshidaEvenIndex), ((4358 : ℚ) / 10000))
+    ]
+  | 135 => [
+      ((0 : YoshidaEvenIndex), ((486 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((229 : ℚ) / 10000)),
+      ((135 : YoshidaEvenIndex), ((4355 : ℚ) / 10000))
+    ]
+  | 136 => [
+      ((0 : YoshidaEvenIndex), ((-481 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-227 : ℚ) / 10000)),
+      ((136 : YoshidaEvenIndex), ((4352 : ℚ) / 10000))
+    ]
+  | 137 => [
+      ((0 : YoshidaEvenIndex), ((477 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((225 : ℚ) / 10000)),
+      ((137 : YoshidaEvenIndex), ((4349 : ℚ) / 10000))
+    ]
+  | 138 => [
+      ((0 : YoshidaEvenIndex), ((-472 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-223 : ℚ) / 10000)),
+      ((138 : YoshidaEvenIndex), ((4346 : ℚ) / 10000))
+    ]
+  | 139 => [
+      ((0 : YoshidaEvenIndex), ((468 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((220 : ℚ) / 10000)),
+      ((139 : YoshidaEvenIndex), ((4343 : ℚ) / 10000))
+    ]
+  | 140 => [
+      ((0 : YoshidaEvenIndex), ((-463 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-218 : ℚ) / 10000)),
+      ((140 : YoshidaEvenIndex), ((4340 : ℚ) / 10000))
+    ]
+  | 141 => [
+      ((0 : YoshidaEvenIndex), ((459 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((216 : ℚ) / 10000)),
+      ((141 : YoshidaEvenIndex), ((4337 : ℚ) / 10000))
+    ]
+  | 142 => [
+      ((0 : YoshidaEvenIndex), ((-454 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-214 : ℚ) / 10000)),
+      ((142 : YoshidaEvenIndex), ((4334 : ℚ) / 10000))
+    ]
+  | 143 => [
+      ((0 : YoshidaEvenIndex), ((450 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((212 : ℚ) / 10000)),
+      ((143 : YoshidaEvenIndex), ((4331 : ℚ) / 10000))
+    ]
+  | 144 => [
+      ((0 : YoshidaEvenIndex), ((-446 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-210 : ℚ) / 10000)),
+      ((144 : YoshidaEvenIndex), ((4328 : ℚ) / 10000))
+    ]
+  | 145 => [
+      ((0 : YoshidaEvenIndex), ((442 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((208 : ℚ) / 10000)),
+      ((145 : YoshidaEvenIndex), ((4325 : ℚ) / 10000))
+    ]
+  | 146 => [
+      ((0 : YoshidaEvenIndex), ((-438 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-206 : ℚ) / 10000)),
+      ((146 : YoshidaEvenIndex), ((4323 : ℚ) / 10000))
+    ]
+  | 147 => [
+      ((0 : YoshidaEvenIndex), ((434 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((204 : ℚ) / 10000)),
+      ((147 : YoshidaEvenIndex), ((4320 : ℚ) / 10000))
+    ]
+  | 148 => [
+      ((0 : YoshidaEvenIndex), ((-430 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-203 : ℚ) / 10000)),
+      ((148 : YoshidaEvenIndex), ((4317 : ℚ) / 10000))
+    ]
+  | 149 => [
+      ((0 : YoshidaEvenIndex), ((426 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((201 : ℚ) / 10000)),
+      ((149 : YoshidaEvenIndex), ((4315 : ℚ) / 10000))
+    ]
+  | 150 => [
+      ((0 : YoshidaEvenIndex), ((-422 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-199 : ℚ) / 10000)),
+      ((150 : YoshidaEvenIndex), ((4312 : ℚ) / 10000))
+    ]
+  | 151 => [
+      ((0 : YoshidaEvenIndex), ((419 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((197 : ℚ) / 10000)),
+      ((151 : YoshidaEvenIndex), ((4309 : ℚ) / 10000))
+    ]
+  | 152 => [
+      ((0 : YoshidaEvenIndex), ((-415 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-195 : ℚ) / 10000)),
+      ((152 : YoshidaEvenIndex), ((4307 : ℚ) / 10000))
+    ]
+  | 153 => [
+      ((0 : YoshidaEvenIndex), ((411 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((194 : ℚ) / 10000)),
+      ((153 : YoshidaEvenIndex), ((4304 : ℚ) / 10000))
+    ]
+  | 154 => [
+      ((0 : YoshidaEvenIndex), ((-408 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-192 : ℚ) / 10000)),
+      ((154 : YoshidaEvenIndex), ((4301 : ℚ) / 10000))
+    ]
+  | 155 => [
+      ((0 : YoshidaEvenIndex), ((404 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((190 : ℚ) / 10000)),
+      ((155 : YoshidaEvenIndex), ((4299 : ℚ) / 10000))
+    ]
+  | 156 => [
+      ((0 : YoshidaEvenIndex), ((-401 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-189 : ℚ) / 10000)),
+      ((156 : YoshidaEvenIndex), ((4296 : ℚ) / 10000))
+    ]
+  | 157 => [
+      ((0 : YoshidaEvenIndex), ((398 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((187 : ℚ) / 10000)),
+      ((157 : YoshidaEvenIndex), ((4294 : ℚ) / 10000))
+    ]
+  | 158 => [
+      ((0 : YoshidaEvenIndex), ((-394 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-186 : ℚ) / 10000)),
+      ((158 : YoshidaEvenIndex), ((4291 : ℚ) / 10000))
+    ]
+  | 159 => [
+      ((0 : YoshidaEvenIndex), ((391 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((184 : ℚ) / 10000)),
+      ((159 : YoshidaEvenIndex), ((4289 : ℚ) / 10000))
+    ]
+  | 160 => [
+      ((0 : YoshidaEvenIndex), ((-388 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-182 : ℚ) / 10000)),
+      ((160 : YoshidaEvenIndex), ((4286 : ℚ) / 10000))
+    ]
+  | 161 => [
+      ((0 : YoshidaEvenIndex), ((384 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((181 : ℚ) / 10000)),
+      ((161 : YoshidaEvenIndex), ((4284 : ℚ) / 10000))
+    ]
+  | 162 => [
+      ((0 : YoshidaEvenIndex), ((-381 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-180 : ℚ) / 10000)),
+      ((162 : YoshidaEvenIndex), ((4281 : ℚ) / 10000))
+    ]
+  | 163 => [
+      ((0 : YoshidaEvenIndex), ((378 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((178 : ℚ) / 10000)),
+      ((163 : YoshidaEvenIndex), ((4279 : ℚ) / 10000))
+    ]
+  | 164 => [
+      ((0 : YoshidaEvenIndex), ((-375 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-177 : ℚ) / 10000)),
+      ((164 : YoshidaEvenIndex), ((4277 : ℚ) / 10000))
+    ]
+  | 165 => [
+      ((0 : YoshidaEvenIndex), ((372 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((175 : ℚ) / 10000)),
+      ((165 : YoshidaEvenIndex), ((4274 : ℚ) / 10000))
+    ]
+  | 166 => [
+      ((0 : YoshidaEvenIndex), ((-369 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-174 : ℚ) / 10000)),
+      ((166 : YoshidaEvenIndex), ((4272 : ℚ) / 10000))
+    ]
+  | 167 => [
+      ((0 : YoshidaEvenIndex), ((366 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((172 : ℚ) / 10000)),
+      ((167 : YoshidaEvenIndex), ((4270 : ℚ) / 10000))
+    ]
+  | 168 => [
+      ((0 : YoshidaEvenIndex), ((-363 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-171 : ℚ) / 10000)),
+      ((168 : YoshidaEvenIndex), ((4267 : ℚ) / 10000))
+    ]
+  | 169 => [
+      ((0 : YoshidaEvenIndex), ((361 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((170 : ℚ) / 10000)),
+      ((169 : YoshidaEvenIndex), ((4265 : ℚ) / 10000))
+    ]
+  | 170 => [
+      ((0 : YoshidaEvenIndex), ((-358 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-168 : ℚ) / 10000)),
+      ((170 : YoshidaEvenIndex), ((4263 : ℚ) / 10000))
+    ]
+  | 171 => [
+      ((0 : YoshidaEvenIndex), ((355 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((167 : ℚ) / 10000)),
+      ((171 : YoshidaEvenIndex), ((4260 : ℚ) / 10000))
+    ]
+  | 172 => [
+      ((0 : YoshidaEvenIndex), ((-352 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-166 : ℚ) / 10000)),
+      ((172 : YoshidaEvenIndex), ((4258 : ℚ) / 10000))
+    ]
+  | 173 => [
+      ((0 : YoshidaEvenIndex), ((350 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((165 : ℚ) / 10000)),
+      ((173 : YoshidaEvenIndex), ((4256 : ℚ) / 10000))
+    ]
+  | 174 => [
+      ((0 : YoshidaEvenIndex), ((-347 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-163 : ℚ) / 10000)),
+      ((174 : YoshidaEvenIndex), ((4254 : ℚ) / 10000))
+    ]
+  | 175 => [
+      ((0 : YoshidaEvenIndex), ((344 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((162 : ℚ) / 10000)),
+      ((175 : YoshidaEvenIndex), ((4251 : ℚ) / 10000))
+    ]
+  | 176 => [
+      ((0 : YoshidaEvenIndex), ((-342 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-161 : ℚ) / 10000)),
+      ((176 : YoshidaEvenIndex), ((4249 : ℚ) / 10000))
+    ]
+  | 177 => [
+      ((0 : YoshidaEvenIndex), ((339 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((160 : ℚ) / 10000)),
+      ((177 : YoshidaEvenIndex), ((4247 : ℚ) / 10000))
+    ]
+  | 178 => [
+      ((0 : YoshidaEvenIndex), ((-337 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-158 : ℚ) / 10000)),
+      ((178 : YoshidaEvenIndex), ((4245 : ℚ) / 10000))
+    ]
+  | 179 => [
+      ((0 : YoshidaEvenIndex), ((334 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((157 : ℚ) / 10000)),
+      ((179 : YoshidaEvenIndex), ((4243 : ℚ) / 10000))
+    ]
+  | 180 => [
+      ((0 : YoshidaEvenIndex), ((-332 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-156 : ℚ) / 10000)),
+      ((180 : YoshidaEvenIndex), ((4241 : ℚ) / 10000))
+    ]
+  | 181 => [
+      ((0 : YoshidaEvenIndex), ((330 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((155 : ℚ) / 10000)),
+      ((181 : YoshidaEvenIndex), ((4239 : ℚ) / 10000))
+    ]
+  | 182 => [
+      ((0 : YoshidaEvenIndex), ((-327 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-154 : ℚ) / 10000)),
+      ((182 : YoshidaEvenIndex), ((4236 : ℚ) / 10000))
+    ]
+  | 183 => [
+      ((0 : YoshidaEvenIndex), ((325 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((153 : ℚ) / 10000)),
+      ((183 : YoshidaEvenIndex), ((4234 : ℚ) / 10000))
+    ]
+  | 184 => [
+      ((0 : YoshidaEvenIndex), ((-323 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-152 : ℚ) / 10000)),
+      ((184 : YoshidaEvenIndex), ((4232 : ℚ) / 10000))
+    ]
+  | 185 => [
+      ((0 : YoshidaEvenIndex), ((320 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((151 : ℚ) / 10000)),
+      ((185 : YoshidaEvenIndex), ((4230 : ℚ) / 10000))
+    ]
+  | 186 => [
+      ((0 : YoshidaEvenIndex), ((-318 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-150 : ℚ) / 10000)),
+      ((186 : YoshidaEvenIndex), ((4228 : ℚ) / 10000))
+    ]
+  | 187 => [
+      ((0 : YoshidaEvenIndex), ((316 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((148 : ℚ) / 10000)),
+      ((187 : YoshidaEvenIndex), ((4226 : ℚ) / 10000))
+    ]
+  | 188 => [
+      ((0 : YoshidaEvenIndex), ((-314 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-147 : ℚ) / 10000)),
+      ((188 : YoshidaEvenIndex), ((4224 : ℚ) / 10000))
+    ]
+  | 189 => [
+      ((0 : YoshidaEvenIndex), ((311 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((146 : ℚ) / 10000)),
+      ((189 : YoshidaEvenIndex), ((4222 : ℚ) / 10000))
+    ]
+  | 190 => [
+      ((0 : YoshidaEvenIndex), ((-309 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-145 : ℚ) / 10000)),
+      ((190 : YoshidaEvenIndex), ((4220 : ℚ) / 10000))
+    ]
+  | 191 => [
+      ((0 : YoshidaEvenIndex), ((307 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((144 : ℚ) / 10000)),
+      ((191 : YoshidaEvenIndex), ((4218 : ℚ) / 10000))
+    ]
+  | 192 => [
+      ((0 : YoshidaEvenIndex), ((-305 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-143 : ℚ) / 10000)),
+      ((192 : YoshidaEvenIndex), ((4216 : ℚ) / 10000))
+    ]
+  | 193 => [
+      ((0 : YoshidaEvenIndex), ((303 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((142 : ℚ) / 10000)),
+      ((193 : YoshidaEvenIndex), ((4214 : ℚ) / 10000))
+    ]
+  | 194 => [
+      ((0 : YoshidaEvenIndex), ((-301 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-141 : ℚ) / 10000)),
+      ((194 : YoshidaEvenIndex), ((4212 : ℚ) / 10000))
+    ]
+  | 195 => [
+      ((0 : YoshidaEvenIndex), ((299 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((141 : ℚ) / 10000)),
+      ((195 : YoshidaEvenIndex), ((4211 : ℚ) / 10000))
+    ]
+  | 196 => [
+      ((0 : YoshidaEvenIndex), ((-297 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-140 : ℚ) / 10000)),
+      ((196 : YoshidaEvenIndex), ((4209 : ℚ) / 10000))
+    ]
+  | 197 => [
+      ((0 : YoshidaEvenIndex), ((295 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((139 : ℚ) / 10000)),
+      ((197 : YoshidaEvenIndex), ((4207 : ℚ) / 10000))
+    ]
+  | 198 => [
+      ((0 : YoshidaEvenIndex), ((-293 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((-138 : ℚ) / 10000)),
+      ((198 : YoshidaEvenIndex), ((4205 : ℚ) / 10000))
+    ]
+  | 199 => [
+      ((0 : YoshidaEvenIndex), ((291 : ℚ) / 10000)),
+      ((1 : YoshidaEvenIndex), ((137 : ℚ) / 10000)),
+      ((199 : YoshidaEvenIndex), ((4203 : ℚ) / 10000))
+    ]
+  | _ => []
+
+def evenSparseRows (i : YoshidaEvenIndex) : SparseRow YoshidaEvenIndex :=
+  rowOfEntries (evenSparseEntries i)
 
 def evenSparseWeights (i : YoshidaEvenIndex) : ℚ :=
   match i.val with
@@ -1212,11 +1415,14 @@ def evenSparseWeights (i : YoshidaEvenIndex) : ℚ :=
   | _ => 1
 
 def evenSparseRowL1 (i : YoshidaEvenIndex) : ℚ :=
-  (evenSparseRows i).sum fun _ x ↦ |x|
+  entriesL1 (evenSparseEntries i)
+
+def evenSparseCenterCongruenceEntries
+    (i j : YoshidaEvenIndex) : ℚ :=
+  entriesCongruence (evenSparseEntries i)
+    (evenSparseEntries j) evenTargetCenter
 
 def evenSparseCenterCongruence (i j : YoshidaEvenIndex) : ℚ :=
   sparseCongruenceEntry evenSparseRows evenTargetCenter i j
-
-end
 
 end ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceData

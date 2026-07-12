@@ -20,8 +20,10 @@ are:
 
 The canonical payload SHA-256 is a drift gate.  Different BLAS/LAPACK output
 is harmless only if it rounds to exactly the same rational certificate.  The
-tool never writes files.  ``--emit-lean`` writes the complete Phase-A Lean data module to stdout;
-all audit diagnostics then go to stderr.
+tool never writes files.  ``--emit-lean`` writes the complete Phase-A Lean
+data module to stdout, with the canonical payload represented once as
+computable ``(column, coefficient)`` lists and bridged to sparse ``Finsupp``
+rows; all audit diagnostics then go to stderr.
 """
 
 from __future__ import annotations
@@ -45,6 +47,7 @@ P_THRESHOLD = 0.005
 P_DENOMINATOR = 10_000
 WEIGHT_DENOMINATOR = 1_000
 UNIFORM_HALF_WIDTH = F(51, 100_000)
+BLOCK_BUDGET_DENOMINATOR = 1_000_000_000_000
 
 TARGET_SOURCE = Path("ArithmeticHodge/Analysis/YoshidaEvenMomentTargets.lean")
 INTERVAL_SOURCE = Path(
@@ -91,6 +94,12 @@ def _fraction_pair(q: F) -> list[int]:
 
 def _fraction_text(q: F) -> str:
     return f"{q.numerator}/{q.denominator}"
+
+
+def _round_up_fraction(q: F, denominator: int) -> F:
+    scaled = q * denominator
+    numerator = -(-scaled.numerator // scaled.denominator)
+    return F(numerator, denominator)
 
 
 def _definition_body(source: str, name: str) -> str:
@@ -463,6 +472,40 @@ def audit(repo_root: Path) -> dict[str, object]:
         for i in range(N)
     ]
 
+    block_budgets: list[list[F]] = []
+    rounded_margins: list[F] = []
+    for i, row in enumerate(rows):
+        block_count = len(row)
+        if block_count <= 0:
+            raise ValueError(f"sparse row {i} has no residue block")
+        budgets: list[F] = []
+        for block in range(block_count):
+            contribution = sum(
+                (
+                    (
+                        abs(congruence[i][j])
+                        + UNIFORM_HALF_WIDTH * row_l1[i] * row_l1[j]
+                    )
+                    * weights[j]
+                    for j in range(N)
+                    if j != i and j % block_count == block
+                ),
+                F(0),
+            )
+            budget = _round_up_fraction(
+                contribution, BLOCK_BUDGET_DENOMINATOR
+            )
+            if contribution > budget:
+                raise ValueError(
+                    f"rounded block budget is unsound at ({i}, {block})"
+                )
+            budgets.append(budget)
+        rounded_margin = diagonal_lowers[i] * weights[i] - sum(budgets, F(0))
+        if rounded_margin <= 0:
+            raise ValueError(f"rounded block budgets fail in row {i}")
+        block_budgets.append(budgets)
+        rounded_margins.append(rounded_margin)
+
     payload = build_payload(
         data["targets_sha256"], grid_rows, weight_grid  # type: ignore[arg-type]
     )
@@ -478,6 +521,7 @@ def audit(repo_root: Path) -> dict[str, object]:
     maximum_ratio_row = max(range(N), key=ratios.__getitem__)
     return {
         "canonical_payload": canonical_payload,
+        "block_budgets": block_budgets,
         "centers": centers,
         "congruence": congruence,
         "diagonal_lowers": diagonal_lowers,
@@ -496,6 +540,7 @@ def audit(repo_root: Path) -> dict[str, object]:
         "positive_diagonal": positive_diagonal,
         "raw_bad_rows": [i for i, margin in enumerate(raw_margins) if margin <= 0],
         "raw_pass_count": sum(margin > 0 for margin in raw_margins),
+        "rounded_margins": rounded_margins,
         "row_count": len(grid_rows),
         "row_l1": row_l1,
         "support_max": max(support_sizes),
@@ -512,6 +557,8 @@ def print_report(result: dict[str, object], stream: TextIO) -> None:
     diagonal_lowers: list[F] = result["diagonal_lowers"]  # type: ignore[assignment]
     weight_grid: list[int] = result["weight_grid"]  # type: ignore[assignment]
     row_l1: list[F] = result["row_l1"]  # type: ignore[assignment]
+    block_budgets: list[list[F]] = result["block_budgets"]  # type: ignore[assignment]
+    rounded_margins: list[F] = result["rounded_margins"]  # type: ignore[assignment]
     print("Yoshida even sparse-congruence certificate: PASS", file=stream)
     print(
         f"discovery_seed={DISCOVERY_SEED} (no PRNG; deterministic LAPACK discovery)",
@@ -566,6 +613,14 @@ def print_report(result: dict[str, object], stream: TextIO) -> None:
         f"margin={_fraction_text(min_margin)} (~{float(min_margin):.18g})",
         file=stream,
     )
+    min_rounded_row = min(range(N), key=rounded_margins.__getitem__)
+    print(
+        f"dominance_residue_blocks={sum(map(len, block_budgets))} "
+        f"budget_denominator={BLOCK_BUDGET_DENOMINATOR} "
+        f"min_rounded_margin_row={min_rounded_row} "
+        f"margin={_fraction_text(rounded_margins[min_rounded_row])}",
+        file=stream,
+    )
     print(
         f"max_offdiag_to_diag_ratio_row={result['max_ratio_row']} "
         f"ratio~{result['max_ratio']:.18g}",
@@ -582,10 +637,10 @@ def _lean_fraction(numerator: int, denominator: int) -> str:
     return f"(({numerator} : ℚ) / {denominator})"
 
 
-def _lean_sparse_term(column: int, numerator: int) -> str:
+def _lean_entry_term(column: int, numerator: int) -> str:
     return (
-        f"Finsupp.single ({column} : YoshidaEvenIndex) "
-        f"{_lean_fraction(numerator, P_DENOMINATOR)}"
+        f"(({column} : YoshidaEvenIndex), "
+        f"{_lean_fraction(numerator, P_DENOMINATOR)})"
     )
 
 
@@ -623,7 +678,7 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
     print("Rows use exact numerator/10000 coefficients; weights use numerator/1000.", file=stream)
     print("-/", file=stream)
     print("", file=stream)
-    print("import ArithmeticHodge.Analysis.SparseCongruenceCertificate", file=stream)
+    print("import ArithmeticHodge.Analysis.SparseEntriesCertificate", file=stream)
     print("import ArithmeticHodge.Analysis.YoshidaEvenMomentTargets", file=stream)
     print("", file=stream)
     print("set_option autoImplicit false", file=stream)
@@ -633,10 +688,9 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
     print("", file=stream)
     print("namespace ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceData", file=stream)
     print("", file=stream)
-    print("noncomputable section", file=stream)
-    print("", file=stream)
     print("open RatInterval", file=stream)
     print("open SparseCongruenceCertificate", file=stream)
+    print("open SparseEntriesCertificate", file=stream)
     print("open YoshidaEvenIntervalCertificate", file=stream)
     print("open YoshidaEvenMomentTargets", file=stream)
     print("", file=stream)
@@ -651,15 +705,19 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
     print("  fun i j ↦", file=stream)
     print("    ((evenTargetInterval i j).lower + (evenTargetInterval i j).upper) / 2", file=stream)
     print("", file=stream)
-    print("def evenSparseRows (i : YoshidaEvenIndex) : SparseRow YoshidaEvenIndex :=", file=stream)
+    print("def evenSparseEntries", file=stream)
+    print("    (i : YoshidaEvenIndex) : SparseEntries YoshidaEvenIndex :=", file=stream)
     print("  match i.val with", file=stream)
     for row_index, row in enumerate(grid_rows):
-        print(f"  | {row_index} =>", file=stream)
+        print(f"  | {row_index} => [", file=stream)
         for term_index, (column, numerator) in enumerate(row):
-            suffix = " +" if term_index + 1 < len(row) else ""
-            indent = "      " if term_index == 0 else "        "
-            print(f"{indent}{_lean_sparse_term(column, numerator)}{suffix}", file=stream)
-    print("  | _ => 0", file=stream)
+            suffix = "," if term_index + 1 < len(row) else ""
+            print(f"      {_lean_entry_term(column, numerator)}{suffix}", file=stream)
+        print("    ]", file=stream)
+    print("  | _ => []", file=stream)
+    print("", file=stream)
+    print("def evenSparseRows (i : YoshidaEvenIndex) : SparseRow YoshidaEvenIndex :=", file=stream)
+    print("  rowOfEntries (evenSparseEntries i)", file=stream)
     print("", file=stream)
     print("def evenSparseWeights (i : YoshidaEvenIndex) : ℚ :=", file=stream)
     print("  match i.val with", file=stream)
@@ -668,14 +726,70 @@ def emit_lean(result: dict[str, object], stream: TextIO) -> None:
     print("  | _ => 1", file=stream)
     print("", file=stream)
     print("def evenSparseRowL1 (i : YoshidaEvenIndex) : ℚ :=", file=stream)
-    print("  (evenSparseRows i).sum fun _ x ↦ |x|", file=stream)
+    print("  entriesL1 (evenSparseEntries i)", file=stream)
+    print("", file=stream)
+    print("def evenSparseCenterCongruenceEntries", file=stream)
+    print("    (i j : YoshidaEvenIndex) : ℚ :=", file=stream)
+    print("  entriesCongruence (evenSparseEntries i)", file=stream)
+    print("    (evenSparseEntries j) evenTargetCenter", file=stream)
     print("", file=stream)
     print("def evenSparseCenterCongruence (i j : YoshidaEvenIndex) : ℚ :=", file=stream)
     print("  sparseCongruenceEntry evenSparseRows evenTargetCenter i j", file=stream)
     print("", file=stream)
-    print("end", file=stream)
-    print("", file=stream)
     print("end ArithmeticHodge.Analysis.YoshidaEvenSparseCongruenceData", file=stream)
+
+
+def emit_dominance_lean(result: dict[str, object], stream: TextIO) -> None:
+    block_budgets: list[list[F]] = result["block_budgets"]  # type: ignore[assignment]
+    rounded_margins: list[F] = result["rounded_margins"]  # type: ignore[assignment]
+    min_rounded_row = min(range(N), key=rounded_margins.__getitem__)
+
+    print("/-", file=stream)
+    print("Generated by scripts/generate_yoshida_even_sparse_congruence.py", file=stream)
+    print(f"Canonical payload SHA-256: {result['payload_sha256']}", file=stream)
+    print(f"Residue blocks: {sum(map(len, block_budgets))}", file=stream)
+    print(f"Block budget denominator: {BLOCK_BUDGET_DENOMINATOR}", file=stream)
+    print(f"Minimum rounded margin row: {min_rounded_row}", file=stream)
+    print(
+        "Minimum rounded margin: "
+        f"{_fraction_text(rounded_margins[min_rounded_row])}",
+        file=stream,
+    )
+    print("-/", file=stream)
+    print("", file=stream)
+    print(
+        "import ArithmeticHodge.Analysis."
+        "YoshidaEvenSparseCongruenceDominanceCore",
+        file=stream,
+    )
+    print("", file=stream)
+    print("set_option autoImplicit false", file=stream)
+    print("", file=stream)
+    print(
+        "namespace ArithmeticHodge.Analysis."
+        "YoshidaEvenSparseCongruenceChecks",
+        file=stream,
+    )
+    print("", file=stream)
+    print("def evenSparseDominanceBlockBudgets", file=stream)
+    print("    (i : YoshidaEvenIndex) : List ℚ :=", file=stream)
+    print("  match i.val with", file=stream)
+    for row, budgets in enumerate(block_budgets):
+        rendered = ", ".join(
+            _lean_fraction(q.numerator, q.denominator) for q in budgets
+        )
+        print(f"  | {row} => [{rendered}]", file=stream)
+    print("  | _ => []", file=stream)
+    print("", file=stream)
+    print("def evenSparseDominanceBlockBudget", file=stream)
+    print("    (i : YoshidaEvenIndex) (b : ℕ) : ℚ :=", file=stream)
+    print("  (evenSparseDominanceBlockBudgets i).getD b 0", file=stream)
+    print("", file=stream)
+    print(
+        "end ArithmeticHodge.Analysis."
+        "YoshidaEvenSparseCongruenceChecks",
+        file=stream,
+    )
 
 
 def main() -> int:
@@ -698,6 +812,11 @@ def main() -> int:
         help="audit, then emit the complete Phase-A Lean data module to stdout",
     )
     output.add_argument(
+        "--emit-dominance-lean",
+        action="store_true",
+        help="audit, then emit the rounded residue-block budget module",
+    )
+    output.add_argument(
         "--emit-canonical-json",
         action="store_true",
         help="audit, then emit the canonical hashed JSON payload to stdout",
@@ -708,6 +827,9 @@ def main() -> int:
     if args.emit_lean:
         print_report(result, sys.stderr)
         emit_lean(result, sys.stdout)
+    elif args.emit_dominance_lean:
+        print_report(result, sys.stderr)
+        emit_dominance_lean(result, sys.stdout)
     elif args.emit_canonical_json:
         print_report(result, sys.stderr)
         sys.stdout.buffer.write(result["canonical_payload"])  # type: ignore[arg-type]

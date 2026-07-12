@@ -31,11 +31,11 @@ def EvenSparseDiagonalPositiveAt (i : YoshidaEvenIndex) : Prop :=
   0 < evenSparseRows i i
 
 def evenSparseEntryRadius (i j : YoshidaEvenIndex) : ℚ :=
-  |sparseCongruenceEntry evenSparseRows evenTargetCenter i j| +
+  |evenSparseCenterCongruence i j| +
     evenSparseEpsilon * evenSparseRowL1 i * evenSparseRowL1 j
 
 def evenSparseDiagonalLower (i : YoshidaEvenIndex) : ℚ :=
-  sparseCongruenceEntry evenSparseRows evenTargetCenter i i -
+  evenSparseCenterCongruence i i -
     evenSparseEpsilon * evenSparseRowL1 i ^ 2
 
 def EvenSparseWeightedDominanceAt (i : YoshidaEvenIndex) : Prop :=
