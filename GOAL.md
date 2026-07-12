@@ -185,36 +185,40 @@ these obligations.
 
 ### Resource-safety invariant
 
-Every shell workload run by the root agent or a subagent—including Lean,
-Lake, builds, tests, certificate replays, generators, and numerical probes—must
-run in a transient user systemd scope capped at exactly 48 GiB of RAM:
+Lean- and Lake-related workloads must use the root `Justfile`; do not spell out
+or bypass its systemd wrapper:
 
-```text
-systemd-run --user --scope --quiet --expand-environment=no \
-  -p MemoryMax=48G -- <command> <args...>
+```console
+just cache
+just build [target]
+just lean <file> [lean-args...]
+just strict <file> [lean-args...]
+just guarded <other-lean-related-command> [args...]
 ```
 
-- Never launch any shell command outside that exact scope, including read-only
-  inspection commands.  Do not weaken, abbreviate, or silently omit the scope
-  for work believed to be trivial.
+These recipes run the workload in a transient user systemd scope capped at
+exactly 48 GiB. The guarded runner also terminates the workload's complete
+process group if either the scope's cgroup `memory.current` or the summed RSS
+of the workload's descendant tree reaches 40 GiB.
+
+- Ordinary non-Lean commands such as `git`, `rg`, and `git diff` run directly;
+  they do not need or benefit from a systemd scope.
+- Never launch a Lean- or Lake-related workload outside the `Justfile`
+  recipes. Do not weaken, abbreviate, or silently omit the scope or guard for
+  work believed to be trivial.
 - Do not run multiple high-memory scopes concurrently merely because each has
   its own 48 GiB cap; protect the machine from aggregate memory pressure too.
-- Propagate this rule explicitly in every subagent task.
+- Propagate the `Justfile` requirement explicitly in every subagent task that
+  runs Lean- or Lake-related workloads.
 - If a required proof or computation reaches the cap, treat that as a design
   failure: checkpoint, reduce, or reformulate it. Do not raise or bypass the
   cap without the user's explicit permission.
 - A resource-intensive validation that remains at full CPU is not evidence
   that it is safe to leave running. Monitor memory and terminate it before it
   threatens desktop responsiveness.
-- Every Lean, Lake, build, generator, certificate replay, or numerical
-  workload that can grow materially or outlive an interactive inspection must
-  run under a guard that repeatedly monitors both the scope's cgroup
-  `memory.current` and the summed RSS of every descendant process rooted at
-  the launched workload.  Shared or file-backed mappings can make process RSS
-  materially exceed memory charged to a newly created cgroup; never trust the
-  smaller counter when the two disagree.  Configure both stop thresholds
-  below the 48 GiB hard cap and below the machine's responsiveness boundary,
-  and terminate the complete descendant tree when either threshold is met.
+- The guarded recipes monitor both counters because shared or file-backed
+  mappings can make process RSS materially exceed memory charged to a newly
+  created cgroup; never trust the smaller counter when the two disagree.
 
 - Keep the root agent on the strongest unresolved lemma of the active gate.
 - Use subagents only for distinct bounded proofs, independent audits,
