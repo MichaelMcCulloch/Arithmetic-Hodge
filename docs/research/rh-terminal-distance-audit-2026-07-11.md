@@ -1561,3 +1561,33 @@ separate from build logs: a green build is evidence, not a stage transition.
    source hash is
    `786c6ce93885848dff4b85c9e5e6e4e2cc3a78db276a03d130ea3a53ef864f62`,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `8f4d1b8` — Uniform dyadic diagonal term bounded
+
+1. **Theorem added.**  The complete dyadically weighted `diagonalHighQ`
+   series now lies between its explicit leading term
+   `-2 / (3 * sqrt 2 * L * κ²)` and that term plus the exact correction
+   `425 / (18 * sqrt 2 * L * κ⁴)`.  A second public theorem exposes the
+   negated error interval `[-correction, 0]` in the orientation used by the
+   uniform diagonal moment identity.
+2. **Gate hypothesis eliminated.**  The high-mode diagonal route no longer
+   needs a finite checkpoint or an assumed tail bound for its dyadic endpoint
+   contribution.  Exact geometric `HasSum` identities discharge the entire
+   infinite series uniformly in every positive mode.
+3. **Assumptions remaining.**  The derivative `tsum` enclosure and the final
+   rational combination against modes `18..199` remain before the uniform
+   diagonal target proposition closes.  The sparse finite-certificate lane
+   still needs a generic target-width theorem, structural checks, dominance,
+   and the robust PosDef endpoint.
+4. **Next make-or-break lemma.**  Finish the normalized derivative radius
+   `5 * L^3 / (4 * pi^4 * n^4)`, combine it with the digamma and `Q` bounds,
+   and kernel-check the resulting high-mode target containment.
+5. **Viability evidence.**  Fresh direct compilation, the 3,620-job module
+   build, and a concrete mode-18 regression pass.  Both public endpoints have
+   exactly the standard three axioms; forbidden and whitespace scans are
+   empty.  Independent review verified all geometric moments, rational ratio
+   identities, summability directions, and the negated sign.  Guarded usage
+   stayed below 0.55 GiB cgroup memory and 4.84 GiB summed RSS, the production
+   source hash is
+   `535c77f618c5c3d369e29341c6a8eabf269cefe7a61f8355007c750e70177791`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
