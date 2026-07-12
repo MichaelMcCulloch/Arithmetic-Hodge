@@ -1346,3 +1346,33 @@ separate from build logs: a green build is evidence, not a stage transition.
    ratios, ordered-pair double counting, symmetry orientation, and strictness.
    Guarded runs peaked below 0.59 GiB cgroup memory and 4.11 GiB summed RSS,
    and all 159 inventoried legacy root Lean artifacts remain untouched.
+
+## `54e1137` — Uniform diagonal identity started
+
+1. **Theorem added.**  The closed Yoshida ramp term at frequency parameter
+   `(2y)^2` and shifted index `2k+1/2` is now exactly the shifted reciprocal
+   profile plus one derivative correction divided by `2L`.  The reusable
+   definitions `yoshidaY`, `diagonalHighProfile`, and
+   `diagonalHighProfileDeriv` fix the normalization for the remaining uniform
+   diagonal analysis.
+2. **Gate hypothesis eliminated.**  The proposed uniform route is no longer
+   resting on an external symbolic-algebra identity.  Its crucial factor of
+   two, quarter shift, derivative sign, and length normalization are all
+   checked by Lean, so the accelerated diagonal series can be reorganized on
+   firm ground instead of expanding one high mode at a time.
+3. **Assumptions remaining.**  The production series decomposition, corrected
+   digamma remainder, derivative-tail and dyadic estimates, combined rational
+   enclosure, and eight finite exceptions remain.  Separately, the generated
+   sparse-congruence certificate still has to remove the finite pivot premise.
+4. **Next make-or-break lemma.**  Rewrite `yoshidaDiagonalMoment` into the
+   digamma/profile/derivative/dyadic uniform series with exact indexing and
+   cancellation, while the sparse lane formalizes congruence evaluation and
+   entrywise error propagation.
+5. **Viability evidence.**  The 3,619-job targeted build, direct strict compile,
+   and exact regression all pass.  The theorem's axiom footprint is exactly
+   `propext`, `Classical.choice`, and `Quot.sound`; forbidden and whitespace
+   scans are empty.  Independent expansion verified the factor two, quarter
+   shift, derivative sign, and denominator hypotheses.  Guarded usage stayed
+   below 0.71 GiB cgroup memory and 4.80 GiB summed RSS, the staged source hash
+   was `5593ee4559715500a0a794ff6198cd31e773c121a99aef55e66c9d234e13c9b5`,
+   and all 159 inventoried legacy root Lean artifacts remain untouched.
