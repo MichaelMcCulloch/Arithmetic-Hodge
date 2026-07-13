@@ -29,6 +29,7 @@ open YoshidaEndpointPhysicalRealQuadratic
 open YoshidaEndpointScaledCorrelation
 open YoshidaPointwiseParityCore
 open YoshidaRenormalizedGeometricKernel
+open YoshidaRegularKernelBound
 open YoshidaSectionSixAnalytic
 open YoshidaShiftedGeometricSeries
 open YoshidaStructuralKernelIntegrability
@@ -944,6 +945,244 @@ private theorem normalized_boundaryCriticalCross_eq_cauchySeries
       ring]
     ring] at hlimit
   exact hlimit
+
+/-! ## Real positive-half geometric evaluation -/
+
+private def boundaryArchCorrelation (L : ℝ) (C : ℝ → ℝ) : ℝ :=
+  (∫ u : ℝ in 0..L,
+      (C 0 - C u) / u - 2 * yoshidaRegularKernel u * C u) -
+    (Real.log L + Real.eulerMascheroniConstant + Real.log 2 +
+      Real.log Real.pi) * C 0
+
+private theorem neg_oddKernel_eq_defect_sub_regular
+    (C0 : ℝ) (C : ℝ → ℝ) {u : ℝ} (hu : u ≠ 0) :
+    -oddKernel u * C u + C0 / u =
+      (C0 - C u) / u - 2 * yoshidaRegularKernel u * C u := by
+  have hden : Real.exp u - Real.exp (-u) ≠ 0 := by
+    intro h
+    have heq : Real.exp u = Real.exp (-u) := sub_eq_zero.mp h
+    have : u = -u := Real.exp_injective heq
+    exact hu (by linarith)
+  rw [oddKernel, yoshidaRegularKernel, if_neg hu, Real.sinh_eq]
+  field_simp [hu, hden]
+  ring
+
+private theorem boundaryDigammaGeometricValue
+    {L : ℝ} (hL : 0 < L) (C D : ℝ → ℝ)
+    (hC : Continuous C) (hD : Continuous D)
+    (hrem : ∀ u : ℝ, C u = C 0 + u * D u) :
+    Summable (fun k : ℕ ↦
+      geometricIntegralTerm L C (k + 1) -
+        (((k + 1 : ℕ) : ℝ)⁻¹ * C 0)) ∧
+    (-(geometricIntegralTerm L C 0 +
+        Real.eulerMascheroniConstant * C 0 +
+        ∑' k : ℕ, (geometricIntegralTerm L C (k + 1) -
+          (((k + 1 : ℕ) : ℝ)⁻¹ * C 0))) -
+      Real.log Real.pi * C 0 = boundaryArchCorrelation L C) := by
+  have hinterchange : PairedIntegralInterchange L (C 0) C := by
+    apply pairedIntegralInterchange_of_removable hL hC
+    · intro u _hu
+      exact hrem u
+    · exact removableMajorantLimit_intervalIntegrable hD (C 0) L
+  have hstable : IntervalIntegrable
+      (stableGeometricIntegrand (C 0) C) volume 0 L :=
+    stableGeometricIntegrand_intervalIntegrable_of_removable
+      hD (C 0) L hrem
+  have href : IntervalIntegrable referenceRegularized volume 0 L :=
+    referenceRegularized_intervalIntegrable L
+  have hren : HasSum (renormalizedTerm L (C 0) C)
+      ((∫ u : ℝ in 0..L, stableGeometricIntegrand (C 0) C u) +
+        (Real.log L + Real.log 2) * C 0) :=
+    renormalizedSeries_hasSum_stable hL hC hinterchange hstable href
+  have hindex :
+      geometricIntegralTerm L C 0 +
+          ∑' k : ℕ, (geometricIntegralTerm L C (k + 1) -
+            C 0 / (k + 1 : ℕ)) =
+        ∑' k : ℕ, renormalizedTerm L (C 0) C k := by
+    calc
+      _ = (∫ u : ℝ in 0..L,
+            stableGeometricIntegrand (C 0) C u) +
+          (Real.log L + Real.log 2) * C 0 :=
+        geometricIntegralTerm_zero_add_tsum_shifted_eq hren
+      _ = _ := hren.tsum_eq.symm
+  have hneg := negated_geometric_identity hL hC hinterchange hstable href
+  have hs : Summable (fun k : ℕ ↦
+      geometricIntegralTerm L C (k + 1) - C 0 / (k + 1 : ℕ)) :=
+    (hasSum_shifted_geometric_of_hasSum_renormalized hren).summable
+  have hintegral :
+      (∫ u : ℝ in 0..L, -oddKernel u * C u + C 0 / u) =
+        ∫ u : ℝ in 0..L,
+          (C 0 - C u) / u - 2 * yoshidaRegularKernel u * C u := by
+    apply intervalIntegral.integral_congr_ae
+    filter_upwards [show ∀ᵐ u : ℝ ∂volume, u ≠ 0 by
+      simp [ae_iff, measure_singleton]] with u hu
+    intro _hu
+    exact neg_oddKernel_eq_defect_sub_regular (C 0) C hu
+  rw [hintegral] at hneg
+  have hindex' :
+      geometricIntegralTerm L C 0 +
+          ∑' k : ℕ, (geometricIntegralTerm L C (k + 1) -
+            (((k + 1 : ℕ) : ℝ)⁻¹ * C 0)) =
+        ∑' k : ℕ, renormalizedTerm L (C 0) C k := by
+    simpa only [div_eq_mul_inv, mul_comm] using hindex
+  have hs' : Summable (fun k : ℕ ↦
+      geometricIntegralTerm L C (k + 1) -
+        (((k + 1 : ℕ) : ℝ)⁻¹ * C 0)) := by
+    simpa only [div_eq_mul_inv, mul_comm] using hs
+  refine ⟨hs', ?_⟩
+  rw [show geometricIntegralTerm L C 0 +
+      Real.eulerMascheroniConstant * C 0 +
+      ∑' k : ℕ, (geometricIntegralTerm L C (k + 1) -
+        (((k + 1 : ℕ) : ℝ)⁻¹ * C 0)) =
+      Real.eulerMascheroniConstant * C 0 +
+        (geometricIntegralTerm L C 0 +
+          ∑' k : ℕ, (geometricIntegralTerm L C (k + 1) -
+            (((k + 1 : ℕ) : ℝ)⁻¹ * C 0))) by ring,
+    hindex']
+  unfold boundaryArchCorrelation
+  linarith
+
+private theorem exp_abs_mul_crossCorrelation_integrable
+    {f g : ℝ → ℂ} (hf : Integrable f) (hg : Integrable g)
+    {b : ℝ} (hb : 0 < b) :
+    Integrable (fun u : ℝ ↦
+      ((Real.exp (-b * |u|) : ℝ) : ℂ) * crossCorrelation f g u) := by
+  have hcoeff : Continuous (fun u : ℝ ↦
+      ((Real.exp (-b * |u|) : ℝ) : ℂ)) := by fun_prop
+  refine (crossCorrelation_integrable hf hg).bdd_mul (c := 1)
+    hcoeff.aestronglyMeasurable ?_
+  filter_upwards [] with u
+  rw [Complex.norm_real, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+  exact (Real.exp_le_one_iff).2 (mul_nonpos_of_nonpos_of_nonneg
+    (by linarith : -b ≤ 0) (abs_nonneg u))
+
+private theorem integral_exp_abs_crossCorrelation_eq_geometric
+    {f g : ℝ → ℂ} (hf : Integrable f) (hg : Integrable g)
+    {L b : ℝ} (hL : 0 < L) (hb : 0 < b)
+    (C : ℝ → ℝ)
+    (hEven : Function.Even (crossCorrelation f g))
+    (hzero : ∀ u : ℝ, L < u → crossCorrelation f g u = 0)
+    (hmatch : ∀ u ∈ Icc (0 : ℝ) L,
+      crossCorrelation f g u = (C u : ℂ)) :
+    (∫ u : ℝ,
+      ((Real.exp (-b * |u|) : ℝ) : ℂ) * crossCorrelation f g u) =
+      2 * ∫ u : ℝ in 0..L,
+        ((Real.exp (-b * u) : ℝ) : ℂ) * (C u : ℂ) := by
+  let F : ℝ → ℂ := fun u ↦
+    ((Real.exp (-b * |u|) : ℝ) : ℂ) * crossCorrelation f g u
+  have hFint : Integrable F := by
+    simpa only [F] using exp_abs_mul_crossCorrelation_integrable hf hg hb
+  have hFeven : Function.Even F := by
+    intro u
+    dsimp only [F]
+    rw [abs_neg, hEven]
+  have hleft : (∫ u : ℝ in Iic 0, F u) =
+      ∫ u : ℝ in Ioi 0, F u := by
+    calc
+      (∫ u : ℝ in Iic 0, F u) =
+          ∫ u : ℝ in Iic 0, F (-u) := by
+        apply setIntegral_congr_fun measurableSet_Iic
+        intro u _hu
+        exact (hFeven u).symm
+      _ = ∫ u : ℝ in Ioi 0, F u := by
+        simpa only [neg_zero] using integral_comp_neg_Iic 0 F
+  have hwhole : (∫ u : ℝ, F u) =
+      2 * ∫ u : ℝ in Ioi 0, F u := by
+    rw [← intervalIntegral.integral_Iic_add_Ioi
+        hFint.integrableOn hFint.integrableOn,
+      hleft]
+    ring
+  have hpositive : (∫ u : ℝ in Ioi 0, F u) =
+      ∫ u : ℝ in 0..L, F u := by
+    rw [intervalIntegral.integral_of_le hL.le]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero measurableSet_Ioi
+      Ioc_subset_Ioi_self
+    intro u hu
+    have huLt : L < u := by
+      rcases hu with ⟨hu0, huNot⟩
+      simp only [mem_Ioi] at hu0
+      simp only [mem_Ioc, not_and, not_le] at huNot
+      exact huNot hu0
+    dsimp only [F]
+    rw [hzero u huLt, mul_zero]
+  have hinterval : (∫ u : ℝ in 0..L, F u) =
+      ∫ u : ℝ in 0..L,
+        ((Real.exp (-b * u) : ℝ) : ℂ) * (C u : ℂ) := by
+    apply intervalIntegral.integral_congr
+    intro u hu
+    have hu' : u ∈ Icc (0 : ℝ) L := by
+      simpa only [uIcc_of_le hL.le] using hu
+    dsimp only [F]
+    rw [abs_of_nonneg hu'.1, hmatch u hu']
+  change (∫ u : ℝ, F u) = _
+  rw [hwhole, hpositive, hinterval]
+
+private theorem normalized_boundaryCriticalCross_eq_archCorrelation
+    {a : ℝ} (ha : 0 < a) (f g : YoshidaClippedSmooth a)
+    {L : ℝ} (hL : 0 < L) (C D : ℝ → ℝ)
+    (hC : Continuous C) (hD : Continuous D)
+    (hrem : ∀ u : ℝ, C u = C 0 + u * D u)
+    (hA : ∀ k : ℕ,
+      ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+          ∫ v : ℝ, (bombieriDigammaKernel k v : ℂ) *
+            boundarySpectralProduct ha f g v =
+        (geometricIntegralTerm L C k : ℂ))
+    (hH0 : ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+      ∫ v : ℝ, boundarySpectralProduct ha f g v = (C 0 : ℂ)) :
+    ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+        ∫ v : ℝ, yoshidaClippedCriticalCrossIntegrand a ha f g v =
+      (boundaryArchCorrelation L C : ℂ) := by
+  have hgeo := boundaryDigammaGeometricValue hL C D hC hD hrem
+  obtain ⟨hsReal, hvalue⟩ := hgeo
+  let A : ℕ → ℂ := fun k ↦ (geometricIntegralTerm L C k : ℂ)
+  let H0 : ℂ := (C 0 : ℂ)
+  have hsComplex : Summable (fun j : ℕ ↦
+      A (j + 1) - (((j + 1 : ℕ) : ℝ)⁻¹ : ℂ) * H0) := by
+    have hcast := Complex.ofRealCLM.summable hsReal
+    apply hcast.congr
+    intro j
+    dsimp only [A, H0]
+    rw [Complex.ofRealCLM_apply]
+    push_cast
+    ring
+  have hdist := normalized_boundaryCriticalCross_eq_cauchySeries
+    ha f g A H0 (by intro k; simpa only [A] using hA k)
+      (by simpa only [H0] using hH0) hsComplex
+  have htsum :
+      (∑' j : ℕ,
+        (A (j + 1) - (((j + 1 : ℕ) : ℝ)⁻¹ : ℂ) * H0)) =
+      (((∑' j : ℕ,
+        (geometricIntegralTerm L C (j + 1) -
+          (((j + 1 : ℕ) : ℝ)⁻¹ * C 0))) : ℝ) : ℂ) := by
+    calc
+      _ = ∑' j : ℕ, Complex.ofRealCLM
+          (geometricIntegralTerm L C (j + 1) -
+            (((j + 1 : ℕ) : ℝ)⁻¹ * C 0)) := by
+        apply tsum_congr
+        intro j
+        dsimp only [A, H0]
+        rw [Complex.ofRealCLM_apply]
+        push_cast
+        ring
+      _ = Complex.ofRealCLM (∑' j : ℕ,
+          (geometricIntegralTerm L C (j + 1) -
+            (((j + 1 : ℕ) : ℝ)⁻¹ * C 0))) :=
+        Complex.ofRealCLM.map_tsum hsReal |>.symm
+      _ = _ := Complex.ofRealCLM_apply _
+  rw [htsum] at hdist
+  have hrhs :
+      -(A 0 + (Real.eulerMascheroniConstant : ℂ) * H0 +
+          (((∑' j : ℕ,
+            (geometricIntegralTerm L C (j + 1) -
+              (((j + 1 : ℕ) : ℝ)⁻¹ * C 0))) : ℝ) : ℂ)) -
+        (Real.log Real.pi : ℂ) * H0 =
+      (boundaryArchCorrelation L C : ℂ) := by
+    dsimp only [A, H0]
+    rw [← hvalue]
+    push_cast
+    ring
+  rw [hrhs] at hdist
+  exact hdist
 
 end
 
