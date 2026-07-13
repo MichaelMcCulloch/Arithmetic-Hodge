@@ -2759,3 +2759,48 @@ separate from build logs: a green build is evidence, not a stage transition.
    but are not used as proof.  Every committed reduction strict-compiles under
    the guarded Justfile, builds its full dependency target, has an empty
    forbidden scan, and audits to the standard three axioms only.
+
+## `12c2c45` through `2a2e589` — Projected-even analytic side conditions closed
+
+1. **Theorems added.**  Fixed degree-six Taylor envelopes now control the
+   regular kernel, hyperbolic term, and both projected shifted remainders on
+   the whole endpoint interval.  A fourth-harmonic Euler bound and a short
+   fixed logarithm series prove
+   `yoshidaEndpointScalarMassLoss < 338887/250000`.  Exact polynomial moments
+   enclose the three centered envelope-Gram entries, while uniform coefficient
+   boxes reduce the true envelope entries to those moments.  Independently,
+   all interval-integrability, weighted-`L²`, low/tail polarization, residual
+   regularity, and exact low-profile hypotheses required by the projected
+   Schur theorem are unconditional.  The assembly theorem
+   `yoshidaEndpointOddCleanQuadratic_nonneg_of_even_of_projectedDual` therefore
+   has exactly one premise: the fixed universal projected-dual inequality.
+   Any resulting full clean-even theorem already transports to nonnegativity
+   of the actual production diagonal on every real zero-trace even boundary
+   residual.
+2. **Gate hypothesis eliminated.**  The projected Schur route no longer hides
+   continuity, local Lipschitz, integrability, weighted-space membership,
+   residual moment cancellation, low-Gram positivity, or scalar-loss
+   assumptions.  Its analytic estimates use fixed transparent series and
+   degree-at-most-eight polynomial moments; no mode cutoff, sampled enclosure
+   family, pivot replay, or generated certificate occurs in this closure.
+3. **Assumptions remaining.**  The two principal minors of the exact
+   gap-minus-envelope matrix have not yet been exported as unconditional
+   theorems.  Until they are, clean positivity for an arbitrary even profile
+   remains conditional on the universal projected-dual inequality.  At the
+   production level, the endpoint-matching constant diagonal and its mixed
+   term with the zero-trace residual still require an endpoint-jump-compatible
+   digamma-distribution identity; the zero-trace diagonal bridge alone cannot
+   control that cross term.
+4. **Next make-or-break lemma.**  Prove structurally
+   `0 < Δ₀₀` and `0 < Δ₀₀Δ₂₂-Δ₀₂²` for the fixed
+   gap-minus-envelope matrix, and use them to export the unconditional
+   weighted-dual inequality for all real `c,b`.  Then specialize the assembly
+   theorem to obtain full clean-even positivity and prove the exact production
+   constant/residual polarization by the endpoint-jump partial-kernel limit.
+5. **Viability evidence.**  Each committed module passes its guarded strict
+   check and focused dependency build; exported theorem audits contain only
+   `propext`, `Classical.choice`, and `Quot.sound`.  Independent reviews
+   rechecked the projection coefficients, scale factors, polarization signs,
+   weighted-`L²` domains, and residual production transport.  A fresh archive
+   comparison reports all 159 inventoried legacy Lean artifacts byte-identical
+   to `refs/archive/legacy-lean-2026-07-11`.
