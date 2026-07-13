@@ -2296,3 +2296,31 @@ separate from build logs: a green build is evidence, not a stage transition.
    integrals, and applies Hölder on an interval of measure two.  Fresh guarded
    strict compilation, focused build, standard-only axiom audit,
    forbidden-proof scan, and independent high-risk review all pass.
+
+## `84fb520` — Sharp odd mass loss is below `7/5`
+
+1. **Theorem added.**  With the improved regular loss `log 2 / 64`,
+   `yoshidaEndpointOddSharpMassLoss_lt_seven_fifths` proves
+   `K_o^sharp < 7/5`.
+2. **Gate hypothesis eliminated.**  Odd endpoint positivity is reduced to a
+   clean rational coercivity target: it now suffices to prove that the
+   logarithmic energy plus endpoint potential controls `7/5` times centered
+   mass.  No floating-point enclosure remains in that comparison.
+3. **Assumptions remaining.**  The complete odd operator inequality at
+   constant `7/5` is not yet formalized.  It must retain the degree-one and
+   degree-three block, control every degree at least five uniformly, and
+   include the full low/tail potential cross term.  The production-form
+   bridge also remains open.
+4. **Next make-or-break lemma.**  Prove structurally that the first four
+   positive logarithm-potential terms
+   `x^2/2 + x^4/4 + x^6/6 + x^8/8`, together with one quarter of the raw
+   logarithmic energy, dominate `(7/5)∫|f|²` for every odd finite-energy
+   function.  Use a fixed symbolic two-mode Schur complement and the uniform
+   `H_5` tail, not a growing matrix.
+5. **Viability evidence.**  The scalar proof uses the general corrected
+   harmonic approximation for Euler's constant, Archimedes' positive-integral
+   bound `pi < 22/7`, fixed universal logarithm-series remainders, and exact
+   rational arithmetic.  Fresh guarded strict compilation, focused build,
+   all-public standard-only axiom audit, forbidden-proof scan, and independent
+   high-risk review pass.  The fixed series close analytic remainders and do
+   not encode a mode family or discovered certificate.
