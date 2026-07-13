@@ -1052,28 +1052,26 @@ def endpointClippedArchCorrelation (g : ℝ → ℝ) : ℝ :=
     (Real.log (2 * yoshidaEndpointA) + Real.eulerMascheroniConstant +
       Real.log 2 + Real.log Real.pi) * C 0
 
-/-- Test-first statement of the generic clipped archimedean bridge. -/
-theorem clippedArchEnergy_eq_endpointClippedArchCorrelation
+/-- Generic clipped archimedean bridge for a real periodic profile whose two
+endpoint traces vanish. -/
+theorem clippedArchEnergy_eq_endpointClippedArchCorrelation_of_endpoints_zero
     (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
     (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
       ((f : YoshidaClippedSmooth yoshidaEndpointA) x).im = 0)
-    (hf_odd : Function.Odd
-      (((f : YoshidaClippedPeriodicCore yoshidaEndpointA) :
-        YoshidaClippedSmooth yoshidaEndpointA) : ℝ → ℂ)) :
+    (hneg : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      (-yoshidaEndpointA) = 0)
+    (hpos : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      yoshidaEndpointA = 0) :
     clippedArchEnergy yoshidaEndpointA yoshidaEndpointA_pos
         (f : YoshidaClippedSmooth yoshidaEndpointA) =
       endpointClippedArchCorrelation
         (fun x ↦ ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re) := by
   let fs : YoshidaClippedSmooth yoshidaEndpointA :=
     (f : YoshidaClippedSmooth yoshidaEndpointA)
-  let fo : yoshidaPointwiseOddPeriodicCoreSubmodule yoshidaEndpointA :=
-    ⟨f, hf_odd⟩
-  obtain ⟨hpos, hneg⟩ :=
-    pointwiseOddPeriodicCore_endpoints_zero yoshidaEndpointA_pos fo
   have hpos' : fs yoshidaEndpointA = 0 := by
-    simpa only [fs, fo] using hpos
+    simpa only [fs] using hpos
   have hneg' : fs (-yoshidaEndpointA) = 0 := by
-    simpa only [fs, fo] using hneg
+    simpa only [fs] using hneg
   have hfreal : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
       fs x = ((fs x).re : ℂ) := by
     intro x hx
@@ -1199,17 +1197,38 @@ theorem clippedArchEnergy_eq_endpointClippedArchCorrelation
   rw [harchValue, hvalue]
   rfl
 
-/-- For a real structural odd endpoint profile, both pieces of the physical
-archimedean integral are separately interval-integrable.  Thus later uses of
-the split singular-minus-regular formula do not rely on the totalized value
-of a nonintegrable interval integral. -/
-theorem endpointClippedArchCorrelation_terms_intervalIntegrable
+/-- Pointwise oddness supplies the endpoint hypotheses of the generic
+zero-trace archimedean bridge. -/
+theorem clippedArchEnergy_eq_endpointClippedArchCorrelation
     (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
     (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
       ((f : YoshidaClippedSmooth yoshidaEndpointA) x).im = 0)
     (hf_odd : Function.Odd
       (((f : YoshidaClippedPeriodicCore yoshidaEndpointA) :
         YoshidaClippedSmooth yoshidaEndpointA) : ℝ → ℂ)) :
+    clippedArchEnergy yoshidaEndpointA yoshidaEndpointA_pos
+        (f : YoshidaClippedSmooth yoshidaEndpointA) =
+      endpointClippedArchCorrelation
+        (fun x ↦ ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re) := by
+  let fo : yoshidaPointwiseOddPeriodicCoreSubmodule yoshidaEndpointA :=
+    ⟨f, hf_odd⟩
+  obtain ⟨hpos, hneg⟩ :=
+    pointwiseOddPeriodicCore_endpoints_zero yoshidaEndpointA_pos fo
+  exact clippedArchEnergy_eq_endpointClippedArchCorrelation_of_endpoints_zero
+    f hf_real (by simpa only [fo] using hneg) (by simpa only [fo] using hpos)
+
+/-- For a real structural zero-trace endpoint profile, both pieces of the
+physical archimedean integral are separately interval-integrable.  Thus later
+uses of the split singular-minus-regular formula do not rely on the totalized
+value of a nonintegrable interval integral. -/
+theorem endpointClippedArchCorrelation_terms_intervalIntegrable_of_endpoints_zero
+    (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
+    (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).im = 0)
+    (hneg : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      (-yoshidaEndpointA) = 0)
+    (hpos : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      yoshidaEndpointA = 0) :
     (let g : ℝ → ℝ := fun x ↦
       ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re
     let C := realEndpointCorrelation yoshidaEndpointA g
@@ -1220,14 +1239,10 @@ theorem endpointClippedArchCorrelation_terms_intervalIntegrable
   dsimp only
   let fs : YoshidaClippedSmooth yoshidaEndpointA :=
     (f : YoshidaClippedSmooth yoshidaEndpointA)
-  let fo : yoshidaPointwiseOddPeriodicCoreSubmodule yoshidaEndpointA :=
-    ⟨f, hf_odd⟩
-  obtain ⟨hpos, hneg⟩ :=
-    pointwiseOddPeriodicCore_endpoints_zero yoshidaEndpointA_pos fo
   have hpos' : fs yoshidaEndpointA = 0 := by
-    simpa only [fs, fo] using hpos
+    simpa only [fs] using hpos
   have hneg' : fs (-yoshidaEndpointA) = 0 := by
-    simpa only [fs, fo] using hneg
+    simpa only [fs] using hneg
   have hfreal : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
       fs x = ((fs x).re : ℂ) := by
     intro x hx
@@ -1247,14 +1262,37 @@ theorem endpointClippedArchCorrelation_terms_intervalIntegrable
     intervalIntegrable_physical_defect_and_regular
       yoshidaEndpointA_pos fs hfcont hfreal hweighted
 
-/-- Exact split of the combined physical archimedean integrand. -/
-theorem endpointClippedArchCorrelation_eq_split
+theorem endpointClippedArchCorrelation_terms_intervalIntegrable
     (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
     (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
       ((f : YoshidaClippedSmooth yoshidaEndpointA) x).im = 0)
     (hf_odd : Function.Odd
       (((f : YoshidaClippedPeriodicCore yoshidaEndpointA) :
         YoshidaClippedSmooth yoshidaEndpointA) : ℝ → ℂ)) :
+    (let g : ℝ → ℝ := fun x ↦
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re
+    let C := realEndpointCorrelation yoshidaEndpointA g
+    IntervalIntegrable (fun u ↦ (C 0 - C u) / u) volume
+        0 (2 * yoshidaEndpointA) ∧
+      IntervalIntegrable (fun u ↦ yoshidaRegularKernel u * C u) volume
+        0 (2 * yoshidaEndpointA)) := by
+  let fo : yoshidaPointwiseOddPeriodicCoreSubmodule yoshidaEndpointA :=
+    ⟨f, hf_odd⟩
+  obtain ⟨hpos, hneg⟩ :=
+    pointwiseOddPeriodicCore_endpoints_zero yoshidaEndpointA_pos fo
+  exact endpointClippedArchCorrelation_terms_intervalIntegrable_of_endpoints_zero
+    f hf_real (by simpa only [fo] using hneg) (by simpa only [fo] using hpos)
+
+/-- Exact split of the combined physical archimedean integrand under explicit
+zero endpoint traces. -/
+theorem endpointClippedArchCorrelation_eq_split_of_endpoints_zero
+    (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
+    (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).im = 0)
+    (hneg : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      (-yoshidaEndpointA) = 0)
+    (hpos : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      yoshidaEndpointA = 0) :
     (let g : ℝ → ℝ := fun x ↦
       ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re
     let C := realEndpointCorrelation yoshidaEndpointA g
@@ -1270,7 +1308,8 @@ theorem endpointClippedArchCorrelation_eq_split
     ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re
   let C : ℝ → ℝ := realEndpointCorrelation yoshidaEndpointA g
   obtain ⟨hdefect, hregular⟩ :=
-    endpointClippedArchCorrelation_terms_intervalIntegrable f hf_real hf_odd
+    endpointClippedArchCorrelation_terms_intervalIntegrable_of_endpoints_zero
+      f hf_real hneg hpos
   have htwice : IntervalIntegrable
       (fun u ↦ 2 * yoshidaRegularKernel u * C u) volume
         0 (2 * yoshidaEndpointA) := by
@@ -1293,8 +1332,55 @@ theorem endpointClippedArchCorrelation_eq_split
   dsimp only
   rw [intervalIntegral.integral_sub hdefect htwice, htwoIntegral]
 
+theorem endpointClippedArchCorrelation_eq_split
+    (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
+    (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).im = 0)
+    (hf_odd : Function.Odd
+      (((f : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA) : ℝ → ℂ)) :
+    (let g : ℝ → ℝ := fun x ↦
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re
+    let C := realEndpointCorrelation yoshidaEndpointA g
+    endpointClippedArchCorrelation g =
+      (∫ u : ℝ in 0..2 * yoshidaEndpointA, (C 0 - C u) / u) -
+      2 * (∫ u : ℝ in 0..2 * yoshidaEndpointA,
+        yoshidaRegularKernel u * C u) -
+      (Real.log (2 * yoshidaEndpointA) +
+        Real.eulerMascheroniConstant + Real.log 2 + Real.log Real.pi) *
+        C 0) := by
+  let fo : yoshidaPointwiseOddPeriodicCoreSubmodule yoshidaEndpointA :=
+    ⟨f, hf_odd⟩
+  obtain ⟨hpos, hneg⟩ :=
+    pointwiseOddPeriodicCore_endpoints_zero yoshidaEndpointA_pos fo
+  exact endpointClippedArchCorrelation_eq_split_of_endpoints_zero
+    f hf_real (by simpa only [fo] using hneg) (by simpa only [fo] using hpos)
+
 /-- Adding the raw physical polar product to the archimedean correlation is
 exactly the named physical endpoint quadratic. -/
+theorem endpointClippedArchCorrelation_add_polar_eq_physicalRealQuadratic_of_endpoints_zero
+    (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
+    (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).im = 0)
+    (hneg : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      (-yoshidaEndpointA) = 0)
+    (hpos : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      yoshidaEndpointA = 0) :
+    (let g : ℝ → ℝ := fun x ↦
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re
+    endpointClippedArchCorrelation g +
+      2 *
+        (∫ y : ℝ in -yoshidaEndpointA..yoshidaEndpointA,
+          Real.exp (-y / 2) * g y) *
+        (∫ y : ℝ in -yoshidaEndpointA..yoshidaEndpointA,
+          Real.exp (y / 2) * g y) =
+      yoshidaEndpointPhysicalRealQuadratic g) := by
+  dsimp only
+  rw [endpointClippedArchCorrelation_eq_split_of_endpoints_zero
+    f hf_real hneg hpos]
+  unfold yoshidaEndpointPhysicalRealQuadratic
+  ring
+
 theorem endpointClippedArchCorrelation_add_polar_eq_physicalRealQuadratic
     (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
     (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
@@ -1311,13 +1397,40 @@ theorem endpointClippedArchCorrelation_add_polar_eq_physicalRealQuadratic
         (∫ y : ℝ in -yoshidaEndpointA..yoshidaEndpointA,
           Real.exp (y / 2) * g y) =
       yoshidaEndpointPhysicalRealQuadratic g) := by
-  dsimp only
-  rw [endpointClippedArchCorrelation_eq_split f hf_real hf_odd]
-  unfold yoshidaEndpointPhysicalRealQuadratic
-  ring
+  let fo : yoshidaPointwiseOddPeriodicCoreSubmodule yoshidaEndpointA :=
+    ⟨f, hf_odd⟩
+  obtain ⟨hpos, hneg⟩ :=
+    pointwiseOddPeriodicCore_endpoints_zero yoshidaEndpointA_pos fo
+  exact
+    endpointClippedArchCorrelation_add_polar_eq_physicalRealQuadratic_of_endpoints_zero
+      f hf_real (by simpa only [fo] using hneg) (by simpa only [fo] using hpos)
 
 /-- Direct production bridge: clipped archimedean energy plus the raw
 physical polar product is the physical endpoint quadratic. -/
+theorem clippedArchEnergy_add_polar_eq_physicalRealQuadratic_of_endpoints_zero
+    (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
+    (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).im = 0)
+    (hneg : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      (-yoshidaEndpointA) = 0)
+    (hpos : (f : YoshidaClippedSmooth yoshidaEndpointA)
+      yoshidaEndpointA = 0) :
+    (let g : ℝ → ℝ := fun x ↦
+      ((f : YoshidaClippedSmooth yoshidaEndpointA) x).re
+    clippedArchEnergy yoshidaEndpointA yoshidaEndpointA_pos
+        (f : YoshidaClippedSmooth yoshidaEndpointA) +
+      2 *
+        (∫ y : ℝ in -yoshidaEndpointA..yoshidaEndpointA,
+          Real.exp (-y / 2) * g y) *
+        (∫ y : ℝ in -yoshidaEndpointA..yoshidaEndpointA,
+          Real.exp (y / 2) * g y) =
+      yoshidaEndpointPhysicalRealQuadratic g) := by
+  dsimp only
+  rw [clippedArchEnergy_eq_endpointClippedArchCorrelation_of_endpoints_zero
+      f hf_real hneg hpos,
+    endpointClippedArchCorrelation_add_polar_eq_physicalRealQuadratic_of_endpoints_zero
+      f hf_real hneg hpos]
+
 theorem clippedArchEnergy_add_polar_eq_physicalRealQuadratic
     (f : YoshidaClippedPeriodicCore yoshidaEndpointA)
     (hf_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
@@ -1335,10 +1448,12 @@ theorem clippedArchEnergy_add_polar_eq_physicalRealQuadratic
         (∫ y : ℝ in -yoshidaEndpointA..yoshidaEndpointA,
           Real.exp (y / 2) * g y) =
       yoshidaEndpointPhysicalRealQuadratic g) := by
-  dsimp only
-  rw [clippedArchEnergy_eq_endpointClippedArchCorrelation f hf_real hf_odd,
-    endpointClippedArchCorrelation_add_polar_eq_physicalRealQuadratic
-      f hf_real hf_odd]
+  let fo : yoshidaPointwiseOddPeriodicCoreSubmodule yoshidaEndpointA :=
+    ⟨f, hf_odd⟩
+  obtain ⟨hpos, hneg⟩ :=
+    pointwiseOddPeriodicCore_endpoints_zero yoshidaEndpointA_pos fo
+  exact clippedArchEnergy_add_polar_eq_physicalRealQuadratic_of_endpoints_zero
+    f hf_real (by simpa only [fo] using hneg) (by simpa only [fo] using hpos)
 
 end
 
