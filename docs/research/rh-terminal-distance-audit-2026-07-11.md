@@ -2176,3 +2176,47 @@ separate from build logs: a green build is evidence, not a stage transition.
    rational arithmetic.  Guarded strict compilation, focused build, complete
    axiom audit, forbidden-proof scan, and two independent reviews pass.  No
    discovered numeric data or growing family of cases appears in the proof.
+
+## `4049546` and `30a1b7a` — Exact odd degree-one data
+
+1. **Theorems added.**  The centered degree-one Hilbert coefficient is proved
+   to be the normalized first moment with squared normalization factor `3/4`.
+   Separately, structural improper integration evaluates the full endpoint
+   potential on that mode as
+   `integral V(x) x^2 = 8/9 - (2/3) log 2`, or exactly
+   `(4/3 - log 2)` times its centered `L²` mass.
+2. **Gate hypothesis eliminated.**  The odd low mode no longer uses the weak
+   quartic surrogate.  Its normalization, affine Jacobian, endpoint
+   integrability, and full logarithmic-potential contribution are exact.
+3. **Assumptions remaining.**  A positive low diagonal is not by itself an
+   operator inequality.  Coupling to the infinite odd tail and the loss from
+   the regular kernel still need a structural Schur estimate.  The production
+   form bridge remains open.
+4. **Next make-or-break lemma.**  Determine the exact low scalar after the
+   endpoint mass losses, then retain enough cancellation in the regular kernel
+   to control low/tail coupling.
+5. **Viability evidence.**  Both files pass guarded strict compilation,
+   focused builds, complete axiom audits, forbidden-proof scans, and
+   independent high-risk review.  The potential proof uses a uniform
+   logarithmic moment antiderivative and exact endpoint limits, not sampled
+   values or a selected family of modes.
+
+## `c254cb4` — The exact odd low scalar is positive
+
+1. **Theorem added.**  With the full potential contribution and the current
+   global endpoint losses,
+   `yoshidaEndpointOddExactLowCoefficient` is proved strictly larger than
+   `1/2400`.
+2. **Gate hypothesis eliminated.**  The degree-one sign failure in `cd7fb64`
+   is now identified specifically as an artifact of the quartic truncation,
+   not an obstruction from the actual endpoint potential.
+3. **Assumptions remaining.**  This theorem controls only the low diagonal.
+   It does not yet control the potential cross term with the complete odd
+   tail or prove endpoint positivity.
+4. **Next make-or-break lemma.**  Replace the global regular-kernel Schur loss
+   by a cancellation-aware bound on mean-zero odd functions, and formulate the
+   resulting infinite-tail Schur complement without a fixed mode dimension.
+5. **Viability evidence.**  The proof derives `pi < 22/7` from a positive
+   integral, uses general logarithm remainder inequalities and the standard
+   Euler bounds, and closes only exact scalar arithmetic.  Strict compilation,
+   focused build, axiom audit, and independent review all pass.
