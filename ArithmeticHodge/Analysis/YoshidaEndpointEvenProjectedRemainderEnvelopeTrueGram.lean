@@ -351,7 +351,7 @@ private theorem abs_trueGram22_sub_polynomialGram_lt :
 
 /-- Upper bound for the true constant polynomial-remainder Gram entry. -/
 theorem fixedProjectedPolynomialRemainderGram00_lt :
-    fixedProjectedPolynomialRemainderGram00 < (39713 / 20000 : ℝ) := by
+    fixedProjectedPolynomialRemainderGram00 < (198564 / 100000 : ℝ) := by
   have hp := fixedProjectedEnvelopePolynomialGram00_bounds.2
   have he := (abs_lt.mp abs_trueGram00_sub_polynomialGram_lt).2
   norm_num at hp he ⊢
@@ -359,8 +359,8 @@ theorem fixedProjectedPolynomialRemainderGram00_lt :
 
 /-- Two-sided bound for the true mixed polynomial-remainder Gram entry. -/
 theorem fixedProjectedPolynomialRemainderGram02_bounds :
-    (7891 / 25000 : ℝ) < fixedProjectedPolynomialRemainderGram02 ∧
-      fixedProjectedPolynomialRemainderGram02 < (1973 / 6250 : ℝ) := by
+    (31565 / 100000 : ℝ) < fixedProjectedPolynomialRemainderGram02 ∧
+      fixedProjectedPolynomialRemainderGram02 < (31568 / 100000 : ℝ) := by
   have hp := fixedProjectedEnvelopePolynomialGram02_bounds
   have he := abs_lt.mp abs_trueGram02_sub_polynomialGram_lt
   constructor <;> norm_num at hp he ⊢ <;> linarith
