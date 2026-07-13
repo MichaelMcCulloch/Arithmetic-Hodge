@@ -1,5 +1,4 @@
 import ArithmeticHodge.Analysis.YoshidaConstantBounds
-import ArithmeticHodge.Analysis.YoshidaEndpointOddLowModePositive
 
 set_option autoImplicit false
 
@@ -8,7 +7,6 @@ open Real
 namespace ArithmeticHodge.Analysis.YoshidaEndpointOddSharpMassLoss
 
 open YoshidaConstantBounds
-open YoshidaEndpointOddLowModePositive
 
 noncomputable section
 
@@ -58,7 +56,7 @@ theorem eulerMascheroniConstant_lt_two_hundred_eighty_nine_div_five_hundred :
 positive argument of the endpoint renormalization logarithm. -/
 theorem pi_mul_log_two_lt_nineteen_thousand_sixty_three_div_eight_thousand_seven_hundred_fifty :
     Real.pi * Real.log 2 < (19063 / 8750 : ℝ) := by
-  have hpi := pi_lt_twenty_two_div_seven
+  have hpi := Real.pi_lt_d4
   have hlogTwo :=
     log_two_lt_one_thousand_seven_hundred_thirty_three_div_two_thousand_five_hundred
   have hpiPos := Real.pi_pos

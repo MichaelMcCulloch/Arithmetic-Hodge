@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaEndpointHyperbolicBound
+import ArithmeticHodge.Analysis.YoshidaEndpointCleanQuadratic
 import ArithmeticHodge.Analysis.YoshidaEndpointOddCorePositive
 import ArithmeticHodge.Analysis.YoshidaRegularKernelSharpMeanZeroSchur
 
@@ -18,17 +19,6 @@ open YoshidaRegularKernelSchur
 open YoshidaRegularKernelSharpMeanZeroSchur
 
 noncomputable section
-
-def yoshidaEndpointScalarMassLoss : ℝ :=
-  Real.eulerMascheroniConstant + Real.log (Real.pi * Real.log 2)
-
-def yoshidaEndpointOddCleanQuadratic (w : ℝ → ℝ) : ℝ :=
-  let f : ℝ → ℂ := fun x ↦ w x
-  centeredRawLogEnergy w / 4 +
-    (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2) -
-    yoshidaEndpointScalarMassLoss * (∫ x : ℝ in -1..1, w x ^ 2) -
-    yoshidaEndpointA * (yoshidaEndpointRegularQuadratic f).re +
-    yoshidaEndpointHyperbolicQuadratic f
 
 theorem yoshidaEndpointOddCleanQuadratic_nonneg
     (w : ℝ → ℝ) (hwcont : Continuous w)
