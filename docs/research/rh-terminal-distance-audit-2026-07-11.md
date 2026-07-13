@@ -2875,3 +2875,49 @@ separate from build logs: a green build is evidence, not a stage transition.
    clean-even theorem audits to only `propext`, `Classical.choice`, and
    `Quot.sound`.  Independent exact arithmetic reproduces the determinant
    margin and all inequality directions.
+
+## `234b4dc`, `5ce9d9e`, `56b7886`, and `df21789` — Complete restricted-support positivity
+
+1. **Theorems added.**  The production constant diagonal and the exact
+   constant/zero-trace-residual cross are now structural identities.  They
+   assemble with clean-even positivity to prove the actual production form
+   nonnegative on every real or complex pointwise-even endpoint source.
+   Structural odd positivity and exact parity orthogonality then prove the
+   production form nonnegative on the complete endpoint periodic core.
+   Finally,
+   `bombieriFunctional_quadratic_nonneg_of_ratio_le_two` proves the production
+   Bombieri quadratic functional nonnegative for every test supported in
+   `[l,r]` with `0 < l`, `l ≤ r`, and `r / l ≤ 2`.
+2. **Gate hypotheses eliminated.**  Gates 1 and 2 are closed without a
+   Fourier cutoff, density assumption, generated mode family, numeric
+   enclosure, pivot replay, or finite certificate.  Endpoint trace, complex
+   real/imaginary splitting, even/odd recombination, normalized dilation,
+   support transport, the ratio-two measure-zero boundary, and the exact
+   Bombieri sign convention are all discharged in the theorem chain.
+3. **Assumptions remaining.**  Restricted-support positivity is not RH.  A
+   wide test has long-range mixed correlations at logarithmic prime-power
+   shifts; its prime term need not vanish, and positivity of each short
+   support piece does not control those cross terms.  The root umbrella still
+   imports quarantined historical evidence modules for project-wide build
+   coverage, but the final restricted theorem's own forward dependency
+   closure does not reach them.
+4. **Next make-or-break lemma.**  Package the unconditional identity
+   `bombieriFunctional (bombieriQuadraticTest g) =
+   bombieriLocalCriticalForm g g - primeSum (bombieriQuadraticTest g)` and
+   rewrite each prime kernel as the real part of a translated logarithmic
+   autocorrelation.  Then prove or violate the resulting structural mixed
+   Gram inequality, beginning with two narrow bumps separated by one prime
+   dilation.  A naive partition-of-unity route is eliminated: translation
+   invariance and positivity on every fixed-width window do not imply global
+   positivity without this cross-term estimate.
+5. **Viability evidence.**  Independent mathematical review found no
+   sign, factor, endpoint, domain, or parity flaw.  A separate recursive audit
+   found 224 files including the target, 406 project import edges, no missing
+   or untracked edge, no cycle, no forbidden proof mechanism, and no
+   certificate-style dependency.  Fresh strict compilation and focused builds
+   pass; all three public endpoints audit exactly to `propext`,
+   `Classical.choice`, and `Quot.sound`.  After qualifying five cache-hidden
+   duplicate-name call sites, the canonical guarded full build passes all
+   8,574 jobs with the final theorem imported by `ArithmeticHodge.lean`.
+   Every one of the 159 protected legacy Lean artifacts remains byte-identical
+   to `refs/archive/legacy-lean-2026-07-11`.
