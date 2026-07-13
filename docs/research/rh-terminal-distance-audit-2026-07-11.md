@@ -3585,7 +3585,7 @@ record their own umbrella-build evidence.
    of a spurious factor `1/2`, and both determinant directions and returned
    PASS.
 
-## Current increment — General alternating form domain and sharp scalar pencil
+## `6f6fb5a` — General alternating form domain and sharp scalar pencil
 
 1. **Theorems added.**  The ordered centered cross-correlation now has a
    continuous fixed-unit affine endpoint quotient `Q_uv` and the exact
@@ -3645,3 +3645,78 @@ record their own umbrella-build evidence.
    odd-kernel scaling, every integrability boundary, cross-correlation order,
    mixed coefficient, endpoint-sign inference, and both production-pencil
    directions and returned PASS.
+
+## Current increment — Exact reflection-parity block pencil
+
+1. **Theorems added.**  Every centered real profile now has literal
+   reflection-even and reflection-odd parts.  The oriented substitution
+   `x -> -t-x` proves that simultaneous reflection reverses ordered centered
+   cross-correlation, hence the complete alternating endpoint channel
+   anticommutes with reflection, vanishes on equal-parity pairs, and for
+   continuous profiles is exactly
+   `J(u,v) = J(u_even,v_odd) + J(u_odd,v_even)`.
+
+   The symmetric endpoint channel is placed on an equally rigorous form
+   domain.  For every continuous profile pair, the complete symmetric weight
+   times the symmetric cross-correlation is interval-integrable: the overlap
+   factorization at `t = 2`, the rescaled removable `oddKernel` theorem, and
+   the reflected adjacent-kernel branch cancel the pole without assuming an
+   endpoint trace.  This identifies an explicit complete perturbation
+   bilinear form with the algebraic polarization and proves that the
+   perturbation has zero even/odd cross term.
+
+   The clean quadratic is not split termwise.  Instead, production local-form
+   parity orthogonality on the actual endpoint-zero periodic core is combined
+   with the exact clean bridge and positive endpoint scale.  The canonical
+   supported real Bombieri crop transports this identity to
+   `factorTwoCenteredProfile`.  Consequently both signed endpoint energies
+   split exactly into their even and odd values.  The original scalar pencil
+   is therefore equal to `factorTwoReflectionParityPencil`, whose only mixed
+   coefficient is the sum of the two opposite-parity channels.  It is further
+   the exact sum of canonical even/odd and odd/even channel pencils.
+   Universal production two-bump positivity and existence of a negative
+   production member are respectively equivalent to nonnegativity and strict
+   negativity of this parity-block pencil.
+2. **Gate hypothesis eliminated.**  Gate 3 no longer treats the centered
+   profile pair as an undifferentiated two-function form.  Same-parity
+   alternating channels are now proved identically zero, while every diagonal
+   contribution is transported into the matching reflection sectors.  The
+   singular symmetric integral is split only after its form-domain
+   integrability has been proved.  Thus a positive proof may attack the two
+   actual opposite-parity channel pencils, and their sum gives the exact
+   production pencil; no independent-profile row contraction or termwise
+   singular-energy polarization is assumed.
+3. **Assumptions remaining.**  Neither opposite-parity channel pencil is
+   proved nonnegative, and the complete parity-block pencil has not been
+   proved nonnegative or given a strict negative direction.  Positivity of the
+   two channel pencils is sufficient but not necessary: failure of one alone
+   would not refute the complete pencil because the other channel can
+   compensate.  No admissible negative seed is produced.  A positive result
+   would still cover only the same-seed pair `{g,D2 g}`; arbitrary logarithmic
+   window chains, all-support Bombieri positivity, and RH transport remain
+   open.  RH is neither proved nor falsified here.
+4. **Next make-or-break lemma.**  For the canonical real/imaginary centered
+   profiles, prove or strictly reverse the complete reflection-parity pencil.
+   The first structural positive target is simultaneous nonnegativity of the
+   two canonical channel pencils.  For the even/odd channel this amounts to
+   controlling
+   `C_eo = J(u_even,v_odd)` by
+   `A_eo = E+(u_even)+E+(v_odd)` and
+   `B_eo = E-(u_even)+E-(v_odd)`, with the analogous odd/even statement,
+   retaining the regular kernel, both endpoint poles, and prime shift in each
+   channel.  The adversarial lane must test strict negativity of the sum, not
+   merely of one summand.
+5. **Viability and integrity evidence.**  The focused module and root
+   umbrella pass warning-as-error checks.  The focused target builds all
+   8,474 jobs and the canonical full build passes all 8,618 jobs.  Nine
+   selected symmetric-integrability, polarization, clean-transport,
+   alternating-decomposition, parity-pencil, and production-equivalence
+   endpoints audit exactly to `propext`, `Classical.choice`, and `Quot.sound`.
+   The new module's recursive structural closure has 264 project files and
+   466 project import edges, with no missing dependency, quarantined
+   certificate/enclosure/pivot/payload module, or forbidden proof construct.
+   Independent analytic and algebraic reviews checked the endpoint quotient,
+   odd-kernel rescaling and reflection, every interval-integral split,
+   production clean-form transport, ordered-correlation signs, parity
+   allocations, mixed factor `2`, and both production equivalences and
+   returned PASS.
