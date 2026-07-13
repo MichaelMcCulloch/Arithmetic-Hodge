@@ -83,6 +83,126 @@ theorem real_rotated_quadratic_pencil_exists_neg_iff (Q P J : ℝ) :
     · exact (not_lt_of_ge hradius.1) hQ
     · exact (not_lt_of_ge hradius.2) hradius'
 
+/-- A real affine functional is nonnegative on the closed unit disk exactly
+when its Euclidean coefficient radius fits inside its nonnegative center. -/
+theorem real_closedDisk_phase_nonneg_iff_radius (Q P J : ℝ) :
+    (∀ a b : ℝ, a ^ 2 + b ^ 2 ≤ 1 →
+      0 ≤ Q + a * P + b * J) ↔
+      0 ≤ Q ∧ P ^ 2 + J ^ 2 ≤ Q ^ 2 := by
+  constructor
+  · intro h
+    have hQ : 0 ≤ Q := by
+      simpa using h 0 0 (by norm_num)
+    refine ⟨hQ, ?_⟩
+    let R : ℝ := Real.sqrt (P ^ 2 + J ^ 2)
+    have hsum : 0 ≤ P ^ 2 + J ^ 2 :=
+      add_nonneg (sq_nonneg P) (sq_nonneg J)
+    have hRsq : R ^ 2 = P ^ 2 + J ^ 2 := by
+      dsimp only [R]
+      exact Real.sq_sqrt hsum
+    by_cases hRzero : R = 0
+    · rw [← hRsq, hRzero]
+      simpa using sq_nonneg Q
+    · have hRpos : 0 < R := lt_of_le_of_ne (Real.sqrt_nonneg _) (Ne.symm hRzero)
+      have hdisk : (-P / R) ^ 2 + (-J / R) ^ 2 ≤ 1 := by
+        rw [show (-P / R) ^ 2 + (-J / R) ^ 2 =
+            (P ^ 2 + J ^ 2) / R ^ 2 by ring]
+        rw [← hRsq, div_self (pow_ne_zero 2 hRzero)]
+      have hphase := h (-P / R) (-J / R) hdisk
+      have hlinear :
+          Q + (-P / R) * P + (-J / R) * J = Q - R := by
+        field_simp [hRzero]
+        nlinarith [hRsq]
+      rw [hlinear] at hphase
+      nlinarith
+  · rintro ⟨hQ, hradius⟩ a b hab
+    have hphaseSq :
+        (a * P + b * J) ^ 2 ≤
+          (a ^ 2 + b ^ 2) * (P ^ 2 + J ^ 2) := by
+      nlinarith [sq_nonneg (a * J - b * P)]
+    have hcoeff : 0 ≤ P ^ 2 + J ^ 2 :=
+      add_nonneg (sq_nonneg P) (sq_nonneg J)
+    have hphaseSqQ : (a * P + b * J) ^ 2 ≤ Q ^ 2 := by
+      calc
+        (a * P + b * J) ^ 2 ≤
+            (a ^ 2 + b ^ 2) * (P ^ 2 + J ^ 2) := hphaseSq
+        _ ≤ 1 * (P ^ 2 + J ^ 2) :=
+          mul_le_mul_of_nonneg_right hab hcoeff
+        _ ≤ Q ^ 2 := by simpa using hradius
+    have habs : |a * P + b * J| ≤ Q := by
+      exact (sq_le_sq₀ (abs_nonneg _) hQ).1 (by simpa only [sq_abs] using hphaseSqQ)
+    linarith [neg_abs_le (a * P + b * J)]
+
+/-- Strict negativity in some closed-disk phase is exactly a negative center
+or a strict reversal of the Euclidean radius inequality. -/
+theorem real_closedDisk_phase_exists_neg_iff_radius (Q P J : ℝ) :
+    (∃ a b : ℝ, a ^ 2 + b ^ 2 ≤ 1 ∧
+      Q + a * P + b * J < 0) ↔
+      Q < 0 ∨ Q ^ 2 < P ^ 2 + J ^ 2 := by
+  constructor
+  · rintro ⟨a, b, hab, hneg⟩
+    by_cases hQ : 0 ≤ Q
+    · right
+      by_contra hradius
+      have hnonneg := (real_closedDisk_phase_nonneg_iff_radius Q P J).2
+        ⟨hQ, le_of_not_gt hradius⟩ a b hab
+      exact (not_lt_of_ge hnonneg) hneg
+    · exact Or.inl (lt_of_not_ge hQ)
+  · intro hfailure
+    have hnotRadius : ¬(0 ≤ Q ∧ P ^ 2 + J ^ 2 ≤ Q ^ 2) := by
+      rcases hfailure with hQ | hradius
+      · exact fun h ↦ (not_lt_of_ge h.1) hQ
+      · exact fun h ↦ (not_lt_of_ge h.2) hradius
+    have hnotPhase : ¬∀ a b : ℝ, a ^ 2 + b ^ 2 ≤ 1 →
+        0 ≤ Q + a * P + b * J := by
+      intro hphase
+      exact hnotRadius ((real_closedDisk_phase_nonneg_iff_radius Q P J).1 hphase)
+    push_neg at hnotPhase
+    exact hnotPhase
+
+/-- The strict-reverse witness may always be chosen on the unit circle.  This
+is the form in which the endpoint radial gap vanishes. -/
+theorem real_unitCircle_phase_exists_neg_iff_radius (Q P J : ℝ) :
+    (∃ a b : ℝ, a ^ 2 + b ^ 2 = 1 ∧
+      Q + a * P + b * J < 0) ↔
+      Q < 0 ∨ Q ^ 2 < P ^ 2 + J ^ 2 := by
+  constructor
+  · rintro ⟨a, b, hab, hneg⟩
+    exact (real_closedDisk_phase_exists_neg_iff_radius Q P J).1
+      ⟨a, b, hab.le, hneg⟩
+  · intro hfailure
+    let R : ℝ := Real.sqrt (P ^ 2 + J ^ 2)
+    have hsum : 0 ≤ P ^ 2 + J ^ 2 :=
+      add_nonneg (sq_nonneg P) (sq_nonneg J)
+    have hRsq : R ^ 2 = P ^ 2 + J ^ 2 := by
+      dsimp only [R]
+      exact Real.sq_sqrt hsum
+    by_cases hRzero : R = 0
+    · have hQneg : Q < 0 := by
+        rcases hfailure with hQ | hradius
+        · exact hQ
+        · rw [← hRsq, hRzero] at hradius
+          nlinarith
+      have hPzero : P = 0 := by
+        nlinarith [hRsq, sq_nonneg J]
+      exact ⟨1, 0, by norm_num, by simpa [hPzero] using hQneg⟩
+    · have hRpos : 0 < R := lt_of_le_of_ne (Real.sqrt_nonneg _) (Ne.symm hRzero)
+      have hunit : (-P / R) ^ 2 + (-J / R) ^ 2 = 1 := by
+        rw [show (-P / R) ^ 2 + (-J / R) ^ 2 =
+            (P ^ 2 + J ^ 2) / R ^ 2 by ring]
+        rw [← hRsq, div_self (pow_ne_zero 2 hRzero)]
+      have hQR : Q - R < 0 := by
+        rcases hfailure with hQ | hradius
+        · linarith
+        · nlinarith [hRsq]
+      refine ⟨-P / R, -J / R, hunit, ?_⟩
+      have hlinear :
+          Q + (-P / R) * P + (-J / R) * J = Q - R := by
+        field_simp [hRzero]
+        nlinarith [hRsq]
+      rw [hlinear]
+      exact hQR
+
 /-! ## The complete endpoint channel -/
 
 /-- The clean diagonal shared by a pair of centered real profiles. -/
@@ -110,6 +230,56 @@ def factorTwoEndpointChannelCoordinate (u v : ℝ → ℝ) : ℂ :=
   simp only [factorTwoEndpointChannelCoordinate,
     Complex.normSq_apply]
   ring
+
+/-- Phase-uniform nonnegativity of the complete endpoint channel is exactly
+its sharp complex numerical-radius inequality. -/
+theorem factorTwoEndpointChannel_phase_nonneg_iff_radius
+    (u v : ℝ → ℝ) :
+    (∀ a b : ℝ, a ^ 2 + b ^ 2 ≤ 1 →
+      0 ≤ factorTwoEndpointChannelCleanSum u v +
+        a * factorTwoEndpointChannelSymmetricSum u v +
+        b * factorTwoCenteredAlternatingCoupling u v) ↔
+      0 ≤ factorTwoEndpointChannelCleanSum u v ∧
+        Complex.normSq (factorTwoEndpointChannelCoordinate u v) ≤
+          factorTwoEndpointChannelCleanSum u v ^ 2 := by
+  rw [factorTwoEndpointChannelCoordinate_normSq]
+  exact real_closedDisk_phase_nonneg_iff_radius
+    (factorTwoEndpointChannelCleanSum u v)
+    (factorTwoEndpointChannelSymmetricSum u v)
+    (factorTwoCenteredAlternatingCoupling u v)
+
+/-- The strict-reverse form of the complete endpoint phase criterion. -/
+theorem factorTwoEndpointChannel_phase_exists_neg_iff_radius
+    (u v : ℝ → ℝ) :
+    (∃ a b : ℝ, a ^ 2 + b ^ 2 ≤ 1 ∧
+      factorTwoEndpointChannelCleanSum u v +
+          a * factorTwoEndpointChannelSymmetricSum u v +
+          b * factorTwoCenteredAlternatingCoupling u v < 0) ↔
+      factorTwoEndpointChannelCleanSum u v < 0 ∨
+        factorTwoEndpointChannelCleanSum u v ^ 2 <
+          Complex.normSq (factorTwoEndpointChannelCoordinate u v) := by
+  rw [factorTwoEndpointChannelCoordinate_normSq]
+  exact real_closedDisk_phase_exists_neg_iff_radius
+    (factorTwoEndpointChannelCleanSum u v)
+    (factorTwoEndpointChannelSymmetricSum u v)
+    (factorTwoCenteredAlternatingCoupling u v)
+
+/-- A strict reverse endpoint radius has a unit-phase witness, exactly where
+the production formula has no radial correction. -/
+theorem factorTwoEndpointChannel_unitPhase_exists_neg_iff_radius
+    (u v : ℝ → ℝ) :
+    (∃ a b : ℝ, a ^ 2 + b ^ 2 = 1 ∧
+      factorTwoEndpointChannelCleanSum u v +
+          a * factorTwoEndpointChannelSymmetricSum u v +
+          b * factorTwoCenteredAlternatingCoupling u v < 0) ↔
+      factorTwoEndpointChannelCleanSum u v < 0 ∨
+        factorTwoEndpointChannelCleanSum u v ^ 2 <
+          Complex.normSq (factorTwoEndpointChannelCoordinate u v) := by
+  rw [factorTwoEndpointChannelCoordinate_normSq]
+  exact real_unitCircle_phase_exists_neg_iff_radius
+    (factorTwoEndpointChannelCleanSum u v)
+    (factorTwoEndpointChannelSymmetricSum u v)
+    (factorTwoCenteredAlternatingCoupling u v)
 
 /-- The scalar pencil attached to one complete endpoint channel. -/
 def factorTwoEndpointChannelPencil
