@@ -2688,3 +2688,74 @@ separate from build logs: a green build is evidence, not a stage transition.
    rederived all polarization factors, signs, endpoint scales, form-domain
    transports, and potential moments and found no forbidden computational
    dependency.
+
+## `3d7b646`, `3583a85`, `273d30e`, `1aa08a4`, and `1c1cbd7` — Exact low Gram and corrected projected representers
+
+1. **Theorems and correction added.**  The complete clean quadratic is
+   structurally positive on the fixed `P₀/P₂` block.  Its exact Gram has the
+   polarization
+   `Q(cP₀+bP₂)=q₀₀c²+2q₀₂cb+q₂₂b²`, with `q₀₀>0` and
+   `q₀₀q₂₂-q₀₂²>0`.  The low-tail representers are now explicitly projected
+   modulo the annihilated `P₀/P₂` span, and those subtractions are proved not
+   to change their pairings with a zero-two tail.  Fixed coefficients
+   `(73/48,35/48)` and `(7/48,1/2)` are selected for the two projected
+   representatives.
+2. **Invalid premise removed.**  The conditional theorem in `3583a85` was a
+   valid implication, but its *raw* weighted-dual premise is analytically
+   impossible: the raw constant representer retains a large irrelevant low
+   component.  A route-selection quadrature gives raw `M₀₀≈4.85` versus
+   `q₀₀≈0.37`; a separate coarse weighted-Cauchy argument also detects the
+   obstruction.  Commit `273d30e` repairs the theorem rather than weakening
+   its conclusion: weighted Cauchy is applied only after subtracting arbitrary
+   `P₀/P₂` profiles, whose tail pairings vanish exactly.
+3. **Gate hypothesis eliminated.**  Positivity and the determinant of the
+   exact low Gram are no longer assumptions.  The determinant proof tests the
+   already established lower-Gram domination on the exact adjugate direction
+   `(-q₀₂,q₀₀)`; it does not evaluate a finite certificate.  The singular
+   potential is also extracted exactly from the projected dual square, leaving
+   a quotient whose numerator contains only bounded regular, hyperbolic, and
+   polynomial terms.
+4. **Assumptions remaining.**  The projected weighted-dual inequality itself
+   remains to be closed, together with its routine integrability wrappers and
+   the final all-even form polarization.  Nothing in these commits proves RH
+   or unconditional even positivity yet.
+5. **Viability evidence.**  Independent review rederived the regular-kernel
+   factor, both hyperbolic coefficients, the projection invariance, and every
+   Schur inequality direction.  The current representer closure has no legacy
+   enclosure, pivot, payload, generated matrix, or certificate dependency;
+   public theorem audits contain only `propext`, `Classical.choice`, and
+   `Quot.sound`.
+
+## `9d6ed6b`, `b959a36`, `696fcd6`, `be7e78a`, `71f35bd`, `1e7e0a1`, `a645fe6`, `a6db642`, `5d2cf0b`, and `9b565f9` — Bounded polynomial remainder reduction
+
+1. **Theorems added.**  For `z=x²` and `t=z/(2-z)`, the structural inequality
+   `t+t³/3≤V(x)` is proved by monotonicity of an explicit logarithmic
+   remainder.  Hence the true tail weight dominates the rational weight
+   `D=41/60+t+t³/3`.  Its reciprocal is majorized on the entire closed
+   interval by
+   `U(x)=60/41-(1800/1681)x²+(17100/68921)x⁴-(18/125)x⁶`.
+   The proof is one exact cubic identity whose remainder is `x⁶` times a
+   six-term Bernstein-positive polynomial.
+2. **Gate hypothesis eliminated.**  The endpoint logarithm and reciprocal no
+   longer occur in the make-or-break estimate.  Exact integral identities
+   reduce the universal projected dual inequality first to an ordinary
+   `U(x)`-weighted square, then to its three fixed Gram entries.  The exact
+   clean-minus-base side is likewise reduced to three fixed gap entries, and a
+   generic strict `2×2` principal-minor theorem now closes the uniform
+   inequality from positivity of the difference matrix.
+3. **Assumptions remaining.**  The sole sharp analytic obligation is to prove
+   the two principal-minor inequalities for the fixed gap Gram minus the fixed
+   polynomial-remainder Gram.  A degree-six Taylor envelope for the regular
+   kernel and cosh term has been derived as the intended structural input, but
+   its final moment bounds are not yet part of this audit checkpoint.
+4. **Next make-or-break lemma.**  Prove the fixed rational bounds for the three
+   polynomial-remainder entries and the three exact gap entries, then discharge
+   `0<Δ₀₀` and `0<Δ₀₀Δ₂₂-Δ₀₂²`.  This is fixed low-dimensional analytic
+   algebra; it must remain a transparent series/moment proof, not a sampled
+   interval table or generated certificate.
+5. **Viability evidence.**  The transformed two-term denominator retains a
+   diagnostic minimum Schur margin around `6.5e-4`; the committed polynomial
+   reciprocal majorant retains about `5.9e-4`.  These figures select the route
+   but are not used as proof.  Every committed reduction strict-compiles under
+   the guarded Justfile, builds its full dependency target, has an empty
+   forbidden scan, and audits to the standard three axioms only.
