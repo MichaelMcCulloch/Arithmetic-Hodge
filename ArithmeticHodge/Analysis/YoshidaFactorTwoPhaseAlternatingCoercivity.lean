@@ -341,6 +341,288 @@ private theorem integral_abs_cross_div_two_sub_eq_openTriangle
         |u (z.1 + z.2) * v z.2| / (2 - z.1) := by
       rw [← integral_indicator measurableSet_openPositiveDistanceTriangle]
 
+/-- A fixed first coordinate is null for planar Lebesgue measure. -/
+private theorem ae_fst_ne (c : ℝ) :
+    ∀ᵐ z : ℝ × ℝ ∂((volume : Measure ℝ).prod volume), z.1 ≠ c := by
+  apply (MeasureTheory.Measure.ae_prod_iff_ae_ae (by measurability)).2
+  filter_upwards [MeasureTheory.Measure.ae_ne volume c] with x hx
+  exact Filter.Eventually.of_forall (fun _y ↦ hx)
+
+private theorem measurableSet_positiveDistanceTriangle :
+    MeasurableSet positiveDistanceTriangle := by
+  unfold positiveDistanceTriangle
+  measurability
+
+private theorem openPositiveDistanceTriangle_ae_eq :
+    openPositiveDistanceTriangle =ᵐ[((volume : Measure ℝ).prod volume)]
+      positiveDistanceTriangle := by
+  filter_upwards [ae_fst_ne 0, ae_fst_ne 2] with z hz0 hz2
+  apply propext
+  constructor
+  · intro hmem
+    exact ⟨hmem.1.1.le, hmem.1.2.le, hmem.2⟩
+  · intro hmem
+    exact ⟨⟨lt_of_le_of_ne hmem.1 (Ne.symm hz0),
+      lt_of_le_of_ne hmem.2.1 hz2⟩, hmem.2.2⟩
+
+/-- The punctured and closed distance triangles have the same integral. -/
+private theorem setIntegral_openTriangle_eq_closedTriangle
+    (F : ℝ × ℝ → ℝ) :
+    (∫ z : ℝ × ℝ in openPositiveDistanceTriangle, F z) =
+      ∫ z : ℝ × ℝ in positiveDistanceTriangle, F z := by
+  rw [← integral_indicator measurableSet_openPositiveDistanceTriangle,
+    ← integral_indicator measurableSet_positiveDistanceTriangle]
+  rw [Measure.volume_eq_prod ℝ ℝ]
+  apply integral_congr_ae
+  filter_upwards [openPositiveDistanceTriangle_ae_eq] with z hz
+  have hziff : z ∈ openPositiveDistanceTriangle ↔
+      z ∈ positiveDistanceTriangle := iff_of_eq hz
+  by_cases hmem : z ∈ openPositiveDistanceTriangle
+  · rw [Set.indicator_of_mem hmem, Set.indicator_of_mem (hziff.mp hmem)]
+  · rw [Set.indicator_of_notMem hmem,
+      Set.indicator_of_notMem (mt hziff.mpr hmem)]
+
+/-- The positive-distance shear turns the absolute correlation majorant into
+the corresponding density on the centered upper triangle. -/
+private theorem integral_abs_cross_div_two_sub_eq_centeredUpperTriangle
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (∫ t : ℝ in 0..2,
+      factorTwoCenteredCrossCorrelation
+          (fun x ↦ |u x|) (fun x ↦ |v x|) t / (2 - t)) =
+      ∫ z : ℝ × ℝ in centeredUpperTriangle,
+        |u z.1 * v z.2| / (2 - z.1 + z.2) := by
+  let F : ℝ × ℝ → ℝ := fun z ↦
+    |u z.1 * v z.2| / (2 - z.1 + z.2)
+  rw [integral_abs_cross_div_two_sub_eq_openTriangle u v hu hv,
+    setIntegral_openTriangle_eq_closedTriangle]
+  calc
+    (∫ z : ℝ × ℝ in positiveDistanceTriangle,
+        |u (z.1 + z.2) * v z.2| / (2 - z.1)) =
+        ∫ z : ℝ × ℝ in positiveDistanceTriangle,
+          F (z.1 + z.2, z.2) := by
+      apply setIntegral_congr_fun measurableSet_positiveDistanceTriangle
+      intro z _hz
+      dsimp only [F]
+      congr 2
+      ring
+    _ = ∫ z : ℝ × ℝ in centeredUpperTriangle, F z :=
+      setIntegral_positiveDistanceTriangle_shear F
+    _ = ∫ z : ℝ × ℝ in centeredUpperTriangle,
+        |u z.1 * v z.2| / (2 - z.1 + z.2) := by rfl
+
+/-- Reusable set-integral transport under a measure-preserving measurable
+embedding whose preimage identifies the two domains. -/
+private theorem setIntegral_comp_measurePreserving
+    (S : ℝ × ℝ → ℝ × ℝ)
+    (hS : MeasurePreserving S
+      ((volume : Measure ℝ).prod volume) ((volume : Measure ℝ).prod volume))
+    (hSemb : MeasurableEmbedding S)
+    (A B : Set (ℝ × ℝ)) (hA : MeasurableSet A) (hB : MeasurableSet B)
+    (hpre : S ⁻¹' B = A) (F : ℝ × ℝ → ℝ) :
+    (∫ z : ℝ × ℝ in A, F (S z)) = ∫ z : ℝ × ℝ in B, F z := by
+  rw [Measure.volume_eq_prod ℝ ℝ]
+  have hmem (z : ℝ × ℝ) : S z ∈ B ↔ z ∈ A := by
+    change z ∈ S ⁻¹' B ↔ z ∈ A
+    rw [hpre]
+  have hcomp := hS.integral_comp hSemb (B.indicator F)
+  calc
+    (∫ z : ℝ × ℝ in A, F (S z)
+        ∂((volume : Measure ℝ).prod volume)) =
+        ∫ z : ℝ × ℝ, A.indicator (fun z ↦ F (S z)) z :=
+      (integral_indicator hA).symm
+    _ = ∫ z : ℝ × ℝ, (B.indicator F) (S z) := by
+      apply integral_congr_ae
+      filter_upwards [] with z
+      by_cases hz : z ∈ A
+      · rw [Set.indicator_of_mem hz, Set.indicator_of_mem ((hmem z).2 hz)]
+      · rw [Set.indicator_of_notMem hz,
+          Set.indicator_of_notMem (mt (hmem z).1 hz)]
+    _ = ∫ z : ℝ × ℝ, B.indicator F z := hcomp
+    _ = ∫ z : ℝ × ℝ in B, F z := integral_indicator hB
+
+private def centeredNegativeTriangle : Set (ℝ × ℝ) :=
+  {z | -1 ≤ z.2 ∧ z.2 ≤ z.1 ∧ z.1 < 0}
+
+private def centeredCrossRectangle : Set (ℝ × ℝ) :=
+  {z | -1 ≤ z.2 ∧ z.2 ≤ 0 ∧ 0 ≤ z.1 ∧ z.1 ≤ 1}
+
+private def centeredPositiveTriangle : Set (ℝ × ℝ) :=
+  {z | 0 < z.2 ∧ z.2 ≤ z.1 ∧ z.1 ≤ 1}
+
+private def unitSquare : Set (ℝ × ℝ) :=
+  Icc (0 : ℝ) 1 ×ˢ Icc (0 : ℝ) 1
+
+private def unitLowerTriangle : Set (ℝ × ℝ) :=
+  {z | 0 ≤ z.2 ∧ z.2 ≤ z.1 ∧ z.1 < 1}
+
+private def unitUpperTriangle : Set (ℝ × ℝ) :=
+  {z | 0 ≤ z.1 ∧ z.1 ≤ z.2 ∧ z.2 < 1}
+
+private theorem measurableSet_centeredNegativeTriangle :
+    MeasurableSet centeredNegativeTriangle := by
+  unfold centeredNegativeTriangle
+  measurability
+
+private theorem measurableSet_centeredCrossRectangle :
+    MeasurableSet centeredCrossRectangle := by
+  unfold centeredCrossRectangle
+  measurability
+
+private theorem measurableSet_centeredPositiveTriangle :
+    MeasurableSet centeredPositiveTriangle := by
+  unfold centeredPositiveTriangle
+  measurability
+
+private theorem measurableSet_unitSquare : MeasurableSet unitSquare := by
+  unfold unitSquare
+  exact measurableSet_Icc.prod measurableSet_Icc
+
+private theorem measurableSet_unitLowerTriangle :
+    MeasurableSet unitLowerTriangle := by
+  unfold unitLowerTriangle
+  measurability
+
+private theorem measurableSet_unitUpperTriangle :
+    MeasurableSet unitUpperTriangle := by
+  unfold unitUpperTriangle
+  measurability
+
+/-- Product integrability survives the distance shear, so the centered upper
+triangle may be split into its three sign regions. -/
+private theorem integrableOn_centeredUpper_absDensity
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    IntegrableOn
+      (fun z : ℝ × ℝ ↦ |u z.1 * v z.2| / (2 - z.1 + z.2))
+      centeredUpperTriangle ((volume : Measure ℝ).prod volume) := by
+  let S : ℝ × ℝ → ℝ × ℝ := fun z ↦ (z.1 + z.2, z.2)
+  let F : ℝ × ℝ → ℝ := fun z ↦ |u z.1 * v z.2| / (2 - z.1 + z.2)
+  let G : ℝ × ℝ → ℝ := fun z ↦
+    |u (z.1 + z.2) * v z.2| / (2 - z.1)
+  have hGIndicator : Integrable
+      (openPositiveDistanceTriangle.indicator G)
+      ((volume : Measure ℝ).prod volume) := by
+    simpa only [G] using
+      integrable_openPositiveDistanceTriangle_profileDensity u v hu hv
+  have hGOpen : IntegrableOn G openPositiveDistanceTriangle
+      ((volume : Measure ℝ).prod volume) := by
+    rw [← integrable_indicator_iff measurableSet_openPositiveDistanceTriangle]
+    exact hGIndicator
+  have hGClosed : IntegrableOn G positiveDistanceTriangle
+      ((volume : Measure ℝ).prod volume) :=
+    hGOpen.congr_set_ae openPositiveDistanceTriangle_ae_eq.symm
+  have hcomp : (fun z ↦ F (S z)) = G := by
+    funext z
+    dsimp only [F, G, S]
+    rw [show 2 - (z.1 + z.2) + z.2 = 2 - z.1 by ring]
+  have hpre : S ⁻¹' centeredUpperTriangle = positiveDistanceTriangle := by
+    ext z
+    change (-1 ≤ z.2 ∧ z.2 ≤ z.1 + z.2 ∧ z.1 + z.2 ≤ 1) ↔
+      (0 ≤ z.1 ∧ z.1 ≤ 2 ∧ -1 ≤ z.2 ∧ z.2 ≤ 1 - z.1)
+    constructor
+    · rintro ⟨hxlow, hxy, hyhigh⟩
+      exact ⟨by linarith, by linarith, hxlow, by linarith⟩
+    · rintro ⟨htlow, _hthigh, hxlow, hxhigh⟩
+      exact ⟨hxlow, by linarith, by linarith⟩
+  have hmeasure : MeasurePreserving S
+      ((volume : Measure ℝ).prod volume) ((volume : Measure ℝ).prod volume) :=
+    measurePreserving_add_prod volume volume
+  let e : ℝ × ℝ ≃ᵐ ℝ × ℝ :=
+    MeasurableEquiv.prodComm.trans
+      ((MeasurableEquiv.shearAddRight ℝ).trans MeasurableEquiv.prodComm)
+  have he_apply (z : ℝ × ℝ) : e z = S z := by
+    change (z.2 + z.1, z.2) = (z.1 + z.2, z.2)
+    congr 1
+    ring
+  have hSemb : MeasurableEmbedding S := by
+    rw [← funext he_apply]
+    exact e.measurableEmbedding
+  have hpreInt : IntegrableOn (fun z ↦ F (S z))
+      (S ⁻¹' centeredUpperTriangle) ((volume : Measure ℝ).prod volume) := by
+    rw [hpre, hcomp]
+    exact hGClosed
+  exact (hmeasure.integrableOn_comp_preimage hSemb).1 hpreInt
+
+private theorem centeredUpperTriangle_eq_sign_regions :
+    centeredUpperTriangle =
+      centeredNegativeTriangle ∪
+        (centeredCrossRectangle ∪ centeredPositiveTriangle) := by
+  ext z
+  change (-1 ≤ z.2 ∧ z.2 ≤ z.1 ∧ z.1 ≤ 1) ↔
+    ((-1 ≤ z.2 ∧ z.2 ≤ z.1 ∧ z.1 < 0) ∨
+      ((-1 ≤ z.2 ∧ z.2 ≤ 0 ∧ 0 ≤ z.1 ∧ z.1 ≤ 1) ∨
+        (0 < z.2 ∧ z.2 ≤ z.1 ∧ z.1 ≤ 1)))
+  constructor
+  · intro hz
+    by_cases hy : z.1 < 0
+    · exact Or.inl ⟨hz.1, hz.2.1, hy⟩
+    · by_cases hx : z.2 ≤ 0
+      · exact Or.inr (Or.inl ⟨hz.1, hx, le_of_not_gt hy, hz.2.2⟩)
+      · exact Or.inr (Or.inr ⟨lt_of_not_ge hx, hz.2.1, hz.2.2⟩)
+  · rintro (hz | hz | hz)
+    · exact ⟨hz.1, hz.2.1, hz.2.2.le.trans (by norm_num)⟩
+    · exact ⟨hz.1, hz.2.1.trans hz.2.2.1, hz.2.2.2⟩
+    · exact ⟨by linarith [hz.1], hz.2.1, hz.2.2⟩
+
+private theorem disjoint_centeredNegative_sign_rest :
+    Disjoint centeredNegativeTriangle
+      (centeredCrossRectangle ∪ centeredPositiveTriangle) := by
+  rw [Set.disjoint_left]
+  intro z hn hrest
+  rcases hrest with hx | hp
+  · exact (not_lt_of_ge hx.2.2.1) hn.2.2
+  · linarith [hn.2.1, hn.2.2, hp.1]
+
+private theorem disjoint_centeredCross_positive :
+    Disjoint centeredCrossRectangle centeredPositiveTriangle := by
+  rw [Set.disjoint_left]
+  intro z hx hp
+  linarith [hx.2.1, hp.1]
+
+private theorem setIntegral_centeredNegative_eq_unitLower
+    (e o : ℝ → ℝ) (he : Function.Even e) (ho : Function.Odd o) :
+    (∫ z : ℝ × ℝ in centeredNegativeTriangle,
+      |e z.1 * o z.2| / (2 - z.1 + z.2)) =
+      ∫ z : ℝ × ℝ in unitLowerTriangle,
+        |e (1 - z.1) * o (1 - z.2)| / (2 - z.1 + z.2) := by
+  let S : ℝ × ℝ → ℝ × ℝ := fun z ↦ (z.1 - 1, z.2 - 1)
+  let F : ℝ × ℝ → ℝ := fun z ↦ |e z.1 * o z.2| / (2 - z.1 + z.2)
+  have hmeasure : MeasurePreserving S
+      ((volume : Measure ℝ).prod volume) ((volume : Measure ℝ).prod volume) :=
+    (measurePreserving_sub_right (volume : Measure ℝ) (1 : ℝ)).prod
+      (measurePreserving_sub_right (volume : Measure ℝ) (1 : ℝ))
+  let E : ℝ × ℝ ≃ᵐ ℝ × ℝ := MeasurableEquiv.prodCongr
+    (MeasurableEquiv.subRight (1 : ℝ)) (MeasurableEquiv.subRight (1 : ℝ))
+  have hE (z : ℝ × ℝ) : E z = S z := rfl
+  have hSemb : MeasurableEmbedding S := by
+    rw [← funext hE]
+    exact E.measurableEmbedding
+  have hpre : S ⁻¹' centeredNegativeTriangle = unitLowerTriangle := by
+    ext z
+    change (-1 ≤ z.2 - 1 ∧ z.2 - 1 ≤ z.1 - 1 ∧ z.1 - 1 < 0) ↔
+      (0 ≤ z.2 ∧ z.2 ≤ z.1 ∧ z.1 < 1)
+    constructor <;> intro hz <;> constructor
+    · linarith [hz.1]
+    · exact ⟨by linarith [hz.2.1], by linarith [hz.2.2]⟩
+    · linarith [hz.1]
+    · exact ⟨by linarith [hz.2.1], by linarith [hz.2.2]⟩
+  have htransport := setIntegral_comp_measurePreserving S hmeasure hSemb
+    unitLowerTriangle centeredNegativeTriangle
+    measurableSet_unitLowerTriangle measurableSet_centeredNegativeTriangle
+    hpre F
+  calc
+    (∫ z : ℝ × ℝ in centeredNegativeTriangle,
+        |e z.1 * o z.2| / (2 - z.1 + z.2)) =
+        ∫ z : ℝ × ℝ in unitLowerTriangle, F (S z) := htransport.symm
+    _ = ∫ z : ℝ × ℝ in unitLowerTriangle,
+        |e (1 - z.1) * o (1 - z.2)| / (2 - z.1 + z.2) := by
+      apply setIntegral_congr_fun measurableSet_unitLowerTriangle
+      intro z _hz
+      dsimp only [F, S]
+      rw [show 2 - (z.1 - 1) + (z.2 - 1) = 2 - z.1 + z.2 by ring]
+      rw [show z.1 - 1 = -(1 - z.1) by ring,
+        show z.2 - 1 = -(1 - z.2) by ring, he, ho]
+      simp only [mul_neg, abs_neg]
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseAlternatingCoercivity
