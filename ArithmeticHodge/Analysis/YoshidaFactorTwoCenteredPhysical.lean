@@ -3,6 +3,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhysicalSymbol
 set_option autoImplicit false
 
 open Complex MeasureTheory Real Set TopologicalSpace
+open scoped ComplexConjugate
 
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoCenteredPhysical
 
@@ -10,6 +11,7 @@ noncomputable section
 
 open MultiplicativeWeil
 open YoshidaBombieriCrossDistribution
+open YoshidaCriticalLogCorrelation
 open YoshidaFactorTwoAdjacentKernel
 open YoshidaFactorTwoAdjacentSchwartz
 open YoshidaFactorTwoCrossDistribution
@@ -38,6 +40,22 @@ def factorTwoAntisymmetricWeight (s : ℝ) : ℝ :=
     factorTwoAdjacentSmoothKernel (factorTwoLogLength - s)
 
 def factorTwoPrimeShift : ℝ := Real.log (3 / 2 : ℝ)
+
+def factorTwoFoldedIntegrand (g : BombieriTest) (s : ℝ) : ℂ :=
+  ((factorTwoAdjacentSmoothKernel (factorTwoLogLength - s) : ℝ) : ℂ) *
+      starRingEnd ℂ (factorTwoSelfCorrelation g s) +
+    ((factorTwoAdjacentSmoothKernel (factorTwoLogLength + s) : ℝ) : ℂ) *
+      factorTwoSelfCorrelation g s
+
+theorem factorTwoSelfCorrelation_zero_im (g : BombieriTest) :
+    (factorTwoSelfCorrelation g 0).im = 0 := by
+  have hsym := factorTwoSelfCorrelation_neg g 0
+  rw [neg_zero] at hsym
+  change factorTwoSelfCorrelation g 0 =
+    conj (factorTwoSelfCorrelation g 0) at hsym
+  have him := congrArg Complex.im hsym
+  rw [Complex.conj_im] at him
+  linarith
 
 theorem factorTwoCenteredIntegrand_intervalIntegrable
     (g : BombieriTest) {a b : ℝ}
@@ -84,6 +102,171 @@ theorem factorTwoCenteredIntegrand_intervalIntegrable
   · unfold factorTwoPhysicalLength
     ring
 
+theorem factorTwoCenteredIntegral_eq_folded
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (∫ s : ℝ in -factorTwoLogLength..factorTwoLogLength,
+      factorTwoCenteredIntegrand g s) =
+      ∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoFoldedIntegrand g s := by
+  have hcenter := factorTwoCenteredIntegrand_intervalIntegrable
+    g ha hab hsupport hratio
+  have hL : 0 ≤ factorTwoLogLength := factorTwoLogLength_pos.le
+  have hneg : IntervalIntegrable (factorTwoCenteredIntegrand g) volume
+      (-factorTwoLogLength) 0 := by
+    apply hcenter.mono_set
+    intro s hs
+    rw [uIcc_of_le (by linarith : -factorTwoLogLength ≤ 0)] at hs
+    rw [uIcc_of_le (by linarith : -factorTwoLogLength ≤ factorTwoLogLength)]
+    exact ⟨hs.1, hs.2.trans hL⟩
+  have hpos : IntervalIntegrable (factorTwoCenteredIntegrand g) volume
+      0 factorTwoLogLength := by
+    apply hcenter.mono_set
+    intro s hs
+    rw [uIcc_of_le hL] at hs
+    rw [uIcc_of_le (by linarith : -factorTwoLogLength ≤ factorTwoLogLength)]
+    exact ⟨(neg_nonpos.mpr hL).trans hs.1, hs.2⟩
+  have hreflect : IntervalIntegrable
+      (fun s : ℝ ↦ factorTwoCenteredIntegrand g (-s)) volume
+      0 factorTwoLogLength := by
+    have h := (hneg.comp_mul_left (c := (-1 : ℝ))).symm
+    convert h using 1 <;> norm_num
+  have hsplit := intervalIntegral.integral_add_adjacent_intervals hneg hpos
+  have hreflectIntegral := intervalIntegral.integral_comp_neg
+    (f := factorTwoCenteredIntegrand g)
+    (a := 0) (b := factorTwoLogLength)
+  calc
+    (∫ s : ℝ in -factorTwoLogLength..factorTwoLogLength,
+        factorTwoCenteredIntegrand g s) =
+        (∫ s : ℝ in -factorTwoLogLength..0,
+          factorTwoCenteredIntegrand g s) +
+        ∫ s : ℝ in 0..factorTwoLogLength,
+          factorTwoCenteredIntegrand g s := hsplit.symm
+    _ = (∫ s : ℝ in 0..factorTwoLogLength,
+          factorTwoCenteredIntegrand g (-s)) +
+        ∫ s : ℝ in 0..factorTwoLogLength,
+          factorTwoCenteredIntegrand g s := by
+      rw [hreflectIntegral]
+      simp only [neg_zero]
+    _ = ∫ s : ℝ in 0..factorTwoLogLength,
+        (factorTwoCenteredIntegrand g (-s) +
+          factorTwoCenteredIntegrand g s) := by
+      rw [intervalIntegral.integral_add hreflect hpos]
+    _ = ∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoFoldedIntegrand g s := by
+      apply intervalIntegral.integral_congr
+      intro s _hs
+      unfold factorTwoFoldedIntegrand factorTwoCenteredIntegrand
+      dsimp only
+      rw [show factorTwoLogLength + -s = factorTwoLogLength - s by ring,
+        factorTwoSelfCorrelation_neg]
+
+theorem factorTwoFoldedIntegrand_intervalIntegrable
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    IntervalIntegrable (factorTwoFoldedIntegrand g) volume
+      0 factorTwoLogLength := by
+  have hcenter := factorTwoCenteredIntegrand_intervalIntegrable
+    g ha hab hsupport hratio
+  have hL : 0 ≤ factorTwoLogLength := factorTwoLogLength_pos.le
+  have hneg : IntervalIntegrable (factorTwoCenteredIntegrand g) volume
+      (-factorTwoLogLength) 0 := by
+    apply hcenter.mono_set
+    intro s hs
+    rw [uIcc_of_le (by linarith : -factorTwoLogLength ≤ 0)] at hs
+    rw [uIcc_of_le (by linarith : -factorTwoLogLength ≤ factorTwoLogLength)]
+    exact ⟨hs.1, hs.2.trans hL⟩
+  have hpos : IntervalIntegrable (factorTwoCenteredIntegrand g) volume
+      0 factorTwoLogLength := by
+    apply hcenter.mono_set
+    intro s hs
+    rw [uIcc_of_le hL] at hs
+    rw [uIcc_of_le (by linarith : -factorTwoLogLength ≤ factorTwoLogLength)]
+    exact ⟨(neg_nonpos.mpr hL).trans hs.1, hs.2⟩
+  have hreflect : IntervalIntegrable
+      (fun s : ℝ ↦ factorTwoCenteredIntegrand g (-s)) volume
+      0 factorTwoLogLength := by
+    have h := (hneg.comp_mul_left (c := (-1 : ℝ))).symm
+    convert h using 1 <;> norm_num
+  have hadd := hreflect.add hpos
+  apply hadd.congr
+  intro s _hs
+  unfold factorTwoFoldedIntegrand factorTwoCenteredIntegrand
+  dsimp only
+  rw [show factorTwoLogLength + -s = factorTwoLogLength - s by ring,
+    factorTwoSelfCorrelation_neg]
+
+theorem factorTwoCenteredIntegral_re_eq_symmetric
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (∫ s : ℝ in -factorTwoLogLength..factorTwoLogLength,
+      factorTwoCenteredIntegrand g s).re =
+      ∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoSymmetricWeight s *
+          (factorTwoSelfCorrelation g s).re := by
+  have hfold := factorTwoCenteredIntegral_eq_folded
+    g ha hab hsupport hratio
+  have hfoldInt := factorTwoFoldedIntegrand_intervalIntegrable
+    g ha hab hsupport hratio
+  calc
+    (∫ s : ℝ in -factorTwoLogLength..factorTwoLogLength,
+        factorTwoCenteredIntegrand g s).re =
+        (∫ s : ℝ in 0..factorTwoLogLength,
+          factorTwoFoldedIntegrand g s).re := congrArg Complex.re hfold
+    _ = ∫ s : ℝ in 0..factorTwoLogLength,
+        (factorTwoFoldedIntegrand g s).re := by
+      simpa only [Complex.reCLM_apply] using
+        (Complex.reCLM.intervalIntegral_comp_comm hfoldInt).symm
+    _ = ∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoSymmetricWeight s *
+          (factorTwoSelfCorrelation g s).re := by
+      apply intervalIntegral.integral_congr
+      intro s _hs
+      unfold factorTwoFoldedIntegrand factorTwoSymmetricWeight
+      simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re,
+        Complex.ofReal_im, Complex.conj_re, zero_mul, sub_zero]
+      ring
+
+theorem factorTwoCenteredIntegral_im_eq_antisymmetric
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (∫ s : ℝ in -factorTwoLogLength..factorTwoLogLength,
+      factorTwoCenteredIntegrand g s).im =
+      ∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoAntisymmetricWeight s *
+          (factorTwoSelfCorrelation g s).im := by
+  have hfold := factorTwoCenteredIntegral_eq_folded
+    g ha hab hsupport hratio
+  have hfoldInt := factorTwoFoldedIntegrand_intervalIntegrable
+    g ha hab hsupport hratio
+  calc
+    (∫ s : ℝ in -factorTwoLogLength..factorTwoLogLength,
+        factorTwoCenteredIntegrand g s).im =
+        (∫ s : ℝ in 0..factorTwoLogLength,
+          factorTwoFoldedIntegrand g s).im := congrArg Complex.im hfold
+    _ = ∫ s : ℝ in 0..factorTwoLogLength,
+        (factorTwoFoldedIntegrand g s).im := by
+      simpa only [Complex.imCLM_apply] using
+        (Complex.imCLM.intervalIntegral_comp_comm hfoldInt).symm
+    _ = ∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoAntisymmetricWeight s *
+          (factorTwoSelfCorrelation g s).im := by
+      apply intervalIntegral.integral_congr
+      intro s _hs
+      unfold factorTwoFoldedIntegrand factorTwoAntisymmetricWeight
+      simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re,
+        Complex.ofReal_im, Complex.conj_re, Complex.conj_im, zero_mul,
+        add_zero]
+      ring
+
 theorem factorTwoGlobalCrossSymbol_eq_centered_physical
     (g : BombieriTest) {a b : ℝ}
     (ha : 0 < a) (hab : a ≤ b)
@@ -123,6 +306,51 @@ theorem factorTwoGlobalCrossSymbol_eq_centered_physical
   · ring
   · unfold factorTwoPhysicalLength
     ring
+
+theorem factorTwoGlobalCrossSymbol_re_eq_parity
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (factorTwoGlobalCrossSymbol g).re =
+      (∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoSymmetricWeight s *
+          (factorTwoSelfCorrelation g s).re) -
+        (Real.log 2 / Real.sqrt 2) *
+          (factorTwoSelfCorrelation g 0).re -
+        (Real.log 3 / Real.sqrt 3) *
+          (factorTwoSelfCorrelation g factorTwoPrimeShift).re := by
+  rw [factorTwoGlobalCrossSymbol_eq_centered_physical
+      g ha hab hsupport hratio,
+    Complex.sub_re,
+    factorTwoCenteredIntegral_re_eq_symmetric
+      g ha hab hsupport hratio]
+  unfold factorTwoPrimeCorrelationSymbol factorTwoPrimeShift
+  simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re,
+    Complex.ofReal_im, zero_mul, sub_zero]
+  ring
+
+theorem factorTwoGlobalCrossSymbol_im_eq_parity
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (factorTwoGlobalCrossSymbol g).im =
+      (∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoAntisymmetricWeight s *
+          (factorTwoSelfCorrelation g s).im) -
+        (Real.log 3 / Real.sqrt 3) *
+          (factorTwoSelfCorrelation g factorTwoPrimeShift).im := by
+  rw [factorTwoGlobalCrossSymbol_eq_centered_physical
+      g ha hab hsupport hratio,
+    Complex.sub_im,
+    factorTwoCenteredIntegral_im_eq_antisymmetric
+      g ha hab hsupport hratio]
+  unfold factorTwoPrimeCorrelationSymbol factorTwoPrimeShift
+  simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re,
+    Complex.ofReal_im, zero_mul, add_zero]
+  rw [factorTwoSelfCorrelation_zero_im]
+  ring
 
 end
 
