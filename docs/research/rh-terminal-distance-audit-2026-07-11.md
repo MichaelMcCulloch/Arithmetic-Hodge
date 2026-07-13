@@ -3527,7 +3527,7 @@ record their own umbrella-build evidence.
    fallbacks remain present, untracked, and unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
 
-## Current increment — Exact centered alternating determinant
+## `8ea3353` — Exact centered alternating determinant
 
 1. **Theorems added.**  Ordered critical cross-correlation for two real
    endpoint-supported pullbacks is restricted structurally to its exact
@@ -3584,3 +3584,64 @@ record their own umbrella-build evidence.
    orientation, both powers of the endpoint scale, the prime sign, the lack
    of a spurious factor `1/2`, and both determinant directions and returned
    PASS.
+
+## Current increment — General alternating form domain and sharp scalar pencil
+
+1. **Theorems added.**  The ordered centered cross-correlation now has a
+   continuous fixed-unit affine endpoint quotient `Q_uv` and the exact
+   factorization `Cross(u,v,2-r) = r * Q_uv(r)`.  Hence every continuous
+   ordered cross-correlation divided by `2-t` is interval-integrable.  After
+   splitting the adjacent smooth kernel into its continuous hyperbolic part
+   and `oddKernel`, rescaling the existing removable-kernel theorem, and
+   reflecting `r = 2-t`, the complete antisymmetric kernel times
+   `Cross(v,u)-Cross(u,v)` is interval-integrable for every pair of continuous
+   profiles.  This form-domain result makes the complete centered alternating
+   channel genuinely additive and homogeneous in each input while retaining
+   the smooth kernel and `p = 3` atom together.
+
+   The real algebra is also exact: a fixed binary pencil
+   `A*r^2 + 2*C*r*s + B*s^2` is nonnegative for every `r,s` iff
+   `A >= 0`, `B >= 0`, and `C^2 <= A*B`.  For the canonical centered pair,
+   structural restricted-support diagonal positivity proves that the product
+   inequality forces both endpoint sums nonnegative.  Consequently universal
+   production two-bump positivity is equivalent to nonnegativity of the sharp
+   fixed-pair pencil with
+   `A = E+(u)+E+(v)`, `B = E-(u)+E-(v)`, and `C = J(u,v)`; existence of a
+   negative production member is equivalent to a negative real pencil
+   direction.
+2. **Gate hypothesis eliminated.**  Gate 3 no longer carries an unproved
+   integrability or bilinearity premise for the singular alternating form.
+   Low/tail or other profile decompositions may now split that integral using
+   proved `IntervalIntegrable` hypotheses.  The exact obstruction has also
+   been reduced from a determinant slogan to one quantified scalar pencil on
+   the fixed canonical pair.  The mixed coefficient is exactly `2*r*s*J`.
+   No row contraction over independent profile pairs is assumed; such a claim
+   is strictly stronger and is not equivalent to the same-seed problem.
+3. **Assumptions remaining.**  The sharp scalar pencil is not proved
+   nonnegative and no negative direction is produced.  Bilinearity alone does
+   not control its norm: an abstract alternating form can be scaled past the
+   endpoint product while preserving every algebraic law proved here.  Even a
+   positive resolution remains confined to `{g, D2 g}`; arbitrary chains of
+   logarithmic windows still require structural block-Toeplitz or equivalent
+   long-range cross control before the all-test Bombieri criterion and RH
+   transport.
+4. **Next make-or-break lemma.**  Prove or strictly reverse, uniformly for the
+   canonical centered profiles of every ratio-two seed,
+   `A*r^2 + 2*J*r*s + B*s^2 >= 0` for all real `r,s`.  The positive lane must
+   estimate the complete endpoint and alternating forms together, retaining
+   the regular kernel, both endpoint poles, and prime shifts.  The adversarial
+   lane should exhibit an admissible seed and real `r,s` with strict negative
+   pencil value; the new equivalence then yields a genuine negative production
+   member.
+5. **Viability and integrity evidence.**  Focused and umbrella
+   warning-as-error checks pass.  The focused target builds all 8,473 jobs and
+   the canonical full build passes all 8,617 jobs.  Eight public quotient,
+   integrability, bilinearity, pencil, endpoint-sign, positive-family, and
+   negative-family endpoints audit exactly to `propext`, `Classical.choice`,
+   and `Quot.sound`.  Source and whitespace scans find no `sorry`, custom
+   axiom, `unsafe`, evaluator, generated certificate, enclosure, pivot, or
+   payload mechanism in the changed Lean module.  Independent analytic and
+   algebraic reviews rechecked the affine Jacobian, endpoint reflection,
+   odd-kernel scaling, every integrability boundary, cross-correlation order,
+   mixed coefficient, endpoint-sign inference, and both production-pencil
+   directions and returned PASS.
