@@ -39,6 +39,35 @@ theorem scaledEndpointCorrelation_mul
   have hright : (a - a * t) / a = 1 - t := by field_simp [ha.ne']
   rw [hleft, hright]
 
+/-- A weighted correlation integral acquires two factors of the dilation:
+one from the correlation and one from the outer change of variables. -/
+theorem integral_weight_mul_scaledEndpointCorrelation
+    {a : ℝ} (ha : 0 < a) (w F : ℝ → ℝ) :
+    (∫ u : ℝ in 0..2 * a, F u * scaledEndpointCorrelation a w u) =
+      a ^ 2 * ∫ t : ℝ in 0..2,
+        F (a * t) * centeredEndpointCorrelation w t := by
+  let G : ℝ → ℝ := fun u ↦ F u * scaledEndpointCorrelation a w u
+  have hsubst :
+      a • (∫ t : ℝ in 0..2, G (a * t)) =
+        ∫ u : ℝ in a * 0..a * 2, G u := by
+    exact intervalIntegral.smul_integral_comp_mul_left G a
+  calc
+    (∫ u : ℝ in 0..2 * a, F u * scaledEndpointCorrelation a w u) =
+        ∫ u : ℝ in 0..2 * a, G u := rfl
+    _ = a * ∫ t : ℝ in 0..2, G (a * t) := by
+      simpa only [mul_zero, smul_eq_mul, mul_comm] using hsubst.symm
+    _ = a * ∫ t : ℝ in 0..2,
+          a * (F (a * t) * centeredEndpointCorrelation w t) := by
+      congr 1
+      apply intervalIntegral.integral_congr
+      intro t _ht
+      dsimp only [G]
+      rw [scaledEndpointCorrelation_mul ha]
+      ring
+    _ = _ := by
+      rw [intervalIntegral.integral_const_mul]
+      ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaEndpointScaledCorrelation
