@@ -2053,3 +2053,57 @@ separate from build logs: a green build is evidence, not a stage transition.
    footprints are exactly `propext`, `Classical.choice`, and `Quot.sound`;
    the reviewed import closures contain no certificate, enclosure, cutoff,
    enumeration, or forbidden proof construct.
+
+## `703689f` — Complete centered finite-energy logarithmic gap
+
+1. **Theorems added.**  `ShiftedLegendreFiniteEnergyGap` constructs each
+   finite normalized Hilbert projection as an explicit polynomial, proves its
+   exact `2 * harmonic n` logarithmic image, identifies both its self-pairing
+   and its pairing with the original function with the same finite spectral
+   energy, and applies residual positivity plus Hilbert-basis convergence.
+   `four_mul_integral_sq_le_centeredRawLogEnergy` then proves for every real
+   zero-mean finite-energy pullback that
+   `4 * integral w^2 <= integral integral (w(x)-w(y))^2 / |x-y|` on
+   `[-1,1]`.
+2. **Gate hypothesis eliminated.**  The sharp infinite-dimensional
+   logarithmic gap, its singular form-domain closure, the zero-mode removal,
+   and all unit-to-centered Jacobian factors are now kernel-checked structural
+   theorems.  No finite matrix, low-mode table, spectral certificate, or
+   assumed continuity of the singular form remains in this chain.
+3. **Assumptions remaining.**  The endpoint Yoshida form is not restricted to
+   zero-mean real functions.  Its constant/low parity modes, positive
+   potential, rank-two hyperbolic term, and smooth regular-kernel perturbation
+   must be assembled with the logarithmic tail at the exact endpoint
+   constant.  The production complex domain and form identity also remain to
+   be connected.
+4. **Next make-or-break lemma.**  Split the endpoint form into its first
+   parity-compatible Legendre modes and the infinite orthogonal tail.  Use the
+   uniform higher-mode gap, exact analytic low-mode integrals, and a structural
+   Schur or completion-of-squares argument to prove the endpoint constant or
+   exhibit the exact failing scalar inequality.
+5. **Viability evidence.**  Each module passes guarded `just strict` and
+   focused `just build`; public axiom footprints are exactly `propext`,
+   `Classical.choice`, and `Quot.sound`.  Independent reviews confirmed the
+   Hilbert coefficient orientation, Fubini and residual signs, affine
+   denominator scaling, and final factor `4`.  The reviewed transitive import
+   closure is structural and free of computational certificates.
+
+## `147f34b` — Uniform infinite higher-mode gaps
+
+1. **Theorem added.**
+   `harmonic_mul_integral_sq_le_unitIntervalLogEnergy` proves uniformly in
+   `k` that removing every shifted-Legendre coefficient below `k` raises the
+   complete finite-energy coercive constant to `2 * harmonic k`.
+2. **Gate hypothesis eliminated.**  The infinite tail no longer needs a fixed
+   cutoff or a computed tail matrix.  Harmonic monotonicity and complete
+   Hilbert convergence control every surviving mode at once.
+3. **Assumptions remaining.**  Endpoint parity must be used to show the
+   relevant low coefficients vanish after subtracting the explicit constant,
+   linear, or quadratic modes, and the finite low-mode form must be evaluated
+   analytically.
+4. **Next make-or-break lemma.**  Prove the parity/low-mode decomposition and
+   close the resulting finite symbolic Schur inequalities against the exact
+   endpoint constant.
+5. **Viability evidence.**  Guarded strict compilation, focused build, axiom
+   audit, and independent review pass.  The theorem is quantified over every
+   `k`; it contains no selected dimension or enumerated mode family.
