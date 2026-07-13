@@ -2324,3 +2324,33 @@ separate from build logs: a green build is evidence, not a stage transition.
    all-public standard-only axiom audit, forbidden-proof scan, and independent
    high-risk review pass.  The fixed series close analytic remainders and do
    not encode a mode family or discovered certificate.
+
+## `1015193`, `ba4901a`, `84af633`, and `a534daa` — Structural `7/5` assembly data
+
+1. **Theorems added.**  The degree-one/degree-three scalar comparison is
+   reduced to an exact square with positive remainder `41/3600`.  The
+   shifted-Legendre spectrum retains weights `2 H_1`, `2 H_3`, and the
+   uniform infinite odd-tail weight `2 H_5` through Hilbert-basis convergence.
+   The centered degree-three polynomial, norm `1/7`, affine coefficient, and
+   squared coefficient factor `7/16` are exact.  Finally, the first four
+   positive endpoint-potential terms are proved pointwise below the full
+   potential and all six fixed `P_1/P_3` moments are evaluated exactly.
+2. **Gate hypothesis eliminated.**  Every analytic ingredient of the proposed
+   two-mode Schur reduction is now structural and dimension-free.  The tail is
+   genuinely infinite, while the low block is fixed by the polynomial degree
+   of the chosen uniform potential lower bound rather than by a growing
+   numerical truncation.
+3. **Assumptions remaining.**  The potential multiplier must still be
+   projected off `P_1/P_3`, its residual Gram assembled with the `H_5-7/5`
+   reserve, and the resulting three scalar comparisons connected to the
+   continuous odd form.  Endpoint component assembly and the production-form
+   bridge remain open.
+4. **Next make-or-break lemma.**  Prove the fixed residual-polynomial Gram and
+   Schur inequalities, then combine them with the retained spectral theorem to
+   establish complete odd `7/5` coercivity.
+5. **Viability evidence.**  Each module passes fresh guarded strict compilation
+   and a focused build, exposes only the standard axiom footprint, and has a
+   clean forbidden-proof scan.  Independent reviews checked every parity
+   case, harmonic factor, affine sign, potential remainder, exact moment, and
+   scalar square completion.  No module imports a generated enclosure,
+   finite-pivot payload, or certificate family.
