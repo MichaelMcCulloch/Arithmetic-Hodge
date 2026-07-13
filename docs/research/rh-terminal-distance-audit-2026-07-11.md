@@ -2804,3 +2804,36 @@ separate from build logs: a green build is evidence, not a stage transition.
    weighted-`L²` domains, and residual production transport.  A fresh archive
    comparison reports all 159 inventoried legacy Lean artifacts byte-identical
    to `refs/archive/legacy-lean-2026-07-11`.
+
+## `7ce9bc4`, `e93fa56`, and `a27c7a4` — Restricted-support transport made certificate-free
+
+1. **Theorems and integrity repair added.**  The fixed endpoint parameter is
+   isolated in a lightweight module.  A new mode-free periodization theorem
+   sends every normalized Bombieri pullback with support ratio at most two
+   into the exact endpoint periodic core.  Conditional nonnegativity on that
+   complete core, or separately on its literal even and odd carriers, now
+   transports exactly to nonnegativity of the production Bombieri quadratic
+   functional on the restricted-support class.
+2. **Gate hypothesis eliminated.**  The support and Bombieri transport no
+   longer need to import `YoshidaRestrictedCoreBridge`, whose historical
+   low-mode residual API imports `YoshidaWeightedTailBounds` and its
+   `decide +kernel` finite-head calculations.  The new path retains only the
+   structural periodization, normalized dilation, crop/form identity, parity
+   recombination, prime-overlap vanishing, and Bombieri invariance arguments.
+3. **Assumptions remaining.**  The transport theorem is intentionally
+   conditional on production positivity of the complete endpoint periodic
+   core.  Odd production positivity is unconditional; even production
+   positivity still awaits the projected-dual determinant and the exact
+   endpoint constant/residual bridge.  No all-support or RH conclusion follows
+   from restricted-support positivity alone.
+4. **Next make-or-break lemma.**  Finish the two fixed projected principal
+   minors, derive unconditional clean-even positivity, and close the
+   endpoint-jump constant/residual production polarization.  The resulting
+   even theorem and the existing odd theorem can then be fed directly to the
+   new parity-to-Bombieri transport.
+5. **Viability evidence.**  Both new proof modules pass warning-as-error and
+   focused guarded builds.  Their public theorem audits contain only
+   `propext`, `Classical.choice`, and `Quot.sound`.  The final conditional
+   transport has a 91-module local closure with no weighted-tail certificate,
+   enclosure, pivot, payload, generated mode family, `native_decide`, or
+   `decide +kernel` occurrence.
