@@ -3364,3 +3364,51 @@ record their own umbrella-build evidence.
    remain byte-identical to `refs/archive/legacy-lean-2026-07-11`; all 24
    fallbacks remain present and unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## After `d78aa01` — Exact local-form/prime endpoint reduction
+
+1. **Theorems added.**  On every ratio-two seed, the physical diagonal is
+   exactly the real local critical self-form, while the symmetric folded
+   coordinate is exactly the real adjacent local form minus the coupled
+   two-prime cross symbol.  Normalized-dilation invariance and Hermitian
+   polarization then give
+   `D(g) - R(g) = (1/2) * Re B(g - D₂g, g - D₂g) + Re P(g)` and
+   `D(g) + R(g) = (1/2) * Re B(g + D₂g, g + D₂g) - Re P(g)`.
+   Both endpoint-nonnegative iff statements and the exact strict-reverse iff
+   statements for the explicit `c = -1` and `c = 1` production tests are
+   exported.
+2. **Gate hypothesis eliminated.**  The two real endpoint obligations no
+   longer depend on an artificial comparison between an indefinite core and
+   an infinite positive residual sum.  The complete residual has been
+   recombined with the core into the actual local critical quadratic, and the
+   only remaining correction is the exact jointly retained `p = 2,3` prime
+   symbol.  This is an equality-level structural reduction; it uses no finite
+   truncation, certificate, positivity premise, or ratio-four resummation.
+3. **Assumptions remaining.**  The tests `g ± D₂g` have support hull contained
+   in `[a/2,b]`, whose ratio can be four, so their local self-forms are not
+   known nonnegative.  Neither signed local-prime domination inequality is
+   proved or strictly reversed.  Even both endpoint bounds would leave the
+   sharp alternating mixed-channel phase pencil open, hence would not prove
+   the same-seed determinant.  Arbitrary-support long-range control, the
+   all-test Bombieri criterion, and final RH transport also remain open; RH is
+   neither proved nor falsified here.
+4. **Next make-or-break lemma.**  For every coefficient-conjugation-fixed
+   admissible seed `q`, prove or strictly reverse both exact inequalities
+   `-Re P(q) ≤ (1/2) * Re B(q - D₂q, q - D₂q)` and
+   `Re P(q) ≤ (1/2) * Re B(q + D₂q, q + D₂q)`.  A strict reverse immediately
+   invokes the corresponding explicit negative-functional theorem.  A proof
+   should retain both prime atoms in a centered two-cell real-space square;
+   after the endpoints, attack the sharp mixed phase pencil rather than the
+   strictly stronger row-contraction condition.
+5. **Viability and integrity evidence.**  The focused module and root umbrella
+   pass warning-as-error checks, and the canonical full build passes all
+   8,614 jobs.  All eight public endpoints audit exactly to `propext`,
+   `Classical.choice`, and `Quot.sound`.  Their recursive structural closure
+   has 261 tracked/current files and 458 project import edges, with no missing,
+   untracked dependency, cycle, protected or quarantined import, or forbidden
+   proof construct.  Three independent reviews checked support transport,
+   Hermitian orientation, both prime signs, factors `1/2` and `2`, circularity,
+   and no-overclaim scope.  All 159 archived artifacts remain byte-identical
+   to `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present,
+   untracked, and unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
