@@ -5,7 +5,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilLocalCriticalForm
 set_option autoImplicit false
 
 open Complex MeasureTheory Real Set TopologicalSpace
-open scoped FourierTransform SchwartzMap
+open scoped ComplexConjugate Convolution FourierTransform SchwartzMap
 
 namespace ArithmeticHodge.Analysis.YoshidaBombieriCrossDistribution
 
@@ -190,20 +190,133 @@ private theorem starReflection_bombieriCriticalPullback_integrable
   simpa only [starReflection, RCLike.star_def] using
     (Complex.conjCLE : ℂ →L[ℝ] ℂ).integrable_comp hneg
 
-private theorem bombieriCriticalCrossCorrelation_integrable
+theorem bombieriCriticalCrossCorrelation_integrable
     (f g : BombieriTest) :
     Integrable (bombieriCriticalCrossCorrelation f g) := by
   exact (starReflection_bombieriCriticalPullback_integrable f).integrable_convolution
     (ContinuousLinearMap.mul ℂ ℂ)
     (g.logarithmicPullbackSchwartz (1 / 2)).integrable
 
-private theorem bombieriCriticalCrossCorrelation_continuous
+theorem bombieriCriticalCrossCorrelation_continuous
     (f g : BombieriTest) :
     Continuous (bombieriCriticalCrossCorrelation f g) := by
   exact (g.logarithmicPullback_hasCompactSupport (1 / 2)).continuous_convolution_right
     (ContinuousLinearMap.mul ℂ ℂ)
     (starReflection_bombieriCriticalPullback_integrable f).locallyIntegrable
     (g.logarithmicPullbackSchwartz (1 / 2)).continuous
+
+private theorem bombieriCriticalPullback_add
+    (f g : BombieriTest) :
+    ((f + g).logarithmicPullbackSchwartz (1 / 2) : ℝ → ℂ) =
+      (f.logarithmicPullbackSchwartz (1 / 2) : ℝ → ℂ) +
+        (g.logarithmicPullbackSchwartz (1 / 2) : ℝ → ℂ) := by
+  funext x
+  simp only [BombieriTest.logarithmicPullbackSchwartz_apply,
+    BombieriTest.logarithmicPullback, TestFunction.coe_add, Pi.add_apply]
+  ring
+
+private theorem bombieriCriticalPullback_smul
+    (c : ℂ) (f : BombieriTest) :
+    ((c • f).logarithmicPullbackSchwartz (1 / 2) : ℝ → ℂ) =
+      c • (f.logarithmicPullbackSchwartz (1 / 2) : ℝ → ℂ) := by
+  funext x
+  simp only [BombieriTest.logarithmicPullbackSchwartz_apply,
+    BombieriTest.logarithmicPullback, TestFunction.coe_smul, Pi.smul_apply,
+    smul_eq_mul]
+  ring
+
+private theorem starReflection_add (F G : ℝ → ℂ) :
+    starReflection (F + G) = starReflection F + starReflection G := by
+  funext x
+  change conj (F (-x) + G (-x)) = conj (F (-x)) + conj (G (-x))
+  rw [map_add]
+
+private theorem starReflection_smul (c : ℂ) (F : ℝ → ℂ) :
+    starReflection (c • F) = starRingEnd ℂ c • starReflection F := by
+  funext x
+  change conj (c * F (-x)) = conj c * conj (F (-x))
+  rw [map_mul]
+
+private theorem bombieriCriticalCrossConvolutionExists
+    (f g : BombieriTest) :
+    ConvolutionExists
+      (starReflection
+        (f.logarithmicPullbackSchwartz (1 / 2) : ℝ → ℂ))
+      (g.logarithmicPullbackSchwartz (1 / 2) : ℝ → ℂ)
+      (ContinuousLinearMap.mul ℂ ℂ) := by
+  exact (g.logarithmicPullback_hasCompactSupport (1 / 2)).convolutionExists_right
+    (ContinuousLinearMap.mul ℂ ℂ)
+    (starReflection_bombieriCriticalPullback_integrable f).locallyIntegrable
+    (g.logarithmicPullbackSchwartz (1 / 2)).continuous
+
+theorem bombieriCriticalCrossCorrelation_add_left
+    (f₁ f₂ g : BombieriTest) (s : ℝ) :
+    bombieriCriticalCrossCorrelation (f₁ + f₂) g s =
+      bombieriCriticalCrossCorrelation f₁ g s +
+        bombieriCriticalCrossCorrelation f₂ g s := by
+  rw [bombieriCriticalCrossCorrelation, crossCorrelation,
+    bombieriCriticalPullback_add, starReflection_add]
+  exact congrFun
+    ((bombieriCriticalCrossConvolutionExists f₁ g).add_distrib
+      (bombieriCriticalCrossConvolutionExists f₂ g)) s
+
+theorem bombieriCriticalCrossCorrelation_add_right
+    (f g₁ g₂ : BombieriTest) (s : ℝ) :
+    bombieriCriticalCrossCorrelation f (g₁ + g₂) s =
+      bombieriCriticalCrossCorrelation f g₁ s +
+        bombieriCriticalCrossCorrelation f g₂ s := by
+  rw [bombieriCriticalCrossCorrelation, crossCorrelation,
+    bombieriCriticalPullback_add]
+  exact congrFun
+    ((bombieriCriticalCrossConvolutionExists f g₁).distrib_add
+      (bombieriCriticalCrossConvolutionExists f g₂)) s
+
+theorem bombieriCriticalCrossCorrelation_smul_left
+    (c : ℂ) (f g : BombieriTest) (s : ℝ) :
+    bombieriCriticalCrossCorrelation (c • f) g s =
+      starRingEnd ℂ c * bombieriCriticalCrossCorrelation f g s := by
+  rw [bombieriCriticalCrossCorrelation, crossCorrelation,
+    bombieriCriticalPullback_smul, starReflection_smul,
+    MeasureTheory.smul_convolution]
+  rfl
+
+theorem bombieriCriticalCrossCorrelation_smul_right
+    (c : ℂ) (f g : BombieriTest) (s : ℝ) :
+    bombieriCriticalCrossCorrelation f (c • g) s =
+      c * bombieriCriticalCrossCorrelation f g s := by
+  rw [bombieriCriticalCrossCorrelation, crossCorrelation,
+    bombieriCriticalPullback_smul, MeasureTheory.convolution_smul]
+  rfl
+
+theorem bombieriCriticalCrossCorrelation_neg_eq_star_swap
+    (f g : BombieriTest) (s : ℝ) :
+    bombieriCriticalCrossCorrelation f g (-s) =
+      starRingEnd ℂ (bombieriCriticalCrossCorrelation g f s) := by
+  rw [bombieriCriticalCrossCorrelation, bombieriCriticalCrossCorrelation,
+    crossCorrelation_apply, crossCorrelation_apply]
+  let F : ℝ → ℂ :=
+    f.logarithmicPullbackSchwartz (1 / 2)
+  let G : ℝ → ℂ :=
+    g.logarithmicPullbackSchwartz (1 / 2)
+  let H : ℝ → ℂ := fun y ↦ star (F (y + s)) * G y
+  calc
+    (∫ x : ℝ, star (F x) * G (-s + x)) =
+        ∫ x : ℝ, H (x + (-s)) := by
+      apply integral_congr_ae
+      filter_upwards [] with x
+      dsimp only [H]
+      congr 2 <;> ring_nf
+    _ = ∫ y : ℝ, H y := MeasureTheory.integral_add_right_eq_self H (-s)
+    _ = ∫ y : ℝ, star (star (G y) * F (s + y)) := by
+      apply integral_congr_ae
+      filter_upwards [] with y
+      dsimp only [H]
+      change conj (F (y + s)) * G y =
+        conj (conj (G y) * F (s + y))
+      rw [map_mul, conj_conj, add_comm y s, mul_comm]
+    _ = star (∫ y : ℝ, star (G y) * F (s + y)) := by
+      simpa only [RCLike.star_def] using
+        (integral_conj (f := fun y : ℝ ↦ star (G y) * F (s + y)))
 
 theorem normalized_integral_bombieriCriticalSpectralProduct_eq_zeroCorrelation
     (f g : BombieriTest) :

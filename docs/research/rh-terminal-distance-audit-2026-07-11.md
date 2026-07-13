@@ -3223,3 +3223,44 @@ record their own umbrella-build evidence.
    `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present and
    unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## After `af6e1f` — Structural Bombieri cross-correlation sesquilinearity
+
+1. **Theorems added.**  The integrability and continuity of the live critical
+   Bombieri cross-correlation are now public.  Its exact algebra is exported
+   through additivity in both inputs, conjugate-linearity in the left scalar,
+   linearity in the right scalar, and the Hermitian translation identity
+   `C(f,g)(-s) = conj(C(g,f)(s))`.  Addition is proved from a structural
+   convolution-existence helper and Mathlib's convolution distributivity;
+   scalar transport uses the convolution scalar laws, and conjugate-swap uses
+   only translation invariance and conjugation of the exact integral.
+2. **Gate hypothesis eliminated.**  The canonical real and imaginary
+   Bombieri projections can now be expanded inside the actual critical
+   self-correlation without appealing to a sampled Fourier identity, a
+   finite-dimensional surrogate, or an unproved sesquilinear convention.
+   In particular the left coefficient is formally conjugated while the right
+   coefficient is not, and the negative-shift orientation is fixed exactly.
+3. **Assumptions remaining.**  The projected self-correlation has not yet
+   been assembled into the two conjugation-fixed diagonal channels and the
+   alternating mixed channel, so the exact realified determinant is not yet
+   exported.  Its real parity-channel bound or strict reverse, long-range
+   block-Toeplitz control, the all-test Bombieri criterion, and final RH
+   transport all remain open.  RH is neither proved nor falsified here.
+4. **Next make-or-break lemma.**  With
+   `u = bombieriRealPartTest g` and
+   `v = bombieriImagPartTest g`, prove structurally the exact expansion of
+   `C(g,g)` into `C(u,u)`, `C(v,v)`, and the alternating mixed correlation,
+   then rewrite the folded determinant as the corresponding real diagonal
+   channels coupled by that one mixed term.  Do not insert the stronger row
+   contraction or any positivity assumption during this exact realification.
+5. **Viability and integrity evidence.**  Before implementation, a guarded
+   probe failed on all five absent algebraic names.  Focused and umbrella
+   warning-as-error checks pass, and the canonical guarded full build passes
+   all 8,611 jobs.  All seven public endpoints audit exactly to `propext`,
+   `Classical.choice`, and `Quot.sound`.  Their recursive project closure has
+   72 tracked files and 124 import edges, with no missing, untracked, cyclic,
+   quarantined-name, protected-import, or forbidden-proof dependency.  All
+   159 archived artifacts remain byte-identical to
+   `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present and
+   unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
