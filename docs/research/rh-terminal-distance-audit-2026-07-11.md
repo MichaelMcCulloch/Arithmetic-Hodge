@@ -3526,3 +3526,61 @@ record their own umbrella-build evidence.
    remain byte-identical to `refs/archive/legacy-lean-2026-07-11`; all 24
    fallbacks remain present, untracked, and unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## Current increment — Exact centered alternating determinant
+
+1. **Theorems added.**  Ordered critical cross-correlation for two real
+   endpoint-supported pullbacks is restricted structurally to its exact
+   overlap interval and rescaled to the centered endpoint coordinates with
+   the correct Jacobian and argument order.  The complete alternating
+   centered channel `factorTwoCenteredAlternatingCoupling` retains the smooth
+   antisymmetric kernel and the `p = 3` atom together, and
+   `factorTwoMixedParityCoupling_eq_endpoint_mul_centeredAlternating` proves
+   the production identity `Omega = A * J`, `A = log 2 / 2`.  Together with
+   the existing signed endpoint formulas, the new determinant theorems prove
+   exactly
+   `R^2 + I^2 <= D^2` iff
+   `J^2 <= (E+ u + E+ v) * (E- u + E- v)` for the canonical centered real and
+   imaginary profiles.  Universal same-seed two-bump positivity and existence
+   of a negative production member are respectively equivalent to this
+   inequality and its strict reverse.
+2. **Gate hypothesis eliminated.**  Gate 3 no longer lacks a centered-profile
+   formula for the alternating mixed channel.  Both signed diagonals and the
+   full skew channel now live in one fixed endpoint coordinate system, so the
+   exact same-seed problem is a single product inequality rather than a
+   diagonal estimate plus an untransported `Omega`.  No endpoint sign is
+   assumed in the equivalence, and no singular integral is split by
+   unjustified linearity.  The proposed operator row contraction is not
+   inserted: independent form-level review confirms it is strictly stronger
+   than this exact determinant and its failure would not decide the same-seed
+   inequality.
+3. **Assumptions remaining.**  The centered product inequality itself is not
+   proved or strictly reversed.  In particular, separate proofs of
+   `E+ >= 0` and `E- >= 0` would still not control `J`; the complete endpoint
+   and alternating channels must satisfy the sharp coupled bound.  Before a
+   Schur argument can use the new profile surface, interval integrability and
+   genuine bilinearity of its singular alternating polarization must also be
+   proved on the canonical endpoint-zero class.  No negative seed is
+   produced.  Even a proof of the same-seed inequality would
+   cover only `{g, D2 g}`; arbitrary logarithmic window chains still require
+   structural block-Toeplitz or equivalent long-range control, followed by
+   the all-test Bombieri criterion and RH transport.
+4. **Next make-or-break lemma.**  Prove or strictly reverse, for the canonical
+   centered profiles `u` and `v` of every ratio-two seed,
+   `J(u,v)^2 <= (E+(u)+E+(v))*(E-(u)+E-(v))`.  The positive route should work
+   at form level through the exact block pencil, retaining the complete
+   regular kernel, both endpoint poles, and prime shifts; it must not replace
+   this target by a row contraction.  In the adversarial lane, reduce a real
+   seed paired with a permitted normalized translate to the exact
+   one-parameter translation pencil and seek a structural strict reverse.
+5. **Viability and integrity evidence.**  The focused module and root umbrella
+   pass warning-as-error checks.  The focused Lake target builds all 8,473
+   jobs and the canonical sequential full build passes all 8,617 jobs.  Four
+   public mixed-channel, determinant, positive-family, and negative-family
+   endpoints audit exactly to `propext`, `Classical.choice`, and `Quot.sound`.
+   Source scans find no `sorry`, custom axiom, `unsafe`, evaluator, generated
+   certificate, enclosure, pivot, or payload mechanism in the new module.
+   Three independent read-only derivations rechecked the cross-correlation
+   orientation, both powers of the endpoint scale, the prime sign, the lack
+   of a spurious factor `1/2`, and both determinant directions and returned
+   PASS.
