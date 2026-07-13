@@ -2386,3 +2386,32 @@ separate from build logs: a green build is evidence, not a stage transition.
    audits, forbidden-proof scans, and two independent highest-risk reviews
    pass.  Both reviews independently rederived the moments, Gram values,
    Schur margins, cross signs, and final inequality directions.
+
+## `b040065` and `5f6dfc6` — Full-potential odd core positivity
+
+1. **Theorems added.**  The octic coercivity theorem is transported to the
+   full singular endpoint potential by an almost-everywhere comparison on
+   `(-1,1)`.  Combining the resulting `7/5` coercivity with the structural
+   strict bound on the complete sharp odd mass loss proves
+   `yoshidaEndpointOddCoreQuadratic_nonneg`.
+2. **Gate hypothesis eliminated.**  The complete odd logarithmic energy plus
+   full endpoint potential now dominates every scalar loss already budgeted
+   for the endpoint scalar, sharp mean-zero regular-kernel, and hyperbolic
+   terms.  Neither the endpoint convention for `log 0` nor a finite modal
+   cutoff enters the proof.
+3. **Assumptions remaining.**  This is positivity of the clean scalar-loss
+   core, not yet an identity with the production clipped Yoshida form.  The
+   regular and hyperbolic quadratic bounds must be assembled with their exact
+   endpoint scales and signs, then the resulting clean form must be bridged
+   to the production critical pairing.  The even sector remains separate.
+4. **Next make-or-break lemma.**  Define the clean odd endpoint quadratic from
+   the logarithmic, full-potential, scalar, regular-kernel, and hyperbolic
+   components; prove it nonnegative using odd mean cancellation and the two
+   sharp component estimates.  Then prove its exact real-space identity with
+   the production clipped form at `a = log 2 / 2`.
+5. **Viability evidence.**  Both modules pass fresh guarded strict checks and
+   focused builds.  Their public theorem axiom footprints are exactly
+   `propext`, `Classical.choice`, and `Quot.sound`; forbidden scans and two
+   independent reviews pass.  The full-potential comparison excludes the two
+   endpoints almost everywhere, and the core assembly uses only scalar
+   transitivity with the exact structural margin below `7/5`.
