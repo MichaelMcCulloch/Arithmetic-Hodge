@@ -310,8 +310,8 @@ private theorem endpointA_pow_fine_bounds (n : ℕ) (hn : n ≠ 0) :
 /-- Coarse rational enclosure of the constant endpoint cosh moment.  Its
 width is intentionally much larger than the Taylor remainder. -/
 theorem coshMoment_p0_bounds :
-    (20100243 / 10000000 : ℝ) < C0 ∧
-      C0 < (20100247 / 10000000 : ℝ) := by
+    (2010024476 / 1000000000 : ℝ) < C0 ∧
+      C0 < (2010024478 / 1000000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 2 (by norm_num) with ⟨h2l, h2u⟩
   rcases endpointA_pow_fine_bounds 4 (by norm_num) with ⟨h4l, h4u⟩
   rcases endpointA_pow_fine_bounds 6 (by norm_num) with ⟨h6l, h6u⟩
@@ -321,8 +321,8 @@ theorem coshMoment_p0_bounds :
 
 /-- Coarse rational enclosure of the degree-two endpoint cosh moment. -/
 theorem coshMoment_p2_bounds :
-    (40122 / 10000000 : ℝ) < C2 ∧
-      C2 < (40126 / 10000000 : ℝ) := by
+    (4012369 / 1000000000 : ℝ) < C2 ∧
+      C2 < (4012371 / 1000000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 2 (by norm_num) with ⟨h2l, h2u⟩
   rcases endpointA_pow_fine_bounds 4 (by norm_num) with ⟨h4l, h4u⟩
   rcases endpointA_pow_fine_bounds 6 (by norm_num) with ⟨h6l, h6u⟩
@@ -332,38 +332,38 @@ theorem coshMoment_p2_bounds :
 
 private theorem endpointA_pow_mul_coshMoment_p0_bounds
     (n : ℕ) (hn : n ≠ 0) :
-    (69314718055 / 200000000000 : ℝ) ^ n * (20100243 / 10000000) <
+    (69314718055 / 200000000000 : ℝ) ^ n * (2010024476 / 1000000000) <
         A ^ n * C0 ∧
       A ^ n * C0 <
-        (69314718057 / 200000000000 : ℝ) ^ n * (20100247 / 10000000) := by
+        (69314718057 / 200000000000 : ℝ) ^ n * (2010024478 / 1000000000) := by
   rcases endpointA_pow_fine_bounds n hn with ⟨hAl, hAu⟩
   constructor
   · exact mul_lt_mul hAl coshMoment_p0_bounds.1.le (by norm_num)
       (pow_nonneg yoshidaEndpointA_pos.le n)
   · exact mul_lt_mul hAu coshMoment_p0_bounds.2.le
-      ((by norm_num : (0 : ℝ) < 20100243 / 10000000).trans
+      ((by norm_num : (0 : ℝ) < 2010024476 / 1000000000).trans
         coshMoment_p0_bounds.1)
       (pow_nonneg (by norm_num) n)
 
 private theorem endpointA_pow_mul_coshMoment_p2_bounds
     (n : ℕ) (hn : n ≠ 0) :
-    (69314718055 / 200000000000 : ℝ) ^ n * (40122 / 10000000) <
+    (69314718055 / 200000000000 : ℝ) ^ n * (4012369 / 1000000000) <
         A ^ n * C2 ∧
       A ^ n * C2 <
-        (69314718057 / 200000000000 : ℝ) ^ n * (40126 / 10000000) := by
+        (69314718057 / 200000000000 : ℝ) ^ n * (4012371 / 1000000000) := by
   rcases endpointA_pow_fine_bounds n hn with ⟨hAl, hAu⟩
   constructor
   · exact mul_lt_mul hAl coshMoment_p2_bounds.1.le (by norm_num)
       (pow_nonneg yoshidaEndpointA_pos.le n)
   · exact mul_lt_mul hAu coshMoment_p2_bounds.2.le
-      ((by norm_num : (0 : ℝ) < 40122 / 10000000).trans
+      ((by norm_num : (0 : ℝ) < 4012369 / 1000000000).trans
         coshMoment_p2_bounds.1)
       (pow_nonneg (by norm_num) n)
 
 /-- Rational box for the constant coefficient of the constant envelope. -/
 theorem projectedEnvelopeD00_bounds :
-    (-616270 / 1000000 : ℝ) < projectedEnvelopeD00 ∧
-      projectedEnvelopeD00 < (-616267 / 1000000 : ℝ) := by
+    (-61626855 / 100000000 : ℝ) < projectedEnvelopeD00 ∧
+      projectedEnvelopeD00 < (-61626854 / 100000000 : ℝ) := by
   rcases endpointA_fine_bounds with ⟨h1l, h1u⟩
   rcases endpointA_pow_fine_bounds 2 (by norm_num) with ⟨h2l, h2u⟩
   rcases endpointA_pow_fine_bounds 3 (by norm_num) with ⟨h3l, h3u⟩
@@ -380,8 +380,8 @@ theorem projectedEnvelopeD00_bounds :
 
 /-- Rational box for the quadratic coefficient of the constant envelope. -/
 theorem projectedEnvelopeD01_bounds :
-    (-1067819 / 1000000 : ℝ) < projectedEnvelopeD01 ∧
-      projectedEnvelopeD01 < (-1067816 / 1000000 : ℝ) := by
+    (-106781760 / 100000000 : ℝ) < projectedEnvelopeD01 ∧
+      projectedEnvelopeD01 < (-106781759 / 100000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 2 (by norm_num) with ⟨h2l, h2u⟩
   rcases endpointA_pow_fine_bounds 3 (by norm_num) with ⟨h3l, h3u⟩
   rcases endpointA_pow_fine_bounds 4 (by norm_num) with ⟨h4l, h4u⟩
@@ -397,8 +397,8 @@ theorem projectedEnvelopeD01_bounds :
 
 /-- Rational box for the quartic coefficient of the constant envelope. -/
 theorem projectedEnvelopeD02_bounds :
-    (17 / 1000000 : ℝ) < projectedEnvelopeD02 ∧
-      projectedEnvelopeD02 < (19 / 1000000 : ℝ) := by
+    (1753 / 100000000 : ℝ) < projectedEnvelopeD02 ∧
+      projectedEnvelopeD02 < (1754 / 100000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 4 (by norm_num) with ⟨h4l, h4u⟩
   rcases endpointA_pow_fine_bounds 5 (by norm_num) with ⟨h5l, h5u⟩
   rcases endpointA_pow_fine_bounds 6 (by norm_num) with ⟨h6l, h6u⟩
@@ -412,8 +412,8 @@ theorem projectedEnvelopeD02_bounds :
 
 /-- Rational box for the sextic coefficient of the constant envelope. -/
 theorem projectedEnvelopeD03_bounds :
-    (0 : ℝ) < projectedEnvelopeD03 ∧
-      projectedEnvelopeD03 < (1 / 1000000 : ℝ) := by
+    (45 / 100000000 : ℝ) < projectedEnvelopeD03 ∧
+      projectedEnvelopeD03 < (46 / 100000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 6 (by norm_num) with ⟨h6l, h6u⟩
   rcases endpointA_pow_fine_bounds 7 (by norm_num) with ⟨h7l, h7u⟩
   rcases endpointA_pow_mul_coshMoment_p0_bounds 7 (by norm_num) with
@@ -425,8 +425,8 @@ theorem projectedEnvelopeD03_bounds :
 
 /-- Rational box for the constant coefficient of the degree-two envelope. -/
 theorem projectedEnvelopeD20_bounds :
-    (449580 / 1000000 : ℝ) < projectedEnvelopeD20 ∧
-      projectedEnvelopeD20 < (449583 / 1000000 : ℝ) := by
+    (44958111 / 100000000 : ℝ) < projectedEnvelopeD20 ∧
+      projectedEnvelopeD20 < (44958112 / 100000000 : ℝ) := by
   rcases endpointA_fine_bounds with ⟨h1l, h1u⟩
   rcases endpointA_pow_fine_bounds 2 (by norm_num) with ⟨h2l, h2u⟩
   rcases endpointA_pow_fine_bounds 3 (by norm_num) with ⟨h3l, h3u⟩
@@ -443,8 +443,8 @@ theorem projectedEnvelopeD20_bounds :
 
 /-- Rational box for the quadratic coefficient of the degree-two envelope. -/
 theorem projectedEnvelopeD21_bounds :
-    (-1776243 / 1000000 : ℝ) < projectedEnvelopeD21 ∧
-      projectedEnvelopeD21 < (-1776240 / 1000000 : ℝ) := by
+    (-177624129 / 100000000 : ℝ) < projectedEnvelopeD21 ∧
+      projectedEnvelopeD21 < (-177624128 / 100000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 2 (by norm_num) with ⟨h2l, h2u⟩
   rcases endpointA_pow_fine_bounds 3 (by norm_num) with ⟨h3l, h3u⟩
   rcases endpointA_pow_fine_bounds 4 (by norm_num) with ⟨h4l, h4u⟩
@@ -460,8 +460,8 @@ theorem projectedEnvelopeD21_bounds :
 
 /-- Rational box for the quartic coefficient of the degree-two envelope. -/
 theorem projectedEnvelopeD22_bounds :
-    (627 / 1000000 : ℝ) < projectedEnvelopeD22 ∧
-      projectedEnvelopeD22 < (630 / 1000000 : ℝ) := by
+    (62871 / 100000000 : ℝ) < projectedEnvelopeD22 ∧
+      projectedEnvelopeD22 < (62872 / 100000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 2 (by norm_num) with ⟨h2l, h2u⟩
   rcases endpointA_pow_fine_bounds 4 (by norm_num) with ⟨h4l, h4u⟩
   rcases endpointA_pow_fine_bounds 5 (by norm_num) with ⟨h5l, h5u⟩
@@ -476,8 +476,8 @@ theorem projectedEnvelopeD22_bounds :
 
 /-- Rational box for the sextic coefficient of the degree-two envelope. -/
 theorem projectedEnvelopeD23_bounds :
-    (-1 / 1000000 : ℝ) < projectedEnvelopeD23 ∧
-      projectedEnvelopeD23 < (0 : ℝ) := by
+    (-45 / 100000000 : ℝ) < projectedEnvelopeD23 ∧
+      projectedEnvelopeD23 < (-44 / 100000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 4 (by norm_num) with ⟨h4l, h4u⟩
   rcases endpointA_pow_fine_bounds 6 (by norm_num) with ⟨h6l, h6u⟩
   rcases endpointA_pow_fine_bounds 7 (by norm_num) with ⟨h7l, h7u⟩
@@ -491,7 +491,7 @@ theorem projectedEnvelopeD23_bounds :
 /-- Rational box for the octic coefficient of the degree-two envelope. -/
 theorem projectedEnvelopeD24_bounds :
     (0 : ℝ) < projectedEnvelopeD24 ∧
-      projectedEnvelopeD24 < (1 / 1000000 : ℝ) := by
+      projectedEnvelopeD24 < (1 / 100000000 : ℝ) := by
   rcases endpointA_pow_fine_bounds 6 (by norm_num) with ⟨h6l, h6u⟩
   unfold projectedEnvelopeD24
   constructor <;> norm_num at h6l h6u ⊢ <;> linarith
