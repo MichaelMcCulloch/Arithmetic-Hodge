@@ -2245,3 +2245,29 @@ separate from build logs: a green build is evidence, not a stage transition.
    `Quot.sound`.  Forbidden-proof scans and independent review confirm that
    the proof is a continuous product-integral/Hölder argument and imports no
    enclosure or computational-certificate module.
+
+## `d0bd4ec` — Sharp structural regular-kernel range
+
+1. **Theorem added.**
+   `seven_div_thirty_two_le_yoshidaRegularKernel` proves uniformly that
+   `7/32 ≤ yoshidaRegularKernel t` for every `0 ≤ t ≤ log 2`.  Together with
+   the existing upper bound, the endpoint kernel lies in `[7/32,1/4]`.
+2. **Gate hypothesis eliminated.**  Mean-zero cancellation can now subtract
+   the constant kernel `1/4` and retain a uniform residual radius `1/32`,
+   rather than using either the global radius `1/4` or the provisional
+   centered radius `1/8`.
+3. **Assumptions remaining.**  The sharpened pointwise range still has to be
+   transported through the continuous product-integral Schur argument.  The
+   resulting endpoint loss must then be assembled with the full odd
+   logarithmic/potential form; low/tail coupling and the production bridge
+   remain open.
+4. **Next make-or-break lemma.**  Prove the sharp mean-zero regular estimate
+   `‖R(f)‖ ≤ (1/16)‖f‖₂²`, then test whether the complete odd endpoint form
+   admits a structural ground-state or uniform low/tail proof at the improved
+   mass constant.
+5. **Viability evidence.**  The lower bound follows from a two-term general
+   logarithm inequality, an exact change of variables, and convexity of one
+   explicit degree-seven polynomial on `[1,sqrt 2]`.  Both endpoint signs and
+   the rational reduction are exact.  Guarded strict compilation, focused
+   build, standard-only axiom audit, forbidden-proof scan, and independent
+   high-risk review all pass.
