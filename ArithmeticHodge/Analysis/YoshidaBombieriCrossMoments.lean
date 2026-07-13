@@ -3,7 +3,7 @@ import ArithmeticHodge.Analysis.YoshidaBombieriCrossDistribution
 set_option autoImplicit false
 
 open Complex MeasureTheory Real Set TopologicalSpace
-open scoped ComplexConjugate Convolution
+open scoped ComplexConjugate Convolution FourierTransform SchwartzMap
 
 namespace ArithmeticHodge.Analysis.YoshidaBombieriCrossMoments
 
@@ -24,6 +24,67 @@ dimension-free replacement for finite Gram-table calculations.
 def bombieriCriticalMoment (f : BombieriTest) (s : ℝ) : ℂ :=
   ∫ x : ℝ, ((Real.exp (s * x) : ℝ) : ℂ) *
     f.logarithmicPullbackSchwartz (1 / 2) x
+
+theorem bombieriCriticalMoment_neg_half_eq_mellin_one
+    (f : BombieriTest) :
+    bombieriCriticalMoment f (-(1 / 2)) =
+      mellin (f : ℝ → ℂ) 1 := by
+  calc
+    bombieriCriticalMoment f (-(1 / 2)) =
+        ∫ u : ℝ, (Real.exp (-u / 2) : ℂ) *
+          f.logarithmicPullbackSchwartz (1 / 2) u := by
+      unfold bombieriCriticalMoment
+      apply integral_congr_ae
+      filter_upwards [] with u
+      congr 2
+      congr 1
+      ring
+    _ = ∫ u : ℝ, f.logarithmicPullbackSchwartz 1 u := by
+      apply integral_congr_ae
+      filter_upwards [] with u
+      simp only [BombieriTest.logarithmicPullbackSchwartz_apply,
+        BombieriTest.logarithmicPullback]
+      rw [show -1 * u = -u / 2 + (-(1 / 2) * u) by ring,
+        Real.exp_add]
+      push_cast
+      ring
+    _ = 𝓕 (f.logarithmicPullbackSchwartz 1) 0 := by
+      rw [SchwartzMap.fourier_coe, Real.fourier_real_eq]
+      simp
+    _ = mellin (f : ℝ → ℂ) 1 := by
+      simpa using (bombieriMellin_vertical_eq_fourier f 1 0).symm
+
+theorem bombieriCriticalMoment_half_eq_mellin_zero
+    (f : BombieriTest) :
+    bombieriCriticalMoment f (1 / 2) =
+      mellin (f : ℝ → ℂ) 0 := by
+  calc
+    bombieriCriticalMoment f (1 / 2) =
+        ∫ u : ℝ, (Real.exp (u / 2) : ℂ) *
+          f.logarithmicPullbackSchwartz (1 / 2) u := by
+      unfold bombieriCriticalMoment
+      apply integral_congr_ae
+      filter_upwards [] with u
+      congr 2
+      congr 1
+      ring
+    _ = ∫ u : ℝ, f.logarithmicPullbackSchwartz 0 u := by
+      apply integral_congr_ae
+      filter_upwards [] with u
+      simp only [BombieriTest.logarithmicPullbackSchwartz_apply,
+        BombieriTest.logarithmicPullback, zero_mul, neg_zero,
+        Real.exp_zero, Complex.ofReal_one, one_mul]
+      have hweight : (Real.exp (u / 2) : ℂ) *
+          (Real.exp (-(1 / 2) * u) : ℂ) = 1 := by
+        rw [← Complex.ofReal_mul, ← Real.exp_add]
+        rw [show u / 2 + -(1 / 2) * u = 0 by ring]
+        simp
+      rw [← mul_assoc, hweight, one_mul]
+    _ = 𝓕 (f.logarithmicPullbackSchwartz 0) 0 := by
+      rw [SchwartzMap.fourier_coe, Real.fourier_real_eq]
+      simp
+    _ = mellin (f : ℝ → ℂ) 0 := by
+      simpa using (bombieriMellin_vertical_eq_fourier f 0 0).symm
 
 private def weightedCriticalRight
     (s : ℝ) (f : BombieriTest) (x : ℝ) : ℂ :=
