@@ -4,6 +4,8 @@ This log records how each coherent increment changes the distance to the
 terminal proof-or-falsification objective in `GOAL.md`.  It is deliberately
 separate from build logs: a green build is evidence, not a stage transition.
 
+Latest audited umbrella integration: `4f36ac6` (2026-07-13).
+
 ## `519bb2e` — Yoshida odd comparison reserve
 
 1. **Theorem added.**  The exact target interval Gram has an entrywise
@@ -2982,3 +2984,65 @@ separate from build logs: a green build is evidence, not a stage transition.
    certificate-style, enclosure, pivot, payload, evaluator, `decide`, or
    `native_decide` dependency.  All 159 inventoried legacy Lean artifacts
    remain untracked and byte-identical to their archive ref.
+
+## `77a8428` through `4f36ac6` — Physical symbol and positive-residual core reduction
+
+1. **Theorems added.**  The adjacent critical spectral product is transformed
+   exactly into its one-sided logarithmic correlation.  Support ratio at most
+   two gives structural support in `[0,2 log 2]` and a removable zero trace at
+   the left endpoint.  The complete Cauchy series is then summed against that
+   correlation, producing the exact physical formula
+   `factorTwoGlobalCrossSymbol_eq_physical`, with smooth kernel
+   `2 cosh(u/2) - oddKernel(u)/2` and the two prime atoms
+   `(log 2)/sqrt 2 * C(0)` and `(log 3)/sqrt 3 * C(log(3/2))` in the correct
+   orientation.  Independently, every harmonic-subtracted diagonal Cauchy
+   term is identified with the strictly positive multiplier
+   `(v^2 + alpha/2)/(n*(alpha^2+v^2))`, `alpha=2n+1/2`.  These residuals are
+   integrable, nonnegative, absolutely summable under an explicit
+   `1/(n+1)^2` majorant, and equal term-for-term and as a `tsum` to the exact
+   digamma residual series.  Their sesquilinear pairing satisfies
+   `normSq R_n(f,g) <= D_n(f)*D_n(g)` by an actual square-root
+   factorization and integral Cauchy--Schwarz.  Factor-two dilation preserves
+   each `D_n`, the complete adjacent residual sum is exactly the negative
+   decaying moment tail, and its norm is at most `sum D_n`.  Finally, the full
+   determinant is proved from the single reduced premise
+   `norm factorTwoCoreCrossSymbol <= bombieriCoreDiagonal`, where the core
+   keeps the growing polar channel and both prime atoms together, while its
+   diagonal keeps the polar diagonal, initial Cauchy channel, and
+   `(gamma+log pi)` mass term together.
+2. **Gate hypothesis eliminated.**  The make-or-break factor-two inequality
+   no longer contains the infinite harmonic-subtracted digamma tail.  That
+   whole family is a positive Hermitian background form, and its adjacent
+   cross is contractive in exactly the matching background energy.  This is
+   a dimension-free structural proof, not a finite mode argument, numerical
+   enclosure, or certificate.  The physical formula also eliminates all
+   ambiguity in the shift sign, conjugations, square-root factors, support
+   endpoints, and prime coefficients.
+3. **Assumptions remaining.**  The reduced core inequality is not proved or
+   falsified.  It may not be split into independent growing and prime bounds,
+   because their cancellation is load-bearing.  Even a proof of this core
+   inequality would establish only the factor-two span
+   `{g, normalizedDilation 2 g}` for every short seed.  Arbitrary chains of
+   logarithmic cells still require the corresponding structural row/Toeplitz
+   contraction, and the all-support Bombieri criterion remains open.
+   Therefore RH is neither proved nor falsified by this checkpoint.
+4. **Next make-or-break lemma.**  Prove or refute, for every ratio-at-most-two
+   seed,
+   `norm factorTwoCoreCrossSymbol <= bombieriCoreDiagonal` by an exact
+   physical-space square or parity-row contraction that retains the growing
+   channel and both prime atoms together.  If it holds, use the exported
+   `factorTwoDeterminant_le_of_core` immediately; do not reintroduce the
+   already discharged residual tail or enlarge a finite approximation.
+5. **Viability and integrity evidence.**  The physical-symbol source audit
+   independently rechecked the correlation convention, dilation shift,
+   singleton endpoint argument, moment orientation, geometric sum, kernel
+   algebra, prime conjugations, and global minus-prime sign and returned
+   PASS.  All newly audited public endpoints depend only on `propext`,
+   `Classical.choice`, and `Quot.sound`.  Guarded strict checks and focused
+   builds pass, and the umbrella build passes all 8,604 jobs at `4f36ac6`.
+   The apparent 183-file legacy discrepancy is resolved: 159 root artifacts
+   exactly match the archived inventory byte-for-byte, while 24 additional
+   untracked fallback modules are the documented ten diagonal and fourteen
+   full-pivot fallbacks.  No tracked import target reaches any untracked file;
+   the physical-symbol closure audited at 250 tracked modules and 443 project
+   edges, with no missing edge or cycle.
