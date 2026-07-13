@@ -2922,7 +2922,7 @@ separate from build logs: a green build is evidence, not a stage transition.
    Every one of the 159 protected legacy Lean artifacts remains byte-identical
    to `refs/archive/legacy-lean-2026-07-11`.
 
-## `6b4726d` through `9976250` — Exact factor-two determinant alternative
+## `6b4726d` through `22b61c2` — Exact factor-two determinant alternative
 
 1. **Theorems and obstruction added.**  The global Bombieri functional is
    decomposed exactly as local critical form minus the complete prime sum, and
@@ -2940,7 +2940,9 @@ separate from build logs: a green build is evidence, not a stage transition.
    `Re F(Q(g+cD₂g)) = (1+normSq c) Aₙ + 2 Re(c Zₙ)`.
    Finally, completed-square algebra proves universal nonnegativity in `c` iff
    `normSq Zₙ ≤ Aₙ²`, and existence of a negative member iff
-   `Aₙ² < normSq Zₙ`.
+   `Aₙ² < normSq Zₙ`.  The strict-reverse branch also chooses the
+   scalar explicitly, including the zero-diagonal case, and returns the
+   concrete negative Bombieri test `g + c D₂g`.
 2. **Route eliminated and gate sharpened.**  Positivity on every fixed-width
    support window plus normalized-dilation invariance does not imply positivity
    of sums of windows: an abstract translation-invariant kernel can be locally
