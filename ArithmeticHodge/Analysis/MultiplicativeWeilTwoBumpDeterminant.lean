@@ -65,6 +65,34 @@ theorem exists_bombieriFunctional_twoBump_neg_iff
       (bombieriFunctional (bombieriQuadraticTest g)).re
       (factorTwoGlobalCrossSymbol g) hA
 
+/-- The determinant reverse chooses a concrete scalar and therefore a
+concrete Bombieri test, rather than only producing a classical existential. -/
+def factorTwoNegativeScalar (g : BombieriTest) : ℂ :=
+  hermitianScalarNegativeDirection
+    (bombieriFunctional (bombieriQuadraticTest g)).re
+    (factorTwoGlobalCrossSymbol g)
+
+theorem bombieriFunctional_twoBump_explicit_neg_of_det
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2)
+    (hdet : (bombieriFunctional (bombieriQuadraticTest g)).re ^ 2 <
+      Complex.normSq (factorTwoGlobalCrossSymbol g)) :
+    (bombieriFunctional
+      (bombieriQuadraticTest
+        (g + factorTwoNegativeScalar g •
+          normalizedDilation 2 (by norm_num) g))).re < 0 := by
+  rw [bombieriFunctional_twoBump_re
+    g (factorTwoNegativeScalar g) ha hab hsupport hratio]
+  have hA :
+      0 ≤ (bombieriFunctional (bombieriQuadraticTest g)).re :=
+    bombieriFunctional_quadratic_re_nonneg_of_ratio_le_two
+      g ha hab hsupport hratio
+  exact hermitianScalarNegativeDirection_value_neg
+    (bombieriFunctional (bombieriQuadraticTest g)).re
+    (factorTwoGlobalCrossSymbol g) hA hdet
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeil

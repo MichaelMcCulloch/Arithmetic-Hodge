@@ -89,6 +89,54 @@ theorem exists_hermitianScalar_neg_iff
   simpa only [not_forall, not_le] using
     not_congr (hermitianScalar_nonneg_iff A Z hA)
 
+/-- A concrete negative direction whenever the Hermitian determinant is
+strictly negative.  The zero-diagonal branch avoids division by zero. -/
+def hermitianScalarNegativeDirection (A : ℝ) (Z : ℂ) : ℂ :=
+  if A = 0 then -starRingEnd ℂ Z
+  else -((A : ℂ)⁻¹ * starRingEnd ℂ Z)
+
+theorem hermitianScalarNegativeDirection_value_neg
+    (A : ℝ) (Z : ℂ) (hA : 0 ≤ A)
+    (hdet : A ^ 2 < Complex.normSq Z) :
+    hermitianScalarValue A Z
+        (hermitianScalarNegativeDirection A Z) < 0 := by
+  by_cases hAzero : A = 0
+  · subst A
+    have hcross :
+        ((-starRingEnd ℂ Z) * Z).re = -Complex.normSq Z := by
+      simp only [Complex.mul_re, Complex.neg_re, Complex.neg_im,
+        Complex.conj_re, Complex.conj_im, Complex.normSq_apply]
+      ring
+    have hZpos : 0 < Complex.normSq Z := by
+      nlinarith
+    rw [hermitianScalarNegativeDirection, if_pos rfl]
+    unfold hermitianScalarValue
+    rw [hcross]
+    simp only [mul_zero, zero_add]
+    nlinarith
+  · have hApos : 0 < A := lt_of_le_of_ne hA (Ne.symm hAzero)
+    have hAc : (A : ℂ) ≠ 0 :=
+      Complex.ofReal_ne_zero.mpr hApos.ne'
+    have hzero :
+        (A : ℂ) * hermitianScalarNegativeDirection A Z +
+            starRingEnd ℂ Z = 0 := by
+      rw [hermitianScalarNegativeDirection, if_neg hAzero]
+      rw [mul_neg, ← mul_assoc, mul_inv_cancel₀ hAc, one_mul,
+        neg_add_cancel]
+    have hsquare := hermitianScalar_completedSquare A Z
+      (hermitianScalarNegativeDirection A Z)
+    rw [hzero, Complex.normSq_zero, zero_add] at hsquare
+    have hscaled :
+        A * hermitianScalarValue A Z
+          (hermitianScalarNegativeDirection A Z) < 0 := by
+      rw [hsquare]
+      linarith
+    by_contra hnot
+    have hvalue :
+        0 ≤ hermitianScalarValue A Z
+          (hermitianScalarNegativeDirection A Z) := le_of_not_gt hnot
+    exact (not_lt_of_ge (mul_nonneg hApos.le hvalue)) hscaled
+
 end
 
 end ArithmeticHodge.Analysis
