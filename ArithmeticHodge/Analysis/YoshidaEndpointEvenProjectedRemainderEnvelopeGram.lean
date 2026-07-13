@@ -396,7 +396,9 @@ theorem abs_shiftedRemainderPolynomial6_2_explicit_lt
       norm_num at hdiff hcenter ⊢
       linarith
 
-private theorem reciprocalMajorant_le_three_halves
+/-- The cubic reciprocal majorant stays below `3/2` on the endpoint
+interval. -/
+theorem reciprocalMajorant_le_three_halves
     {x : ℝ} (hx : x ∈ Icc (-1) 1) :
     atanhTailWeightReciprocalMajorant x ≤ (3 / 2 : ℝ) := by
   have hxSq : x ^ 2 ≤ 1 := (sq_le_one_iff_abs_le_one x).2 (abs_le.mpr hx)
