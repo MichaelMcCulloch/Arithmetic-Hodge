@@ -91,6 +91,55 @@ theorem centeredEndpointCorrelation_zero_sub_eq_overlap_add_tails
   rw [hsquare]
   linarith
 
+/-- Positive-distance overlap contribution before the outer singular
+integration. -/
+def centeredPositiveDistanceEnergy (w : ℝ → ℝ) (t : ℝ) : ℝ :=
+  ∫ x : ℝ in -1..1 - t, (w (t + x) - w x) ^ 2
+
+/-- The two endpoint tails left outside the overlap at distance `t`. -/
+def centeredEndpointBoundaryTail (w : ℝ → ℝ) (t : ℝ) : ℝ :=
+  (∫ x : ℝ in 1 - t..1, w x ^ 2) +
+    ∫ x : ℝ in -1..-1 + t, w x ^ 2
+
+/-- Integrating the fixed-distance identity reduces the singular correlation
+to the positive-distance energy and the boundary-tail integral. -/
+theorem integral_correlation_defect_div_eq_energy_add_boundary
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (henergy : IntervalIntegrable
+      (fun t : ℝ ↦ centeredPositiveDistanceEnergy w t / t) volume 0 2)
+    (hboundary : IntervalIntegrable
+      (fun t : ℝ ↦ centeredEndpointBoundaryTail w t / t) volume 0 2) :
+    (∫ t : ℝ in 0..2,
+      (centeredEndpointCorrelation w 0 - centeredEndpointCorrelation w t) / t) =
+      (1 / 2 : ℝ) *
+          (∫ t : ℝ in 0..2, centeredPositiveDistanceEnergy w t / t) +
+        (1 / 2 : ℝ) *
+          (∫ t : ℝ in 0..2, centeredEndpointBoundaryTail w t / t) := by
+  have hpoint (t : ℝ) :
+      (centeredEndpointCorrelation w 0 - centeredEndpointCorrelation w t) / t =
+        (1 / 2 : ℝ) * (centeredPositiveDistanceEnergy w t / t) +
+          (1 / 2 : ℝ) * (centeredEndpointBoundaryTail w t / t) := by
+    rw [centeredEndpointCorrelation_zero_sub_eq_overlap_add_tails w hw t]
+    unfold centeredPositiveDistanceEnergy centeredEndpointBoundaryTail
+    ring
+  calc
+    _ = ∫ t : ℝ in 0..2,
+        ((1 / 2 : ℝ) * (centeredPositiveDistanceEnergy w t / t) +
+          (1 / 2 : ℝ) * (centeredEndpointBoundaryTail w t / t)) := by
+      apply intervalIntegral.integral_congr
+      intro t _ht
+      exact hpoint t
+    _ = (∫ t : ℝ in 0..2,
+          (1 / 2 : ℝ) * (centeredPositiveDistanceEnergy w t / t)) +
+        ∫ t : ℝ in 0..2,
+          (1 / 2 : ℝ) * (centeredEndpointBoundaryTail w t / t) := by
+      exact intervalIntegral.integral_add
+        (henergy.const_mul (1 / 2 : ℝ))
+        (hboundary.const_mul (1 / 2 : ℝ))
+    _ = _ := by
+      rw [intervalIntegral.integral_const_mul,
+        intervalIntegral.integral_const_mul]
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaEndpointSingularCorrelation
