@@ -2643,3 +2643,48 @@ separate from build logs: a green build is evidence, not a stage transition.
    production addition order, and the full import closure; no finite mode
    table, enclosure, pivot, payload, certificate, or kernel evaluation enters
    the chain.
+
+## `3e77ed3`, `d6eb1c3`, `18d008f`, `637aa02`, `fbd55b6`, `4c09cff`, `7df338b`, and `adfa568` — Exact low block and weighted infinite-tail Schur route
+
+1. **Theorems and obstruction added.**  The clean quadratic now has the exact
+   constant polarization
+   `Q(c+u)=c²Q(1)+Q(u)+2cL(u)`, with `L` split into its potential, scalar,
+   symmetric regular-kernel, and cosh terms.  The fixed potential moments are
+   evaluated structurally:
+   `∫V=2-2log2`, `∫VP₂=1/3`, and
+   `∫VP₂²=41/75-(2/5)log2`; the fixed logarithmic energy is
+   `D(P₂)=12/5`.  The even tail reserve now retains the positive potential and
+   hyperbolic forms.  Generic weighted Cauchy and the exact real `2 × 2` Schur
+   completion are proved, and the complete even scalar loss is sharpened to
+   `Λ < 6833/5000` from structural Euler/logarithm bounds.
+2. **Gate hypothesis eliminated.**  The full even problem no longer depends
+   on an unspecified constant-to-all-modes cross norm.  It reduces to a fixed
+   `{P₀,P₂}` low Gram and two explicit representers in the weighted tail space
+   with weight `41/60+V`.  This is an infinite-space reduction: weighted
+   Cauchy controls every tail simultaneously, and the final completion is
+   fixed two-dimensional algebra rather than a growing matrix.
+3. **Route falsified and assumptions remaining.**  Charging the constant
+   cross to the previously proved diagonal margin and bare mean-zero reserve
+   is impossible already on `P₂`: its potential cross is exactly `1/3`, far
+   exceeding that Schur budget.  The positive potential and cosh terms must be
+   retained jointly.  What remains is to prove positivity of the sharp fixed
+   low Gram and the corresponding weighted dual-Gram inequality for the two
+   explicit tail representers; production constant and mixed identities then
+   remain after clean even positivity.
+4. **Next make-or-break lemma.**  Let `F₀,F₂` be the potential minus centered
+   regular-kernel plus cosh representers, projected off `P₀,P₂`, and
+   `W=41/60+V`.  Prove, uniformly for real `c,b`,
+   `∫(cF₀+bF₂)²/W ≤ q₀₀c²+2q₀₂cb+q₂₂b²`, where `q` is the fixed clean low
+   Gram (or a proved structural lower Gram).  Equivalently, prove the two
+   principal-minor inequalities for the resulting fixed `2 × 2` weighted
+   dual Gram.  A failure of this exact inequality would be a structural
+   obstruction to the current coercive mechanism.
+5. **Viability evidence.**  Every theorem above passes guarded strict and
+   focused builds; public axiom audits contain only `propext`,
+   `Classical.choice`, and `Quot.sound`.  Exact logarithmic moments use
+   improper antiderivatives and finite universal series bounds, not sampled
+   quadrature.  The tail reserve uses the complete Legendre tail, while the
+   weighted Cauchy and Schur lemmas are dimension-free.  Independent review
+   rederived all polarization factors, signs, endpoint scales, form-domain
+   transports, and potential moments and found no forbidden computational
+   dependency.
