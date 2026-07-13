@@ -1,0 +1,61 @@
+{
+  "name": "Arithmetic-Hodge (Lean 4.29.0-rc8 / Mathlib)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "runArgs": [
+    "--memory=48g",
+    "--memory-swap=48g"
+  ],
+  "initializeCommand": "bash .devcontainer/ensure-ssh-agent.sh",
+  "containerEnv": {
+    "DEEPSEEK_API_TOKEN": "${localEnv:DEEPSEEK_API_TOKEN}",
+    "CLAUDE_CONFIG_DIR": "${localEnv:HOME}/.claude",
+    "CODEX_HOME": "${localEnv:HOME}/.codex",
+    "ELAN_HOME": "/usr/local/elan",
+    "SSH_AUTH_SOCK": "/ssh-agent"
+  },
+  "mounts": [
+    "source=${localEnv:XDG_RUNTIME_DIR}/ssh-agent.socket,target=/ssh-agent,type=bind",
+    "source=${localEnv:HOME}/ContainerData/DevContainers/Arithmetic-Hodge/mathlib-cache,target=/home/ubuntu/.cache/mathlib,type=bind",
+    "source=${localEnv:HOME}/ContainerData/DevContainers/Arithmetic-Hodge/uv,target=/home/ubuntu/.cache/uv,type=bind",
+    "source=${localEnv:HOME}/.claude,target=${localEnv:HOME}/.claude,type=bind",
+    "source=${localEnv:HOME}/.codex,target=${localEnv:HOME}/.codex,type=bind",
+    "source=${localEnv:HOME}/.config/glab-cli,target=/home/ubuntu/.config/glab-cli,type=bind"
+  ],
+  "remoteUser": "ubuntu",
+  "updateRemoteUserUID": false,
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "workspaceFolder": "/workspaces/Arithmetic-Hodge",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "leanprover.lean4",
+        "foxundermoon.shell-format",
+        "skellock.just",
+        "tamasfe.even-better-toml",
+        "Anthropic.claude-code",
+        "openai.chatgpt"
+      ],
+      "settings": {
+        "files.exclude": {
+          "**/.cache": true,
+          "**/.devcontainer": true,
+          "**/.DS_Store": true,
+          "**/.git": true,
+          "**/.hg": true,
+          "**/.lake": true,
+          "**/.svn": true,
+          "**/.vscode": true,
+          "**/build": true,
+          "**/lake-packages": true,
+          "**/Thumbs.db": true,
+          "**/*.ilean": true,
+          "**/*.olean": true,
+          "**/*.trace": true
+        }
+      }
+    }
+  }
+}
