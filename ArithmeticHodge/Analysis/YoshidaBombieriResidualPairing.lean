@@ -144,6 +144,173 @@ theorem bombieriResidualCross_self
   rw [bombieriResidualCross_eq_cauchyResidual]
   exact (ofReal_bombieriDiagonalResidual_eq_cauchyResidual g n).symm
 
+private theorem normSq_integral_star_mul_le
+    (F G : ℝ → ℂ)
+    (hFmeas : AEStronglyMeasurable F)
+    (hGmeas : AEStronglyMeasurable G)
+    (hFsq : Integrable (fun v : ℝ ↦ ‖F v‖ ^ 2))
+    (hGsq : Integrable (fun v : ℝ ↦ ‖G v‖ ^ 2)) :
+    Complex.normSq (∫ v : ℝ, star (F v) * G v) ≤
+      (∫ v : ℝ, ‖F v‖ ^ 2) * ∫ v : ℝ, ‖G v‖ ^ 2 := by
+  have hFLp : MemLp F 2 volume :=
+    (memLp_two_iff_integrable_sq_norm hFmeas).2 hFsq
+  have hGLp : MemLp G 2 volume :=
+    (memLp_two_iff_integrable_sq_norm hGmeas).2 hGsq
+  have hholder := integral_mul_norm_le_Lp_mul_Lq
+    (p := 2) (q := 2) (f := F) (g := G) (μ := volume)
+    Real.HolderConjugate.two_two (by simpa using hFLp) (by simpa using hGLp)
+  let A : ℝ := ∫ v : ℝ, ‖F v‖ ^ 2
+  let B : ℝ := ∫ v : ℝ, ‖G v‖ ^ 2
+  have hA0 : 0 ≤ A := integral_nonneg fun _ ↦ sq_nonneg _
+  have hB0 : 0 ≤ B := integral_nonneg fun _ ↦ sq_nonneg _
+  have hholder' :
+      (∫ v : ℝ, ‖F v‖ * ‖G v‖) ≤ Real.sqrt A * Real.sqrt B := by
+    rw [Real.sqrt_eq_rpow, Real.sqrt_eq_rpow]
+    simpa only [A, B, Real.rpow_two] using hholder
+  have hnorm :
+      ‖∫ v : ℝ, star (F v) * G v‖ ≤
+        ∫ v : ℝ, ‖F v‖ * ‖G v‖ := by
+    calc
+      ‖∫ v : ℝ, star (F v) * G v‖ ≤
+          ∫ v : ℝ, ‖star (F v) * G v‖ :=
+        norm_integral_le_integral_norm _
+      _ = ∫ v : ℝ, ‖F v‖ * ‖G v‖ := by
+        apply integral_congr_ae
+        filter_upwards [] with v
+        rw [norm_mul, norm_star]
+  have hbound := hnorm.trans hholder'
+  rw [Complex.normSq_eq_norm_sq]
+  calc
+    ‖∫ v : ℝ, star (F v) * G v‖ ^ 2 ≤
+        (Real.sqrt A * Real.sqrt B) ^ 2 :=
+      (sq_le_sq₀ (norm_nonneg _) (by positivity)).2 hbound
+    _ = A * B := by
+      rw [mul_pow, Real.sq_sqrt hA0, Real.sq_sqrt hB0]
+    _ = _ := rfl
+
+theorem normSq_bombieriResidualCross_le
+    (f g : BombieriTest) (n : ℕ) :
+    Complex.normSq (bombieriResidualCross f g n) ≤
+      bombieriDiagonalResidual f n * bombieriDiagonalResidual g n := by
+  let w : ℝ → ℝ := bombieriDiagonalResidualMultiplier n
+  let Mf : ℝ → ℂ := fun v ↦
+    mellin (f : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I)
+  let Mg : ℝ → ℂ := fun v ↦
+    mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I)
+  let F : ℝ → ℂ := fun v ↦ (Real.sqrt (w v) : ℂ) * Mf v
+  let G : ℝ → ℂ := fun v ↦ (Real.sqrt (w v) : ℂ) * Mg v
+  have hkernel : Continuous (fun v : ℝ ↦
+      bombieriDigammaKernel (n + 1) v) := by
+    unfold bombieriDigammaKernel
+    apply Continuous.div continuous_const
+      ((continuous_const.pow 2).add (continuous_id.pow 2))
+    intro v
+    change (2 * (((n + 1 : ℕ) : ℝ)) + 1 / 2) ^ 2 + v ^ 2 ≠ 0
+    positivity
+  have hw : Continuous w := by
+    exact continuous_const.sub hkernel
+  have hMf : Continuous Mf :=
+    (bombieriMellin_differentiable f).continuous.comp (by fun_prop)
+  have hMg : Continuous Mg :=
+    (bombieriMellin_differentiable g).continuous.comp (by fun_prop)
+  have hF : Continuous F := by
+    exact (Complex.continuous_ofReal.comp (Real.continuous_sqrt.comp hw)).mul hMf
+  have hG : Continuous G := by
+    exact (Complex.continuous_ofReal.comp (Real.continuous_sqrt.comp hw)).mul hMg
+  have hFsq : Integrable (fun v : ℝ ↦ ‖F v‖ ^ 2) := by
+    apply (bombieriDiagonalResidualIntegrand_integrable f n).congr
+    filter_upwards [] with v
+    have hw0 := (bombieriDiagonalResidualMultiplier_pos n v).le
+    simp only [F, w, Mf, bombieriDiagonalResidualIntegrand,
+      norm_mul, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_nonneg (Real.sqrt_nonneg _), mul_pow,
+      Real.sq_sqrt hw0, Complex.normSq_eq_norm_sq]
+  have hGsq : Integrable (fun v : ℝ ↦ ‖G v‖ ^ 2) := by
+    apply (bombieriDiagonalResidualIntegrand_integrable g n).congr
+    filter_upwards [] with v
+    have hw0 := (bombieriDiagonalResidualMultiplier_pos n v).le
+    simp only [G, w, Mg, bombieriDiagonalResidualIntegrand,
+      norm_mul, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_nonneg (Real.sqrt_nonneg _), mul_pow,
+      Real.sq_sqrt hw0, Complex.normSq_eq_norm_sq]
+  have hcross :
+      (∫ v : ℝ, star (F v) * G v) =
+        ∫ v : ℝ, bombieriResidualCrossIntegrand f g n v := by
+    apply integral_congr_ae
+    filter_upwards [] with v
+    have hw0 := (bombieriDiagonalResidualMultiplier_pos n v).le
+    change
+      star ((Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) *
+          mellin (f : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I)) *
+          ((Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) *
+            mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I)) =
+        (bombieriDiagonalResidualMultiplier n v : ℂ) *
+          (star (mellin (f : ℝ → ℂ)
+              ((1 / 2 : ℝ) + v * Complex.I)) *
+            mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I))
+    rw [star_mul]
+    have hstar :
+        star (Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) =
+          (Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) := by
+      simp
+    rw [hstar]
+    have hsqrt :
+        (Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) *
+            (Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) =
+          (bombieriDiagonalResidualMultiplier n v : ℂ) := by
+      rw [← Complex.ofReal_mul, Real.mul_self_sqrt hw0]
+    calc
+      star (mellin (f : ℝ → ℂ)
+            ((1 / 2 : ℝ) + v * Complex.I)) *
+          (Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) *
+          ((Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) *
+            mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I)) =
+          star (mellin (f : ℝ → ℂ)
+              ((1 / 2 : ℝ) + v * Complex.I)) *
+            ((Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ) *
+              (Real.sqrt (bombieriDiagonalResidualMultiplier n v) : ℂ)) *
+            mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I) := by ring
+      _ = _ := by rw [hsqrt]; ring
+  have hcs := normSq_integral_star_mul_le F G
+    hF.aestronglyMeasurable hG.aestronglyMeasurable hFsq hGsq
+  rw [hcross] at hcs
+  have hFint :
+      (∫ v : ℝ, ‖F v‖ ^ 2) =
+        ∫ v : ℝ, bombieriDiagonalResidualIntegrand f n v := by
+    apply integral_congr_ae
+    filter_upwards [] with v
+    have hw0 := (bombieriDiagonalResidualMultiplier_pos n v).le
+    simp only [F, w, Mf, bombieriDiagonalResidualIntegrand,
+      norm_mul, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_nonneg (Real.sqrt_nonneg _), mul_pow,
+      Real.sq_sqrt hw0, Complex.normSq_eq_norm_sq]
+  have hGint :
+      (∫ v : ℝ, ‖G v‖ ^ 2) =
+        ∫ v : ℝ, bombieriDiagonalResidualIntegrand g n v := by
+    apply integral_congr_ae
+    filter_upwards [] with v
+    have hw0 := (bombieriDiagonalResidualMultiplier_pos n v).le
+    simp only [G, w, Mg, bombieriDiagonalResidualIntegrand,
+      norm_mul, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_nonneg (Real.sqrt_nonneg _), mul_pow,
+      Real.sq_sqrt hw0, Complex.normSq_eq_norm_sq]
+  rw [hFint, hGint] at hcs
+  let c : ℝ := 1 / (2 * Real.pi)
+  let A : ℝ := ∫ v : ℝ, bombieriDiagonalResidualIntegrand f n v
+  let B : ℝ := ∫ v : ℝ, bombieriDiagonalResidualIntegrand g n v
+  let I : ℂ := ∫ v : ℝ, bombieriResidualCrossIntegrand f g n v
+  have hcs' : Complex.normSq I ≤ A * B := by
+    simpa only [I, A, B] using hcs
+  rw [bombieriResidualCross, bombieriDiagonalResidual,
+    bombieriDiagonalResidual]
+  change Complex.normSq ((c : ℂ) * I) ≤ (c * A) * (c * B)
+  rw [Complex.normSq_mul, Complex.normSq_ofReal]
+  calc
+    c * c * Complex.normSq I = c ^ 2 * Complex.normSq I := by ring
+    _ ≤ c ^ 2 * (A * B) :=
+      mul_le_mul_of_nonneg_left hcs' (sq_nonneg c)
+    _ = _ := by ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaBombieriResidualPairing
