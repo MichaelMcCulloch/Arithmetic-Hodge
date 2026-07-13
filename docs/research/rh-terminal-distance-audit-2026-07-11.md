@@ -3471,3 +3471,58 @@ record their own umbrella-build evidence.
    `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present,
    untracked, and unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## After `8074fed` — Centered clean factor-two endpoints
+
+1. **Theorems added.**  Every ratio-two seed now has a canonical normalized
+   logarithmic centering for which both exact endpoint coordinates split into
+   the sum of coefficient-real and coefficient-imaginary profiles:
+   `D+R = A * sum(Q(w)+P(w))` and `D-R = A * sum(Q(w)-P(w))`, where
+   `A = log 2 / 2`, `Q` is the existing endpoint clean quadratic, and `P`
+   retains the complete smooth symmetric correlation together with both
+   `p = 2,3` atoms.  The symmetric weight is also split exactly into its
+   regular hyperbolic part and the two Cauchy poles.  Continuity, reflection,
+   and an affine fixed-interval parametrization make the reflected quotient
+   genuinely interval-integrable and prove
+   `integral C(2-t)/t <= integral V*w^2 + log 2 * integral w^2`.
+2. **Gate hypothesis eliminated.**  The proposed centered two-cell route is
+   no longer an informal change of variables.  Support transport, endpoint
+   zero traces, the clipped-to-physical-to-clean bridge, real/imaginary
+   polarization, normalized-dilation invariance, the exact pole extraction,
+   and the boundary-tail fold are all formal equality-level or
+   infinite-dimensional theorems.  No prime atom, singular endpoint, or
+   complex profile is discarded, and no finite certificate is used to state
+   the two remaining inequalities.
+3. **Assumptions remaining.**  Neither `0 <= Q(w)+P(w)` nor
+   `0 <= Q(w)-P(w)` is proved or strictly reversed.  Separate scalar bounds
+   fail structurally: in the even channel they leave a mass deficit exceeding
+   `0.84`, while in the odd channel the reflected pole consumes endpoint
+   potential not isolated by the current coercivity API.  A 500-mode Galerkin
+   search found no negative profile and put the weakest unscaled `D+R` margin
+   near `6.67e-4`, but this is an upper-bound diagnostic, not a certified lower
+   bound.  The mixed phase pencil, arbitrary-window chains, the all-test
+   Bombieri criterion, and RH transport remain open; RH is neither proved nor
+   falsified here.
+4. **Next make-or-break lemma.**  On the reflection-even endpoint-zero
+   sector, prove coercivity of the complete clean-plus-perturbation operator
+   on the zero-`P0`/`P2` tail while retaining the regular kernel, both poles,
+   and the prime-shift operator together.  Then certify positivity or a strict
+   reverse of the two principal minors of its modified `P0`/`P2` Schur
+   complement.  The odd companion should analogously perturb the existing
+   ten-mode Gram and repeat its low/tail Schur argument; the already-spent
+   `1/40` reserve cannot absorb a separate perturbation norm.
+5. **Viability and integrity evidence.**  Focused and umbrella
+   warning-as-error checks pass, and the canonical sequential full build
+   passes all 8,616 jobs.  Sixteen selected public reduction, transport,
+   pole, integrability, and bound theorems audit exactly to `propext`,
+   `Classical.choice`, and `Quot.sound`.  Their recursive structural closure
+   has 262 tracked/current files and 463 project import edges, with no missing
+   edge, cycle, protected or quarantined import, or forbidden proof construct;
+   the sole current untracked member is the new production module.  Three
+   independent read-only route audits checked both parity sectors and searched
+   for a negative profile without finding one; a separate source review found
+   no sign, factor, support, integrability, or circularity defect.  All 159
+   archived artifacts
+   remain byte-identical to `refs/archive/legacy-lean-2026-07-11`; all 24
+   fallbacks remain present, untracked, and unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
