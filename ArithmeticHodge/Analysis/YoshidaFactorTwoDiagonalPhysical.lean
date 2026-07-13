@@ -22,6 +22,8 @@ open YoshidaFactorTwoDiagonalGeometric
 open YoshidaFactorTwoSelfCorrelationSupport
 open YoshidaRenormalizedGeometricKernel
 open YoshidaShiftedGeometricSeries
+open YoshidaStructuralKernelIntegrability
+open YoshidaZeroCorrelationGeometricSeries
 
 /-!
 # Exact physical diagonal on a factor-two cell
@@ -172,6 +174,282 @@ theorem bombieriSelfPolar_re_eq_factorTwo_integral
       simp only [Complex.conj_re]
       rw [Real.cosh_eq]
       ring
+
+def factorTwoDiagonalPhysicalIntegrand
+    (g : BombieriTest) (s : ℝ) : ℝ :=
+  2 * factorTwoAdjacentSmoothKernel s * factorTwoSelfCorrelationRe g s +
+    factorTwoSelfCorrelationRe g 0 / s
+
+theorem bombieriDiagonalResidual_eq_factorTwo_geometric
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) (n : ℕ) :
+    bombieriDiagonalResidual g n =
+      factorTwoSelfCorrelationRe g 0 / (n + 1 : ℕ) -
+        geometricIntegralTerm factorTwoLogLength
+          (factorTwoSelfCorrelationRe g) (n + 1) := by
+  have hcoefRe : (((((n + 1 : ℕ) : ℝ) : ℂ))⁻¹).re =
+      (((n + 1 : ℕ) : ℝ)⁻¹) := by
+    rw [Complex.inv_re, Complex.normSq_ofReal]
+    norm_num only [Complex.ofReal_re]
+    field_simp
+  have hcoefIm : (((((n + 1 : ℕ) : ℝ) : ℂ))⁻¹).im = 0 := by
+    rw [Complex.inv_im]
+    simp
+  have hres := congrArg Complex.re
+    (ofReal_bombieriDiagonalResidual_eq_cauchyResidual g n)
+  simp only [Complex.ofReal_re, Complex.sub_re, Complex.mul_re] at hres
+  rw [hcoefRe, hcoefIm, zero_mul, sub_zero] at hres
+  rw [bombieriCauchySelfValue_re_eq_geometricIntegralTerm
+    g ha hab hsupport hratio (n + 1)] at hres
+  simpa only [div_eq_mul_inv, mul_comm] using hres
+
+theorem tsum_bombieriDiagonalResidual_eq_factorTwo_geometric
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (∑' n : ℕ, bombieriDiagonalResidual g n) =
+      ∑' n : ℕ,
+        (factorTwoSelfCorrelationRe g 0 / (n + 1 : ℕ) -
+          geometricIntegralTerm factorTwoLogLength
+            (factorTwoSelfCorrelationRe g) (n + 1)) := by
+  apply tsum_congr
+  intro n
+  exact bombieriDiagonalResidual_eq_factorTwo_geometric
+    g ha hab hsupport hratio n
+
+theorem factorTwoDiagonalStableIntegrand_intervalIntegrable
+    (g : BombieriTest) :
+    IntervalIntegrable (factorTwoDiagonalStableIntegrand g) volume
+      0 factorTwoLogLength := by
+  have hCdiff : ContDiff ℝ 1 (factorTwoSelfCorrelationRe g) := by
+    exact Complex.reCLM.contDiff.comp
+      (factorTwoSelfCorrelation_contDiff g 1)
+  obtain ⟨D, hD, hrem⟩ :=
+    exists_continuous_removable_slope (factorTwoSelfCorrelationRe g) hCdiff
+  have hstable : IntervalIntegrable
+      (stableGeometricIntegrand
+        (factorTwoSelfCorrelationRe g 0) (factorTwoSelfCorrelationRe g))
+      volume 0 factorTwoLogLength :=
+    stableGeometricIntegrand_intervalIntegrable_of_removable
+      hD (factorTwoSelfCorrelationRe g 0) factorTwoLogLength hrem
+  apply hstable.neg.congr
+  intro s _hs
+  change -(oddKernel s * factorTwoSelfCorrelationRe g s -
+      factorTwoSelfCorrelationRe g 0 / s) =
+    -oddKernel s * factorTwoSelfCorrelationRe g s +
+      factorTwoSelfCorrelationRe g 0 / s
+  ring
+
+theorem factorTwoDiagonalPhysicalIntegrand_intervalIntegrable
+    (g : BombieriTest) :
+    IntervalIntegrable (factorTwoDiagonalPhysicalIntegrand g) volume
+      0 factorTwoLogLength := by
+  have hpolarInt : IntervalIntegrable (fun s : ℝ ↦
+      4 * Real.cosh (s / 2) * factorTwoSelfCorrelationRe g s)
+      volume 0 factorTwoLogLength := by
+    apply Continuous.intervalIntegrable
+    unfold factorTwoSelfCorrelationRe
+    exact (by fun_prop : Continuous (fun s : ℝ ↦
+      4 * Real.cosh (s / 2))).mul
+        (Complex.continuous_re.comp
+          (factorTwoSelfCorrelation_contDiff g 0).continuous)
+  have hstableInt := factorTwoDiagonalStableIntegrand_intervalIntegrable g
+  apply (hpolarInt.add hstableInt).congr
+  intro s _hs
+  unfold factorTwoDiagonalPhysicalIntegrand
+  unfold factorTwoDiagonalStableIntegrand
+  unfold factorTwoAdjacentSmoothKernel
+  ring
+
+theorem bombieriLocalCriticalForm_self_re_eq_factorTwoDiagonalPhysical
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (bombieriLocalCriticalForm g g).re =
+      (∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoDiagonalPhysicalIntegrand g s) -
+        (Real.log factorTwoLogLength + Real.eulerMascheroniConstant +
+          Real.log 2 + Real.log Real.pi) *
+            factorTwoSelfCorrelationRe g 0 := by
+  let C0 : ℝ := factorTwoSelfCorrelationRe g 0
+  let G : ℕ → ℝ := fun k ↦
+    geometricIntegralTerm factorTwoLogLength
+      (factorTwoSelfCorrelationRe g) k
+  let R : ℕ → ℝ := fun k ↦
+    renormalizedTerm factorTwoLogLength C0
+      (factorTwoSelfCorrelationRe g) k
+  have hres := tsum_bombieriDiagonalResidual_eq_factorTwo_geometric
+    g ha hab hsupport hratio
+  have hren := factorTwoDiagonalRenormalizedSeries_hasSum g
+  have hindex := geometricIntegralTerm_zero_add_tsum_shifted_eq hren
+  have hresNeg :
+      (∑' n : ℕ, bombieriDiagonalResidual g n) =
+        -(∑' n : ℕ, (G (n + 1) - C0 / (n + 1 : ℕ))) := by
+    rw [hres]
+    calc
+      (∑' n : ℕ,
+          (factorTwoSelfCorrelationRe g 0 / (n + 1 : ℕ) -
+            geometricIntegralTerm factorTwoLogLength
+              (factorTwoSelfCorrelationRe g) (n + 1))) =
+          ∑' n : ℕ, -(G (n + 1) - C0 / (n + 1 : ℕ)) := by
+        apply tsum_congr
+        intro n
+        dsimp only [G, C0]
+        ring
+      _ = -(∑' n : ℕ, (G (n + 1) - C0 / (n + 1 : ℕ))) := by
+        rw [tsum_neg]
+  have hindex' :
+      G 0 + ∑' n : ℕ, (G (n + 1) - C0 / (n + 1 : ℕ)) =
+        ∑' n : ℕ, R n := by
+    have hrenTsum : (∑' n : ℕ, R n) =
+        (∫ s : ℝ in 0..factorTwoLogLength,
+          stableGeometricIntegrand
+            (factorTwoSelfCorrelationRe g 0)
+            (factorTwoSelfCorrelationRe g) s) +
+          (Real.log factorTwoLogLength + Real.log 2) *
+            factorTwoSelfCorrelationRe g 0 := by
+      simpa only [R, C0] using hren.tsum_eq
+    calc
+      G 0 + ∑' n : ℕ, (G (n + 1) - C0 / (n + 1 : ℕ)) =
+          (∫ s : ℝ in 0..factorTwoLogLength,
+            stableGeometricIntegrand
+              (factorTwoSelfCorrelationRe g 0)
+              (factorTwoSelfCorrelationRe g) s) +
+            (Real.log factorTwoLogLength + Real.log 2) *
+              factorTwoSelfCorrelationRe g 0 := by
+        simpa only [G, C0] using hindex
+      _ = ∑' n : ℕ, R n := hrenTsum.symm
+  have hcauchyZero := bombieriCauchySelfValue_re_eq_geometricIntegralTerm
+    g ha hab hsupport hratio 0
+  have hcore : bombieriCoreDiagonal g =
+      (star (mellin (g : ℝ → ℂ) 1) * mellin (g : ℝ → ℂ) 0 +
+        star (mellin (g : ℝ → ℂ) 0) * mellin (g : ℝ → ℂ) 1).re -
+        (bombieriCauchyCrossValue g g 0).re -
+        Real.eulerMascheroniConstant * C0 -
+        Real.log Real.pi * C0 := by
+    unfold bombieriCoreDiagonal bombieriCoreDiagonalSymbol
+    dsimp only [C0, factorTwoSelfCorrelationRe, factorTwoSelfCorrelation,
+      bombieriCriticalCrossCorrelation]
+    simp only [Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
+      Complex.ofReal_im, zero_mul, sub_zero]
+  have hseries := factorTwoDiagonalRenormalizedSeries_eq_stable g
+  have hpolar := bombieriSelfPolar_re_eq_factorTwo_integral
+    g ha hab hsupport hratio
+  have hpolarInt : IntervalIntegrable (fun s : ℝ ↦
+      4 * Real.cosh (s / 2) * factorTwoSelfCorrelationRe g s)
+      volume 0 factorTwoLogLength := by
+    apply Continuous.intervalIntegrable
+    unfold factorTwoSelfCorrelationRe
+    exact (by fun_prop : Continuous (fun s : ℝ ↦
+      4 * Real.cosh (s / 2))).mul
+        (Complex.continuous_re.comp
+          (factorTwoSelfCorrelation_contDiff g 0).continuous)
+  have hstableInt := factorTwoDiagonalStableIntegrand_intervalIntegrable g
+  have hlocalDecomp : (bombieriLocalCriticalForm g g).re =
+      (star (mellin (g : ℝ → ℂ) 1) * mellin (g : ℝ → ℂ) 0 +
+        star (mellin (g : ℝ → ℂ) 0) * mellin (g : ℝ → ℂ) 1).re -
+        Real.eulerMascheroniConstant * C0 -
+        (∑' n : ℕ, R n) - Real.log Real.pi * C0 := by
+    rw [bombieriLocalCriticalForm_self_re_eq_core_add_residual,
+      hcore, hresNeg, hcauchyZero]
+    linarith [hindex']
+  have hseries' :
+      -Real.eulerMascheroniConstant * C0 - ∑' n : ℕ, R n =
+      (∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoDiagonalStableIntegrand g s) -
+        (Real.log factorTwoLogLength + Real.eulerMascheroniConstant +
+          Real.log 2) * C0 := by
+    simpa only [C0, R] using hseries
+  rw [hlocalDecomp]
+  calc
+    (star (mellin (g : ℝ → ℂ) 1) * mellin (g : ℝ → ℂ) 0 +
+          star (mellin (g : ℝ → ℂ) 0) * mellin (g : ℝ → ℂ) 1).re -
+          Real.eulerMascheroniConstant * C0 -
+          (∑' n : ℕ, R n) - Real.log Real.pi * C0 =
+        (star (mellin (g : ℝ → ℂ) 1) * mellin (g : ℝ → ℂ) 0 +
+          star (mellin (g : ℝ → ℂ) 0) * mellin (g : ℝ → ℂ) 1).re +
+          (-Real.eulerMascheroniConstant * C0 - ∑' n : ℕ, R n) -
+          Real.log Real.pi * C0 := by ring
+    _ = (∫ s : ℝ in 0..factorTwoLogLength,
+          4 * Real.cosh (s / 2) * factorTwoSelfCorrelationRe g s) +
+        (∫ s : ℝ in 0..factorTwoLogLength,
+          factorTwoDiagonalStableIntegrand g s) -
+        (Real.log factorTwoLogLength + Real.eulerMascheroniConstant +
+          Real.log 2) * C0 - Real.log Real.pi * C0 := by
+      rw [hpolar, hseries']
+      ring
+    _ = (∫ s : ℝ in 0..factorTwoLogLength,
+          (4 * Real.cosh (s / 2) * factorTwoSelfCorrelationRe g s +
+            factorTwoDiagonalStableIntegrand g s)) -
+        (Real.log factorTwoLogLength + Real.eulerMascheroniConstant +
+          Real.log 2) * C0 - Real.log Real.pi * C0 := by
+      rw [intervalIntegral.integral_add hpolarInt hstableInt]
+    _ = (∫ s : ℝ in 0..factorTwoLogLength,
+          factorTwoDiagonalPhysicalIntegrand g s) -
+        (Real.log factorTwoLogLength + Real.eulerMascheroniConstant +
+          Real.log 2 + Real.log Real.pi) *
+            factorTwoSelfCorrelationRe g 0 := by
+      have hintegrand :
+          (∫ s : ℝ in 0..factorTwoLogLength,
+            (4 * Real.cosh (s / 2) * factorTwoSelfCorrelationRe g s +
+              factorTwoDiagonalStableIntegrand g s)) =
+            ∫ s : ℝ in 0..factorTwoLogLength,
+              factorTwoDiagonalPhysicalIntegrand g s := by
+        apply intervalIntegral.integral_congr
+        intro s _hs
+        unfold factorTwoDiagonalPhysicalIntegrand
+        unfold factorTwoDiagonalStableIntegrand
+        unfold factorTwoAdjacentSmoothKernel
+        ring
+      rw [hintegrand]
+      dsimp only [C0]
+      ring
+
+theorem bombieriFunctional_quadratic_re_eq_factorTwoDiagonalPhysical
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (bombieriFunctional (bombieriQuadraticTest g)).re =
+      (∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoDiagonalPhysicalIntegrand g s) -
+        (Real.log factorTwoLogLength + Real.eulerMascheroniConstant +
+          Real.log 2 + Real.log Real.pi) *
+            factorTwoSelfCorrelationRe g 0 := by
+  rw [bombieriFunctional_quadratic_eq_bombieriLocalCriticalForm_le_two
+    g ha hab hsupport hratio]
+  exact bombieriLocalCriticalForm_self_re_eq_factorTwoDiagonalPhysical
+    g ha hab hsupport hratio
+
+/-- The same physical diagonal with the sole diagonal prime atom retained at
+the factor-two endpoint.  The atom vanishes structurally because the
+self-correlation is zero at `log 2`. -/
+theorem bombieriFunctional_quadratic_re_eq_factorTwoDiagonalPhysical_with_endpoint
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a ≤ 2) :
+    (bombieriFunctional (bombieriQuadraticTest g)).re =
+      (∫ s : ℝ in 0..factorTwoLogLength,
+        factorTwoDiagonalPhysicalIntegrand g s) -
+        (Real.log factorTwoLogLength + Real.eulerMascheroniConstant +
+          Real.log 2 + Real.log Real.pi) *
+            factorTwoSelfCorrelationRe g 0 -
+        2 * (Real.log 2 / Real.sqrt 2) *
+          factorTwoSelfCorrelationRe g factorTwoLogLength := by
+  have hend := congrArg Complex.re
+    (factorTwoSelfCorrelation_length_eq_zero
+      g ha hab hsupport hratio)
+  simp only [Complex.zero_re] at hend
+  rw [bombieriFunctional_quadratic_re_eq_factorTwoDiagonalPhysical
+      g ha hab hsupport hratio,
+    show factorTwoSelfCorrelationRe g factorTwoLogLength = 0 by
+      exact hend,
+    mul_zero, sub_zero]
 
 end
 
