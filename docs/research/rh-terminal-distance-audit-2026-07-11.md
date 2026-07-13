@@ -2921,3 +2921,62 @@ separate from build logs: a green build is evidence, not a stage transition.
    8,574 jobs with the final theorem imported by `ArithmeticHodge.lean`.
    Every one of the 159 protected legacy Lean artifacts remains byte-identical
    to `refs/archive/legacy-lean-2026-07-11`.
+
+## `6b4726d` through `9976250` — Exact factor-two determinant alternative
+
+1. **Theorems and obstruction added.**  The global Bombieri functional is
+   decomposed exactly as local critical form minus the complete prime sum, and
+   each prime kernel is identified with a normalized-dilation correlation.
+   Polarization exposes the mixed functional without discarding either sign.
+   For a ratio-at-most-two seed `g`, scalar `c`, and the factor-two normalized
+   dilation `D₂g`, the support-free identity
+   `qCross(g,cD₂g)(x) = conj(c)/sqrt(2) * q(x/2) +
+   c*sqrt(2)*q(2x)` is proved.  Structural support and Hermitian symmetry then
+   show that the infinite mixed prime sum has exactly the `n=2` and `n=3`
+   terms, combined into the explicit symbol `factorTwoPrimeCrossSymbol`.
+   With `Aₙ = Re F(Qg)` and
+   `Zₙ = B(g,D₂g) - factorTwoPrimeCrossSymbol g`, the full family is
+   proved exactly:
+   `Re F(Q(g+cD₂g)) = (1+normSq c) Aₙ + 2 Re(c Zₙ)`.
+   Finally, completed-square algebra proves universal nonnegativity in `c` iff
+   `normSq Zₙ ≤ Aₙ²`, and existence of a negative member iff
+   `Aₙ² < normSq Zₙ`.
+2. **Route eliminated and gate sharpened.**  Positivity on every fixed-width
+   support window plus normalized-dilation invariance does not imply positivity
+   of sums of windows: an abstract translation-invariant kernel can be locally
+   positive while a pair of separated copies is negative.  The exact Lean
+   reduction replaces that invalid localization step by its missing
+   `2×2` Hermitian determinant.  Thus the first adjacent-window extension is
+   now a necessary-and-sufficient inequality rather than an unspecified cross
+   term.  No determinant sign, all-support positivity, or RH conclusion is
+   asserted.
+3. **Assumptions remaining.**  The inequality
+   `normSq (factorTwoGlobalCrossSymbol g) ≤
+   (Re F(Qg))²` remains unproved for arbitrary ratio-at-most-two `g`; its
+   strict reverse also remains unproved for every explicit seed.  Even its
+   proof would establish only positivity on each span `{g,D₂g}`.  Extending
+   to an arbitrary chain of logarithmic windows would still require the
+   corresponding finite- and infinite-Toeplitz Gram control.  Conversion of a
+   strict reverse into `¬ RiemannHypothesis` additionally remains a Gate 4
+   criterion-transport obligation.
+4. **Next make-or-break lemma.**  Express `Zₙ` on two adjacent log cells as a
+   single physical-space sesquilinear kernel and prove its Cauchy–Schwarz
+   domination by the already structural diagonal `Aₙ`, or find a smooth
+   compactly supported `g` for which the strict reverse can be enclosed
+   analytically.  The proof must expose a positive/coercive operator or a
+   structural counterexample; invoking positivity of `g+cD₂g` would be
+   circular because that is exactly the determinant criterion.
+5. **Viability and integrity evidence.**  Independent mathematical review
+   rederived every square-root factor, conjugation, endpoint, surviving prime
+   index, local-minus-prime sign, scalar coefficient, and both directions of
+   the determinant alternative.  A bounded non-proof route-selection probe
+   on explicit smooth log-window seeds found determinant ratios below one
+   (largest observed about `0.929`), supporting the inequality route without
+   entering any theorem.  The public endpoint strict-compiles, focused builds
+   pass, and every exported theorem audits exactly to `propext`,
+   `Classical.choice`, and `Quot.sound`; the canonical full build passes all
+   8,588 jobs.  The target's forward closure has 238 tracked modules and 422
+   project import edges, with no missing, cyclic, untracked, protected,
+   certificate-style, enclosure, pivot, payload, evaluator, `decide`, or
+   `native_decide` dependency.  All 159 inventoried legacy Lean artifacts
+   remain untracked and byte-identical to their archive ref.
