@@ -1,309 +1,179 @@
-# Arithmetic-Hodge Decisive RH Program
+# Arithmetic-Hodge RH Objective
 
-This is the active goal for the autonomous run. It is intentionally stable at
-the program and stage-gate level; rapidly changing theorem-by-theorem status
-lives in the terminal-distance audit linked under **Current directive**.
+## Objective
 
-## Terminal objective
+Work toward a closed Lean theorem establishing exactly one of:
 
-Continue autonomously in `/workspaces/Arithmetic-Hodge` until the
-repository contains one of the following fully verified Lean artifacts:
-
-1. an axiom-free theorem proving the repository's canonical
-   `RiemannHypothesis` statement for every required Bombieri/Weil test
-   function; or
-1. an explicit admissible test-function or zero witness whose verified
-   properties imply `¬ RiemannHypothesis`.
-
-Do not claim that RH is proved or falsified before one of those terminal
-artifacts passes every repository gate.
-
-Time, edit count, theorem count, and repository size are not progress metrics.
-The program must continually reduce the mathematical distance to a terminal
-artifact.
-
-## What counts as decisive progress
-
-An increment is decisive only if it does at least one of the following:
-
-- discharges a named hypothesis of a theorem on the active terminal dependency
-  path;
-- upgrades a finite, conditional, or restricted statement to the next
-  quantified statement required by that path;
-- proves that a proposed RH route cannot work by exhibiting a verified
-  obstruction or counterexample;
-- produces and verifies a candidate negative Bombieri/Weil witness; or
-- removes a proof-integrity risk from a theorem already on the terminal path.
-
-Refactoring, stronger constants, larger finite matrices, duplicated APIs,
-additional exploratory files, and broader literature notes are supporting
-work, not decisive progress, unless a current gate explicitly requires them.
-
-Every task must be expressible in this form before work begins:
-
-> If this succeeds, it discharges **[specific obligation]** in **\[current
-> gate\]**; if it fails, the failure decides **[specific route or bound]**.
-
-## Firm-ground and loose-end policy
-
-Advance from firm, checked ground without allowing loose ends to control the
-research program.
-
-- Close every proof obligation that blocks the active gate.
-- Finish a nearly complete coherent theorem before changing routes when its
-  completion has clear downstream value.
-- Inventory and quarantine non-blocking experiments, superseded approaches,
-  and research artifacts. Preserve them, but do not polish them on the
-  critical path.
-- Do not advance a theorem by replacing `sorry` with an axiom, typeclass
-  bridge, circular RH-equivalent assumption, `unsafe`, `native_decide`, or any
-  other proof bypass.
-- The terminal theorem's complete transitive dependency closure must consist
-  of structural proofs: analytic identities and estimates, algebraic or
-  operator-theoretic arguments, and uniform quantified reductions that explain
-  why the result holds.
-- Exhaustive finite computation is not a proof ingredient for this program.
-  Generated numeric tables, mode-by-mode target boxes, matrix-cell or row/block
-  enumeration, pivot/Cholesky replay, and `decide +kernel` evaluation of a
-  discovered certificate may be used to find conjectures or counterexamples,
-  but no terminal-path theorem may import or depend on them.
-- This restriction is retroactive. Audit every theorem previously called
-  firm ground through all of its imports; if its weakest lemma is computational
-  rather than structural, reclassify the theorem as exploratory evidence and
-  reopen the obligation. Closed scalar arithmetic after a structural
-  reduction is acceptable only when it does not encode an enumerated family
-  of cases or a discovered numeric certificate.
-- Preserve superseded research evidence in the remote archive tags
-  `archive/legacy-lean-2026-07-11` and
-  `archive/yoshida-finite-fallbacks-2026-07-12`; redundant untracked working
-  copies need not be retained.  Never import the archived finite mode tables,
-  payloads, or pivot replays into the terminal structural proof path.
-
-Firm ground means a structural-proof dependency audit first, followed by strict
-compilation, a full `lake build`, forbidden-proof and naming scans, axiom
-audits, and independent review proportional to mathematical risk.
-
-## Active stage gates
-
-Work on the earliest unclosed gate. Later gates may receive bounded exploratory
-probes only when they clarify whether the active route is viable.
-
-### Gate 0 — Structuralize the restricted Yoshida foundation
-
-Reopen every claimed odd/even restricted-support result whose dependency graph
-passes through finite numeric certificates. Replace the weakest such lemma by
-one structural theorem that works uniformly in the Fourier dimension, for
-example through the real-space correlation form, a coercive operator
-decomposition, a positive integral/rank-one representation, or an exact
-structural obstruction.
-
-The deliverable is a dependency-audited theorem or falsification result with no
-mode table, target enclosure family, finite Gram certificate, or enumerated
-matrix inequality in its transitive imports.
-
-### Gate 1 — Prove or refute infinite-mode restricted-support positivity
-
-This is the first decisive mathematical gate. Prove a theorem for the complete
-restricted-support space, not another truncation. The proof must assemble:
-
-- the required parity components and Fourier-circle normalization;
-- a genuinely infinite coercive-tail estimate;
-- a structural treatment of the low modes that is uniform in dimension;
-- a sound operator Schur-complement or equivalent infinite-space argument; and
-- all cross terms, convergence statements, and closure/density steps.
-
-The deliverable is either:
-
-- an unconditional theorem establishing Yoshida positivity for every
-  admissible test in the support-ratio-at-most-two class; or
-- a formally or exactly verified obstruction showing why the proposed
-  finite-plus-tail mechanism cannot establish that theorem.
-
-If the constants or hypotheses do not close, record the precise failing
-inequality or construct a counterexample to the intermediate claim. Do not
-respond by merely enlarging the finite block indefinitely.
-
-### Gate 2 — Transport restricted positivity to the Bombieri functional
-
-Prove an exact theorem connecting the restricted Yoshida statement to the
-repository's production Bombieri/Weil quadratic functional. Discharge, rather
-than assume:
-
-- normalized multiplicative dilation and logarithmic centering;
-- Fourier/Mellin convention compatibility;
-- admissibility and support transport;
-- equality of the relevant quadratic forms; and
-- every continuity, density, and limiting step used by the transport.
-
-The result must be a quantified Bombieri positivity theorem on a precisely
-stated nontrivial class, with no hidden convention or integrability boundary.
-
-### Gate 3 — Cross or decisively characterize the all-support gap
-
-Restricted-support positivity is not RH. Attack the all-support gap directly.
-Candidate mechanisms may include support decomposition, normalized dilation,
-localization, density, monotone exhaustion, or another source-backed
-local-to-global principle, but each candidate must control cross terms and
-preserve the exact Bombieri functional.
-
-For each candidate mechanism:
-
-1. state the complete theorem that would imply all-test positivity;
-1. isolate its strongest genuinely new lemma;
-1. try to prove that lemma before building auxiliary infrastructure; and
-1. in parallel, search for a counterexample to the lemma and its quantitative
-   bounds.
-
-The gate closes only with either an all-support Bombieri positivity theorem or
-a verified obstruction that eliminates the route and identifies the next
-specific mechanism to test.
-
-### Gate 4 — Terminal RH theorem or falsifying witness
-
-Connect the all-test Bombieri/Weil result to the canonical
-`RiemannHypothesis` theorem, or connect a verified negative witness to
-`¬ RiemannHypothesis`. Audit the entire dependency closure and run all project
-gates before making a terminal claim.
-
-## Parallel falsification lane
-
-Maintain a bounded adversarial lane at every gate. Its purpose is not generic
-numerical experimentation; it is to kill false intermediate claims early or
-produce a terminal witness.
-
-A candidate negative witness is relevant only if it includes:
-
-- an explicit representation accepted by Lean;
-- proofs of every Bombieri/Weil admissibility condition;
-- a rigorous error bound or exact evaluation of the quadratic functional;
-- a strict negative inequality; and
-- the theorem transporting that inequality to `¬ RiemannHypothesis`.
-
-Numerical searches may select candidates, but they do not discharge any of
-these obligations.
-
-## Anti-drift operating rules
-
-### Resource-safety invariant
-
-Lean- and Lake-related workloads must use the root `Justfile` recipes:
-
-```console
-just cache
-just build [target]
-just lean <file> [lean-args...]
-just strict <file> [lean-args...]
-just guarded <other-lean-related-command> [args...]
+```lean
+theorem arithmeticHodge_riemannHypothesis : RiemannHypothesis := by
+  ...
 ```
 
-You may amend the `Justfile` if you find something to be lacking.
+or
 
-- Ordinary non-Lean commands such as `git`, `rg`, and `git diff` run directly;
-  they do not need the `Justfile` recipes.
-- Never launch a Lean- or Lake-related workload outside the `Justfile`
-  recipes, even for work believed to be trivial.
-- Do not run multiple high-memory workloads concurrently; protect the machine
-  from aggregate memory pressure.
-- Propagate the `Justfile` requirement explicitly in every subagent task that
-  runs Lean- or Lake-related workloads.
-- If a required proof or computation runs out of memory, treat that as a
-  design failure: checkpoint, reduce, or reformulate it.
-- A resource-intensive validation that remains at full CPU is not evidence
-  that it is safe to leave running. Monitor memory and terminate it before it
-  threatens desktop responsiveness.
-- Keep the root agent on the strongest unresolved lemma of the active gate.
-- Use subagents only for distinct bounded proofs, independent audits,
-  counterexample searches, source verification, or certificate generation.
-- Never idle solely because agents are running while useful critical-path work
-  remains.
-- Prefer a proof or disproof of the gate's hardest lemma over improvements to
-  already adequate constants or infrastructure.
-- Do not expand a finite certificate after its downstream inequalities close.
-- Do not undertake broad refactors unless a current proof is blocked by the
-  existing interface and characterization tests protect the change.
-- Use primary sources when they sharpen a named obligation; do not substitute
-  literature collection for proving the obligation.
-- As soon as a coherent increment passes its verification gates, commit and push
-  it before beginning the next mutable increment, staging only its intended
-  files by explicit path.
+```lean
+theorem arithmeticHodge_not_riemannHypothesis : ¬ RiemannHypothesis := by
+  ...
+```
 
-After every coherent increment, record a terminal-distance audit:
+The theorem must have no mathematical hypotheses. It must compile in the
+current repository without `sorry`, `admit`, a project-added axiom, or a
+circular assumption equivalent to the desired conclusion.
 
-1. theorem or obstruction added;
-1. active-gate hypothesis eliminated;
-1. assumptions still remaining;
-1. exact next make-or-break lemma; and
-1. evidence that the current route remains viable.
+This is the only terminal success condition. Intermediate results matter to
+the extent that they shorten a credible path to one of these two declarations.
+Do not claim that RH has been proved or falsified before the corresponding
+closed theorem exists and passes final validation.
 
-If repeated attempts merely restate the same unresolved lemma, stop generating
-nearby lemmas. Produce a route audit, test the lemma adversarially, and either
-change the mathematical mechanism or formalize the obstruction.
+## Mathematical fidelity
 
-## Current directive
+Lean is the primary proof checker. Any method is permitted when its logical
+content is represented faithfully in Lean and it advances the terminal
+objective. In particular, the work may use:
 
-Gate 3 is the active gate. Gates 0--2 are structurally closed: the endpoint
-continuous-operator route now proves the production form nonnegative on the
-complete endpoint periodic core, and
-`bombieriFunctional_quadratic_nonneg_of_ratio_le_two` transports this to every
-Bombieri test with positive support endpoints and support ratio at most two.
-The theorem's audited forward dependency closure contains no finite mode
-table, target enclosure, pivot replay, generated certificate, or other
-computational proof mechanism. The former finite odd/even results and all
-full-pivot, sparse-dominance, target-enclosure, and generated block modules
-remain quarantined evidence and are not admissible terminal-path premises.
+- direct analytic, algebraic, spectral, operator-theoretic, or number-theoretic
+  arguments;
+- exact reductions, finite-dimensional lemmas, verified certificates, and
+  kernel-checked computation;
+- numerical experiments, symbolic computation, and external literature for
+  conjecture selection or counterexample discovery;
+- new definitions, alternate coordinates, refactors, or a completely new RH
+  route when the present route is unproductive; and
+- parallel proof attempts or adversarial searches on genuinely independent
+  subproblems.
 
-The current critical path is the first exact adjacent-window extension. For a
-ratio-at-most-two seed `g`, normalized factor-two dilation `D₂g`, and scalar
-`c`, the production functional is the Hermitian scalar family
+Finite or numerical evidence is not by itself a proof of an infinite claim.
+It becomes relevant proof material only through a sound Lean theorem that
+connects it to the required quantified statement. External floating-point
+output must not be presented as a rigorous inequality without a verified error
+bound or exact replacement.
+
+Do not weaken the intended theorem merely to obtain a compiling declaration.
+In particular, a theorem conditional on RH, positivity, an unproved operator
+bound, or an encoded equivalent of the missing result is not terminal progress.
+
+## Adaptive proof methodology
+
+Use a theorem-driven loop rather than a fixed stage-gate process:
+
+1. Choose the sharpest unresolved statement whose proof or disproof would
+   materially change the route to RH.
+2. Inspect the existing definitions and theorems that touch that statement.
+3. Write a Lean proof attempt quickly. Let elaboration and compiler errors
+   expose the actual missing lemmas.
+4. Prove only the supporting facts needed by that attempt, preferring the
+   shortest reusable formulation.
+5. If the statement resists proof, test it adversarially. A counterexample,
+   failed constant, sign obstruction, or non-coercive direction is useful when
+   it rules out the proposed mechanism.
+6. Change coordinates, refactor, or abandon the route when evidence warrants
+   it. No historical plan has authority over the mathematics.
+
+Keep one principal mathematical claim in focus. Avoid producing chains of
+nearby interface lemmas unless the active proof attempt actually calls for
+them. Notes and design documents are optional memory aids, not deliverables.
+
+Subagents are most useful for distinct proof attempts, source/API discovery,
+or counterexample searches. Repeated independent audits of already compiled
+routine algebra are usually lower value than another proof attempt.
+
+## Validation policy
+
+Validation should be proportional to the claim:
+
+- During proof development, a focused `just strict <file>` is normally enough.
+- Run the relevant target build when a module is integrated or its imports
+  change.
+- Run the full build at meaningful repository checkpoints and before a
+  terminal claim, not after every small lemma.
+- Inspect assumptions or dependency provenance when there is a concrete risk
+  of `sorry`, a new axiom, a circular theorem, an unintended certificate, or a
+  misleading statement. Do not repeat such audits mechanically when nothing
+  relevant changed.
+- Before claiming RH or `¬ RH`, run the full repository build, inspect the
+  terminal theorem's assumptions and dependency path, and verify that the
+  theorem is the canonical proposition intended here.
+
+Use the root `Justfile` for Lean/Lake workloads so the repository's resource
+guard remains in effect. Ordinary source inspection and Git commands may run
+directly.
+
+Commit and push coherent checkpoints when doing so preserves useful progress.
+There is no required theorem count, audit template, documentation quota, or
+commit cadence.
+
+## Current mathematical frontier
+
+The current production route has established restricted positivity for
+Bombieri tests whose positive support ratio is at most two. The immediate
+adjacent-window problem is the same-seed factor-two family
 
 ```text
-Re F(g + c D₂g) = (1 + |c|²) A(g) + 2 Re(c Z(g)),
-A(g) = Re F(g),
+Re F(g + c D₂g) = (1 + |c|²) D(g) + 2 Re(c Z(g)),
+```
+
+where
+
+```text
+D(g) = Re F(g),
 Z(g) = factorTwoGlobalCrossSymbol(g).
 ```
 
-Consequently this entire family is nonnegative exactly when
-`normSq Z(g) ≤ A(g)^2`; a strict reverse supplies an explicit negative
-Bombieri test. Both sides are now expressed structurally in the same folded
-self-correlation coordinates. Writing `C(s)` for the critical
-self-correlation, `L = log 2`, and `h` for
-`factorTwoAdjacentSmoothKernel`, the diagonal is
+For a centered ratio-two seed, the exact endpoint coordinates now have the
+form
 
 ```text
-A(g) = integral_[0,L] (2 h(s) Re C(s) + Re C(0)/s) ds
-       - (log L + EulerGamma + log 2 + log pi) Re C(0),
+D(g) = A Q,
+Z(g) = A (P + i J),
+A = log 2 / 2 > 0.
 ```
 
-while `Re Z(g)` and `Im Z(g)` use respectively the weights
-`h(L+s)+h(L-s)` and `h(L+s)-h(L-s)`, together with the exact prime atoms at
-`0` and `log(3/2)`. The endpoint atom at `L` vanishes structurally.
-
-The tempting separation of an indefinite core from the positive digamma
-residual is eliminated: `mellinBumpSequence 999` is an explicit admissible
-ratio-two seed with negative core diagonal, so a triangle bound on the core
-cannot prove the determinant. The complete residual, polar, smooth-kernel,
-and prime contributions must remain coupled.
-
-The current make-or-break lemma is to prove or refute
+Thus universal positivity of this two-bump family is exactly
 
 ```text
-normSq (factorTwoGlobalCrossSymbol g)
-  ≤ (Re (bombieriFunctional (bombieriQuadraticTest g)))^2
+normSq (P + i J) ≤ Q²,
 ```
 
-for every ratio-at-most-two seed, using the exact folded parity channels and
-physical diagonal. A proposed `S^2 + K^2 ≤ I` row contraction is only a
-candidate strengthening: derive its positive factorization or kill it with a
-structural counterexample before depending on it. If the same-seed inequality
-holds, apply the existing determinant theorem immediately and then attack the
-finite/infinite block-Toeplitz control required for arbitrary logarithmic
-window chains. If it fails strictly, package the seed and explicit scalar as a
-negative Bombieri witness and discharge the Gate 4 criterion transport.
+and strict reversal is exactly a negative member of the family. In the current
+Lean API these quantities are represented by
+`factorTwoEndpointChannelCleanSum` and
+`factorTwoEndpointChannelCoordinate`.
 
-The live theorem-by-theorem position and next make-or-break lemma are recorded
-in `docs/research/rh-terminal-distance-audit-2026-07-11.md`; that audit, rather
-than this stable program, carries rapidly changing commit-level status.
+Reflection parity splits the scalar pencil into even--odd and odd--even
+blocks. The sharp total criterion adds the two complex block coordinates
+before taking `normSq`. Proving the two block-radius bounds separately is a
+valid sufficient route, but it is stronger than necessary; failure of one
+block alone is not a production counterexample because the other block may
+compensate.
 
-No restricted-support or finite-dimensional result is terminal. The program
-exists to force each such result into the next quantified theorem—or to expose
-precisely why that transition fails—until RH is proved or falsified.
+A promising positive mechanism is a phase-uniform coercivity or Schur estimate
+for the complete coupled form
+
+```text
+Q + a P + b J,    a² + b² ≤ 1,
+```
+
+retaining the endpoint, smooth-kernel, residual, and prime terms together. A
+promising falsification mechanism is an admissible centered seed for which the
+total radius inequality is strictly reversed. These are current opportunities,
+not mandatory routes.
+
+Even if the same-seed factor-two inequality is proved, arbitrary support still
+requires a valid local-to-global argument, such as a controlled chain of
+logarithmic windows or another all-support mechanism. Conversely, a strict
+negative production witness becomes a falsification only after its
+admissibility and the transport to `¬ RiemannHypothesis` are proved in Lean.
+
+The agent may bypass this frontier entirely if a more direct proof or
+falsification route becomes credible.
+
+## Research conduct
+
+- State uncertainty plainly and distinguish a compiled theorem from a
+  numerical observation or plausible route.
+- Preserve unrelated worktree changes.
+- Prefer proving or refuting a substantive statement over polishing process
+  artifacts.
+- When a route repeatedly reproduces the same missing lemma, change the
+  mathematical mechanism rather than renaming the obstruction.
+- Keep the objective precise and the methodology flexible.
