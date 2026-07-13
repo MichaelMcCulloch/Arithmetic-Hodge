@@ -2478,3 +2478,66 @@ separate from build logs: a green build is evidence, not a stage transition.
    `a(E/4+P+log 2 M) - a^2 R - a B M + a H = a * clean` and confirmed every
    sign and scale, while explicitly rejecting any claim that the still-open
    production arch bridge had already been closed.
+
+## `8dbee23`, `a11b902`, `a263d23`, `bd524b1`, and `cb1a508` — Structural source recombination
+
+1. **Theorems added.**  Real and imaginary coefficients of a literal
+   pointwise-odd periodic source remain in that carrier, are globally
+   continuous after clipping, and have locally Lipschitz centered profiles.
+   The actual production diagonal splits exactly into the two coefficient
+   diagonals.  Its polar term is the raw physical polar product, and both
+   resulting physical endpoint quadratics are nonnegative.  Separately, every
+   periodic source has an exact literal even/odd decomposition with zero
+   production cross terms and a certificate-free nonnegative recombination
+   theorem.
+2. **Gate hypothesis eliminated.**  No abstract realification, spectral parity
+   certificate, or endpoint regularity premise remains in the odd source
+   recombination.  Once the archimedean energy is identified with the physical
+   correlation expression, the complex odd production theorem follows from
+   already proved component positivity and the exact diagonal split.
+3. **Assumptions remaining.**  The production archimedean
+   digamma-to-correlation identity is still open, so this does not yet prove
+   positivity of `yoshidaClippedLocalCriticalForm` on the odd carrier.  The
+   even carrier also needs its constant direction and low/tail cross terms.
+4. **Next make-or-break lemma.**  Close the generic clipped arch bridge and its
+   combined-integral split, then compose it with the physical factorization,
+   polar identity, and real/imaginary energy split.
+5. **Viability evidence.**  Every module passes strict compilation, focused
+   builds, forbidden-proof scans, and standard-only axiom audits.  Independent
+   review rederived the Laplace conjugation, even spectral-kernel substitution,
+   real cross pairing, Hermitian orientation, and sesquilinear cancellation.
+   Some unavoidable carrier imports define Fourier modes, but no theorem in
+   this chain uses a mode table, enclosure, pivot, or certificate fact.
+
+## `b15411d`, `24a8603`, and `ec9a735` — Infinite even reduction and mean-zero positivity
+
+1. **Theorems added.**  Every continuous finite-energy even profile decomposes
+   as `w = a P₀ + b P₂ + r`, with the exact infinite spectral estimate
+   `(3/5)b² + (25/12)∫r² ≤ D(w)/4`.  The complete clean endpoint quadratic is
+   nonnegative whenever `a = 0`: the `P₂` weight and full degree-four tail
+   dominate the scalar and sharp regular losses, while the potential and even
+   hyperbolic term are nonnegative.
+2. **Gate hypothesis eliminated.**  The even problem is no longer an
+   unspecified all-mode coercivity obligation.  The complete mean-zero even
+   sector is closed structurally, and the only surviving low direction is the
+   constant profile together with its cross functional against that positive
+   mean-zero space.
+3. **Assumptions remaining.**  The constant direction cannot be discarded:
+   its logarithmic energy is zero, and positivity uses cancellation among the
+   endpoint potential, regular kernel, and positive cosh rank-one term.  A
+   fixed structural Schur or ground-state argument for that constant/tail
+   coupling remains open, as does the production arch bridge shared with the
+   odd lane.
+4. **Next make-or-break lemma.**  Prove a quantitative reserve on the mean-zero
+   even quadratic and bound the single constant-to-mean-zero cross functional
+   against it, retaining the cosh and potential cancellation rather than
+   replacing them by a mass-only estimate.
+5. **Viability evidence.**  The tail theorem passes to the limit through the
+   complete Legendre Hilbert basis and uses the uniform weight `2H₄ = 25/6`;
+   it is not a cutoff.  Two independent reviews rederived the coefficients,
+   residual mass, `7/5` slack `(1/25)b² + (41/60)∫r²`, and the exact regular
+   scale `a/32 = log 2/64`.  A dependency flaw discovered during review was
+   removed by extracting the generic clean form and replacing an unnecessary
+   odd low-mode import with Mathlib's structural `pi < 3.1416` theorem.  The
+   final 32-module terminal closure contains no octic, Gram, Schur-data,
+   pivot, payload, enclosure, or certificate module.
