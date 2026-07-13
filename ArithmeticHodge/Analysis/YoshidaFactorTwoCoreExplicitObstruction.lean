@@ -261,6 +261,44 @@ theorem not_core_bound_mellinBumpSequence_999 :
   have hcore := bombieriCoreDiagonal_mellinBumpSequence_999_neg
   linarith
 
+/-- The explicit core-bound counterexample belongs to the support-ratio-at-most
+two seed class used by the factor-two determinant reduction. -/
+theorem exists_factorTwo_support_not_core_bound :
+    ∃ a b : ℝ,
+      0 < a ∧ a ≤ b ∧
+      tsupport (mellinBumpSequence 999 : ℝ → ℂ) ⊆ Set.Icc a b ∧
+      b / a ≤ 2 ∧
+      ¬ ‖factorTwoCoreCrossSymbol (mellinBumpSequence 999)‖ ≤
+        bombieriCoreDiagonal (mellinBumpSequence 999) := by
+  let ε : ℝ := 1 / 1000
+  let a : ℝ := Real.exp (-ε)
+  let b : ℝ := Real.exp ε
+  have hε : 0 < ε := by norm_num [ε]
+  have ha : 0 < a := Real.exp_pos _
+  have hab : a ≤ b := Real.exp_le_exp.mpr (by
+    linarith)
+  have hsupport : tsupport (mellinBumpSequence 999 : ℝ → ℂ) ⊆
+      Set.Icc a b := by
+    have hradius : mellinBumpRadius 999 = ε := by
+      norm_num [mellinBumpRadius, ε]
+    have hopen := mellinBumpSequence_support 999
+    simpa only [a, b, hradius] using
+      hopen.trans Set.Ioo_subset_Icc_self
+  have hexpUpper : Real.exp ε ≤ 1 / (1 - ε) :=
+    Real.exp_bound_div_one_sub_of_interval hε.le (by norm_num [ε])
+  have hexpNegLower : 1 - ε ≤ Real.exp (-ε) :=
+    Real.one_sub_le_exp_neg ε
+  have hratio : b / a ≤ 2 := by
+    rw [div_le_iff₀ ha]
+    calc
+      b = Real.exp ε := rfl
+      _ ≤ 1 / (1 - ε) := hexpUpper
+      _ ≤ 2 * (1 - ε) := by norm_num [ε]
+      _ ≤ 2 * Real.exp (-ε) := by linarith
+      _ = 2 * a := rfl
+  exact ⟨a, b, ha, hab, hsupport, hratio,
+    not_core_bound_mellinBumpSequence_999⟩
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoCoreExplicitObstruction
