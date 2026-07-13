@@ -2541,3 +2541,38 @@ separate from build logs: a green build is evidence, not a stage transition.
    odd low-mode import with Mathlib's structural `pi < 3.1416` theorem.  The
    final 32-module terminal closure contains no octic, Gram, Schur-data,
    pivot, payload, enclosure, or certificate module.
+
+## `d44e3e6`, `12eb4dd`, and `3162dc3` — Structural odd production positivity
+
+1. **Theorems added.**  The actual clipped archimedean energy is identified
+   with the physical endpoint correlation by a generic digamma-distribution
+   argument.  The singular and regular pieces are separately
+   interval-integrable before the combined integral is split.  Adding the
+   production polar term gives the named physical quadratic, and exact
+   real/imaginary diagonal splitting proves
+   `yoshidaClippedLocalCriticalForm_re_nonneg` on every literal pointwise-odd
+   periodic source vector.
+2. **Gate hypothesis eliminated.**  The odd sector no longer stops at a clean
+   surrogate or physical-coordinate expression: it reaches the actual
+   production clipped form with no modal cutoff, target enclosure, or
+   certificate premise.  Endpoint vanishing, weighted spectral integrability,
+   Fourier inversion, renormalized geometric summation, physical scaling, and
+   complex recombination are all proved in the chain.
+3. **Assumptions remaining.**  This is nonnegativity on the complete odd
+   periodic carrier, not on the even carrier or the unrestricted periodic
+   core.  The even mean-zero carrier is already nonnegative, but the constant
+   direction and its cross functional remain open.  Consequently the final
+   restricted-support Bombieri theorem and RH criterion are not yet closed.
+4. **Next make-or-break lemma.**  Establish a quantitative reserve for the
+   mean-zero even quadratic and prove the one-dimensional constant/tail Schur
+   inequality while retaining the endpoint-potential and cosh cancellations.
+5. **Viability evidence.**  Three initial reviews independently confirmed all
+   Fourier factors, kernel signs, scalar constants, and interchanges, but
+   rejected the first import closure because two generic analytic lemmas were
+   housed under legacy certificate-bearing modules.  The helpers and
+   production-energy definitions were extracted into lightweight structural
+   modules, after which the bridge closure fell to 117 local modules with no
+   certificate, enclosure, pivot, payload, numerical coercivity, odd
+   positivity, kernel `decide`, or forbidden construct.  Final bridge and odd
+   production reviews pass; all public theorem audits report only `propext`,
+   `Classical.choice`, and `Quot.sound`.
