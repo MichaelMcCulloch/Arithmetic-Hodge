@@ -2220,3 +2220,28 @@ separate from build logs: a green build is evidence, not a stage transition.
    integral, uses general logarithm remainder inequalities and the standard
    Euler bounds, and closes only exact scalar arithmetic.  Strict compilation,
    focused build, axiom audit, and independent review all pass.
+
+## `3652650` — Mean-zero regular-kernel cancellation
+
+1. **Theorem added.**
+   `norm_yoshidaEndpointRegularQuadratic_le_of_integral_eq_zero` subtracts the
+   constant kernel `1/8` on the centered interval and proves that every
+   continuous complex mean-zero function pays at most `1/4` of its centered
+   `L²` mass in the regular-kernel quadratic form.
+2. **Gate hypothesis eliminated.**  The regular remainder is no longer forced
+   to pay the full global Schur constant on the odd sector.  Its constant
+   component cancels exactly as a product of the two mean integrals, with no
+   mode cutoff or certificate.
+3. **Assumptions remaining.**  The current pointwise range `0 ≤ h ≤ 1/4`
+   retains only half of the available cancellation.  The sharper uniform
+   lower bound `7/32 ≤ h` is still needed to reduce the centered-kernel radius
+   from `1/8` to `1/32`; low/tail potential coupling and the production-form
+   bridge also remain open.
+4. **Next make-or-break lemma.**  Prove `7/32 ≤ yoshidaRegularKernel t` for
+   every `0 ≤ t ≤ log 2` by an exact analytic inequality, then repeat the same
+   mean-zero Schur argument at radius `1/32`.
+5. **Viability evidence.**  Guarded strict compilation and focused build pass;
+   the public axiom footprint is exactly `propext`, `Classical.choice`, and
+   `Quot.sound`.  Forbidden-proof scans and independent review confirm that
+   the proof is a continuous product-integral/Hölder argument and imports no
+   enclosure or computational-certificate module.
