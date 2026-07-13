@@ -222,8 +222,8 @@ You may amend the `Justfile` if you find something to be lacking.
   existing interface and characterization tests protect the change.
 - Use primary sources when they sharpen a named obligation; do not substitute
   literature collection for proving the obligation.
-- As soon as a coherent increment passes its verification gates, commit it
-  before beginning the next mutable increment, staging only its intended
+- As soon as a coherent increment passes its verification gates, commit and push
+  it before beginning the next mutable increment, staging only its intended
   files by explicit path.
 
 After every coherent increment, record a terminal-distance audit:
