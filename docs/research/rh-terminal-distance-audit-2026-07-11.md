@@ -3046,3 +3046,56 @@ Latest audited umbrella integration: `4f36ac6` (2026-07-13).
    full-pivot fallbacks.  No tracked import target reaches any untracked file;
    the physical-symbol closure audited at 250 tracked modules and 443 project
    edges, with no missing edge or cycle.
+
+## `488572a` through `95723a2` — Core obstruction and coupled parity pivot
+
+1. **Obstruction and theorems added.**  The isolated diagonal core is proved
+   indefinite.  First, any nonzero seed whose polar Mellin moments at zero and
+   one vanish has strictly negative core diagonal.  More decisively, the
+   explicit unit-mass seed `mellinBumpSequence 999` has core diagonal strictly
+   below zero by a structural Holder estimate, exact support-width bounds, and
+   exact Mellin-error bounds.  Its core cross norm therefore cannot be bounded
+   by that diagonal.  `exists_factorTwo_support_not_core_bound` packages the
+   same witness with positive endpoints, support in the stated interval, and
+   endpoint ratio at most two, so the failure occurs inside the exact seed
+   class consumed by the factor-two reduction.
+2. **Route eliminated.**  The sufficient premise of
+   `factorTwoDeterminant_le_of_core` is false, even on an explicit admissible
+   ratio-two seed.  Consequently the positive residual may not be separated
+   from the indefinite core by a triangle inequality.  This falsifies only
+   that proof mechanism: it does not reverse the full determinant, produce a
+   negative Bombieri functional, or prove or falsify RH.  The exact positive
+   residual decomposition and its Cauchy--Schwarz theorem remain valid and
+   must now stay coupled to the core.
+3. **Replacement structure proved.**  The complete physical symbol is shifted
+   from `[0, 2 log 2]` to the natural self-correlation interval
+   `[-log 2, log 2]`, then folded by the exact identity
+   `C(-s) = conj(C(s))`.  Its real channel has weight
+   `h(log 2+s) + h(log 2-s)` and prime atoms at zero and `log(3/2)`; its
+   imaginary channel has weight `h(log 2+s) - h(log 2-s)`, no `log 2` atom,
+   and the imaginary `log 3` atom.  These are exact interval-integral
+   identities, not a truncation or estimate.
+4. **Assumptions remaining.**  The necessary-and-sufficient same-seed
+   determinant
+   `normSq factorTwoGlobalCrossSymbol <= (Re F(Qg))^2` remains open.  A
+   contraction of the fully polarized adjacent operator would imply it, but
+   that row contraction is stronger than the same-seed statement and is not
+   yet available.  Even the same-seed determinant would cover only adjacent
+   cells; arbitrary support still requires structural block-Toeplitz or
+   equivalent long-range prime-correlation control.
+5. **Next make-or-break lemma.**  Express the already structural diagonal
+   `Re F(Qg)` in the same folded self-correlation coordinates, keep the full
+   digamma residual coupled to the polar and prime pieces, and prove or refute
+   the resulting exact parity-channel determinant inequality.  Treat a
+   proposed `S^2 + K^2 <= I` row contraction as a candidate strengthening,
+   not as an assumption: derive its positive factorization or kill it with a
+   structural counterexample before building dependent infrastructure.
+6. **Viability and integrity evidence.**  The centered, folded, real-parity,
+   imaginary-parity, explicit negative-core, core-bound violation, and
+   ratio-two support endpoints all pass guarded strict/focused builds.  Every
+   audited public endpoint depends exactly on `propext`, `Classical.choice`,
+   and `Quot.sound`; forbidden-proof scans find no `sorry`, custom axiom,
+   evaluator, or certificate mechanism.  With both modules imported by the
+   root umbrella, the canonical guarded full build passes all 8,607 jobs.  The
+   protected 159 legacy artifacts and 24 fallback modules remain unmodified
+   and untracked.
