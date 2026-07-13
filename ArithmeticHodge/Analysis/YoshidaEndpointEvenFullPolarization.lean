@@ -8,6 +8,7 @@ namespace ArithmeticHodge.Analysis.YoshidaEndpointEvenFullPolarization
 
 open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointEvenTailRepresenter
+open YoshidaEndpointPotentialBound
 
 noncomputable section
 
@@ -52,6 +53,89 @@ theorem centeredRawLogBilinear_fixedEvenLowProfile_tail_eq_zero
       ring]
     exact intervalIntegral.integral_const_mul _ _]
   rw [htwoRaw, mul_zero]
+
+/-- The ordinary `L²` cross term of the fixed low profile with a zero-two
+tail vanishes exactly. -/
+theorem integral_fixedEvenLowProfile_mul_tail_eq_zero
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hzero : centeredEvenP0Coefficient r = 0)
+    (htwo : centeredEvenP2Coefficient r = 0)
+    (c b : ℝ) :
+    (∫ x : ℝ in -1..1,
+      (c * centeredEvenP0 x + b * centeredEvenP2 x) * r x) = 0 := by
+  have h0 : IntervalIntegrable
+      (fun x : ℝ ↦ r x * centeredEvenP0 x) volume (-1) 1 :=
+    (hr.mul (by unfold centeredEvenP0; fun_prop)).intervalIntegrable (-1) 1
+  have h2 : IntervalIntegrable
+      (fun x : ℝ ↦ r x * centeredEvenP2 x) volume (-1) 1 :=
+    (hr.mul (by unfold centeredEvenP2; fun_prop)).intervalIntegrable (-1) 1
+  rw [show (fun x : ℝ ↦
+      (c * centeredEvenP0 x + b * centeredEvenP2 x) * r x) =
+      fun x ↦ c * (r x * centeredEvenP0 x) +
+        b * (r x * centeredEvenP2 x) by
+    funext x
+    ring,
+    intervalIntegral.integral_add (h0.const_mul c) (h2.const_mul b),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul,
+    integral_mul_centeredEvenP0_eq,
+    integral_mul_centeredEvenP2_eq,
+    hzero, htwo]
+  ring
+
+/-- Exact polarization of the locally integrable endpoint-potential term. -/
+theorem integral_endpointPotential_add_sq
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * (u x + v x) ^ 2) =
+      (∫ x : ℝ in -1..1,
+          yoshidaEndpointPotential x * u x ^ 2) +
+        2 * (∫ x : ℝ in -1..1,
+          yoshidaEndpointPotential x * u x * v x) +
+        ∫ x : ℝ in -1..1,
+          yoshidaEndpointPotential x * v x ^ 2 := by
+  have huu := intervalIntegrable_endpointPotential_mul u u hu hu
+  have huv := intervalIntegrable_endpointPotential_mul u v hu hv
+  have hvv := intervalIntegrable_endpointPotential_mul v v hv hv
+  have huu' : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * u x ^ 2)
+      volume (-1) 1 := by simpa only [pow_two, mul_assoc] using huu
+  have hvv' : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * v x ^ 2)
+      volume (-1) 1 := by simpa only [pow_two, mul_assoc] using hvv
+  rw [show (fun x : ℝ ↦
+      yoshidaEndpointPotential x * (u x + v x) ^ 2) =
+      fun x ↦ yoshidaEndpointPotential x * u x ^ 2 +
+        (2 * (yoshidaEndpointPotential x * u x * v x) +
+          yoshidaEndpointPotential x * v x ^ 2) by
+    funext x
+    ring,
+    intervalIntegral.integral_add huu' ((huv.const_mul 2).add hvv'),
+    intervalIntegral.integral_add (huv.const_mul 2) hvv',
+    intervalIntegral.integral_const_mul]
+  ring
+
+/-- Exact polarization of the ordinary mass term. -/
+theorem integral_add_sq
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (∫ x : ℝ in -1..1, (u x + v x) ^ 2) =
+      (∫ x : ℝ in -1..1, u x ^ 2) +
+        2 * (∫ x : ℝ in -1..1, u x * v x) +
+        ∫ x : ℝ in -1..1, v x ^ 2 := by
+  have huu : IntervalIntegrable (fun x : ℝ ↦ u x ^ 2)
+      volume (-1) 1 := (hu.pow 2).intervalIntegrable (-1) 1
+  have huv : IntervalIntegrable (fun x : ℝ ↦ u x * v x)
+      volume (-1) 1 := (hu.mul hv).intervalIntegrable (-1) 1
+  have hvv : IntervalIntegrable (fun x : ℝ ↦ v x ^ 2)
+      volume (-1) 1 := (hv.pow 2).intervalIntegrable (-1) 1
+  rw [show (fun x : ℝ ↦ (u x + v x) ^ 2) =
+      fun x ↦ u x ^ 2 + (2 * (u x * v x) + v x ^ 2) by
+    funext x
+    ring,
+    intervalIntegral.integral_add huu ((huv.const_mul 2).add hvv),
+    intervalIntegral.integral_add (huv.const_mul 2) hvv,
+    intervalIntegral.integral_const_mul]
+  ring
 
 end
 
