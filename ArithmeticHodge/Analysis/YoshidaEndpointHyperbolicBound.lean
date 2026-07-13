@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.HyperbolicKernelRankTwo
+import ArithmeticHodge.Analysis.YoshidaEndpointParameter
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
 import Mathlib.MeasureTheory.Integral.MeanInequalities
@@ -145,13 +146,6 @@ theorem normSq_integral_sinh_scaled_le
   dsimp only [w] at hsq ⊢
   rw [hweight, henergy] at hsq
   exact hsq
-
-/-- The endpoint half-width in the scaled Yoshida form. -/
-def yoshidaEndpointA : ℝ := Real.log 2 / 2
-
-theorem yoshidaEndpointA_pos : 0 < yoshidaEndpointA := by
-  unfold yoshidaEndpointA
-  positivity
 
 /-- Exact closed form of the endpoint negative hyperbolic loss. -/
 theorem two_mul_sinh_yoshidaEndpointA_sub_eq :
