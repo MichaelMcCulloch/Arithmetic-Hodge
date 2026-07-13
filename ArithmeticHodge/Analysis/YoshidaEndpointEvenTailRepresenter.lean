@@ -43,7 +43,7 @@ def yoshidaEndpointEvenRegularRepresenter
   ∫ y : ℝ in Icc (-1) 1,
     yoshidaRegularKernel (yoshidaEndpointA * |x - y|) * p y
 
-private theorem integrable_regular_pairing
+theorem integrable_regular_pairing
     (p r : ℝ → ℝ) (hp : Continuous p) (hr : Continuous r) :
     Integrable
       (fun z : ℝ × ℝ ↦
@@ -484,7 +484,7 @@ theorem centeredRawLogBilinear_centeredEvenP0_eq_zero (r : ℝ → ℝ) :
   unfold centeredRawLogBilinear centeredEvenP0
   simp
 
-private theorem intervalIntegrable_endpointPotential_mul
+theorem intervalIntegrable_endpointPotential_mul
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
     IntervalIntegrable
       (fun x ↦ yoshidaEndpointPotential x * u x * v x)
@@ -498,7 +498,7 @@ private theorem intervalIntegrable_endpointPotential_mul
   intro x _hx
   ring
 
-private theorem intervalIntegrable_regularRepresenter_mul
+theorem intervalIntegrable_regularRepresenter_mul
     (p r : ℝ → ℝ) (hp : Continuous p) (hr : Continuous r) :
     IntervalIntegrable
       (fun x ↦ yoshidaEndpointEvenRegularRepresenter p x * r x)
