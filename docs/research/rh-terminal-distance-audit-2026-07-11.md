@@ -2837,3 +2837,41 @@ separate from build logs: a green build is evidence, not a stage transition.
    transport has a 91-module local closure with no weighted-tail certificate,
    enclosure, pivot, payload, generated mode family, `native_decide`, or
    `decide +kernel` occurrence.
+
+## `e803fb3`, `103907a`, and `cceadce` — Complete clean-even positivity
+
+1. **Theorems added.**  The three exact projected gap entries are expressed
+   through fixed shifted-remainder moments and enclosed structurally.  After
+   subtracting the true polynomial-remainder Gram, the first diagonal exceeds
+   `14463/50000`, the second exceeds `11789/50000`, and the positive mixed
+   entry lies between `26073/100000` and `26077/100000`.  Consequently the
+   determinant exceeds `2007299/10000000000`.  These principal minors export
+   the unconditional projected weighted-dual inequality for all real
+   coefficient pairs, and the infinite-dimensional Schur assembly proves the
+   clean endpoint quadratic nonnegative on every continuous, even, locally
+   Lipschitz profile.
+2. **Gate hypothesis eliminated.**  Clean-even positivity no longer has a
+   projected-dual, integrability, low-Gram, determinant, or finite-dimensional
+   premise.  The complete even tail is controlled simultaneously by weighted
+   Cauchy; the only closed algebra is the fixed two-representer Schur
+   complement.  The mixed remainder entry is enclosed two-sidedly and proved
+   positive before its square is bounded, avoiding the invalid one-sided
+   shortcut identified during adversarial review.
+3. **Assumptions remaining.**  This is the complete clean form but not yet the
+   production diagonal for a source with a nonzero endpoint trace.  The
+   zero-trace residual already reaches production.  The endpoint-matching
+   constant diagonal and its mixed production term with the residual still
+   require the endpoint-jump digamma bridge currently under construction.
+4. **Next make-or-break lemma.**  Prove the exact production identity for the
+   clipped constant and the ordered constant/zero-trace residual cross, then
+   assemble the real and imaginary parts of every pointwise-even periodic
+   source.  Combining that theorem with structural odd positivity closes the
+   complete periodic core and feeds the certificate-free restricted-support
+   Bombieri transport directly.
+5. **Viability evidence.**  Fresh guarded strict and focused builds pass; the
+   final clean theorem's 83-module closure has no certificate, enclosure,
+   pivot, payload, generated mode family, `native_decide`, or
+   `decide +kernel`.  Every exported gap, determinant, weighted-dual, and
+   clean-even theorem audits to only `propext`, `Classical.choice`, and
+   `Quot.sound`.  Independent exact arithmetic reproduces the determinant
+   margin and all inequality directions.
