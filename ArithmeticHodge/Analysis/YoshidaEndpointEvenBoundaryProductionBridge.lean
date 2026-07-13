@@ -1184,6 +1184,298 @@ private theorem normalized_boundaryCriticalCross_eq_archCorrelation
   rw [hrhs] at hdist
   exact hdist
 
+/-! ## Constant and constant--zero-trace correlations -/
+
+private theorem measurable_yoshidaClippedOne (a : ℝ) :
+    Measurable ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ) := by
+  change Measurable (fun x : ℝ ↦
+    if x ∈ Icc (-a) a then (1 : ℂ) else 0)
+  exact Measurable.ite measurableSet_Icc measurable_const measurable_const
+
+private theorem yoshidaClippedOne_real (a x : ℝ) :
+    star ((yoshidaClippedOne a : YoshidaClippedSmooth a) x) =
+      (yoshidaClippedOne a : YoshidaClippedSmooth a) x := by
+  change star (if x ∈ Icc (-a) a then (1 : ℂ) else 0) =
+    if x ∈ Icc (-a) a then (1 : ℂ) else 0
+  split <;> simp
+
+private theorem crossCorrelation_even_of_real_even
+    {f g : ℝ → ℂ}
+    (hfReal : ∀ x : ℝ, star (f x) = f x)
+    (hfEven : Function.Even f) (hgEven : Function.Even g) :
+    Function.Even (crossCorrelation f g) := by
+  intro u
+  rw [crossCorrelation]
+  apply convolution_neg_of_neg_eq
+  · filter_upwards [] with x
+    unfold starReflection
+    rw [hfEven, hfReal]
+  · filter_upwards [] with x
+    exact hgEven x
+
+private theorem crossCorrelation_eq_zero_of_two_mul_a_lt
+    {a u : ℝ} (hu : 2 * a < u)
+    (f g : YoshidaClippedSmooth a) :
+    crossCorrelation (f : ℝ → ℂ) (g : ℝ → ℂ) u = 0 := by
+  rw [crossCorrelation_apply]
+  apply integral_eq_zero_of_ae
+  filter_upwards [] with x
+  by_cases hx : x ∈ Icc (-a) a
+  · have hux : u + x ∉ Icc (-a) a := by
+      intro hmem
+      linarith [hx.1, hmem.2]
+    rw [yoshidaClippedSmooth_eq_zero_outside g hux, mul_zero]
+    simp
+  · rw [yoshidaClippedSmooth_eq_zero_outside f hx, star_zero, zero_mul]
+    simp
+
+private theorem crossCorrelation_eq_real_overlap
+    {a u : ℝ} (f g : YoshidaClippedSmooth a)
+    (hf_real : ∀ x ∈ Icc (-a) a, f x = ((f x).re : ℂ))
+    (hg_real : ∀ x ∈ Icc (-a) a, g x = ((g x).re : ℂ))
+    (hu0 : 0 ≤ u) (huL : u ≤ 2 * a) :
+    crossCorrelation (f : ℝ → ℂ) (g : ℝ → ℂ) u =
+      ((∫ x : ℝ in -a..a - u,
+        (f x).re * (g (u + x)).re : ℝ) : ℂ) := by
+  rw [crossCorrelation_apply]
+  have hle : -a ≤ a - u := by linarith
+  have hsupport :
+      (∫ x : ℝ, star (f x) * g (u + x)) =
+        ∫ x : ℝ in -a..a - u, star (f x) * g (u + x) := by
+    rw [intervalIntegral.integral_of_le hle,
+      ← integral_Icc_eq_integral_Ioc]
+    exact (setIntegral_eq_integral_of_forall_compl_eq_zero (fun x hx ↦ by
+      by_cases hxf : x ∈ Icc (-a) a
+      · have hxgt : a - u < x := by
+          by_contra hnot
+          exact hx ⟨hxf.1, le_of_not_gt hnot⟩
+        have hux : u + x ∉ Icc (-a) a := by
+          intro hmem
+          linarith [hmem.2]
+        rw [yoshidaClippedSmooth_eq_zero_outside g hux, mul_zero]
+      · rw [yoshidaClippedSmooth_eq_zero_outside f hxf,
+          star_zero, zero_mul])).symm
+  rw [hsupport, ← intervalIntegral.integral_ofReal]
+  apply intervalIntegral.integral_congr
+  intro x hx
+  have hx' : x ∈ Icc (-a) (a - u) := by
+    simpa only [uIcc_of_le hle] using hx
+  have hxf : x ∈ Icc (-a) a := ⟨hx'.1, by linarith [hx'.2, hu0]⟩
+  have hux : u + x ∈ Icc (-a) a := by
+    constructor <;> linarith [hx'.1, hx'.2, hu0]
+  change star (f x) * g (u + x) =
+    (((f x).re * (g (u + x)).re : ℝ) : ℂ)
+  rw [hf_real x hxf, hg_real (u + x) hux]
+  simp
+
+private def constantEndpointCorrelation (a : ℝ) (u : ℝ) : ℝ :=
+  2 * a - u
+
+private theorem continuous_constantEndpointCorrelation (a : ℝ) :
+    Continuous (constantEndpointCorrelation a) := by
+  unfold constantEndpointCorrelation
+  fun_prop
+
+private theorem constantEndpointCorrelation_removable (a u : ℝ) :
+    constantEndpointCorrelation a u =
+      constantEndpointCorrelation a 0 + u * (-1) := by
+  unfold constantEndpointCorrelation
+  ring
+
+private theorem crossCorrelation_one_one_match
+    {a u : ℝ} (hu : u ∈ Icc (0 : ℝ) (2 * a)) :
+    crossCorrelation
+        ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)
+        ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ) u =
+      (constantEndpointCorrelation a u : ℂ) := by
+  rw [crossCorrelation_eq_real_overlap
+    (yoshidaClippedOne a) (yoshidaClippedOne a)
+    (fun x hx ↦ by rw [show
+      (yoshidaClippedOne a : YoshidaClippedSmooth a) x = 1 by
+        change (if x ∈ Icc (-a) a then (1 : ℂ) else 0) = 1
+        rw [if_pos hx]]; simp)
+    (fun x hx ↦ by rw [show
+      (yoshidaClippedOne a : YoshidaClippedSmooth a) x = 1 by
+        change (if x ∈ Icc (-a) a then (1 : ℂ) else 0) = 1
+        rw [if_pos hx]]; simp)
+    hu.1 hu.2]
+  have hle : -a ≤ a - u := by linarith [hu.2]
+  have hreal :
+      (∫ x : ℝ in -a..a - u,
+        ((yoshidaClippedOne a : YoshidaClippedSmooth a) x).re *
+          ((yoshidaClippedOne a : YoshidaClippedSmooth a) (u + x)).re) =
+        constantEndpointCorrelation a u := by
+    calc
+      _ = ∫ _x : ℝ in -a..a - u, (1 : ℝ) := by
+        apply intervalIntegral.integral_congr
+        intro x hx
+        have hx' : x ∈ Icc (-a) (a - u) := by
+          simpa only [uIcc_of_le hle] using hx
+        have hxf : x ∈ Icc (-a) a :=
+          ⟨hx'.1, by linarith [hx'.2, hu.1]⟩
+        have hux : u + x ∈ Icc (-a) a := by
+          constructor <;> linarith [hx'.1, hx'.2, hu.1]
+        change
+          ((yoshidaClippedOne a : YoshidaClippedSmooth a) x).re *
+            ((yoshidaClippedOne a : YoshidaClippedSmooth a) (u + x)).re = 1
+        rw [show (yoshidaClippedOne a : YoshidaClippedSmooth a) x = 1 by
+          change (if x ∈ Icc (-a) a then (1 : ℂ) else 0) = 1
+          rw [if_pos hxf],
+          show (yoshidaClippedOne a : YoshidaClippedSmooth a) (u + x) = 1 by
+          change (if u + x ∈ Icc (-a) a then (1 : ℂ) else 0) = 1
+          rw [if_pos hux]]
+        norm_num
+      _ = constantEndpointCorrelation a u := by
+        unfold constantEndpointCorrelation
+        norm_num
+        ring
+  exact congrArg Complex.ofReal hreal
+
+private def constantCorrelationExtension (a : ℝ) (u : ℝ) : ℝ :=
+  if |u| ≤ 2 * a then 2 * a - |u| else 0
+
+private theorem continuous_constantCorrelationExtension (a : ℝ) :
+    Continuous (constantCorrelationExtension a) := by
+  unfold constantCorrelationExtension
+  apply Continuous.if_le
+    ((continuous_const.sub continuous_abs)) continuous_const
+    continuous_abs continuous_const
+  intro u hu
+  rw [hu]
+  ring
+
+private theorem crossCorrelation_one_one_even (a : ℝ) : Function.Even
+    (crossCorrelation
+      ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)
+      ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)) :=
+  crossCorrelation_even_of_real_even
+    (yoshidaClippedOne_real a) (periodicCoreOne_even a)
+      (periodicCoreOne_even a)
+
+private theorem crossCorrelation_one_one_eq_extension (a : ℝ) :
+    crossCorrelation
+        ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)
+        ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ) =
+      fun u ↦ (constantCorrelationExtension a u : ℂ) := by
+  funext u
+  by_cases hu : 0 ≤ u
+  · rw [constantCorrelationExtension, abs_of_nonneg hu]
+    by_cases huL : u ≤ 2 * a
+    · rw [if_pos huL]
+      exact crossCorrelation_one_one_match ⟨hu, huL⟩
+    · rw [if_neg huL,
+        crossCorrelation_eq_zero_of_two_mul_a_lt
+          (lt_of_not_ge huL) (yoshidaClippedOne a) (yoshidaClippedOne a)]
+      norm_num
+  · have hneg : 0 ≤ -u := by linarith
+    have habs : |u| = -u := abs_of_neg (lt_of_not_ge hu)
+    rw [constantCorrelationExtension, habs,
+      ← crossCorrelation_one_one_even a u]
+    by_cases huL : -u ≤ 2 * a
+    · rw [if_pos huL]
+      exact crossCorrelation_one_one_match ⟨hneg, huL⟩
+    · rw [if_neg huL,
+        crossCorrelation_eq_zero_of_two_mul_a_lt
+          (lt_of_not_ge huL) (yoshidaClippedOne a) (yoshidaClippedOne a)]
+      norm_num
+
+private theorem continuous_crossCorrelation_one_one (a : ℝ) :
+    Continuous (crossCorrelation
+      ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)
+      ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)) := by
+  rw [crossCorrelation_one_one_eq_extension a]
+  exact Complex.continuous_ofReal.comp
+    (continuous_constantCorrelationExtension a)
+
+private def residualEndpointCorrelation {a : ℝ}
+    (r : YoshidaClippedSmooth a) (u : ℝ) : ℝ :=
+  ∫ x : ℝ in -a..a - u, (r x).re
+
+private theorem continuous_residualEndpointCorrelation
+    {a : ℝ} (r : YoshidaClippedSmooth a)
+    (hrcont : Continuous (r : ℝ → ℂ)) :
+    Continuous (residualEndpointCorrelation r) := by
+  have hg : Continuous (fun x : ℝ ↦ (r x).re) :=
+    Complex.continuous_re.comp hrcont
+  rw [continuous_iff_continuousAt]
+  intro u
+  have hFTC := intervalIntegral.integral_hasDerivAt_right
+    (hg.intervalIntegrable (-a) (a - u))
+    hg.stronglyMeasurable.stronglyMeasurableAtFilter
+    hg.continuousAt
+  have hinner : Tendsto (fun v : ℝ ↦ a - v) (𝓝 u) (𝓝 (a - u)) := by
+    exact continuousAt_const.sub continuousAt_id
+  exact (hFTC.continuousAt.comp hinner)
+
+private theorem contDiff_one_residualEndpointCorrelation
+    {a : ℝ} (r : YoshidaClippedSmooth a)
+    (hrcont : Continuous (r : ℝ → ℂ)) :
+    ContDiff ℝ 1 (residualEndpointCorrelation r) := by
+  let g : ℝ → ℝ := fun x ↦ (r x).re
+  have hg : Continuous g := Complex.continuous_re.comp hrcont
+  have hderiv (u : ℝ) : HasDerivAt (residualEndpointCorrelation r)
+      (-g (a - u)) u := by
+    have hFTC := intervalIntegral.integral_hasDerivAt_right
+      (hg.intervalIntegrable (-a) (a - u))
+      hg.stronglyMeasurable.stronglyMeasurableAtFilter
+      hg.continuousAt
+    have hinner : HasDerivAt (fun v : ℝ ↦ a - v) (-1) u := by
+      convert (hasDerivAt_const u a).sub (hasDerivAt_id u) using 1
+      all_goals simp
+    convert hFTC.comp u hinner using 1
+    all_goals simp [g]
+  rw [contDiff_one_iff_deriv]
+  constructor
+  · intro u
+    exact (hderiv u).differentiableAt
+  · rw [show deriv (residualEndpointCorrelation r) =
+        fun u ↦ -g (a - u) by
+      funext u
+      exact (hderiv u).deriv]
+    fun_prop
+
+private theorem exists_continuous_residualEndpointSlope
+    {a : ℝ} (r : YoshidaClippedSmooth a)
+    (hrcont : Continuous (r : ℝ → ℂ)) :
+    ∃ D : ℝ → ℝ, Continuous D ∧
+      ∀ u : ℝ, residualEndpointCorrelation r u =
+        residualEndpointCorrelation r 0 + u * D u := by
+  let C : ℝ → ℝ := residualEndpointCorrelation r
+  have hC : ContDiff ℝ 1 C :=
+    contDiff_one_residualEndpointCorrelation r hrcont
+  let Q : ℝ → ℝ := fun u ↦ (C u - C 0) / u
+  let D : ℝ → ℝ := Function.update Q 0 (deriv C 0)
+  have hderiv : HasDerivAt C (deriv C 0) 0 :=
+    (hC.differentiable (by norm_num) 0).hasDerivAt
+  have hQzero : Tendsto Q (nhdsWithin 0 ({0} : Set ℝ)ᶜ)
+      (nhds (deriv C 0)) := by
+    have h := hderiv.tendsto_slope_zero
+    apply h.congr'
+    filter_upwards [self_mem_nhdsWithin] with u hu
+    dsimp only [Q]
+    simp only [zero_add, smul_eq_mul, div_eq_inv_mul]
+  have hD : Continuous D := by
+    rw [continuous_iff_continuousAt]
+    intro u
+    by_cases hu : u = 0
+    · subst u
+      rw [show D = Function.update Q 0 (deriv C 0) by rfl,
+        continuousAt_update_same]
+      exact hQzero
+    · rw [show D = Function.update Q 0 (deriv C 0) by rfl,
+        continuousAt_update_of_ne hu]
+      exact ((hC.continuous.continuousAt.sub continuousAt_const).div
+        continuousAt_id hu)
+  refine ⟨D, hD, ?_⟩
+  intro u
+  by_cases hu : u = 0
+  · subst u
+    simp
+  · rw [show D u = Q u by simp [D, hu]]
+    dsimp only [Q]
+    field_simp [hu]
+    ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaEndpointEvenBoundaryProductionBridge
