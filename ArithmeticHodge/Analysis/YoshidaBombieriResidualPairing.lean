@@ -144,6 +144,156 @@ theorem bombieriResidualCross_self
   rw [bombieriResidualCross_eq_cauchyResidual]
   exact (ofReal_bombieriDiagonalResidual_eq_cauchyResidual g n).symm
 
+private theorem bombieriDiagonalResidualIntegrand_add
+    (f g : BombieriTest) (n : ℕ) (v : ℝ) :
+    bombieriDiagonalResidualIntegrand (f + g) n v =
+      bombieriDiagonalResidualIntegrand f n v +
+        bombieriDiagonalResidualIntegrand g n v +
+        2 * (bombieriResidualCrossIntegrand f g n v).re := by
+  have hmellin :
+      mellin ((f + g : BombieriTest) : ℝ → ℂ)
+          ((1 / 2 : ℝ) + v * Complex.I) =
+        mellin (f : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I) +
+          mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I) := by
+    change
+      mellinLinearMap ((1 / 2 : ℝ) + v * Complex.I) (f + g) =
+        mellinLinearMap ((1 / 2 : ℝ) + v * Complex.I) f +
+          mellinLinearMap ((1 / 2 : ℝ) + v * Complex.I) g
+    exact map_add _ _ _
+  unfold bombieriDiagonalResidualIntegrand
+  rw [hmellin, Complex.normSq_add]
+  unfold bombieriResidualCrossIntegrand bombieriCriticalSpectralProduct
+  simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    Complex.star_def, Complex.conj_re, Complex.conj_im, zero_mul, sub_zero]
+  ring
+
+private theorem bombieriDiagonalResidualIntegrand_sub
+    (f g : BombieriTest) (n : ℕ) (v : ℝ) :
+    bombieriDiagonalResidualIntegrand (f - g) n v =
+      bombieriDiagonalResidualIntegrand f n v +
+        bombieriDiagonalResidualIntegrand g n v -
+        2 * (bombieriResidualCrossIntegrand f g n v).re := by
+  have hmellin :
+      mellin ((f - g : BombieriTest) : ℝ → ℂ)
+          ((1 / 2 : ℝ) + v * Complex.I) =
+        mellin (f : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I) -
+          mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I) := by
+    change
+      mellinLinearMap ((1 / 2 : ℝ) + v * Complex.I) (f - g) =
+        mellinLinearMap ((1 / 2 : ℝ) + v * Complex.I) f -
+          mellinLinearMap ((1 / 2 : ℝ) + v * Complex.I) g
+    exact map_sub _ _ _
+  unfold bombieriDiagonalResidualIntegrand
+  rw [hmellin, Complex.normSq_sub]
+  unfold bombieriResidualCrossIntegrand bombieriCriticalSpectralProduct
+  simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    Complex.star_def, Complex.conj_re, Complex.conj_im, zero_mul, sub_zero]
+  ring
+
+/-- Exact Hermitian polarization of one positive diagonal residual under
+addition. -/
+theorem bombieriDiagonalResidual_add
+    (f g : BombieriTest) (n : ℕ) :
+    bombieriDiagonalResidual (f + g) n =
+      bombieriDiagonalResidual f n + bombieriDiagonalResidual g n +
+        2 * (bombieriResidualCross f g n).re := by
+  have hf := bombieriDiagonalResidualIntegrand_integrable f n
+  have hg := bombieriDiagonalResidualIntegrand_integrable g n
+  have hcross : Integrable (fun v : ℝ ↦
+      (bombieriResidualCrossIntegrand f g n v).re) :=
+    Complex.reCLM.integrable_comp
+      (bombieriResidualCrossIntegrand_integrable f g n)
+  have hsplit :
+      (∫ v : ℝ, (bombieriDiagonalResidualIntegrand f n v +
+        bombieriDiagonalResidualIntegrand g n v +
+          2 * (bombieriResidualCrossIntegrand f g n v).re)) =
+        (∫ v : ℝ, bombieriDiagonalResidualIntegrand f n v) +
+          (∫ v : ℝ, bombieriDiagonalResidualIntegrand g n v) +
+          2 * ∫ v : ℝ, (bombieriResidualCrossIntegrand f g n v).re := by
+    calc
+      _ = (∫ v : ℝ, (bombieriDiagonalResidualIntegrand f n v +
+              bombieriDiagonalResidualIntegrand g n v)) +
+            ∫ v : ℝ, 2 * (bombieriResidualCrossIntegrand f g n v).re := by
+        simpa only [Pi.add_apply] using
+          (integral_add (hf.add hg) (hcross.const_mul 2))
+      _ = _ := by
+        rw [show (∫ v : ℝ, (bombieriDiagonalResidualIntegrand f n v +
+              bombieriDiagonalResidualIntegrand g n v)) =
+            (∫ v : ℝ, bombieriDiagonalResidualIntegrand f n v) +
+              ∫ v : ℝ, bombieriDiagonalResidualIntegrand g n v by
+          simpa only [Pi.add_apply] using integral_add hf hg,
+          MeasureTheory.integral_const_mul]
+  have hreal :
+      (∫ v : ℝ, (bombieriResidualCrossIntegrand f g n v).re) =
+        (∫ v : ℝ, bombieriResidualCrossIntegrand f g n v).re := by
+    simpa only [RCLike.re_to_complex] using
+      integral_re (bombieriResidualCrossIntegrand_integrable f g n)
+  unfold bombieriDiagonalResidual bombieriResidualCross
+  rw [show (∫ v : ℝ, bombieriDiagonalResidualIntegrand (f + g) n v) =
+      ∫ v : ℝ, (bombieriDiagonalResidualIntegrand f n v +
+        bombieriDiagonalResidualIntegrand g n v +
+          2 * (bombieriResidualCrossIntegrand f g n v).re) by
+    apply integral_congr_ae
+    filter_upwards [] with v
+    exact bombieriDiagonalResidualIntegrand_add f g n v]
+  rw [hsplit]
+  rw [hreal]
+  simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    zero_mul, sub_zero]
+  ring
+
+/-- Exact Hermitian polarization of one positive diagonal residual under
+subtraction. -/
+theorem bombieriDiagonalResidual_sub
+    (f g : BombieriTest) (n : ℕ) :
+    bombieriDiagonalResidual (f - g) n =
+      bombieriDiagonalResidual f n + bombieriDiagonalResidual g n -
+        2 * (bombieriResidualCross f g n).re := by
+  have hf := bombieriDiagonalResidualIntegrand_integrable f n
+  have hg := bombieriDiagonalResidualIntegrand_integrable g n
+  have hcross : Integrable (fun v : ℝ ↦
+      (bombieriResidualCrossIntegrand f g n v).re) :=
+    Complex.reCLM.integrable_comp
+      (bombieriResidualCrossIntegrand_integrable f g n)
+  have hsplit :
+      (∫ v : ℝ, (bombieriDiagonalResidualIntegrand f n v +
+        bombieriDiagonalResidualIntegrand g n v -
+          2 * (bombieriResidualCrossIntegrand f g n v).re)) =
+        (∫ v : ℝ, bombieriDiagonalResidualIntegrand f n v) +
+          (∫ v : ℝ, bombieriDiagonalResidualIntegrand g n v) -
+          2 * ∫ v : ℝ, (bombieriResidualCrossIntegrand f g n v).re := by
+    calc
+      _ = (∫ v : ℝ, (bombieriDiagonalResidualIntegrand f n v +
+              bombieriDiagonalResidualIntegrand g n v)) -
+            ∫ v : ℝ, 2 * (bombieriResidualCrossIntegrand f g n v).re := by
+        simpa only [Pi.add_apply, Pi.sub_apply] using
+          (integral_sub (hf.add hg) (hcross.const_mul 2))
+      _ = _ := by
+        rw [show (∫ v : ℝ, (bombieriDiagonalResidualIntegrand f n v +
+              bombieriDiagonalResidualIntegrand g n v)) =
+            (∫ v : ℝ, bombieriDiagonalResidualIntegrand f n v) +
+              ∫ v : ℝ, bombieriDiagonalResidualIntegrand g n v by
+          simpa only [Pi.add_apply] using integral_add hf hg,
+          MeasureTheory.integral_const_mul]
+  have hreal :
+      (∫ v : ℝ, (bombieriResidualCrossIntegrand f g n v).re) =
+        (∫ v : ℝ, bombieriResidualCrossIntegrand f g n v).re := by
+    simpa only [RCLike.re_to_complex] using
+      integral_re (bombieriResidualCrossIntegrand_integrable f g n)
+  unfold bombieriDiagonalResidual bombieriResidualCross
+  rw [show (∫ v : ℝ, bombieriDiagonalResidualIntegrand (f - g) n v) =
+      ∫ v : ℝ, (bombieriDiagonalResidualIntegrand f n v +
+        bombieriDiagonalResidualIntegrand g n v -
+          2 * (bombieriResidualCrossIntegrand f g n v).re) by
+    apply integral_congr_ae
+    filter_upwards [] with v
+    exact bombieriDiagonalResidualIntegrand_sub f g n v]
+  rw [hsplit]
+  rw [hreal]
+  simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    zero_mul, sub_zero]
+  ring
+
 private theorem normSq_integral_star_mul_le
     (F G : ℝ → ℂ)
     (hFmeas : AEStronglyMeasurable F)

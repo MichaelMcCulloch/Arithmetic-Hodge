@@ -3316,3 +3316,51 @@ record their own umbrella-build evidence.
    `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present and
    unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## After `3d57c05` — Exact signed factor-two real-channel factorization
+
+1. **Theorems added.**  Each positive Bombieri diagonal residual now has
+   exact addition and subtraction polarization with mixed term
+   `2 * Re bombieriResidualCross`.  For every ratio-two seed, the two real
+   signed channels are exactly
+   `D(g) - R(g) = coreD(g) - Re coreX(g) + (1/2) * Σ residual(g - D₂g)`
+   and
+   `D(g) + R(g) = coreD(g) + Re coreX(g) + (1/2) * Σ residual(g + D₂g)`.
+   Both channel-nonnegative iff coercivity statements are exported, together
+   with exact strict-reverse iff statements for the production two-bump tests
+   with the explicit scalars `c = -1` and `c = 1`.
+2. **Gate hypothesis eliminated.**  Gate 3's real fixed-channel obligations
+   `-D(g) ≤ R(g) ≤ D(g)` are no longer opaque folded-integral inequalities.
+   They are exactly the two named comparisons between an indefinite core and
+   one half of the complete positive diagonal-residual energy of `g ± D₂g`.
+   The factor `1/2`, cross-pairing orientation, and both signs follow from
+   structural Hermitian polarization and summable `tsum` algebra.  No
+   core-only estimate, finite residual truncation, or support-ratio-four
+   physical resummation is used.
+3. **Assumptions remaining.**  Neither core-versus-residual coercivity bound
+   is yet proved, and no strict reverse seed is produced.  The sharp
+   alternating mixed-channel/phase-pencil inequality needed to combine two
+   real channels remains open.  Even the complete same-seed determinant would
+   still leave arbitrary-support block-Toeplitz or equivalent long-range
+   prime-correlation control and final RH transport.  RH is neither proved
+   nor falsified here.
+4. **Next make-or-break lemma.**  Prove or refute, for every admissible
+   ratio-two seed, both exact inequalities
+   `-(coreD(g) - Re coreX(g)) ≤ (1/2) * Σ residual(g - D₂g)` and
+   `-(coreD(g) + Re coreX(g)) ≤ (1/2) * Σ residual(g + D₂g)`.
+   Attack the complete coupled expressions through a positive real-space
+   square or construct a strict reverse and invoke the corresponding explicit
+   `c = ±1` negative-functional theorem immediately.  Do not replace these
+   obligations by the already-falsified core-only norm bound.
+5. **Viability and integrity evidence.**  Guarded RED established both absent
+   residual-polarization identifiers and the missing real-channel module
+   before their production edits.  Focused and umbrella warning-as-error
+   checks pass; the canonical guarded full build passes all 8,613 jobs.  All
+   eight public endpoints audit exactly to `propext`, `Classical.choice`, and
+   `Quot.sound`.  The recursive structural closure has 261 tracked/current
+   files and 459 project import edges, with no missing, untracked, cyclic,
+   protected, quarantined-name, or forbidden-proof dependency.  Independent
+   focused and broad mathematical reviews pass.  All 159 archived artifacts
+   remain byte-identical to `refs/archive/legacy-lean-2026-07-11`; all 24
+   fallbacks remain present and unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
