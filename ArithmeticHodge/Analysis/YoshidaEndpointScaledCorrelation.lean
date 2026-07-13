@@ -14,6 +14,25 @@ noncomputable section
 def scaledEndpointCorrelation (a : ℝ) (w : ℝ → ℝ) (u : ℝ) : ℝ :=
   ∫ x : ℝ in -a..a - u, w ((u + x) / a) * w (x / a)
 
+/-- One-sided autocorrelation of a real function on the physical interval
+`[-a,a]`. -/
+def realEndpointCorrelation (a : ℝ) (f : ℝ → ℝ) (u : ℝ) : ℝ :=
+  ∫ x : ℝ in -a..a - u, f (u + x) * f x
+
+/-- Pull a function on `[-a,a]` back to the centered interval. -/
+def centeredRescale (a : ℝ) (f : ℝ → ℝ) (x : ℝ) : ℝ := f (a * x)
+
+theorem scaledEndpointCorrelation_centeredRescale
+    {a : ℝ} (ha : a ≠ 0) (f : ℝ → ℝ) (u : ℝ) :
+    scaledEndpointCorrelation a (centeredRescale a f) u =
+      realEndpointCorrelation a f u := by
+  unfold scaledEndpointCorrelation realEndpointCorrelation centeredRescale
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  change f (a * ((u + x) / a)) * f (a * (x / a)) = f (u + x) * f x
+  rw [show a * ((u + x) / a) = u + x by field_simp [ha],
+    show a * (x / a) = x by field_simp [ha]]
+
 theorem scaledEndpointCorrelation_mul
     {a : ℝ} (ha : 0 < a) (w : ℝ → ℝ) (t : ℝ) :
     scaledEndpointCorrelation a w (a * t) =
@@ -38,6 +57,13 @@ theorem scaledEndpointCorrelation_mul
   have hleft : -a / a = (-1 : ℝ) := by field_simp [ha.ne']
   have hright : (a - a * t) / a = 1 - t := by field_simp [ha.ne']
   rw [hleft, hright]
+
+theorem realEndpointCorrelation_mul
+    {a : ℝ} (ha : 0 < a) (f : ℝ → ℝ) (t : ℝ) :
+    realEndpointCorrelation a f (a * t) =
+      a * centeredEndpointCorrelation (centeredRescale a f) t := by
+  rw [← scaledEndpointCorrelation_centeredRescale ha.ne']
+  exact scaledEndpointCorrelation_mul ha (centeredRescale a f) t
 
 /-- A weighted correlation integral acquires two factors of the dilation:
 one from the correlation and one from the outer change of variables. -/
