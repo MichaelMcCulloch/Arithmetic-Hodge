@@ -3264,3 +3264,55 @@ record their own umbrella-build evidence.
    `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present and
    unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## After `05980c3` — Exact factor-two parity realification
+
+1. **Theorems added.**  For coefficient-conjugation-fixed Bombieri tests the
+   critical cross-correlation is real at every shift.  With the canonical
+   projections `u = bombieriRealPartTest g` and
+   `v = bombieriImagPartTest g`, the exact self-correlation now expands as
+   `C_g = C_u + C_v + I * (C_uv - C_vu)`, hence
+   `Re C_g = Re C_u + Re C_v` and
+   `Im C_g = Re C_uv - Re C_vu`, with no extra factor two.  Exact named
+   coordinates `D`, `R`, `I`, and `Ω` expose
+   `D(g) = D(u) + D(v)`, `R(g) = R(u) + R(v)`, and `I(g) = Ω(u,v)` at their
+   weakest valid hypotheses.  Universal same-seed two-bump nonnegativity and
+   existence of a negative two-bump test are respectively equivalent to the
+   resulting realified determinant inequality and its strict reverse.
+2. **Gate hypothesis eliminated.**  Gate 3 no longer hides the canonical
+   real/imaginary channel split inside a complex self-correlation.  The
+   determinant is now stated exactly as
+   `(R(u) + R(v))^2 + Ω(u,v)^2 ≤ (D(u) + D(v))^2`, while a strict reverse
+   immediately yields the already exported negative Bombieri witness.  This
+   is structural sesquilinear and integral algebra only.  In particular the
+   singular-endpoint symmetric integral is not treated as unconditionally
+   linear: its additivity retains the ratio-two support hypotheses, transports
+   them to both projections, and derives interval integrability from the
+   exact folded complex integrand before applying integral linearity.
+3. **Assumptions remaining.**  Real-channel positivity is not proved, and the
+   sharp phase-pencil bound for the alternating mixed coupling is not proved
+   or refuted.  No strict-reverse seed is produced.  Even a completed
+   same-seed factor-two determinant would control only two adjacent
+   logarithmic cells; arbitrary-support block-Toeplitz or equivalent
+   long-range prime-correlation control remains open.  The all-test Bombieri
+   criterion and its terminal transport therefore remain open, so RH is
+   neither proved nor falsified here.
+4. **Next make-or-break lemma.**  Prove the real fixed-channel bounds
+   `-D(q) ≤ R(q) ≤ D(q)` structurally and then prove the sharp alternating
+   phase-pencil inequality
+   `(1 - c^2) * Ω(u,v)^2 ≤
+     4 * (D(u) - c * R(u)) * (D(v) - c * R(v))`
+   for every `c ∈ [-1,1]`, or produce a strict reverse for an admissible seed
+   and invoke the negative-witness equivalence immediately.  Do not replace
+   this exact same-seed condition by the stronger row contraction.
+5. **Viability and integrity evidence.**  The genuine missing-module probe
+   failed on the absent `.olean` before implementation.  The focused module
+   and root umbrella pass warning-as-error checks, and the canonical guarded
+   full build passes all 8,612 jobs.  All nine public theorems audit exactly
+   to `propext`, `Classical.choice`, and `Quot.sound`.  Their recursive project
+   closure has 260 tracked files and 457 import edges, with no missing,
+   untracked, cyclic, quarantined-name, protected-import, or forbidden-proof
+   dependency.  All 159 archived artifacts remain byte-identical to
+   `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present and
+   unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.

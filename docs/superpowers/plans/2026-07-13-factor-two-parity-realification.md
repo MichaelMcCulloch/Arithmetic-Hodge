@@ -149,6 +149,8 @@ git push origin main
 
 ### Task 3: Exact realified factor-two determinant
 
+**Status:** Complete and verified on 2026-07-13.
+
 **Files:**
 
 - Create:
@@ -173,7 +175,12 @@ require the missing-`.olean` failure.
    `C_g = C_u + C_v + I * (C_uv - C_vu)` for the canonical real/imaginary
    parts `u` and `v`;
 3. the corresponding real and imaginary correlation identities;
-4. `D(g) = D(u) + D(v)`, `R(g) = R(u) + R(v)`, and `I(g) = Ω(u,v)`;
+4. the unconditional identities `D(g) = D(u) + D(v)` and
+   `I(g) = Ω(u,v)`, together with `R(g) = R(u) + R(v)` under the
+   ratio-two support hypotheses that make the singular-endpoint symmetric
+   integrands interval-integrable.  The support hypotheses are transported
+   to `u` and `v`, and their integrability is derived from the exact folded
+   complex integrand before interval-integral additivity is used;
 5. exact universal-nonnegative and strict-negative equivalences with
 
 ```text
