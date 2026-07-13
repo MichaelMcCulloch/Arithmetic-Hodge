@@ -2576,3 +2576,70 @@ separate from build logs: a green build is evidence, not a stage transition.
    positivity, kernel `decide`, or forbidden construct.  Final bridge and odd
    production reviews pass; all public theorem audits report only `propext`,
    `Classical.choice`, and `Quot.sound`.
+
+## `6f0d50f`, `4423a26`, and `3da4785` — Even constant and reserve isolated structurally
+
+1. **Theorems added.**  The generic clipped arch bridge now applies to every
+   real periodic profile with two zero endpoint traces, without an oddness
+   hypothesis.  Independently, the clean constant diagonal has the transparent
+   strict lower bound `2171/15000 < Q(1)`, and every mean-zero even profile has
+   the quantitative reserve
+   `(1/25)b² + (41/60)∫r² ≤ Q(w)` for its fixed `P₂` coefficient and complete
+   degree-four-and-higher residual.
+2. **Gate hypothesis eliminated.**  Neither diagonal block of the even
+   constant/mean-zero decomposition is merely semidefinite or computationally
+   certified.  The constant block has a strict rational margin, the infinite
+   mean-zero block has a dimension-free coercive reserve, and the production
+   arch identity is available on zero-trace even residuals.
+3. **Assumptions remaining.**  Separate positive diagonal bounds do not imply
+   positivity of their sum.  The clean quadratic's constant-to-mean-zero cross
+   functional still needs a structural Schur estimate.  Moreover, subtracting
+   the endpoint value gives a zero-trace residual, whereas subtracting the
+   average gives the mean-zero residual controlled by the reserve; these are
+   different decompositions and cannot be silently identified.
+4. **Next make-or-break lemma.**  Polarize the clean quadratic against the
+   constant profile and bound that one linear functional in the exact
+   `P₂`/infinite-tail reserve norm, retaining the positive endpoint potential
+   and cosh rank-one terms if a termwise absolute-value estimate is too weak.
+5. **Viability evidence.**  The constant proof uses only two terms of the
+   fixed logarithmic-potential series, `cosh ≥ 1`, the structural regular
+   Schur norm, and explicit scalar inequalities.  The reserve uses the exact
+   infinite even `P₀/P₂/H₄` reduction and sharp mean-zero regular cancellation.
+   Independent reviews rederived all coefficients and margins; strict builds,
+   standard-only axiom audits, and forbidden dependency scans pass.
+
+## `86e9298`, `d0db40f`, `e32e06d`, `f5a6e81`, and `02b2add` — Zero-trace even residual reaches the clean production form
+
+1. **Theorems added.**  Every even periodic source is split exactly into its
+   endpoint-matching constant profile plus an even zero-trace residual, with
+   real-valuedness preserved.  On any real zero-trace periodic profile, the
+   actual production polar energy is exactly the raw physical polar product.
+   Consequently the zero-trace even residual's actual production diagonal is
+   both its physical endpoint quadratic and
+   `a * yoshidaEndpointOddCleanQuadratic` of the centered real profile.  A
+   locally Lipschitz wrapper also discharges the `L²` and logarithmic-energy
+   domain premises of the quantitative mean-zero reserve.
+2. **Gate hypothesis eliminated.**  No parity-only endpoint lemma or hidden
+   form-domain assumption remains between the smooth even source residual and
+   the generic clean quadratic.  Endpoint gluing supplies global continuity,
+   source smoothness supplies local Lipschitz regularity, and the production
+   arch/polar identities compose with the physical-to-clean factorization
+   using the exact scale `a = log 2 / 2`.
+3. **Assumptions remaining.**  Positivity of the centered zero-trace residual
+   is still not implied by mean-zero positivity: its average generally does
+   not vanish.  The full original even production diagonal also contains the
+   endpoint constant and its cross term with the residual.  Thus these
+   identities narrow the problem but do not yet establish even production
+   positivity.
+4. **Next make-or-break lemma.**  Prove the full clean even inequality by a
+   one-dimensional constant/mean-zero Schur complement, or prove a structural
+   obstruction to the currently available reserve constants.  Then transport
+   that theorem through the committed residual identity and the exact
+   constant-plus-residual production polarization.
+5. **Viability evidence.**  Fresh strict and focused builds pass for every new
+   module.  Exported theorem audits contain only `propext`,
+   `Classical.choice`, and `Quot.sound`.  Independent reviews checked endpoint
+   orientation, global-continuity gluing, real coercions, polar scaling,
+   production addition order, and the full import closure; no finite mode
+   table, enclosure, pivot, payload, certificate, or kernel evaluation enters
+   the chain.
