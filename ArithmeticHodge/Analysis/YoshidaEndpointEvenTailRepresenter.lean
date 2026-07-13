@@ -664,6 +664,80 @@ def yoshidaEndpointEvenTailRepresenter0 : ℝ → ℝ :=
 def yoshidaEndpointEvenTailRepresenter2 : ℝ → ℝ :=
   yoshidaEndpointEvenTailRepresenter centeredEvenP2
 
+/-- A representative of the same tail functional after subtracting an
+arbitrary element of the annihilated `P₀/P₂` dual span.  This subtraction is
+essential: the raw representers contain large low-mode components which do
+not act on a zero-two tail. -/
+def yoshidaEndpointEvenProjectedTailRepresenter
+    (p : ℝ → ℝ) (s0 s2 : ℝ) (x : ℝ) : ℝ :=
+  yoshidaEndpointEvenTailRepresenter p x -
+    s0 * centeredEvenP0 x - s2 * centeredEvenP2 x
+
+def yoshidaEndpointEvenProjectedTailRepresenter0
+    (s0 s2 : ℝ) : ℝ → ℝ :=
+  yoshidaEndpointEvenProjectedTailRepresenter centeredEvenP0 s0 s2
+
+def yoshidaEndpointEvenProjectedTailRepresenter2
+    (s0 s2 : ℝ) : ℝ → ℝ :=
+  yoshidaEndpointEvenProjectedTailRepresenter centeredEvenP2 s0 s2
+
+theorem intervalIntegrable_projectedTailRepresenter_mul
+    (p r : ℝ → ℝ) (hr : Continuous r) (s0 s2 : ℝ)
+    (hF : IntervalIntegrable
+      (fun x ↦ yoshidaEndpointEvenTailRepresenter p x * r x)
+      volume (-1) 1) :
+    IntervalIntegrable
+      (fun x ↦ yoshidaEndpointEvenProjectedTailRepresenter p s0 s2 x * r x)
+      volume (-1) 1 := by
+  have h0 : IntervalIntegrable
+      (fun x ↦ r x * centeredEvenP0 x) volume (-1) 1 :=
+    (hr.mul (by unfold centeredEvenP0; fun_prop)).intervalIntegrable (-1) 1
+  have h2 : IntervalIntegrable
+      (fun x ↦ r x * centeredEvenP2 x) volume (-1) 1 :=
+    (hr.mul (by unfold centeredEvenP2; fun_prop)).intervalIntegrable (-1) 1
+  apply (hF.sub (h0.const_mul s0)).sub (h2.const_mul s2) |>.congr
+  intro x _hx
+  unfold yoshidaEndpointEvenProjectedTailRepresenter
+  ring
+
+/-- Subtracting `P₀/P₂` from a representer does not change its pairing with a
+tail orthogonal to those two modes. -/
+theorem integral_projectedTailRepresenter_mul_eq
+    (p r : ℝ → ℝ) (hr : Continuous r)
+    (hzero : centeredEvenP0Coefficient r = 0)
+    (htwo : centeredEvenP2Coefficient r = 0)
+    (s0 s2 : ℝ)
+    (hF : IntervalIntegrable
+      (fun x ↦ yoshidaEndpointEvenTailRepresenter p x * r x)
+      volume (-1) 1) :
+    (∫ x : ℝ in -1..1,
+      yoshidaEndpointEvenProjectedTailRepresenter p s0 s2 x * r x) =
+      ∫ x : ℝ in -1..1,
+        yoshidaEndpointEvenTailRepresenter p x * r x := by
+  have h0 : IntervalIntegrable
+      (fun x ↦ r x * centeredEvenP0 x) volume (-1) 1 :=
+    (hr.mul (by unfold centeredEvenP0; fun_prop)).intervalIntegrable (-1) 1
+  have h2 : IntervalIntegrable
+      (fun x ↦ r x * centeredEvenP2 x) volume (-1) 1 :=
+    (hr.mul (by unfold centeredEvenP2; fun_prop)).intervalIntegrable (-1) 1
+  rw [show (fun x : ℝ ↦
+      yoshidaEndpointEvenProjectedTailRepresenter p s0 s2 x * r x) =
+      fun x ↦ yoshidaEndpointEvenTailRepresenter p x * r x -
+        s0 * (r x * centeredEvenP0 x) -
+        s2 * (r x * centeredEvenP2 x) by
+    funext x
+    unfold yoshidaEndpointEvenProjectedTailRepresenter
+    ring,
+    intervalIntegral.integral_sub (hF.sub (h0.const_mul s0))
+      (h2.const_mul s2),
+    intervalIntegral.integral_sub hF (h0.const_mul s0),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul,
+    integral_mul_centeredEvenP0_eq,
+    integral_mul_centeredEvenP2_eq,
+    hzero, htwo]
+  ring
+
 private theorem integral_tailRepresenter_mul
     (p r : ℝ → ℝ) (hp : Continuous p) (hr : Continuous r) :
     (∫ x : ℝ in -1..1,
@@ -749,45 +823,43 @@ def yoshidaEndpointEvenTailWeight (x : ℝ) : ℝ :=
   (41 / 60 : ℝ) + yoshidaEndpointPotential x
 
 theorem weighted_low_tail_adjugate_le
-    (r : ℝ → ℝ) (q00 q02 q22 : ℝ)
+    (r g0 g2 : ℝ → ℝ) (q00 q02 q22 : ℝ)
     (hq00 : 0 < q00) (hdet : 0 < q00 * q22 - q02 ^ 2)
     (hdualLp : ∀ c b : ℝ,
       MemLp (fun x : ℝ ↦
-        (c * yoshidaEndpointEvenTailRepresenter0 x +
-          b * yoshidaEndpointEvenTailRepresenter2 x) /
+        (c * g0 x + b * g2 x) /
             Real.sqrt (yoshidaEndpointEvenTailWeight x)) 2
         (volume.restrict (Ioc (-1) 1)))
     (hprimal : MemLp (fun x : ℝ ↦
       Real.sqrt (yoshidaEndpointEvenTailWeight x) * r x) 2
         (volume.restrict (Ioc (-1) 1)))
     (hcross0 : IntervalIntegrable
-      (fun x ↦ yoshidaEndpointEvenTailRepresenter0 x * r x)
+      (fun x ↦ g0 x * r x)
       volume (-1) 1)
     (hcross2 : IntervalIntegrable
-      (fun x ↦ yoshidaEndpointEvenTailRepresenter2 x * r x)
+      (fun x ↦ g2 x * r x)
       volume (-1) 1)
     (hdualGram : ∀ c b : ℝ,
       (∫ x : ℝ in -1..1,
-        (c * yoshidaEndpointEvenTailRepresenter0 x +
-          b * yoshidaEndpointEvenTailRepresenter2 x) ^ 2 /
+        (c * g0 x + b * g2 x) ^ 2 /
             yoshidaEndpointEvenTailWeight x) ≤
         q00 * c ^ 2 + 2 * q02 * c * b + q22 * b ^ 2) :
     q22 * (∫ x : ℝ in -1..1,
-        yoshidaEndpointEvenTailRepresenter0 x * r x) ^ 2 -
+        g0 x * r x) ^ 2 -
       2 * q02 *
         (∫ x : ℝ in -1..1,
-          yoshidaEndpointEvenTailRepresenter0 x * r x) *
+          g0 x * r x) *
         (∫ x : ℝ in -1..1,
-          yoshidaEndpointEvenTailRepresenter2 x * r x) +
+          g2 x * r x) +
       q00 * (∫ x : ℝ in -1..1,
-        yoshidaEndpointEvenTailRepresenter2 x * r x) ^ 2 ≤
+        g2 x * r x) ^ 2 ≤
       (q00 * q22 - q02 ^ 2) *
         (∫ x : ℝ in -1..1,
           yoshidaEndpointEvenTailWeight x * r x ^ 2) := by
   let μ : Measure ℝ := volume.restrict (Ioc (-1) 1)
   let W : ℝ → ℝ := yoshidaEndpointEvenTailWeight
-  let F0 : ℝ → ℝ := yoshidaEndpointEvenTailRepresenter0
-  let F2 : ℝ → ℝ := yoshidaEndpointEvenTailRepresenter2
+  let F0 : ℝ → ℝ := g0
+  let F2 : ℝ → ℝ := g2
   let ell0 : ℝ := ∫ x : ℝ in -1..1, F0 x * r x
   let ell2 : ℝ := ∫ x : ℝ in -1..1, F2 x * r x
   let T : ℝ := ∫ x : ℝ in -1..1, W x * r x ^ 2
@@ -906,36 +978,35 @@ theorem low_tail_schur_sum_nonneg
     (hzero : centeredEvenP0Coefficient r = 0)
     (htwo : centeredEvenP2Coefficient r = 0)
     (hlocal : LocallyLipschitzOn (Icc (-1) 1) r)
+    (g0 g2 : ℝ → ℝ)
     (q00 q02 q22 c b : ℝ)
     (hq00 : 0 < q00) (hdet : 0 < q00 * q22 - q02 ^ 2)
     (hdualLp : ∀ c b : ℝ,
       MemLp (fun x : ℝ ↦
-        (c * yoshidaEndpointEvenTailRepresenter0 x +
-          b * yoshidaEndpointEvenTailRepresenter2 x) /
+        (c * g0 x + b * g2 x) /
             Real.sqrt (yoshidaEndpointEvenTailWeight x)) 2
         (volume.restrict (Ioc (-1) 1)))
     (hprimal : MemLp (fun x : ℝ ↦
       Real.sqrt (yoshidaEndpointEvenTailWeight x) * r x) 2
         (volume.restrict (Ioc (-1) 1)))
     (hcross0 : IntervalIntegrable
-      (fun x ↦ yoshidaEndpointEvenTailRepresenter0 x * r x)
+      (fun x ↦ g0 x * r x)
       volume (-1) 1)
     (hcross2 : IntervalIntegrable
-      (fun x ↦ yoshidaEndpointEvenTailRepresenter2 x * r x)
+      (fun x ↦ g2 x * r x)
       volume (-1) 1)
     (hdualGram : ∀ c b : ℝ,
       (∫ x : ℝ in -1..1,
-        (c * yoshidaEndpointEvenTailRepresenter0 x +
-          b * yoshidaEndpointEvenTailRepresenter2 x) ^ 2 /
+        (c * g0 x + b * g2 x) ^ 2 /
             yoshidaEndpointEvenTailWeight x) ≤
         q00 * c ^ 2 + 2 * q02 * c * b + q22 * b ^ 2) :
     0 ≤ q00 * c ^ 2 + 2 * q02 * c * b + q22 * b ^ 2 +
       2 * c * (∫ x : ℝ in -1..1,
-        yoshidaEndpointEvenTailRepresenter0 x * r x) +
+        g0 x * r x) +
       2 * b * (∫ x : ℝ in -1..1,
-        yoshidaEndpointEvenTailRepresenter2 x * r x) +
+        g2 x * r x) +
       yoshidaEndpointOddCleanQuadratic r := by
-  have hadj := weighted_low_tail_adjugate_le r q00 q02 q22
+  have hadj := weighted_low_tail_adjugate_le r g0 g2 q00 q02 q22
     hq00 hdet hdualLp hprimal hcross0 hcross2 hdualGram
   have htail := weighted_tail_mass_le_cleanQuadratic
     r hr hre hzero htwo hlocal
@@ -943,34 +1014,35 @@ theorem low_tail_schur_sum_nonneg
   have hschur := hadj.trans hscaledTail
   exact quadratic_add_tail_nonneg
     q00 q02 q22
-    (∫ x : ℝ in -1..1,
-      yoshidaEndpointEvenTailRepresenter0 x * r x)
-    (∫ x : ℝ in -1..1,
-      yoshidaEndpointEvenTailRepresenter2 x * r x)
+    (∫ x : ℝ in -1..1, g0 x * r x)
+    (∫ x : ℝ in -1..1, g2 x * r x)
     (yoshidaEndpointOddCleanQuadratic r) c b hq00 hdet hschur
 
 /-- Exact conditional reduction of full even clean positivity to the fixed
-low Gram matrix and its weighted representer inequality.
+low Gram matrix and a weighted inequality for representers projected modulo
+the annihilated `P₀/P₂` span.
 
-The uniform `hdualGram` premise is intentionally visible.  Replacing the
-exact low Gram by the previously used coarse lower Gram is a falsified route;
-the exact fixed Gram stated here is not ruled out by that diagnostic and
-remains the analytic obligation.  Thus this theorem is conditional, not an
-unconditional positivity result.  `hformPolarization` is the exact
-form-domain expansion, not an inequality. -/
-theorem cleanQuadratic_nonneg_of_fixed_lowGram_of_weighted_dual
+The four projection coefficients are arbitrary.  The zero-two hypotheses
+prove that subtracting the corresponding low profiles leaves both tail
+pairings unchanged.  The uniform `hdualGram` premise is intentionally
+visible and concerns these projected representers.  The analogous premise
+for the raw representers is false because of their large, irrelevant low-mode
+components.  This theorem is conditional, not an unconditional positivity
+result.  `hformPolarization` is the exact form-domain expansion. -/
+theorem cleanQuadratic_nonneg_of_fixed_lowGram_of_projected_weighted_dual
     (r : ℝ → ℝ) (hr : Continuous r) (hre : Function.Even r)
     (hzero : centeredEvenP0Coefficient r = 0)
     (htwo : centeredEvenP2Coefficient r = 0)
     (hlocal : LocallyLipschitzOn (Icc (-1) 1) r)
     (c b : ℝ)
+    (s00 s02 s20 s22 : ℝ)
     (hq00 : 0 < yoshidaEndpointEvenLowGram00)
     (hdet : 0 < yoshidaEndpointEvenLowGram00 *
         yoshidaEndpointEvenLowGram22 - yoshidaEndpointEvenLowGram02 ^ 2)
     (hdualLp : ∀ c b : ℝ,
       MemLp (fun x : ℝ ↦
-        (c * yoshidaEndpointEvenTailRepresenter0 x +
-          b * yoshidaEndpointEvenTailRepresenter2 x) /
+        (c * yoshidaEndpointEvenProjectedTailRepresenter0 s00 s02 x +
+          b * yoshidaEndpointEvenProjectedTailRepresenter2 s20 s22 x) /
             Real.sqrt (yoshidaEndpointEvenTailWeight x)) 2
         (volume.restrict (Ioc (-1) 1)))
     (hprimal : MemLp (fun x : ℝ ↦
@@ -984,8 +1056,8 @@ theorem cleanQuadratic_nonneg_of_fixed_lowGram_of_weighted_dual
       volume (-1) 1)
     (hdualGram : ∀ c b : ℝ,
       (∫ x : ℝ in -1..1,
-        (c * yoshidaEndpointEvenTailRepresenter0 x +
-          b * yoshidaEndpointEvenTailRepresenter2 x) ^ 2 /
+        (c * yoshidaEndpointEvenProjectedTailRepresenter0 s00 s02 x +
+          b * yoshidaEndpointEvenProjectedTailRepresenter2 s20 s22 x) ^ 2 /
             yoshidaEndpointEvenTailWeight x) ≤
         yoshidaEndpointEvenLowGram00 * c ^ 2 +
           2 * yoshidaEndpointEvenLowGram02 * c * b +
@@ -1003,11 +1075,46 @@ theorem cleanQuadratic_nonneg_of_fixed_lowGram_of_weighted_dual
           yoshidaEndpointOddCleanQuadratic r) :
     0 ≤ yoshidaEndpointOddCleanQuadratic
       (fun x ↦ c * centeredEvenP0 x + b * centeredEvenP2 x + r x) := by
+  have hprojected0 : IntervalIntegrable
+      (fun x ↦ yoshidaEndpointEvenProjectedTailRepresenter0 s00 s02 x * r x)
+      volume (-1) 1 := by
+    simpa only [yoshidaEndpointEvenProjectedTailRepresenter0,
+      yoshidaEndpointEvenTailRepresenter0] using
+      intervalIntegrable_projectedTailRepresenter_mul
+        centeredEvenP0 r hr s00 s02 hcross0
+  have hprojected2 : IntervalIntegrable
+      (fun x ↦ yoshidaEndpointEvenProjectedTailRepresenter2 s20 s22 x * r x)
+      volume (-1) 1 := by
+    simpa only [yoshidaEndpointEvenProjectedTailRepresenter2,
+      yoshidaEndpointEvenTailRepresenter2] using
+      intervalIntegrable_projectedTailRepresenter_mul
+        centeredEvenP2 r hr s20 s22 hcross2
+  have hpair0 :
+      (∫ x : ℝ in -1..1,
+        yoshidaEndpointEvenProjectedTailRepresenter0 s00 s02 x * r x) =
+        ∫ x : ℝ in -1..1,
+          yoshidaEndpointEvenTailRepresenter0 x * r x := by
+    simpa only [yoshidaEndpointEvenProjectedTailRepresenter0,
+      yoshidaEndpointEvenTailRepresenter0] using
+      integral_projectedTailRepresenter_mul_eq
+        centeredEvenP0 r hr hzero htwo s00 s02 hcross0
+  have hpair2 :
+      (∫ x : ℝ in -1..1,
+        yoshidaEndpointEvenProjectedTailRepresenter2 s20 s22 x * r x) =
+        ∫ x : ℝ in -1..1,
+          yoshidaEndpointEvenTailRepresenter2 x * r x := by
+    simpa only [yoshidaEndpointEvenProjectedTailRepresenter2,
+      yoshidaEndpointEvenTailRepresenter2] using
+      integral_projectedTailRepresenter_mul_eq
+        centeredEvenP2 r hr hzero htwo s20 s22 hcross2
   rw [hformPolarization]
+  rw [← hpair0, ← hpair2]
   exact low_tail_schur_sum_nonneg r hr hre hzero htwo hlocal
+    (yoshidaEndpointEvenProjectedTailRepresenter0 s00 s02)
+    (yoshidaEndpointEvenProjectedTailRepresenter2 s20 s22)
     yoshidaEndpointEvenLowGram00 yoshidaEndpointEvenLowGram02
     yoshidaEndpointEvenLowGram22 c b hq00 hdet hdualLp hprimal
-    hcross0 hcross2 hdualGram
+    hprojected0 hprojected2 hdualGram
 
 end
 
