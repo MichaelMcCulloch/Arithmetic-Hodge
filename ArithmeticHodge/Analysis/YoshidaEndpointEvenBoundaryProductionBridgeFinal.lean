@@ -1,9 +1,11 @@
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenBoundaryProductionBridge
 import ArithmeticHodge.Analysis.YoshidaClippedRealImagEnergySplit
 import ArithmeticHodge.Analysis.YoshidaEndpointClippedArchBridge
+import ArithmeticHodge.Analysis.YoshidaEndpointEvenCleanPositive
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenResidualProduction
 import ArithmeticHodge.Analysis.YoshidaEndpointPhysicalRealQuadratic
 import ArithmeticHodge.Analysis.YoshidaEndpointScaledCorrelation
+import ArithmeticHodge.Analysis.YoshidaPointwiseEvenRealImag
 import ArithmeticHodge.Analysis.YoshidaPointwiseOddRealImag
 
 set_option autoImplicit false
@@ -13,11 +15,13 @@ open Complex Filter MeasureTheory Real Set Topology
 namespace ArithmeticHodge.Analysis.YoshidaEndpointEvenBoundaryProductionBridge
 
 open ArithmeticHodge.Analysis
+open YoshidaClippedRealImag
 open YoshidaClippedRealImagEnergySplit
 open YoshidaClippedEndpointContinuous
 open YoshidaEndpointClippedArchBridge
 open YoshidaEndpointClippedPolarBridge
 open YoshidaEndpointEvenBoundaryResidual
+open YoshidaEndpointEvenCleanPositive
 open YoshidaEndpointEvenConstantCross
 open YoshidaEndpointEvenResidualProduction
 open YoshidaEndpointHyperbolicBound
@@ -26,6 +30,7 @@ open YoshidaEndpointPhysicalRealQuadratic
 open YoshidaEndpointPolarScaling
 open YoshidaEndpointScaledCorrelation
 open YoshidaPointwiseOddRealImag
+open YoshidaPointwiseEvenRealImag
 open YoshidaPointwiseParityCore
 open YoshidaRenormalizedGeometricKernel
 open YoshidaRegularKernelBound
@@ -1077,6 +1082,229 @@ theorem clippedCriticalForm_symmetricCross_periodicCoreOne_eq_clean
   rw [Complex.add_re, hswap, hordered]
   dsimp only [g, fs] at hclean ⊢
   linarith
+
+/-! ## Full real-even production diagonal -/
+
+/-- Exact production-to-clean bridge for a real pointwise-even periodic
+source, including its nonzero endpoint boundary value. -/
+theorem clippedCriticalFormValue_even_eq_clean_add_boundary
+    (f : yoshidaPointwiseEvenPeriodicCoreSubmodule yoshidaEndpointA)
+    (hf_real : ∀ x : ℝ,
+      ((((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA) : ℝ → ℂ) x).im = 0) :
+    (let c : ℝ :=
+      ((((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA) yoshidaEndpointA).re)
+    let r : YoshidaClippedPeriodicCore yoshidaEndpointA :=
+      evenBoundaryResidual f
+    let g : ℝ → ℝ := fun x ↦
+      ((r : YoshidaClippedSmooth yoshidaEndpointA) x).re
+    let w : ℝ → ℝ := centeredRescale yoshidaEndpointA g
+    clippedCriticalFormValue yoshidaEndpointA yoshidaEndpointA_pos
+        ((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+          YoshidaClippedSmooth yoshidaEndpointA) =
+      yoshidaEndpointA * yoshidaEndpointOddCleanQuadratic
+        (fun x ↦ c + w x)) := by
+  let fs : YoshidaClippedSmooth yoshidaEndpointA :=
+    ((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+      YoshidaClippedSmooth yoshidaEndpointA)
+  let one : YoshidaClippedSmooth yoshidaEndpointA :=
+    yoshidaClippedOne yoshidaEndpointA
+  let c : ℝ := (fs yoshidaEndpointA).re
+  let r : YoshidaClippedPeriodicCore yoshidaEndpointA :=
+    evenBoundaryResidual f
+  let rs : YoshidaClippedSmooth yoshidaEndpointA :=
+    (r : YoshidaClippedSmooth yoshidaEndpointA)
+  let g : ℝ → ℝ := fun x ↦ (rs x).re
+  let w : ℝ → ℝ := centeredRescale yoshidaEndpointA g
+  dsimp only
+  have hfA : fs yoshidaEndpointA = (c : ℂ) := by
+    apply Complex.ext
+    · rfl
+    · simpa only [fs, c, ofReal_im] using hf_real yoshidaEndpointA
+  have hcore : (c : ℂ) • periodicCoreOne yoshidaEndpointA + r = f.1 := by
+    have h := evenBoundaryConstantPart_add_residual f
+    unfold evenBoundaryConstantPart at h
+    change fs yoshidaEndpointA • periodicCoreOne yoshidaEndpointA + r = f.1 at h
+    rw [hfA] at h
+    exact h
+  have hdecomp : (c : ℂ) • one + rs = fs := by
+    have h := congrArg
+      (fun q : YoshidaClippedPeriodicCore yoshidaEndpointA ↦
+        (q : YoshidaClippedSmooth yoshidaEndpointA)) hcore
+    simpa only [one, rs, fs, r] using h
+  have hform :
+      clippedCriticalFormValue yoshidaEndpointA yoshidaEndpointA_pos fs =
+        c ^ 2 * clippedCriticalFormValue yoshidaEndpointA
+            yoshidaEndpointA_pos one +
+          clippedCriticalFormValue yoshidaEndpointA
+            yoshidaEndpointA_pos rs +
+          c * clippedCriticalFormSymmetricCross one rs := by
+    unfold clippedCriticalFormValue clippedCriticalFormSymmetricCross
+    rw [← hdecomp]
+    simp only [map_add, map_smul, LinearMap.add_apply,
+      LinearMap.map_smulₛₗ₂, smul_eq_mul]
+    simp only [Complex.conj_ofReal, Complex.add_re,
+      Complex.mul_re, ofReal_re, ofReal_im, zero_mul, sub_zero]
+    ring
+  have hends : rs (-yoshidaEndpointA) = 0 ∧
+      rs yoshidaEndpointA = 0 := by
+    simpa only [rs, r] using
+      evenBoundaryResidual_endpoints_zero yoshidaEndpointA_pos f
+  have hrreal (x : ℝ) : (rs x).im = 0 := by
+    simpa only [rs, r] using evenBoundaryResidual_im_zero f hf_real x
+  have hcross := clippedCriticalForm_symmetricCross_periodicCoreOne_eq_clean
+    r (by simpa only [rs] using hrreal)
+      (by simpa only [r, rs] using evenBoundaryResidual_pointwise_even f)
+      (by simpa only [rs] using hends.1)
+      (by simpa only [rs] using hends.2)
+  have hconst := clippedCriticalFormValue_periodicCoreOne_eq_clean
+  have hresidual :=
+    clippedCriticalFormValue_evenBoundaryResidual_eq_clean f hf_real
+  have hrcont : Continuous (rs : ℝ → ℂ) :=
+    continuous_yoshidaClippedSmooth_of_endpoints_zero
+      yoshidaEndpointA_pos rs hends.1 hends.2
+  have hgcont : Continuous g := Complex.continuous_re.comp hrcont
+  have hwcont : Continuous w := by
+    dsimp only [w, centeredRescale]
+    exact hgcont.comp (continuous_const.mul continuous_id)
+  have hcleanAdd := yoshidaEndpointOddCleanQuadratic_add_constant
+    w hwcont c
+  rw [hform, hconst]
+  change clippedCriticalFormValue yoshidaEndpointA yoshidaEndpointA_pos rs = _
+    at hresidual
+  rw [hresidual]
+  change clippedCriticalFormSymmetricCross one rs = _ at hcross
+  rw [hcross]
+  rw [hcleanAdd]
+  ring
+
+/-- Unconditional production nonnegativity for every real pointwise-even
+periodic source. -/
+theorem clippedCriticalFormValue_even_nonneg_of_clean
+    (f : yoshidaPointwiseEvenPeriodicCoreSubmodule yoshidaEndpointA)
+    (hf_real : ∀ x : ℝ,
+      ((((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA) : ℝ → ℂ) x).im = 0) :
+    0 ≤ clippedCriticalFormValue yoshidaEndpointA yoshidaEndpointA_pos
+      ((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA) := by
+  let fs : YoshidaClippedSmooth yoshidaEndpointA :=
+    ((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+      YoshidaClippedSmooth yoshidaEndpointA)
+  let c : ℝ := (fs yoshidaEndpointA).re
+  let r : YoshidaClippedPeriodicCore yoshidaEndpointA :=
+    evenBoundaryResidual f
+  let rs : YoshidaClippedSmooth yoshidaEndpointA :=
+    (r : YoshidaClippedSmooth yoshidaEndpointA)
+  let g : ℝ → ℝ := fun x ↦ (rs x).re
+  let w : ℝ → ℝ := centeredRescale yoshidaEndpointA g
+  let u : ℝ → ℝ := fun x ↦ c + w x
+  have hbridge := clippedCriticalFormValue_even_eq_clean_add_boundary f hf_real
+  have hends : rs (-yoshidaEndpointA) = 0 ∧
+      rs yoshidaEndpointA = 0 := by
+    simpa only [rs, r] using
+      evenBoundaryResidual_endpoints_zero yoshidaEndpointA_pos f
+  have hrcont : Continuous (rs : ℝ → ℂ) :=
+    continuous_yoshidaClippedSmooth_of_endpoints_zero
+      yoshidaEndpointA_pos rs hends.1 hends.2
+  have hgcont : Continuous g := Complex.continuous_re.comp hrcont
+  have hgeven : Function.Even g := by
+    intro x
+    have heven := evenBoundaryResidual_pointwise_even f x
+    exact congrArg Complex.re heven
+  have hwcont : Continuous w := by
+    dsimp only [w, centeredRescale]
+    exact hgcont.comp (continuous_const.mul continuous_id)
+  have hweven : Function.Even w := by
+    intro x
+    dsimp only [w, centeredRescale]
+    rw [show yoshidaEndpointA * -x = -(yoshidaEndpointA * x) by ring,
+      hgeven]
+  have hucont : Continuous u := continuous_const.add hwcont
+  have hueven : Function.Even u := by
+    intro x
+    dsimp only [u]
+    rw [hweven]
+  have hprofile : ContDiffOn ℝ 1 g
+      (Icc (-yoshidaEndpointA) yoshidaEndpointA) := by
+    exact Complex.reCLM.contDiff.comp_contDiffOn
+      (rs.property.1.of_le (by simp))
+  have hscale : ContDiffOn ℝ 1
+      (fun x : ℝ ↦ yoshidaEndpointA * x) (Icc (-1) 1) := by
+    fun_prop
+  have hmaps : MapsTo (fun x : ℝ ↦ yoshidaEndpointA * x)
+      (Icc (-1) 1) (Icc (-yoshidaEndpointA) yoshidaEndpointA) := by
+    intro x hx
+    constructor <;> nlinarith [hx.1, hx.2, yoshidaEndpointA_pos]
+  have hulocal : LocallyLipschitzOn (Icc (-1) 1) u := by
+    have hsumProfile : ContDiffOn ℝ 1 (fun x ↦ c + g x)
+        (Icc (-yoshidaEndpointA) yoshidaEndpointA) :=
+      contDiffOn_const.add hprofile
+    have hcomp := hsumProfile.comp hscale hmaps
+    simpa only [u, w, centeredRescale, Function.comp_apply] using
+      hcomp.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hQ : 0 ≤ yoshidaEndpointOddCleanQuadratic u :=
+    yoshidaEndpointOddCleanQuadratic_nonneg_of_even_of_locallyLipschitzOn
+      u hucont hueven hulocal
+  change clippedCriticalFormValue yoshidaEndpointA yoshidaEndpointA_pos fs = _
+    at hbridge
+  change 0 ≤ clippedCriticalFormValue yoshidaEndpointA
+    yoshidaEndpointA_pos fs
+  rw [hbridge]
+  exact mul_nonneg yoshidaEndpointA_pos.le hQ
+
+/-! ## Complex pointwise-even production diagonal -/
+
+/-- Unconditional production nonnegativity for an arbitrary complex-valued
+pointwise-even periodic source. -/
+theorem yoshidaClippedLocalCriticalForm_re_nonneg_of_pointwiseEven
+    (f : yoshidaPointwiseEvenPeriodicCoreSubmodule yoshidaEndpointA) :
+    0 ≤ (yoshidaClippedLocalCriticalForm yoshidaEndpointA
+      yoshidaEndpointA_pos
+      ((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA)
+      ((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA)).re := by
+  let fs : YoshidaClippedSmooth yoshidaEndpointA :=
+    ((f.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+      YoshidaClippedSmooth yoshidaEndpointA)
+  let fr : yoshidaPointwiseEvenPeriodicCoreSubmodule yoshidaEndpointA :=
+    pointwiseEvenPeriodicCoreRealPart f
+  let fi : yoshidaPointwiseEvenPeriodicCoreSubmodule yoshidaEndpointA :=
+    pointwiseEvenPeriodicCoreImagPart f
+  have hr : 0 ≤ clippedCriticalFormValue yoshidaEndpointA
+      yoshidaEndpointA_pos
+      ((fr.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA) :=
+    clippedCriticalFormValue_even_nonneg_of_clean fr
+      (fun x ↦ by
+        simpa only [fr] using pointwiseEvenPeriodicCoreRealPart_im_zero f)
+  have hi : 0 ≤ clippedCriticalFormValue yoshidaEndpointA
+      yoshidaEndpointA_pos
+      ((fi.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA) :=
+    clippedCriticalFormValue_even_nonneg_of_clean fi
+      (fun x ↦ by
+        simpa only [fi] using pointwiseEvenPeriodicCoreImagPart_im_zero f)
+  have hsplit := yoshidaClippedLocalCriticalForm_real_add_imag_re
+    yoshidaEndpointA_pos fs
+  change 0 ≤ (yoshidaClippedLocalCriticalForm yoshidaEndpointA
+    yoshidaEndpointA_pos fs fs).re
+  change (yoshidaClippedLocalCriticalForm yoshidaEndpointA
+      yoshidaEndpointA_pos fs fs).re =
+    (yoshidaClippedLocalCriticalForm yoshidaEndpointA yoshidaEndpointA_pos
+      (((fr.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA))
+      (((fr.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA))).re +
+    (yoshidaClippedLocalCriticalForm yoshidaEndpointA yoshidaEndpointA_pos
+      (((fi.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA))
+      (((fi.1 : YoshidaClippedPeriodicCore yoshidaEndpointA) :
+        YoshidaClippedSmooth yoshidaEndpointA))).re at hsplit
+  rw [hsplit]
+  exact add_nonneg hr hi
 
 end
 
