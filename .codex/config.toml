@@ -1,0 +1,7 @@
+# Repository-local Codex configuration for libcans.
+
+[mcp_servers.ferromail]
+enabled = false
+
+[mcp_servers.neo4j-mcp]
+enabled = false

@@ -185,8 +185,7 @@ these obligations.
 
 ### Resource-safety invariant
 
-Lean- and Lake-related workloads must use the root `Justfile`; do not spell out
-or bypass its systemd wrapper:
+Lean- and Lake-related workloads must use the root `Justfile` recipes:
 
 ```console
 just cache
@@ -196,30 +195,21 @@ just strict <file> [lean-args...]
 just guarded <other-lean-related-command> [args...]
 ```
 
-These recipes run the workload in a transient user systemd scope capped at
-exactly 48 GiB. The guarded runner also terminates the workload's complete
-process group if either the scope's cgroup `memory.current` or the summed RSS
-of the workload's descendant tree reaches 40 GiB. You may amend the justfile
-if you find something to be lacking
+You may amend the `Justfile` if you find something to be lacking.
 
 - Ordinary non-Lean commands such as `git`, `rg`, and `git diff` run directly;
-  they do not need or benefit from a systemd scope.
+  they do not need the `Justfile` recipes.
 - Never launch a Lean- or Lake-related workload outside the `Justfile`
-  recipes. Do not weaken, abbreviate, or silently omit the scope or guard for
-  work believed to be trivial.
-- Do not run multiple high-memory scopes concurrently merely because each has
-  its own 48 GiB cap; protect the machine from aggregate memory pressure too.
+  recipes, even for work believed to be trivial.
+- Do not run multiple high-memory workloads concurrently; protect the machine
+  from aggregate memory pressure.
 - Propagate the `Justfile` requirement explicitly in every subagent task that
   runs Lean- or Lake-related workloads.
-- If a required proof or computation reaches the cap, treat that as a design
-  failure: checkpoint, reduce, or reformulate it. Do not raise or bypass the
-  cap without the user's explicit permission.
+- If a required proof or computation runs out of memory, treat that as a
+  design failure: checkpoint, reduce, or reformulate it.
 - A resource-intensive validation that remains at full CPU is not evidence
   that it is safe to leave running. Monitor memory and terminate it before it
   threatens desktop responsiveness.
-- The guarded recipes monitor both counters because shared or file-backed
-  mappings can make process RSS materially exceed memory charged to a newly
-  created cgroup; never trust the smaller counter when the two disagree.
 - Keep the root agent on the strongest unresolved lemma of the active gate.
 - Use subagents only for distinct bounded proofs, independent audits,
   counterexample searches, source verification, or certificate generation.

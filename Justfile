@@ -8,13 +8,18 @@ soft_limit_kib := "41943040"
 default:
     @just --list
 
-# Run an additional Lean-related workload inside the guarded 48 GiB scope.
+# Run an additional Lean-related workload.
 guarded *command:
     #!/usr/bin/env zsh
     set -u
     if (( $# == 0 )); then
       print -u2 "usage: just guarded <lean-related command> [args...]"
       exit 2
+    fi
+    if [[ ! -S "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/bus" ]]; then
+      # No systemd user manager (e.g. inside the devcontainer, where the
+      # container's own memory limit applies); run unwrapped.
+      exec "$@"
     fi
     systemd-run --user --scope --quiet --expand-environment=no \
       -p MemoryMax={{ memory_max }} -- zsh -c '
@@ -75,7 +80,7 @@ guarded *command:
         wait "$job"
       ' _ "{{ soft_limit_bytes }}" "{{ soft_limit_kib }}" "$@"
 
-# Fetch the Mathlib cache under the Lean workload guard.
+# Fetch the Mathlib cache.
 cache:
     @just guarded lake exe cache get
 

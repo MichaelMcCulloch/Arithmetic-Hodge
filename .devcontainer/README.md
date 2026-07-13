@@ -34,17 +34,6 @@ just build    # build the project
 
 ## Caveats vs the host
 
-- **`just guarded` / `just cache` / `just build` via the Justfile**: the
-  `guarded` recipe wraps workloads in `systemd-run --user --scope` with a
-  48 GiB `MemoryMax`. Containers have no systemd user manager, so that wrapper
-  fails inside the devcontainer. The equivalent guard is applied at the
-  container boundary instead: `runArgs` caps the whole container at
-  `--memory=48g`. Inside the container run the underlying commands directly:
-  ```sh
-  lake exe cache get   # instead of `just cache`
-  lake build           # instead of `just build`
-  lake env lean <file> # instead of `just lean <file>`
-  ```
 - The Lean toolchain is baked into the image at `/usr/local/elan` (world
   writable, like libcans' rustup layout). If `lean-toolchain` is bumped, elan
   downloads the new toolchain into the running container; bump the

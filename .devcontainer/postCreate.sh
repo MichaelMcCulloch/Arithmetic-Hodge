@@ -100,8 +100,6 @@ report_lean_toolchain() {
 		warn "no lean-toolchain file found"
 	fi
 	echo "mathlib cache persists at ~/.cache/mathlib (bind mount)"
-	echo "note: 'just guarded' needs a systemd user manager, which containers lack;"
-	echo "the container itself is capped at 48g (runArgs), so run 'lake build' directly"
 }
 main() {
 	echo "== Arithmetic-Hodge dev container =="
