@@ -140,6 +140,34 @@ theorem integral_correlation_defect_div_eq_energy_add_boundary
       rw [intervalIntegral.integral_const_mul,
         intervalIntegral.integral_const_mul]
 
+/-- The desired singular-correlation identity follows exactly from the
+positive-distance fold and the boundary-tail Fubini identity.  The two
+hypotheses isolate the remaining analytic interchange statements without
+introducing a spectral expansion or cutoff. -/
+theorem integral_correlation_defect_div_eq_centered_energy_add_potential
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (henergy : IntervalIntegrable
+      (fun t : ℝ ↦ centeredPositiveDistanceEnergy w t / t) volume 0 2)
+    (hboundary : IntervalIntegrable
+      (fun t : ℝ ↦ centeredEndpointBoundaryTail w t / t) volume 0 2)
+    (hpositiveFold :
+      (1 / 2 : ℝ) *
+          (∫ t : ℝ in 0..2, centeredPositiveDistanceEnergy w t / t) =
+        centeredRawLogEnergy w / 4)
+    (hboundaryFold :
+      (1 / 2 : ℝ) *
+          (∫ t : ℝ in 0..2, centeredEndpointBoundaryTail w t / t) =
+        (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2) +
+          Real.log 2 * (∫ x : ℝ in -1..1, w x ^ 2)) :
+    (∫ t : ℝ in 0..2,
+      (centeredEndpointCorrelation w 0 - centeredEndpointCorrelation w t) / t) =
+      centeredRawLogEnergy w / 4 +
+        (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2) +
+        Real.log 2 * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  rw [integral_correlation_defect_div_eq_energy_add_boundary
+    w hw henergy hboundary, hpositiveFold, hboundaryFold]
+  ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaEndpointSingularCorrelation
