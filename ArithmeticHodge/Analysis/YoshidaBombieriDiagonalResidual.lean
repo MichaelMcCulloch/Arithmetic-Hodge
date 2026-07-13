@@ -47,6 +47,17 @@ def bombieriDiagonalResidualIntegrand
     Complex.normSq (mellin (g : ℝ → ℂ)
       ((1 / 2 : ℝ) + v * Complex.I))
 
+theorem bombieriCriticalNormSq_weighted_integrable (g : BombieriTest) :
+    Integrable (fun v : ℝ ↦
+      (1 + v ^ 2) * Complex.normSq
+        (mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I))) := by
+  have h := bombieriCriticalSpectralProduct_weighted_integrable g g
+  apply h.congr
+  filter_upwards [] with v
+  simp only [bombieriCriticalSpectralProduct, norm_mul, norm_star,
+    Complex.normSq_eq_norm_sq]
+  ring
+
 theorem bombieriDiagonalResidualIntegrand_integrable
     (g : BombieriTest) (n : ℕ) :
     Integrable (bombieriDiagonalResidualIntegrand g n) := by
@@ -55,12 +66,7 @@ theorem bombieriDiagonalResidualIntegrand_integrable
   let p : ℝ := (((n + 1 : ℕ) : ℝ) ^ 2)⁻¹
   have hW : Integrable (fun v : ℝ ↦
       (1 + v ^ 2) * Complex.normSq (M v)) := by
-    have h := bombieriCriticalSpectralProduct_weighted_integrable g g
-    apply h.congr
-    filter_upwards [] with v
-    simp only [bombieriCriticalSpectralProduct, M, norm_mul, norm_star,
-      Complex.normSq_eq_norm_sq]
-    ring
+    simpa only [M] using bombieriCriticalNormSq_weighted_integrable g
   have hmajor : Integrable (fun v : ℝ ↦
       p * ((1 + v ^ 2) * Complex.normSq (M v))) := hW.const_mul p
   apply hmajor.mono'
@@ -103,6 +109,80 @@ theorem bombieriDiagonalResidual_nonneg (g : BombieriTest) (n : ℕ) :
   exact integral_nonneg fun v ↦
     mul_nonneg (bombieriDiagonalResidualMultiplier_pos n v).le
       (Complex.normSq_nonneg _)
+
+def bombieriWeightedSpectralMass (g : BombieriTest) : ℝ :=
+  (1 / (2 * Real.pi)) * ∫ v : ℝ,
+    (1 + v ^ 2) * Complex.normSq
+      (mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I))
+
+theorem bombieriWeightedSpectralMass_nonneg (g : BombieriTest) :
+    0 ≤ bombieriWeightedSpectralMass g := by
+  apply mul_nonneg (by positivity)
+  exact integral_nonneg fun v ↦
+    mul_nonneg (by positivity) (Complex.normSq_nonneg _)
+
+theorem bombieriDiagonalResidual_le_invSq_mul_mass
+    (g : BombieriTest) (n : ℕ) :
+    bombieriDiagonalResidual g n ≤
+      (((n + 1 : ℕ) : ℝ) ^ 2)⁻¹ * bombieriWeightedSpectralMass g := by
+  let p : ℝ := (((n + 1 : ℕ) : ℝ) ^ 2)⁻¹
+  let W : ℝ → ℝ := fun v ↦
+    (1 + v ^ 2) * Complex.normSq
+      (mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I))
+  have hW : Integrable W := by
+    simpa only [W] using bombieriCriticalNormSq_weighted_integrable g
+  have hmajor : Integrable (fun v : ℝ ↦ p * W v) := hW.const_mul p
+  have hint :
+      (∫ v : ℝ, bombieriDiagonalResidualIntegrand g n v) ≤
+        ∫ v : ℝ, p * W v := by
+    apply integral_mono (bombieriDiagonalResidualIntegrand_integrable g n)
+      hmajor
+    intro v
+    have hcoefficient := abs_bombieriDigammaKernel_sub_inv_le n v
+    have hmultiplier : bombieriDiagonalResidualMultiplier n v ≤
+        (1 + v ^ 2) / (((n + 1 : ℕ) : ℝ) ^ 2) := by
+      rw [← abs_of_pos (bombieriDiagonalResidualMultiplier_pos n v)]
+      simpa only [bombieriDiagonalResidualMultiplier, abs_sub_comm] using
+        hcoefficient
+    have hmass : 0 ≤ Complex.normSq
+        (mellin (g : ℝ → ℂ) ((1 / 2 : ℝ) + v * Complex.I)) :=
+      Complex.normSq_nonneg _
+    calc
+      bombieriDiagonalResidualIntegrand g n v ≤
+          ((1 + v ^ 2) / (((n + 1 : ℕ) : ℝ) ^ 2)) *
+            Complex.normSq
+              (mellin (g : ℝ → ℂ)
+                ((1 / 2 : ℝ) + v * Complex.I)) := by
+        exact mul_le_mul_of_nonneg_right hmultiplier hmass
+      _ = p * W v := by
+        simp only [p, W, div_eq_mul_inv]
+        ring
+  calc
+    bombieriDiagonalResidual g n =
+        (1 / (2 * Real.pi)) *
+          ∫ v : ℝ, bombieriDiagonalResidualIntegrand g n v := rfl
+    _ ≤ (1 / (2 * Real.pi)) * ∫ v : ℝ, p * W v :=
+      mul_le_mul_of_nonneg_left hint (by positivity)
+    _ = p * bombieriWeightedSpectralMass g := by
+      rw [MeasureTheory.integral_const_mul]
+      simp only [bombieriWeightedSpectralMass, W]
+      ring
+    _ = _ := rfl
+
+theorem summable_bombieriDiagonalResidual (g : BombieriTest) :
+    Summable (bombieriDiagonalResidual g) := by
+  have hp : Summable (fun n : ℕ ↦
+      (((n + 1 : ℕ) : ℝ) ^ 2)⁻¹) := by
+    exact (summable_nat_add_iff 1).2
+      (Real.summable_nat_pow_inv.mpr (by norm_num : 1 < 2))
+  have hmajor := hp.mul_right (bombieriWeightedSpectralMass g)
+  apply hmajor.of_nonneg_of_le
+  · exact bombieriDiagonalResidual_nonneg g
+  · exact bombieriDiagonalResidual_le_invSq_mul_mass g
+
+theorem tsum_bombieriDiagonalResidual_nonneg (g : BombieriTest) :
+    0 ≤ ∑' n : ℕ, bombieriDiagonalResidual g n :=
+  tsum_nonneg (bombieriDiagonalResidual_nonneg g)
 
 theorem ofReal_bombieriDiagonalResidual_eq_cauchyResidual
     (g : BombieriTest) (n : ℕ) :
@@ -171,6 +251,59 @@ theorem ofReal_bombieriDiagonalResidual_eq_cauchyResidual
           normalized_bombieriDigammaKernel_crossProduct g g (n + 1)]
     _ = _ := by
       simp only [r, Complex.ofReal_inv, Complex.ofReal_natCast]
+
+theorem summable_bombieriCauchySeriesResidual (g : BombieriTest) :
+    Summable (fun n : ℕ ↦
+      bombieriCauchyCrossValue g g (n + 1) -
+        ((((n + 1 : ℕ) : ℝ)⁻¹ : ℂ) *
+          bombieriCriticalCrossCorrelation g g 0)) := by
+  have hcast := Complex.ofRealCLM.summable
+    (summable_bombieriDiagonalResidual g)
+  apply hcast.neg.congr
+  intro n
+  rw [Complex.ofRealCLM_apply,
+    ofReal_bombieriDiagonalResidual_eq_cauchyResidual]
+  ring
+
+theorem ofReal_tsum_bombieriDiagonalResidual_eq_cauchySeries
+    (g : BombieriTest) :
+    ((∑' n : ℕ, bombieriDiagonalResidual g n : ℝ) : ℂ) =
+      ∑' n : ℕ,
+        ((((n + 1 : ℕ) : ℝ)⁻¹ : ℂ) *
+            bombieriCriticalCrossCorrelation g g 0 -
+          bombieriCauchyCrossValue g g (n + 1)) := by
+  calc
+    ((∑' n : ℕ, bombieriDiagonalResidual g n : ℝ) : ℂ) =
+        ∑' n : ℕ, (bombieriDiagonalResidual g n : ℂ) := by
+      simpa only [Complex.ofRealCLM_apply] using
+        Complex.ofRealCLM.map_tsum (summable_bombieriDiagonalResidual g)
+    _ = _ := by
+      apply tsum_congr
+      intro n
+      exact ofReal_bombieriDiagonalResidual_eq_cauchyResidual g n
+
+theorem cauchySeries_eq_neg_ofReal_tsum_bombieriDiagonalResidual
+    (g : BombieriTest) :
+    (∑' n : ℕ,
+      (bombieriCauchyCrossValue g g (n + 1) -
+        ((((n + 1 : ℕ) : ℝ)⁻¹ : ℂ) *
+          bombieriCriticalCrossCorrelation g g 0))) =
+      -((∑' n : ℕ, bombieriDiagonalResidual g n : ℝ) : ℂ) := by
+  calc
+    (∑' n : ℕ,
+        (bombieriCauchyCrossValue g g (n + 1) -
+          ((((n + 1 : ℕ) : ℝ)⁻¹ : ℂ) *
+            bombieriCriticalCrossCorrelation g g 0))) =
+        -(∑' n : ℕ,
+          ((((n + 1 : ℕ) : ℝ)⁻¹ : ℂ) *
+              bombieriCriticalCrossCorrelation g g 0 -
+            bombieriCauchyCrossValue g g (n + 1))) := by
+      rw [← tsum_neg]
+      apply tsum_congr
+      intro n
+      ring
+    _ = -((∑' n : ℕ, bombieriDiagonalResidual g n : ℝ) : ℂ) := by
+      rw [ofReal_tsum_bombieriDiagonalResidual_eq_cauchySeries]
 
 end
 
