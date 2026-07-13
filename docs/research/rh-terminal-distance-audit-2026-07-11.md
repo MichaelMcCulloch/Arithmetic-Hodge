@@ -2445,3 +2445,36 @@ separate from build logs: a green build is evidence, not a stage transition.
    independent high-risk reviews pass.  Both reviews rederived the odd mean,
    endpoint-null measure conversions, `a/32 = log 2/64`, every sign, and the
    final sharp-loss expansion.
+
+## `83b710a`, `0f15aa6`, `1a63951`, and `23d0416` — Structural endpoint correlation factorization
+
+1. **Theorems added.**  A determinant-one triangle shear, symmetry across the
+   diagonal, and the exact zero diagonal prove the full positive-distance
+   logarithmic fold for every locally Lipschitz centered profile.  Combining
+   it with the boundary tails gives the complete centered singular-correlation
+   identity.  Scaling back to physical coordinates proves the singular defect
+   formula, and the separately defined physical endpoint quadratic factors
+   exactly as `a * yoshidaEndpointOddCleanQuadratic` with all regular, scalar,
+   and polar signs retained.
+2. **Gate hypothesis eliminated.**  The singular correlation fold and every
+   physical-to-centered scale factor are now structural.  In particular, the
+   logarithmic energy is obtained by an exact change of variables and Fubini
+   argument, not by quadrature, sampled modes, or a finite certificate.
+3. **Assumptions remaining.**  This does not yet identify the production
+   `clippedArchEnergy` with the physical correlation expression.  The generic
+   digamma-distribution/Fourier interchange remains the narrow odd production
+   bridge, and its combined singular-minus-regular integral must be split
+   using proved integrability before the new factorization can be applied.
+   Real/imaginary recombination and the structural even sector also remain
+   open.
+4. **Next make-or-break lemma.**  Prove
+   `clippedArchEnergy_eq_endpointClippedArchCorrelation` for a real-valued
+   pointwise-odd periodic source profile, then identify that correlation plus
+   `clippedPolarEnergy` with `yoshidaEndpointPhysicalRealQuadratic`.
+5. **Viability evidence.**  The triangle fold, centered and physical singular
+   identities, and physical factor theorem all pass strict compilation,
+   focused builds, forbidden-proof scans, and standard-only axiom audits.  An
+   independent factor review rederived
+   `a(E/4+P+log 2 M) - a^2 R - a B M + a H = a * clean` and confirmed every
+   sign and scale, while explicitly rejecting any claim that the still-open
+   production arch bridge had already been closed.
