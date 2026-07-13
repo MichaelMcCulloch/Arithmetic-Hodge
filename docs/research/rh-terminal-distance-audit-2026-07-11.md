@@ -2107,3 +2107,72 @@ separate from build logs: a green build is evidence, not a stage transition.
 5. **Viability evidence.**  Guarded strict compilation, focused build, axiom
    audit, and independent review pass.  The theorem is quantified over every
    `k`; it contains no selected dimension or enumerated mode family.
+
+## `da01ba0` — Structural endpoint hyperbolic loss
+
+1. **Theorem added.**  `yoshidaEndpointHyperbolicQuadratic_lower` factors the
+   endpoint hyperbolic kernel into its `cosh` and `sinh` moments, evaluates the
+   squared `sinh` mass exactly, and bounds the only negative rank-one term by
+   `(1 / sqrt 2 - log 2)` times the centered `L²` mass.
+2. **Gate hypothesis eliminated.**  The odd hyperbolic loss no longer depends
+   on the legacy coercivity numerics or a mode-by-mode polar estimate.
+3. **Assumptions remaining.**  The endpoint logarithmic, potential, regular,
+   and hyperbolic components still need an exact production-form bridge and a
+   low-mode assembly whose constants actually close.
+4. **Next make-or-break lemma.**  Use centered parity to isolate the genuine
+   low modes and determine symbolically whether the current potential and
+   regular-kernel bounds suffice.
+5. **Viability evidence.**  Guarded strict compilation, focused build, axiom
+   audit, forbidden-proof scan, and independent high-risk review pass.  The
+   proof uses Cauchy--Schwarz and exact hyperbolic identities only.
+
+## `c5a98ee` through `1cdab7a` — Exact parity tails and centered constants
+
+1. **Theorems added.**  Unit-interval reflection is proved to act on shifted
+   Legendre degree `n` by `(-1)^n`; opposite-parity Hilbert coefficients
+   therefore vanish uniformly.  The first three centered polynomials are
+   identified exactly as `1`, `-X`, and `(3 X^2 - 1)/2`.  Removing the genuine
+   low coefficient gives complete unit-interval gaps `3` in the even sector
+   and `11/3` in the odd sector, which transport to centered raw gaps `6` and
+   `22/3`.
+2. **Gate hypothesis eliminated.**  Both infinite parity tails are controlled
+   at their exact first surviving harmonic weight.  No finite Fourier block,
+   chosen truncation, or tail computation remains.
+3. **Assumptions remaining.**  The finite low modes must be combined with the
+   endpoint potential, regular-kernel, and hyperbolic terms.  The exact
+   production-form identity is also not yet packaged against these clean
+   component definitions.
+4. **Next make-or-break lemma.**  Evaluate the low-mode component bounds and
+   the resulting Schur inequalities symbolically before building the final
+   operator assembly.
+5. **Viability evidence.**  Commits `c5a98ee`, `8319df6`, `e5d5fa9`, and
+   `1cdab7a` all pass guarded strict compilation and focused builds.  Their
+   public axioms are exactly `propext`, `Classical.choice`, and `Quot.sound`,
+   and independent reviews confirmed every reflection sign and affine factor.
+
+## `cd7fb64` — The coarse quartic endpoint strategy is obstructed
+
+1. **Theorem added.**  The exact centered degree-one quartic ratio is
+   `57/140`, and `yoshidaEndpointOddQuarticLowCoefficient_neg` proves
+   structurally that
+   `1 + 57/140 - K_o < 0`, where
+   `K_o = gamma + log (pi * log 2) + log 2 / 4 +
+   (1 / sqrt 2 - log 2)`.
+2. **Route eliminated.**  Combining only the logarithmic gap, the quartic
+   truncation of the potential, the global regular-kernel Schur loss, and the
+   global hyperbolic loss cannot prove endpoint positivity.  The failure is
+   already the scalar degree-one odd mode; increasing a finite block cannot
+   repair it.
+3. **Assumptions remaining.**  This is an obstruction to the coarse lower
+   bound, not to the true endpoint form.  Exact or sharper low-mode potential
+   and regular-kernel information is still available and must be tested.  The
+   even low block and the clean production-form bridge remain open as well.
+4. **Next make-or-break lemma.**  Evaluate the full endpoint potential on the
+   degree-one mode exactly and retain cancellation in the regular kernel.  If
+   the strengthened odd low coefficient is positive, prove the resulting
+   low/tail Schur inequality; otherwise record the next exact obstruction.
+5. **Viability evidence.**  The strict sign uses four terms of a proved
+   logarithm remainder, `pi > 3`, the standard Euler lower bound, and exact
+   rational arithmetic.  Guarded strict compilation, focused build, complete
+   axiom audit, forbidden-proof scan, and two independent reviews pass.  No
+   discovered numeric data or growing family of cases appears in the proof.
