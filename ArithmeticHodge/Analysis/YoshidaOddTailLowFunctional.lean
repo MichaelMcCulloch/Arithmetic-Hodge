@@ -785,7 +785,8 @@ theorem norm_sq_integral_criticalCross_le
   have hu : MemLp u 2 := by
     rw [memLp_two_iff_integrable_sq_norm huMeas]
     simpa only [u, Complex.normSq_eq_norm_sq] using
-      integrable_normSq_yoshidaCriticalSample yoshidaA_pos g
+      YoshidaSectionSixAnalytic.integrable_normSq_yoshidaCriticalSample
+        yoshidaA_pos g
   have hw : MemLp w 2 := by
     rw [memLp_two_iff_integrable_sq_norm hwMeas]
     simpa only [w] using integrable_norm_sq_oddLowCriticalWeight i

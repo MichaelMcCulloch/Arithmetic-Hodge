@@ -74,7 +74,7 @@ theorem clippedSpectralMass_eq_intervalEnergy
   have hFourierSq : Integrable (fun w : ℝ ↦
       ‖FourierTransform.fourier g w‖ ^ 2) := by
     have hscaled :=
-      (integrable_normSq_yoshidaCriticalSample ha
+      (YoshidaSectionSixAnalytic.integrable_normSq_yoshidaCriticalSample ha
         f).comp_mul_left' (R := c) hc
     apply hscaled.congr
     filter_upwards [] with w
@@ -1025,7 +1025,8 @@ theorem evenOneNinetyNineTail_clipped_form_value_ge_102_div_25_of_unit_energy
         ‖((f : YoshidaClippedSmooth yoshidaA) : ℝ → ℂ) x‖ ^ 2) = 1) :
     (102 / 25 : ℝ) ≤ clippedCriticalFormValue yoshidaA yoshidaA_pos
       (f : YoshidaClippedSmooth yoshidaA) := by
-  have hMassInt := integrable_normSq_yoshidaCriticalSample yoshidaA_pos
+  have hMassInt :=
+    YoshidaSectionSixAnalytic.integrable_normSq_yoshidaCriticalSample yoshidaA_pos
     (f : YoshidaClippedSmooth yoshidaA)
   have hDigammaInt :=
     integrable_digammaQuarterVerticalRe_mul_normSq_yoshidaCriticalSample
