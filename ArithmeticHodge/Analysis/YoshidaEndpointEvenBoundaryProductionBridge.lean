@@ -400,6 +400,551 @@ private theorem normalized_integral_boundarySpectralProduct
     _ = H 0 := hzero
     _ = _ := rfl
 
+/-! ## Digamma finite sums under ordinary product decay -/
+
+private def boundaryDigammaCorrection (j : ℕ) (v : ℝ) : ℝ :=
+  ((j + 1 : ℕ) : ℝ)⁻¹ - bombieriDigammaKernel (j + 1) v
+
+private theorem boundaryDigammaCorrection_nonneg (j : ℕ) (v : ℝ) :
+    0 ≤ boundaryDigammaCorrection j v := by
+  rw [boundaryDigammaCorrection]
+  apply sub_nonneg.mpr
+  simp only [bombieriDigammaKernel, Nat.cast_add, Nat.cast_one]
+  let q : ℝ := j + 1
+  change (4 * q + 1) / ((2 * q + 1 / 2) ^ 2 + v ^ 2) ≤ q⁻¹
+  have hq : 1 ≤ q := by simp [q]
+  have hq0 : 0 < q := zero_lt_one.trans_le hq
+  have hden : 0 < (2 * q + 1 / 2) ^ 2 + v ^ 2 := by positivity
+  rw [div_le_iff₀ hden]
+  field_simp
+  nlinarith [sq_nonneg v]
+
+private theorem summable_boundaryDigammaCorrection (v : ℝ) :
+    Summable (fun j : ℕ ↦ boundaryDigammaCorrection j v) := by
+  have hp : Summable (fun j : ℕ ↦
+      (1 + v ^ 2) / (((j + 1 : ℕ) : ℝ) ^ 2)) := by
+    have hbase : Summable (fun j : ℕ ↦
+        1 / (((j + 1 : ℕ) : ℝ) ^ 2)) := by
+      simpa only [one_div] using
+        (summable_nat_add_iff 1).2
+          (Real.summable_nat_pow_inv.mpr (by norm_num : 1 < 2))
+    refine (hbase.mul_left (1 + v ^ 2)).congr ?_
+    intro j
+    simp only [div_eq_mul_inv]
+    ring
+  apply hp.of_norm_bounded
+  intro j
+  rw [Real.norm_eq_abs,
+    abs_of_nonneg (boundaryDigammaCorrection_nonneg j v)]
+  have h := abs_bombieriDigammaKernel_sub_inv_le j v
+  rw [abs_sub_comm] at h
+  change |boundaryDigammaCorrection j v| ≤
+    (1 + v ^ 2) / (((j + 1 : ℕ) : ℝ) ^ 2) at h
+  rw [abs_of_nonneg (boundaryDigammaCorrection_nonneg j v)] at h
+  exact h
+
+private def boundaryDigammaBase (v : ℝ) : ℝ :=
+  -bombieriDigammaKernel 0 v - Real.eulerMascheroniConstant -
+    Real.log Real.pi
+
+private def boundaryDigammaPartialKernel (N : ℕ) (v : ℝ) : ℝ :=
+  boundaryDigammaBase v +
+    ∑ j ∈ Finset.range N, boundaryDigammaCorrection j v
+
+private theorem continuous_bombieriDigammaKernel (k : ℕ) :
+    Continuous (fun v : ℝ ↦ bombieriDigammaKernel k v) := by
+  unfold bombieriDigammaKernel
+  exact continuous_const.div
+    ((continuous_const.pow 2).add (continuous_id.pow 2))
+    (fun v ↦ by positivity)
+
+private theorem continuous_boundaryDigammaBase :
+    Continuous boundaryDigammaBase := by
+  exact ((continuous_bombieriDigammaKernel 0).neg.sub continuous_const).sub
+    continuous_const
+
+private theorem continuous_boundaryDigammaPartialKernel (N : ℕ) :
+    Continuous (boundaryDigammaPartialKernel N) := by
+  unfold boundaryDigammaPartialKernel boundaryDigammaCorrection
+  apply continuous_boundaryDigammaBase.add
+  apply continuous_finset_sum
+  intro j _hj
+  exact continuous_const.sub (continuous_bombieriDigammaKernel (j + 1))
+
+private theorem boundaryDigammaBase_le_partial (N : ℕ) (v : ℝ) :
+    boundaryDigammaBase v ≤ boundaryDigammaPartialKernel N v := by
+  rw [boundaryDigammaPartialKernel]
+  exact le_add_of_nonneg_right
+    (Finset.sum_nonneg fun j _ ↦ boundaryDigammaCorrection_nonneg j v)
+
+private theorem boundaryDigammaPartial_le_localKernel (N : ℕ) (v : ℝ) :
+    boundaryDigammaPartialKernel N v ≤
+      (Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+        Real.log Real.pi := by
+  have hsum := (summable_boundaryDigammaCorrection v).sum_le_tsum
+    (Finset.range N) (fun j _ ↦ boundaryDigammaCorrection_nonneg j v)
+  rw [boundaryDigammaPartialKernel]
+  have hfull :
+      (Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+          Real.log Real.pi =
+        boundaryDigammaBase v + ∑' j : ℕ, boundaryDigammaCorrection j v := by
+    rw [digamma_quarter_vertical_re_eq]
+    rw [show (∑' j : ℕ,
+        (bombieriDigammaKernel (j + 1) v - ((j : ℝ) + 1)⁻¹)) =
+        -(∑' j : ℕ, boundaryDigammaCorrection j v) by
+      rw [← tsum_neg]
+      apply tsum_congr
+      intro j
+      rw [boundaryDigammaCorrection]
+      push_cast
+      ring]
+    rw [boundaryDigammaBase]
+    ring
+  rw [hfull]
+  simpa only [add_comm] using
+    add_le_add_left hsum (boundaryDigammaBase v)
+
+private theorem abs_boundaryDigammaPartialKernel_le (N : ℕ) (v : ℝ) :
+    |boundaryDigammaPartialKernel N v| ≤
+      |boundaryDigammaBase v| +
+        |(Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+          Real.log Real.pi| := by
+  have hlo := boundaryDigammaBase_le_partial N v
+  have hhi := boundaryDigammaPartial_le_localKernel N v
+  rw [abs_le]
+  constructor
+  · calc
+      -(|boundaryDigammaBase v| +
+          |(Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+            Real.log Real.pi|) ≤ -|boundaryDigammaBase v| := by
+        linarith [abs_nonneg
+          ((Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+            Real.log Real.pi)]
+      _ ≤ boundaryDigammaBase v := neg_abs_le _
+      _ ≤ boundaryDigammaPartialKernel N v := hlo
+  · calc
+      boundaryDigammaPartialKernel N v ≤
+          (Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+            Real.log Real.pi := hhi
+      _ ≤ |(Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+            Real.log Real.pi| := le_abs_self _
+      _ ≤ |boundaryDigammaBase v| +
+          |(Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+            Real.log Real.pi| := le_add_of_nonneg_left (abs_nonneg _)
+
+private theorem bombieriDigammaKernel_zero_norm_le_four (v : ℝ) :
+    ‖(bombieriDigammaKernel 0 v : ℂ)‖ ≤ 4 := by
+  rw [Complex.norm_real, Real.norm_eq_abs]
+  unfold bombieriDigammaKernel
+  norm_num
+  have hden : 0 < (1 / 4 : ℝ) + v ^ 2 := by positivity
+  rw [abs_of_pos hden]
+  rw [inv_le_comm₀ hden (by norm_num : (0 : ℝ) < 4)]
+  nlinarith [sq_nonneg v]
+
+private theorem boundaryDigammaBase_mul_integrable
+    {a : ℝ} (ha : 0 < a) (f g : YoshidaClippedSmooth a) :
+    Integrable (fun v : ℝ ↦
+      (boundaryDigammaBase v : ℂ) * boundarySpectralProduct ha f g v) := by
+  let C : ℝ := 4 + |Real.eulerMascheroniConstant| + |Real.log Real.pi|
+  apply (boundarySpectralProduct_integrable ha f g).bdd_mul
+    (c := C) (Complex.continuous_ofReal.comp continuous_boundaryDigammaBase
+      |>.aestronglyMeasurable)
+  filter_upwards [] with v
+  simp only [Function.comp_apply]
+  rw [Complex.norm_real, Real.norm_eq_abs]
+  calc
+    |boundaryDigammaBase v| ≤
+        |bombieriDigammaKernel 0 v| +
+          |Real.eulerMascheroniConstant| + |Real.log Real.pi| := by
+      rw [boundaryDigammaBase]
+      have houter := abs_sub_le
+        (-bombieriDigammaKernel 0 v - Real.eulerMascheroniConstant)
+        0 (Real.log Real.pi)
+      have hinner := abs_sub_le (-bombieriDigammaKernel 0 v)
+        0 Real.eulerMascheroniConstant
+      simp only [sub_zero, zero_sub, abs_neg] at houter hinner
+      linarith
+    _ ≤ C := by
+      have hk := bombieriDigammaKernel_zero_norm_le_four v
+      rw [Complex.norm_real, Real.norm_eq_abs] at hk
+      dsimp only [C]
+      linarith
+
+private def boundaryDigammaPartialIntegrand
+    {a : ℝ} (ha : 0 < a) (f g : YoshidaClippedSmooth a)
+    (N : ℕ) (v : ℝ) : ℂ :=
+  (boundaryDigammaPartialKernel N v : ℂ) *
+    boundarySpectralProduct ha f g v
+
+private theorem boundaryDigammaPartialIntegrand_integrable
+    {a : ℝ} (ha : 0 < a) (f g : YoshidaClippedSmooth a) (N : ℕ) :
+    Integrable (boundaryDigammaPartialIntegrand ha f g N) := by
+  let bound : ℝ → ℝ := fun v ↦
+    ‖(boundaryDigammaBase v : ℂ) * boundarySpectralProduct ha f g v‖ +
+      ‖yoshidaClippedCriticalCrossIntegrand a ha f g v‖
+  have hbound : Integrable bound :=
+    (boundaryDigammaBase_mul_integrable ha f g).norm.add
+      (yoshidaClippedCriticalCrossIntegrand_integrable ha f g).norm
+  apply hbound.mono'
+  · exact ((Complex.continuous_ofReal.comp
+      (continuous_boundaryDigammaPartialKernel N)).mul
+        (continuous_boundarySpectralProduct ha f g)).aestronglyMeasurable
+  · filter_upwards [] with v
+    rw [boundaryDigammaPartialIntegrand]
+    simp only [norm_mul, Complex.norm_real, Real.norm_eq_abs]
+    have habs := abs_boundaryDigammaPartialKernel_le N v
+    have hnorm := mul_le_mul_of_nonneg_right habs
+      (norm_nonneg (boundarySpectralProduct ha f g v))
+    calc
+      |boundaryDigammaPartialKernel N v| *
+          ‖boundarySpectralProduct ha f g v‖ ≤
+          (|boundaryDigammaBase v| +
+            |(Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+              Real.log Real.pi|) *
+            ‖boundarySpectralProduct ha f g v‖ := hnorm
+      _ = bound v := by
+        simp only [bound, yoshidaClippedCriticalCrossIntegrand,
+          MultiplicativeWeil.bombieriLocalCriticalKernel,
+          boundarySpectralProduct, norm_mul, Complex.norm_real,
+          Real.norm_eq_abs]
+        ring
+
+private theorem tendsto_integral_boundaryDigammaPartialIntegrand
+    {a : ℝ} (ha : 0 < a) (f g : YoshidaClippedSmooth a) :
+    Tendsto (fun N : ℕ ↦
+      ∫ v : ℝ, boundaryDigammaPartialIntegrand ha f g N v) atTop
+      (𝓝 (∫ v : ℝ, yoshidaClippedCriticalCrossIntegrand a ha f g v)) := by
+  let bound : ℝ → ℝ := fun v ↦
+    ‖(boundaryDigammaBase v : ℂ) * boundarySpectralProduct ha f g v‖ +
+      ‖yoshidaClippedCriticalCrossIntegrand a ha f g v‖
+  have hbound : Integrable bound :=
+    (boundaryDigammaBase_mul_integrable ha f g).norm.add
+      (yoshidaClippedCriticalCrossIntegrand_integrable ha f g).norm
+  apply tendsto_integral_of_dominated_convergence bound
+  · intro N
+    exact (boundaryDigammaPartialIntegrand_integrable ha f g N)
+      |>.aestronglyMeasurable
+  · exact hbound
+  · intro N
+    filter_upwards [] with v
+    rw [boundaryDigammaPartialIntegrand]
+    simp only [norm_mul, Complex.norm_real, Real.norm_eq_abs]
+    have habs := abs_boundaryDigammaPartialKernel_le N v
+    have hnorm := mul_le_mul_of_nonneg_right habs
+      (norm_nonneg (boundarySpectralProduct ha f g v))
+    calc
+      |boundaryDigammaPartialKernel N v| *
+          ‖boundarySpectralProduct ha f g v‖ ≤
+          (|boundaryDigammaBase v| +
+            |(Complex.digamma ((1 / 4 : ℝ) + (v / 2) * I)).re -
+              Real.log Real.pi|) *
+            ‖boundarySpectralProduct ha f g v‖ := hnorm
+      _ = bound v := by
+        simp only [bound, yoshidaClippedCriticalCrossIntegrand,
+          MultiplicativeWeil.bombieriLocalCriticalKernel,
+          boundarySpectralProduct, norm_mul, Complex.norm_real,
+          Real.norm_eq_abs]
+        ring
+  · filter_upwards [] with v
+    have hsum := (summable_boundaryDigammaCorrection v).hasSum.tendsto_sum_nat
+    have hkernel : Tendsto
+        (fun N : ℕ ↦ boundaryDigammaPartialKernel N v) atTop
+        (𝓝 ((Complex.digamma
+          ((1 / 4 : ℝ) + (v / 2) * I)).re - Real.log Real.pi)) := by
+      rw [show (Complex.digamma
+          ((1 / 4 : ℝ) + (v / 2) * I)).re - Real.log Real.pi =
+          boundaryDigammaBase v +
+            ∑' j : ℕ, boundaryDigammaCorrection j v by
+        rw [digamma_quarter_vertical_re_eq]
+        rw [show (∑' j : ℕ,
+            (bombieriDigammaKernel (j + 1) v - ((j : ℝ) + 1)⁻¹)) =
+            -(∑' j : ℕ, boundaryDigammaCorrection j v) by
+          rw [← tsum_neg]
+          apply tsum_congr
+          intro j
+          rw [boundaryDigammaCorrection]
+          push_cast
+          ring]
+        rw [boundaryDigammaBase]
+        ring]
+      exact tendsto_const_nhds.add hsum
+    have hkernelC : Tendsto
+        (fun N : ℕ ↦ (boundaryDigammaPartialKernel N v : ℂ)) atTop
+        (𝓝 (((Complex.digamma
+          ((1 / 4 : ℝ) + (v / 2) * I)).re - Real.log Real.pi : ℝ) : ℂ)) :=
+      (Complex.continuous_ofReal.tendsto _).comp hkernel
+    have hmul := hkernelC.mul
+      (tendsto_const_nhds : Tendsto
+        (fun _N : ℕ ↦ boundarySpectralProduct ha f g v) atTop
+        (𝓝 (boundarySpectralProduct ha f g v)))
+    simpa only [boundaryDigammaPartialIntegrand,
+      yoshidaClippedCriticalCrossIntegrand,
+      MultiplicativeWeil.bombieriLocalCriticalKernel,
+      boundarySpectralProduct, mul_assoc] using hmul
+
+private theorem bombieriDigammaKernel_nonneg (k : ℕ) (v : ℝ) :
+    0 ≤ bombieriDigammaKernel k v := by
+  unfold bombieriDigammaKernel
+  positivity
+
+private theorem boundaryDigammaCorrection_le_inv (j : ℕ) (v : ℝ) :
+    boundaryDigammaCorrection j v ≤ ((j + 1 : ℕ) : ℝ)⁻¹ := by
+  rw [boundaryDigammaCorrection]
+  linarith [bombieriDigammaKernel_nonneg (j + 1) v]
+
+private theorem boundaryDigammaCorrection_mul_integrable
+    {a : ℝ} (ha : 0 < a) (f g : YoshidaClippedSmooth a) (j : ℕ) :
+    Integrable (fun v : ℝ ↦
+      (boundaryDigammaCorrection j v : ℂ) *
+        boundarySpectralProduct ha f g v) := by
+  let c : ℝ := ((j + 1 : ℕ) : ℝ)⁻¹
+  apply (boundarySpectralProduct_integrable ha f g).bdd_mul (c := c)
+    ((Complex.continuous_ofReal.comp
+      (continuous_const.sub (continuous_bombieriDigammaKernel (j + 1))))
+      |>.aestronglyMeasurable)
+  filter_upwards [] with v
+  simp only [Function.comp_apply]
+  rw [Complex.norm_real, Real.norm_eq_abs]
+  change |boundaryDigammaCorrection j v| ≤ c
+  rw [
+    abs_of_nonneg (boundaryDigammaCorrection_nonneg j v)]
+  exact boundaryDigammaCorrection_le_inv j v
+
+private theorem bombieriDigammaKernel_mul_integrable
+    {a : ℝ} (ha : 0 < a) (f g : YoshidaClippedSmooth a) (k : ℕ) :
+    Integrable (fun v : ℝ ↦
+      (bombieriDigammaKernel k v : ℂ) *
+        boundarySpectralProduct ha f g v) := by
+  by_cases hk : k = 0
+  · subst k
+    apply (boundarySpectralProduct_integrable ha f g).bdd_mul (c := 4)
+      ((Complex.continuous_ofReal.comp
+        (continuous_bombieriDigammaKernel 0)).aestronglyMeasurable)
+    filter_upwards [] with v
+    exact bombieriDigammaKernel_zero_norm_le_four v
+  · obtain ⟨j, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hk
+    let r : ℂ := ((((j + 1 : ℕ) : ℝ)⁻¹ : ℝ) : ℂ)
+    have hrM : Integrable (fun v : ℝ ↦
+        r * boundarySpectralProduct ha f g v) :=
+      (boundarySpectralProduct_integrable ha f g).const_mul r
+    have hq := boundaryDigammaCorrection_mul_integrable ha f g j
+    apply (hrM.sub hq).congr
+    filter_upwards [] with v
+    simp only [Pi.sub_apply, r, boundaryDigammaCorrection]
+    push_cast
+    ring
+
+/-- Endpoint-jump-compatible digamma distribution.  Unlike the weighted
+interface, this theorem uses only ordinary product decay and the actual
+integrability of the production critical-cross integrand. -/
+private theorem normalized_boundaryCriticalCross_eq_cauchySeries
+    {a : ℝ} (ha : 0 < a) (f g : YoshidaClippedSmooth a)
+    (A : ℕ → ℂ) (H0 : ℂ)
+    (hA : ∀ k : ℕ,
+      ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+          ∫ v : ℝ, (bombieriDigammaKernel k v : ℂ) *
+            boundarySpectralProduct ha f g v = A k)
+    (hH0 : ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+      ∫ v : ℝ, boundarySpectralProduct ha f g v = H0)
+    (hs : Summable (fun j : ℕ ↦
+      A (j + 1) - (((j + 1 : ℕ) : ℝ)⁻¹ : ℂ) * H0)) :
+    (((1 / (2 * Real.pi) : ℝ) : ℂ) *
+        ∫ v : ℝ, yoshidaClippedCriticalCrossIntegrand a ha f g v) =
+      -(A 0 + (Real.eulerMascheroniConstant : ℂ) * H0 +
+          ∑' j : ℕ,
+            (A (j + 1) - (((j + 1 : ℕ) : ℝ)⁻¹ : ℂ) * H0)) -
+        (Real.log Real.pi : ℂ) * H0 := by
+  let c : ℂ := ((1 / (2 * Real.pi) : ℝ) : ℂ)
+  let B : ℂ := -A 0 - (Real.eulerMascheroniConstant : ℂ) * H0 -
+    (Real.log Real.pi : ℂ) * H0
+  let Q : ℕ → ℂ := fun j ↦
+    (((j + 1 : ℕ) : ℝ)⁻¹ : ℂ) * H0 - A (j + 1)
+  have hQ : Summable Q := by
+    apply hs.neg.congr
+    intro j
+    dsimp only [Q]
+    ring
+  have hfinite (N : ℕ) :
+      c * ∫ v : ℝ, boundaryDigammaPartialIntegrand ha f g N v =
+        B + ∑ j ∈ Finset.range N, Q j := by
+    let M : ℝ → ℂ := boundarySpectralProduct ha f g
+    let Base : ℝ → ℂ := fun v ↦ (boundaryDigammaBase v : ℂ) * M v
+    let Corr : ℕ → ℝ → ℂ := fun j v ↦
+      (boundaryDigammaCorrection j v : ℂ) * M v
+    have hM : Integrable M := boundarySpectralProduct_integrable ha f g
+    have hBase : Integrable Base := by
+      simpa only [Base, M] using boundaryDigammaBase_mul_integrable ha f g
+    have hCorr (j : ℕ) : Integrable (Corr j) := by
+      simpa only [Corr, M] using
+        boundaryDigammaCorrection_mul_integrable ha f g j
+    have hCorrSum : Integrable (fun v : ℝ ↦
+        ∑ j ∈ Finset.range N, Corr j v) := by
+      apply integrable_finset_sum
+      intro j hj
+      exact hCorr j
+    have hsplit :
+        (∫ v : ℝ, boundaryDigammaPartialIntegrand ha f g N v) =
+          (∫ v : ℝ, Base v) +
+            ∑ j ∈ Finset.range N, ∫ v : ℝ, Corr j v := by
+      calc
+        _ = ∫ v : ℝ, Base v + ∑ j ∈ Finset.range N, Corr j v := by
+          apply integral_congr_ae
+          filter_upwards [] with v
+          simp only [boundaryDigammaPartialIntegrand,
+            boundaryDigammaPartialKernel, Base, Corr, M]
+          push_cast
+          rw [add_mul, Finset.sum_mul]
+        _ = (∫ v : ℝ, Base v) +
+            ∫ v : ℝ, ∑ j ∈ Finset.range N, Corr j v :=
+          MeasureTheory.integral_add hBase hCorrSum
+        _ = _ := by
+          rw [MeasureTheory.integral_finset_sum]
+          intro j hj
+          exact hCorr j
+    have hBaseValue : c * ∫ v : ℝ, Base v = B := by
+      let K0 : ℝ → ℂ := fun v ↦
+        (bombieriDigammaKernel 0 v : ℂ) * M v
+      let γM : ℝ → ℂ := fun v ↦
+        (Real.eulerMascheroniConstant : ℂ) * M v
+      let pM : ℝ → ℂ := fun v ↦ (Real.log Real.pi : ℂ) * M v
+      have hK0 : Integrable K0 := by
+        simpa only [K0, M] using bombieriDigammaKernel_mul_integrable ha f g 0
+      have hγM : Integrable γM := hM.const_mul _
+      have hpM : Integrable pM := hM.const_mul _
+      have hinner : (∫ v : ℝ, -K0 v - γM v) =
+          (∫ v : ℝ, -K0 v) - ∫ v : ℝ, γM v := by
+        exact MeasureTheory.integral_sub hK0.neg hγM
+      have hdecomp : (∫ v : ℝ, Base v) =
+          -(∫ v : ℝ, K0 v) -
+            (Real.eulerMascheroniConstant : ℂ) * (∫ v : ℝ, M v) -
+            (Real.log Real.pi : ℂ) * (∫ v : ℝ, M v) := by
+        calc
+          _ = ∫ v : ℝ,
+              -K0 v - γM v - pM v := by
+            apply integral_congr_ae
+            filter_upwards [] with v
+            simp only [Base, K0, γM, pM, M, boundaryDigammaBase]
+            push_cast
+            ring
+          _ = ((∫ v : ℝ, -K0 v) - ∫ v : ℝ, γM v) -
+              ∫ v : ℝ, pM v := by
+            calc
+              (∫ v : ℝ, -K0 v - γM v - pM v) =
+                  (∫ v : ℝ, -K0 v - γM v) -
+                    ∫ v : ℝ, pM v :=
+                MeasureTheory.integral_sub (hK0.neg.sub hγM) hpM
+              _ = _ := by
+                rw [hinner]
+          _ = _ := by
+            rw [MeasureTheory.integral_neg,
+              show (∫ v : ℝ, γM v) =
+                  (Real.eulerMascheroniConstant : ℂ) * ∫ v : ℝ, M v by
+                simpa only [γM] using MeasureTheory.integral_const_mul
+                  (Real.eulerMascheroniConstant : ℂ) M,
+              show (∫ v : ℝ, pM v) =
+                  (Real.log Real.pi : ℂ) * ∫ v : ℝ, M v by
+                simpa only [pM] using MeasureTheory.integral_const_mul
+                  (Real.log Real.pi : ℂ) M]
+      rw [hdecomp]
+      have hK0Value : c * ∫ v : ℝ, K0 v = A 0 := by
+        simpa only [c, K0, M] using hA 0
+      have hMValue : c * ∫ v : ℝ, M v = H0 := by
+        simpa only [c, M] using hH0
+      calc
+        c * ((-(∫ v : ℝ, K0 v) -
+              (Real.eulerMascheroniConstant : ℂ) * (∫ v : ℝ, M v)) -
+            (Real.log Real.pi : ℂ) * (∫ v : ℝ, M v)) =
+            -(c * ∫ v : ℝ, K0 v) -
+              (Real.eulerMascheroniConstant : ℂ) *
+                (c * ∫ v : ℝ, M v) -
+              (Real.log Real.pi : ℂ) *
+                (c * ∫ v : ℝ, M v) := by ring
+        _ = B := by
+          rw [hK0Value, hMValue]
+    have hCorrValue (j : ℕ) :
+        c * ∫ v : ℝ, Corr j v = Q j := by
+      let r : ℂ := (((j + 1 : ℕ) : ℝ)⁻¹ : ℂ)
+      let K : ℝ → ℂ := fun v ↦
+        (bombieriDigammaKernel (j + 1) v : ℂ) * M v
+      have hrM : Integrable (fun v : ℝ ↦ r * M v) := hM.const_mul r
+      have hK : Integrable K := by
+        simpa only [K, M] using
+          bombieriDigammaKernel_mul_integrable ha f g (j + 1)
+      have hdecomp : (∫ v : ℝ, Corr j v) =
+          r * (∫ v : ℝ, M v) - ∫ v : ℝ, K v := by
+        calc
+          _ = ∫ v : ℝ, r * M v - K v := by
+            apply integral_congr_ae
+            filter_upwards [] with v
+            simp only [Corr, r, K, M, boundaryDigammaCorrection]
+            push_cast
+            ring
+          _ = (∫ v : ℝ, r * M v) - ∫ v : ℝ, K v :=
+            MeasureTheory.integral_sub hrM hK
+          _ = _ := by
+            congr 1
+            simpa using MeasureTheory.integral_const_mul r M
+      rw [hdecomp]
+      have hMValue : c * ∫ v : ℝ, M v = H0 := by
+        simpa only [c, M] using hH0
+      have hKValue : c * ∫ v : ℝ, K v = A (j + 1) := by
+        simpa only [c, K, M] using hA (j + 1)
+      calc
+        c * (r * (∫ v : ℝ, M v) - ∫ v : ℝ, K v) =
+            r * (c * ∫ v : ℝ, M v) -
+              (c * ∫ v : ℝ, K v) := by ring
+        _ = Q j := by
+          rw [hMValue, hKValue]
+    rw [hsplit]
+    calc
+      c * ((∫ v : ℝ, Base v) +
+          ∑ j ∈ Finset.range N, ∫ v : ℝ, Corr j v) =
+          c * (∫ v : ℝ, Base v) +
+            ∑ j ∈ Finset.range N,
+              c * ∫ v : ℝ, Corr j v := by
+        rw [mul_add, Finset.mul_sum]
+      _ = _ := by
+        rw [hBaseValue]
+        apply congrArg (fun z : ℂ ↦ B + z)
+        apply Finset.sum_congr rfl
+        intro j hj
+        exact hCorrValue j
+  have hleft : Tendsto (fun N : ℕ ↦
+      c * ∫ v : ℝ, boundaryDigammaPartialIntegrand ha f g N v) atTop
+      (𝓝 (c * ∫ v : ℝ,
+        yoshidaClippedCriticalCrossIntegrand a ha f g v)) :=
+    Tendsto.const_mul c
+      (tendsto_integral_boundaryDigammaPartialIntegrand ha f g)
+  have hright : Tendsto (fun N : ℕ ↦
+      B + ∑ j ∈ Finset.range N, Q j) atTop
+      (𝓝 (B + ∑' j : ℕ, Q j)) :=
+    tendsto_const_nhds.add hQ.hasSum.tendsto_sum_nat
+  have hsame : Tendsto (fun N : ℕ ↦
+      c * ∫ v : ℝ, boundaryDigammaPartialIntegrand ha f g N v) atTop
+      (𝓝 (B + ∑' j : ℕ, Q j)) := by
+    apply hright.congr'
+    filter_upwards [] with N
+    exact (hfinite N).symm
+  have hlimit := tendsto_nhds_unique hleft hsame
+  rw [show c = ((1 / (2 * Real.pi) : ℝ) : ℂ) by rfl] at hlimit
+  rw [show B + ∑' j : ℕ, Q j =
+      -(A 0 + (Real.eulerMascheroniConstant : ℂ) * H0 +
+          ∑' j : ℕ,
+            (A (j + 1) - (((j + 1 : ℕ) : ℝ)⁻¹ : ℂ) * H0)) -
+        (Real.log Real.pi : ℂ) * H0 by
+    dsimp only [B, Q]
+    rw [show (∑' j : ℕ,
+        ((((j + 1 : ℕ) : ℝ)⁻¹ : ℂ) * H0 - A (j + 1))) =
+      -(∑' j : ℕ,
+        (A (j + 1) - (((j + 1 : ℕ) : ℝ)⁻¹ : ℂ) * H0)) by
+      rw [← tsum_neg]
+      apply tsum_congr
+      intro j
+      ring]
+    ring] at hlimit
+  exact hlimit
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaEndpointEvenBoundaryProductionBridge
