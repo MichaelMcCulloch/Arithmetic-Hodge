@@ -94,6 +94,24 @@ theorem integral_weight_mul_scaledEndpointCorrelation
       rw [intervalIntegral.integral_const_mul]
       ring
 
+/-- Weighted physical correlations obey the same two-factor scaling law. -/
+theorem integral_weight_mul_realEndpointCorrelation
+    {a : ℝ} (ha : 0 < a) (f F : ℝ → ℝ) :
+    (∫ u : ℝ in 0..2 * a, F u * realEndpointCorrelation a f u) =
+      a ^ 2 * ∫ t : ℝ in 0..2,
+        F (a * t) * centeredEndpointCorrelation (centeredRescale a f) t := by
+  calc
+    (∫ u : ℝ in 0..2 * a, F u * realEndpointCorrelation a f u) =
+        ∫ u : ℝ in 0..2 * a,
+          F u * scaledEndpointCorrelation a (centeredRescale a f) u := by
+      apply intervalIntegral.integral_congr
+      intro u _hu
+      change F u * realEndpointCorrelation a f u =
+        F u * scaledEndpointCorrelation a (centeredRescale a f) u
+      rw [scaledEndpointCorrelation_centeredRescale ha.ne']
+    _ = _ := integral_weight_mul_scaledEndpointCorrelation ha
+      (centeredRescale a f) F
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaEndpointScaledCorrelation
