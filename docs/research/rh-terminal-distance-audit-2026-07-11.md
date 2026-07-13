@@ -2354,3 +2354,35 @@ separate from build logs: a green build is evidence, not a stage transition.
    case, harmonic factor, affine sign, potential remainder, exact moment, and
    scalar square completion.  No module imports a generated enclosure,
    finite-pivot payload, or certificate family.
+
+## `eaab121`, `f84b3ce`, and `7c346a3` — Complete odd `7/5` coercivity
+
+1. **Theorem added.**  The octic multiplier is projected exactly off the
+   centered `P_1/P_3` block, with structural residual orthogonality and Gram
+   identities.  The centered logarithmic form retains exact `H_1,H_3`
+   contributions and the complete `H_5` odd tail.  Their assembly proves
+   `seven_fifths_mul_integral_sq_le_logEnergy_div_four_add_octic`: for every
+   continuous odd finite-energy function,
+   `(7/5)∫w² ≤ D(w)/4 + ∫P_8 w²`.
+2. **Gate hypothesis eliminated.**  The odd logarithmic-plus-potential
+   operator now has a genuine infinite-dimensional structural coercivity
+   theorem at a constant strictly larger than the complete sharp odd endpoint
+   mass loss.  No finite matrix size, tail cutoff, or numerical pivot remains
+   in this sector.
+3. **Assumptions remaining.**  The octic integral must be transported under
+   the full endpoint potential despite its removable endpoint convention, and
+   the logarithmic, potential, regular, hyperbolic, and scalar terms must be
+   packaged into the clean endpoint form.  That clean form then needs an exact
+   bridge to the production clipped Yoshida/Bombieri form.  The even sector is
+   still separate.
+4. **Next make-or-break lemma.**  Upgrade octic coercivity to the full endpoint
+   potential by an almost-everywhere integral comparison, combine it with
+   `K_o^sharp < 7/5`, sharp regular cancellation, and the structural
+   hyperbolic bound, then prove the production-form identity.
+5. **Viability evidence.**  The proof uses only two fixed polynomial modes,
+   a uniform harmonic tail for every odd degree at least five, pointwise
+   octic positivity, and the exact square `∫(δv+r)²` with `δ=53/60`.  Fresh
+   guarded strict compilation, focused build, all-public standard-only axiom
+   audits, forbidden-proof scans, and two independent highest-risk reviews
+   pass.  Both reviews independently rederived the moments, Gram values,
+   Schur margins, cross signs, and final inequality directions.
