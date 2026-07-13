@@ -82,7 +82,7 @@ theorem oddTenTail_clipped_form_value_ge_38_div_25_of_unit_energy
   exact oddTenTail_clipped_form_value_ge_38_div_25 f hf
     (oddTail_pointwise_odd yoshidaA_pos 10 f hf)
     henergy
-    (integrable_normSq_yoshidaCriticalSample yoshidaA_pos
+    (YoshidaSectionSixAnalytic.integrable_normSq_yoshidaCriticalSample yoshidaA_pos
       (f : YoshidaClippedSmooth yoshidaA))
     (integrable_digammaQuarterVerticalRe_mul_normSq_yoshidaCriticalSample
       yoshidaA_pos (f : YoshidaClippedSmooth yoshidaA))
