@@ -25,6 +25,106 @@ def bombieriConjugateTest (f : BombieriTest) : BombieriTest :=
 theorem bombieriConjugateTest_apply (f : BombieriTest) (x : ℝ) :
     bombieriConjugateTest f x = starRingEnd ℂ (f x) := rfl
 
+@[simp]
+theorem bombieriConjugateTest_add (f g : BombieriTest) :
+    bombieriConjugateTest (f + g) =
+      bombieriConjugateTest f + bombieriConjugateTest g := by
+  ext x
+  change starRingEnd ℂ (f x + g x) =
+    starRingEnd ℂ (f x) + starRingEnd ℂ (g x)
+  exact map_add (starRingEnd ℂ) (f x) (g x)
+
+theorem bombieriConjugateTest_smul (c : ℂ) (f : BombieriTest) :
+    bombieriConjugateTest (c • f) =
+      starRingEnd ℂ c • bombieriConjugateTest f := by
+  ext x
+  change starRingEnd ℂ (c * f x) =
+    starRingEnd ℂ c * starRingEnd ℂ (f x)
+  exact map_mul (starRingEnd ℂ) c (f x)
+
+@[simp]
+theorem bombieriConjugateTest_conjugateTest (f : BombieriTest) :
+    bombieriConjugateTest (bombieriConjugateTest f) = f := by
+  ext x
+  simp only [bombieriConjugateTest_apply, starRingEnd_self_apply]
+
+theorem tsupport_bombieriConjugateTest (f : BombieriTest) :
+    tsupport (bombieriConjugateTest f : ℝ → ℂ) = tsupport f := by
+  unfold tsupport Function.support
+  congr 1
+  ext x
+  change star (f x) ≠ 0 ↔ f x ≠ 0
+  exact not_congr star_eq_zero
+
+def bombieriRealPartTest (g : BombieriTest) : BombieriTest :=
+  (1 / 2 : ℂ) • (g + bombieriConjugateTest g)
+
+def bombieriImagPartTest (g : BombieriTest) : BombieriTest :=
+  (Complex.I / 2) • (bombieriConjugateTest g - g)
+
+@[simp]
+theorem bombieriRealPartTest_apply (g : BombieriTest) (x : ℝ) :
+    bombieriRealPartTest g x = ((g x).re : ℂ) := by
+  change (1 / 2 : ℂ) * (g x + starRingEnd ℂ (g x)) = ((g x).re : ℂ)
+  apply Complex.ext
+  · simp
+    ring
+  · simp
+
+@[simp]
+theorem bombieriImagPartTest_apply (g : BombieriTest) (x : ℝ) :
+    bombieriImagPartTest g x = ((g x).im : ℂ) := by
+  change (Complex.I / 2) * (starRingEnd ℂ (g x) - g x) = ((g x).im : ℂ)
+  apply Complex.ext
+  · simp
+    ring
+  · simp
+
+@[simp]
+theorem bombieriConjugateTest_realPartTest (g : BombieriTest) :
+    bombieriConjugateTest (bombieriRealPartTest g) =
+      bombieriRealPartTest g := by
+  ext x
+  simp only [bombieriConjugateTest_apply, bombieriRealPartTest_apply,
+    Complex.conj_ofReal]
+
+@[simp]
+theorem bombieriConjugateTest_imagPartTest (g : BombieriTest) :
+    bombieriConjugateTest (bombieriImagPartTest g) =
+      bombieriImagPartTest g := by
+  ext x
+  simp only [bombieriConjugateTest_apply, bombieriImagPartTest_apply,
+    Complex.conj_ofReal]
+
+theorem bombieriRealPartTest_add_I_smul_imagPartTest (g : BombieriTest) :
+    bombieriRealPartTest g + Complex.I • bombieriImagPartTest g = g := by
+  ext x
+  simpa only [TestFunction.coe_add, Pi.add_apply, TestFunction.coe_smul,
+    Pi.smul_apply, bombieriRealPartTest_apply, bombieriImagPartTest_apply,
+    smul_eq_mul, mul_comm] using Complex.re_add_im (g x)
+
+theorem bombieriRealPartTest_tsupport_subset (g : BombieriTest) :
+    tsupport (bombieriRealPartTest g : ℝ → ℂ) ⊆ tsupport g := by
+  change tsupport (fun x : ℝ ↦
+      (1 / 2 : ℂ) • (g x + bombieriConjugateTest g x)) ⊆ tsupport g
+  exact (tsupport_smul_subset_right
+      (fun _ : ℝ ↦ (1 / 2 : ℂ))
+      (fun x : ℝ ↦ g x + bombieriConjugateTest g x)).trans
+    ((tsupport_add (g : ℝ → ℂ)
+      (bombieriConjugateTest g : ℝ → ℂ)).trans
+        (union_subset Subset.rfl (tsupport_bombieriConjugateTest g).subset))
+
+theorem bombieriImagPartTest_tsupport_subset (g : BombieriTest) :
+    tsupport (bombieriImagPartTest g : ℝ → ℂ) ⊆ tsupport g := by
+  change tsupport (fun x : ℝ ↦
+      (Complex.I / 2) • (bombieriConjugateTest g x - g x)) ⊆ tsupport g
+  exact (tsupport_smul_subset_right
+      (fun _ : ℝ ↦ (Complex.I / 2))
+      (fun x : ℝ ↦ bombieriConjugateTest g x - g x)).trans
+    ((tsupport_sub (bombieriConjugateTest g : ℝ → ℂ)
+      (g : ℝ → ℂ)).trans
+        (union_subset (tsupport_bombieriConjugateTest g).subset Subset.rfl))
+
 theorem BombieriTest.apply_eq_zero_of_nonpos (f : BombieriTest)
     {x : ℝ} (hx : ¬ 0 < x) : f x = 0 := by
   by_contra hne

@@ -3183,3 +3183,43 @@ record their own umbrella-build evidence.
    `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present and
    unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## After `d75a54c` — Conjugation projections for parity realification
+
+1. **Theorems added.**  Coefficient conjugation on `BombieriTest` now
+   distributes over addition, conjugates scalar coefficients, is involutive,
+   and preserves topological support exactly.  The canonical tests
+   `bombieriRealPartTest g = (1/2) • (g + conj g)` and
+   `bombieriImagPartTest g = (I/2) • (conj g - g)` evaluate pointwise to the
+   real and imaginary parts of `g`, are both fixed by coefficient conjugation,
+   reconstruct `g` exactly as `u + I • v`, and have support contained in that
+   of `g`.
+2. **Gate hypothesis eliminated.**  The exact folded determinant can now be
+   realified using canonical conjugation-fixed diagonal channels without
+   choosing pointwise representatives, enlarging support, or assuming a
+   positivity statement.  This is structural projection algebra only: it
+   proves neither the determinant inequality nor a strict reverse.
+3. **Assumptions remaining.**  Structural sesquilinearity and conjugate-swap
+   identities for the critical cross-correlation are not yet exported, so the
+   self-correlation has not yet been expanded into its two diagonal real
+   channels and one alternating mixed channel.  The parity determinant bound,
+   arbitrary-support block-Toeplitz control, the all-test Bombieri criterion,
+   and the final RH transport all remain open.  RH is therefore neither proved
+   nor falsified at this checkpoint.
+4. **Next make-or-break lemma.**  Prove the exact add-left, add-right,
+   conjugate-linear left-scalar, linear right-scalar, and negative-shift
+   conjugate-swap identities for the existing critical cross-correlation.
+   Then use them with these projections to rewrite the same-seed determinant
+   exactly as two real diagonal channels coupled by one alternating real
+   bilinear channel, without inserting a stronger row contraction.
+5. **Viability and integrity evidence.**  The genuine missing-name probe
+   failed on both projection names before implementation.  Focused and
+   umbrella warning-as-error checks pass, and the canonical guarded full build
+   passes all 8,611 jobs.  All eleven new public theorems audit exactly to
+   `propext`, `Classical.choice`, and `Quot.sound`.  Their recursive project
+   closure has 22 tracked files and 32 import edges, with no missing,
+   untracked, cyclic, quarantined-name, or forbidden-proof dependency.  All
+   159 archived artifacts remain byte-identical to
+   `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present and
+   unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
