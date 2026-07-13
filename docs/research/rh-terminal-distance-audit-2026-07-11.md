@@ -2415,3 +2415,33 @@ separate from build logs: a green build is evidence, not a stage transition.
    independent reviews pass.  The full-potential comparison excludes the two
    endpoints almost everywhere, and the core assembly uses only scalar
    transitivity with the exact structural margin below `7/5`.
+
+## `2d44363` — Clean odd endpoint form is nonnegative
+
+1. **Theorem added.**  `yoshidaEndpointOddCleanQuadratic_nonneg` combines the
+   core with the actual endpoint components
+   `D/4 + V - κE - a Re R + H`, where
+   `a = log 2 / 2` and `κ = γ + log (π log 2)`.  Pointwise oddness proves the
+   complexified function has zero centered mean, enabling the sharp regular
+   estimate; the hyperbolic lower bound supplies the remaining rank-one loss.
+2. **Gate hypothesis eliminated.**  Odd endpoint positivity is no longer only
+   a scalar-loss surrogate.  The exact clean logarithmic, potential, scalar,
+   regular-kernel, and hyperbolic expression is structurally nonnegative with
+   the production signs and scales.
+3. **Assumptions remaining.**  The equality
+   `Re B_clipped = a * clean` is not yet a Lean theorem.  It requires a general
+   correlation fold and change of variables from the production clipped
+   pairing, followed by real/imaginary recombination for complex odd source
+   functions.  Prime-translation vanishing and the even sector remain
+   downstream obligations.
+4. **Next make-or-break lemma.**  Prove the exact real-space identity on an
+   arbitrary smooth real odd clipped function: singular correlation equals
+   `a(D/4 + V + log 2 E)`, the regular correlation equals `a^2 Re R`, and the
+   polar term equals `aH`.  Assemble these with the existing renormalized
+   scalar identity, then split a complex odd function into real and imaginary
+   parts.
+5. **Viability evidence.**  Fresh strict compilation, the focused 3,386-job
+   build, standard-only axiom audit, forbidden/dependency scans, and two
+   independent high-risk reviews pass.  Both reviews rederived the odd mean,
+   endpoint-null measure conversions, `a/32 = log 2/64`, every sign, and the
+   final sharp-loss expansion.
