@@ -4,6 +4,9 @@ This inventory records the 159 untracked root-level Lean research artifacts
 that predated the active compact-support positivity task.  The corresponding
 machine-readable table is
 [`legacy-lean-inventory-2026-07-11.tsv`](legacy-lean-inventory-2026-07-11.tsv).
+A current compile-and-content follow-up, including the later 24-file Yoshida
+fallback bundle, is recorded in
+[`restored-artifact-reinspection-2026-07-13.md`](restored-artifact-reinspection-2026-07-13.md).
 
 ## Summary
 

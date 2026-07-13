@@ -73,10 +73,11 @@ research program.
   reopen the obligation. Closed scalar arithmetic after a structural
   reduction is acceptable only when it does not encode an enumerated family
   of cases or a discovered numeric certificate.
-- Preserve the 159 inventoried legacy Lean artifacts, their archive ref, and
-  the separately identified untracked fallback modules byte-for-byte: do not
-  edit, rename, move, stage, or delete them unless the user explicitly changes
-  this directive.
+- Preserve superseded research evidence in the remote archive tags
+  `archive/legacy-lean-2026-07-11` and
+  `archive/yoshida-finite-fallbacks-2026-07-12`; redundant untracked working
+  copies need not be retained.  Never import the archived finite mode tables,
+  payloads, or pivot replays into the terminal structural proof path.
 
 Firm ground means a structural-proof dependency audit first, followed by strict
 compilation, a full `lake build`, forbidden-proof and naming scans, axiom
