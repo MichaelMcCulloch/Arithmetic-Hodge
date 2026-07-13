@@ -1,4 +1,3 @@
-import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedAssembly
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenResidualProduction
 
 set_option autoImplicit false
