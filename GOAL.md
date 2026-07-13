@@ -6,7 +6,7 @@ lives in the terminal-distance audit linked under **Current directive**.
 
 ## Terminal objective
 
-Continue autonomously in `/home/michael/Development/Arithmetic-Hodge` until the
+Continue autonomously in `/workspaces/Arithmetic-Hodge` until the
 repository contains one of the following fully verified Lean artifacts:
 
 1. an axiom-free theorem proving the repository's canonical
@@ -240,45 +240,64 @@ change the mathematical mechanism or formalize the obstruction.
 
 ## Current directive
 
-Gate 0 is reopened by the structural-proof requirement. The results formerly
-treated as closed at `1ea80bc` and `a038238`, together with all full-pivot,
-sparse-dominance, target-enclosure, and generated block modules, are
-quarantined evidence until a transitive dependency audit proves that no
-computational certificate supports them. They are not admissible premises for
-the terminal theorem.
+Gate 3 is the active gate. Gates 0--2 are structurally closed: the endpoint
+continuous-operator route now proves the production form nonnegative on the
+complete endpoint periodic core, and
+`bombieriFunctional_quadratic_nonneg_of_ratio_le_two` transports this to every
+Bombieri test with positive support endpoints and support ratio at most two.
+The theorem's audited forward dependency closure contains no finite mode
+table, target enclosure, pivot replay, generated certificate, or other
+computational proof mechanism. The former finite odd/even results and all
+full-pivot, sparse-dominance, target-enclosure, and generated block modules
+remain quarantined evidence and are not admissible terminal-path premises.
 
-The current critical path is:
-
-Primary-source audit fixes the endpoint obligation sharply. The structural
-\`\`sufficiently small support'' theorems stop strictly before
-`a = log 2 / 2`; published results at the endpoint return to finite spectral
-or matrix computations and are therefore evidence, not admissible premises.
-Suzuki's scaled real-space identity reduces the endpoint to a continuous
-operator inequality on `[-1, 1]`: the fractional logarithmic energy
+The current critical path is the first exact adjacent-window extension. For a
+ratio-at-most-two seed `g`, normalized factor-two dilation `D₂g`, and scalar
+`c`, the production functional is the Hermitian scalar family
 
 ```text
-L(w) = (1/4) integral integral |w(x)-w(y)|^2 / |x-y|
-       - (1/2) integral |w(x)|^2 log(1-x^2)
+Re F(g + c D₂g) = (1 + |c|²) A(g) + 2 Re(c Z(g)),
+A(g) = Re F(g),
+Z(g) = factorTwoGlobalCrossSymbol(g).
 ```
 
-minus the smooth kernel perturbation
-`a * Re integral integral r''(a*(x-y))*w(y)*conj(w(x))` must dominate
-`(log(2*pi) + EulerGamma - log(2/log 2)) * ||w||_2^2`, with
-`a = log 2 / 2`, on the exact production domain. The prime-translation term
-has zero-length overlap at this endpoint. A proof of this inequality, or a
-structural counterexample to it, is the current make-or-break lemma; replacing
-it by a discretized spectral calculation is not progress under this program.
+Consequently this entire family is nonnegative exactly when
+`normSq Z(g) ≤ A(g)^2`; a strict reverse supplies an explicit negative
+Bombieri test. Both sides are now expressed structurally in the same folded
+self-correlation coordinates. Writing `C(s)` for the critical
+self-correlation, `L = log 2`, and `h` for
+`factorTwoAdjacentSmoothKernel`, the diagonal is
 
-1. express the production clipped quadratic form on arbitrary finite Fourier
-   combinations directly through its real-space correlation or spectral
-   operator, without expanding a finite matrix;
-1. prove a dimension-free coercive/positive decomposition, or isolate a
-   concrete structural obstruction to such a decomposition;
-1. derive odd, even, tail, coupling, and parity results as restrictions or
-   Schur complements of that one operator theorem rather than from certified
-   low blocks; and
-1. audit the resulting theorem's complete import closure before it is restored
-   to firm ground and advanced toward the Bombieri/Weil all-support gate.
+```text
+A(g) = integral_[0,L] (2 h(s) Re C(s) + Re C(0)/s) ds
+       - (log L + EulerGamma + log 2 + log pi) Re C(0),
+```
+
+while `Re Z(g)` and `Im Z(g)` use respectively the weights
+`h(L+s)+h(L-s)` and `h(L+s)-h(L-s)`, together with the exact prime atoms at
+`0` and `log(3/2)`. The endpoint atom at `L` vanishes structurally.
+
+The tempting separation of an indefinite core from the positive digamma
+residual is eliminated: `mellinBumpSequence 999` is an explicit admissible
+ratio-two seed with negative core diagonal, so a triangle bound on the core
+cannot prove the determinant. The complete residual, polar, smooth-kernel,
+and prime contributions must remain coupled.
+
+The current make-or-break lemma is to prove or refute
+
+```text
+normSq (factorTwoGlobalCrossSymbol g)
+  ≤ (Re (bombieriFunctional (bombieriQuadraticTest g)))^2
+```
+
+for every ratio-at-most-two seed, using the exact folded parity channels and
+physical diagonal. A proposed `S^2 + K^2 ≤ I` row contraction is only a
+candidate strengthening: derive its positive factorization or kill it with a
+structural counterexample before depending on it. If the same-seed inequality
+holds, apply the existing determinant theorem immediately and then attack the
+finite/infinite block-Toeplitz control required for arbitrary logarithmic
+window chains. If it fails strictly, package the seed and explicit scalar as a
+negative Bombieri witness and discharge the Gate 4 criterion transport.
 
 The live theorem-by-theorem position and next make-or-break lemma are recorded
 in `docs/research/rh-terminal-distance-audit-2026-07-11.md`; that audit, rather

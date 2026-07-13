@@ -4,7 +4,8 @@ This log records how each coherent increment changes the distance to the
 terminal proof-or-falsification objective in `GOAL.md`.  It is deliberately
 separate from build logs: a green build is evidence, not a stage transition.
 
-Latest audited umbrella integration: `4f36ac6` (2026-07-13).
+Earlier audited umbrella integration: `4f36ac6` (2026-07-13). Later entries
+record their own umbrella-build evidence.
 
 ## `519bb2e` — Yoshida odd comparison reserve
 
@@ -3099,3 +3100,50 @@ Latest audited umbrella integration: `4f36ac6` (2026-07-13).
    root umbrella, the canonical guarded full build passes all 8,607 jobs.  The
    protected 159 legacy artifacts and 24 fallback modules remain unmodified
    and untracked.
+
+## `cdfde51` through `79df9f0` — Exact factor-two physical diagonal
+
+1. **Theorems added.**  The ratio-two self-correlation is smooth, supported
+   on `[-log 2, log 2]`, and zero at both endpoints.  Its complete diagonal
+   Cauchy series is folded and resummed through the removable regularized
+   geometric kernel, while the polar pair is folded onto the same positive
+   half-interval.  These identities assemble into
+   `bombieriFunctional_quadratic_re_eq_factorTwoDiagonalPhysical` and its
+   endpoint-retaining variant: the actual production diagonal is one exact
+   integral of `factorTwoDiagonalPhysicalIntegrand` minus the exact mass
+   constant, with the sole diagonal prime atom displayed and then killed by
+   structural endpoint vanishing.
+2. **Gate hypothesis eliminated.**  Gate 3 no longer lacks a physical formula
+   for the diagonal in the coordinates used by the adjacent cross symbol.
+   Together with `factorTwoGlobalCrossSymbol_re_eq_parity` and
+   `factorTwoGlobalCrossSymbol_im_eq_parity`, both sides of the exact
+   same-seed determinant now live on the folded self-correlation interval.
+   No harmonic-subtracted infinite series, spectral truncation, or finite
+   matrix remains in the statement to be compared.
+3. **Assumptions remaining.**  The determinant inequality itself is not
+   proved or refuted.  The isolated-core triangle route remains invalid, so
+   the full residual, polar, smooth-kernel, mass, and two prime channels must
+   remain coupled.  Even a same-seed determinant proof covers only two
+   adjacent logarithmic cells; arbitrary support still requires structural
+   block-Toeplitz or equivalent long-range control, followed by the all-test
+   Bombieri and RH criterion gates.
+4. **Next make-or-break lemma.**  Let `D` be the endpoint-retaining physical
+   diagonal and let `R` and `I` be the exact symmetric and antisymmetric folded
+   cross channels.  First expose the kernel-checked identity
+   `normSq factorTwoGlobalCrossSymbol = R^2 + I^2` and the determinant gap
+   `A^2 - normSq Z = D^2 - R^2 - I^2`.  Then prove structurally
+   `R^2 + I^2 <= D^2`, retaining both prime atoms, or prove its strict reverse
+   for an explicit admissible seed.  Any stronger row contraction must be
+   derived or structurally falsified before use.
+5. **Viability and integrity evidence.**  The diagonal module and root
+   umbrella pass warning-as-error compilation, and the canonical guarded full
+   build passes all 8,610 jobs.  The recursive diagonal dependency closure has
+   257 tracked project files and 450 import edges, with no missing, untracked,
+   cyclic, quarantined-name, or forbidden-proof dependency.  Four public
+   support, resummation, diagonal, and endpoint-retaining theorems audit
+   exactly to `propext`, `Classical.choice`, and `Quot.sound`.  A source scan
+   finds no `sorry`, custom axiom, `unsafe`, or `native_decide`.  All 159
+   inventoried legacy artifacts remain byte-identical to
+   `refs/archive/legacy-lean-2026-07-11`; all 24 documented fallback modules
+   remain present and unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
