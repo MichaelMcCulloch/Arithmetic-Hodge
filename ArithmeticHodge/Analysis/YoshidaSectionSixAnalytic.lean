@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaClippedLowModes
+import ArithmeticHodge.Analysis.YoshidaClippedEnergyStructural
 import ArithmeticHodge.Analysis.YoshidaCoercivityNumerics
 
 set_option autoImplicit false
@@ -175,26 +176,6 @@ theorem integral_sin_sq_mul_symmetric
   rw [show a * T * 2 = 2 * (a * T) by ring, Real.sin_two_mul]
   ring
 
-/-- Continuity of the clipped critical sample as a Fourier transform of a
-compactly supported integrable function. -/
-theorem continuous_yoshidaCriticalSample
-    {a : ℝ} (ha : 0 < a) (f : YoshidaClippedSmooth a) :
-    Continuous (fun v : ℝ ↦ yoshidaCriticalSampleLinear a ha v f) := by
-  have hfint : Integrable (f : ℝ → ℂ) :=
-    f.property.1.continuousOn.integrableOn_Icc
-      |>.integrable_of_forall_notMem_eq_zero
-        (fun x hx ↦ yoshidaClippedSmooth_eq_zero_outside f hx)
-  have hfourier : Continuous (FourierTransform.fourier (f : ℝ → ℂ)) :=
-    VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar
-      continuous_inner hfint
-  have heq : (fun v : ℝ ↦ yoshidaCriticalSampleLinear a ha v f) =
-      fun v : ℝ ↦ FourierTransform.fourier (f : ℝ → ℂ)
-        (v / (2 * Real.pi)) := by
-    funext v
-    exact yoshidaCriticalSample_eq_fourier ha v f
-  rw [heq]
-  exact hfourier.comp (by fun_prop)
-
 /-- Critical-sample energy on the symmetric interval `[-T,T]`. -/
 def clippedCentralEnergy
     (a : ℝ) (ha : 0 < a) (f : YoshidaClippedSmooth a) (T : ℝ) : ℝ :=
@@ -251,89 +232,6 @@ theorem paired_central_energy_estimate6_6
     _ = a * C / (2 * Real.pi ^ 3) *
         (T - Real.sin (2 * a * T) / (2 * a)) * W := by
       field_simp [Real.pi_ne_zero]
-
-/-- Real polar contribution to the diagonal clipped critical form. -/
-def clippedPolarEnergy
-    (a : ℝ) (ha : 0 < a) (f : YoshidaClippedSmooth a) : ℝ :=
-  2 * (star (yoshidaPositivePolarLinear a ha f) *
-    yoshidaNegativePolarLinear a ha f).re
-
-/-- Real archimedean contribution, including the `-log π` kernel term. -/
-def clippedArchEnergy
-    (a : ℝ) (ha : 0 < a) (f : YoshidaClippedSmooth a) : ℝ :=
-  (1 / (2 * Real.pi)) * ∫ v : ℝ,
-    ((Complex.digamma
-      ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re - Real.log Real.pi) *
-      Complex.normSq (yoshidaCriticalSampleLinear a ha v f)
-
-/-- Critical-line spectral mass in the repository normalization. -/
-def clippedSpectralMass
-    (a : ℝ) (ha : 0 < a) (f : YoshidaClippedSmooth a) : ℝ :=
-  (1 / (2 * Real.pi)) * ∫ v : ℝ,
-    Complex.normSq (yoshidaCriticalSampleLinear a ha v f)
-
-/-- Digamma-weighted critical-line energy before subtracting `log π`. -/
-def clippedDigammaEnergy
-    (a : ℝ) (ha : 0 < a) (f : YoshidaClippedSmooth a) : ℝ :=
-  (1 / (2 * Real.pi)) * ∫ v : ℝ,
-    (Complex.digamma
-      ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re *
-      Complex.normSq (yoshidaCriticalSampleLinear a ha v f)
-
-/-- The real diagonal value of the current clipped local critical form. -/
-def clippedCriticalFormValue
-    (a : ℝ) (ha : 0 < a) (f : YoshidaClippedSmooth a) : ℝ :=
-  (yoshidaClippedLocalCriticalForm a ha f f).re
-
-/-- On the diagonal, the clipped critical cross integrand is the coercion of
-the real Bombieri kernel times the sample norm square. -/
-theorem criticalCrossIntegrand_self_eq_ofReal
-    {a : ℝ} (ha : 0 < a) (f : YoshidaClippedSmooth a) (v : ℝ) :
-    yoshidaClippedCriticalCrossIntegrand a ha f f v =
-      ((((Complex.digamma
-        ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re - Real.log Real.pi) *
-        Complex.normSq (yoshidaCriticalSampleLinear a ha v f) : ℝ) : ℂ) := by
-  rw [yoshidaClippedCriticalCrossIntegrand,
-    MultiplicativeWeil.bombieriLocalCriticalKernel]
-  let s := yoshidaCriticalSampleLinear a ha v f
-  let k := (Complex.digamma
-    ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re - Real.log Real.pi
-  have hnorm : star s * s = ((Complex.normSq s : ℝ) : ℂ) := by
-    simpa only [starRingEnd_apply] using
-      (Complex.normSq_eq_conj_mul_self (z := s)).symm
-  change (k : ℂ) * star s * s = ((k * Complex.normSq s : ℝ) : ℂ)
-  calc
-    (k : ℂ) * star s * s = (k : ℂ) * (star s * s) := by ring
-    _ = (k : ℂ) * (Complex.normSq s : ℂ) := by rw [hnorm]
-    _ = ((k * Complex.normSq s : ℝ) : ℂ) := by push_cast; ring
-
-/-- Exact real decomposition of the current clipped local critical form. -/
-theorem clippedCriticalFormValue_eq_polar_add_arch
-    {a : ℝ} (ha : 0 < a) (f : YoshidaClippedSmooth a) :
-    clippedCriticalFormValue a ha f =
-      clippedPolarEnergy a ha f + clippedArchEnergy a ha f := by
-  unfold clippedCriticalFormValue clippedPolarEnergy clippedArchEnergy
-  rw [yoshidaClippedLocalCriticalForm_apply,
-    yoshidaClippedLocalCriticalPairing]
-  have hint :
-      (∫ v : ℝ, yoshidaClippedCriticalCrossIntegrand a ha f f v) =
-        (((∫ v : ℝ,
-          ((Complex.digamma
-            ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re - Real.log Real.pi) *
-            Complex.normSq (yoshidaCriticalSampleLinear a ha v f) : ℝ)) : ℂ) := by
-    calc
-      (∫ v : ℝ, yoshidaClippedCriticalCrossIntegrand a ha f f v) =
-          ∫ v : ℝ,
-            ((((Complex.digamma
-              ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re - Real.log Real.pi) *
-              Complex.normSq (yoshidaCriticalSampleLinear a ha v f) : ℝ) : ℂ) := by
-        apply integral_congr_ae
-        filter_upwards [] with v
-        exact criticalCrossIntegrand_self_eq_ofReal ha f v
-      _ = _ := integral_complex_ofReal
-  rw [hint]
-  simp [Complex.mul_re, Complex.mul_im]
-  ring
 
 /-- When the two real terms are integrable, the archimedean energy is the
 digamma energy minus `log π` times spectral mass. -/

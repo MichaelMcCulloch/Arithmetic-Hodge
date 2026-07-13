@@ -1,4 +1,4 @@
-import ArithmeticHodge.Analysis.YoshidaEndpointOddCleanPositive
+import ArithmeticHodge.Analysis.YoshidaEndpointCleanQuadratic
 
 set_option autoImplicit false
 

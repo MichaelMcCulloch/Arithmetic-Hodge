@@ -1,10 +1,11 @@
 import ArithmeticHodge.Analysis.YoshidaDigammaDistribution
+import ArithmeticHodge.Analysis.YoshidaCauchyPairing
+import ArithmeticHodge.Analysis.YoshidaClippedEnergyStructural
 import ArithmeticHodge.Analysis.YoshidaEndpointPhysicalRealQuadratic
 import ArithmeticHodge.Analysis.YoshidaEndpointPhysicalRegularScaling
-import ArithmeticHodge.Analysis.YoshidaOddCorrelationIntegrability
-import ArithmeticHodge.Analysis.YoshidaOddSpectralMassBridge
 import ArithmeticHodge.Analysis.YoshidaPointwiseOddPeriodicCore
 import ArithmeticHodge.Analysis.YoshidaShiftedGeometricSeries
+import ArithmeticHodge.Analysis.YoshidaStructuralKernelIntegrability
 import Mathlib.Analysis.Fourier.FourierTransformDeriv
 
 set_option autoImplicit false
@@ -23,12 +24,11 @@ open YoshidaEndpointPhysicalRealQuadratic
 open YoshidaEndpointRegularCorrelation
 open YoshidaEndpointScaledCorrelation
 open YoshidaRegularKernelBound
-open YoshidaOddCorrelationIntegrability
-open YoshidaOddSpectralMassBridge
 open YoshidaPointwiseOddPeriodicCore
 open YoshidaRenormalizedGeometricKernel
 open YoshidaSectionSixAnalytic
 open YoshidaShiftedGeometricSeries
+open YoshidaStructuralKernelIntegrability
 
 noncomputable section
 

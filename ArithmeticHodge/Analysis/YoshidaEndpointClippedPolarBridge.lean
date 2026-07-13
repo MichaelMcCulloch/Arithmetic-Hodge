@@ -1,5 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaEndpointPolarScaling
-import ArithmeticHodge.Analysis.YoshidaSectionSixAnalytic
+import ArithmeticHodge.Analysis.YoshidaClippedEnergyStructural
 
 set_option autoImplicit false
 

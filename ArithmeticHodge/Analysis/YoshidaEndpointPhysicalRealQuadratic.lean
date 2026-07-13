@@ -1,4 +1,4 @@
-import ArithmeticHodge.Analysis.YoshidaEndpointOddCleanPositive
+import ArithmeticHodge.Analysis.YoshidaEndpointCleanQuadratic
 import ArithmeticHodge.Analysis.YoshidaEndpointPhysicalRegularScaling
 import ArithmeticHodge.Analysis.YoshidaEndpointPhysicalSingularIdentity
 import ArithmeticHodge.Analysis.YoshidaEndpointPolarScaling
