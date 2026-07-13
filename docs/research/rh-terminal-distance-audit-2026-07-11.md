@@ -3147,3 +3147,39 @@ record their own umbrella-build evidence.
    `refs/archive/legacy-lean-2026-07-11`; all 24 documented fallback modules
    remain present and unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## After `ea70a82` — Exact folded factor-two determinant merge node
+
+1. **Theorems added.**  The exact cross norm is now exposed as
+   `R^2 + I^2`, where `R` and `I` are the existing symmetric-real and
+   antisymmetric-imaginary folded parity channels.  The same module rewrites
+   the determinant gap as `D^2 - R^2 - I^2`, with `D` the endpoint-retaining
+   physical diagonal, and gives exact equivalences between `R^2 + I^2 ≤ D^2`
+   and universal two-bump nonnegativity, and between its strict reverse and
+   the existence of a negative two-bump Bombieri test.
+2. **Gate hypothesis eliminated.**  Gate 3 no longer requires translating an
+   abstract complex norm or determinant condition into physical coordinates:
+   the same-seed positive and strict-negative alternatives are stated directly
+   in the folded parity variables, with all mass and prime terms displayed.
+3. **Assumptions remaining.**  The inequality `R^2 + I^2 ≤ D^2` is not proved
+   or refuted, and no negative seed is produced.  A proof would still cover
+   only the two adjacent logarithmic cells generated from one seed; arbitrary
+   support requires long-range block-Toeplitz or equivalent prime-correlation
+   control.  Consequently RH is neither proved nor falsified here.
+4. **Next make-or-break lemma.**  Prove the exact folded inequality
+   `R^2 + I^2 ≤ D^2` structurally for every ratio-at-most-two seed, retaining
+   the endpoint atom and both cross prime atoms, or prove its strict reverse
+   for an explicit admissible seed and invoke the exported negative-witness
+   equivalence immediately.
+5. **Viability and integrity evidence.**  The missing-module probe failed for
+   the expected absent `.olean`; focused and umbrella warning-as-error checks
+   then passed, and the canonical full build passed all 8,611 jobs.  All four
+   public theorems audit exactly to `propext`, `Classical.choice`, and
+   `Quot.sound`.  Their recursive project closure has 259 files and 455 import
+   edges, with no missing, untracked, cyclic, quarantined-name, or forbidden
+   proof dependency.  Independent source review passed every sign, square,
+   inequality orientation, endpoint coefficient, and no-overclaim check.  All
+   159 archived artifacts are byte-identical to
+   `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present and
+   unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
