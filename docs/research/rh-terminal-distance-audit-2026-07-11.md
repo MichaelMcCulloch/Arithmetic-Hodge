@@ -2253,7 +2253,7 @@ separate from build logs: a green build is evidence, not a stage transition.
    `7/32 ≤ yoshidaRegularKernel t` for every `0 ≤ t ≤ log 2`.  Together with
    the existing upper bound, the endpoint kernel lies in `[7/32,1/4]`.
 2. **Gate hypothesis eliminated.**  Mean-zero cancellation can now subtract
-   the constant kernel `1/4` and retain a uniform residual radius `1/32`,
+   the midpoint kernel `15/64` and retain a uniform residual radius `1/64`,
    rather than using either the global radius `1/4` or the provisional
    centered radius `1/8`.
 3. **Assumptions remaining.**  The sharpened pointwise range still has to be
@@ -2262,7 +2262,7 @@ separate from build logs: a green build is evidence, not a stage transition.
    logarithmic/potential form; low/tail coupling and the production bridge
    remain open.
 4. **Next make-or-break lemma.**  Prove the sharp mean-zero regular estimate
-   `‖R(f)‖ ≤ (1/16)‖f‖₂²`, then test whether the complete odd endpoint form
+   `‖R(f)‖ ≤ (1/32)‖f‖₂²`, then test whether the complete odd endpoint form
    admits a structural ground-state or uniform low/tail proof at the improved
    mass constant.
 5. **Viability evidence.**  The lower bound follows from a two-term general
@@ -2271,3 +2271,28 @@ separate from build logs: a green build is evidence, not a stage transition.
    the rational reduction are exact.  Guarded strict compilation, focused
    build, standard-only axiom audit, forbidden-proof scan, and independent
    high-risk review all pass.
+
+## `83eea89` — Optimal mean-zero Schur consequence of the sharp range
+
+1. **Theorem added.**
+   `norm_yoshidaEndpointRegularQuadratic_le_one_thirty_second_of_integral_eq_zero`
+   proves `‖R(f)‖ ≤ (1/32)∫|f|²` for every continuous complex function with
+   zero centered mean.
+2. **Gate hypothesis eliminated.**  On the odd endpoint sector the scaled
+   regular loss falls from `log 2 / 4` to `log 2 / 64`.  The improvement is
+   dimension-free and uses exact constant-kernel cancellation, not a modal
+   truncation.
+3. **Assumptions remaining.**  The endpoint logarithmic energy and full
+   potential still need a uniform structural assembly at the new total mass
+   constant.  The exact odd low/tail coupling and production-form bridge are
+   not yet proved.
+4. **Next make-or-break lemma.**  Prove the sharp odd mass loss is below a
+   rational coercivity target, then establish that target for the complete
+   odd logarithmic-plus-potential operator by a fixed symbolic low block and
+   a genuinely infinite harmonic tail, or by an equivalent ground-state
+   identity.
+5. **Viability evidence.**  The proof centers the exact range
+   `[7/32,1/4]` at `15/64`, factors the removed constant as a product of mean
+   integrals, and applies Hölder on an interval of measure two.  Fresh guarded
+   strict compilation, focused build, standard-only axiom audit,
+   forbidden-proof scan, and independent high-risk review all pass.
