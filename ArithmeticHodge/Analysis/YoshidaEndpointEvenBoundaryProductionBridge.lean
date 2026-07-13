@@ -948,7 +948,7 @@ private theorem normalized_boundaryCriticalCross_eq_cauchySeries
 
 /-! ## Real positive-half geometric evaluation -/
 
-private def boundaryArchCorrelation (L : ℝ) (C : ℝ → ℝ) : ℝ :=
+def boundaryArchCorrelation (L : ℝ) (C : ℝ → ℝ) : ℝ :=
   (∫ u : ℝ in 0..L,
       (C 0 - C u) / u - 2 * yoshidaRegularKernel u * C u) -
     (Real.log L + Real.eulerMascheroniConstant + Real.log 2 +
@@ -1268,7 +1268,7 @@ private theorem crossCorrelation_eq_real_overlap
   rw [hf_real x hxf, hg_real (u + x) hux]
   simp
 
-private def constantEndpointCorrelation (a : ℝ) (u : ℝ) : ℝ :=
+def constantEndpointCorrelation (a : ℝ) (u : ℝ) : ℝ :=
   2 * a - u
 
 private theorem continuous_constantEndpointCorrelation (a : ℝ) :
@@ -1387,7 +1387,7 @@ private theorem continuous_crossCorrelation_one_one (a : ℝ) :
   exact Complex.continuous_ofReal.comp
     (continuous_constantCorrelationExtension a)
 
-private def residualEndpointCorrelation {a : ℝ}
+def residualEndpointCorrelation {a : ℝ}
     (r : YoshidaClippedSmooth a) (u : ℝ) : ℝ :=
   ∫ x : ℝ in -a..a - u, (r x).re
 
@@ -1475,6 +1475,238 @@ private theorem exists_continuous_residualEndpointSlope
     dsimp only [Q]
     field_simp [hu]
     ring
+
+private theorem continuous_crossCorrelation_one_residual
+    {a : ℝ} (r : YoshidaClippedSmooth a)
+    (hrcont : Continuous (r : ℝ → ℂ)) :
+    Continuous (crossCorrelation
+      ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)
+      (r : ℝ → ℂ)) := by
+  rw [crossCorrelation]
+  have honeInt : Integrable
+      ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ) :=
+    clipped_integrable (yoshidaClippedOne a)
+  have hstarInt : Integrable (starReflection
+      ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)) := by
+    have hneg : Integrable (fun x : ℝ ↦
+        (yoshidaClippedOne a : YoshidaClippedSmooth a) (-x)) :=
+      honeInt.comp_neg
+    simpa only [starReflection, RCLike.star_def] using
+      Complex.conjCLE.toContinuousLinearMap.integrable_comp hneg
+  exact (clipped_hasCompactSupport r).continuous_convolution_right
+    (ContinuousLinearMap.mul ℂ ℂ) hstarInt.locallyIntegrable hrcont
+
+private theorem crossCorrelation_one_residual_even
+    {a : ℝ} (r : YoshidaClippedSmooth a)
+    (hrEven : Function.Even (r : ℝ → ℂ)) : Function.Even
+      (crossCorrelation
+        ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)
+        (r : ℝ → ℂ)) :=
+  crossCorrelation_even_of_real_even
+    (yoshidaClippedOne_real a) (periodicCoreOne_even a) hrEven
+
+private theorem crossCorrelation_one_residual_match
+    {a u : ℝ} (r : YoshidaClippedSmooth a)
+    (hr_real : ∀ x ∈ Icc (-a) a, r x = ((r x).re : ℂ))
+    (hrEven : Function.Even (r : ℝ → ℂ))
+    (hu : u ∈ Icc (0 : ℝ) (2 * a)) :
+    crossCorrelation
+        ((yoshidaClippedOne a : YoshidaClippedSmooth a) : ℝ → ℂ)
+        (r : ℝ → ℂ) u = (residualEndpointCorrelation r u : ℂ) := by
+  rw [crossCorrelation_eq_real_overlap
+    (yoshidaClippedOne a) r
+    (fun x hx ↦ by
+      change (if x ∈ Icc (-a) a then (1 : ℂ) else 0) =
+        (((if x ∈ Icc (-a) a then (1 : ℂ) else 0)).re : ℂ)
+      rw [if_pos hx]
+      simp)
+    hr_real hu.1 hu.2]
+  have hle : -a ≤ a - u := by linarith [hu.2]
+  let q : ℝ → ℝ := fun x ↦ (r x).re
+  have hfirst :
+      (∫ x : ℝ in -a..a - u,
+        ((yoshidaClippedOne a : YoshidaClippedSmooth a) x).re *
+          (r (u + x)).re) =
+        ∫ x : ℝ in -a..a - u, q (u + x) := by
+    apply intervalIntegral.integral_congr
+    intro x hx
+    have hx' : x ∈ Icc (-a) (a - u) := by
+      simpa only [uIcc_of_le hle] using hx
+    have hxf : x ∈ Icc (-a) a :=
+      ⟨hx'.1, by linarith [hx'.2, hu.1]⟩
+    change ((yoshidaClippedOne a : YoshidaClippedSmooth a) x).re *
+        (r (u + x)).re = q (u + x)
+    rw [show (yoshidaClippedOne a : YoshidaClippedSmooth a) x = 1 by
+      change (if x ∈ Icc (-a) a then (1 : ℂ) else 0) = 1
+      rw [if_pos hxf]]
+    simp [q]
+  have hshift :
+      (∫ x : ℝ in -a..a - u, q (u + x)) =
+        ∫ x : ℝ in -a + u..a, q x := by
+    rw [show (fun x : ℝ ↦ q (u + x)) = fun x ↦ q (x + u) by
+      funext x
+      rw [add_comm]]
+    rw [intervalIntegral.integral_comp_add_right]
+    congr 1
+    all_goals ring
+  have hneg :
+      (∫ x : ℝ in -a + u..a, q x) =
+        ∫ x : ℝ in -a..a - u, q (-x) := by
+    rw [intervalIntegral.integral_comp_neg]
+    congr 1
+    all_goals ring
+  have heven :
+      (∫ x : ℝ in -a..a - u, q (-x)) =
+        ∫ x : ℝ in -a..a - u, q x := by
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    dsimp only [q]
+    exact congrArg Complex.re (hrEven x)
+  rw [hfirst, hshift, hneg, heven]
+  rfl
+
+/-- Structural endpoint-jump archimedean evaluation on the clipped constant.
+No mode expansion or weighted second moment is used. -/
+theorem normalized_arch_periodicCoreOne_eq_boundaryArch :
+    ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+        ∫ v : ℝ, yoshidaClippedCriticalCrossIntegrand
+          yoshidaEndpointA yoshidaEndpointA_pos
+          (yoshidaClippedOne yoshidaEndpointA)
+          (yoshidaClippedOne yoshidaEndpointA) v =
+      (boundaryArchCorrelation (2 * yoshidaEndpointA)
+        (constantEndpointCorrelation yoshidaEndpointA) : ℂ) := by
+  let one : YoshidaClippedSmooth yoshidaEndpointA :=
+    yoshidaClippedOne yoshidaEndpointA
+  let C : ℝ → ℝ := constantEndpointCorrelation yoshidaEndpointA
+  let D : ℝ → ℝ := fun _ ↦ -1
+  have hA (k : ℕ) :
+      ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+          ∫ v : ℝ, (bombieriDigammaKernel k v : ℂ) *
+            boundarySpectralProduct yoshidaEndpointA_pos one one v =
+        (geometricIntegralTerm (2 * yoshidaEndpointA) C k : ℂ) := by
+    rw [normalized_bombieriKernel_boundarySpectralProduct
+      yoshidaEndpointA_pos one one
+      (measurable_yoshidaClippedOne yoshidaEndpointA)
+      (measurable_yoshidaClippedOne yoshidaEndpointA)
+      (by simpa only [one] using
+        continuous_crossCorrelation_one_one yoshidaEndpointA)]
+    have hfold := integral_exp_abs_crossCorrelation_eq_geometric
+      (clipped_integrable one) (clipped_integrable one)
+      (L := 2 * yoshidaEndpointA)
+      (b := 2 * (k : ℝ) + 1 / 2)
+      (mul_pos (by norm_num) yoshidaEndpointA_pos) (by positivity) C
+      (by simpa only [one] using
+        crossCorrelation_one_one_even yoshidaEndpointA)
+      (fun u hu ↦ by
+        simpa only [one] using crossCorrelation_eq_zero_of_two_mul_a_lt
+          hu one one)
+      (fun u hu ↦ by
+        simpa only [one, C] using crossCorrelation_one_one_match hu)
+    rw [hfold, geometricIntegralTerm]
+    push_cast
+    rw [← intervalIntegral.integral_ofReal]
+    congr 1
+    apply intervalIntegral.integral_congr
+    intro u _hu
+    simp only [oddRate]
+    push_cast
+    rfl
+  have hH0 :
+      ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+          ∫ v : ℝ, boundarySpectralProduct yoshidaEndpointA_pos one one v =
+        (C 0 : ℂ) := by
+    rw [normalized_integral_boundarySpectralProduct
+      yoshidaEndpointA_pos one one
+      (measurable_yoshidaClippedOne yoshidaEndpointA)
+      (measurable_yoshidaClippedOne yoshidaEndpointA)
+      (by simpa only [one] using
+        continuous_crossCorrelation_one_one yoshidaEndpointA)]
+    simpa only [one, C] using
+      crossCorrelation_one_one_match
+        (show (0 : ℝ) ∈ Icc 0 (2 * yoshidaEndpointA) by
+          exact ⟨le_rfl,
+            (mul_pos (by norm_num) yoshidaEndpointA_pos).le⟩)
+  simpa only [one, C] using
+    normalized_boundaryCriticalCross_eq_archCorrelation
+      yoshidaEndpointA_pos one one (L := 2 * yoshidaEndpointA)
+      (mul_pos (by norm_num) yoshidaEndpointA_pos) C D
+      (continuous_constantEndpointCorrelation yoshidaEndpointA)
+      continuous_const
+      (fun u ↦ by simpa only [C, D] using
+        constantEndpointCorrelation_removable yoshidaEndpointA u)
+      hA hH0
+
+/-- Ordered constant--residual archimedean evaluation for an arbitrary real,
+even, globally continuous endpoint-zero residual. -/
+theorem normalized_arch_periodicCoreOne_residual_eq_boundaryArch
+    (r : YoshidaClippedSmooth yoshidaEndpointA)
+    (hrcont : Continuous (r : ℝ → ℂ))
+    (hr_real : ∀ x ∈ Icc (-yoshidaEndpointA) yoshidaEndpointA,
+      r x = ((r x).re : ℂ))
+    (hrEven : Function.Even (r : ℝ → ℂ)) :
+    ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+        ∫ v : ℝ, yoshidaClippedCriticalCrossIntegrand
+          yoshidaEndpointA yoshidaEndpointA_pos
+          (yoshidaClippedOne yoshidaEndpointA) r v =
+      (boundaryArchCorrelation (2 * yoshidaEndpointA)
+        (residualEndpointCorrelation r) : ℂ) := by
+  let one : YoshidaClippedSmooth yoshidaEndpointA :=
+    yoshidaClippedOne yoshidaEndpointA
+  let C : ℝ → ℝ := residualEndpointCorrelation r
+  obtain ⟨D, hD, hrem⟩ :=
+    exists_continuous_residualEndpointSlope r hrcont
+  have hHcont : Continuous
+      (crossCorrelation (one : ℝ → ℂ) (r : ℝ → ℂ)) := by
+    simpa only [one] using continuous_crossCorrelation_one_residual r hrcont
+  have hA (k : ℕ) :
+      ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+          ∫ v : ℝ, (bombieriDigammaKernel k v : ℂ) *
+            boundarySpectralProduct yoshidaEndpointA_pos one r v =
+        (geometricIntegralTerm (2 * yoshidaEndpointA) C k : ℂ) := by
+    rw [normalized_bombieriKernel_boundarySpectralProduct
+      yoshidaEndpointA_pos one r
+      (by simpa only [one] using
+        measurable_yoshidaClippedOne yoshidaEndpointA)
+      hrcont.measurable hHcont]
+    have hfold := integral_exp_abs_crossCorrelation_eq_geometric
+      (clipped_integrable one) (clipped_integrable r)
+      (L := 2 * yoshidaEndpointA)
+      (b := 2 * (k : ℝ) + 1 / 2)
+      (mul_pos (by norm_num) yoshidaEndpointA_pos) (by positivity) C
+      (by simpa only [one] using
+        crossCorrelation_one_residual_even r hrEven)
+      (fun u hu ↦ crossCorrelation_eq_zero_of_two_mul_a_lt hu one r)
+      (fun u hu ↦ by
+        simpa only [one, C] using
+          crossCorrelation_one_residual_match r hr_real hrEven hu)
+    rw [hfold, geometricIntegralTerm]
+    push_cast
+    rw [← intervalIntegral.integral_ofReal]
+    congr 1
+    apply intervalIntegral.integral_congr
+    intro u _hu
+    simp only [oddRate]
+    push_cast
+    rfl
+  have hH0 :
+      ((1 / (2 * Real.pi) : ℝ) : ℂ) *
+          ∫ v : ℝ, boundarySpectralProduct yoshidaEndpointA_pos one r v =
+        (C 0 : ℂ) := by
+    rw [normalized_integral_boundarySpectralProduct
+      yoshidaEndpointA_pos one r
+      (by simpa only [one] using
+        measurable_yoshidaClippedOne yoshidaEndpointA)
+      hrcont.measurable hHcont]
+    simpa only [one, C] using
+      crossCorrelation_one_residual_match r hr_real hrEven
+        (show (0 : ℝ) ∈ Icc 0 (2 * yoshidaEndpointA) by
+          exact ⟨le_rfl,
+            (mul_pos (by norm_num) yoshidaEndpointA_pos).le⟩)
+  simpa only [one, C] using
+    normalized_boundaryCriticalCross_eq_archCorrelation
+      yoshidaEndpointA_pos one r (L := 2 * yoshidaEndpointA)
+      (mul_pos (by norm_num) yoshidaEndpointA_pos) C D
+      (continuous_residualEndpointCorrelation r hrcont) hD hrem hA hH0
 
 end
 
