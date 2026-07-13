@@ -3412,3 +3412,62 @@ record their own umbrella-build evidence.
    to `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present,
    untracked, and unmodified, with aggregate SHA-256
    `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
+
+## After `cb9df48` — Positive folded factor-two prime overlap
+
+1. **Theorems added.**  If a seed has support ratio at most two, disjoint
+   logarithmic overlap at `delta = log(3/2)` gives the exact norm estimate
+   `2 * norm C(delta) <= Re C(0)`.  Hence both folded energies
+   `Q+ = Re C(0) + 2 Re C(delta)` and
+   `Q- = Re C(0) - 2 Re C(delta)` are nonnegative.  The retained real
+   two-prime symbol is now exactly
+   `W = ((2 alpha + beta)/4) Q+ + ((2 alpha - beta)/4) Q-`, where
+   `alpha = log 2 / sqrt 2`, `beta = log 3 / sqrt 3`, and the structural
+   inequality `beta < 2 alpha` makes both coefficients strictly positive.
+   The scalar mass envelope
+   `(alpha-beta/2) Re C(0) <= W <= (alpha+beta/2) Re C(0)`, prime-symbol
+   nonnegativity, both weighted endpoint identities, and both endpoint
+   nonnegativity iff statements are exported.
+2. **Gate hypothesis eliminated.**  The sign and admissible magnitude of the
+   jointly retained `p = 2,3` correction are no longer open or hidden behind
+   a complex cross symbol.  The exact real endpoints are
+   `D-R = (1/2) Re B(g-D2g,g-D2g) + W` and
+   `D+R = (1/2) Re B(g+D2g,g+D2g) - W`, with `W >= 0`.  The proof uses only
+   support length, translation of the shifted square, Cauchy--Schwarz, and
+   elementary logarithm/root inequalities; no fixedness premise, finite mode
+   table, certificate, or local-form positivity enters.
+3. **Assumptions remaining.**  Neither coupled endpoint inequality is proved
+   or strictly reversed.  In particular the prime energy cannot be discarded:
+   an adversarial sine-basis diagnostic makes
+   `(1/2) Re B(g-D2g,g-D2g)` negative while the complete antisymmetric
+   endpoint remains positive, so the tempting shortcut through standalone
+   antisymmetric local-form positivity is not viable.  The symmetric endpoint
+   is numerically the weaker one, but sampled positivity is not a theorem.
+   The sharp mixed phase pencil, arbitrary-window control, the all-test
+   Bombieri criterion, and terminal RH transport all remain open; RH is
+   neither proved nor falsified here.
+4. **Next make-or-break lemma.**  Prove or strictly reverse
+   `W(g) <= (1/2) Re B(g+D2g,g+D2g)` on the coefficient-conjugation-fixed
+   ratio-two class, retaining the exact `Q+`/`Q-` alignment.  A pointwise
+   spectral-multiplier square is not available because the multiplier changes
+   sign, and a scalar mass bound loses the near cancellation.  The viable
+   structural route is a centered two-cell correlation form split into its
+   reflection-even ground-state direction and an infinite-dimensional
+   coercive reserve.  The companion minus endpoint must likewise keep `W`
+   coupled rather than assume its local self-form nonnegative.
+5. **Viability and integrity evidence.**  Focused and umbrella warning-as-error
+   checks pass, the focused target build passes 8,472 jobs, and the canonical
+   full build passes all 8,615 jobs.  All twelve public theorems audit exactly
+   to `propext`, `Classical.choice`, and `Quot.sound`.  Their recursive
+   structural closure has 262 tracked/current files and 459 project import
+   edges, with no missing edge, cycle, protected or quarantined import, or
+   forbidden proof construct; the sole current untracked member is the new
+   module itself.  Independent reviews confirmed the disjoint-cell geometry,
+   coefficient signs, endpoint orientations, and the failure of standalone
+   local-form shortcuts.  A non-proof Galerkin scan through 240 sine modes kept
+   both complete endpoints positive, with the weaker symmetric margin about
+   `6.8e-4`, so no candidate negative witness was found.  All 159 archived
+   artifacts remain byte-identical to
+   `refs/archive/legacy-lean-2026-07-11`; all 24 fallbacks remain present,
+   untracked, and unmodified, with aggregate SHA-256
+   `4ebc8b644fc92bb459cd7f05c7add77f26993c14e29ca27a3b592ed979f84fd3`.
