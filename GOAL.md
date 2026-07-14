@@ -183,12 +183,32 @@ low-tail Schur certificate. After the exact decompositions `e = eL + eT` and
 twice a mixed block `C`. The tail theorem gives `0 ≤ T`; it remains to prove
 `0 ≤ L` and `C ^ 2 ≤ L * T` for each opposite-parity reflection channel
 (with the appropriate alternating-coordinate sign change). The existing
-`210 x 210` matrix API has the correct `Fin 200 + Fin 10` dimensions but is
-not yet fully instantiated. Exact finite-synthesis theorems now connect the
-two symmetric perturbation blocks and the alternating block to the adapted
-production basis. The clean quadratic blocks still lack the corresponding
-public bilinear finite-synthesis bridge, and no disk-uniform PSD/Schur
-certificate currently closes the block.
+`210 x 210` matrix API is now fully instantiated on the endpoint-adapted
+production basis. The clean blocks are obtained without a new singular-form
+bilinearity assumption: the public clipped critical sesquilinear form expands
+the finite syntheses, and the endpoint-clean bridge identifies its real
+diagonal with the clean quadratic. Together with the two symmetric
+perturbation blocks and the alternating block, this gives an assumption-free
+exact representation of the complete finite-low phase by one concrete
+matrix for every disk phase. An inverse-free scalar Schur reduction further
+eliminates the second disk coordinate: it is enough, for every `a² ≤ 1`, to
+prove nonnegativity of the even and odd diagonal pencils and
+
+```text
+(1 - a²) X(e,o)² ≤ 4 Eₐ(e) Oₐ(o).
+```
+
+This criterion remains sound when a diagonal pencil is only semidefinite.
+The remaining finite obligation is an actual certificate for these three
+inequalities. Existing tail-only operator constants do not supply it, and
+the concrete perturbation/alternating entries do not yet have the rational
+enclosures needed by the repository's interval-pivot or exact LDL machinery.
+
+For the full-profile assembly, the clean part of the low-tail mixed term is
+now exactly the real clipped critical pairing divided by `yoshidaA`, obtained
+from the diagonal endpoint-clean bridge and Hermitian sesquilinearity. The
+remaining assembly obligation is still the phase-dependent low-tail Schur
+bound, including the symmetric-perturbation and alternating mixed terms.
 
 Even if the same-seed factor-two inequality is proved, arbitrary support still
 requires a valid local-to-global argument, such as a controlled chain of
