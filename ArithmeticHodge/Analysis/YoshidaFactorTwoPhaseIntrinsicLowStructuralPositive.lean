@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEndpointControlsStructuralPositive
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicLowControlStep01CoupledResidualPositive
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicLowControlStep01Slope23FifthsStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicLowControlStep12ResidualPositive
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicLowControlStep23EvenSlopeStructural
 
@@ -18,6 +19,7 @@ open YoshidaFactorTwoPhaseIntrinsicLowAlternatingKernelSharp
 open YoshidaFactorTwoPhaseIntrinsicLowControlStep01CoupledResidualPositive
 open YoshidaFactorTwoPhaseIntrinsicLowControlStep01CauchyStructural
 open YoshidaFactorTwoPhaseIntrinsicLowControlStep01Positive
+open YoshidaFactorTwoPhaseIntrinsicLowControlStep01Slope23FifthsStructural
 open YoshidaFactorTwoPhaseIntrinsicLowControlStep12ResidualPositive
 open YoshidaFactorTwoPhaseIntrinsicLowControlStep12Structural
 open YoshidaFactorTwoPhaseIntrinsicLowControlStep23EvenSlopeStructural
@@ -97,6 +99,32 @@ theorem factorTwoEndpointChannelPhase_intrinsicLow_nonneg_of_slope23Fifths
     factorTwoIntrinsicEven_minus_endpoint_kernel_gates.1
     factorTwoIntrinsicEven_minus_endpoint_kernel_gates.2
     hcontrols.1 hcontrols.2.1 hcontrols.2.2.1 hcontrols.2.2.2
+
+/-! ## Unconditional structural closure -/
+
+theorem factorTwoIntrinsicStep01ExactCauchy_structural :
+    FactorTwoIntrinsicStep01ExactCauchy :=
+  factorTwoIntrinsicStep01ExactCauchy_of_slope23Fifths
+    factorTwoIntrinsicStep01Slope_twentyThree_fifths_le
+
+theorem factorTwoIntrinsicBoundaryControls_nonneg_structural :
+    ∀ c d : ℝ,
+      0 ≤ factorTwoIntrinsicBoundaryControl0 c d ∧
+        0 ≤ factorTwoIntrinsicBoundaryControl1 c d ∧
+        0 ≤ factorTwoIntrinsicBoundaryControl2 c d ∧
+        0 ≤ factorTwoIntrinsicBoundaryControl3 c d :=
+  factorTwoIntrinsicBoundaryControls_nonneg_of_slope23Fifths
+    factorTwoIntrinsicStep01Slope_twentyThree_fifths_le
+
+theorem factorTwoEndpointChannelPhase_intrinsicLow_nonneg_structural
+    (c0 c2 c1 c3 a b : ℝ)
+    (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    0 ≤ factorTwoEndpointChannelPhase
+      (factorTwoEvenStructuralLowProfile c0 c2)
+      (factorTwoOddStructuralLowProfile c1 c3) a b :=
+  factorTwoEndpointChannelPhase_intrinsicLow_nonneg_of_slope23Fifths
+    factorTwoIntrinsicStep01Slope_twentyThree_fifths_le
+    c0 c2 c1 c3 a b hab
 
 end
 
