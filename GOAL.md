@@ -199,10 +199,48 @@ prove nonnegativity of the even and odd diagonal pencils and
 ```
 
 This criterion remains sound when a diagonal pencil is only semidefinite.
-The remaining finite obligation is an actual certificate for these three
-inequalities. Existing tail-only operator constants do not supply it, and
-the concrete perturbation/alternating entries do not yet have the rational
-enclosures needed by the repository's interval-pivot or exact LDL machinery.
+There is also a parameter-free sufficient certificate.  The concrete
+`420 x 420` real Toeplitz matrix has now been defined and proved to control
+every phase in the disk.  An exact unnormalized Hadamard/parity congruence
+reduces its positive semidefiniteness to the following two real `210 x 210`
+split matrices:
+
+```text
+[[Q_E + P_E, J/2], [Jᵀ/2, Q_O - P_O]],
+[[Q_E - P_E, J/2], [Jᵀ/2, Q_O + P_O]].
+```
+
+All entries needed by either finite certificate now have exact
+enclosure-ready formulas.  The adapted even clean block is a four-term
+pullback of the canonical Section-6 moment Gram through frequency `200`; the
+odd clean block is already unconditionally positive definite by its existing
+interval certificate; the canonical symmetric perturbation blocks have
+explicit zero, diagonal, and off-diagonal trigonometric correlation formulas;
+and the alternating block has an explicit three-branch formula followed by
+the endpoint-adaptation subtraction.  No floating-point bound is asserted by
+these identities.
+
+A deterministic external reconstruction currently finds no finite-low
+counterexample.  It reports a worst scalar-Schur normalized ratio about
+`0.959645` (roughly four percent below one) and a minimum full phase-matrix
+eigenvalue about `3.53e-4`.  The stronger static split certificate is also
+numerically positive, but only by about `2.51e-7` in its thinner split, so it
+is substantially more delicate to certify.  These are discovery results,
+not Lean inequalities.  The perturbation entry compression is now exact:
+all three blocks reduce to four one-dimensional frequency families (a
+symmetric sine moment, a symmetric affine-cosine moment, an antisymmetric
+one-minus-cosine moment, and an antisymmetric affine-sine moment).  The
+remaining finite obligation is to prove sufficiently sharp rational
+enclosures for these four families and the clean moments through frequency
+`200`, then replay an exact certificate.  A generic robust-congruence theorem
+is now compiled: a rational invertible change of basis, a uniform entrywise
+error bound around a rational center, and kernel-checked weighted diagonal
+dominance imply positive definiteness of the true matrix.  This avoids the
+width growth of a raw 210-stage interval elimination and makes the two fixed
+static splits the shortest current formal route.  Numerical conditioning
+still calls for scalar moment boxes around `1e-9` or tighter.  The healthier
+scalar-Schur margin remains a fallback if the static certificate cannot
+retain its thin reserve under rigorous enclosure inflation.
 
 For the full-profile assembly, the clean part of the low-tail mixed term is
 now exactly the real clipped critical pairing divided by `yoshidaA`, obtained
