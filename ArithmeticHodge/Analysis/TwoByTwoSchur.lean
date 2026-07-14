@@ -22,6 +22,59 @@ theorem scalar_low_tail_nonneg
     exact nonneg_of_mul_nonneg_left
       (by simpa [mul_comm] using hprod) hright
 
+/-- Two determinant bounds with the same nonnegative cross scaling may be
+added without loss.  This is the scalar form of closure of positive
+semidefinite `2 × 2` matrices under addition.  Keeping the common factor
+`delta` explicit avoids introducing square roots when `delta = 1 - a^2` in
+a disk--Schur argument. -/
+theorem scaled_determinant_bound_add
+    (delta e₁ o₁ j₁ e₂ o₂ j₂ : ℝ)
+    (hdelta : 0 ≤ delta)
+    (he₁ : 0 ≤ e₁) (ho₁ : 0 ≤ o₁)
+    (he₂ : 0 ≤ e₂) (ho₂ : 0 ≤ o₂)
+    (h₁ : delta * j₁ ^ 2 ≤ 4 * e₁ * o₁)
+    (h₂ : delta * j₂ ^ 2 ≤ 4 * e₂ * o₂) :
+    delta * (j₁ + j₂) ^ 2 ≤
+      4 * (e₁ + e₂) * (o₁ + o₂) := by
+  have hleft₁ : 0 ≤ delta * j₁ ^ 2 :=
+    mul_nonneg hdelta (sq_nonneg j₁)
+  have hleft₂ : 0 ≤ delta * j₂ ^ 2 :=
+    mul_nonneg hdelta (sq_nonneg j₂)
+  have hright₁ : 0 ≤ 4 * e₁ * o₁ := by positivity
+  have hproduct := mul_le_mul h₁ h₂ hleft₂ hright₁
+  have hcrossBase :
+      4 * (e₁ * o₁ * e₂ * o₂) ≤
+        (e₁ * o₂ + e₂ * o₁) ^ 2 := by
+    nlinarith [sq_nonneg (e₁ * o₂ - e₂ * o₁)]
+  have hcrossNonneg : 0 ≤ e₁ * o₂ + e₂ * o₁ := by
+    positivity
+  have hcrossSquare :
+      (delta * j₁ * j₂) ^ 2 ≤
+        (2 * (e₁ * o₂ + e₂ * o₁)) ^ 2 := by
+    nlinarith
+  have hcross :
+      delta * j₁ * j₂ ≤
+        2 * (e₁ * o₂ + e₂ * o₁) := by
+    by_cases hsign : 0 ≤ delta * j₁ * j₂
+    · nlinarith
+    · have : delta * j₁ * j₂ < 0 := lt_of_not_ge hsign
+      nlinarith
+  nlinarith
+
+/-- Unscaled determinant closure, obtained by taking the common cross
+scaling to be one. -/
+theorem determinant_bound_add
+    (e₁ o₁ j₁ e₂ o₂ j₂ : ℝ)
+    (he₁ : 0 ≤ e₁) (ho₁ : 0 ≤ o₁)
+    (he₂ : 0 ≤ e₂) (ho₂ : 0 ≤ o₂)
+    (h₁ : j₁ ^ 2 ≤ 4 * e₁ * o₁)
+    (h₂ : j₂ ^ 2 ≤ 4 * e₂ * o₂) :
+    (j₁ + j₂) ^ 2 ≤
+      4 * (e₁ + e₂) * (o₁ + o₂) := by
+  simpa only [one_mul] using scaled_determinant_bound_add
+    1 e₁ o₁ j₁ e₂ o₂ j₂ (by norm_num)
+      he₁ ho₁ he₂ ho₂ (by simpa using h₁) (by simpa using h₂)
+
 /-- A positive `2 × 2` low block plus a tail stays nonnegative when the two
 low-to-tail functionals satisfy the exact adjugate Schur bound. -/
 theorem quadratic_add_tail_nonneg
