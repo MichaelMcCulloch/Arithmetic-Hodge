@@ -1,4 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicLowStaticMinusStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEvenCleanSharp
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 
 set_option autoImplicit false
 
@@ -7,6 +9,8 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicLowStaticMinusR
 noncomputable section
 
 open YoshidaFactorTwoPhaseIntrinsicLow
+open YoshidaFactorTwoPhaseIntrinsicEvenCleanSharp
+open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicLowStaticMinusStructural
 open YoshidaFactorTwoPhaseIntrinsicLowStaticSplitPositive
 open YoshidaFactorTwoPhaseLowSchur
@@ -54,6 +58,27 @@ theorem intrinsicStaticMinusOddLower_principal_minors_pos :
         intrinsicStaticMinusOddLower13 ^ 2 := by
   norm_num [intrinsicStaticMinusOddLower11,
     intrinsicStaticMinusOddLower13, intrinsicStaticMinusOddLower33]
+
+/-- The rational even Gram lies below the complete even-minus endpoint.
+The clean and negative-perturbation lower forms are added before any entry is
+discarded. -/
+theorem intrinsicStaticMinusEvenLower_le (c0 c2 : ℝ) :
+    intrinsicStaticMinusEvenLower c0 c2 ≤
+      factorTwoIntrinsicStaticEvenQuadratic (-1) c0 c2 := by
+  have hclean := intrinsicEven_clean_rationalQuadratic_le c0 c2
+  have hpert := evenNegativePerturbationSharp_quadratic_le c0 c2
+  rw [factorTwoCenteredSymmetricPerturbation_structuralLow] at hpert
+  unfold evenNegativePerturbationSharp00
+    evenNegativePerturbationSharp02
+    evenNegativePerturbationSharp22 at hpert
+  unfold intrinsicStaticMinusEvenLower
+    intrinsicStaticMinusEvenLower00 intrinsicStaticMinusEvenLower02
+    intrinsicStaticMinusEvenLower22
+    factorTwoIntrinsicStaticEvenQuadratic
+    factorTwoStructuralPhaseLow00 factorTwoStructuralPhaseLow02
+    factorTwoStructuralPhaseLow22 at ⊢
+  norm_num at hclean hpert ⊢
+  nlinarith
 
 /-- The four short coupled intervals needed by the rational Schur core. -/
 def FactorTwoIntrinsicAlternatingSharpBounds : Prop :=
