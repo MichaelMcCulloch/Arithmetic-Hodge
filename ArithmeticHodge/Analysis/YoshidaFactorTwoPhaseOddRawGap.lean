@@ -1,5 +1,7 @@
 import ArithmeticHodge.Analysis.CenteredOddOneThreeEnergy
+import ArithmeticHodge.Analysis.UnitIntervalLogEnergyLipschitz
 import ArithmeticHodge.Analysis.YoshidaClippedMomentBridge
+import ArithmeticHodge.Analysis.YoshidaEndpointPullbackLipschitz
 import ArithmeticHodge.Analysis.YoshidaEndpointScaledCorrelation
 import ArithmeticHodge.Analysis.YoshidaOddTailLowFunctional
 
@@ -13,14 +15,17 @@ open CenteredOddOneThreeEnergy
 open ShiftedLegendreCenteredLowModeThreeL2
 open ShiftedLegendreCenteredParity
 open UnitIntervalIntegralBridge
+open UnitIntervalLogEnergyLipschitz
 open UnitIntervalLogEnergyAffine
 open UnitIntervalLogEnergyProjection
 open YoshidaEndpointOcticPotential
+open YoshidaEndpointPullbackLipschitz
 open YoshidaClippedMomentBridge
 open YoshidaClippedCircleBridge
 open YoshidaCoercivityNumerics
 open YoshidaEndpointScaledCorrelation
 open YoshidaOddHomogeneousCoercivity
+open YoshidaOddSpectralMassBridge
 open YoshidaOddTailLowFunctional
 open YoshidaOddTailPaired
 open YoshidaSectionSixAnalytic
@@ -696,6 +701,479 @@ private theorem tsum_sq_oddTailP3FourierWeight_le :
           (mul_nonneg (by norm_num) yoshidaA_pos.le))
     _ = 49 / (90 * yoshidaA) := by ring
 
+private theorem oddTailP1Moment_partialSum
+    (f : YoshidaOddTenTail) (N : ℕ) :
+    ((3 / (2 * yoshidaA) : ℝ) : ℂ) *
+        (∫ y : ℝ in -yoshidaA..yoshidaA,
+          ((y / yoshidaA : ℝ) : ℂ) * oddTailSinePartialSum f N y) =
+      ∑ k ∈ Finset.range N,
+        oddTailSineCoefficient f k * oddTailP1FourierWeight k := by
+  unfold oddTailSinePartialSum
+  rw [show (fun y : ℝ ↦
+      ((y / yoshidaA : ℝ) : ℂ) *
+        (∑ k ∈ Finset.range N,
+          oddTailSineCoefficient f k •
+            yoshidaClippedOddMode yoshidaA (11 + k)) y) =
+      fun y ↦ ∑ k ∈ Finset.range N,
+        ((y / yoshidaA : ℝ) : ℂ) *
+          (oddTailSineCoefficient f k •
+            yoshidaClippedOddMode yoshidaA (11 + k)) y by
+    funext y
+    simp only [Submodule.coe_sum, Finset.sum_apply, Finset.mul_sum]]
+  rw [intervalIntegral.integral_finset_sum]
+  · rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [show (fun y : ℝ ↦
+        ((y / yoshidaA : ℝ) : ℂ) *
+          (oddTailSineCoefficient f k •
+            yoshidaClippedOddMode yoshidaA (11 + k)) y) =
+        fun y ↦ oddTailSineCoefficient f k *
+          (((y / yoshidaA : ℝ) : ℂ) *
+            yoshidaClippedOddMode yoshidaA (11 + k) y) by
+      funext y
+      simp only [Submodule.coe_smul, Pi.smul_apply, smul_eq_mul]
+      ring]
+    have hint := intervalIntegral.integral_const_mul
+      (a := -yoshidaA) (b := yoshidaA) (μ := volume)
+      (oddTailSineCoefficient f k)
+      (fun y : ℝ ↦ ((y / yoshidaA : ℝ) : ℂ) *
+        yoshidaClippedOddMode yoshidaA (11 + k) y)
+    calc
+      ((3 / (2 * yoshidaA) : ℝ) : ℂ) *
+          (∫ y : ℝ in -yoshidaA..yoshidaA,
+            oddTailSineCoefficient f k *
+              (((y / yoshidaA : ℝ) : ℂ) *
+                yoshidaClippedOddMode yoshidaA (11 + k) y)) =
+          ((3 / (2 * yoshidaA) : ℝ) : ℂ) *
+            (oddTailSineCoefficient f k *
+              ∫ y : ℝ in -yoshidaA..yoshidaA,
+                ((y / yoshidaA : ℝ) : ℂ) *
+                  yoshidaClippedOddMode yoshidaA (11 + k) y) :=
+        congrArg (((3 / (2 * yoshidaA) : ℝ) : ℂ) * ·) hint
+      _ = oddTailSineCoefficient f k *
+          (((3 / (2 * yoshidaA) : ℝ) : ℂ) *
+            ∫ y : ℝ in -yoshidaA..yoshidaA,
+              ((y / yoshidaA : ℝ) : ℂ) *
+                yoshidaClippedOddMode yoshidaA (11 + k) y) := by ring
+      _ = oddTailSineCoefficient f k * oddTailP1FourierWeight k := by
+        rw [p1Moment_oddMode (11 + k) (by omega)]
+        rfl
+  · intro k hk
+    exact (((by fun_prop : Continuous (fun y : ℝ ↦
+      ((y / yoshidaA : ℝ) : ℂ))).continuousOn.mul
+        (oddTailSineCoefficient f k •
+          yoshidaClippedOddMode yoshidaA (11 + k)).property.1.continuousOn)
+      |>.intervalIntegrable_of_Icc (by linarith [yoshidaA_pos]))
+
+private theorem oddTailP3Moment_partialSum
+    (f : YoshidaOddTenTail) (N : ℕ) :
+    ((7 / (2 * yoshidaA) : ℝ) : ℂ) *
+        (∫ y : ℝ in -yoshidaA..yoshidaA,
+          (centeredP3 (y / yoshidaA) : ℂ) *
+            oddTailSinePartialSum f N y) =
+      ∑ k ∈ Finset.range N,
+        oddTailSineCoefficient f k * oddTailP3FourierWeight k := by
+  unfold oddTailSinePartialSum
+  rw [show (fun y : ℝ ↦
+      (centeredP3 (y / yoshidaA) : ℂ) *
+        (∑ k ∈ Finset.range N,
+          oddTailSineCoefficient f k •
+            yoshidaClippedOddMode yoshidaA (11 + k)) y) =
+      fun y ↦ ∑ k ∈ Finset.range N,
+        (centeredP3 (y / yoshidaA) : ℂ) *
+          (oddTailSineCoefficient f k •
+            yoshidaClippedOddMode yoshidaA (11 + k)) y by
+    funext y
+    simp only [Submodule.coe_sum, Finset.sum_apply, Finset.mul_sum]]
+  rw [intervalIntegral.integral_finset_sum]
+  · rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [show (fun y : ℝ ↦
+        (centeredP3 (y / yoshidaA) : ℂ) *
+          (oddTailSineCoefficient f k •
+            yoshidaClippedOddMode yoshidaA (11 + k)) y) =
+        fun y ↦ oddTailSineCoefficient f k *
+          ((centeredP3 (y / yoshidaA) : ℂ) *
+            yoshidaClippedOddMode yoshidaA (11 + k) y) by
+      funext y
+      simp only [Submodule.coe_smul, Pi.smul_apply, smul_eq_mul]
+      ring]
+    have hint := intervalIntegral.integral_const_mul
+      (a := -yoshidaA) (b := yoshidaA) (μ := volume)
+      (oddTailSineCoefficient f k)
+      (fun y : ℝ ↦ (centeredP3 (y / yoshidaA) : ℂ) *
+        yoshidaClippedOddMode yoshidaA (11 + k) y)
+    calc
+      ((7 / (2 * yoshidaA) : ℝ) : ℂ) *
+          (∫ y : ℝ in -yoshidaA..yoshidaA,
+            oddTailSineCoefficient f k *
+              ((centeredP3 (y / yoshidaA) : ℂ) *
+                yoshidaClippedOddMode yoshidaA (11 + k) y)) =
+          ((7 / (2 * yoshidaA) : ℝ) : ℂ) *
+            (oddTailSineCoefficient f k *
+              ∫ y : ℝ in -yoshidaA..yoshidaA,
+                (centeredP3 (y / yoshidaA) : ℂ) *
+                  yoshidaClippedOddMode yoshidaA (11 + k) y) :=
+        congrArg (((7 / (2 * yoshidaA) : ℝ) : ℂ) * ·) hint
+      _ = oddTailSineCoefficient f k *
+          (((7 / (2 * yoshidaA) : ℝ) : ℂ) *
+            ∫ y : ℝ in -yoshidaA..yoshidaA,
+              (centeredP3 (y / yoshidaA) : ℂ) *
+                yoshidaClippedOddMode yoshidaA (11 + k) y) := by ring
+      _ = oddTailSineCoefficient f k * oddTailP3FourierWeight k := by
+        rw [p3Moment_oddMode (11 + k) (by omega)]
+        rfl
+  · intro k hk
+    exact (((by
+      simp only [centeredP3]
+      fun_prop : Continuous (fun y : ℝ ↦
+        (centeredP3 (y / yoshidaA) : ℂ))).continuousOn.mul
+        (oddTailSineCoefficient f k •
+          yoshidaClippedOddMode yoshidaA (11 + k)).property.1.continuousOn)
+      |>.intervalIntegrable_of_Icc (by linarith [yoshidaA_pos]))
+
+private theorem summable_norm_oddTailP1FourierSeries
+    (f : YoshidaOddTenTail) :
+    Summable (fun k : ℕ ↦
+      ‖oddTailSineCoefficient f k * oddTailP1FourierWeight k‖) := by
+  have hpq : (2 : ℝ).HolderConjugate 2 :=
+    ⟨by norm_num, by norm_num, by norm_num⟩
+  have hu : Summable (fun k : ℕ ↦
+      ‖oddTailSineCoefficient f k‖ ^ (2 : ℝ)) := by
+    simpa only [Real.rpow_two] using
+      (hasSum_sq_oddTailSineCoefficient f).summable
+  have hw : Summable (fun k : ℕ ↦
+      ‖oddTailP1FourierWeight k‖ ^ (2 : ℝ)) := by
+    simpa only [Real.rpow_two] using
+      summable_sq_oddTailP1FourierWeight
+  have hholder :=
+    Real.summable_and_inner_le_Lp_mul_Lq_tsum_of_nonneg hpq
+      (fun k ↦ norm_nonneg (oddTailSineCoefficient f k))
+      (fun k ↦ norm_nonneg (oddTailP1FourierWeight k)) hu hw
+  simpa only [norm_mul] using hholder.1
+
+private theorem summable_norm_oddTailP3FourierSeries
+    (f : YoshidaOddTenTail) :
+    Summable (fun k : ℕ ↦
+      ‖oddTailSineCoefficient f k * oddTailP3FourierWeight k‖) := by
+  have hpq : (2 : ℝ).HolderConjugate 2 :=
+    ⟨by norm_num, by norm_num, by norm_num⟩
+  have hu : Summable (fun k : ℕ ↦
+      ‖oddTailSineCoefficient f k‖ ^ (2 : ℝ)) := by
+    simpa only [Real.rpow_two] using
+      (hasSum_sq_oddTailSineCoefficient f).summable
+  have hw : Summable (fun k : ℕ ↦
+      ‖oddTailP3FourierWeight k‖ ^ (2 : ℝ)) := by
+    simpa only [Real.rpow_two] using
+      summable_sq_oddTailP3FourierWeight
+  have hholder :=
+    Real.summable_and_inner_le_Lp_mul_Lq_tsum_of_nonneg hpq
+      (fun k ↦ norm_nonneg (oddTailSineCoefficient f k))
+      (fun k ↦ norm_nonneg (oddTailP3FourierWeight k)) hu hw
+  simpa only [norm_mul] using hholder.1
+
+private theorem hasSum_oddTailP1FourierSeries
+    (f : YoshidaOddTenTail) :
+    HasSum
+      (fun k : ℕ ↦ oddTailSineCoefficient f k *
+        oddTailP1FourierWeight k)
+      (oddTailP1Moment f) := by
+  apply (hasSum_iff_tendsto_nat_of_summable_norm
+    (summable_norm_oddTailP1FourierSeries f)).2
+  have ht := weightedIntegral_oddTailSinePartialSum_tendsto f
+    (fun y : ℝ ↦ ((y / yoshidaA : ℝ) : ℂ)) (by fun_prop)
+  have hc : Tendsto
+      (fun _ : ℕ ↦ (((3 / (2 * yoshidaA) : ℝ) : ℂ))) atTop
+      (nhds (((3 / (2 * yoshidaA) : ℝ) : ℂ))) := tendsto_const_nhds
+  have hscaled := hc.mul ht
+  convert hscaled using 1
+  · funext N
+    exact (oddTailP1Moment_partialSum f N).symm
+
+private theorem hasSum_oddTailP3FourierSeries
+    (f : YoshidaOddTenTail) :
+    HasSum
+      (fun k : ℕ ↦ oddTailSineCoefficient f k *
+        oddTailP3FourierWeight k)
+      (oddTailP3Moment f) := by
+  apply (hasSum_iff_tendsto_nat_of_summable_norm
+    (summable_norm_oddTailP3FourierSeries f)).2
+  have hp : Continuous (fun y : ℝ ↦
+      (centeredP3 (y / yoshidaA) : ℂ)) := by
+    simp only [centeredP3]
+    fun_prop
+  have ht := weightedIntegral_oddTailSinePartialSum_tendsto f
+    (fun y : ℝ ↦ (centeredP3 (y / yoshidaA) : ℂ)) hp
+  have hc : Tendsto
+      (fun _ : ℕ ↦ (((7 / (2 * yoshidaA) : ℝ) : ℂ))) atTop
+      (nhds (((7 / (2 * yoshidaA) : ℝ) : ℂ))) := tendsto_const_nhds
+  have hscaled := hc.mul ht
+  convert hscaled using 1
+  · funext N
+    exact (oddTailP3Moment_partialSum f N).symm
+
+private theorem normSq_oddTailP1Moment_le
+    (f : YoshidaOddTenTail) :
+    Complex.normSq (oddTailP1Moment f) ≤
+      clippedIntervalEnergy (oddTenTailToClippedSmooth f) *
+        (1 / (10 * yoshidaA) : ℝ) := by
+  have hu := hasSum_sq_oddTailSineCoefficient f
+  have hw := summable_sq_oddTailP1FourierWeight.hasSum
+  have hcs := normSq_hasSum_mul_le
+    (hasSum_oddTailP1FourierSeries f) hu hw
+  have hE : 0 ≤ clippedIntervalEnergy (oddTenTailToClippedSmooth f) := by
+    unfold clippedIntervalEnergy
+    exact intervalIntegral.integral_nonneg
+      (by linarith [yoshidaA_pos]) (fun _ _ ↦ sq_nonneg _)
+  calc
+    Complex.normSq (oddTailP1Moment f) ≤
+        clippedIntervalEnergy (oddTenTailToClippedSmooth f) *
+          ∑' k : ℕ, ‖oddTailP1FourierWeight k‖ ^ 2 := hcs
+    _ ≤ clippedIntervalEnergy (oddTenTailToClippedSmooth f) *
+        (1 / (10 * yoshidaA) : ℝ) :=
+      mul_le_mul_of_nonneg_left tsum_sq_oddTailP1FourierWeight_le hE
+
+private theorem normSq_oddTailP3Moment_le
+    (f : YoshidaOddTenTail) :
+    Complex.normSq (oddTailP3Moment f) ≤
+      clippedIntervalEnergy (oddTenTailToClippedSmooth f) *
+        (49 / (90 * yoshidaA) : ℝ) := by
+  have hu := hasSum_sq_oddTailSineCoefficient f
+  have hw := summable_sq_oddTailP3FourierWeight.hasSum
+  have hcs := normSq_hasSum_mul_le
+    (hasSum_oddTailP3FourierSeries f) hu hw
+  have hE : 0 ≤ clippedIntervalEnergy (oddTenTailToClippedSmooth f) := by
+    unfold clippedIntervalEnergy
+    exact intervalIntegral.integral_nonneg
+      (by linarith [yoshidaA_pos]) (fun _ _ ↦ sq_nonneg _)
+  calc
+    Complex.normSq (oddTailP3Moment f) ≤
+        clippedIntervalEnergy (oddTenTailToClippedSmooth f) *
+          ∑' k : ℕ, ‖oddTailP3FourierWeight k‖ ^ 2 := hcs
+    _ ≤ clippedIntervalEnergy (oddTenTailToClippedSmooth f) *
+        (49 / (90 * yoshidaA) : ℝ) :=
+      mul_le_mul_of_nonneg_left tsum_sq_oddTailP3FourierWeight_le hE
+
+private theorem oddTailP1Moment_eq_centeredCoefficient_of_real
+    (f : YoshidaOddTenTail)
+    (hreal : ∀ y : ℝ, (oddTenTailToClippedSmooth f y).im = 0) :
+    oddTailP1Moment f =
+      (centeredOddP1Coefficient (oddTailCenteredProfile f) : ℂ) := by
+  let q : ℝ → ℝ := fun y ↦
+    (y / yoshidaA) * (oddTenTailToClippedSmooth f y).re
+  have hpoint : (fun y : ℝ ↦
+      ((y / yoshidaA : ℝ) : ℂ) * oddTenTailToClippedSmooth f y) =
+      fun y ↦ (q y : ℂ) := by
+    funext y
+    apply Complex.ext
+    · simp only [q, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+        zero_mul, sub_zero]
+    · simp only [q, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
+        zero_mul, mul_zero, add_zero, hreal y]
+  have hsubst := intervalIntegral.smul_integral_comp_mul_add
+    (a := (-1 : ℝ)) (b := 1) q yoshidaA 0
+  have hscale :
+      (∫ y : ℝ in -yoshidaA..yoshidaA, q y) =
+        yoshidaA * ∫ x : ℝ in -1..1, q (yoshidaA * x) := by
+    simpa only [smul_eq_mul, mul_neg, mul_one, add_zero, mul_zero,
+      zero_add] using hsubst.symm
+  unfold oddTailP1Moment centeredOddP1Coefficient oddTailCenteredProfile
+  rw [hpoint, intervalIntegral.integral_ofReal, hscale]
+  norm_cast
+  field_simp [yoshidaA_pos.ne']
+  apply intervalIntegral.integral_congr
+  intro x hx
+  unfold q centeredRescale centeredP1
+  field_simp [yoshidaA_pos.ne']
+
+private theorem oddTailP3Moment_eq_centeredCoefficient_of_real
+    (f : YoshidaOddTenTail)
+    (hreal : ∀ y : ℝ, (oddTenTailToClippedSmooth f y).im = 0) :
+    oddTailP3Moment f =
+      (centeredOddP3Coefficient (oddTailCenteredProfile f) : ℂ) := by
+  let q : ℝ → ℝ := fun y ↦
+    centeredP3 (y / yoshidaA) * (oddTenTailToClippedSmooth f y).re
+  have hpoint : (fun y : ℝ ↦
+      (centeredP3 (y / yoshidaA) : ℂ) * oddTenTailToClippedSmooth f y) =
+      fun y ↦ (q y : ℂ) := by
+    funext y
+    apply Complex.ext
+    · simp only [q, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+        zero_mul, sub_zero]
+    · simp only [q, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
+        zero_mul, mul_zero, add_zero, hreal y]
+  have hsubst := intervalIntegral.smul_integral_comp_mul_add
+    (a := (-1 : ℝ)) (b := 1) q yoshidaA 0
+  have hscale :
+      (∫ y : ℝ in -yoshidaA..yoshidaA, q y) =
+        yoshidaA * ∫ x : ℝ in -1..1, q (yoshidaA * x) := by
+    simpa only [smul_eq_mul, mul_neg, mul_one, add_zero, mul_zero,
+      zero_add] using hsubst.symm
+  unfold oddTailP3Moment centeredOddP3Coefficient oddTailCenteredProfile
+  rw [hpoint, intervalIntegral.integral_ofReal, hscale]
+  norm_cast
+  field_simp [yoshidaA_pos.ne']
+  apply intervalIntegral.integral_congr
+  intro x hx
+  unfold q centeredRescale
+  field_simp [yoshidaA_pos.ne']
+
+private theorem clippedIntervalEnergy_eq_centeredProfile_energy_of_real
+    (f : YoshidaOddTenTail)
+    (hreal : ∀ y : ℝ, (oddTenTailToClippedSmooth f y).im = 0) :
+    clippedIntervalEnergy (oddTenTailToClippedSmooth f) =
+      yoshidaA * ∫ x : ℝ in -1..1, oddTailCenteredProfile f x ^ 2 := by
+  let q : ℝ → ℝ := fun y ↦ (oddTenTailToClippedSmooth f y).re ^ 2
+  have hsubst := intervalIntegral.smul_integral_comp_mul_add
+    (a := (-1 : ℝ)) (b := 1) q yoshidaA 0
+  have hscale :
+      (∫ y : ℝ in -yoshidaA..yoshidaA, q y) =
+        yoshidaA * ∫ x : ℝ in -1..1, q (yoshidaA * x) := by
+    simpa only [smul_eq_mul, mul_neg, mul_one, add_zero, mul_zero,
+      zero_add] using hsubst.symm
+  unfold clippedIntervalEnergy
+  calc
+    (∫ y : ℝ in -yoshidaA..yoshidaA,
+        ‖oddTenTailToClippedSmooth f y‖ ^ 2) =
+        ∫ y : ℝ in -yoshidaA..yoshidaA, q y := by
+      apply intervalIntegral.integral_congr
+      intro y hy
+      change ‖oddTenTailToClippedSmooth f y‖ ^ 2 = q y
+      rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, hreal y]
+      unfold q
+      ring
+    _ = yoshidaA * ∫ x : ℝ in -1..1, q (yoshidaA * x) := hscale
+    _ = yoshidaA * ∫ x : ℝ in -1..1,
+        oddTailCenteredProfile f x ^ 2 := by rfl
+
+private theorem oddTail_endpoints_zero (f : YoshidaOddTenTail) :
+    oddTenTailToClippedSmooth f (-yoshidaA) = 0 ∧
+      oddTenTailToClippedSmooth f yoshidaA = 0 := by
+  let r : YoshidaClippedPeriodicCore yoshidaA := f
+  have hodd : (r : YoshidaClippedSmooth yoshidaA) (-yoshidaA) =
+      -(r : YoshidaClippedSmooth yoshidaA) yoshidaA :=
+    oddTail_pointwise_odd yoshidaA_pos 10 r f.property yoshidaA
+  have hperiod : (r : YoshidaClippedSmooth yoshidaA) (-yoshidaA) =
+      (r : YoshidaClippedSmooth yoshidaA) yoshidaA := by
+    have hp := periodicExtension_periodic r (-yoshidaA)
+    rw [show -yoshidaA + 2 * yoshidaA = yoshidaA by ring] at hp
+    calc
+      (r : YoshidaClippedSmooth yoshidaA) (-yoshidaA) =
+          periodicExtension r (-yoshidaA) :=
+        (periodicExtension_apply_of_mem r
+          ⟨le_rfl, by linarith [yoshidaA_pos]⟩).symm
+      _ = periodicExtension r yoshidaA := hp.symm
+      _ = (r : YoshidaClippedSmooth yoshidaA) yoshidaA :=
+        periodicExtension_apply_of_mem r
+          ⟨by linarith [yoshidaA_pos], le_rfl⟩
+  have hpos : (r : YoshidaClippedSmooth yoshidaA) yoshidaA = 0 := by
+    have htwo : (2 : ℂ) *
+        (r : YoshidaClippedSmooth yoshidaA) yoshidaA = 0 := by
+      calc
+        (2 : ℂ) * (r : YoshidaClippedSmooth yoshidaA) yoshidaA =
+            (r : YoshidaClippedSmooth yoshidaA) yoshidaA +
+              (r : YoshidaClippedSmooth yoshidaA) yoshidaA := two_mul _
+        _ = (r : YoshidaClippedSmooth yoshidaA) (-yoshidaA) +
+              (r : YoshidaClippedSmooth yoshidaA) yoshidaA := by rw [hperiod]
+        _ = -(r : YoshidaClippedSmooth yoshidaA) yoshidaA +
+              (r : YoshidaClippedSmooth yoshidaA) yoshidaA := by rw [hodd]
+        _ = 0 := neg_add_cancel _
+    exact (mul_eq_zero.mp htwo).resolve_left (by norm_num)
+  simpa only [r, oddTenTailToClippedSmooth_apply] using
+    ⟨hperiod.trans hpos, hpos⟩
+
+private theorem continuous_oddTailCenteredProfile (f : YoshidaOddTenTail) :
+    Continuous (oddTailCenteredProfile f) := by
+  obtain ⟨hneg, hpos⟩ := oddTail_endpoints_zero f
+  let S : Set ℝ := Icc (-yoshidaA) yoshidaA
+  let g : ℝ → ℂ := oddTenTailToClippedSmooth f
+  have hfront : ∀ y ∈ frontier S, g y = 0 := by
+    intro y hy
+    have hy' : y ∈ ({-yoshidaA, yoshidaA} : Set ℝ) := by
+      simpa only [S, frontier_Icc (by linarith [yoshidaA_pos] :
+        -yoshidaA ≤ yoshidaA)] using hy
+    rcases hy' with (rfl | rfl)
+    · exact hneg
+    · exact hpos
+  have hpiece : Continuous (S.piecewise g 0) := by
+    apply continuous_piecewise hfront
+    · simpa only [S, g, isClosed_Icc.closure_eq] using
+        (oddTenTailToClippedSmooth f).property.1.continuousOn
+    · exact continuousOn_const
+  have heq : g = S.piecewise g 0 := by
+    funext y
+    by_cases hy : y ∈ S
+    · simp only [Set.piecewise, hy, if_true]
+    · change oddTenTailToClippedSmooth f y = S.piecewise g 0 y
+      rw [yoshidaClippedSmooth_eq_zero_outside
+          (oddTenTailToClippedSmooth f) (by simpa only [S] using hy)]
+      simp only [g, Set.piecewise, hy, if_false, Pi.zero_apply]
+  have hg : Continuous g := heq.symm ▸ hpiece
+  unfold oddTailCenteredProfile centeredRescale
+  exact (Complex.continuous_re.comp hg).comp
+    (continuous_const.mul continuous_id)
+
+private theorem odd_oddTailCenteredProfile (f : YoshidaOddTenTail) :
+    Function.Odd (oddTailCenteredProfile f) := by
+  intro x
+  unfold oddTailCenteredProfile centeredRescale
+  rw [show yoshidaA * -x = -(yoshidaA * x) by ring]
+  have hodd := oddTail_pointwise_odd yoshidaA_pos 10
+    (f : YoshidaClippedPeriodicCore yoshidaA) f.property
+    (yoshidaA * x)
+  have hre := congrArg Complex.re hodd
+  simpa only [oddTenTailToClippedSmooth_apply, map_neg] using hre
+
+private theorem locallyLipschitzOn_oddTailCenteredProfile
+    (f : YoshidaOddTenTail) :
+    LocallyLipschitzOn (Icc (-1) 1) (oddTailCenteredProfile f) := by
+  have hprofile : ContDiffOn ℝ 1
+      (fun y ↦ (oddTenTailToClippedSmooth f y).re)
+      (Icc (-yoshidaA) yoshidaA) := by
+    exact Complex.reCLM.contDiff.comp_contDiffOn
+      ((oddTenTailToClippedSmooth f).property.1.of_le (by simp))
+  have hscale : ContDiffOn ℝ 1 (fun x : ℝ ↦ yoshidaA * x)
+      (Icc (-1) 1) := by fun_prop
+  have hmaps : MapsTo (fun x : ℝ ↦ yoshidaA * x)
+      (Icc (-1) 1) (Icc (-yoshidaA) yoshidaA) := by
+    intro x hx
+    constructor <;> nlinarith [hx.1, hx.2, yoshidaA_pos]
+  have hcomp := hprofile.comp hscale hmaps
+  simpa only [oddTailCenteredProfile, centeredRescale, Function.comp_apply] using
+    hcomp.locallyLipschitzOn (convex_Icc (-1) 1)
+
+/-- Parseval on the genuine tenth odd tail gives the sharp degree-one
+Legendre coefficient budget after centered endpoint rescaling. -/
+theorem centeredOddP1Coefficient_sq_le_oddTail_energy
+    (f : YoshidaOddTenTail)
+    (hreal : ∀ y : ℝ, (oddTenTailToClippedSmooth f y).im = 0) :
+    centeredOddP1Coefficient (oddTailCenteredProfile f) ^ 2 ≤
+      (1 / 10 : ℝ) *
+        ∫ x : ℝ in -1..1, oddTailCenteredProfile f x ^ 2 := by
+  have h := normSq_oddTailP1Moment_le f
+  rw [oddTailP1Moment_eq_centeredCoefficient_of_real f hreal,
+    clippedIntervalEnergy_eq_centeredProfile_energy_of_real f hreal] at h
+  simp [Complex.normSq_apply] at h
+  field_simp [yoshidaA_pos.ne'] at h ⊢
+  nlinarith [yoshidaA_pos]
+
+/-- Parseval on the genuine tenth odd tail gives the sharp degree-three
+Legendre coefficient budget after centered endpoint rescaling. -/
+theorem centeredOddP3Coefficient_sq_le_oddTail_energy
+    (f : YoshidaOddTenTail)
+    (hreal : ∀ y : ℝ, (oddTenTailToClippedSmooth f y).im = 0) :
+    centeredOddP3Coefficient (oddTailCenteredProfile f) ^ 2 ≤
+      (49 / 90 : ℝ) *
+        ∫ x : ℝ in -1..1, oddTailCenteredProfile f x ^ 2 := by
+  have h := normSq_oddTailP3Moment_le f
+  rw [oddTailP3Moment_eq_centeredCoefficient_of_real f hreal,
+    clippedIntervalEnergy_eq_centeredProfile_energy_of_real f hreal] at h
+  simp [Complex.normSq_apply] at h
+  field_simp [yoshidaA_pos.ne'] at h ⊢
+  nlinarith [yoshidaA_pos]
+
 /-!
 # The exact odd one/three raw-energy gap
 
@@ -727,6 +1205,40 @@ theorem centeredRawLogEnergy_ge_three_hundred_eighty_three_div_one_hundred_eight
   rw [hresidual] at hspectral
   nlinarith [sq_nonneg (centeredOddP1Coefficient w),
     sq_nonneg (centeredOddP3Coefficient w)]
+
+/-- The genuine real tenth odd Fourier tail satisfies the exact `383 / 180`
+raw logarithmic-energy gap.  All form-domain, parity, and low-coefficient
+hypotheses are derived from the algebraic tail itself. -/
+theorem oddTail_centeredRawLogEnergy_ge_three_hundred_eighty_three_div_one_hundred_eighty
+    (f : YoshidaOddTenTail)
+    (hreal : ∀ y : ℝ, (oddTenTailToClippedSmooth f y).im = 0) :
+    (383 / 180 : ℝ) *
+        (∫ x : ℝ in -1..1, oddTailCenteredProfile f x ^ 2) ≤
+      centeredRawLogEnergy (oddTailCenteredProfile f) / 4 := by
+  let w : ℝ → ℝ := oddTailCenteredProfile f
+  have hwcont : Continuous w := by
+    simpa only [w] using continuous_oddTailCenteredProfile f
+  have hwodd : Function.Odd w := by
+    simpa only [w] using odd_oddTailCenteredProfile f
+  have hlocal : LocallyLipschitzOn (Icc (-1) 1) w := by
+    simpa only [w] using locallyLipschitzOn_oddTailCenteredProfile f
+  obtain ⟨C, hLip⟩ := exists_lipschitzWith_centeredPullback w hlocal
+  let g : unitInterval → ℝ :=
+    fun t ↦ centeredPullback w (t : ℝ)
+  have hgcont : Continuous g := by
+    dsimp only [g, centeredPullback]
+    fun_prop
+  have hgmem : MemLp g 2 :=
+    hgcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace g)
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand g) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith g
+      (by simpa only [g] using hLip)
+  have hone := centeredOddP1Coefficient_sq_le_oddTail_energy f hreal
+  have hthree := centeredOddP3Coefficient_sq_le_oddTail_energy f hreal
+  exact centeredRawLogEnergy_ge_three_hundred_eighty_three_div_one_hundred_eighty
+    w hwcont (by simpa only [g] using hgmem)
+      (by simpa only [g] using henergy) hwodd
+      (by simpa only [w] using hone) (by simpa only [w] using hthree)
 
 end
 
