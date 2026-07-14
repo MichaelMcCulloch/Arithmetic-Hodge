@@ -251,7 +251,7 @@ private theorem evenStructuralKernelBase_ultra_bounds :
   · nlinarith
   constructor <;> nlinarith
 
-private theorem evenPositivePerturbationTaylor_ultra_bounds :
+theorem evenPositivePerturbationTaylor_ultra_bounds :
     (-228083 / 1000000 : ℝ) < evenPositivePerturbationTaylor00 ∧
       (-204811 / 1000000 : ℝ) < evenPositivePerturbationTaylor02 ∧
       evenPositivePerturbationTaylor02 < (-204809 / 1000000 : ℝ) ∧
