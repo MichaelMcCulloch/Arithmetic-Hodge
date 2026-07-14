@@ -4,6 +4,24 @@ set_option autoImplicit false
 
 namespace ArithmeticHodge.Analysis.TwoByTwoSchur
 
+/-- Scalar low--tail Schur closure.  A nonnegative low block and tail block
+remain nonnegative after adding their mixed term when the exact determinant
+bound holds. -/
+theorem scalar_low_tail_nonneg
+    (low tail mixed : ℝ)
+    (hlow : 0 ≤ low) (htail : 0 ≤ tail)
+    (hschur : mixed ^ 2 ≤ low * tail) :
+    0 ≤ low + 2 * mixed + tail := by
+  by_cases hmixed : 0 ≤ mixed
+  · positivity
+  · have hmixedNeg : mixed < 0 := lt_of_not_ge hmixed
+    have hright : 0 < low + tail - 2 * mixed := by linarith
+    have hprod : 0 ≤
+        (low + 2 * mixed + tail) * (low + tail - 2 * mixed) := by
+      nlinarith [sq_nonneg (low - tail)]
+    exact nonneg_of_mul_nonneg_left
+      (by simpa [mul_comm] using hprod) hright
+
 /-- A positive `2 × 2` low block plus a tail stays nonnegative when the two
 low-to-tail functionals satisfy the exact adjugate Schur bound. -/
 theorem quadratic_add_tail_nonneg

@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoEndpointChannelRadius
+import ArithmeticHodge.Analysis.TwoByTwoSchur
 
 set_option autoImplicit false
 
@@ -13,6 +14,7 @@ open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointChannelRadius
 open YoshidaFactorTwoEndpointClean
 open YoshidaFactorTwoEndpointParityPencil
+open TwoByTwoSchur
 
 /-!
 # Exact full-profile low/tail phase decomposition
@@ -64,6 +66,31 @@ def factorTwoEndpointLowTailCorrection
     factorTwoCenteredAlternatingCoupling uLow vTail +
     factorTwoCenteredAlternatingCoupling uTail vLow)
 
+/-- The genuinely mixed low--tail block of the channel phase.  This is the
+quantity controlled by the sharp scalar Schur determinant, rather than by the
+stronger and generally unnecessary sign condition on the whole correction. -/
+def factorTwoEndpointLowTailMixed
+    (uLow uTail vLow vTail : ℝ → ℝ) (a b : ℝ) : ℝ :=
+  factorTwoCenteredCleanPolarization uLow uTail +
+    factorTwoCenteredCleanPolarization vLow vTail +
+  a * (factorTwoCenteredSymmetricPerturbationBilinear uLow uTail +
+    factorTwoCenteredSymmetricPerturbationBilinear vLow vTail) +
+  (b / 2) * (factorTwoCenteredAlternatingCoupling uLow vTail +
+    factorTwoCenteredAlternatingCoupling uTail vLow)
+
+/-- The retained correction is exactly its pure finite-low phase plus twice
+the mixed low--tail block. -/
+theorem factorTwoEndpointLowTailCorrection_eq_low_add_two_mixed
+    (uLow uTail vLow vTail : ℝ → ℝ) (a b : ℝ) :
+    factorTwoEndpointLowTailCorrection uLow uTail vLow vTail a b =
+      factorTwoEndpointChannelPhase uLow vLow a b +
+        2 * factorTwoEndpointLowTailMixed
+          uLow uTail vLow vTail a b := by
+  unfold factorTwoEndpointLowTailCorrection
+    factorTwoEndpointChannelPhase factorTwoEndpointChannelCleanSum
+    factorTwoEndpointChannelSymmetricSum factorTwoEndpointLowTailMixed
+  ring
+
 /-- Exact channel decomposition into the already-controlled pure tail phase
 and the complete finite-low/low-tail correction. -/
 theorem factorTwoEndpointChannelPhase_add_add
@@ -93,6 +120,43 @@ theorem factorTwoEndpointChannelPhase_add_add
     factorTwoCenteredAlternatingCoupling_add_right
       uTail vLow vTail huTail hvLow hvTail]
   ring
+
+/-- Exact low--mixed--tail decomposition of the full channel phase. -/
+theorem factorTwoEndpointChannelPhase_add_add_eq_low_mixed_tail
+    (uLow uTail vLow vTail : ℝ → ℝ)
+    (huLow : Continuous uLow) (huTail : Continuous uTail)
+    (hvLow : Continuous vLow) (hvTail : Continuous vTail)
+    (a b : ℝ) :
+    factorTwoEndpointChannelPhase
+        (uLow + uTail) (vLow + vTail) a b =
+      factorTwoEndpointChannelPhase uLow vLow a b +
+        2 * factorTwoEndpointLowTailMixed
+          uLow uTail vLow vTail a b +
+      factorTwoEndpointChannelPhase uTail vTail a b := by
+  rw [factorTwoEndpointChannelPhase_add_add
+      uLow uTail vLow vTail huLow huTail hvLow hvTail,
+    factorTwoEndpointLowTailCorrection_eq_low_add_two_mixed]
+  ring
+
+/-- Sharp block-Schur closure of the full profile.  Unlike the older
+`correction ≥ 0` interface, this permits a negative mixed block up to its exact
+determinant budget. -/
+theorem factorTwoEndpointChannelPhase_nonneg_of_low_tail_schur
+    (uLow uTail vLow vTail : ℝ → ℝ)
+    (huLow : Continuous uLow) (huTail : Continuous uTail)
+    (hvLow : Continuous vLow) (hvTail : Continuous vTail)
+    (a b : ℝ)
+    (hLow : 0 ≤ factorTwoEndpointChannelPhase uLow vLow a b)
+    (hTail : 0 ≤ factorTwoEndpointChannelPhase uTail vTail a b)
+    (hSchur : factorTwoEndpointLowTailMixed
+        uLow uTail vLow vTail a b ^ 2 ≤
+      factorTwoEndpointChannelPhase uLow vLow a b *
+        factorTwoEndpointChannelPhase uTail vTail a b) :
+    0 ≤ factorTwoEndpointChannelPhase
+      (uLow + uTail) (vLow + vTail) a b := by
+  rw [factorTwoEndpointChannelPhase_add_add_eq_low_mixed_tail
+    uLow uTail vLow vTail huLow huTail hvLow hvTail]
+  exact scalar_low_tail_nonneg _ _ _ hLow hTail hSchur
 
 /-- This is the exact remaining full-profile obligation: tail phase
 nonnegativity plus nonnegativity of the retained low/cross correction imply

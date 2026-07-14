@@ -15,12 +15,15 @@ open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOddCorePositive
 open YoshidaEndpointOddSharpMassLoss
 open YoshidaEndpointPotentialBound
+open YoshidaEndpointPotentialOddCoercivity
 open YoshidaRegularKernelSchur
 open YoshidaRegularKernelSharpMeanZeroSchur
 
 noncomputable section
 
-theorem yoshidaEndpointOddCleanQuadratic_nonneg
+/-- The odd clean endpoint form retains the exact positive gap between the
+`7 / 5` raw-log/potential coercivity and the complete sharp mass loss. -/
+theorem yoshidaEndpointOddCleanQuadratic_coercive
     (w : ℝ → ℝ) (hwcont : Continuous w)
     (hf : MemLp (fun t : unitInterval ↦ centeredPullback w (t : ℝ)) 2)
     (henergy : Integrable (unitIntervalRawLogEnergyIntegrand
@@ -28,7 +31,9 @@ theorem yoshidaEndpointOddCleanQuadratic_nonneg
     (hwodd : Function.Odd w)
     (hpotential : IntervalIntegrable
       (fun x ↦ yoshidaEndpointPotential x * w x ^ 2) volume (-1) 1) :
-    0 ≤ yoshidaEndpointOddCleanQuadratic w := by
+    (7 / 5 - yoshidaEndpointOddSharpMassLoss) *
+        (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      yoshidaEndpointOddCleanQuadratic w := by
   let f : ℝ → ℂ := fun x ↦ w x
   have hfcont : Continuous f := by
     exact Complex.continuous_ofReal.comp hwcont
@@ -101,16 +106,64 @@ theorem yoshidaEndpointOddCleanQuadratic_nonneg
     linarith
   have hhyperbolic := yoshidaEndpointHyperbolicQuadratic_lower f hfcont
   rw [hmassInterval] at hhyperbolic
-  have hcore := yoshidaEndpointOddCoreQuadratic_nonneg
-    w hwcont hf henergy hwodd hpotential
+  have hcoercive :=
+    seven_fifths_mul_integral_sq_le_logEnergy_div_four_add_endpointPotential
+      w hwcont hf henergy hwodd hpotential
   dsimp only [yoshidaEndpointOddCleanQuadratic]
-  unfold yoshidaEndpointOddCoreQuadratic at hcore
-  unfold yoshidaEndpointOddSharpMassLoss yoshidaEndpointEvenSharpMassLoss at hcore
-  unfold yoshidaEndpointScalarMassLoss
-  change _ + _ - _ - yoshidaEndpointA *
-      (yoshidaEndpointRegularQuadratic f).re +
-      yoshidaEndpointHyperbolicQuadratic f ≥ 0
+  unfold yoshidaEndpointOddSharpMassLoss yoshidaEndpointEvenSharpMassLoss
+    yoshidaEndpointScalarMassLoss
   linarith
+
+/-- A convenient rational reserve retained by every odd clean profile.  The
+constant follows from the analytic logarithm, Euler-constant, and square-root
+bounds used in the sharp mass-loss proof. -/
+theorem one_hundredth_lt_odd_clean_coercivity_gap :
+    (1 / 100 : ℝ) < 7 / 5 - yoshidaEndpointOddSharpMassLoss := by
+  have hgamma :=
+    eulerMascheroniConstant_lt_two_hundred_eighty_nine_div_five_hundred
+  have hlog := log_pi_mul_log_two_lt_seven_hundred_seventy_nine_div_thousand
+  have hsqrt := inv_sqrt_two_lt_one_hundred_seventy_seven_div_two_hundred_fifty
+  have htwoLower := six_hundred_ninety_three_div_thousand_lt_log_two
+  have htwoUpper :=
+    log_two_lt_one_thousand_seven_hundred_thirty_three_div_two_thousand_five_hundred
+  unfold yoshidaEndpointOddSharpMassLoss yoshidaEndpointEvenSharpMassLoss
+  linarith
+
+/-- Rational form of odd clean coercivity, suitable for subsequent Schur
+budgets without carrying transcendental constants. -/
+theorem one_hundredth_energy_le_yoshidaEndpointOddCleanQuadratic
+    (w : ℝ → ℝ) (hwcont : Continuous w)
+    (hf : MemLp (fun t : unitInterval ↦ centeredPullback w (t : ℝ)) 2)
+    (henergy : Integrable (unitIntervalRawLogEnergyIntegrand
+      (fun t : unitInterval ↦ centeredPullback w (t : ℝ))))
+    (hwodd : Function.Odd w)
+    (hpotential : IntervalIntegrable
+      (fun x ↦ yoshidaEndpointPotential x * w x ^ 2) volume (-1) 1) :
+    (1 / 100 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      yoshidaEndpointOddCleanQuadratic w := by
+  have hcoercive := yoshidaEndpointOddCleanQuadratic_coercive
+    w hwcont hf henergy hwodd hpotential
+  have hmass : 0 ≤ ∫ x : ℝ in -1..1, w x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num) fun x _hx ↦ sq_nonneg (w x)
+  exact (mul_le_mul_of_nonneg_right
+    one_hundredth_lt_odd_clean_coercivity_gap.le hmass).trans hcoercive
+
+theorem yoshidaEndpointOddCleanQuadratic_nonneg
+    (w : ℝ → ℝ) (hwcont : Continuous w)
+    (hf : MemLp (fun t : unitInterval ↦ centeredPullback w (t : ℝ)) 2)
+    (henergy : Integrable (unitIntervalRawLogEnergyIntegrand
+      (fun t : unitInterval ↦ centeredPullback w (t : ℝ))))
+    (hwodd : Function.Odd w)
+    (hpotential : IntervalIntegrable
+      (fun x ↦ yoshidaEndpointPotential x * w x ^ 2) volume (-1) 1) :
+    0 ≤ yoshidaEndpointOddCleanQuadratic w := by
+  have hcoercive := yoshidaEndpointOddCleanQuadratic_coercive
+    w hwcont hf henergy hwodd hpotential
+  have hgap : 0 ≤ 7 / 5 - yoshidaEndpointOddSharpMassLoss :=
+    (sub_pos.mpr yoshidaEndpointOddSharpMassLoss_lt_seven_fifths).le
+  have hmass : 0 ≤ ∫ x : ℝ in -1..1, w x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num) fun x _hx ↦ sq_nonneg (w x)
+  exact (mul_nonneg hgap hmass).trans hcoercive
 
 end
 
