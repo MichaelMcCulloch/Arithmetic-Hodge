@@ -158,22 +158,37 @@ promising falsification mechanism is an admissible centered seed for which the
 total radius inequality is strictly reversed. These are current opportunities,
 not mandatory routes.
 
-The high-frequency instance of that positive mechanism is now compiled.
-`endpoint_tail_phase_uniform` proves the complete phase-disk inequality when
-the even component lies in the tail above the first 200 even modes and the odd
-component lies in the tail above the first 10 odd modes. Its new even lower
-bound comes from a genuine infinite Schur estimate, not a retained numerical
-cutoff. This result is tail-only and does not establish the canonical
-same-seed pencil.
+The high-frequency instance of that positive mechanism and its decomposition
+hypotheses are now compiled. `endpoint_tail_phase_uniform` proves the complete
+phase-disk inequality when the even component lies in the tail above the first
+200 even modes and the odd component lies in the tail above the first 10 odd
+modes, provided both tails are pointwise real and have zero endpoint traces.
+Its even lower bound comes from a genuine infinite Schur estimate, not a
+retained numerical cutoff.
 
-The smallest explicit gap on this route is the finite-low/low-tail assembly.
-After the exact Fourier decompositions `e = eL + eT` and `o = oL + oT`, write
-the phase form as a low block `L`, a tail block `T`, and twice a mixed block
-`C`. The tail theorem gives `0 ≤ T`; it remains to prove the concrete
-finite-dimensional inequalities `0 ≤ L` and `C ^ 2 ≤ L * T` for each of the
-two opposite-parity reflection channels (with the appropriate sign change in
-the alternating coordinate). No existing concrete PSD theorem currently
-closes this block-Schur obligation.
+The standard 200-mode even split did not itself preserve the required
+endpoint trace. The endpoint-adapted basis now replaces each retained even
+mode by that mode minus its endpoint-trace multiple of frequency `200`.
+Frequency `200` remains in the cutoff-`199` tail, so this change preserves the
+`Fin 200` low dimension while forcing every adapted low mode and the resulting
+tail to vanish at both endpoints. Pointwise realification is proved to
+preserve both even and odd Fourier-tail submodules. The compiled decomposition
+theorems therefore return real `Fin 200` and `Fin 10` coefficients, exact
+low-plus-tail equalities, and real endpoint-zero tails to which the tail phase
+theorem applies. This still does not establish the canonical same-seed pencil.
+
+The smallest explicit gap on this route is now the concrete finite-low and
+low-tail Schur certificate. After the exact decompositions `e = eL + eT` and
+`o = oL + oT`, write the phase form as a low block `L`, a tail block `T`, and
+twice a mixed block `C`. The tail theorem gives `0 ≤ T`; it remains to prove
+`0 ≤ L` and `C ^ 2 ≤ L * T` for each opposite-parity reflection channel
+(with the appropriate alternating-coordinate sign change). The existing
+`210 x 210` matrix API has the correct `Fin 200 + Fin 10` dimensions but is
+not yet fully instantiated. Exact finite-synthesis theorems now connect the
+two symmetric perturbation blocks and the alternating block to the adapted
+production basis. The clean quadratic blocks still lack the corresponding
+public bilinear finite-synthesis bridge, and no disk-uniform PSD/Schur
+certificate currently closes the block.
 
 Even if the same-seed factor-two inequality is proved, arbitrary support still
 requires a valid local-to-global argument, such as a controlled chain of
