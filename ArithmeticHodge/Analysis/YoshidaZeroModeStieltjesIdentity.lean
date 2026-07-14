@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaZeroModeStructuralCore
+import ArithmeticHodge.Analysis.DigammaTrapezoid
 import Mathlib.Analysis.Real.Pi.Leibniz
 
 set_option autoImplicit false
@@ -159,6 +160,73 @@ private theorem hasSum_quarterRationalTerm :
       (Real.pi / 2 + 3 * structuralYoshidaLength) := by
   rw [hasSum_iff_tendsto_nat_of_nonneg quarterRationalTerm_nonneg]
   exact tendsto_sum_quarterRationalTerm
+
+/-- Closed real value of the quarter-line digamma baseline used by the
+factor-two perturbation enclosures. -/
+theorem digamma_one_fourth_re_eq :
+    (Complex.digamma (1 / 4 : ℂ)).re =
+      -Real.eulerMascheroniConstant - Real.pi / 2 -
+        3 * structuralYoshidaLength := by
+  have hshift : HasSum (fun n : ℕ ↦ quarterRationalTerm (n + 1))
+      (Real.pi / 2 + 3 * structuralYoshidaLength - 3) := by
+    have h := (hasSum_nat_add_iff' 1).2 hasSum_quarterRationalTerm
+    convert h using 1
+    norm_num [quarterRationalTerm]
+  have htel : HasSum
+      (fun n : ℕ ↦
+        (1 : ℝ) / (n + 1 : ℕ) - 1 / (n + 2 : ℕ)) 1 := by
+    have hsum (N : ℕ) :
+        (∑ n ∈ Finset.range N,
+          ((1 : ℝ) / (n + 1 : ℕ) - 1 / (n + 2 : ℕ))) =
+            1 - 1 / (N + 1 : ℕ) := by
+      induction N with
+      | zero => norm_num
+      | succ N ih =>
+          rw [Finset.sum_range_succ, ih]
+          push_cast
+          have hN : (0 : ℝ) < N + 1 := by positivity
+          have hN' : (0 : ℝ) < N + 2 := by positivity
+          field_simp [hN.ne', hN'.ne']
+          ring
+    have hnonneg (n : ℕ) :
+        0 ≤ (1 : ℝ) / (n + 1 : ℕ) - 1 / (n + 2 : ℕ) := by
+      push_cast
+      have h1 : (0 : ℝ) < n + 1 := by positivity
+      have h2 : (0 : ℝ) < n + 2 := by positivity
+      rw [sub_nonneg, div_le_div_iff₀ h2 h1]
+      linarith
+    rw [hasSum_iff_tendsto_nat_of_nonneg hnonneg]
+    have hinv :=
+      (tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ))
+    have hlim := (tendsto_const_nhds :
+      Tendsto (fun _ : ℕ ↦ (1 : ℝ)) atTop (nhds 1)).sub hinv
+    convert hlim using 1
+    · funext N
+      rw [hsum]
+      push_cast
+      rfl
+    · norm_num
+  have hquarter : HasSum
+      (ArithmeticHodge.Analysis.DigammaTrapezoid.quarterDigammaSeriesTerm 0)
+      (4 - (Real.pi / 2 + 3 * structuralYoshidaLength)) := by
+    have h := hshift.neg.add htel
+    convert h using 1
+    · funext n
+      unfold ArithmeticHodge.Analysis.DigammaTrapezoid.quarterDigammaSeriesTerm
+        ArithmeticHodge.Analysis.DigammaTrapezoid.shiftedReciprocalRealPart
+        ArithmeticHodge.Analysis.DigammaTrapezoid.reciprocalRealPart
+        quarterRationalTerm
+      push_cast
+      field_simp
+      ring
+    · ring
+  have hd :=
+    ArithmeticHodge.Analysis.DigammaTrapezoid.digamma_quarter_vertical_re_eq_trapezoid_series
+      0
+  rw [hquarter.tsum_eq] at hd
+  norm_num [ArithmeticHodge.Analysis.DigammaTrapezoid.shiftedReciprocalRealPart,
+    ArithmeticHodge.Analysis.DigammaTrapezoid.reciprocalRealPart] at hd
+  linarith
 
 private def zeroStieltjesTerm (k : ℕ) : ℝ :=
   (2 * (1 - (Real.sqrt 2)⁻¹ / (4 : ℝ) ^ k) /
