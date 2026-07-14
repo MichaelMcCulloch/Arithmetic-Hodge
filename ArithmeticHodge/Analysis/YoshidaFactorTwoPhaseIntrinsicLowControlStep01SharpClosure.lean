@@ -20,6 +20,8 @@ open YoshidaFactorTwoEndpointParityPencil
 open YoshidaEndpointEvenLowProfile
 open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointEvenTailRepresenter
+open YoshidaEndpointOddResidualRegularity
+open YoshidaEndpointSingularCorrelation
 open YoshidaFactorTwoPhaseIntrinsicEvenCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicEvenEndpointStructuralPositive
@@ -282,6 +284,93 @@ theorem factorTwoIntrinsicStep01Slope_two_le :
   rw [factorTwoIntrinsicStep01Slope_two_le_iff
     factorTwoIntrinsicEvenDetCoefficient0_pos]
   linarith [factorTwoIntrinsicStep01_slopeGap_pos]
+
+/-! ## The remainder-only handoff is too strong -/
+
+/-- On the constant-even/zero-odd direction, the asymmetric singular square
+has the exact value one, independently of the determinant slope. -/
+theorem factorTwoIntrinsicStep01WeightedSquare_p0_zero_eq_one (s : ℝ) :
+    (1 / 2 : ℝ) *
+        (∫ r : ℝ in 0..2,
+          factorTwoIntrinsicStep01WeightedSquareNumerator
+              centeredEvenP0 0 s r / r) = 1 := by
+  have hnumerator : ∀ r : ℝ,
+      factorTwoIntrinsicStep01WeightedSquareNumerator
+          centeredEvenP0 0 s r = r := by
+    intro r
+    unfold factorTwoIntrinsicStep01WeightedSquareNumerator
+      centeredPositiveDistanceEnergy
+      factorTwoIntrinsicStep01WeightedEndpointSquare
+      factorTwoIntrinsicStep01WeightedEndpointPairing centeredEvenP0
+    simp
+  have hintegral :
+      (∫ r : ℝ in 0..2,
+          factorTwoIntrinsicStep01WeightedSquareNumerator
+              centeredEvenP0 0 s r / r) =
+        ∫ _r : ℝ in 0..2, (1 : ℝ) := by
+    apply intervalIntegral.integral_congr_ae_restrict
+    filter_upwards [
+        (Set.countable_singleton (0 : ℝ)).ae_notMem
+          (volume.restrict (Set.uIoc (0 : ℝ) 2))] with r hr
+    rw [hnumerator r]
+    exact div_self hr
+  rw [hintegral]
+  norm_num
+
+private theorem step01EvenPositive00_lt_one :
+    step01EvenPositive00 < 1 := by
+  have hclean := intrinsicEven_cleanGram00_lt_thirtyseven_hundredths
+  have hpert := step01_evenNegativePerturbation00_lower
+  unfold step01EvenPositive00 factorTwoStructuralPhaseLow00 at ⊢
+  unfold evenNegativePerturbation00 at hpert
+  nlinarith
+
+/-- The universal nonnegativity premise for the signed remainder is false.
+The constant even mode is an exact witness, so a successful Step01 closure
+must retain part of the five-square reserve instead of discarding it. -/
+theorem factorTwoIntrinsicStep01WeightedSignedRemainder_p0_zero_neg :
+    factorTwoIntrinsicStep01WeightedSignedRemainder
+        centeredEvenP0 0 factorTwoIntrinsicStep01Slope < 0 := by
+  have he : Continuous centeredEvenP0 := by
+    unfold centeredEvenP0
+    fun_prop
+  have heLocal : LocallyLipschitzOn (Icc (-1) 1) centeredEvenP0 := by
+    have hdiff : ContDiff ℝ 1 centeredEvenP0 := by
+      unfold centeredEvenP0
+      fun_prop
+    exact hdiff.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hzeroLocal : LocallyLipschitzOn (Icc (-1) 1) (0 : ℝ → ℝ) := by
+    have hdiff : ContDiff ℝ 1 (fun _ : ℝ ↦ (0 : ℝ)) := contDiff_const
+    change LocallyLipschitzOn (Icc (-1) 1) (fun _ : ℝ ↦ (0 : ℝ))
+    exact hdiff.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hnormal :=
+    factorTwoIntrinsicStep01WeightedProfileForm_eq_square_add_remainder
+      centeredEvenP0 0 he continuous_zero heLocal hzeroLocal
+      factorTwoIntrinsicStep01Slope
+  have hform :
+      factorTwoIntrinsicStep01WeightedProfileForm
+          centeredEvenP0 0 factorTwoIntrinsicStep01Slope =
+        step01EvenPositive00 := by
+    have h := factorTwoIntrinsicStep01WeightedProfileForm_eq_intrinsic
+      1 0 0 0
+    have heq : factorTwoEvenStructuralLowProfile 1 0 = centeredEvenP0 := by
+      funext x
+      unfold factorTwoEvenStructuralLowProfile
+      ring
+    have hoq : factorTwoOddStructuralLowProfile 0 0 = 0 := by
+      funext x
+      simp [factorTwoOddStructuralLowProfile]
+    rw [heq, hoq] at h
+    simpa [factorTwoIntrinsicEvenPlusQuadratic,
+      factorTwoIntrinsicStep01ExactOddBudget,
+      factorTwoIntrinsicOddDirectionQuadratic,
+      factorTwoIntrinsicOddPhaseQuadratic,
+      factorTwoIntrinsicAlternatingBilinear,
+      factorTwoIntrinsicAlternatingRow0,
+      factorTwoIntrinsicAlternatingRow2, step01EvenPositive00] using h
+  rw [hform,
+    factorTwoIntrinsicStep01WeightedSquare_p0_zero_eq_one] at hnormal
+  linarith [step01EvenPositive00_lt_one]
 
 end
 
