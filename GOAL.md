@@ -230,12 +230,20 @@ not Lean inequalities.  The perturbation entry compression is now exact:
 all three blocks reduce to four one-dimensional frequency families (a
 symmetric sine moment, a symmetric affine-cosine moment, an antisymmetric
 one-minus-cosine moment, and an antisymmetric affine-sine moment).  The
-first family now has an exact dyadic Cauchy-series representation proved by
-dominated convergence from the genuine singular integral, including its
-retained prime atom.  The remaining finite obligation is to derive the other
-three exact series and prove sufficiently sharp rational enclosures for all
-four families and the clean moments through frequency `200`, then replay an
-exact certificate.  A generic robust-congruence theorem is now compiled: a
+four families now have exact dyadic Cauchy-series representations proved by
+dominated convergence from the genuine singular integrals, including their
+retained prime atoms.  The affine-cosine identity also covers the zero mode;
+the other three vanish there and are stated on positive canonical modes.
+The clean sine moments at frequencies `191` through `200` now have
+kernel-checked rational boxes of width at most `10^-9`, including the extra
+`S_200` introduced by endpoint adaptation.  The retained `p = 3` sine and
+cosine phases at every frequency `0` through `200` also have exact rational
+Taylor enclosures of width at most `10^-10`, after a kernel-checked
+quarter-turn reduction.  The remaining finite obligation is to prove
+sufficiently sharp rational enclosures for the dyadic parts of all four
+perturbation families and the still-unboxed clean moments through frequency
+`200`, then replay an exact certificate.  A generic robust-congruence theorem
+is now compiled: a
 rational invertible change of basis, a uniform entrywise error bound around a
 rational center, and kernel-checked weighted diagonal dominance imply
 positive definiteness of the true matrix.  This avoids the width growth of a
