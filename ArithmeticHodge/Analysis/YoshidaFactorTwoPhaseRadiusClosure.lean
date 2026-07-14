@@ -26,7 +26,7 @@ The alternating radius is now unconditional.  Substituting its sharp
 two symmetric perturbation radii as analytic hypotheses.
 -/
 
-private theorem continuous_clipped_of_endpoints_zero
+theorem continuous_clipped_of_endpoints_zero
     {a : ℝ} (ha : 0 < a) (r : YoshidaClippedPeriodicCore a)
     (hneg : (r : YoshidaClippedSmooth a) (-a) = 0)
     (hpos : (r : YoshidaClippedSmooth a) a = 0) :
@@ -57,7 +57,7 @@ private theorem continuous_clipped_of_endpoints_zero
   rw [heq]
   exact hpiece
 
-private theorem continuous_centeredRescale_re_of_endpoints_zero
+theorem continuous_centeredRescale_re_of_endpoints_zero
     {a : ℝ} (ha : 0 < a) (r : YoshidaClippedPeriodicCore a)
     (hneg : (r : YoshidaClippedSmooth a) (-a) = 0)
     (hpos : (r : YoshidaClippedSmooth a) a = 0) :

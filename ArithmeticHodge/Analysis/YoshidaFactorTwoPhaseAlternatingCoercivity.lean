@@ -386,7 +386,7 @@ private theorem setIntegral_openTriangle_eq_closedTriangle
 
 /-- The positive-distance shear turns the absolute correlation majorant into
 the corresponding density on the centered upper triangle. -/
-private theorem integral_abs_cross_div_two_sub_eq_centeredUpperTriangle
+theorem integral_abs_cross_div_two_sub_eq_centeredUpperTriangle
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
     (∫ t : ℝ in 0..2,
       factorTwoCenteredCrossCorrelation
@@ -414,7 +414,7 @@ private theorem integral_abs_cross_div_two_sub_eq_centeredUpperTriangle
 
 /-- Reusable set-integral transport under a measure-preserving measurable
 embedding whose preimage identifies the two domains. -/
-private theorem setIntegral_comp_measurePreserving
+theorem setIntegral_comp_measurePreserving
     (S : ℝ × ℝ → ℝ × ℝ)
     (hS : MeasurePreserving S
       ((volume : Measure ℝ).prod volume) ((volume : Measure ℝ).prod volume))

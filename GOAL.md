@@ -158,6 +158,23 @@ promising falsification mechanism is an admissible centered seed for which the
 total radius inequality is strictly reversed. These are current opportunities,
 not mandatory routes.
 
+The high-frequency instance of that positive mechanism is now compiled.
+`endpoint_tail_phase_uniform` proves the complete phase-disk inequality when
+the even component lies in the tail above the first 200 even modes and the odd
+component lies in the tail above the first 10 odd modes. Its new even lower
+bound comes from a genuine infinite Schur estimate, not a retained numerical
+cutoff. This result is tail-only and does not establish the canonical
+same-seed pencil.
+
+The smallest explicit gap on this route is the finite-low/low-tail assembly.
+After the exact Fourier decompositions `e = eL + eT` and `o = oL + oT`, write
+the phase form as a low block `L`, a tail block `T`, and twice a mixed block
+`C`. The tail theorem gives `0 ≤ T`; it remains to prove the concrete
+finite-dimensional inequalities `0 ≤ L` and `C ^ 2 ≤ L * T` for each of the
+two opposite-parity reflection channels (with the appropriate sign change in
+the alternating coordinate). No existing concrete PSD theorem currently
+closes this block-Schur obligation.
+
 Even if the same-seed factor-two inequality is proved, arbitrary support still
 requires a valid local-to-global argument, such as a controlled chain of
 logarithmic windows or another all-support mechanism. Conversely, a strict
