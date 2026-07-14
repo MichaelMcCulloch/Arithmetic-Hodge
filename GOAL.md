@@ -230,17 +230,20 @@ not Lean inequalities.  The perturbation entry compression is now exact:
 all three blocks reduce to four one-dimensional frequency families (a
 symmetric sine moment, a symmetric affine-cosine moment, an antisymmetric
 one-minus-cosine moment, and an antisymmetric affine-sine moment).  The
-remaining finite obligation is to prove sufficiently sharp rational
-enclosures for these four families and the clean moments through frequency
-`200`, then replay an exact certificate.  A generic robust-congruence theorem
-is now compiled: a rational invertible change of basis, a uniform entrywise
-error bound around a rational center, and kernel-checked weighted diagonal
-dominance imply positive definiteness of the true matrix.  This avoids the
-width growth of a raw 210-stage interval elimination and makes the two fixed
-static splits the shortest current formal route.  Numerical conditioning
-still calls for scalar moment boxes around `1e-9` or tighter.  The healthier
-scalar-Schur margin remains a fallback if the static certificate cannot
-retain its thin reserve under rigorous enclosure inflation.
+first family now has an exact dyadic Cauchy-series representation proved by
+dominated convergence from the genuine singular integral, including its
+retained prime atom.  The remaining finite obligation is to derive the other
+three exact series and prove sufficiently sharp rational enclosures for all
+four families and the clean moments through frequency `200`, then replay an
+exact certificate.  A generic robust-congruence theorem is now compiled: a
+rational invertible change of basis, a uniform entrywise error bound around a
+rational center, and kernel-checked weighted diagonal dominance imply
+positive definiteness of the true matrix.  This avoids the width growth of a
+raw 210-stage interval elimination and makes the two fixed static splits the
+shortest current formal route.  Numerical conditioning still calls for
+scalar moment boxes around `1e-9` or tighter.  The healthier scalar-Schur
+margin remains a fallback if the static certificate cannot retain its thin
+reserve under rigorous enclosure inflation.
 
 For the full-profile assembly, the clean part of the low-tail mixed term is
 now exactly the real clipped critical pairing divided by `yoshidaA`, obtained
