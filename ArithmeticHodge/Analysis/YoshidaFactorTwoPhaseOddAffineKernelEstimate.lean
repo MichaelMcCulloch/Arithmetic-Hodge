@@ -866,7 +866,7 @@ private theorem oddLowAntisymmetricKernelPolynomial6_expansion (t : ℝ) :
 private theorem abs_antisymmetricKernel_sub_polynomial_lt
     {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
     |yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
-        oddLowAntisymmetricKernelPolynomial6 t| < (3 / 8000 : ℝ) := by
+        oddLowAntisymmetricKernelPolynomial6 t| < (1 / 4000 : ℝ) := by
   let up : ℝ := yoshidaEndpointA * (2 + t)
   let um : ℝ := yoshidaEndpointA * (2 - t)
   let zp : ℝ := up / 2
@@ -955,64 +955,56 @@ private theorem abs_antisymmetricKernel_sub_polynomial_lt
       ecp, ecm, erp, erm]
     ring
   have hinside :
-      |2 * ecp - 2 * ecm - erp + erm| ≤ 4 * E + 2 / 1900 := by
+      |2 * ecp - 2 * ecm - erp + erm| ≤ 2 * E + 1 / 1900 := by
     rw [abs_le]
     constructor
-    · calc
-        -(4 * E + 2 / 1900) ≤ -(2 * E + 1 / 1900) := by
-          linarith
-        _ ≤ 2 * ecp - 2 * ecm - erp + erm := by
-          rw [← sub_nonneg]
-          have hidentity :
-              (2 * ecp - 2 * ecm - erp + erm) -
-                  (-(2 * E + 1 / 1900)) =
-                2 * ecp + 2 * (E - ecm) +
-                  ((1 / 1900 : ℝ) - erp) + erm := by
-            ring
-          rw [hidentity]
-          have hEcm : 0 ≤ E - ecm := sub_nonneg.mpr hecmE
-          have hrerp : 0 ≤ (1 / 1900 : ℝ) - erp :=
-            sub_nonneg.mpr herp
-          exact add_nonneg
-            (add_nonneg (add_nonneg (mul_nonneg (by norm_num) hecp0)
-              (mul_nonneg (by norm_num) hEcm)) hrerp) herm0
-    · calc
-        2 * ecp - 2 * ecm - erp + erm ≤ 2 * E + 1 / 1900 := by
-          rw [← sub_nonneg]
-          have hidentity :
-              (2 * E + 1 / 1900) -
-                  (2 * ecp - 2 * ecm - erp + erm) =
-                2 * (E - ecp) + 2 * ecm + erp +
-                  ((1 / 1900 : ℝ) - erm) := by
-            ring
-          rw [hidentity]
-          have hEcp : 0 ≤ E - ecp := sub_nonneg.mpr hecpE
-          have hrerm : 0 ≤ (1 / 1900 : ℝ) - erm :=
-            sub_nonneg.mpr herm
-          exact add_nonneg
-            (add_nonneg (add_nonneg (mul_nonneg (by norm_num) hEcp)
-              (mul_nonneg (by norm_num) hecm0)) herp0) hrerm
-        _ ≤ 4 * E + 2 / 1900 := by
-          linarith
+    · rw [← sub_nonneg]
+      have hidentity :
+          (2 * ecp - 2 * ecm - erp + erm) -
+              (-(2 * E + 1 / 1900)) =
+            2 * ecp + 2 * (E - ecm) +
+              ((1 / 1900 : ℝ) - erp) + erm := by
+        ring
+      rw [hidentity]
+      have hEcm : 0 ≤ E - ecm := sub_nonneg.mpr hecmE
+      have hrerp : 0 ≤ (1 / 1900 : ℝ) - erp :=
+        sub_nonneg.mpr herp
+      exact add_nonneg
+        (add_nonneg (add_nonneg (mul_nonneg (by norm_num) hecp0)
+          (mul_nonneg (by norm_num) hEcm)) hrerp) herm0
+    · rw [← sub_nonneg]
+      have hidentity :
+          (2 * E + 1 / 1900) -
+              (2 * ecp - 2 * ecm - erp + erm) =
+            2 * (E - ecp) + 2 * ecm + erp +
+              ((1 / 1900 : ℝ) - erm) := by
+        ring
+      rw [hidentity]
+      have hEcp : 0 ≤ E - ecp := sub_nonneg.mpr hecpE
+      have hrerm : 0 ≤ (1 / 1900 : ℝ) - erm :=
+        sub_nonneg.mpr herm
+      exact add_nonneg
+        (add_nonneg (add_nonneg (mul_nonneg (by norm_num) hEcp)
+          (mul_nonneg (by norm_num) hecm0)) herp0) hrerm
   have hscaled :
       |yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
           oddLowAntisymmetricKernelPolynomial6 t| ≤
-        yoshidaEndpointA * (4 * E + 2 / 1900) := by
+        yoshidaEndpointA * (2 * E + 1 / 1900) := by
     rw [hdiff, abs_mul, abs_of_pos yoshidaEndpointA_pos]
     exact mul_le_mul_of_nonneg_left hinside yoshidaEndpointA_pos.le
   have hrat :
       (347 / 1000 : ℝ) *
-          (4 * ((4 / 3 : ℝ) * (7 / 10 : ℝ) ^ 8 / 40320) +
-            2 / 1900) <
-        (3 / 8000 : ℝ) := by
+          (2 * ((4 / 3 : ℝ) * (7 / 10 : ℝ) ^ 8 / 40320) +
+            1 / 1900) <
+        (1 / 4000 : ℝ) := by
     norm_num
   calc
     |yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
         oddLowAntisymmetricKernelPolynomial6 t| ≤
-        yoshidaEndpointA * (4 * E + 2 / 1900) := hscaled
-    _ < (347 / 1000 : ℝ) * (4 * E + 2 / 1900) :=
+        yoshidaEndpointA * (2 * E + 1 / 1900) := hscaled
+    _ < (347 / 1000 : ℝ) * (2 * E + 1 / 1900) :=
       mul_lt_mul_of_pos_right hAupper (by positivity)
-    _ < (3 / 8000 : ℝ) := by
+    _ < (1 / 4000 : ℝ) := by
       simpa only [E] using hrat
 
 private theorem antisymmetric_polynomial_coefficient_bounds :
@@ -1210,7 +1202,7 @@ private theorem antisymmetric_polynomial_coefficient_bounds :
 private theorem abs_antisymmetricPolynomial_sub_linear_le
     {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
     |oddLowAntisymmetricKernelPolynomial6 t - t / 10| ≤
-      (7 / 8000 : ℝ) := by
+      (3 / 4000 : ℝ) := by
   rcases antisymmetric_polynomial_coefficient_bounds with
     ⟨hc1Lower, hc1Upper, hc3Lower, hc3Upper, hc5Lower, hc5Upper⟩
   let d1 : ℝ := antisymmetricPolynomialCoeff1 yoshidaEndpointA - 1 / 10
@@ -1239,13 +1231,13 @@ private theorem abs_antisymmetricPolynomial_sub_linear_le
     dsimp only [d1, c3, c5]
     ring
   have hquinticIdentity :
-      (875 : ℝ) - 827 * t + 212 * t ^ 3 + 5 * t ^ 5 =
+      (750 : ℝ) - 827 * t + 212 * t ^ 3 + 5 * t ^ 5 =
         5 * t ^ 5 +
           212 * (t - 8 / 7) ^ 2 * (t + 16 / 7) +
-          (181 / 49 : ℝ) * t + 83037 / 343 := by
+          (181 / 49 : ℝ) * t + 40162 / 343 := by
     ring
   have hquintic :
-      0 ≤ (875 : ℝ) - 827 * t + 212 * t ^ 3 + 5 * t ^ 5 := by
+      0 ≤ (750 : ℝ) - 827 * t + 212 * t ^ 3 + 5 * t ^ 5 := by
     rw [hquinticIdentity]
     have htPlus : 0 ≤ t + 16 / 7 := by linarith [ht.1]
     exact add_nonneg
@@ -1256,7 +1248,7 @@ private theorem abs_antisymmetricPolynomial_sub_linear_le
         (mul_nonneg (by norm_num) ht.1))
       (by norm_num)
   have hmodelLower :
-      -(7 / 8000 : ℝ) ≤
+      -(3 / 4000 : ℝ) ≤
         (-827 / 1000000 : ℝ) * t +
           (212 / 1000000 : ℝ) * t ^ 3 +
           (5 / 1000000 : ℝ) * t ^ 5 := by
@@ -1271,7 +1263,7 @@ private theorem abs_antisymmetricPolynomial_sub_linear_le
       (5 / 1000000 : ℝ) * t ^ 5 ≤ c5 * t ^ 5 :=
     mul_le_mul_of_nonneg_right hc5L ht5
   have hlower :
-      -(7 / 8000 : ℝ) ≤ d1 * t + c3 * t ^ 3 + c5 * t ^ 5 := by
+      -(3 / 4000 : ℝ) ≤ d1 * t + c3 * t ^ 3 + c5 * t ^ 5 := by
     linarith
   have hd1UpperMul :
       d1 * t ≤ (-826 / 1000000 : ℝ) * t :=
@@ -1283,7 +1275,7 @@ private theorem abs_antisymmetricPolynomial_sub_linear_le
       c5 * t ^ 5 ≤ (6 / 1000000 : ℝ) * t ^ 5 :=
     mul_le_mul_of_nonneg_right hc5U ht5
   have hupper :
-      d1 * t + c3 * t ^ 3 + c5 * t ^ 5 ≤ (7 / 8000 : ℝ) := by
+      d1 * t + c3 * t ^ 3 + c5 * t ^ 5 ≤ (3 / 4000 : ℝ) := by
     calc
       d1 * t + c3 * t ^ 3 + c5 * t ^ 5 ≤
           (-826 / 1000000 : ℝ) * t +
@@ -1294,7 +1286,7 @@ private theorem abs_antisymmetricPolynomial_sub_linear_le
             (213 / 1000000 : ℝ) * (4 * t) +
             (6 / 1000000 : ℝ) * (16 * t) := by
         gcongr
-      _ ≤ (7 / 8000 : ℝ) := by
+      _ ≤ (3 / 4000 : ℝ) := by
         nlinarith [ht.2]
   rw [hformula, abs_le]
   exact ⟨hlower, hupper⟩
@@ -1303,10 +1295,10 @@ private theorem abs_antisymmetricPolynomial_sub_linear_le
 kernel.  The estimate uses one Taylor remainder on the whole interval and one
 global quintic square identity; it has no interval subdivision or sampled
 certificate. -/
-theorem abs_yoshidaEndpointA_mul_factorTwoCenteredAntisymmetricRegularWeight_sub_linear_le
+theorem abs_yoshidaEndpointA_mul_factorTwoCenteredAntisymmetricRegularWeight_sub_linear_le_one_thousand
     {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
     |yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
-        t / 10| ≤ (1 / 800 : ℝ) := by
+        t / 10| ≤ (1 / 1000 : ℝ) := by
   have ht : t ∈ Icc (0 : ℝ) 2 := ⟨ht0, ht2⟩
   have hanalytic := abs_antisymmetricKernel_sub_polynomial_lt ht
   have hpoly := abs_antisymmetricPolynomial_sub_linear_le ht
@@ -1315,16 +1307,24 @@ theorem abs_yoshidaEndpointA_mul_factorTwoCenteredAntisymmetricRegularWeight_sub
     (oddLowAntisymmetricKernelPolynomial6 t) (t / 10)
   have hstrict :
       |yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
-          t / 10| < (1 / 800 : ℝ) := by
+          t / 10| < (1 / 1000 : ℝ) := by
     calc
       |yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
           t / 10| ≤
           |yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
             oddLowAntisymmetricKernelPolynomial6 t| +
           |oddLowAntisymmetricKernelPolynomial6 t - t / 10| := htriangle
-      _ < (3 / 8000 : ℝ) + 7 / 8000 := by linarith
-      _ = (1 / 800 : ℝ) := by norm_num
+      _ < (1 / 4000 : ℝ) + 3 / 4000 := by linarith
+      _ = (1 / 1000 : ℝ) := by norm_num
   exact hstrict.le
+
+/-- Compatibility form of the preceding sharper global estimate. -/
+theorem abs_yoshidaEndpointA_mul_factorTwoCenteredAntisymmetricRegularWeight_sub_linear_le
+    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
+    |yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+        t / 10| ≤ (1 / 800 : ℝ) :=
+  (abs_yoshidaEndpointA_mul_factorTwoCenteredAntisymmetricRegularWeight_sub_linear_le_one_thousand
+    ht0 ht2).trans (by norm_num)
 
 /-- On the open centered interval, the scaled antisymmetric factor-two
 weight is its regular part plus the exact difference of its two dimensionless
