@@ -48,16 +48,61 @@ theorem endpoint_phase_pair_eq_square
         (1 - (a ^ 2 + b ^ 2) / 4) * (u₀ ^ 2 + v₀ ^ 2) := by
   ring
 
-/-- The endpoint square is pointwise nonnegative for every phase in the
-closed unit disk. -/
-theorem factorTwoPhaseEndpointSquare_nonneg
-    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+/-- The endpoint square is pointwise nonnegative throughout the closed disk
+of radius two.  The larger radius is exact for this completion: its residual
+coefficient is `1 - (a² + b²) / 4`. -/
+theorem factorTwoPhaseEndpointSquare_nonneg_of_sq_add_sq_le_four
+    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 4)
     (r x : ℝ) :
     0 ≤ factorTwoPhaseEndpointSquare u v a b r x := by
   unfold factorTwoPhaseEndpointSquare
   have hcoeff : 0 ≤ 1 - (a ^ 2 + b ^ 2) / 4 := by
     nlinarith
   positivity
+
+/-- Unit phases are the production specialization of the exact radius-two
+endpoint-square estimate. -/
+theorem factorTwoPhaseEndpointSquare_nonneg
+    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (r x : ℝ) :
+    0 ≤ factorTwoPhaseEndpointSquare u v a b r x := by
+  exact factorTwoPhaseEndpointSquare_nonneg_of_sq_add_sq_le_four
+    u v a b (hab.trans (by norm_num)) r x
+
+/-- A unit phase retains at least half of the unphased endpoint square.  This
+is the quantitative form of the two-vector completion; unlike mere
+nonnegativity at doubled phase, it allows the unchanged positive-distance
+square to remain in the final lower bound. -/
+theorem half_factorTwoPhaseEndpointSquare_zero_le
+    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (r x : ℝ) :
+    (1 / 2 : ℝ) * factorTwoPhaseEndpointSquare u v 0 0 r x ≤
+      factorTwoPhaseEndpointSquare u v a b r x := by
+  let u₀ : ℝ := u x
+  let v₀ : ℝ := v x
+  let u₁ : ℝ := u (2 - r + x)
+  let v₁ : ℝ := v (2 - r + x)
+  let A : ℝ := a * u₀ + b * v₀
+  let B : ℝ := -b * u₀ + a * v₀
+  have hAB : A ^ 2 + B ^ 2 =
+      (a ^ 2 + b ^ 2) * (u₀ ^ 2 + v₀ ^ 2) := by
+    dsimp only [A, B]
+    ring
+  have hbase0 : 0 ≤ u₀ ^ 2 + v₀ ^ 2 := by positivity
+  have hABle : A ^ 2 + B ^ 2 ≤ u₀ ^ 2 + v₀ ^ 2 := by
+    rw [hAB]
+    nlinarith
+  have huCross : 2 * u₁ * A ≤ u₁ ^ 2 + A ^ 2 := by
+    nlinarith [sq_nonneg (u₁ - A)]
+  have hvCross : 2 * v₁ * B ≤ v₁ ^ 2 + B ^ 2 := by
+    nlinarith [sq_nonneg (v₁ - B)]
+  have hcross :
+      2 * (u₁ * A + v₁ * B) ≤
+        u₁ ^ 2 + v₁ ^ 2 + u₀ ^ 2 + v₀ ^ 2 := by
+    nlinarith
+  unfold factorTwoPhaseEndpointSquare
+  dsimp only [u₀, v₀, u₁, v₁, A, B] at hcross ⊢
+  nlinarith
 
 /-- The sum of the positive-distance overlap squares and the completed
 endpoint square at distance `r`. -/
@@ -216,9 +261,9 @@ theorem factorTwoPhaseSingularCorrelationNumerator_eq_square
   ring
 
 /-- The completed fixed-distance numerator is nonnegative throughout the
-distance interval for every phase in the closed unit disk. -/
-theorem factorTwoPhaseSingularSquareNumerator_nonneg
-    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+distance interval for every phase in the closed disk of radius two. -/
+theorem factorTwoPhaseSingularSquareNumerator_nonneg_of_sq_add_sq_le_four
+    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 4)
     {r : ℝ} (hr0 : 0 ≤ r) (hr2 : r ≤ 2) :
     0 ≤ factorTwoPhaseSingularSquareNumerator u v a b r := by
   unfold factorTwoPhaseSingularSquareNumerator
@@ -228,16 +273,111 @@ theorem factorTwoPhaseSingularSquareNumerator_nonneg
     positivity
   · apply intervalIntegral.integral_nonneg (by linarith)
     intro x _hx
-    exact factorTwoPhaseEndpointSquare_nonneg u v a b hab r x
+    exact factorTwoPhaseEndpointSquare_nonneg_of_sq_add_sq_le_four
+      u v a b hab r x
 
-/-- Correlation form of the same fixed-distance nonnegativity statement. -/
+/-- Unit phases are the production specialization of the exact radius-two
+singular-square estimate. -/
+theorem factorTwoPhaseSingularSquareNumerator_nonneg
+    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    {r : ℝ} (hr0 : 0 ≤ r) (hr2 : r ≤ 2) :
+    0 ≤ factorTwoPhaseSingularSquareNumerator u v a b r := by
+  exact factorTwoPhaseSingularSquareNumerator_nonneg_of_sq_add_sq_le_four
+    u v a b (hab.trans (by norm_num)) hr0 hr2
+
+/-- Even at radius two, the completed singular numerator retains the entire
+positive-distance energy; only its endpoint completion depends on phase. -/
+theorem positiveDistanceEnergy_add_le_singularSquareNumerator
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 4)
+    {r : ℝ} (hr0 : 0 ≤ r) :
+    centeredPositiveDistanceEnergy u r +
+        centeredPositiveDistanceEnergy v r ≤
+      factorTwoPhaseSingularSquareNumerator u v a b r := by
+  have hui : IntervalIntegrable
+      (fun x : ℝ ↦ (u (r + x) - u x) ^ 2) volume (-1) (1 - r) := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hvi : IntervalIntegrable
+      (fun x : ℝ ↦ (v (r + x) - v x) ^ 2) volume (-1) (1 - r) := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  unfold centeredPositiveDistanceEnergy
+    factorTwoPhaseSingularSquareNumerator
+  rw [← intervalIntegral.integral_add hui hvi]
+  apply le_add_of_nonneg_right
+  apply intervalIntegral.integral_nonneg (by linarith)
+  intro x _hx
+  exact factorTwoPhaseEndpointSquare_nonneg_of_sq_add_sq_le_four
+    u v a b hab r x
+
+/-- Quantitative fixed-distance retention for a unit phase.  Half of the
+unphased singular numerator survives, and half of the positive-distance
+energy survives a second time because that part is phase-independent. -/
+theorem half_singularSquare_zero_add_half_positiveDistance_le
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    {r : ℝ} (hr0 : 0 ≤ r) (_hr2 : r ≤ 2) :
+    (1 / 2 : ℝ) *
+          factorTwoPhaseSingularSquareNumerator u v 0 0 r +
+        (1 / 2 : ℝ) *
+          (centeredPositiveDistanceEnergy u r +
+            centeredPositiveDistanceEnergy v r) ≤
+      factorTwoPhaseSingularSquareNumerator u v a b r := by
+  have huDiff : IntervalIntegrable
+      (fun x : ℝ ↦ (u (r + x) - u x) ^ 2) volume (-1) (1 - r) := by
+    exact (((hu.comp (continuous_const.add continuous_id)).sub hu).pow 2)
+      |>.intervalIntegrable _ _
+  have hvDiff : IntervalIntegrable
+      (fun x : ℝ ↦ (v (r + x) - v x) ^ 2) volume (-1) (1 - r) := by
+    exact (((hv.comp (continuous_const.add continuous_id)).sub hv).pow 2)
+      |>.intervalIntegrable _ _
+  have hendpointZero : Continuous
+      (fun x : ℝ ↦ factorTwoPhaseEndpointSquare u v 0 0 r x) := by
+    unfold factorTwoPhaseEndpointSquare
+    fun_prop
+  have hendpointPhase : Continuous
+      (fun x : ℝ ↦ factorTwoPhaseEndpointSquare u v a b r x) := by
+    unfold factorTwoPhaseEndpointSquare
+    fun_prop
+  have hendpoint :
+      (1 / 2 : ℝ) *
+          (∫ x : ℝ in -1..-1 + r,
+            factorTwoPhaseEndpointSquare u v 0 0 r x) ≤
+        ∫ x : ℝ in -1..-1 + r,
+          factorTwoPhaseEndpointSquare u v a b r x := by
+    rw [← intervalIntegral.integral_const_mul]
+    apply intervalIntegral.integral_mono_on (by linarith)
+    · exact hendpointZero.intervalIntegrable _ _ |>.const_mul _
+    · exact hendpointPhase.intervalIntegrable _ _
+    · intro x _hx
+      exact half_factorTwoPhaseEndpointSquare_zero_le u v a b hab r x
+  unfold factorTwoPhaseSingularSquareNumerator
+  unfold centeredPositiveDistanceEnergy
+  rw [intervalIntegral.integral_add huDiff hvDiff]
+  nlinarith
+
+/-- Correlation form of the radius-two fixed-distance nonnegativity
+statement. -/
+theorem factorTwoPhaseSingularCorrelationNumerator_nonneg_of_sq_add_sq_le_four
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 4)
+    {r : ℝ} (hr0 : 0 ≤ r) (hr2 : r ≤ 2) :
+    0 ≤ factorTwoPhaseSingularCorrelationNumerator u v a b r := by
+  rw [factorTwoPhaseSingularCorrelationNumerator_eq_square u v hu hv a b r]
+  exact factorTwoPhaseSingularSquareNumerator_nonneg_of_sq_add_sq_le_four
+    u v a b hab hr0 hr2
+
+/-- Unit phases are the production specialization of the exact radius-two
+correlation-numerator estimate. -/
 theorem factorTwoPhaseSingularCorrelationNumerator_nonneg
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
     (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
     {r : ℝ} (hr0 : 0 ≤ r) (hr2 : r ≤ 2) :
     0 ≤ factorTwoPhaseSingularCorrelationNumerator u v a b r := by
-  rw [factorTwoPhaseSingularCorrelationNumerator_eq_square u v hu hv a b r]
-  exact factorTwoPhaseSingularSquareNumerator_nonneg u v a b hab hr0 hr2
+  exact
+    factorTwoPhaseSingularCorrelationNumerator_nonneg_of_sq_add_sq_le_four
+      u v hu hv a b (hab.trans (by norm_num)) hr0 hr2
 
 /-- The completed singular density is interval-integrable on the locally
 Lipschitz source domain. -/
@@ -276,30 +416,176 @@ theorem intervalIntegrable_factorTwoPhaseSingularSquareNumerator_div
   unfold factorTwoPhaseSingularCorrelationNumerator
   ring
 
-/-- The singular square integral is nonnegative for every closed-disk phase. -/
-theorem integral_factorTwoPhaseSingularSquareNumerator_div_nonneg
-    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+/-- The singular-square integral is nonnegative throughout the closed disk
+of radius two. -/
+theorem integral_factorTwoPhaseSingularSquareNumerator_div_nonneg_of_sq_add_sq_le_four
+    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 4) :
     0 ≤ ∫ r : ℝ in 0..2,
       factorTwoPhaseSingularSquareNumerator u v a b r / r := by
   apply intervalIntegral.integral_nonneg (by norm_num)
   intro r hr
   exact div_nonneg
-    (factorTwoPhaseSingularSquareNumerator_nonneg u v a b hab hr.1 hr.2)
+    (factorTwoPhaseSingularSquareNumerator_nonneg_of_sq_add_sq_le_four
+      u v a b hab hr.1 hr.2)
     hr.1
 
-/-- The same nonnegative singular integral in the original correlation
-variables, before the endpoint square is exposed. -/
-theorem integral_factorTwoPhaseSingularCorrelationNumerator_div_nonneg
+/-- Unit phases are the production specialization of the exact radius-two
+integrated singular-square estimate. -/
+theorem integral_factorTwoPhaseSingularSquareNumerator_div_nonneg
+    (u v : ℝ → ℝ) (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    0 ≤ ∫ r : ℝ in 0..2,
+      factorTwoPhaseSingularSquareNumerator u v a b r / r := by
+  exact
+    integral_factorTwoPhaseSingularSquareNumerator_div_nonneg_of_sq_add_sq_le_four
+      u v a b (hab.trans (by norm_num))
+
+/-- The radius-two singular square always retains one half of each raw
+logarithmic energy.  This is the quantitative reserve available after the
+phase is doubled in the half-clean decomposition. -/
+theorem half_raw_add_half_raw_le_singularSquareIntegral
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (hlocalu : LocallyLipschitzOn (Icc (-1) 1) u)
+    (hlocalv : LocallyLipschitzOn (Icc (-1) 1) v)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 4) :
+    centeredRawLogEnergy u / 2 + centeredRawLogEnergy v / 2 ≤
+      ∫ r : ℝ in 0..2,
+        factorTwoPhaseSingularSquareNumerator u v a b r / r := by
+  have hui :=
+    intervalIntegrable_centeredPositiveDistanceEnergy_div_of_locallyLipschitzOn
+      u hlocalu
+  have hvi :=
+    intervalIntegrable_centeredPositiveDistanceEnergy_div_of_locallyLipschitzOn
+      v hlocalv
+  have hsi := intervalIntegrable_factorTwoPhaseSingularSquareNumerator_div
+    u v hu hv hlocalu hlocalv a b
+  have hmono :
+      (∫ r : ℝ in 0..2,
+          centeredPositiveDistanceEnergy u r / r +
+            centeredPositiveDistanceEnergy v r / r) ≤
+        ∫ r : ℝ in 0..2,
+          factorTwoPhaseSingularSquareNumerator u v a b r / r := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      (hui.add hvi) hsi
+    intro r hr
+    by_cases hrz : r = 0
+    · simp [hrz]
+    · have hrp : 0 < r := lt_of_le_of_ne hr.1 (Ne.symm hrz)
+      rw [← add_div]
+      exact div_le_div_of_nonneg_right
+        (positiveDistanceEnergy_add_le_singularSquareNumerator
+          u v hu hv a b hab hr.1) hrp.le
+  rw [intervalIntegral.integral_add hui hvi] at hmono
+  have huRaw :=
+    half_integral_positiveDistanceEnergy_eq_centeredRaw_of_locallyLipschitzOn
+      u hlocalu
+  have hvRaw :=
+    half_integral_positiveDistanceEnergy_eq_centeredRaw_of_locallyLipschitzOn
+      v hlocalv
+  nlinarith
+
+/-- Integrated quantitative retention of the singular square.  In addition
+to half of the unphased square, a unit phase preserves one quarter of each
+profile's raw logarithmic energy before the outer `1/2` in the phase-form
+assembly is applied. -/
+theorem half_integral_singularSquare_zero_add_quarter_raw_le
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (hlocalu : LocallyLipschitzOn (Icc (-1) 1) u)
+    (hlocalv : LocallyLipschitzOn (Icc (-1) 1) v)
     (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    (1 / 2 : ℝ) *
+          (∫ r : ℝ in 0..2,
+            factorTwoPhaseSingularSquareNumerator u v 0 0 r / r) +
+        centeredRawLogEnergy u / 4 + centeredRawLogEnergy v / 4 ≤
+      ∫ r : ℝ in 0..2,
+        factorTwoPhaseSingularSquareNumerator u v a b r / r := by
+  have hzero := intervalIntegrable_factorTwoPhaseSingularSquareNumerator_div
+    u v hu hv hlocalu hlocalv 0 0
+  have hphase := intervalIntegrable_factorTwoPhaseSingularSquareNumerator_div
+    u v hu hv hlocalu hlocalv a b
+  have huEnergy :=
+    intervalIntegrable_centeredPositiveDistanceEnergy_div_of_locallyLipschitzOn
+      u hlocalu
+  have hvEnergy :=
+    intervalIntegrable_centeredPositiveDistanceEnergy_div_of_locallyLipschitzOn
+      v hlocalv
+  have hleft : IntervalIntegrable
+      (fun r : ℝ ↦
+        (1 / 2 : ℝ) *
+            (factorTwoPhaseSingularSquareNumerator u v 0 0 r / r) +
+          (1 / 2 : ℝ) *
+            (centeredPositiveDistanceEnergy u r / r +
+              centeredPositiveDistanceEnergy v r / r)) volume 0 2 :=
+    (hzero.const_mul (1 / 2 : ℝ)).add
+      ((huEnergy.add hvEnergy).const_mul (1 / 2 : ℝ))
+  have hmono :
+      (∫ r : ℝ in 0..2,
+        ((1 / 2 : ℝ) *
+            (factorTwoPhaseSingularSquareNumerator u v 0 0 r / r) +
+          (1 / 2 : ℝ) *
+            (centeredPositiveDistanceEnergy u r / r +
+              centeredPositiveDistanceEnergy v r / r))) ≤
+        ∫ r : ℝ in 0..2,
+          factorTwoPhaseSingularSquareNumerator u v a b r / r := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hleft hphase
+    intro r hr
+    by_cases hrzero : r = 0
+    · simp [hrzero]
+    · have hrpos : 0 < r := lt_of_le_of_ne hr.1 (Ne.symm hrzero)
+      have hfixed := half_singularSquare_zero_add_half_positiveDistance_le
+        u v hu hv a b hab hr.1 hr.2
+      rw [div_eq_mul_inv, div_eq_mul_inv, div_eq_mul_inv, div_eq_mul_inv]
+      have hscaled := mul_le_mul_of_nonneg_right hfixed (inv_nonneg.mpr hr.1)
+      calc
+        (1 / 2 : ℝ) *
+              (factorTwoPhaseSingularSquareNumerator u v 0 0 r * r⁻¹) +
+            (1 / 2 : ℝ) *
+              (centeredPositiveDistanceEnergy u r * r⁻¹ +
+                centeredPositiveDistanceEnergy v r * r⁻¹) =
+            ((1 / 2 : ℝ) *
+                factorTwoPhaseSingularSquareNumerator u v 0 0 r +
+              (1 / 2 : ℝ) *
+                (centeredPositiveDistanceEnergy u r +
+                  centeredPositiveDistanceEnergy v r)) * r⁻¹ := by ring
+        _ ≤ factorTwoPhaseSingularSquareNumerator u v a b r * r⁻¹ :=
+          hscaled
+  have huRaw :=
+    half_integral_positiveDistanceEnergy_eq_centeredRaw_of_locallyLipschitzOn
+      u hlocalu
+  have hvRaw :=
+    half_integral_positiveDistanceEnergy_eq_centeredRaw_of_locallyLipschitzOn
+      v hlocalv
+  rw [intervalIntegral.integral_add
+      (hzero.const_mul (1 / 2 : ℝ))
+      ((huEnergy.add hvEnergy).const_mul (1 / 2 : ℝ)),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_add huEnergy hvEnergy] at hmono
+  linarith [huRaw, hvRaw]
+
+/-- The same radius-two nonnegative singular integral in the original
+correlation variables, before the endpoint square is exposed. -/
+theorem integral_factorTwoPhaseSingularCorrelationNumerator_div_nonneg_of_sq_add_sq_le_four
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 4) :
     0 ≤ ∫ r : ℝ in 0..2,
       factorTwoPhaseSingularCorrelationNumerator u v a b r / r := by
   apply intervalIntegral.integral_nonneg (by norm_num)
   intro r hr
   exact div_nonneg
-    (factorTwoPhaseSingularCorrelationNumerator_nonneg
+    (factorTwoPhaseSingularCorrelationNumerator_nonneg_of_sq_add_sq_le_four
       u v hu hv a b hab hr.1 hr.2)
     hr.1
+
+/-- Unit phases are the production specialization of the exact radius-two
+integrated correlation-numerator estimate. -/
+theorem integral_factorTwoPhaseSingularCorrelationNumerator_div_nonneg
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    0 ≤ ∫ r : ℝ in 0..2,
+      factorTwoPhaseSingularCorrelationNumerator u v a b r / r := by
+  exact
+    integral_factorTwoPhaseSingularCorrelationNumerator_div_nonneg_of_sq_add_sq_le_four
+      u v hu hv a b (hab.trans (by norm_num))
 
 /-- Exact integrated recombination of the two raw/potential energies with
 the signed reflected Cauchy pole.  No absolute value or separate-channel
