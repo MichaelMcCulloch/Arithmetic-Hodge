@@ -58,6 +58,122 @@ theorem abs_centeredEndpointCorrelation_le_energy
       show -1 + (2 - t) = 1 - t by ring] using hcorr
   nlinarith
 
+/-- The two endpoint tails sweep the centered energy exactly twice.  The
+proof reflects one primitive rather than introducing a two-dimensional
+interchange. -/
+theorem integral_centeredEndpointBoundaryTail_eq_two_mul_energy
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ t : ℝ in 0..2, centeredEndpointBoundaryTail w t) =
+      2 * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let q : ℝ → ℝ := fun x ↦ w x ^ 2
+  let E : ℝ := ∫ x : ℝ in -1..1, q x
+  let L : ℝ → ℝ := fun t ↦ ∫ x : ℝ in -1..-1 + t, q x
+  have hq : Continuous q := hw.pow 2
+  have hL : Continuous L := by
+    dsimp only [L]
+    exact (intervalIntegral.differentiable_integral_of_continuous
+      (a := (-1 : ℝ)) hq).continuous.comp
+        (continuous_const.add continuous_id)
+  have hpoint (t : ℝ) :
+      centeredEndpointBoundaryTail w t = E - L (2 - t) + L t := by
+    have hsplit := intervalIntegral.integral_add_adjacent_intervals
+      (μ := volume)
+      (hq.intervalIntegrable (-1) (1 - t))
+      (hq.intervalIntegrable (1 - t) 1)
+    unfold centeredEndpointBoundaryTail
+    dsimp only [E, L, q]
+    rw [show -1 + (2 - t) = 1 - t by ring]
+    linarith
+  rw [show centeredEndpointBoundaryTail w =
+      fun t ↦ E - L (2 - t) + L t by
+    funext t
+    exact hpoint t]
+  have hR : Continuous (fun t : ℝ ↦ L (2 - t)) :=
+    hL.comp (continuous_const.sub continuous_id)
+  have hreflect := intervalIntegral.integral_comp_sub_left
+    (f := L) (a := (0 : ℝ)) (b := 2) 2
+  calc
+    (∫ t : ℝ in 0..2, E - L (2 - t) + L t) =
+        (∫ _t : ℝ in 0..2, E) -
+          (∫ t : ℝ in 0..2, L (2 - t)) +
+            ∫ t : ℝ in 0..2, L t := by
+      rw [intervalIntegral.integral_add
+        ((continuous_const.sub hR).intervalIntegrable _ _)
+        (hL.intervalIntegrable _ _),
+        intervalIntegral.integral_sub
+          (continuous_const.intervalIntegrable _ _)
+          (hR.intervalIntegrable _ _)]
+    _ = 2 * (∫ x : ℝ in -1..1, w x ^ 2) := by
+      rw [hreflect]
+      simp only [intervalIntegral.integral_const, smul_eq_mul]
+      dsimp only [E, q]
+      ring
+
+/-- The positive-lag absolute autocorrelation has the sharp unit energy
+budget.  It is the integrated two-square inequality; each endpoint tail is
+counted exactly once after reflection. -/
+theorem integral_abs_centeredEndpointCorrelation_le_energy
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ t : ℝ in 0..2, |centeredEndpointCorrelation w t|) ≤
+      ∫ x : ℝ in -1..1, w x ^ 2 := by
+  let C : ℝ → ℝ := fun t ↦ |centeredEndpointCorrelation w t|
+  let B : ℝ → ℝ := fun t ↦ centeredEndpointBoundaryTail w (2 - t)
+  have hC : Continuous C :=
+    (continuous_centeredEndpointCorrelation_of_continuous w hw).abs
+  have hB : Continuous B := by
+    let q : ℝ → ℝ := fun x ↦ w x ^ 2
+    let L : ℝ → ℝ := fun t ↦ ∫ x : ℝ in -1..-1 + t, q x
+    have hq : Continuous q := hw.pow 2
+    have hL : Continuous L := by
+      dsimp only [L]
+      exact (intervalIntegral.differentiable_integral_of_continuous
+        (a := (-1 : ℝ)) hq).continuous.comp
+          (continuous_const.add continuous_id)
+    have htail : Continuous (fun t : ℝ ↦
+        centeredEndpointBoundaryTail w t) := by
+      have hpoint (t : ℝ) :
+          centeredEndpointBoundaryTail w t =
+            (∫ x : ℝ in -1..1, q x) - L (2 - t) + L t := by
+        have hsplit := intervalIntegral.integral_add_adjacent_intervals
+          (μ := volume)
+          (hq.intervalIntegrable (-1) (1 - t))
+          (hq.intervalIntegrable (1 - t) 1)
+        unfold centeredEndpointBoundaryTail
+        dsimp only [L, q]
+        rw [show -1 + (2 - t) = 1 - t by ring]
+        linarith
+      rw [show (fun t : ℝ ↦ centeredEndpointBoundaryTail w t) =
+          fun t ↦ (∫ x : ℝ in -1..1, q x) - L (2 - t) + L t by
+        funext t
+        exact hpoint t]
+      fun_prop
+    exact htail.comp (continuous_const.sub continuous_id)
+  have hpoint : ∀ t ∈ Set.Icc (0 : ℝ) 2, 2 * C t ≤ B t := by
+    intro t ht
+    have h :=
+      two_mul_abs_centeredEndpointCorrelation_two_sub_le_boundaryTail
+        w hw (t := 2 - t) (sub_nonneg.mpr ht.2)
+    dsimp only [C, B]
+    rw [show 2 - (2 - t) = t by ring] at h
+    exact h
+  have hmono :
+      (∫ t : ℝ in 0..2, 2 * C t) ≤ ∫ t : ℝ in 0..2, B t := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      ((hC.const_mul 2).intervalIntegrable _ _)
+      (hB.intervalIntegrable _ _)
+    exact hpoint
+  have hreflect := intervalIntegral.integral_comp_sub_left
+    (f := fun t : ℝ ↦ centeredEndpointBoundaryTail w t)
+    (a := (0 : ℝ)) (b := 2) 2
+  rw [intervalIntegral.integral_const_mul] at hmono
+  change 2 * (∫ t : ℝ in 0..2,
+      |centeredEndpointCorrelation w t|) ≤
+    ∫ t : ℝ in 0..2, centeredEndpointBoundaryTail w (2 - t) at hmono
+  rw [hreflect] at hmono
+  norm_num only [sub_self, sub_zero] at hmono
+  rw [integral_centeredEndpointBoundaryTail_eq_two_mul_energy w hw] at hmono
+  linarith
+
 /-- The positive-distance absolute autocorrelation costs at most twice the
 centered energy.  This deliberately cheap bound is sufficient once the odd
 regular scalar is centered around its exact zero correlation mean. -/
