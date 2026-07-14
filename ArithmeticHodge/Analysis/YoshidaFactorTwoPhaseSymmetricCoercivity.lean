@@ -1,6 +1,7 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseEnvelope
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseTailCoercivity
 import ArithmeticHodge.Analysis.EndpointParityCarleman
+import ArithmeticHodge.Analysis.YoshidaEndpointTriangleInterchange
 
 set_option autoImplicit false
 
@@ -20,6 +21,7 @@ open YoshidaFactorTwoPhaseEnvelope
 open YoshidaFactorTwoPhaseTailCoercivity
 open EndpointParityCarleman
 open YoshidaRenormalizedGeometricKernel
+open YoshidaEndpointTriangleInterchange
 
 /-!
 # The symmetric factor-two phase coordinate
@@ -488,6 +490,725 @@ theorem factorTwoSymmetricWeight_eq_rankOneSeries
     factorTwoAdjacentSmoothKernel_eq_exp_sub_tsum hzp,
     factorTwoAdjacentSmoothKernel_eq_exp_sub_tsum hzm]
   linear_combination hhead - hsum
+
+/-! ## Hyperbolic correlation ranks -/
+
+/-- The centered even Laplace moment at a real rate. -/
+def centeredCoshMoment (w : ℝ → ℝ) (lambda : ℝ) : ℝ :=
+  ∫ x : ℝ in -1..1, Real.cosh (lambda * x) * w x
+
+/-- The centered odd Laplace moment at a real rate. -/
+def centeredSinhMoment (w : ℝ → ℝ) (lambda : ℝ) : ℝ :=
+  ∫ x : ℝ in -1..1, Real.sinh (lambda * x) * w x
+
+/-- The hyperbolic difference kernel separates into one even and one odd
+rank.  Recording the subtraction sign explicitly is what makes reflection
+parity turn the correlation integral into a signed square. -/
+theorem cosh_sub_eq_cosh_mul_cosh_sub_sinh_mul_sinh
+    (lambda y x : ℝ) :
+    Real.cosh (lambda * (y - x)) =
+      Real.cosh (lambda * y) * Real.cosh (lambda * x) -
+        Real.sinh (lambda * y) * Real.sinh (lambda * x) := by
+  rw [mul_sub, Real.cosh_sub]
+
+/-- A continuous lag weight transports the one-sided endpoint correlation to
+the centered upper triangle.  This is the exact measure-theoretic bridge
+between the scalar rank series and the corresponding quadratic ranks. -/
+private theorem integral_weight_mul_centeredCorrelation_eq_upperTriangle
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (q : ℝ → ℝ) (hq : Continuous q) :
+    (∫ t : ℝ in 0..2, q t * centeredEndpointCorrelation w t) =
+      ∫ p : ℝ × ℝ in centeredUpperTriangle,
+        q (p.1 - p.2) * w p.1 * w p.2 := by
+  let K : ℝ × ℝ → ℝ := fun p ↦
+    q (p.1 - p.2) * w p.1 * w p.2
+  let H : ℝ × ℝ → ℝ := fun p ↦ K (p.1 + p.2, p.2)
+  have hTmeas : MeasurableSet positiveDistanceTriangle := by
+    unfold positiveDistanceTriangle
+    measurability
+  have hKcont : Continuous K := by
+    dsimp only [K]
+    fun_prop
+  have hHcont : Continuous H := by
+    dsimp only [H]
+    exact hKcont.comp (by fun_prop)
+  have hHRectangle : IntegrableOn H
+      (Icc (0 : ℝ) 2 ×ˢ Icc (-1 : ℝ) 1)
+      ((volume : Measure ℝ).prod volume) :=
+    hHcont.continuousOn.integrableOn_compact (isCompact_Icc.prod isCompact_Icc)
+  have hTsubset : positiveDistanceTriangle ⊆
+      Icc (0 : ℝ) 2 ×ˢ Icc (-1 : ℝ) 1 := by
+    intro p hp
+    exact ⟨⟨hp.1, hp.2.1⟩, ⟨hp.2.2.1, by linarith [hp.2.2.2, hp.1]⟩⟩
+  have hHTriangle : IntegrableOn H positiveDistanceTriangle
+      ((volume : Measure ℝ).prod volume) :=
+    hHRectangle.mono_set hTsubset
+  have hHIndicator : Integrable
+      (positiveDistanceTriangle.indicator H)
+      ((volume : Measure ℝ).prod volume) :=
+    hHTriangle.integrable_indicator hTmeas
+  have hOuter :
+      (∫ t : ℝ in 0..2, q t * centeredEndpointCorrelation w t) =
+        ∫ t : ℝ in 0..2, ∫ x : ℝ in -1..1 - t, H (t, x) := by
+    apply intervalIntegral.integral_congr
+    intro t _ht
+    unfold centeredEndpointCorrelation
+    change q t * (∫ x : ℝ in -1..1 - t, w (t + x) * w x) =
+      ∫ x : ℝ in -1..1 - t,
+        q ((t + x) - x) * w (t + x) * w x
+    rw [show (fun x : ℝ ↦
+        q ((t + x) - x) * w (t + x) * w x) =
+      fun x ↦ q t * (w (t + x) * w x) by
+        funext x
+        rw [show t + x - x = t by ring]
+        ring,
+      intervalIntegral.integral_const_mul]
+  have hTriangleFold :
+      (∫ t : ℝ in 0..2, ∫ x : ℝ in -1..1 - t, H (t, x)) =
+        ∫ p : ℝ × ℝ in positiveDistanceTriangle, H p := by
+    rw [← integral_indicator hTmeas,
+      Measure.volume_eq_prod ℝ ℝ,
+      integral_prod _ hHIndicator]
+    rw [intervalIntegral.integral_of_le (by norm_num),
+      ← integral_indicator measurableSet_Ioc]
+    apply integral_congr_ae
+    filter_upwards [MeasureTheory.Measure.ae_ne volume (0 : ℝ)] with t ht0
+    by_cases ht : t ∈ Ioc (0 : ℝ) 2
+    · rw [Set.indicator_of_mem ht]
+      calc
+        (∫ x : ℝ in -1..1 - t, H (t, x)) =
+            ∫ x : ℝ,
+              (Icc (-1 : ℝ) (1 - t)).indicator (fun x ↦ H (t, x)) x := by
+          rw [intervalIntegral.integral_of_le (by linarith [ht.2]),
+            ← integral_Icc_eq_integral_Ioc,
+            ← integral_indicator measurableSet_Icc]
+        _ = ∫ x : ℝ,
+            positiveDistanceTriangle.indicator H (t, x) := by
+          apply integral_congr_ae
+          filter_upwards [] with x
+          by_cases hx : x ∈ Icc (-1 : ℝ) (1 - t)
+          · have hp : (t, x) ∈ positiveDistanceTriangle :=
+                ⟨ht.1.le, ht.2, hx.1, hx.2⟩
+            rw [Set.indicator_of_mem hx, Set.indicator_of_mem hp]
+          · have hp : (t, x) ∉ positiveDistanceTriangle := by
+              intro hp
+              exact hx ⟨hp.2.2.1, hp.2.2.2⟩
+            rw [Set.indicator_of_notMem hx, Set.indicator_of_notMem hp]
+    · rw [Set.indicator_of_notMem ht]
+      have hrow : (fun x : ℝ ↦
+          positiveDistanceTriangle.indicator H (t, x)) = 0 := by
+        funext x
+        by_cases hp : (t, x) ∈ positiveDistanceTriangle
+        · exfalso
+          apply ht
+          exact ⟨lt_of_le_of_ne hp.1 (Ne.symm ht0), hp.2.1⟩
+        · rw [Set.indicator_of_notMem hp]
+          rfl
+      rw [hrow]
+      simp
+  calc
+    (∫ t : ℝ in 0..2, q t * centeredEndpointCorrelation w t) =
+        ∫ t : ℝ in 0..2, ∫ x : ℝ in -1..1 - t, H (t, x) := hOuter
+    _ = ∫ p : ℝ × ℝ in positiveDistanceTriangle, H p := hTriangleFold
+    _ = ∫ p : ℝ × ℝ in centeredUpperTriangle, K p := by
+      simpa only [H] using setIntegral_positiveDistanceTriangle_shear K
+    _ = ∫ p : ℝ × ℝ in centeredUpperTriangle,
+        q (p.1 - p.2) * w p.1 * w p.2 := by rfl
+
+/-- An even lag weight fills the centered square twice.  The only overlap of
+the two reflected triangles is the diagonal, which is null for planar
+Lebesgue measure. -/
+private theorem two_mul_integral_evenWeight_mul_centeredCorrelation
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (q : ℝ → ℝ) (hq : Continuous q) (hqEven : Function.Even q) :
+    2 * (∫ t : ℝ in 0..2, q t * centeredEndpointCorrelation w t) =
+      ∫ y : ℝ in -1..1, ∫ x : ℝ in -1..1,
+        q (y - x) * w y * w x := by
+  let K : ℝ × ℝ → ℝ := fun p ↦
+    q (p.1 - p.2) * w p.1 * w p.2
+  let S : Set (ℝ × ℝ) := Icc (-1 : ℝ) 1 ×ˢ Icc (-1 : ℝ) 1
+  let U : Set (ℝ × ℝ) := centeredUpperTriangle
+  have hSmeas : MeasurableSet S := by
+    dsimp only [S]
+    exact measurableSet_Icc.prod measurableSet_Icc
+  have hUmeas : MeasurableSet U := by
+    dsimp only [U]
+    unfold centeredUpperTriangle
+    measurability
+  have hKcont : Continuous K := by
+    dsimp only [K]
+    fun_prop
+  have hKSquare : IntegrableOn K S
+      ((volume : Measure ℝ).prod volume) := by
+    apply hKcont.continuousOn.integrableOn_compact
+    dsimp only [S]
+    exact isCompact_Icc.prod isCompact_Icc
+  have hUsub : U ⊆ S := by
+    intro p hp
+    dsimp only [U, S] at hp ⊢
+    unfold centeredUpperTriangle at hp
+    exact ⟨⟨by linarith [hp.1, hp.2.1], hp.2.2⟩,
+      ⟨hp.1, by linarith [hp.2.1, hp.2.2]⟩⟩
+  have hKUpper : IntegrableOn K U
+      ((volume : Measure ℝ).prod volume) :=
+    hKSquare.mono_set hUsub
+  have hIU : Integrable (U.indicator K)
+      ((volume : Measure ℝ).prod volume) :=
+    hKUpper.integrable_indicator hUmeas
+  have hKswap (p : ℝ × ℝ) : K p.swap = K p := by
+    rcases p with ⟨y, x⟩
+    dsimp only [K, Prod.swap_prod_mk]
+    rw [show x - y = -(y - x) by ring, hqEven]
+    ring
+  have haeNe : ∀ᵐ p : ℝ × ℝ
+      ∂((volume : Measure ℝ).prod volume), p.1 ≠ p.2 := by
+    apply (MeasureTheory.Measure.ae_prod_iff_ae_ae (by measurability)).2
+    filter_upwards [] with y
+    filter_upwards [MeasureTheory.Measure.ae_ne volume y] with x hx
+    exact Ne.symm hx
+  have hIndicatorSplit : ∀ᵐ p : ℝ × ℝ
+      ∂((volume : Measure ℝ).prod volume),
+      S.indicator K p = U.indicator K p + U.indicator K p.swap := by
+    filter_upwards [haeNe] with p hpne
+    by_cases hpS : p ∈ S
+    · rcases lt_or_gt_of_ne hpne with hlt | hgt
+      · have hpU : p ∉ U := by
+          intro hpU
+          dsimp only [U] at hpU
+          unfold centeredUpperTriangle at hpU
+          linarith [hpU.2.1]
+        have hswapU : p.swap ∈ U := by
+          rcases p with ⟨y, x⟩
+          dsimp only [S, U, Prod.swap_prod_mk] at hpS ⊢
+          unfold centeredUpperTriangle
+          exact ⟨hpS.1.1, hlt.le, hpS.2.2⟩
+        rw [Set.indicator_of_mem hpS, Set.indicator_of_notMem hpU,
+          Set.indicator_of_mem hswapU, hKswap]
+        ring
+      · have hpU : p ∈ U := by
+          rcases p with ⟨y, x⟩
+          dsimp only [S, U] at hpS ⊢
+          unfold centeredUpperTriangle
+          exact ⟨hpS.2.1, hgt.le, hpS.1.2⟩
+        have hswapU : p.swap ∉ U := by
+          intro hswapU
+          rcases p with ⟨y, x⟩
+          dsimp only [U, Prod.swap_prod_mk] at hswapU
+          unfold centeredUpperTriangle at hswapU
+          linarith [hswapU.2.1]
+        rw [Set.indicator_of_mem hpS, Set.indicator_of_mem hpU,
+          Set.indicator_of_notMem hswapU]
+        ring
+    · have hpU : p ∉ U := fun hpU ↦ hpS (hUsub hpU)
+      have hswapU : p.swap ∉ U := by
+        intro hswapU
+        have hsS := hUsub hswapU
+        apply hpS
+        rcases p with ⟨y, x⟩
+        dsimp only [S, Prod.swap_prod_mk] at hsS ⊢
+        exact ⟨hsS.2, hsS.1⟩
+      rw [Set.indicator_of_notMem hpS, Set.indicator_of_notMem hpU,
+        Set.indicator_of_notMem hswapU]
+      ring
+  have hswapIntegral :
+      (∫ p : ℝ × ℝ, U.indicator K p.swap) =
+        ∫ p : ℝ × ℝ, U.indicator K p := by
+    rw [Measure.volume_eq_prod ℝ ℝ]
+    exact integral_prod_swap (U.indicator K)
+  have hsplit :
+      (∫ p : ℝ × ℝ in S, K p) =
+        (∫ p : ℝ × ℝ in U, K p) +
+          ∫ p : ℝ × ℝ in U, K p := by
+    rw [← integral_indicator hSmeas,
+      ← integral_indicator hUmeas]
+    calc
+      (∫ p : ℝ × ℝ, S.indicator K p) =
+          ∫ p : ℝ × ℝ,
+            (U.indicator K p + U.indicator K p.swap) :=
+        integral_congr_ae hIndicatorSplit
+      _ = (∫ p : ℝ × ℝ, U.indicator K p) +
+          ∫ p : ℝ × ℝ, U.indicator K p.swap := by
+        simpa only [Pi.add_apply, Function.comp_apply] using
+          integral_add hIU hIU.swap
+      _ = _ := by rw [hswapIntegral]
+  have hSquareIterated :
+      (∫ y : ℝ in -1..1, ∫ x : ℝ in -1..1, K (y, x)) =
+        ∫ p : ℝ × ℝ in S, K p := by
+    calc
+      (∫ y : ℝ in -1..1, ∫ x : ℝ in -1..1, K (y, x)) =
+          ∫ y : ℝ in Icc (-1) 1,
+            ∫ x : ℝ in Icc (-1) 1, K (y, x) := by
+        rw [intervalIntegral.integral_of_le (by norm_num),
+          ← integral_Icc_eq_integral_Ioc]
+        apply setIntegral_congr_fun measurableSet_Icc
+        intro y _hy
+        change (∫ x : ℝ in -1..1, K (y, x)) =
+          ∫ x : ℝ in Icc (-1) 1, K (y, x)
+        rw [intervalIntegral.integral_of_le (by norm_num),
+          ← integral_Icc_eq_integral_Ioc]
+      _ = ∫ p : ℝ × ℝ in S, K p := by
+        dsimp only [S]
+        exact (setIntegral_prod K hKSquare).symm
+  have hUpper := integral_weight_mul_centeredCorrelation_eq_upperTriangle
+    w hw q hq
+  change 2 * (∫ t : ℝ in 0..2,
+      q t * centeredEndpointCorrelation w t) =
+    ∫ y : ℝ in -1..1, ∫ x : ℝ in -1..1, K (y, x)
+  rw [hUpper]
+  dsimp only [U] at hsplit
+  rw [hSquareIterated]
+  linarith
+
+/-- Every hyperbolic correlation rank is exactly the difference of the
+squares of its even and odd centered Laplace moments. -/
+theorem two_mul_integral_cosh_mul_centeredCorrelation
+    (w : ℝ → ℝ) (hw : Continuous w) (lambda : ℝ) :
+    2 * (∫ t : ℝ in 0..2,
+        Real.cosh (lambda * t) * centeredEndpointCorrelation w t) =
+      centeredCoshMoment w lambda ^ 2 -
+        centeredSinhMoment w lambda ^ 2 := by
+  let ce : ℝ → ℝ := fun x ↦ Real.cosh (lambda * x) * w x
+  let so : ℝ → ℝ := fun x ↦ Real.sinh (lambda * x) * w x
+  have hce : Continuous ce := by
+    dsimp only [ce]
+    fun_prop
+  have hso : Continuous so := by
+    dsimp only [so]
+    fun_prop
+  have hinner (y : ℝ) :
+      (∫ x : ℝ in -1..1,
+        Real.cosh (lambda * (y - x)) * w y * w x) =
+        (Real.cosh (lambda * y) * w y) * centeredCoshMoment w lambda -
+          (Real.sinh (lambda * y) * w y) * centeredSinhMoment w lambda := by
+    rw [show (fun x : ℝ ↦
+        Real.cosh (lambda * (y - x)) * w y * w x) =
+      fun x ↦ (Real.cosh (lambda * y) * w y) * ce x -
+        (Real.sinh (lambda * y) * w y) * so x by
+          funext x
+          dsimp only [ce, so]
+          rw [cosh_sub_eq_cosh_mul_cosh_sub_sinh_mul_sinh]
+          ring]
+    rw [intervalIntegral.integral_sub
+        ((hce.const_mul _).intervalIntegrable (-1) 1)
+        ((hso.const_mul _).intervalIntegrable (-1) 1),
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_const_mul]
+    rfl
+  have houter :
+      (∫ y : ℝ in -1..1,
+        ∫ x : ℝ in -1..1,
+          Real.cosh (lambda * (y - x)) * w y * w x) =
+        centeredCoshMoment w lambda ^ 2 -
+          centeredSinhMoment w lambda ^ 2 := by
+    rw [show (fun y : ℝ ↦
+        ∫ x : ℝ in -1..1,
+          Real.cosh (lambda * (y - x)) * w y * w x) =
+      fun y ↦ ce y * centeredCoshMoment w lambda -
+        so y * centeredSinhMoment w lambda by
+          funext y
+          exact hinner y]
+    rw [intervalIntegral.integral_sub
+        ((hce.mul_const _).intervalIntegrable (-1) 1)
+        ((hso.mul_const _).intervalIntegrable (-1) 1),
+      intervalIntegral.integral_mul_const,
+      intervalIntegral.integral_mul_const]
+    unfold centeredCoshMoment centeredSinhMoment
+    dsimp only [ce, so]
+    ring
+  have hEven : Function.Even (fun t : ℝ ↦ Real.cosh (lambda * t)) := by
+    intro t
+    dsimp only
+    rw [show lambda * -t = -(lambda * t) by ring, Real.cosh_neg]
+  have hfill := two_mul_integral_evenWeight_mul_centeredCorrelation
+    w hw (fun t : ℝ ↦ Real.cosh (lambda * t)) (by fun_prop) hEven
+  rw [hfill]
+  exact houter
+
+private theorem centered_intervalIntegral_eq_zero_of_odd
+    (f : ℝ → ℝ) (hf : Function.Odd f) :
+    (∫ x : ℝ in -1..1, f x) = 0 := by
+  have hreflect :
+      (∫ x : ℝ in -1..1, f (-x)) = ∫ x : ℝ in -1..1, f x := by
+    simpa only [neg_neg] using
+      (intervalIntegral.integral_comp_neg
+        (f := f) (a := (-1 : ℝ)) (b := 1))
+  have hneg :
+      (∫ x : ℝ in -1..1, f (-x)) = -(∫ x : ℝ in -1..1, f x) := by
+    rw [show (fun x : ℝ ↦ f (-x)) = fun x ↦ -f x by
+      funext x
+      exact hf x]
+    exact intervalIntegral.integral_neg
+  rw [hneg] at hreflect
+  exact CharZero.neg_eq_self_iff.mp hreflect
+
+theorem centeredSinhMoment_eq_zero_of_even
+    {w : ℝ → ℝ} (hw : Function.Even w) (lambda : ℝ) :
+    centeredSinhMoment w lambda = 0 := by
+  apply centered_intervalIntegral_eq_zero_of_odd
+  intro x
+  change Real.sinh (lambda * -x) * w (-x) =
+    -(Real.sinh (lambda * x) * w x)
+  rw [show lambda * -x = -(lambda * x) by ring,
+    Real.sinh_neg, hw]
+  ring
+
+theorem centeredCoshMoment_eq_zero_of_odd
+    {w : ℝ → ℝ} (hw : Function.Odd w) (lambda : ℝ) :
+    centeredCoshMoment w lambda = 0 := by
+  apply centered_intervalIntegral_eq_zero_of_odd
+  intro x
+  change Real.cosh (lambda * -x) * w (-x) =
+    -(Real.cosh (lambda * x) * w x)
+  rw [show lambda * -x = -(lambda * x) by ring,
+    Real.cosh_neg, hw]
+  ring
+
+/-- On an even profile every hyperbolic correlation rank is a nonnegative
+square. -/
+theorem two_mul_integral_cosh_mul_centeredCorrelation_of_even
+    (w : ℝ → ℝ) (hw : Continuous w) (heven : Function.Even w)
+    (lambda : ℝ) :
+    2 * (∫ t : ℝ in 0..2,
+        Real.cosh (lambda * t) * centeredEndpointCorrelation w t) =
+      centeredCoshMoment w lambda ^ 2 := by
+  rw [two_mul_integral_cosh_mul_centeredCorrelation w hw,
+    centeredSinhMoment_eq_zero_of_even heven]
+  ring
+
+/-- On an odd profile every hyperbolic correlation rank is the negative of a
+square. -/
+theorem two_mul_integral_cosh_mul_centeredCorrelation_of_odd
+    (w : ℝ → ℝ) (hw : Continuous w) (hodd : Function.Odd w)
+    (lambda : ℝ) :
+    2 * (∫ t : ℝ in 0..2,
+        Real.cosh (lambda * t) * centeredEndpointCorrelation w t) =
+      -(centeredSinhMoment w lambda ^ 2) := by
+  rw [two_mul_integral_cosh_mul_centeredCorrelation w hw,
+    centeredCoshMoment_eq_zero_of_odd hodd]
+  ring
+
+/-! ## Exact finite-rank archimedean forms -/
+
+/-- The first `N` decaying hyperbolic ranks of the symmetric adjacent-cell
+kernel, together with its growing head rank.  Keeping this finite makes the
+subsequent integral interchange purely algebraic; the analytic infinite
+limit can then be taken in a downstream tail-closure theorem. -/
+def factorTwoSymmetricRankPartialWeight (N : ℕ) (t : ℝ) : ℝ :=
+  2 * Real.exp yoshidaEndpointA *
+      Real.cosh (yoshidaEndpointA * t / 2) -
+    ∑ m ∈ Finset.range N,
+      2 * Real.exp
+          (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+        Real.cosh
+          (yoshidaEndpointA * oddRate (m + 1) * t)
+
+/-- The centered quadratic form associated with the finite hyperbolic-rank
+approximation. -/
+def factorTwoCenteredArchRankPartialSum
+    (w : ℝ → ℝ) (N : ℕ) : ℝ :=
+  yoshidaEndpointA *
+    ∫ t : ℝ in 0..2,
+      factorTwoSymmetricRankPartialWeight N t *
+        centeredEndpointCorrelation w t
+
+private theorem intervalIntegrable_cosh_mul_centeredCorrelation
+    (w : ℝ → ℝ) (hw : Continuous w) (lambda : ℝ) :
+    IntervalIntegrable
+      (fun t : ℝ ↦ Real.cosh (lambda * t) *
+        centeredEndpointCorrelation w t) volume 0 2 := by
+  exact ((by fun_prop : Continuous (fun t : ℝ ↦
+      Real.cosh (lambda * t))).mul
+    (continuous_centeredEndpointCorrelation_of_continuous w hw))
+      |>.intervalIntegrable 0 2
+
+/-- On an even profile, the finite archimedean approximation is exactly one
+positive growing Laplace square minus the finite sum of positive decaying
+Laplace squares. -/
+theorem factorTwoCenteredArchRankPartialSum_eq_evenSquares
+    (w : ℝ → ℝ) (hw : Continuous w) (heven : Function.Even w)
+    (N : ℕ) :
+    factorTwoCenteredArchRankPartialSum w N =
+      yoshidaEndpointA *
+        (Real.exp yoshidaEndpointA *
+            centeredCoshMoment w (yoshidaEndpointA / 2) ^ 2 -
+          ∑ m ∈ Finset.range N,
+            Real.exp
+                (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+              centeredCoshMoment w
+                (yoshidaEndpointA * oddRate (m + 1)) ^ 2) := by
+  have hhead :=
+    two_mul_integral_cosh_mul_centeredCorrelation_of_even
+      w hw heven (yoshidaEndpointA / 2)
+  have htail (m : ℕ) :=
+    two_mul_integral_cosh_mul_centeredCorrelation_of_even
+      w hw heven (yoshidaEndpointA * oddRate (m + 1))
+  have hheadScaled :
+      (∫ t : ℝ in 0..2,
+        2 * Real.exp yoshidaEndpointA *
+          Real.cosh (yoshidaEndpointA * t / 2) *
+            centeredEndpointCorrelation w t) =
+        Real.exp yoshidaEndpointA *
+          centeredCoshMoment w (yoshidaEndpointA / 2) ^ 2 := by
+    rw [show (fun t : ℝ ↦
+        2 * Real.exp yoshidaEndpointA *
+          Real.cosh (yoshidaEndpointA * t / 2) *
+            centeredEndpointCorrelation w t) =
+      fun t : ℝ ↦
+        (2 * Real.exp yoshidaEndpointA) *
+          (Real.cosh ((yoshidaEndpointA / 2) * t) *
+            centeredEndpointCorrelation w t) by
+        funext t
+        ring_nf]
+    rw [intervalIntegral.integral_const_mul]
+    linear_combination Real.exp yoshidaEndpointA * hhead
+  have htailScaled (m : ℕ) :
+      (∫ t : ℝ in 0..2,
+        2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t) =
+        Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          centeredCoshMoment w
+            (yoshidaEndpointA * oddRate (m + 1)) ^ 2 := by
+    rw [show (fun t : ℝ ↦
+        2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t) =
+      fun t : ℝ ↦
+        (2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1))) *
+          (Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t) by
+        funext t
+        ring]
+    rw [intervalIntegral.integral_const_mul]
+    linear_combination
+      Real.exp (-2 * yoshidaEndpointA * oddRate (m + 1)) * htail m
+  have hheadInt : IntervalIntegrable
+      (fun t : ℝ ↦
+        2 * Real.exp yoshidaEndpointA *
+          Real.cosh (yoshidaEndpointA * t / 2) *
+            centeredEndpointCorrelation w t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    exact (by
+      apply Continuous.mul
+      · fun_prop
+      · exact continuous_centeredEndpointCorrelation_of_continuous w hw)
+  have htailInt (m : ℕ) : IntervalIntegrable
+      (fun t : ℝ ↦
+        2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    exact (by
+      apply Continuous.mul
+      · fun_prop
+      · exact continuous_centeredEndpointCorrelation_of_continuous w hw)
+  have htailSumInt : IntervalIntegrable
+      (fun t : ℝ ↦
+        ∑ m ∈ Finset.range N,
+          2 * Real.exp
+              (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+            Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+              centeredEndpointCorrelation w t) volume 0 2 := by
+    rw [show (fun t : ℝ ↦
+        ∑ m ∈ Finset.range N,
+          2 * Real.exp
+              (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+            Real.cosh
+                (yoshidaEndpointA * oddRate (m + 1) * t) *
+              centeredEndpointCorrelation w t) =
+      ∑ m ∈ Finset.range N, fun t : ℝ ↦
+        2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t by
+      funext t
+      simp only [Finset.sum_apply]]
+    exact IntervalIntegrable.sum (Finset.range N)
+      (fun m _hm ↦ htailInt m)
+  unfold factorTwoCenteredArchRankPartialSum
+    factorTwoSymmetricRankPartialWeight
+  rw [show (fun t : ℝ ↦
+      (2 * Real.exp yoshidaEndpointA *
+          Real.cosh (yoshidaEndpointA * t / 2) -
+        ∑ m ∈ Finset.range N,
+          2 * Real.exp
+              (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+            Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t)) *
+        centeredEndpointCorrelation w t) =
+      fun t : ℝ ↦
+        2 * Real.exp yoshidaEndpointA *
+            Real.cosh (yoshidaEndpointA * t / 2) *
+              centeredEndpointCorrelation w t -
+          ∑ m ∈ Finset.range N,
+            (2 * Real.exp
+                (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+              Real.cosh
+                (yoshidaEndpointA * oddRate (m + 1) * t)) *
+              centeredEndpointCorrelation w t by
+        funext t
+        simp only [sub_mul, Finset.sum_mul]]
+  rw [intervalIntegral.integral_sub hheadInt htailSumInt,
+    intervalIntegral.integral_finset_sum
+      (fun m _hm ↦ htailInt m), hheadScaled]
+  simp_rw [htailScaled]
+
+/-- On an odd profile, the same finite archimedean approximation has the
+opposite square signs: a negative growing sine square and positive decaying
+sine squares. -/
+theorem factorTwoCenteredArchRankPartialSum_eq_oddSquares
+    (w : ℝ → ℝ) (hw : Continuous w) (hodd : Function.Odd w)
+    (N : ℕ) :
+    factorTwoCenteredArchRankPartialSum w N =
+      yoshidaEndpointA *
+        (-Real.exp yoshidaEndpointA *
+            centeredSinhMoment w (yoshidaEndpointA / 2) ^ 2 +
+          ∑ m ∈ Finset.range N,
+            Real.exp
+                (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+              centeredSinhMoment w
+                (yoshidaEndpointA * oddRate (m + 1)) ^ 2) := by
+  have hhead :=
+    two_mul_integral_cosh_mul_centeredCorrelation_of_odd
+      w hw hodd (yoshidaEndpointA / 2)
+  have htail (m : ℕ) :=
+    two_mul_integral_cosh_mul_centeredCorrelation_of_odd
+      w hw hodd (yoshidaEndpointA * oddRate (m + 1))
+  have hheadScaled :
+      (∫ t : ℝ in 0..2,
+        2 * Real.exp yoshidaEndpointA *
+          Real.cosh (yoshidaEndpointA * t / 2) *
+            centeredEndpointCorrelation w t) =
+        -Real.exp yoshidaEndpointA *
+          centeredSinhMoment w (yoshidaEndpointA / 2) ^ 2 := by
+    rw [show (fun t : ℝ ↦
+        2 * Real.exp yoshidaEndpointA *
+          Real.cosh (yoshidaEndpointA * t / 2) *
+            centeredEndpointCorrelation w t) =
+      fun t : ℝ ↦
+        (2 * Real.exp yoshidaEndpointA) *
+          (Real.cosh ((yoshidaEndpointA / 2) * t) *
+            centeredEndpointCorrelation w t) by
+        funext t
+        ring_nf]
+    rw [intervalIntegral.integral_const_mul]
+    linear_combination Real.exp yoshidaEndpointA * hhead
+  have htailScaled (m : ℕ) :
+      (∫ t : ℝ in 0..2,
+        2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t) =
+        -Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          centeredSinhMoment w
+            (yoshidaEndpointA * oddRate (m + 1)) ^ 2 := by
+    rw [show (fun t : ℝ ↦
+        2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t) =
+      fun t : ℝ ↦
+        (2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1))) *
+          (Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t) by
+        funext t
+        ring]
+    rw [intervalIntegral.integral_const_mul]
+    linear_combination
+      Real.exp (-2 * yoshidaEndpointA * oddRate (m + 1)) * htail m
+  have hheadInt : IntervalIntegrable
+      (fun t : ℝ ↦
+        2 * Real.exp yoshidaEndpointA *
+          Real.cosh (yoshidaEndpointA * t / 2) *
+            centeredEndpointCorrelation w t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    exact (by
+      apply Continuous.mul
+      · fun_prop
+      · exact continuous_centeredEndpointCorrelation_of_continuous w hw)
+  have htailInt (m : ℕ) : IntervalIntegrable
+      (fun t : ℝ ↦
+        2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    exact (by
+      apply Continuous.mul
+      · fun_prop
+      · exact continuous_centeredEndpointCorrelation_of_continuous w hw)
+  have htailSumInt : IntervalIntegrable
+      (fun t : ℝ ↦
+        ∑ m ∈ Finset.range N,
+          2 * Real.exp
+              (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+            Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+              centeredEndpointCorrelation w t) volume 0 2 := by
+    rw [show (fun t : ℝ ↦
+        ∑ m ∈ Finset.range N,
+          2 * Real.exp
+              (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+            Real.cosh
+                (yoshidaEndpointA * oddRate (m + 1) * t) *
+              centeredEndpointCorrelation w t) =
+      ∑ m ∈ Finset.range N, fun t : ℝ ↦
+        2 * Real.exp
+            (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+          Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t) *
+            centeredEndpointCorrelation w t by
+      funext t
+      simp only [Finset.sum_apply]]
+    exact IntervalIntegrable.sum (Finset.range N)
+      (fun m _hm ↦ htailInt m)
+  unfold factorTwoCenteredArchRankPartialSum
+    factorTwoSymmetricRankPartialWeight
+  rw [show (fun t : ℝ ↦
+      (2 * Real.exp yoshidaEndpointA *
+          Real.cosh (yoshidaEndpointA * t / 2) -
+        ∑ m ∈ Finset.range N,
+          2 * Real.exp
+              (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+            Real.cosh
+              (yoshidaEndpointA * oddRate (m + 1) * t)) *
+        centeredEndpointCorrelation w t) =
+      fun t : ℝ ↦
+        2 * Real.exp yoshidaEndpointA *
+            Real.cosh (yoshidaEndpointA * t / 2) *
+              centeredEndpointCorrelation w t -
+          ∑ m ∈ Finset.range N,
+            (2 * Real.exp
+                (-2 * yoshidaEndpointA * oddRate (m + 1)) *
+              Real.cosh
+                (yoshidaEndpointA * oddRate (m + 1) * t)) *
+              centeredEndpointCorrelation w t by
+        funext t
+        simp only [sub_mul, Finset.sum_mul]]
+  rw [intervalIntegral.integral_sub hheadInt htailSumInt,
+    intervalIntegral.integral_finset_sum
+      (fun m _hm ↦ htailInt m), hheadScaled]
+  simp_rw [htailScaled]
+  simp_rw [neg_mul]
+  rw [Finset.sum_neg_distrib]
+  ring
 
 end
 
