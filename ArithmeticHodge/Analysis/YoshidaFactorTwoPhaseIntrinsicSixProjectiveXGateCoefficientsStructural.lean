@@ -33,7 +33,7 @@ short list of scalar mixed-coefficient inequalities; the two endpoint
 coefficients factor separately.
 -/
 
-private def endpointAffinePolynomial (plus minus : ℝ) : ℝ[X] :=
+def endpointAffinePolynomial (plus minus : ℝ) : ℝ[X] :=
   C plus + C minus * X
 
 private theorem eval_endpointAffinePolynomial (plus minus x : ℝ) :
@@ -61,46 +61,46 @@ private theorem coeff_three_endpointAffinePolynomial_triple
   simp only [coeff_add, coeff_C, coeff_C_mul_X, coeff_C_mul_X_pow]
   norm_num
 
-private def coefficientLow00Polynomial : ℝ[X] :=
+def coefficientLow00Polynomial : ℝ[X] :=
   endpointAffinePolynomial
     (factorTwoStructuralPhaseLow00 1)
     (factorTwoStructuralPhaseLow00 (-1))
 
-private def coefficientLow02Polynomial : ℝ[X] :=
+def coefficientLow02Polynomial : ℝ[X] :=
   endpointAffinePolynomial
     (factorTwoStructuralPhaseLow02 1)
     (factorTwoStructuralPhaseLow02 (-1))
 
-private def coefficientLow22Polynomial : ℝ[X] :=
+def coefficientLow22Polynomial : ℝ[X] :=
   endpointAffinePolynomial
     (factorTwoStructuralPhaseLow22 1)
     (factorTwoStructuralPhaseLow22 (-1))
 
-private def coefficientLowDetPolynomial : ℝ[X] :=
+def coefficientLowDetPolynomial : ℝ[X] :=
   coefficientLow00Polynomial * coefficientLow22Polynomial -
     coefficientLow02Polynomial ^ 2
 
-private def coefficientCross04Polynomial : ℝ[X] :=
+def coefficientCross04Polynomial : ℝ[X] :=
   endpointAffinePolynomial
     (factorTwoIntrinsicFourP45Cross04 1)
     (factorTwoIntrinsicFourP45Cross04 (-1))
 
-private def coefficientCross24Polynomial : ℝ[X] :=
+def coefficientCross24Polynomial : ℝ[X] :=
   endpointAffinePolynomial
     (factorTwoIntrinsicFourP45Cross24 1)
     (factorTwoIntrinsicFourP45Cross24 (-1))
 
-private def coefficientP4DiagonalPolynomial : ℝ[X] :=
+def coefficientP4DiagonalPolynomial : ℝ[X] :=
   endpointAffinePolynomial
     (factorTwoIntrinsicSixP4Diagonal 1)
     (factorTwoIntrinsicSixP4Diagonal (-1))
 
-private def coefficientOdd11Polynomial : ℝ[X] :=
+def coefficientOdd11Polynomial : ℝ[X] :=
   endpointAffinePolynomial
     (factorTwoIntrinsicOddPhaseLow11 1)
     (factorTwoIntrinsicOddPhaseLow11 (-1))
 
-private def coefficientAdjugateTwoPolynomial
+def coefficientAdjugateTwoPolynomial
     (u0 u2 v0 v2 : ℝ[X]) : ℝ[X] :=
   coefficientLow22Polynomial * u0 * v0 -
     coefficientLow02Polynomial * (u0 * v2 + u2 * v0) +
@@ -134,7 +134,7 @@ def factorTwoIntrinsicSixProjectiveP1ResidualCoefficientPolynomial : ℝ[X] :=
 /-! The raw determinant factor is lower degree than the fraction-free Schur
 numerator.  It is therefore the right object for coefficient signs. -/
 
-private def coefficientP1AlternatingAdjugatePolynomial : ℝ[X] :=
+def coefficientP1AlternatingAdjugatePolynomial : ℝ[X] :=
   (coefficientLow22Polynomial * coefficientP4DiagonalPolynomial -
       coefficientCross24Polynomial ^ 2) *
         C factorTwoIntrinsicAlternating01 ^ 2 +
@@ -332,16 +332,16 @@ theorem factorTwoIntrinsicSixProjectiveRawMinorFourPolynomial_eq_components :
 
 /-! ## Exact seven-coefficient reduction for the second pivot -/
 
-private abbrev pivotCoeff (n : ℕ) : ℝ :=
+abbrev pivotCoeff (n : ℕ) : ℝ :=
   factorTwoIntrinsicSixProjectiveP4PivotCoefficientPolynomial.coeff n
 
-private abbrev residualOneCoeff (n : ℕ) : ℝ :=
+abbrev residualOneCoeff (n : ℕ) : ℝ :=
   factorTwoIntrinsicSixProjectiveP1ResidualCoefficientPolynomial.coeff n
 
-private abbrev crossFourOneCoeff (n : ℕ) : ℝ :=
+abbrev crossFourOneCoeff (n : ℕ) : ℝ :=
   factorTwoIntrinsicSixProjectiveP4P1CrossCoefficientPolynomial.coeff n
 
-private abbrev p1AlternatingAdjugateCoeff (n : ℕ) : ℝ :=
+abbrev p1AlternatingAdjugateCoeff (n : ℕ) : ℝ :=
   coefficientP1AlternatingAdjugatePolynomial.coeff n
 
 /-- The five exact coefficients of the raw determinant factor.  Only the
