@@ -7,8 +7,14 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveRa
 noncomputable section
 
 open Polynomial
+open YoshidaEndpointOcticPotential
+open YoshidaEndpointOddFullPolarization
+open YoshidaFactorTwoEndpointClean
+open YoshidaFactorTwoEndpointParityPencil
 open YoshidaFactorTwoPhaseIntrinsicLow
+open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
+open YoshidaFactorTwoPhaseIntrinsicOddPerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveXGateStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveXGateCoefficientsStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFiveCoefficientsStructural
@@ -112,6 +118,60 @@ theorem rawFiveOddMinorCoeff_one_pos :
       YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow11,
       YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow13,
       YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow33] using hmdet
+
+/-- Quantitative form of the mixed odd determinant reserve.  Polarizing the
+two endpoints cancels the clean--perturbation cross terms; the perturbation
+determinant is negative, while the clean determinant has a direct rational
+Schur margin. -/
+theorem rawFiveOddMinorCoeff_one_gt_three_div_eighty :
+    (3 / 80 : ℝ) < rawFiveOddMinorCoeff 1 := by
+  let c11 : ℝ := yoshidaEndpointOddLowGram11
+  let c13 : ℝ := yoshidaEndpointOddLowGram13
+  let c33 : ℝ := yoshidaEndpointOddLowGram33
+  let p11 : ℝ := factorTwoCenteredSymmetricPerturbation centeredP1
+  let p13 : ℝ :=
+    factorTwoCenteredSymmetricPerturbationBilinear centeredP1 centeredP3
+  let p33 : ℝ := factorTwoCenteredSymmetricPerturbation centeredP3
+  have heq : rawFiveOddMinorCoeff 1 =
+      2 * ((c11 * c33 - c13 ^ 2) - (p11 * p33 - p13 ^ 2)) := by
+    rw [rawFiveOddMinorCoeff_one_eq]
+    unfold factorTwoIntrinsicOddPhaseLow11 factorTwoIntrinsicOddPhaseLow13
+      factorTwoIntrinsicOddPhaseLow33
+    dsimp only [c11, c13, c33, p11, p13, p33]
+    ring
+  have hc11 : (1778 / 10000 : ℝ) < c11 := by
+    simpa only [c11] using yoshidaEndpointOddLowGram11_gt_1778_div_10000
+  have hc33 : (3315 / 10000 : ℝ) < c33 := by
+    simpa only [c33] using yoshidaEndpointOddLowGram33_gt_3315_div_10000
+  have hc13 : (1 / 5 : ℝ) < c13 ∧ c13 < 2002 / 10000 := by
+    simpa only [c13] using yoshidaEndpointOddLowGram13_bounds
+  have hc11pos : 0 < c11 := lt_trans (by norm_num) hc11
+  have hcleanProduct :
+      (1778 / 10000 : ℝ) * (3315 / 10000) < c11 * c33 := by
+    calc
+      (1778 / 10000 : ℝ) * (3315 / 10000) <
+          c11 * (3315 / 10000) :=
+        mul_lt_mul_of_pos_right hc11 (by norm_num)
+      _ < c11 * c33 := mul_lt_mul_of_pos_left hc33 hc11pos
+  have hc13pos : 0 < c13 := lt_trans (by norm_num) hc13.1
+  have hcrossSum : 0 < (2002 / 10000 : ℝ) + c13 :=
+    add_pos (by norm_num) hc13pos
+  have hcleanCross : c13 ^ 2 < (2002 / 10000 : ℝ) ^ 2 := by
+    nlinarith [mul_pos (sub_pos.mpr hc13.2) hcrossSum]
+  rcases oddStructuralLow_perturbation_sharp_bounds with
+    ⟨hp11, _hp13, hp33⟩
+  have hp11pos : 0 < p11 := by
+    dsimp only [p11]
+    linarith [hp11.1]
+  have hp33neg : p33 < 0 := by
+    dsimp only [p33]
+    linarith [hp33.2]
+  have hpertDetNeg : p11 * p33 - p13 ^ 2 < 0 := by
+    have hmul : p11 * p33 < 0 := mul_neg_of_pos_of_neg hp11pos hp33neg
+    nlinarith [sq_nonneg p13]
+  rw [heq]
+  norm_num at hcleanProduct hcleanCross ⊢
+  nlinarith
 
 end
 
