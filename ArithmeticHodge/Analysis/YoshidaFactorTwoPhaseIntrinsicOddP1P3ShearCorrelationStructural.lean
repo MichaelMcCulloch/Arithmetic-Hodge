@@ -103,7 +103,9 @@ theorem integral_sq_oddStructuralP1P3ShearDiagonalCorrelation :
   norm_num [intervalIntegral.integral_add, intervalIntegral.integral_sub,
     intervalIntegral.integral_const_mul, integral_pow]
 
-private theorem sq_intervalIntegral_mul_le_zero_two
+/-- Cauchy--Schwarz on `[0,2]` for continuous real functions.  This public
+form is reused with square roots of analytic envelope weights. -/
+theorem sq_intervalIntegral_mul_le_zero_two
     (f g : ℝ → ℝ) (hf : Continuous f) (hg : Continuous g) :
     (∫ x : ℝ in 0..2, f x * g x) ^ 2 ≤
       (∫ x : ℝ in 0..2, f x ^ 2) *
