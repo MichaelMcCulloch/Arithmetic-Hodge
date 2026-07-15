@@ -1012,10 +1012,14 @@ private theorem two_mul_mul_ge_neg_sum_sq_of_abs_lt
     nlinarith [sq_nonneg (x + y)]
 
 set_option maxHeartbeats 800000 in
-private theorem minorMinusTransformedScaled_pos
-    (y0 y1 y2 y3 y4 : ℝ)
-    (hne : y0 ≠ 0 ∨ y1 ≠ 0 ∨ y2 ≠ 0 ∨ y3 ≠ 0 ∨ y4 ≠ 0) :
-    0 < minusMinorFiveQuadratic
+private theorem minorMinusTransformedScaled_reserve_le
+    (y0 y1 y2 y3 y4 : ℝ) :
+    (8653 / 40000000 : ℝ) * y0 ^ 2 +
+        (24687 / 200000000 : ℝ) * y1 ^ 2 +
+        (6447 / 200000000 : ℝ) * y2 ^ 2 +
+        (6459 / 8000000 : ℝ) * y3 ^ 2 +
+        (517 / 800000 : ℝ) * y4 ^ 2 ≤
+      minusMinorFiveQuadratic
       minorMinusT00 minorMinusT01 minorMinusT02 minorMinusT03 minorMinusT04
       minorMinusT11 minorMinusT12 minorMinusT13 minorMinusT14
       minorMinusT22 minorMinusT23 minorMinusT24 minorMinusT33 minorMinusT34
@@ -1063,6 +1067,20 @@ private theorem minorMinusTransformedScaled_pos
     (x := y2) (y := y4)
   have hc34 := two_mul_mul_ge_neg_sum_sq_of_abs_lt h34
     (x := y3) (y := y4)
+  unfold minusMinorFiveQuadratic
+  nlinarith only [hd0, hd1, hd2, hd3, hd4, hc01, hc02, hc03, hc04,
+    hc12, hc13, hc14, hc23, hc24, hc34]
+
+private theorem minorMinusTransformedScaled_pos
+    (y0 y1 y2 y3 y4 : ℝ)
+    (hne : y0 ≠ 0 ∨ y1 ≠ 0 ∨ y2 ≠ 0 ∨ y3 ≠ 0 ∨ y4 ≠ 0) :
+    0 < minusMinorFiveQuadratic
+      minorMinusT00 minorMinusT01 minorMinusT02 minorMinusT03 minorMinusT04
+      minorMinusT11 minorMinusT12 minorMinusT13 minorMinusT14
+      minorMinusT22 minorMinusT23 minorMinusT24 minorMinusT33 minorMinusT34
+      minorMinusT44
+      ((1 / 80 : ℝ) * y0) ((1 / 50 : ℝ) * y1)
+      ((1 / 50 : ℝ) * y2) ((3 / 4 : ℝ) * y3) y4 := by
   have hbudget :
       0 < (8653 / 40000000 : ℝ) * y0 ^ 2 +
         (24687 / 200000000 : ℝ) * y1 ^ 2 +
@@ -1071,9 +1089,29 @@ private theorem minorMinusTransformedScaled_pos
         (517 / 800000 : ℝ) * y4 ^ 2 := by
     rcases hne with h0 | h1 | h2 | h3 | h4
     all_goals positivity
-  unfold minusMinorFiveQuadratic
-  nlinarith only [hd0, hd1, hd2, hd3, hd4, hc01, hc02, hc03, hc04,
-    hc12, hc13, hc14, hc23, hc24, hc34, hbudget]
+  exact hbudget.trans_le
+    (minorMinusTransformedScaled_reserve_le y0 y1 y2 y3 y4)
+
+/-- The diagonal reserve retained by the rational congruence for the
+negative five-dimensional endpoint form. -/
+theorem factorTwoIntrinsicSixUnbalancedMinorMinusLowerFive_transformed_reserve
+    (x0 x1 x2 x3 x4 : ℝ) :
+    (8653 / 6250 : ℝ) * x0 ^ 2 +
+        (24687 / 80000 : ℝ) * x1 ^ 2 +
+        (6447 / 80000 : ℝ) * x2 ^ 2 +
+        (2153 / 1500000 : ℝ) * x3 ^ 2 +
+        (517 / 800000 : ℝ) * x4 ^ 2 ≤
+      factorTwoIntrinsicSixUnbalancedMinorMinusLowerFiveQuadratic
+        (x0 - (2 / 15 : ℝ) * x1 - (1 / 6 : ℝ) * x2 -
+          (1 / 20 : ℝ) * x3 + (4 / 25 : ℝ) * x4)
+        (x3 - (11 / 4 : ℝ) * x4)
+        (x1 - (4 / 35 : ℝ) * x2 + (9 / 50 : ℝ) * x3 -
+          (3 / 8 : ℝ) * x4)
+        (x2 - (1 / 14 : ℝ) * x3 + (7 / 80 : ℝ) * x4) x4 := by
+  rw [minorMinusLowerFive_congruence]
+  have h := minorMinusTransformedScaled_reserve_le
+    (80 * x0) (50 * x1) (50 * x2) ((4 / 3 : ℝ) * x3) x4
+  convert h using 1 <;> ring
 
 private theorem minorMinusTransformed_pos
     (x0 x1 x2 x3 x4 : ℝ)
