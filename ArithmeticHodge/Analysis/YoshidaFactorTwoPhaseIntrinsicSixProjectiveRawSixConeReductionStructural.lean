@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4UniformStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFourConeStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFiveConeStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawSixCoefficientFrontierStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawSixFactorStructural
 
@@ -15,6 +16,7 @@ open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
 open YoshidaFactorTwoPhaseIntrinsicSixP4UniformStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveGateReduction
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFourConeStructural
+open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFiveConeStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawSixCoefficientFrontierStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawSixFactorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveXGateStructural
@@ -43,6 +45,38 @@ theorem factorTwoIntrinsicSixProjectiveP5Gap_eval_pos_of_raw_cone
     (pow_pos (factorTwoIntrinsicSixProjectiveLowDet_pos x hx) 3)
     (eval_pos_of_mem_strictNonnegativeCoefficientCone
       factorTwoIntrinsicSixProjectiveRawDeterminantPolynomial hRawSix x hx)
+
+/-- After closing the first three projective Schur gates structurally, the
+raw-six determinant sign is exactly the final remaining gate.  This pointwise
+criterion is weaker than requiring a nonnegative coefficient certificate. -/
+theorem factorTwoIntrinsicSixProjectiveXGates_iff_rawSix_eval_nonneg
+    (x : ℝ) (hx : 0 ≤ x) :
+    FactorTwoIntrinsicSixProjectiveXGates x ↔
+      0 ≤ factorTwoIntrinsicSixProjectiveRawDeterminantPolynomial.eval x := by
+  have hlow := factorTwoIntrinsicSixProjectiveLowDet_pos x hx
+  constructor
+  · rintro ⟨_, _, _, hfinal⟩
+    have hgap :
+        0 ≤ factorTwoIntrinsicSixProjectiveP5GapPolynomial.eval x := by
+      rw [eval_factorTwoIntrinsicSixProjectiveP5GapPolynomial]
+      linarith
+    rw [factorTwoIntrinsicSixProjectiveP5GapPolynomial_factor,
+      eval_mul, eval_pow,
+      eval_factorTwoIntrinsicSixProjectiveRawLowDetPolynomial] at hgap
+    exact nonneg_of_mul_nonneg_left
+      (by simpa only [mul_comm] using hgap) (pow_pos hlow 3)
+  · intro hraw
+    refine ⟨factorTwoIntrinsicSixProjectiveP4Pivot_pos x hx,
+      factorTwoIntrinsicSixProjectiveBaseMinorTwoX_pos x hx,
+      factorTwoIntrinsicSixProjectiveBaseDetX_pos x hx, ?_⟩
+    have hgap :
+        0 ≤ factorTwoIntrinsicSixProjectiveP5GapPolynomial.eval x := by
+      rw [factorTwoIntrinsicSixProjectiveP5GapPolynomial_factor,
+        eval_mul, eval_pow,
+        eval_factorTwoIntrinsicSixProjectiveRawLowDetPolynomial]
+      exact mul_nonneg (pow_pos hlow 3).le hraw
+    rw [eval_factorTwoIntrinsicSixProjectiveP5GapPolynomial] at hgap
+    linarith
 
 /-- The unconditional raw-four cone, any raw-five cone proof, and any
 raw-six cone proof close all four six-mode projective Schur gates. -/
@@ -101,6 +135,25 @@ theorem factorTwoEndpointChannelPhase_intrinsicSix_nonneg_of_raw_cones
     c0 c2 c4 c1 c3 c5 t x hx
     (factorTwoIntrinsicSixProjectiveXGates_of_raw_cones
       x hxNonneg hRawFive hRawSix)
+
+/-- Pointwise nonnegativity of the raw-six determinant is the sole remaining
+input for the intrinsic six-mode phase on the rational circle chart. -/
+theorem factorTwoEndpointChannelPhase_intrinsicSix_nonneg_of_rawSix_eval_nonneg
+    (c0 c2 c4 c1 c3 c5 t x : ℝ) (hx : x = t ^ 2)
+    (hRawSix :
+      0 ≤ factorTwoIntrinsicSixProjectiveRawDeterminantPolynomial.eval x) :
+    0 ≤ factorTwoEndpointChannelPhase
+      (factorTwoEvenStructuralLowProfile c0 c2 +
+        factorTwoIntrinsicSixEvenTail c4)
+      (factorTwoIntrinsicSixOddTail c1 c3 c5)
+      ((1 - x) / (1 + x)) (2 * t / (1 + x)) := by
+  have hxNonneg : 0 ≤ x := by
+    rw [hx]
+    positivity
+  exact factorTwoEndpointChannelPhase_intrinsicSix_nonneg_of_projective_x_gates
+    c0 c2 c4 c1 c3 c5 t x hx
+    ((factorTwoIntrinsicSixProjectiveXGates_iff_rawSix_eval_nonneg
+      x hxNonneg).2 hRawSix)
 
 end
 
