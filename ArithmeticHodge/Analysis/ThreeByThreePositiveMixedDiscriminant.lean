@@ -54,6 +54,16 @@ private theorem determinantPencil_expansion
   simp only [map_add, map_sub, map_mul]
   ring
 
+/-- The invariant four-term expansion of a three-dimensional affine
+matrix pencil.  The two middle coefficients are the first mixed determinant
+with the endpoint forms in the two possible orders. -/
+theorem determinantPencil_eq_coefficients
+    (A B : Matrix (Fin 3) (Fin 3) ℝ) :
+    determinantPencil A B =
+      C A.det + C (matrixMixedDeterminantOne A B) * X +
+        C (matrixMixedDeterminantOne B A) * X ^ 2 + C B.det * X ^ 3 :=
+  determinantPencil_expansion A B
+
 theorem matrixMixedDeterminantOne_eq_coefficient
     (A B : Matrix (Fin 3) (Fin 3) ℝ) :
     matrixMixedDeterminantOne A B = (determinantPencil A B).coeff 1 := by
