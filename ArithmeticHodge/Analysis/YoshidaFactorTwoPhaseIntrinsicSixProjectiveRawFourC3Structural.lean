@@ -967,6 +967,15 @@ private theorem endpoint_schur_excess_lt :
   exact lt_of_le_of_lt endpoint_schur_excess_le_diagonal_floor
     endpoint_schur_excess_at_floor_lt
 
+/-- Public coefficient form of the negative-endpoint `P₁` adjugate
+reserve.  This is the reusable endpoint input for the next projective
+minor. -/
+theorem p1AlternatingAdjugateCoeff_two_sub_pivotCoeff_three_lt :
+    p1AlternatingAdjugateCoeff 2 - (19 / 100 : ℝ) * pivotCoeff 3 <
+      (157 / 5000000 : ℝ) := by
+  rw [p1AlternatingAdjugateCoeff_two_eq, pivotCoeff_three_eq_evenDetMinus]
+  exact endpoint_schur_excess_lt
+
 /-! ## Odd reserves and unconditional closure -/
 
 private theorem coefficientOdd11Polynomial_coeff_one_gt :
