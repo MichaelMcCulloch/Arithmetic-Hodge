@@ -120,7 +120,10 @@ private theorem factorTwoCenteredP5_affine (t : ℝ) :
     Polynomial.eval_finset_sum, Finset.sum_range_succ, Nat.choose]
   ring
 
-private theorem factorial_mul_integral_exp_shiftedLegendreReal
+/-- Rodrigues integration by parts for an arbitrary shifted Legendre mode.
+The public form lets later low-mode arguments reuse the same structural
+identity instead of reproving the boundary-term calculation. -/
+theorem factorial_mul_integral_exp_shiftedLegendreReal
     (n : ℕ) (lambda : ℝ) :
     (n.factorial : ℝ) *
         (∫ t : ℝ in 0..1,
