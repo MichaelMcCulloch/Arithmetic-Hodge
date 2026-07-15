@@ -713,6 +713,13 @@ private theorem plusCrossCoordinate_lower_bounds :
     dsimp only [clean, err, beta, Q] at heq hprimeLower ⊢
     nlinarith
 
+/-- Public sharp lower boxes for the two aligned positive-endpoint `P₄`
+cross coordinates. -/
+theorem factorTwoIntrinsicP4PlusCrossCoordinate_lower_bounds :
+    (1924 / 10000 : ℝ) < factorTwoIntrinsicP4PlusCrossSum ∧
+      (1925 / 100000 : ℝ) < factorTwoIntrinsicP4PlusCrossDifference :=
+  plusCrossCoordinate_lower_bounds
+
 private theorem negativeCrossCoordinate_upper_bounds :
     nS < (17 / 70 + 1 / 25000 - 1924 / 10000 : ℝ) ∧
       nD < (3 / 70 + 1 / 25000 - 1925 / 100000 : ℝ) := by
