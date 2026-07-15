@@ -1945,6 +1945,35 @@ private theorem abs_intrinsicAlternatingSharpRegularError_lt_of_abs_q_le
   rw [herr]
   exact lt_of_le_of_lt (habs.trans hmono) hmajor
 
+/-- A reusable uniform version of the sharp alternating remainder bound.
+The degree-six kernel residual is charged once to the complete correlation
+polynomial; no entrywise decomposition or interval subdivision is used. -/
+theorem abs_intrinsicAlternatingSharpRegularError_lt_of_uniform_q_bound
+    (q : ℝ → ℝ) (hq : Continuous q) (M : ℝ) (hM : 0 < M)
+    (hqbound : ∀ t, 0 ≤ t → t ≤ 2 → |q t| ≤ M) :
+    |intrinsicAlternatingSharpRegularError q| < M / 25000 := by
+  apply abs_intrinsicAlternatingSharpRegularError_lt_of_abs_q_le
+    q hq M (M / 25000) hqbound
+  have hbase := integral_rational_sum_q03Minus23_majorant
+  rw [show (fun t : ℝ ↦
+      (intrinsicAlternatingRationalLowerMagnitude t +
+        intrinsicAlternatingRationalUpperMagnitude t) *
+          (M * (t * (2 - t)))) =
+    fun t ↦ M *
+      ((intrinsicAlternatingRationalLowerMagnitude t +
+        intrinsicAlternatingRationalUpperMagnitude t) *
+          (t * (2 - t))) by
+    funext t
+    ring,
+    intervalIntegral.integral_const_mul]
+  calc
+    M * (∫ t : ℝ in 0..2,
+        (intrinsicAlternatingRationalLowerMagnitude t +
+          intrinsicAlternatingRationalUpperMagnitude t) *
+            (t * (2 - t))) < M * (1 / 25000 : ℝ) :=
+      mul_lt_mul_of_pos_left hbase hM
+    _ = M / 25000 := by ring
+
 theorem abs_intrinsicAlternatingSharpRegularError_q03Plus23_lt :
     |intrinsicAlternatingSharpRegularError intrinsicAlternatingQ03Plus23| <
       (1 / 12000 : ℝ) := by
