@@ -235,6 +235,142 @@ theorem integral_endpointPotential_mul_centeredP3_mul_P5 :
     integral_endpointPotential_mul_sq]
   ring
 
+/-! ## The single global regular-kernel polynomial -/
+
+/-- Sixth-order regular-kernel model for the `P1`--`P5` cross. -/
+def oddP5CleanRegularPolynomial15 : ℝ :=
+  yoshidaEndpointA ^ 3 / 712800 +
+    31 * yoshidaEndpointA ^ 5 / 90810720 +
+      61 * yoshidaEndpointA ^ 6 / 1995840
+
+/-- Sixth-order regular-kernel model for the `P3`--`P5` cross. -/
+def oddP5CleanRegularPolynomial35 : ℝ :=
+  -yoshidaEndpointA / 8316 - yoshidaEndpointA ^ 3 / 772200 -
+    31 * yoshidaEndpointA ^ 5 / 544864320
+
+private def regularKernelCoefficient : ℕ → ℝ
+  | 0 => 1 / 4
+  | 1 => -1 / 48
+  | 2 => -1 / 32
+  | 3 => 7 / 11520
+  | 4 => 5 / 1536
+  | 5 => -31 / 1935360
+  | 6 => -61 / 184320
+  | _ => 0
+
+private def oddP5Correlation15Coefficient : ℕ → ℝ
+  | 0 => 0
+  | 1 => -1
+  | 2 => 7
+  | 3 => -15
+  | 4 => 105 / 8
+  | 5 => -35 / 8
+  | 6 => 0
+  | 7 => 3 / 16
+  | _ => 0
+
+private def oddP5Correlation35Coefficient : ℕ → ℝ
+  | 0 => 0
+  | 1 => -1
+  | 2 => 9 / 2
+  | 3 => -5
+  | 4 => 0
+  | 5 => 15 / 8
+  | 6 => 0
+  | 7 => -7 / 16
+  | 8 => 0
+  | 9 => 5 / 128
+  | _ => 0
+
+private theorem integral_double_polynomial_zero_two
+    (N M : ℕ) (a : ℕ → ℕ → ℝ) :
+    (∫ t : ℝ in 0..2,
+      ∑ i ∈ Finset.range N, ∑ j ∈ Finset.range M,
+        a i j * t ^ (i + j)) =
+      ∑ i ∈ Finset.range N, ∑ j ∈ Finset.range M,
+        a i j * (2 : ℝ) ^ (i + j + 1) / (i + j + 1) := by
+  rw [intervalIntegral.integral_finset_sum]
+  · apply Finset.sum_congr rfl
+    intro i hi
+    rw [intervalIntegral.integral_finset_sum]
+    · apply Finset.sum_congr rfl
+      intro j hj
+      rw [intervalIntegral.integral_const_mul, integral_pow]
+      norm_num
+      ring
+    · intro j hj
+      exact ((continuous_id.pow (i + j)).const_mul (a i j))
+        |>.intervalIntegrable 0 2
+  · intro i hi
+    apply Continuous.intervalIntegrable
+    fun_prop
+
+private theorem regularKernelPolynomial_eq_sum (t : ℝ) :
+    yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) =
+      ∑ i ∈ Finset.range 7,
+        regularKernelCoefficient i * yoshidaEndpointA ^ i * t ^ i := by
+  simp [yoshidaRegularKernelPolynomial6, regularKernelCoefficient,
+    Finset.sum_range_succ]
+  ring
+
+private theorem oddP5Correlation15_eq_sum (t : ℝ) :
+    oddP5Correlation15 t =
+      ∑ j ∈ Finset.range 8,
+        oddP5Correlation15Coefficient j * t ^ j := by
+  simp [oddP5Correlation15, oddP5Correlation15Coefficient,
+    Finset.sum_range_succ]
+  ring
+
+private theorem oddP5Correlation35_eq_sum (t : ℝ) :
+    oddP5Correlation35 t =
+      ∑ j ∈ Finset.range 10,
+        oddP5Correlation35Coefficient j * t ^ j := by
+  simp [oddP5Correlation35, oddP5Correlation35Coefficient,
+    Finset.sum_range_succ]
+  ring
+
+/-- Exact polynomial regular-kernel integral for the `P1`--`P5` cross. -/
+theorem integral_regularKernelPolynomial_mul_oddP5Correlation15 :
+    2 * (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+        oddP5Correlation15 t) = oddP5CleanRegularPolynomial15 := by
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+        oddP5Correlation15 t) =
+      fun t ↦ ∑ i ∈ Finset.range 7, ∑ j ∈ Finset.range 8,
+        (regularKernelCoefficient i * oddP5Correlation15Coefficient j *
+          yoshidaEndpointA ^ i) * t ^ (i + j) by
+    funext t
+    rw [regularKernelPolynomial_eq_sum, oddP5Correlation15_eq_sum]
+    simp [regularKernelCoefficient, oddP5Correlation15Coefficient,
+      Finset.sum_range_succ]
+    ring,
+    integral_double_polynomial_zero_two]
+  norm_num [regularKernelCoefficient, oddP5Correlation15Coefficient,
+    oddP5CleanRegularPolynomial15, Finset.sum_range_succ]
+  ring
+
+/-- Exact polynomial regular-kernel integral for the `P3`--`P5` cross. -/
+theorem integral_regularKernelPolynomial_mul_oddP5Correlation35 :
+    2 * (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+        oddP5Correlation35 t) = oddP5CleanRegularPolynomial35 := by
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+        oddP5Correlation35 t) =
+      fun t ↦ ∑ i ∈ Finset.range 7, ∑ j ∈ Finset.range 10,
+        (regularKernelCoefficient i * oddP5Correlation35Coefficient j *
+          yoshidaEndpointA ^ i) * t ^ (i + j) by
+    funext t
+    rw [regularKernelPolynomial_eq_sum, oddP5Correlation35_eq_sum]
+    simp [regularKernelCoefficient, oddP5Correlation35Coefficient,
+      Finset.sum_range_succ]
+    ring,
+    integral_double_polynomial_zero_two]
+  norm_num [regularKernelCoefficient, oddP5Correlation35Coefficient,
+    oddP5CleanRegularPolynomial35, Finset.sum_range_succ]
+  ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
