@@ -1,21 +1,33 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseLegendreFourFiveRankStructural
 
 set_option autoImplicit false
 
-open MeasureTheory Real Set
+open Complex MeasureTheory Real Set
 
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
 
 noncomputable section
 
 open CenteredOddOneThreeEnergy
+open CenteredEndpointCorrelation
 open YoshidaEndpointEvenLowPotential
+open YoshidaEndpointEvenConstantCross
+open YoshidaEndpointEvenFullPolarization
+open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
+open YoshidaEndpointEvenTailRepresenter
+open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialExactLowMode
 open YoshidaEndpointPotentialIntegrable
+open YoshidaEndpointRegularCorrelation
+open YoshidaRegularKernelBound
+open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoEndpointClean
+open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
@@ -29,6 +41,107 @@ moments.  Its logarithmic terms cancel by Legendre orthogonality.  The
 remaining regular and hyperbolic crosses are treated by global analytic
 envelopes below; no interval subdivision or finite certificate is used.
 -/
+
+private theorem measurable_yoshidaRegularKernel_local :
+    Measurable yoshidaRegularKernel := by
+  unfold yoshidaRegularKernel
+  apply Measurable.ite
+  · simpa only [Set.setOf_eq_eq_singleton] using
+      measurableSet_singleton (0 : ℝ)
+  · exact measurable_const
+  · exact ((Real.measurable_exp.comp (measurable_id.div_const 2)).div
+      (measurable_const.mul Real.measurable_sinh)).sub
+        (measurable_const.div (measurable_const.mul measurable_id))
+
+/-- The regular kernel paired with any continuous correlation is integrable
+on the complete overlap interval. -/
+private theorem intervalIntegrable_regularKernel_mul
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    IntervalIntegrable
+      (fun t ↦ yoshidaRegularKernel (yoshidaEndpointA * t) * C t)
+      volume 0 2 := by
+  let f : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (yoshidaEndpointA * t) * C t
+  let g : ℝ → ℝ := fun t ↦ (1 / 4 : ℝ) * |C t|
+  have hgIcc : IntegrableOn g (Icc (0 : ℝ) 2) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact (continuous_const.mul hC.abs).continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (0 : ℝ) 2)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (0 : ℝ) 2)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact (measurable_yoshidaRegularKernel_local.comp
+      (measurable_const.mul measurable_id)).mul hC.measurable
+  have hfg : ∀ᵐ t : ℝ ∂(volume.restrict (Ioc (0 : ℝ) 2)),
+      ‖f t‖ ≤ g t := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have htIcc : t ∈ Icc (0 : ℝ) 2 := ⟨ht.1.le, ht.2⟩
+    have harg0 : 0 ≤ yoshidaEndpointA * t :=
+      mul_nonneg yoshidaEndpointA_pos.le htIcc.1
+    have harg2 : yoshidaEndpointA * t ≤ Real.log 2 := by
+      unfold yoshidaEndpointA
+      nlinarith [mul_le_mul_of_nonneg_left htIcc.2
+        (by positivity : 0 ≤ Real.log 2 / 2)]
+    have hK := yoshidaRegularKernel_mem_Icc harg0 harg2
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hK.1]
+    exact mul_le_mul_of_nonneg_right hK.2 (abs_nonneg (C t))
+  constructor
+  · exact Integrable.mono' hg hfmeas hfg
+  · simp
+
+/-- Polarizing the regular quadratic turns its symmetric cross exactly into
+the symmetric overlap correlation. -/
+theorem re_yoshidaEndpointRegularRealBilinear_add_eq_correlation
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (yoshidaEndpointRegularRealBilinear u v +
+        yoshidaEndpointRegularRealBilinear v u).re =
+      4 * ∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (yoshidaEndpointA * t) *
+          factorTwoCenteredCorrelationBilinear u v t := by
+  have hCu : Continuous (centeredEndpointCorrelation u) :=
+    continuous_centeredEndpointCorrelation_of_continuous u hu
+  have hCv : Continuous (centeredEndpointCorrelation v) :=
+    continuous_centeredEndpointCorrelation_of_continuous v hv
+  have hB : Continuous (factorTwoCenteredCorrelationBilinear u v) := by
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation u v hu hv).add
+      (continuous_factorTwoCenteredCrossCorrelation v u hv hu)).div_const 2
+  have hIu := intervalIntegrable_regularKernel_mul
+    (centeredEndpointCorrelation u) hCu
+  have hIv := intervalIntegrable_regularKernel_mul
+    (centeredEndpointCorrelation v) hCv
+  have hIb := intervalIntegrable_regularKernel_mul
+    (factorTwoCenteredCorrelationBilinear u v) hB
+  have hsum := re_yoshidaEndpointRegularQuadratic_eq_correlation
+    (u + v) (hu.add hv)
+  have huq := re_yoshidaEndpointRegularQuadratic_eq_correlation u hu
+  have hvq := re_yoshidaEndpointRegularQuadratic_eq_correlation v hv
+  have hpolar := congrArg Complex.re
+    (yoshidaEndpointRegularQuadratic_add_ofReal u v hu hv)
+  simp only [add_re] at hpolar
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (yoshidaEndpointA * t) *
+        centeredEndpointCorrelation (u + v) t) =
+      fun t ↦
+        yoshidaRegularKernel (yoshidaEndpointA * t) *
+            centeredEndpointCorrelation u t +
+          2 * (yoshidaRegularKernel (yoshidaEndpointA * t) *
+            factorTwoCenteredCorrelationBilinear u v t) +
+          yoshidaRegularKernel (yoshidaEndpointA * t) *
+            centeredEndpointCorrelation v t by
+    funext t
+    rw [centeredEndpointCorrelation_add u v hu hv t]
+    ring,
+    intervalIntegral.integral_add (hIu.add (hIb.const_mul 2)) hIv,
+    intervalIntegral.integral_add hIu (hIb.const_mul 2),
+    intervalIntegral.integral_const_mul] at hsum
+  simp only [Pi.add_apply] at hsum
+  rw [hsum, huq, hvq] at hpolar
+  simp only [add_re]
+  linarith
 
 /-- Exact potential part of the clean `P1`--`P5` cross. -/
 theorem integral_endpointPotential_mul_centeredP1_mul_P5 :
