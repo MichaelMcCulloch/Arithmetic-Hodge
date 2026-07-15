@@ -680,7 +680,7 @@ private theorem p4PivotCoefficientPolynomial_expansion :
   simp only [map_add, map_sub, map_mul, map_pow, map_ofNat]
   ring
 
-private theorem pivotCoeff_one_eq_exact_mixed :
+theorem pivotCoeff_one_eq_exact_mixed :
     pivotCoeff 1 = mixedDeterminantOne
       (factorTwoStructuralPhaseLow00 1)
       (factorTwoStructuralPhaseLow02 1)
@@ -698,7 +698,7 @@ private theorem pivotCoeff_one_eq_exact_mixed :
   rw [p4PivotCoefficientPolynomial_expansion]
   simp
 
-private theorem pivotCoeff_two_eq_exact_mixed :
+theorem pivotCoeff_two_eq_exact_mixed :
     pivotCoeff 2 = mixedDeterminantOne
       (factorTwoStructuralPhaseLow00 (-1))
       (factorTwoStructuralPhaseLow02 (-1))
