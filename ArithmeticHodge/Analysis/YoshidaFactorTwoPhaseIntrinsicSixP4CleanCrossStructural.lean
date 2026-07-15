@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedRemainderEnvelopeMoments
+import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedRemainderEnvelopeCoefficients
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
 
 set_option autoImplicit false
@@ -15,6 +16,7 @@ open YoshidaEndpointEvenConstantCross
 open YoshidaEndpointEvenProjectedBaseIntegrable
 open YoshidaEndpointEvenProjectedDualIdentity
 open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
+open YoshidaEndpointEvenProjectedRemainderEnvelopeCoefficients
 open YoshidaEndpointEvenProjectedRemainderEnvelopeMoments
 open YoshidaEndpointEvenProjectedRemainderEnvelopePolynomials
 open YoshidaEndpointEvenProjectedRemainderMoments
@@ -609,6 +611,273 @@ theorem integral_cleanP4RemainderPolynomial2_mul_P4 :
   rw [integral_sq_mul_P4]
   unfold factorTwoIntrinsicP4CleanRemainderModel24
   ring
+
+/-! ## Structural model and transfer bounds -/
+
+private theorem abs_factorTwoCenteredP4_le_one
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    |factorTwoCenteredP4 x| ≤ 1 := by
+  have hprod : 0 ≤ (x + 1) * (1 - x) :=
+    mul_nonneg (by linarith [hx.1]) (by linarith [hx.2])
+  have hsq : x ^ 2 ≤ 1 := by nlinarith
+  have hupper : 0 ≤ (7 * x ^ 2 + 1) * (1 - x ^ 2) :=
+    mul_nonneg (by positivity) (by linarith)
+  unfold factorTwoCenteredP4
+  rw [abs_le]
+  constructor
+  · nlinarith [sq_nonneg (7 * x ^ 2 - 3)]
+  · nlinarith
+
+/-- The constant-basis model pairing is exactly the quartic and sextic
+coefficient combination selected by orthogonality against `P₄`. -/
+theorem factorTwoIntrinsicP4CleanRemainderModel04_eq_coefficients :
+    factorTwoIntrinsicP4CleanRemainderModel04 =
+      (16 / 315 : ℝ) * projectedEnvelopeD02 +
+        (16 / 231 : ℝ) * projectedEnvelopeD03 := by
+  unfold factorTwoIntrinsicP4CleanRemainderModel04 projectedEnvelopeD02
+    projectedEnvelopeD03
+  ring
+
+/-- The degree-two-basis model pairing is the analogous quartic--octic
+coefficient combination. -/
+theorem factorTwoIntrinsicP4CleanRemainderModel24_eq_coefficients :
+    factorTwoIntrinsicP4CleanRemainderModel24 =
+      (16 / 315 : ℝ) * projectedEnvelopeD22 +
+        (16 / 231 : ℝ) * projectedEnvelopeD23 +
+        (32 / 429 : ℝ) * projectedEnvelopeD24 := by
+  unfold factorTwoIntrinsicP4CleanRemainderModel24 projectedEnvelopeD22
+    projectedEnvelopeD23 projectedEnvelopeD24
+  ring
+
+/-- Rational structural box for the constant-basis model pairing. -/
+theorem factorTwoIntrinsicP4CleanRemainderModel04_bounds :
+    (0 : ℝ) < factorTwoIntrinsicP4CleanRemainderModel04 ∧
+      factorTwoIntrinsicP4CleanRemainderModel04 < (1 / 1000000 : ℝ) := by
+  rw [factorTwoIntrinsicP4CleanRemainderModel04_eq_coefficients]
+  rcases projectedEnvelopeD02_bounds with ⟨h02l, h02u⟩
+  rcases projectedEnvelopeD03_bounds with ⟨h03l, h03u⟩
+  constructor <;> norm_num at h02l h02u h03l h03u ⊢ <;> linarith
+
+/-- Rational structural box for the degree-two-basis model pairing. -/
+theorem factorTwoIntrinsicP4CleanRemainderModel24_bounds :
+    (31 / 1000000 : ℝ) < factorTwoIntrinsicP4CleanRemainderModel24 ∧
+      factorTwoIntrinsicP4CleanRemainderModel24 < (33 / 1000000 : ℝ) := by
+  rw [factorTwoIntrinsicP4CleanRemainderModel24_eq_coefficients]
+  rcases projectedEnvelopeD22_bounds with ⟨h22l, h22u⟩
+  rcases projectedEnvelopeD23_bounds with ⟨h23l, h23u⟩
+  rcases projectedEnvelopeD24_bounds with ⟨h24l, h24u⟩
+  constructor <;>
+    norm_num at h22l h22u h23l h23u h24l h24u ⊢ <;> linarith
+
+/-- The global constant-basis remainder pairing differs from its exact
+degree-six model by less than `1/350000`. -/
+theorem factorTwoIntrinsicP4CleanRemainder04_sub_model_abs_lt :
+    |(∫ x : ℝ in -1..1,
+        fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x) -
+        factorTwoIntrinsicP4CleanRemainderModel04| <
+      (1 / 350000 : ℝ) := by
+  have htrue : IntervalIntegrable
+      (fun x ↦ fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x)
+      volume (-1) 1 :=
+    intervalIntegrable_shifted0.mul_continuousOn
+      continuous_factorTwoCenteredP4.continuousOn
+  have hmodel : IntervalIntegrable
+      (fun x ↦ cleanP4RemainderPolynomial0 x * factorTwoCenteredP4 x)
+      volume (-1) 1 :=
+    (continuous_cleanP4RemainderPolynomial0.mul
+      continuous_factorTwoCenteredP4).intervalIntegrable (-1) 1
+  rw [← integral_cleanP4RemainderPolynomial0_mul_P4,
+    ← intervalIntegral.integral_sub htrue hmodel, ← Real.norm_eq_abs]
+  calc
+    ‖∫ x : ℝ in -1..1,
+        fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x -
+          cleanP4RemainderPolynomial0 x * factorTwoCenteredP4 x‖ ≤
+        (1 / 720000 : ℝ) * |(1 : ℝ) - (-1)| := by
+      apply intervalIntegral.norm_integral_le_of_norm_le_const
+      intro x hx
+      rw [uIoc_of_le (by norm_num)] at hx
+      have hxIcc : x ∈ Icc (-1 : ℝ) 1 := ⟨hx.1.le, hx.2⟩
+      have herror :=
+        abs_fixedProjectedShiftedRemainder0_sub_polynomial6_lt hxIcc
+      rw [shiftedPolynomial0_eq hxIcc] at herror
+      have hP4 := abs_factorTwoCenteredP4_le_one hxIcc
+      rw [show fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x -
+          cleanP4RemainderPolynomial0 x * factorTwoCenteredP4 x =
+        (fixedProjectedShiftedRemainder0 x -
+          cleanP4RemainderPolynomial0 x) * factorTwoCenteredP4 x by ring,
+        Real.norm_eq_abs, abs_mul]
+      calc
+        |fixedProjectedShiftedRemainder0 x -
+            cleanP4RemainderPolynomial0 x| * |factorTwoCenteredP4 x| ≤
+            (1 / 720000 : ℝ) * 1 :=
+          mul_le_mul herror.le hP4 (abs_nonneg _) (by norm_num)
+        _ = (1 / 720000 : ℝ) := by norm_num
+    _ < (1 / 350000 : ℝ) := by norm_num
+
+/-- The global degree-two-basis remainder pairing differs from its exact
+model by less than `1/850000`. -/
+theorem factorTwoIntrinsicP4CleanRemainder24_sub_model_abs_lt :
+    |(∫ x : ℝ in -1..1,
+        fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x) -
+        factorTwoIntrinsicP4CleanRemainderModel24| <
+      (1 / 850000 : ℝ) := by
+  have htrue : IntervalIntegrable
+      (fun x ↦ fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x)
+      volume (-1) 1 :=
+    intervalIntegrable_shifted2.mul_continuousOn
+      continuous_factorTwoCenteredP4.continuousOn
+  have hmodel : IntervalIntegrable
+      (fun x ↦ cleanP4RemainderPolynomial2 x * factorTwoCenteredP4 x)
+      volume (-1) 1 :=
+    (continuous_cleanP4RemainderPolynomial2.mul
+      continuous_factorTwoCenteredP4).intervalIntegrable (-1) 1
+  rw [← integral_cleanP4RemainderPolynomial2_mul_P4,
+    ← intervalIntegral.integral_sub htrue hmodel, ← Real.norm_eq_abs]
+  calc
+    ‖∫ x : ℝ in -1..1,
+        fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x -
+          cleanP4RemainderPolynomial2 x * factorTwoCenteredP4 x‖ ≤
+        (1 / 1800000 : ℝ) * |(1 : ℝ) - (-1)| := by
+      apply intervalIntegral.norm_integral_le_of_norm_le_const
+      intro x hx
+      rw [uIoc_of_le (by norm_num)] at hx
+      have hxIcc : x ∈ Icc (-1 : ℝ) 1 := ⟨hx.1.le, hx.2⟩
+      have herror :=
+        abs_fixedProjectedShiftedRemainder2_sub_polynomial6_lt hxIcc
+      rw [shiftedPolynomial2_eq hxIcc] at herror
+      have hP4 := abs_factorTwoCenteredP4_le_one hxIcc
+      rw [show fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x -
+          cleanP4RemainderPolynomial2 x * factorTwoCenteredP4 x =
+        (fixedProjectedShiftedRemainder2 x -
+          cleanP4RemainderPolynomial2 x) * factorTwoCenteredP4 x by ring,
+        Real.norm_eq_abs, abs_mul]
+      calc
+        |fixedProjectedShiftedRemainder2 x -
+            cleanP4RemainderPolynomial2 x| * |factorTwoCenteredP4 x| ≤
+            (1 / 1800000 : ℝ) * 1 :=
+          mul_le_mul herror.le hP4 (abs_nonneg _) (by norm_num)
+        _ = (1 / 1800000 : ℝ) := by norm_num
+    _ < (1 / 850000 : ℝ) := by norm_num
+
+/-- Absolute structural bound for the constant-basis smooth correction. -/
+theorem factorTwoIntrinsicP4CleanRemainder04_abs_lt :
+    |(∫ x : ℝ in -1..1,
+      fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x)| <
+        (1 / 250000 : ℝ) := by
+  have hmodel := factorTwoIntrinsicP4CleanRemainderModel04_bounds
+  have htransfer := factorTwoIntrinsicP4CleanRemainder04_sub_model_abs_lt
+  calc
+    |(∫ x : ℝ in -1..1,
+        fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x)| =
+        |((∫ x : ℝ in -1..1,
+            fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x) -
+            factorTwoIntrinsicP4CleanRemainderModel04) +
+          factorTwoIntrinsicP4CleanRemainderModel04| := by
+      congr 1
+      ring
+    _ ≤ |(∫ x : ℝ in -1..1,
+          fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x) -
+          factorTwoIntrinsicP4CleanRemainderModel04| +
+        |factorTwoIntrinsicP4CleanRemainderModel04| := abs_add_le _ _
+    _ < (1 / 350000 : ℝ) + 1 / 1000000 := by
+      rw [abs_of_pos hmodel.1]
+      exact add_lt_add htransfer hmodel.2
+    _ < (1 / 250000 : ℝ) := by norm_num
+
+/-- Absolute structural bound for the degree-two-basis smooth correction. -/
+theorem factorTwoIntrinsicP4CleanRemainder24_abs_lt :
+    |(∫ x : ℝ in -1..1,
+      fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x)| <
+        (7 / 200000 : ℝ) := by
+  have hmodel := factorTwoIntrinsicP4CleanRemainderModel24_bounds
+  have htransfer := factorTwoIntrinsicP4CleanRemainder24_sub_model_abs_lt
+  have hmodelPos : 0 < factorTwoIntrinsicP4CleanRemainderModel24 := by
+    linarith [hmodel.1]
+  calc
+    |(∫ x : ℝ in -1..1,
+        fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x)| =
+        |((∫ x : ℝ in -1..1,
+            fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x) -
+            factorTwoIntrinsicP4CleanRemainderModel24) +
+          factorTwoIntrinsicP4CleanRemainderModel24| := by
+      congr 1
+      ring
+    _ ≤ |(∫ x : ℝ in -1..1,
+          fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x) -
+          factorTwoIntrinsicP4CleanRemainderModel24| +
+        |factorTwoIntrinsicP4CleanRemainderModel24| := abs_add_le _ _
+    _ < (1 / 850000 : ℝ) + 33 / 1000000 := by
+      rw [abs_of_pos hmodelPos]
+      exact add_lt_add htransfer hmodel.2
+    _ < (7 / 200000 : ℝ) := by norm_num
+
+/-- The constant clean cross differs from its exact potential contribution
+by less than `1/250000`. -/
+theorem factorTwoIntrinsicP4CleanCross04_sub_one_tenth_abs_lt :
+    |yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4 -
+        (1 / 10 : ℝ)| < (1 / 250000 : ℝ) := by
+  rw [factorTwoIntrinsicP4CleanCross04_eq_potential_add_remainder]
+  simpa only [add_sub_cancel_left] using
+    factorTwoIntrinsicP4CleanRemainder04_abs_lt
+
+/-- The degree-two clean cross differs from its exact potential contribution
+by less than `7/200000`. -/
+theorem factorTwoIntrinsicP4CleanCross24_sub_one_seventh_abs_lt :
+    |yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4 -
+        (1 / 7 : ℝ)| < (7 / 200000 : ℝ) := by
+  rw [factorTwoIntrinsicP4CleanCross24_eq_potential_add_remainder]
+  simpa only [add_sub_cancel_left] using
+    factorTwoIntrinsicP4CleanRemainder24_abs_lt
+
+/-- The clean weak-sum coordinate differs from its exact potential value
+`17/70` by less than `1/25000`. -/
+theorem factorTwoIntrinsicP4CleanCross_sum_sub_seventeen_seventieths_abs_lt :
+    |(yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4 +
+          yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4) -
+        (17 / 70 : ℝ)| < (1 / 25000 : ℝ) := by
+  have h0 := factorTwoIntrinsicP4CleanCross04_sub_one_tenth_abs_lt
+  have h2 := factorTwoIntrinsicP4CleanCross24_sub_one_seventh_abs_lt
+  calc
+    |(yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4 +
+          yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4) -
+        (17 / 70 : ℝ)| =
+        |(yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4 -
+            (1 / 10 : ℝ)) +
+          (yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4 -
+            (1 / 7 : ℝ))| := by
+      congr 1
+      ring
+    _ ≤ |yoshidaEndpointEvenCleanBilinear centeredEvenP0
+          factorTwoCenteredP4 - (1 / 10 : ℝ)| +
+        |yoshidaEndpointEvenCleanBilinear centeredEvenP2
+          factorTwoCenteredP4 - (1 / 7 : ℝ)| := abs_add_le _ _
+    _ < (1 / 250000 : ℝ) + 7 / 200000 := add_lt_add h0 h2
+    _ < (1 / 25000 : ℝ) := by norm_num
+
+/-- The clean weak-difference coordinate differs from its exact potential
+value `3/70` by less than `1/25000`. -/
+theorem factorTwoIntrinsicP4CleanCross_difference_sub_three_seventieths_abs_lt :
+    |(yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4 -
+          yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4) -
+        (3 / 70 : ℝ)| < (1 / 25000 : ℝ) := by
+  have h0 := factorTwoIntrinsicP4CleanCross04_sub_one_tenth_abs_lt
+  have h2 := factorTwoIntrinsicP4CleanCross24_sub_one_seventh_abs_lt
+  calc
+    |(yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4 -
+          yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4) -
+        (3 / 70 : ℝ)| =
+        |(yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4 -
+            (1 / 7 : ℝ)) -
+          (yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4 -
+            (1 / 10 : ℝ))| := by
+      congr 1
+      ring
+    _ ≤ |yoshidaEndpointEvenCleanBilinear centeredEvenP2
+          factorTwoCenteredP4 - (1 / 7 : ℝ)| +
+        |yoshidaEndpointEvenCleanBilinear centeredEvenP0
+          factorTwoCenteredP4 - (1 / 10 : ℝ)| := abs_sub _ _
+    _ < (7 / 200000 : ℝ) + 1 / 250000 := add_lt_add h2 h0
+    _ < (1 / 25000 : ℝ) := by norm_num
 
 end
 
