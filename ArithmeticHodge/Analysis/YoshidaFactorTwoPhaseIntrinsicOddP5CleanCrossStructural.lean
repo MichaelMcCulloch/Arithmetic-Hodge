@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationCrossStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseLegendreFourFiveRankStructural
 
@@ -30,6 +31,7 @@ open YoshidaFactorTwoEndpointClean
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 
@@ -370,6 +372,125 @@ theorem integral_regularKernelPolynomial_mul_oddP5Correlation35 :
   norm_num [regularKernelCoefficient, oddP5Correlation35Coefficient,
     oddP5CleanRegularPolynomial35, Finset.sum_range_succ]
   ring
+
+/-! ## Uniform regular-kernel errors -/
+
+/-- Global sixth-order envelope error for the `P1`--`P5` correlation. -/
+def oddP5CleanRegularEnvelopeError15 : ℝ :=
+  oddCleanRegularEnvelopeError oddP5Correlation15
+
+/-- Global sixth-order envelope error for the `P3`--`P5` correlation. -/
+def oddP5CleanRegularEnvelopeError35 : ℝ :=
+  oddCleanRegularEnvelopeError oddP5Correlation35
+
+theorem abs_oddP5CleanRegularEnvelopeError15_lt :
+    |oddP5CleanRegularEnvelopeError15| < (1 / 3000000 : ℝ) := by
+  have herr := abs_oddCleanRegularEnvelopeError_le oddP5Correlation15
+    (by unfold oddP5Correlation15; fun_prop)
+  have hmass := integral_abs_oddP5Correlation15_lt
+  unfold oddP5CleanRegularEnvelopeError15
+  nlinarith
+
+theorem abs_oddP5CleanRegularEnvelopeError35_lt :
+    |oddP5CleanRegularEnvelopeError35| < (1 / 2800000 : ℝ) := by
+  have herr := abs_oddCleanRegularEnvelopeError_le oddP5Correlation35
+    (by unfold oddP5Correlation35; fun_prop)
+  have hmass := integral_abs_oddP5Correlation35_lt
+  unfold oddP5CleanRegularEnvelopeError35
+  nlinarith
+
+/-- The actual regular `P1`--`P5` integral is its exact polynomial model
+plus the one global envelope error. -/
+theorem integral_regularKernel_mul_oddP5Correlation15_eq :
+    2 * (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (yoshidaEndpointA * t) * oddP5Correlation15 t) =
+      oddP5CleanRegularPolynomial15 + oddP5CleanRegularEnvelopeError15 := by
+  have hactual := intervalIntegrable_regularKernel_mul oddP5Correlation15
+    (by unfold oddP5Correlation15; fun_prop)
+  have hpoly : IntervalIntegrable
+      (fun t : ℝ ↦
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+          oddP5Correlation15 t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    unfold yoshidaRegularKernelPolynomial6 oddP5Correlation15
+    fun_prop
+  unfold oddP5CleanRegularEnvelopeError15 oddCleanRegularEnvelopeError
+  rw [show (fun t : ℝ ↦
+      (yoshidaRegularKernel (yoshidaEndpointA * t) -
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) *
+          oddP5Correlation15 t) =
+      fun t ↦
+        yoshidaRegularKernel (yoshidaEndpointA * t) * oddP5Correlation15 t -
+          yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+            oddP5Correlation15 t by
+    funext t
+    ring,
+    intervalIntegral.integral_sub hactual hpoly]
+  have hmodel := integral_regularKernelPolynomial_mul_oddP5Correlation15
+  linarith
+
+/-- The actual regular `P3`--`P5` integral has the analogous decomposition. -/
+theorem integral_regularKernel_mul_oddP5Correlation35_eq :
+    2 * (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (yoshidaEndpointA * t) * oddP5Correlation35 t) =
+      oddP5CleanRegularPolynomial35 + oddP5CleanRegularEnvelopeError35 := by
+  have hactual := intervalIntegrable_regularKernel_mul oddP5Correlation35
+    (by unfold oddP5Correlation35; fun_prop)
+  have hpoly : IntervalIntegrable
+      (fun t : ℝ ↦
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+          oddP5Correlation35 t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    unfold yoshidaRegularKernelPolynomial6 oddP5Correlation35
+    fun_prop
+  unfold oddP5CleanRegularEnvelopeError35 oddCleanRegularEnvelopeError
+  rw [show (fun t : ℝ ↦
+      (yoshidaRegularKernel (yoshidaEndpointA * t) -
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) *
+          oddP5Correlation35 t) =
+      fun t ↦
+        yoshidaRegularKernel (yoshidaEndpointA * t) * oddP5Correlation35 t -
+          yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+            oddP5Correlation35 t by
+    funext t
+    ring,
+    intervalIntegral.integral_sub hactual hpoly]
+  have hmodel := integral_regularKernelPolynomial_mul_oddP5Correlation35
+  linarith
+
+theorem re_regularBilinear_p1_p5_eq :
+    (yoshidaEndpointRegularRealBilinear centeredP1 factorTwoCenteredP5 +
+        yoshidaEndpointRegularRealBilinear factorTwoCenteredP5 centeredP1).re =
+      2 * (oddP5CleanRegularPolynomial15 +
+        oddP5CleanRegularEnvelopeError15) := by
+  have hpolar := re_yoshidaEndpointRegularRealBilinear_add_eq_correlation
+    centeredP1 factorTwoCenteredP5
+    (by unfold centeredP1; fun_prop) continuous_factorTwoCenteredP5
+  have hcorr :
+      factorTwoCenteredCorrelationBilinear centeredP1 factorTwoCenteredP5 =
+        oddP5Correlation15 := by
+    funext t
+    exact factorTwoCenteredCorrelationBilinear_p1_p5 t
+  rw [hcorr] at hpolar
+  have hmodel := integral_regularKernel_mul_oddP5Correlation15_eq
+  linarith
+
+theorem re_regularBilinear_p3_p5_eq :
+    (yoshidaEndpointRegularRealBilinear centeredP3 factorTwoCenteredP5 +
+        yoshidaEndpointRegularRealBilinear factorTwoCenteredP5 centeredP3).re =
+      2 * (oddP5CleanRegularPolynomial35 +
+        oddP5CleanRegularEnvelopeError35) := by
+  have hpolar := re_yoshidaEndpointRegularRealBilinear_add_eq_correlation
+    centeredP3 factorTwoCenteredP5
+    (by unfold centeredP3; fun_prop) continuous_factorTwoCenteredP5
+  have hcorr :
+      factorTwoCenteredCorrelationBilinear centeredP3 factorTwoCenteredP5 =
+        oddP5Correlation35 := by
+    funext t
+    exact factorTwoCenteredCorrelationBilinear_p3_p5 t
+  rw [hcorr] at hpolar
+  have hmodel := integral_regularKernel_mul_oddP5Correlation35_eq
+  linarith
 
 end
 
