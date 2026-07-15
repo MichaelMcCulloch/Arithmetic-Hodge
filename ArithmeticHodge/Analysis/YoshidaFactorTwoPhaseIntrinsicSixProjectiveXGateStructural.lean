@@ -403,6 +403,99 @@ private def rawAlternatingDeterminant : ℝ :=
       (lowAlternating0 1 * lowAlternating2 2 -
         lowAlternating2 1 * lowAlternating0 2)
 
+/-! The four component definitions below expose the exact algebraic seams of
+the raw six-mode determinant.  Keeping these names public lets downstream
+coefficient reconstructions prove the four component identities separately,
+instead of asking the elaborator to reduce the complete determinant at once.
+-/
+
+def factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial : ℝ[X] :=
+  p4PivotPolynomial
+
+def factorTwoIntrinsicSixProjectiveRawOddDeterminantPolynomial : ℝ[X] :=
+  rawOddDeterminantPolynomial
+
+def factorTwoIntrinsicSixProjectiveRawMixedAdjugateOnePolynomial : ℝ[X] :=
+  rawMixedAdjugateOnePolynomial
+
+def factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial
+    (i j : Fin 3) : ℝ[X] :=
+  oddEntryPolynomial i j
+
+def factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial
+    (i j : Fin 3) : ℝ[X] :=
+  rawAdjugateCofactorPolynomial i j
+
+def factorTwoIntrinsicSixProjectiveRawCofactor0 : Fin 3 → ℝ
+  | 0 => factorTwoIntrinsicAlternating23 * factorTwoIntrinsicSixAlternating45 -
+      factorTwoIntrinsicFourP45Cross43 * factorTwoIntrinsicFourP45Cross25
+  | 1 => factorTwoIntrinsicFourP45Cross25 * factorTwoIntrinsicFourP45Cross41 -
+      factorTwoIntrinsicSixAlternating45 * factorTwoIntrinsicAlternating21
+  | 2 => factorTwoIntrinsicAlternating21 * factorTwoIntrinsicFourP45Cross43 -
+      factorTwoIntrinsicFourP45Cross41 * factorTwoIntrinsicAlternating23
+
+def factorTwoIntrinsicSixProjectiveRawCofactor2 : Fin 3 → ℝ
+  | 0 => factorTwoIntrinsicFourP45Cross43 * factorTwoIntrinsicFourP45Cross05 -
+      factorTwoIntrinsicAlternating03 * factorTwoIntrinsicSixAlternating45
+  | 1 => factorTwoIntrinsicSixAlternating45 * factorTwoIntrinsicAlternating01 -
+      factorTwoIntrinsicFourP45Cross05 * factorTwoIntrinsicFourP45Cross41
+  | 2 => factorTwoIntrinsicFourP45Cross41 * factorTwoIntrinsicAlternating03 -
+      factorTwoIntrinsicAlternating01 * factorTwoIntrinsicFourP45Cross43
+
+def factorTwoIntrinsicSixProjectiveRawCofactor4 : Fin 3 → ℝ
+  | 0 => factorTwoIntrinsicAlternating03 * factorTwoIntrinsicFourP45Cross25 -
+      factorTwoIntrinsicAlternating23 * factorTwoIntrinsicFourP45Cross05
+  | 1 => factorTwoIntrinsicFourP45Cross05 * factorTwoIntrinsicAlternating21 -
+      factorTwoIntrinsicFourP45Cross25 * factorTwoIntrinsicAlternating01
+  | 2 => factorTwoIntrinsicAlternating01 * factorTwoIntrinsicAlternating23 -
+      factorTwoIntrinsicAlternating21 * factorTwoIntrinsicAlternating03
+
+def factorTwoIntrinsicSixProjectiveRawExpandedAdjugateCofactorPolynomial
+    (i j : Fin 3) : ℝ[X] :=
+  rawEvenEnergyPolynomial
+    (C (factorTwoIntrinsicSixProjectiveRawCofactor0 i))
+    (C (factorTwoIntrinsicSixProjectiveRawCofactor2 i))
+    (C (factorTwoIntrinsicSixProjectiveRawCofactor4 i))
+    (C (factorTwoIntrinsicSixProjectiveRawCofactor0 j))
+    (C (factorTwoIntrinsicSixProjectiveRawCofactor2 j))
+    (C (factorTwoIntrinsicSixProjectiveRawCofactor4 j))
+
+/-- Polynomial cross products and scalar cross products give the same
+cofactor energy.  This is the three-dimensional Gram identity at the level
+needed by the public coefficient reconstruction. -/
+theorem factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial_eq_expanded
+    (i j : Fin 3) :
+    factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial i j =
+      factorTwoIntrinsicSixProjectiveRawExpandedAdjugateCofactorPolynomial i j := by
+  fin_cases i <;> fin_cases j <;>
+    unfold factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial
+      factorTwoIntrinsicSixProjectiveRawExpandedAdjugateCofactorPolynomial
+      factorTwoIntrinsicSixProjectiveRawCofactor0
+      factorTwoIntrinsicSixProjectiveRawCofactor2
+      factorTwoIntrinsicSixProjectiveRawCofactor4
+      rawAdjugateCofactorPolynomial rawEvenEnergyPolynomial
+      rawCofactorVector0 rawCofactorVector2 rawCofactorVector4
+      rawCross0 rawCross2 rawCross4 rawAlternating0 rawAlternating2
+      rawAlternating4 lowAlternating0 lowAlternating2 p4Alternating <;>
+    simp only [map_sub, map_mul]
+
+def factorTwoIntrinsicSixProjectiveRawMixedAdjugateTwoPolynomial : ℝ[X] :=
+  factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 0 0 *
+      factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 0 0 +
+    2 * factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 0 1 *
+      factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 0 1 +
+    2 * factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 0 2 *
+      factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 0 2 +
+    factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 1 1 *
+      factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 1 1 +
+    2 * factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 1 2 *
+      factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 1 2 +
+    factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 2 2 *
+      factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 2 2
+
+def factorTwoIntrinsicSixProjectiveRawAlternatingDeterminant : ℝ :=
+  rawAlternatingDeterminant
+
 /-- Raw `P₀/P₂/P₄/P₁/P₃` leading determinant.  Its last
 term is the cross-product Gram square rather than a quotient by the even
 determinant. -/
@@ -418,10 +511,11 @@ def factorTwoIntrinsicSixProjectiveRawMinorFivePolynomial : ℝ[X] :=
 /-- Raw determinant of the complete six-mode projective matrix.  The cubic
 alternating term is a literal determinant square. -/
 def factorTwoIntrinsicSixProjectiveRawDeterminantPolynomial : ℝ[X] :=
-  p4PivotPolynomial * rawOddDeterminantPolynomial -
-    X * rawMixedAdjugateOnePolynomial +
-    X ^ 2 * rawMixedAdjugateTwoPolynomial -
-    X ^ 3 * C (rawAlternatingDeterminant ^ 2)
+  factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial *
+      factorTwoIntrinsicSixProjectiveRawOddDeterminantPolynomial -
+    X * factorTwoIntrinsicSixProjectiveRawMixedAdjugateOnePolynomial +
+    X ^ 2 * factorTwoIntrinsicSixProjectiveRawMixedAdjugateTwoPolynomial -
+    X ^ 3 * C (factorTwoIntrinsicSixProjectiveRawAlternatingDeterminant ^ 2)
 
 private theorem eval_affineEndpointPolynomial
     (plus minus x : ℝ) :
