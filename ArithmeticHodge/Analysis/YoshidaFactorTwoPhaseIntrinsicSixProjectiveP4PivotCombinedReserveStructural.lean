@@ -64,7 +64,7 @@ private def minusLower02 : ℝ := 54506 / 100000
 private def minusLower22 : ℝ := 51518 / 100000
 
 private def plusP4Lower : ℝ := 3439 / 25000
-private def minusP4Lower : ℝ := 49065 / 100000
+def minusP4Lower : ℝ := 49065 / 100000
 
 /-! ## Sharpened rational lower Grams -/
 
@@ -306,7 +306,7 @@ private theorem abs_poleFreeAnalyticError_correlation44_le :
   rw [integral_factorTwoCenteredP4_sq] at hcorr
   nlinarith
 
-private theorem minusP4Lower_lt_exact :
+theorem minusP4Lower_lt_exact :
     minusP4Lower < factorTwoIntrinsicSixP4Diagonal (-1) := by
   let beta : ℝ := Real.log 3 / Real.sqrt 3
   let C : ℝ := factorTwoIntrinsicP4Correlation44

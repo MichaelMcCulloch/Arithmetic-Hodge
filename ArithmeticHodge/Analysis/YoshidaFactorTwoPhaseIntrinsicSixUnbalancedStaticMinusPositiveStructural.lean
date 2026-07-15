@@ -144,7 +144,7 @@ private theorem minusP4P6_bounds :
 /-- The two negative-endpoint `P4` coordinates are enclosed only after the
 clean, regular-error, polynomial, archimedean, and retained-prime pieces
 have been combined. -/
-private theorem factorTwoIntrinsicP4MinusCross_refined_bounds :
+theorem factorTwoIntrinsicP4MinusCross_refined_bounds :
     (2927 / 10000 : ℝ) < factorTwoIntrinsicP4MinusCrossSum ∧
       factorTwoIntrinsicP4MinusCrossSum < (2931 / 10000 : ℝ) ∧
       (662 / 10000 : ℝ) < factorTwoIntrinsicP4MinusCrossDifference ∧
@@ -280,7 +280,7 @@ private theorem factorTwoIntrinsicP4MinusCross_refined_bounds :
 
 /-! ## The first fraction-free odd Schur pivot -/
 
-private theorem factorTwoIntrinsicSixUnbalancedKMinus_firstColumn_bounds :
+theorem factorTwoIntrinsicSixUnbalancedKMinus_firstColumn_bounds :
     (20077 / 50000 : ℝ) <
         factorTwoIntrinsicSixUnbalancedKMinus01 +
           factorTwoIntrinsicSixUnbalancedKMinus21 ∧
