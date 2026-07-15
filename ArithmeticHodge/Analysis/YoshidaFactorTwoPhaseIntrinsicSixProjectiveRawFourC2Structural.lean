@@ -990,6 +990,23 @@ private theorem c44_lt : c44 < (8 / 25 : ℝ) := by
   norm_num at hmass hregScaled hhyper hlog ⊢
   nlinarith
 
+/-- Public structural upper bound for the clean `P₄` diagonal. -/
+theorem factorTwoP4_clean_diagonal_lt_eight_div_twenty_five :
+    yoshidaEndpointOddCleanQuadratic factorTwoCenteredP4 <
+      (8 / 25 : ℝ) := by
+  simpa only [c44] using c44_lt
+
+/-- The negative-endpoint `P₄` diagonal inherits a convenient rational
+upper bound from the clean estimate and the proved perturbation lower
+bound. -/
+theorem factorTwoIntrinsicSixP4Diagonal_minus_lt_sixty_four_div_one_twenty_five :
+    factorTwoIntrinsicSixP4Diagonal (-1) < (64 / 125 : ℝ) := by
+  have hclean := factorTwoP4_clean_diagonal_lt_eight_div_twenty_five
+  have hpert := factorTwoCenteredSymmetricPerturbation_p4_lower
+  unfold factorTwoIntrinsicSixP4Diagonal factorTwoEndpointPhaseDiagonal
+  norm_num at hclean hpert ⊢
+  nlinarith
+
 /-! ## Monotonicity of the cancellation-preserving bracket -/
 
 private theorem positive_sq_bounds
