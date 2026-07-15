@@ -123,8 +123,8 @@ theorem rawFiveOddMinorCoeff_one_pos :
 two endpoints cancels the clean--perturbation cross terms; the perturbation
 determinant is negative, while the clean determinant has a direct rational
 Schur margin. -/
-theorem rawFiveOddMinorCoeff_one_gt_three_div_eighty :
-    (3 / 80 : ℝ) < rawFiveOddMinorCoeff 1 := by
+theorem rawFiveOddMinorCoeff_one_gt_one_div_twenty_five :
+    (1 / 25 : ℝ) < rawFiveOddMinorCoeff 1 := by
   let c11 : ℝ := yoshidaEndpointOddLowGram11
   let c13 : ℝ := yoshidaEndpointOddLowGram13
   let c33 : ℝ := yoshidaEndpointOddLowGram33
@@ -166,12 +166,25 @@ theorem rawFiveOddMinorCoeff_one_gt_three_div_eighty :
   have hp33neg : p33 < 0 := by
     dsimp only [p33]
     linarith [hp33.2]
-  have hpertDetNeg : p11 * p33 - p13 ^ 2 < 0 := by
-    have hmul : p11 * p33 < 0 := mul_neg_of_pos_of_neg hp11pos hp33neg
+  have hpertProduct :
+      p11 * p33 < (14 / 1000 : ℝ) * (-117 / 1000) := by
+    calc
+      p11 * p33 < p11 * (-117 / 1000 : ℝ) :=
+        mul_lt_mul_of_pos_left hp33.2 hp11pos
+      _ < (14 / 1000 : ℝ) * (-117 / 1000) :=
+        mul_lt_mul_of_neg_right hp11.1 (by norm_num)
+  have hpertDetUpper :
+      p11 * p33 - p13 ^ 2 < (14 / 1000 : ℝ) * (-117 / 1000) := by
     nlinarith [sq_nonneg p13]
   rw [heq]
-  norm_num at hcleanProduct hcleanCross ⊢
+  norm_num at hcleanProduct hcleanCross hpertDetUpper ⊢
   nlinarith
+
+/-- A slightly weaker denominator retained for callers that only need the
+original quantitative reserve. -/
+theorem rawFiveOddMinorCoeff_one_gt_three_div_eighty :
+    (3 / 80 : ℝ) < rawFiveOddMinorCoeff 1 := by
+  linarith [rawFiveOddMinorCoeff_one_gt_one_div_twenty_five]
 
 end
 
