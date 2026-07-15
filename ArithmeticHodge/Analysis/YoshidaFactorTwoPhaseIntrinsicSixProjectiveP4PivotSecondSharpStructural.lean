@@ -319,49 +319,49 @@ private theorem abs_step01_error22_le_here :
 /-! The exact clean midpoint and its negative perturbation in the aligned
 `P₀ ± P₂` basis.  All twelve coordinates below are positive. -/
 
-private def cleanStrong : ℝ :=
+def cleanStrong : ℝ :=
   yoshidaEndpointEvenLowGram00 + 2 * yoshidaEndpointEvenLowGram02 +
     yoshidaEndpointEvenLowGram22
 
-private def cleanSkew : ℝ :=
+def cleanSkew : ℝ :=
   yoshidaEndpointEvenLowGram00 - yoshidaEndpointEvenLowGram22
 
-private def cleanCrossSum : ℝ :=
+def cleanCrossSum : ℝ :=
   yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4 +
     yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4
 
-private def cleanWeak : ℝ :=
+def cleanWeak : ℝ :=
   yoshidaEndpointEvenLowGram00 - 2 * yoshidaEndpointEvenLowGram02 +
     yoshidaEndpointEvenLowGram22
 
-private def cleanCrossDifference : ℝ :=
+def cleanCrossDifference : ℝ :=
   yoshidaEndpointEvenCleanBilinear centeredEvenP2 factorTwoCenteredP4 -
     yoshidaEndpointEvenCleanBilinear centeredEvenP0 factorTwoCenteredP4
 
-private def cleanP4 : ℝ :=
+def cleanP4 : ℝ :=
   yoshidaEndpointOddCleanQuadratic factorTwoCenteredP4
 
-private def perturbStrong : ℝ :=
+def perturbStrong : ℝ :=
   evenNegativePerturbation00 + 2 * evenNegativePerturbation02 +
     evenNegativePerturbation22
 
-private def perturbSkew : ℝ :=
+def perturbSkew : ℝ :=
   evenNegativePerturbation00 - evenNegativePerturbation22
 
-private def perturbCrossSum : ℝ :=
+def perturbCrossSum : ℝ :=
   cleanCrossSum - factorTwoIntrinsicP4PlusCrossSum
 
-private def perturbWeak : ℝ :=
+def perturbWeak : ℝ :=
   evenNegativePerturbation00 - 2 * evenNegativePerturbation02 +
     evenNegativePerturbation22
 
-private def perturbCrossDifference : ℝ :=
+def perturbCrossDifference : ℝ :=
   cleanCrossDifference - factorTwoIntrinsicP4PlusCrossDifference
 
-private def perturbP4 : ℝ :=
+def perturbP4 : ℝ :=
   -factorTwoCenteredSymmetricPerturbation factorTwoCenteredP4
 
-private theorem clean_aligned_bounds :
+theorem clean_aligned_bounds :
     (137423 / 100000 : ℝ) < cleanStrong ∧
       cleanStrong < (137442 / 100000 : ℝ) ∧
       (3962 / 100000 : ℝ) < cleanSkew ∧
@@ -405,7 +405,7 @@ private theorem clean_aligned_bounds :
   · linarith
   constructor <;> linarith
 
-private theorem perturb_aligned_bounds :
+theorem perturb_aligned_bounds :
     (824479 / 1000000 : ℝ) < perturbStrong ∧
       perturbStrong < (826465 / 1000000 : ℝ) ∧
       (37851 / 1000000 : ℝ) < perturbSkew ∧
