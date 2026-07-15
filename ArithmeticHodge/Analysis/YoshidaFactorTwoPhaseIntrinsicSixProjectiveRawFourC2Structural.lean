@@ -1102,6 +1102,13 @@ theorem factorTwoP4_clean_diagonal_lt_three_hundred_fifteen_thousandths :
       (315 / 1000 : ℝ) := by
   simpa only [c44] using c44_lt_three_hundred_fifteen_thousandths
 
+/-- Tight lower box for the positive quantity obtained by negating the
+`P₄` symmetric perturbation. -/
+theorem factorTwoP4_negative_perturbation_gt_one_seventy_six_forty_five :
+    (17645 / 100000 : ℝ) <
+      -factorTwoCenteredSymmetricPerturbation factorTwoCenteredP4 := by
+  simpa only [n44] using n44_gt
+
 /-- Tight positive-endpoint `P₄` diagonal cap. -/
 theorem factorTwoIntrinsicSixP4Diagonal_plus_lt_one_thirty_nine_thousandths :
     factorTwoIntrinsicSixP4Diagonal 1 < (139 / 1000 : ℝ) := by
