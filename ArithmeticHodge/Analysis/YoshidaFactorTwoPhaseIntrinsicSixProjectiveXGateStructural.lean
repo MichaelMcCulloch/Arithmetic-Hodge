@@ -1,3 +1,4 @@
+import ArithmeticHodge.Analysis.ThreeByThreeFractionFreeGram
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4LeadingReduction
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveGateReduction
 
@@ -409,6 +410,9 @@ coefficient reconstructions prove the four component identities separately,
 instead of asking the elaborator to reduce the complete determinant at once.
 -/
 
+def factorTwoIntrinsicSixProjectiveRawLowDetPolynomial : ℝ[X] :=
+  lowDetPolynomial
+
 def factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial : ℝ[X] :=
   p4PivotPolynomial
 
@@ -422,9 +426,177 @@ def factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial
     (i j : Fin 3) : ℝ[X] :=
   oddEntryPolynomial i j
 
+def factorTwoIntrinsicSixProjectiveRawLowAdjugatePairPolynomial
+    (i j : Fin 3) : ℝ[X] :=
+  adjugateTwoPolynomial
+    (C (lowAlternating0 i)) (C (lowAlternating2 i))
+    (C (lowAlternating0 j)) (C (lowAlternating2 j))
+
+def factorTwoIntrinsicSixProjectiveRawP4OddCrossPolynomial
+    (i : Fin 3) : ℝ[X] :=
+  p4OddCrossPolynomial i
+
+def factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial
+    (i j : Fin 3) : ℝ[X] :=
+  oddResidualPolynomial i j
+
+def factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+    (i j : Fin 3) : ℝ[X] :=
+  rawAdjugatePairPolynomial i j
+
 def factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial
     (i j : Fin 3) : ℝ[X] :=
   rawAdjugateCofactorPolynomial i j
+
+private theorem adjugateThreePolynomial_fractionFree
+    (u0 u2 u4 v0 v2 v4 : ℝ[X]) :
+    lowDetPolynomial *
+        adjugateThreePolynomial u0 u2 u4 v0 v2 v4 =
+      p4PivotPolynomial * adjugateTwoPolynomial u0 u2 v0 v2 +
+        (lowDetPolynomial * u4 -
+            adjugateTwoPolynomial
+              cross04Polynomial cross24Polynomial u0 u2) *
+          (lowDetPolynomial * v4 -
+            adjugateTwoPolynomial
+              cross04Polynomial cross24Polynomial v0 v2) := by
+  unfold adjugateThreePolynomial p4PivotPolynomial
+    adjugateTwoPolynomial lowDetPolynomial
+  ring
+
+private theorem adjugateThreePolynomial_symmetric
+    (u0 u2 u4 v0 v2 v4 : ℝ[X]) :
+    adjugateThreePolynomial u0 u2 u4 v0 v2 v4 =
+      adjugateThreePolynomial v0 v2 v4 u0 u2 u4 := by
+  unfold adjugateThreePolynomial
+  ring
+
+private theorem adjugateThreePolynomial_lagrange
+    (u0 u2 u4 v0 v2 v4 w0 w2 w4 z0 z2 z4 : ℝ[X]) :
+    adjugateThreePolynomial u0 u2 u4 w0 w2 w4 *
+          adjugateThreePolynomial v0 v2 v4 z0 z2 z4 -
+        adjugateThreePolynomial u0 u2 u4 z0 z2 z4 *
+          adjugateThreePolynomial v0 v2 v4 w0 w2 w4 =
+      p4PivotPolynomial *
+        rawEvenEnergyPolynomial
+          (u2 * v4 - u4 * v2)
+          (u4 * v0 - u0 * v4)
+          (u0 * v2 - u2 * v0)
+          (w2 * z4 - w4 * z2)
+          (w4 * z0 - w0 * z4)
+          (w0 * z2 - w2 * z0) := by
+  unfold adjugateThreePolynomial rawEvenEnergyPolynomial
+    p4PivotPolynomial adjugateTwoPolynomial lowDetPolynomial
+  ring
+
+private theorem adjugateThreePolynomial_gramDeterminant
+    (u0 u2 u4 v0 v2 v4 w0 w2 w4 : ℝ[X]) :
+    adjugateThreePolynomial u0 u2 u4 u0 u2 u4 *
+          (adjugateThreePolynomial v0 v2 v4 v0 v2 v4 *
+              adjugateThreePolynomial w0 w2 w4 w0 w2 w4 -
+            adjugateThreePolynomial v0 v2 v4 w0 w2 w4 ^ 2) -
+        adjugateThreePolynomial u0 u2 u4 v0 v2 v4 *
+          (adjugateThreePolynomial u0 u2 u4 v0 v2 v4 *
+              adjugateThreePolynomial w0 w2 w4 w0 w2 w4 -
+            adjugateThreePolynomial u0 u2 u4 w0 w2 w4 *
+              adjugateThreePolynomial v0 v2 v4 w0 w2 w4) +
+      adjugateThreePolynomial u0 u2 u4 w0 w2 w4 *
+        (adjugateThreePolynomial u0 u2 u4 v0 v2 v4 *
+            adjugateThreePolynomial v0 v2 v4 w0 w2 w4 -
+          adjugateThreePolynomial u0 u2 u4 w0 w2 w4 *
+            adjugateThreePolynomial v0 v2 v4 v0 v2 v4) =
+      p4PivotPolynomial ^ 2 *
+        (u0 * (v2 * w4 - v4 * w2) -
+            u2 * (v0 * w4 - v4 * w0) +
+          u4 * (v0 * w2 - v2 * w0)) ^ 2 := by
+  unfold adjugateThreePolynomial p4PivotPolynomial
+    adjugateTwoPolynomial lowDetPolynomial
+  ring
+
+/-- Fraction-free adjugate update from the low plane to the full even
+three-plane.  This is the scalar Schur identity shared by every pair of odd
+columns. -/
+theorem factorTwoIntrinsicSixProjectiveRawAdjugatePair_fractionFree
+    (i j : Fin 3) :
+    factorTwoIntrinsicSixProjectiveRawLowDetPolynomial *
+        factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial i j =
+      factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial *
+          factorTwoIntrinsicSixProjectiveRawLowAdjugatePairPolynomial i j +
+        factorTwoIntrinsicSixProjectiveRawP4OddCrossPolynomial i *
+          factorTwoIntrinsicSixProjectiveRawP4OddCrossPolynomial j := by
+  unfold factorTwoIntrinsicSixProjectiveRawLowDetPolynomial
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+    factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial
+    factorTwoIntrinsicSixProjectiveRawLowAdjugatePairPolynomial
+    factorTwoIntrinsicSixProjectiveRawP4OddCrossPolynomial
+    rawAdjugatePairPolynomial p4OddCrossPolynomial
+    rawAlternating0 rawAlternating2 rawAlternating4
+  exact adjugateThreePolynomial_fractionFree _ _ _ _ _ _
+
+theorem factorTwoIntrinsicSixProjectiveRawAdjugatePair_symmetric
+    (i j : Fin 3) :
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial i j =
+      factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial j i := by
+  unfold factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+    rawAdjugatePairPolynomial rawAlternating0 rawAlternating2 rawAlternating4
+  exact adjugateThreePolynomial_symmetric _ _ _ _ _ _
+
+theorem factorTwoIntrinsicSixProjectiveRawOddResidual_eq_components
+    (i j : Fin 3) :
+    factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial i j =
+      factorTwoIntrinsicSixProjectiveRawLowDetPolynomial *
+          factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial i j -
+        X * factorTwoIntrinsicSixProjectiveRawLowAdjugatePairPolynomial i j := by
+  unfold factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial
+    factorTwoIntrinsicSixProjectiveRawLowDetPolynomial
+    factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial
+    factorTwoIntrinsicSixProjectiveRawLowAdjugatePairPolynomial
+    oddResidualPolynomial
+  rfl
+
+def factorTwoIntrinsicSixProjectiveRawCofactorLeftIndex : Fin 3 → Fin 3
+  | 0 => 1
+  | 1 => 2
+  | 2 => 0
+
+def factorTwoIntrinsicSixProjectiveRawCofactorRightIndex : Fin 3 → Fin 3
+  | 0 => 2
+  | 1 => 0
+  | 2 => 1
+
+def factorTwoIntrinsicSixProjectiveRawAdjugatePairMinorPolynomial
+    (i j : Fin 3) : ℝ[X] :=
+  factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+        (factorTwoIntrinsicSixProjectiveRawCofactorLeftIndex i)
+        (factorTwoIntrinsicSixProjectiveRawCofactorLeftIndex j) *
+      factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+        (factorTwoIntrinsicSixProjectiveRawCofactorRightIndex i)
+        (factorTwoIntrinsicSixProjectiveRawCofactorRightIndex j) -
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+        (factorTwoIntrinsicSixProjectiveRawCofactorLeftIndex i)
+        (factorTwoIntrinsicSixProjectiveRawCofactorRightIndex j) *
+      factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+        (factorTwoIntrinsicSixProjectiveRawCofactorRightIndex i)
+        (factorTwoIntrinsicSixProjectiveRawCofactorLeftIndex j)
+
+/-- Every `2 x 2` minor of the adjugate Gram matrix is the even pivot times
+the energy of the corresponding oriented cross products. -/
+theorem factorTwoIntrinsicSixProjectiveRawAdjugatePairMinor_factor
+    (i j : Fin 3) :
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairMinorPolynomial i j =
+      factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial *
+        factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial i j := by
+  fin_cases i <;> fin_cases j <;>
+    unfold factorTwoIntrinsicSixProjectiveRawAdjugatePairMinorPolynomial
+      factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+      factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial
+      factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial
+      factorTwoIntrinsicSixProjectiveRawCofactorLeftIndex
+      factorTwoIntrinsicSixProjectiveRawCofactorRightIndex
+      rawAdjugatePairPolynomial rawAdjugateCofactorPolynomial
+      rawCofactorVector0 rawCofactorVector2 rawCofactorVector4
+      rawCross0 rawCross2 rawCross4 rawAlternating0 rawAlternating2
+      rawAlternating4 <;>
+    exact adjugateThreePolynomial_lagrange _ _ _ _ _ _ _ _ _ _ _ _
 
 def factorTwoIntrinsicSixProjectiveRawCofactor0 : Fin 3 → ℝ
   | 0 => factorTwoIntrinsicAlternating23 * factorTwoIntrinsicSixAlternating45 -
@@ -496,6 +668,37 @@ def factorTwoIntrinsicSixProjectiveRawMixedAdjugateTwoPolynomial : ℝ[X] :=
 def factorTwoIntrinsicSixProjectiveRawAlternatingDeterminant : ℝ :=
   rawAlternatingDeterminant
 
+def factorTwoIntrinsicSixProjectiveRawAdjugatePairDeterminantPolynomial : ℝ[X] :=
+  factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 0 *
+        (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 1 1 *
+            factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 2 2 -
+          factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 1 2 ^ 2) -
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 1 *
+      (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 1 *
+          factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 2 2 -
+        factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 2 *
+          factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 1 2) +
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 2 *
+      (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 1 *
+          factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 1 2 -
+        factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 2 *
+          factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 1 1)
+
+/-- The determinant of the adjugate Gram matrix is the square of the even
+pivot times the square of the oriented alternating determinant. -/
+theorem factorTwoIntrinsicSixProjectiveRawAdjugatePairDeterminant_factor :
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairDeterminantPolynomial =
+      factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial ^ 2 *
+        C (factorTwoIntrinsicSixProjectiveRawAlternatingDeterminant ^ 2) := by
+  unfold factorTwoIntrinsicSixProjectiveRawAdjugatePairDeterminantPolynomial
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+    factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial
+    factorTwoIntrinsicSixProjectiveRawAlternatingDeterminant
+    rawAdjugatePairPolynomial rawAlternating0 rawAlternating2 rawAlternating4
+  rw [adjugateThreePolynomial_gramDeterminant]
+  unfold rawAlternatingDeterminant
+  simp only [map_sub, map_add, map_mul, map_pow]
+
 /-- Raw `P₀/P₂/P₄/P₁/P₃` leading determinant.  Its last
 term is the cross-product Gram square rather than a quotient by the even
 determinant. -/
@@ -516,6 +719,44 @@ def factorTwoIntrinsicSixProjectiveRawDeterminantPolynomial : ℝ[X] :=
     X * factorTwoIntrinsicSixProjectiveRawMixedAdjugateOnePolynomial +
     X ^ 2 * factorTwoIntrinsicSixProjectiveRawMixedAdjugateTwoPolynomial -
     X ^ 3 * C (factorTwoIntrinsicSixProjectiveRawAlternatingDeterminant ^ 2)
+
+/-- The concrete raw determinant is exactly the abstract fraction-free Gram
+determinant built from its odd, adjugate, cofactor, and alternating blocks. -/
+theorem factorTwoIntrinsicSixProjectiveRawDeterminantPolynomial_eq_fractionFreeGram :
+    factorTwoIntrinsicSixProjectiveRawDeterminantPolynomial =
+      ThreeByThreeFractionFreeGram.rawDet
+        factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial X
+        (C factorTwoIntrinsicSixProjectiveRawAlternatingDeterminant)
+        (factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 0 0)
+        (factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 0 1)
+        (factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 0 2)
+        (factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 1 1)
+        (factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 1 2)
+        (factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial 2 2)
+        (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 0)
+        (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 1)
+        (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 0 2)
+        (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 1 1)
+        (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 1 2)
+        (factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial 2 2)
+        (factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 0 0)
+        (factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 0 1)
+        (factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 0 2)
+        (factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 1 1)
+        (factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 1 2)
+        (factorTwoIntrinsicSixProjectiveRawAdjugateCofactorPolynomial 2 2) := by
+  unfold factorTwoIntrinsicSixProjectiveRawDeterminantPolynomial
+    factorTwoIntrinsicSixProjectiveRawOddDeterminantPolynomial
+    factorTwoIntrinsicSixProjectiveRawMixedAdjugateOnePolynomial
+    factorTwoIntrinsicSixProjectiveRawMixedAdjugateTwoPolynomial
+    factorTwoIntrinsicSixProjectiveRawOddEntryPolynomial
+    factorTwoIntrinsicSixProjectiveRawAdjugatePairPolynomial
+    ThreeByThreeFractionFreeGram.rawDet
+    ThreeByThreeFractionFreeGram.det3
+    ThreeByThreeFractionFreeGram.mixedOne
+    ThreeByThreeFractionFreeGram.mixedTwo
+    rawOddDeterminantPolynomial rawMixedAdjugateOnePolynomial
+  simp only [map_pow]
 
 private theorem eval_affineEndpointPolynomial
     (plus minus x : ℝ) :
@@ -702,6 +943,29 @@ def factorTwoIntrinsicSixProjectiveP5GapPolynomial : ℝ[X] :=
       (p4PivotPolynomial * oddResidualPolynomial 0 0 -
           X * p4OddCrossPolynomial 0 ^ 2) *
         oddResidualPolynomial 1 2 ^ 2)
+
+/-- The concrete final gap is the abstract bordered determinant of the even
+pivot, its three cross entries, and the symmetric odd residual block. -/
+theorem factorTwoIntrinsicSixProjectiveP5GapPolynomial_eq_borderedGap :
+    factorTwoIntrinsicSixProjectiveP5GapPolynomial =
+      ThreeByThreeFractionFreeGram.borderedGap
+        factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial X
+        (factorTwoIntrinsicSixProjectiveRawP4OddCrossPolynomial 0)
+        (factorTwoIntrinsicSixProjectiveRawP4OddCrossPolynomial 1)
+        (factorTwoIntrinsicSixProjectiveRawP4OddCrossPolynomial 2)
+        (factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial 0 0)
+        (factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial 0 1)
+        (factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial 0 2)
+        (factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial 1 1)
+        (factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial 1 2)
+        (factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial 2 2) := by
+  unfold factorTwoIntrinsicSixProjectiveP5GapPolynomial
+    factorTwoIntrinsicSixProjectiveBaseDetPolynomial
+    factorTwoIntrinsicSixProjectiveRawP4PivotPolynomial
+    factorTwoIntrinsicSixProjectiveRawP4OddCrossPolynomial
+    factorTwoIntrinsicSixProjectiveRawOddResidualPolynomial
+    ThreeByThreeFractionFreeGram.borderedGap
+  rfl
 
 /-- Exact division-free Schur factorization of the second projective pivot.
 The low determinant occurs once, and the remaining factor is the raw `4 x 4`
