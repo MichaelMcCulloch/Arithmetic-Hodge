@@ -15,12 +15,15 @@ noncomputable section
 open CenteredOddOneThreeEnergy
 open CenteredEndpointCorrelation
 open YoshidaEndpointEvenLowPotential
+open YoshidaConstantBounds
 open YoshidaEndpointEvenConstantCross
 open YoshidaEndpointEvenFullPolarization
 open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 open YoshidaEndpointEvenTailRepresenter
 open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOcticPotential
+open YoshidaEndpointOddFullPolarization
+open YoshidaEndpointOddResidualRegularity
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialExactLowMode
 open YoshidaEndpointPotentialIntegrable
@@ -34,6 +37,8 @@ open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
+open YoshidaFactorTwoPhaseLegendreFourFiveRankStructural
+open YoshidaFactorTwoPhaseSymmetricCoercivity
 
 /-!
 # Structural clean `P1/P3`--`P5` crosses
@@ -491,6 +496,164 @@ theorem re_regularBilinear_p3_p5_eq :
   rw [hcorr] at hpolar
   have hmodel := integral_regularKernel_mul_oddP5Correlation35_eq
   linarith
+
+/-! ## Tiny hyperbolic crosses -/
+
+private theorem endpointA_coarse_bounds :
+    (693 / 2000 : ℝ) < yoshidaEndpointA ∧
+      yoshidaEndpointA < (7 / 20 : ℝ) := by
+  unfold yoshidaEndpointA
+  constructor <;> linarith [strict_log_two_fine_bounds.1,
+    strict_log_two_fine_bounds.2]
+
+/-- The endpoint sinh moment of `P5`. -/
+def oddP5CleanSinhMoment : ℝ :=
+  yoshidaEndpointSinhMoment factorTwoCenteredP5
+
+private theorem oddP5CleanSinhMoment_eq_centered :
+    oddP5CleanSinhMoment =
+      centeredSinhMoment factorTwoCenteredP5 (yoshidaEndpointA / 2) := by
+  unfold oddP5CleanSinhMoment yoshidaEndpointSinhMoment centeredSinhMoment
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  ring
+
+theorem oddP5CleanSinhMoment_nonneg : 0 ≤ oddP5CleanSinhMoment := by
+  rw [oddP5CleanSinhMoment_eq_centered,
+    centeredSinhMoment_P5_rodrigues]
+  have hI : 0 ≤ ∫ t : ℝ in 0..1,
+      Real.exp (2 * (yoshidaEndpointA / 2) * t) *
+        (t ^ 5 * (1 - t) ^ 5) := by
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro t ht
+    have ht0 : 0 ≤ t := ht.1
+    have ht1 : 0 ≤ 1 - t := by linarith [ht.2]
+    positivity
+  apply mul_nonneg
+  · apply mul_nonneg
+    · exact mul_nonneg (by norm_num) (Real.exp_pos _).le
+    · exact div_nonneg
+        (pow_nonneg (mul_nonneg (by norm_num)
+          (div_nonneg yoshidaEndpointA_pos.le (by norm_num))) 5)
+        (by norm_num)
+  · exact hI
+
+/-- Rodrigues' formula makes the `P5` endpoint sinh moment microscopic. -/
+theorem oddP5CleanSinhMoment_lt :
+    oddP5CleanSinhMoment < (1 / 125000 : ℝ) := by
+  let lambda : ℝ := yoshidaEndpointA / 2
+  have hlambda : 0 < lambda := by
+    dsimp only [lambda]
+    exact half_pos yoshidaEndpointA_pos
+  have hweighted := exp_neg_mul_centeredSinhMoment_P5_le lambda hlambda.le
+  have htwoLambda : 0 ≤ 2 * lambda := by positivity
+  have htwoLambdaLt : 2 * lambda < (1 / 2 : ℝ) := by
+    dsimp only [lambda]
+    linarith [endpointA_coarse_bounds.2]
+  have hpowNum : (2 * lambda) ^ 5 < (1 / 2 : ℝ) ^ 5 :=
+    pow_lt_pow_left₀ htwoLambdaLt htwoLambda (by norm_num)
+  have hpowDen : (5 : ℝ) ^ 6 ≤ (2 * lambda + 5) ^ 6 :=
+    pow_le_pow_left₀ (by norm_num) (by linarith) 6
+  have hprofile :
+      2 * (2 * lambda) ^ 5 / (2 * lambda + 5) ^ 6 <
+        (1 / 250000 : ℝ) := by
+    rw [div_lt_iff₀ (by positivity)]
+    norm_num at hpowNum hpowDen ⊢
+    nlinarith
+  have hprofilePos :
+      0 < 2 * (2 * lambda) ^ 5 / (2 * lambda + 5) ^ 6 := by
+    positivity
+  have hlambdaLog : lambda < Real.log 2 := by
+    dsimp only [lambda, yoshidaEndpointA]
+    nlinarith [Real.log_pos (by norm_num : (1 : ℝ) < 2)]
+  have hexp : Real.exp lambda < 2 := by
+    calc
+      Real.exp lambda < Real.exp (Real.log 2) :=
+        Real.exp_lt_exp.mpr hlambdaLog
+      _ = 2 := Real.exp_log (by norm_num)
+  rw [oddP5CleanSinhMoment_eq_centered]
+  calc
+    centeredSinhMoment factorTwoCenteredP5 (yoshidaEndpointA / 2) =
+        Real.exp lambda *
+          (Real.exp (-lambda) * centeredSinhMoment factorTwoCenteredP5 lambda) := by
+      dsimp only [lambda]
+      rw [← mul_assoc, ← Real.exp_add]
+      simp
+    _ ≤ Real.exp lambda *
+        (2 * (2 * lambda) ^ 5 / (2 * lambda + 5) ^ 6) :=
+      mul_le_mul_of_nonneg_left hweighted (Real.exp_pos lambda).le
+    _ < 2 * (2 * (2 * lambda) ^ 5 / (2 * lambda + 5) ^ 6) :=
+      mul_lt_mul_of_pos_right hexp hprofilePos
+    _ < 2 * (1 / 250000 : ℝ) :=
+      mul_lt_mul_of_pos_left hprofile (by norm_num)
+    _ = 1 / 125000 := by ring
+
+theorem abs_oddCleanSinhMoment1_lt :
+    |oddCleanSinhMoment1| < (1 / 8 : ℝ) := by
+  have hsq := oddCleanSinhMoment1_sq_lt
+  have habs0 := abs_nonneg oddCleanSinhMoment1
+  rw [← sq_abs] at hsq
+  nlinarith
+
+theorem abs_oddCleanSinhMoment3_lt :
+    |oddCleanSinhMoment3| < (1 / 4000 : ℝ) := by
+  have hsq := oddCleanSinhMoment3_sq_lt
+  have habs0 := abs_nonneg oddCleanSinhMoment3
+  rw [← sq_abs] at hsq
+  nlinarith
+
+theorem abs_oddP5_hyperbolicCross15_lt :
+    |2 * yoshidaEndpointA * oddCleanSinhMoment1 * oddP5CleanSinhMoment| <
+      (1 / 1000000 : ℝ) := by
+  have hA : 2 * yoshidaEndpointA ≤ 1 := by
+    linarith [endpointA_coarse_bounds.2]
+  have h1 := abs_oddCleanSinhMoment1_lt
+  have h5 := oddP5CleanSinhMoment_lt
+  have h50 := oddP5CleanSinhMoment_nonneg
+  have hprod :
+      (2 * yoshidaEndpointA) * |oddCleanSinhMoment1| ≤ (1 / 8 : ℝ) := by
+    calc
+      (2 * yoshidaEndpointA) * |oddCleanSinhMoment1| ≤
+          1 * |oddCleanSinhMoment1| :=
+        mul_le_mul_of_nonneg_right hA (abs_nonneg _)
+      _ ≤ 1 / 8 := by linarith
+  rw [abs_mul, abs_mul, abs_mul,
+    abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2),
+    abs_of_nonneg yoshidaEndpointA_pos.le, abs_of_nonneg h50]
+  calc
+    (2 * yoshidaEndpointA) * |oddCleanSinhMoment1| * oddP5CleanSinhMoment ≤
+        (1 / 8 : ℝ) * oddP5CleanSinhMoment :=
+      mul_le_mul_of_nonneg_right hprod h50
+    _ < (1 / 8 : ℝ) * (1 / 125000 : ℝ) :=
+      mul_lt_mul_of_pos_left h5 (by norm_num)
+    _ = 1 / 1000000 := by ring
+
+theorem abs_oddP5_hyperbolicCross35_lt :
+    |2 * yoshidaEndpointA * oddCleanSinhMoment3 * oddP5CleanSinhMoment| <
+      (1 / 500000000 : ℝ) := by
+  have hA : 2 * yoshidaEndpointA ≤ 1 := by
+    linarith [endpointA_coarse_bounds.2]
+  have h3 := abs_oddCleanSinhMoment3_lt
+  have h5 := oddP5CleanSinhMoment_lt
+  have h50 := oddP5CleanSinhMoment_nonneg
+  have hprod :
+      (2 * yoshidaEndpointA) * |oddCleanSinhMoment3| ≤
+        (1 / 4000 : ℝ) := by
+    calc
+      (2 * yoshidaEndpointA) * |oddCleanSinhMoment3| ≤
+          1 * |oddCleanSinhMoment3| :=
+        mul_le_mul_of_nonneg_right hA (abs_nonneg _)
+      _ ≤ 1 / 4000 := by linarith
+  rw [abs_mul, abs_mul, abs_mul,
+    abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2),
+    abs_of_nonneg yoshidaEndpointA_pos.le, abs_of_nonneg h50]
+  calc
+    (2 * yoshidaEndpointA) * |oddCleanSinhMoment3| * oddP5CleanSinhMoment ≤
+        (1 / 4000 : ℝ) * oddP5CleanSinhMoment :=
+      mul_le_mul_of_nonneg_right hprod h50
+    _ < (1 / 4000 : ℝ) * (1 / 125000 : ℝ) :=
+      mul_lt_mul_of_pos_left h5 (by norm_num)
+    _ = 1 / 500000000 := by ring
 
 end
 
