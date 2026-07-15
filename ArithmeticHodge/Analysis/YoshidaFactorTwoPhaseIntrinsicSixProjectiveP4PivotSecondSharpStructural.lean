@@ -588,6 +588,111 @@ theorem factorTwoIntrinsicP4_negative_aligned_bounds :
   · linarith
   constructor <;> linarith
 
+/-- Tight public aligned-coordinate boxes for the positive `P₀/P₂/P₄`
+endpoint.  They are the clean midpoint minus the same perturbation isolated in
+`factorTwoIntrinsicP4_negative_aligned_bounds`. -/
+theorem factorTwoIntrinsicP4_positive_aligned_bounds :
+    (547765 / 1000000 : ℝ) <
+        factorTwoStructuralPhaseLow00 1 +
+          2 * factorTwoStructuralPhaseLow02 1 +
+          factorTwoStructuralPhaseLow22 1 ∧
+      factorTwoStructuralPhaseLow00 1 +
+          2 * factorTwoStructuralPhaseLow02 1 +
+          factorTwoStructuralPhaseLow22 1 <
+        (549941 / 1000000 : ℝ) ∧
+      (-141 / 1000000 : ℝ) <
+        factorTwoStructuralPhaseLow00 1 -
+          factorTwoStructuralPhaseLow22 1 ∧
+      factorTwoStructuralPhaseLow00 1 -
+          factorTwoStructuralPhaseLow22 1 <
+        (1919 / 1000000 : ℝ) ∧
+      (185634 / 1000000 : ℝ) <
+        factorTwoIntrinsicFourP45Cross04 1 +
+          factorTwoIntrinsicFourP45Cross24 1 ∧
+      factorTwoIntrinsicFourP45Cross04 1 +
+          factorTwoIntrinsicFourP45Cross24 1 <
+        (193081 / 1000000 : ℝ) ∧
+      (6065 / 1000000 : ℝ) <
+        factorTwoStructuralPhaseLow00 1 -
+          2 * factorTwoStructuralPhaseLow02 1 +
+          factorTwoStructuralPhaseLow22 1 ∧
+      factorTwoStructuralPhaseLow00 1 -
+          2 * factorTwoStructuralPhaseLow02 1 +
+          factorTwoStructuralPhaseLow22 1 <
+        (8241 / 1000000 : ℝ) ∧
+      (15634 / 1000000 : ℝ) <
+        factorTwoIntrinsicFourP45Cross24 1 -
+          factorTwoIntrinsicFourP45Cross04 1 ∧
+      factorTwoIntrinsicFourP45Cross24 1 -
+          factorTwoIntrinsicFourP45Cross04 1 <
+        (19581 / 1000000 : ℝ) := by
+  have hc := clean_aligned_bounds
+  have hp := perturb_aligned_bounds
+  have hStrong :
+      factorTwoStructuralPhaseLow00 1 +
+          2 * factorTwoStructuralPhaseLow02 1 +
+          factorTwoStructuralPhaseLow22 1 =
+        cleanStrong - perturbStrong := by
+    unfold factorTwoStructuralPhaseLow00 factorTwoStructuralPhaseLow02
+      factorTwoStructuralPhaseLow22 cleanStrong perturbStrong
+      evenNegativePerturbation00 evenNegativePerturbation02
+      evenNegativePerturbation22
+    ring
+  have hSkew :
+      factorTwoStructuralPhaseLow00 1 -
+          factorTwoStructuralPhaseLow22 1 =
+        cleanSkew - perturbSkew := by
+    unfold factorTwoStructuralPhaseLow00 factorTwoStructuralPhaseLow22
+      cleanSkew perturbSkew evenNegativePerturbation00
+      evenNegativePerturbation22
+    ring
+  have hSum :
+      factorTwoIntrinsicFourP45Cross04 1 +
+          factorTwoIntrinsicFourP45Cross24 1 =
+        cleanCrossSum - perturbCrossSum := by
+    unfold perturbCrossSum factorTwoIntrinsicP4PlusCrossSum
+    ring
+  have hWeak :
+      factorTwoStructuralPhaseLow00 1 -
+          2 * factorTwoStructuralPhaseLow02 1 +
+          factorTwoStructuralPhaseLow22 1 =
+        cleanWeak - perturbWeak := by
+    unfold factorTwoStructuralPhaseLow00 factorTwoStructuralPhaseLow02
+      factorTwoStructuralPhaseLow22 cleanWeak perturbWeak
+      evenNegativePerturbation00 evenNegativePerturbation02
+      evenNegativePerturbation22
+    ring
+  have hDifference :
+      factorTwoIntrinsicFourP45Cross24 1 -
+          factorTwoIntrinsicFourP45Cross04 1 =
+        cleanCrossDifference - perturbCrossDifference := by
+    unfold perturbCrossDifference factorTwoIntrinsicP4PlusCrossDifference
+    ring
+  rw [hStrong, hSkew, hSum, hWeak, hDifference]
+  rcases hc with
+    ⟨hAL, hAU, hXL, hXU, hRL, hRU, hCL, hCU, hDL, hDU, _hF⟩
+  rcases hp with
+    ⟨haL, haU, hyL, hyU, hrL, hrU, hcL, hcU, hdL, hdU, _hfL, _hfU⟩
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  linarith
+
 /-! ## Cancellation-preserving reserve polynomial -/
 
 /-- The reverse mixed determinant after writing the negative endpoint as
