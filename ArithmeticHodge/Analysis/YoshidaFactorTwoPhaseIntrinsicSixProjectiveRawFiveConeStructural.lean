@@ -8,6 +8,7 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveRa
 
 noncomputable section
 
+open YoshidaFactorTwoPhaseIntrinsicSixProjectiveGateReduction
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveXGateStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFiveOuterConeStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFiveC2Structural
@@ -20,6 +21,14 @@ theorem factorTwoIntrinsicSixProjectiveRawMinorFive_mem_cone :
   exact factorTwoIntrinsicSixProjectiveRawMinorFive_mem_cone_iff_middle_two.2
     ⟨factorTwoIntrinsicSixProjectiveRawMinorFiveCoefficient_two_nonneg,
       factorTwoIntrinsicSixProjectiveRawMinorFiveCoefficient_three_nonneg⟩
+
+/-- The third projective Schur gate is now unconditional on the nonnegative
+projective half-line. -/
+theorem factorTwoIntrinsicSixProjectiveBaseDetX_pos
+    (x : ℝ) (hx : 0 ≤ x) :
+    0 < factorTwoIntrinsicSixProjectiveBaseDetX x := by
+  exact factorTwoIntrinsicSixProjectiveBaseDetX_pos_of_raw_cone
+    x hx factorTwoIntrinsicSixProjectiveRawMinorFive_mem_cone
 
 end
 
