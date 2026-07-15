@@ -776,6 +776,13 @@ private theorem eval_lowDetPolynomial (x : ℝ) :
     factorTwoIntrinsicSixProjectiveLow22
   ring
 
+/-- Evaluation of the public raw low-determinant component. -/
+theorem eval_factorTwoIntrinsicSixProjectiveRawLowDetPolynomial (x : ℝ) :
+    factorTwoIntrinsicSixProjectiveRawLowDetPolynomial.eval x =
+      factorTwoIntrinsicSixProjectiveLowDet x := by
+  unfold factorTwoIntrinsicSixProjectiveRawLowDetPolynomial
+  exact eval_lowDetPolynomial x
+
 /-- The projective low determinant is the quadratic homogenization of the
 already-proved affine low determinant. -/
 theorem factorTwoIntrinsicSixProjectiveLowDet_eq_homogeneous
