@@ -14,6 +14,7 @@ noncomputable section
 
 open CenteredOddOneThreeEnergy
 open CenteredEndpointCorrelation
+open UnitIntervalLogEnergyAffine
 open YoshidaEndpointEvenLowPotential
 open YoshidaConstantBounds
 open YoshidaEndpointEvenConstantCross
@@ -23,6 +24,7 @@ open YoshidaEndpointEvenTailRepresenter
 open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddFullPolarization
+open YoshidaEndpointOddCleanPositive
 open YoshidaEndpointOddResidualRegularity
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialExactLowMode
@@ -654,6 +656,269 @@ theorem abs_oddP5_hyperbolicCross35_lt :
     _ < (1 / 4000 : ℝ) * (1 / 125000 : ℝ) :=
       mul_lt_mul_of_pos_left h5 (by norm_num)
     _ = 1 / 500000000 := by ring
+
+/-! ## Clean cross assembly -/
+
+theorem oddP5CleanRegularPolynomial15_bounds :
+    0 ≤ oddP5CleanRegularPolynomial15 ∧
+      oddP5CleanRegularPolynomial15 < (1 / 8000000 : ℝ) := by
+  have hA0 : 0 ≤ yoshidaEndpointA := yoshidaEndpointA_pos.le
+  have hA := endpointA_coarse_bounds.2
+  have hA3 := pow_lt_pow_left₀ hA hA0 (by norm_num : (3 : ℕ) ≠ 0)
+  have hA5 := pow_lt_pow_left₀ hA hA0 (by norm_num : (5 : ℕ) ≠ 0)
+  have hA6 := pow_lt_pow_left₀ hA hA0 (by norm_num : (6 : ℕ) ≠ 0)
+  constructor
+  · unfold oddP5CleanRegularPolynomial15
+    positivity
+  · unfold oddP5CleanRegularPolynomial15
+    norm_num at hA3 hA5 hA6 ⊢
+    nlinarith
+
+theorem neg_oddP5CleanRegularPolynomial35_bounds :
+    (1 / 25000 : ℝ) < -oddP5CleanRegularPolynomial35 ∧
+      -oddP5CleanRegularPolynomial35 < (1 / 23000 : ℝ) := by
+  have hA0 : 0 ≤ yoshidaEndpointA := yoshidaEndpointA_pos.le
+  have hAlo := endpointA_coarse_bounds.1
+  have hAhi := endpointA_coarse_bounds.2
+  have hA3 := pow_lt_pow_left₀ hAhi hA0 (by norm_num : (3 : ℕ) ≠ 0)
+  have hA5 := pow_lt_pow_left₀ hAhi hA0 (by norm_num : (5 : ℕ) ≠ 0)
+  have hA3nonneg : 0 ≤ yoshidaEndpointA ^ 3 := pow_nonneg hA0 3
+  have hA5nonneg : 0 ≤ yoshidaEndpointA ^ 5 := pow_nonneg hA0 5
+  unfold oddP5CleanRegularPolynomial35
+  constructor
+  · have hloRat :
+        (1 / 25000 : ℝ) < (693 / 2000 : ℝ) / 8316 := by
+      norm_num
+    nlinarith
+  · norm_num at hA3 hA5 ⊢
+    nlinarith
+
+private theorem centeredRawLogBilinear_p1_p5_eq_zero :
+    centeredRawLogBilinear centeredP1 factorTwoCenteredP5 = 0 := by
+  have h := centeredRawLogBilinear_fixedOddLowProfile_tail_eq_zero
+    factorTwoCenteredP5 continuous_factorTwoCenteredP5
+    factorTwoCenteredP5_intrinsic_coefficients_zero.1
+    factorTwoCenteredP5_intrinsic_coefficients_zero.2 1 0
+  have hp : factorTwoOddStructuralLowProfile 1 0 = centeredP1 := by
+    funext x
+    unfold factorTwoOddStructuralLowProfile
+    ring
+  rwa [hp] at h
+
+private theorem centeredRawLogBilinear_p3_p5_eq_zero :
+    centeredRawLogBilinear centeredP3 factorTwoCenteredP5 = 0 := by
+  have h := centeredRawLogBilinear_fixedOddLowProfile_tail_eq_zero
+    factorTwoCenteredP5 continuous_factorTwoCenteredP5
+    factorTwoCenteredP5_intrinsic_coefficients_zero.1
+    factorTwoCenteredP5_intrinsic_coefficients_zero.2 0 1
+  have hp : factorTwoOddStructuralLowProfile 0 1 = centeredP3 := by
+    funext x
+    unfold factorTwoOddStructuralLowProfile
+    ring
+  rwa [hp] at h
+
+private theorem integral_centeredP1_mul_P5_eq_zero :
+    (∫ x : ℝ in -1..1, centeredP1 x * factorTwoCenteredP5 x) = 0 := by
+  have h := integral_fixedOddLowProfile_mul_tail_eq_zero
+    factorTwoCenteredP5 continuous_factorTwoCenteredP5
+    factorTwoCenteredP5_intrinsic_coefficients_zero.1
+    factorTwoCenteredP5_intrinsic_coefficients_zero.2 1 0
+  simpa [factorTwoOddStructuralLowProfile] using h
+
+private theorem integral_centeredP3_mul_P5_eq_zero :
+    (∫ x : ℝ in -1..1, centeredP3 x * factorTwoCenteredP5 x) = 0 := by
+  have h := integral_fixedOddLowProfile_mul_tail_eq_zero
+    factorTwoCenteredP5 continuous_factorTwoCenteredP5
+    factorTwoCenteredP5_intrinsic_coefficients_zero.1
+    factorTwoCenteredP5_intrinsic_coefficients_zero.2 0 1
+  simpa [factorTwoOddStructuralLowProfile] using h
+
+private theorem yoshidaEndpointCoshMoment_eq_centeredCoshMoment
+    (w : ℝ → ℝ) :
+    yoshidaEndpointCoshMoment w =
+      centeredCoshMoment w (yoshidaEndpointA / 2) := by
+  unfold centeredCoshMoment yoshidaEndpointCoshMoment
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  ring
+
+private theorem yoshidaEndpointCoshMoment_centeredP1_eq_zero :
+    yoshidaEndpointCoshMoment centeredP1 = 0 := by
+  have h := centeredCoshMoment_eq_zero_of_odd
+    (w := centeredP1) (by intro x; unfold centeredP1; ring)
+    (yoshidaEndpointA / 2)
+  rw [yoshidaEndpointCoshMoment_eq_centeredCoshMoment]
+  exact h
+
+private theorem yoshidaEndpointCoshMoment_centeredP3_eq_zero :
+    yoshidaEndpointCoshMoment centeredP3 = 0 := by
+  have h := centeredCoshMoment_eq_zero_of_odd
+    (w := centeredP3) (by intro x; unfold centeredP3; ring)
+    (yoshidaEndpointA / 2)
+  rw [yoshidaEndpointCoshMoment_eq_centeredCoshMoment]
+  exact h
+
+private theorem yoshidaEndpointCoshMoment_P5_eq_zero :
+    yoshidaEndpointCoshMoment factorTwoCenteredP5 = 0 := by
+  have h := centeredCoshMoment_eq_zero_of_odd odd_factorTwoCenteredP5
+    (yoshidaEndpointA / 2)
+  rw [yoshidaEndpointCoshMoment_eq_centeredCoshMoment]
+  exact h
+
+/-- Exact structural decomposition of the clean `P1`--`P5` cross. -/
+theorem cleanBilinear_p1_p5_eq :
+    yoshidaEndpointEvenCleanBilinear centeredP1 factorTwoCenteredP5 =
+      (1 / 14 : ℝ) -
+        yoshidaEndpointA * (oddP5CleanRegularPolynomial15 +
+          oddP5CleanRegularEnvelopeError15) -
+        2 * yoshidaEndpointA * oddCleanSinhMoment1 *
+          oddP5CleanSinhMoment := by
+  unfold yoshidaEndpointEvenCleanBilinear
+  rw [centeredRawLogBilinear_p1_p5_eq_zero,
+    integral_endpointPotential_mul_centeredP1_mul_P5,
+    integral_centeredP1_mul_P5_eq_zero,
+    re_regularBilinear_p1_p5_eq,
+    yoshidaEndpointCoshMoment_centeredP1_eq_zero,
+    yoshidaEndpointCoshMoment_P5_eq_zero]
+  unfold oddCleanSinhMoment1 oddP5CleanSinhMoment
+  ring
+
+/-- Exact structural decomposition of the clean `P3`--`P5` cross. -/
+theorem cleanBilinear_p3_p5_eq :
+    yoshidaEndpointEvenCleanBilinear centeredP3 factorTwoCenteredP5 =
+      (1 / 9 : ℝ) -
+        yoshidaEndpointA * (oddP5CleanRegularPolynomial35 +
+          oddP5CleanRegularEnvelopeError35) -
+        2 * yoshidaEndpointA * oddCleanSinhMoment3 *
+          oddP5CleanSinhMoment := by
+  unfold yoshidaEndpointEvenCleanBilinear
+  rw [centeredRawLogBilinear_p3_p5_eq_zero,
+    integral_endpointPotential_mul_centeredP3_mul_P5,
+    integral_centeredP3_mul_P5_eq_zero,
+    re_regularBilinear_p3_p5_eq,
+    yoshidaEndpointCoshMoment_centeredP3_eq_zero,
+    yoshidaEndpointCoshMoment_P5_eq_zero]
+  unfold oddCleanSinhMoment3 oddP5CleanSinhMoment
+  ring
+
+/-- Sharp rational box for the complete clean `P1`--`P5` cross. -/
+theorem cleanBilinear_p1_p5_bounds :
+    (71427 / 1000000 : ℝ) <
+        yoshidaEndpointEvenCleanBilinear centeredP1 factorTwoCenteredP5 ∧
+      yoshidaEndpointEvenCleanBilinear centeredP1 factorTwoCenteredP5 <
+        (71429 / 1000000 : ℝ) := by
+  have hdecomp := cleanBilinear_p1_p5_eq
+  have hmodel := oddP5CleanRegularPolynomial15_bounds
+  have hA := endpointA_coarse_bounds.2
+  have hAModel :
+      yoshidaEndpointA * oddP5CleanRegularPolynomial15 <
+        (7 / 20 : ℝ) * (1 / 8000000 : ℝ) := by
+    calc
+      yoshidaEndpointA * oddP5CleanRegularPolynomial15 ≤
+          (7 / 20 : ℝ) * oddP5CleanRegularPolynomial15 :=
+        mul_le_mul_of_nonneg_right hA.le hmodel.1
+      _ < (7 / 20 : ℝ) * (1 / 8000000 : ℝ) :=
+        mul_lt_mul_of_pos_left hmodel.2 (by norm_num)
+  have herr := abs_oddP5CleanRegularEnvelopeError15_lt
+  have hAError :
+      |yoshidaEndpointA * oddP5CleanRegularEnvelopeError15| <
+        (7 / 20 : ℝ) * (1 / 3000000 : ℝ) := by
+    rw [abs_mul, abs_of_pos yoshidaEndpointA_pos]
+    calc
+      yoshidaEndpointA * |oddP5CleanRegularEnvelopeError15| ≤
+          (7 / 20 : ℝ) * |oddP5CleanRegularEnvelopeError15| :=
+        mul_le_mul_of_nonneg_right hA.le (abs_nonneg _)
+      _ < (7 / 20 : ℝ) * (1 / 3000000 : ℝ) :=
+        mul_lt_mul_of_pos_left herr (by norm_num)
+  have hhyper := abs_oddP5_hyperbolicCross15_lt
+  have hhyperNonneg :
+      0 ≤ 2 * yoshidaEndpointA * oddCleanSinhMoment1 * oddP5CleanSinhMoment := by
+    have h1 : 0 < oddCleanSinhMoment1 :=
+      (show (0 : ℝ) < 11587142 / 100000000 by norm_num).trans
+        oddCleanSinhMoment1_gt
+    exact mul_nonneg
+      (mul_nonneg (mul_nonneg (by norm_num) yoshidaEndpointA_pos.le) h1.le)
+      oddP5CleanSinhMoment_nonneg
+  constructor
+  · nlinarith [neg_abs_le
+      (yoshidaEndpointA * oddP5CleanRegularEnvelopeError15),
+      le_abs_self (yoshidaEndpointA * oddP5CleanRegularEnvelopeError15),
+      neg_abs_le
+        (2 * yoshidaEndpointA * oddCleanSinhMoment1 * oddP5CleanSinhMoment),
+      le_abs_self
+        (2 * yoshidaEndpointA * oddCleanSinhMoment1 * oddP5CleanSinhMoment)]
+  · nlinarith [neg_abs_le
+      (yoshidaEndpointA * oddP5CleanRegularEnvelopeError15),
+      mul_nonneg yoshidaEndpointA_pos.le hmodel.1]
+
+/-- Sharp rational box for the complete clean `P3`--`P5` cross. -/
+theorem cleanBilinear_p3_p5_bounds :
+    (111124 / 1000000 : ℝ) <
+        yoshidaEndpointEvenCleanBilinear centeredP3 factorTwoCenteredP5 ∧
+      yoshidaEndpointEvenCleanBilinear centeredP3 factorTwoCenteredP5 <
+        (111127 / 1000000 : ℝ) := by
+  have hdecomp := cleanBilinear_p3_p5_eq
+  have hmodel := neg_oddP5CleanRegularPolynomial35_bounds
+  have hAlo := endpointA_coarse_bounds.1
+  have hAhi := endpointA_coarse_bounds.2
+  have hmodelPos : 0 < -oddP5CleanRegularPolynomial35 :=
+    (show (0 : ℝ) < 1 / 25000 by norm_num).trans hmodel.1
+  have hAModelLower :
+      (693 / 2000 : ℝ) * (1 / 25000 : ℝ) <
+        yoshidaEndpointA * (-oddP5CleanRegularPolynomial35) := by
+    calc
+      (693 / 2000 : ℝ) * (1 / 25000 : ℝ) <
+          yoshidaEndpointA * (1 / 25000 : ℝ) :=
+        mul_lt_mul_of_pos_right hAlo (by norm_num)
+      _ < yoshidaEndpointA * (-oddP5CleanRegularPolynomial35) :=
+        mul_lt_mul_of_pos_left hmodel.1 yoshidaEndpointA_pos
+  have hAModelUpper :
+      yoshidaEndpointA * (-oddP5CleanRegularPolynomial35) <
+        (7 / 20 : ℝ) * (1 / 23000 : ℝ) := by
+    calc
+      yoshidaEndpointA * (-oddP5CleanRegularPolynomial35) ≤
+          (7 / 20 : ℝ) * (-oddP5CleanRegularPolynomial35) :=
+        mul_le_mul_of_nonneg_right hAhi.le hmodelPos.le
+      _ < (7 / 20 : ℝ) * (1 / 23000 : ℝ) :=
+        mul_lt_mul_of_pos_left hmodel.2 (by norm_num)
+  have herr := abs_oddP5CleanRegularEnvelopeError35_lt
+  have hAError :
+      |yoshidaEndpointA * oddP5CleanRegularEnvelopeError35| <
+        (7 / 20 : ℝ) * (1 / 2800000 : ℝ) := by
+    rw [abs_mul, abs_of_pos yoshidaEndpointA_pos]
+    calc
+      yoshidaEndpointA * |oddP5CleanRegularEnvelopeError35| ≤
+          (7 / 20 : ℝ) * |oddP5CleanRegularEnvelopeError35| :=
+        mul_le_mul_of_nonneg_right hAhi.le (abs_nonneg _)
+      _ < (7 / 20 : ℝ) * (1 / 2800000 : ℝ) :=
+        mul_lt_mul_of_pos_left herr (by norm_num)
+  have hhyper := abs_oddP5_hyperbolicCross35_lt
+  constructor
+  · nlinarith [neg_abs_le
+      (yoshidaEndpointA * oddP5CleanRegularEnvelopeError35),
+      le_abs_self (yoshidaEndpointA * oddP5CleanRegularEnvelopeError35),
+      neg_abs_le
+        (2 * yoshidaEndpointA * oddCleanSinhMoment3 * oddP5CleanSinhMoment),
+      le_abs_self
+        (2 * yoshidaEndpointA * oddCleanSinhMoment3 * oddP5CleanSinhMoment)]
+  · nlinarith [neg_abs_le
+      (yoshidaEndpointA * oddP5CleanRegularEnvelopeError35),
+      le_abs_self (yoshidaEndpointA * oddP5CleanRegularEnvelopeError35),
+      neg_abs_le
+        (2 * yoshidaEndpointA * oddCleanSinhMoment3 * oddP5CleanSinhMoment),
+      le_abs_self
+        (2 * yoshidaEndpointA * oddCleanSinhMoment3 * oddP5CleanSinhMoment)]
+
+theorem cleanBilinear_oddP5_cross_bounds :
+    ((71427 / 1000000 : ℝ) <
+        yoshidaEndpointEvenCleanBilinear centeredP1 factorTwoCenteredP5 ∧
+      yoshidaEndpointEvenCleanBilinear centeredP1 factorTwoCenteredP5 <
+        (71429 / 1000000 : ℝ)) ∧
+    ((111124 / 1000000 : ℝ) <
+        yoshidaEndpointEvenCleanBilinear centeredP3 factorTwoCenteredP5 ∧
+      yoshidaEndpointEvenCleanBilinear centeredP3 factorTwoCenteredP5 <
+        (111127 / 1000000 : ℝ)) :=
+  ⟨cleanBilinear_p1_p5_bounds, cleanBilinear_p3_p5_bounds⟩
 
 end
 
