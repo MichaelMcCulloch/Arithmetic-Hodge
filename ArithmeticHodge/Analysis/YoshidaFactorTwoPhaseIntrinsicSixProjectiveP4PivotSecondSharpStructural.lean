@@ -475,6 +475,119 @@ private theorem perturb_aligned_bounds :
   · linarith
   constructor <;> linarith
 
+/-- Tight public aligned-coordinate boxes for the negative `P₀/P₂/P₄`
+endpoint.  These are the clean midpoint plus the negative perturbation, so
+downstream minors can reuse the already-proved analytic stack directly. -/
+theorem factorTwoIntrinsicP4_negative_aligned_bounds :
+    (2198709 / 1000000 : ℝ) <
+        factorTwoStructuralPhaseLow00 (-1) +
+          2 * factorTwoStructuralPhaseLow02 (-1) +
+          factorTwoStructuralPhaseLow22 (-1) ∧
+      factorTwoStructuralPhaseLow00 (-1) +
+          2 * factorTwoStructuralPhaseLow02 (-1) +
+          factorTwoStructuralPhaseLow22 (-1) <
+        (2200885 / 1000000 : ℝ) ∧
+      (77471 / 1000000 : ℝ) <
+        factorTwoStructuralPhaseLow00 (-1) -
+          factorTwoStructuralPhaseLow22 (-1) ∧
+      factorTwoStructuralPhaseLow00 (-1) -
+          factorTwoStructuralPhaseLow22 (-1) <
+        (79531 / 1000000 : ℝ) ∧
+      (292634 / 1000000 : ℝ) <
+        factorTwoIntrinsicFourP45Cross04 (-1) +
+          factorTwoIntrinsicFourP45Cross24 (-1) ∧
+      factorTwoIntrinsicFourP45Cross04 (-1) +
+          factorTwoIntrinsicFourP45Cross24 (-1) <
+        (300081 / 1000000 : ℝ) ∧
+      (18409 / 1000000 : ℝ) <
+        factorTwoStructuralPhaseLow00 (-1) -
+          2 * factorTwoStructuralPhaseLow02 (-1) +
+          factorTwoStructuralPhaseLow22 (-1) ∧
+      factorTwoStructuralPhaseLow00 (-1) -
+          2 * factorTwoStructuralPhaseLow02 (-1) +
+          factorTwoStructuralPhaseLow22 (-1) <
+        (20585 / 1000000 : ℝ) ∧
+      (66134 / 1000000 : ℝ) <
+        factorTwoIntrinsicFourP45Cross24 (-1) -
+          factorTwoIntrinsicFourP45Cross04 (-1) ∧
+      factorTwoIntrinsicFourP45Cross24 (-1) -
+          factorTwoIntrinsicFourP45Cross04 (-1) <
+        (70081 / 1000000 : ℝ) := by
+  have hc := clean_aligned_bounds
+  have hp := perturb_aligned_bounds
+  have hStrong :
+      factorTwoStructuralPhaseLow00 (-1) +
+          2 * factorTwoStructuralPhaseLow02 (-1) +
+          factorTwoStructuralPhaseLow22 (-1) =
+        cleanStrong + perturbStrong := by
+    unfold factorTwoStructuralPhaseLow00 factorTwoStructuralPhaseLow02
+      factorTwoStructuralPhaseLow22 cleanStrong perturbStrong
+      evenNegativePerturbation00 evenNegativePerturbation02
+      evenNegativePerturbation22
+    ring
+  have hSkew :
+      factorTwoStructuralPhaseLow00 (-1) -
+          factorTwoStructuralPhaseLow22 (-1) =
+        cleanSkew + perturbSkew := by
+    unfold factorTwoStructuralPhaseLow00 factorTwoStructuralPhaseLow22
+      cleanSkew perturbSkew evenNegativePerturbation00
+      evenNegativePerturbation22
+    ring
+  have hSum :
+      factorTwoIntrinsicFourP45Cross04 (-1) +
+          factorTwoIntrinsicFourP45Cross24 (-1) =
+        cleanCrossSum + perturbCrossSum := by
+    unfold factorTwoIntrinsicFourP45Cross04
+      factorTwoIntrinsicFourP45Cross24
+    unfold perturbCrossSum
+    unfold factorTwoIntrinsicP4PlusCrossSum
+    unfold factorTwoIntrinsicFourP45Cross04
+      factorTwoIntrinsicFourP45Cross24 cleanCrossSum
+    ring
+  have hWeak :
+      factorTwoStructuralPhaseLow00 (-1) -
+          2 * factorTwoStructuralPhaseLow02 (-1) +
+          factorTwoStructuralPhaseLow22 (-1) =
+        cleanWeak + perturbWeak := by
+    unfold factorTwoStructuralPhaseLow00 factorTwoStructuralPhaseLow02
+      factorTwoStructuralPhaseLow22 cleanWeak perturbWeak
+      evenNegativePerturbation00 evenNegativePerturbation02
+      evenNegativePerturbation22
+    ring
+  have hDifference :
+      factorTwoIntrinsicFourP45Cross24 (-1) -
+          factorTwoIntrinsicFourP45Cross04 (-1) =
+        cleanCrossDifference + perturbCrossDifference := by
+    unfold factorTwoIntrinsicFourP45Cross04
+      factorTwoIntrinsicFourP45Cross24
+    unfold perturbCrossDifference
+    unfold factorTwoIntrinsicP4PlusCrossDifference
+    unfold factorTwoIntrinsicFourP45Cross04
+      factorTwoIntrinsicFourP45Cross24 cleanCrossDifference
+    ring
+  rw [hStrong, hSkew, hSum, hWeak, hDifference]
+  rcases hc with
+    ⟨hAL, hAU, hXL, hXU, hRL, hRU, hCL, hCU, hDL, hDU, _hF⟩
+  rcases hp with
+    ⟨haL, haU, hyL, hyU, hrL, hrU, hcL, hcU, hdL, hdU, _hfL, _hfU⟩
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor
+  · linarith
+  constructor <;> linarith
+
 /-! ## Cancellation-preserving reserve polynomial -/
 
 /-- The reverse mixed determinant after writing the negative endpoint as
