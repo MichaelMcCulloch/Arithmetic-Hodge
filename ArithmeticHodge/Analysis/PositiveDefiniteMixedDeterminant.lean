@@ -52,6 +52,35 @@ theorem real_trace_mul_pos_of_posDef
   have hreal := (Complex.pos_iff.mp hcomplex).1
   simpa [Matrix.trace, complexOfRealMatrix] using hreal
 
+/-- The adjugate of a real positive-definite matrix is positive definite.
+This is the division-free form of `adj A = det A • A⁻¹`. -/
+theorem adjugate_posDef
+    {A : Matrix n n ℝ} [Nonempty n]
+    (hA : A.PosDef) :
+    A.adjugate.PosDef := by
+  have hdet : 0 < A.det := hA.det_pos
+  have hdetUnit : IsUnit A.det :=
+    A.isUnit_iff_isUnit_det.mp hA.isUnit
+  have hadj : A.adjugate = A.det • A⁻¹ := by
+    calc
+      A.adjugate = A⁻¹ * (A * A.adjugate) := by
+        symm
+        exact A.nonsing_inv_mul_cancel_left A.adjugate hdetUnit
+      _ = A⁻¹ * (A.det • (1 : Matrix n n ℝ)) := by
+        rw [Matrix.mul_adjugate]
+      _ = A.det • A⁻¹ := by
+        simp only [Matrix.mul_smul, Matrix.mul_one]
+  rw [hadj]
+  exact hA.inv.smul hdet
+
+/-- The first mixed determinant of two positive-definite real forms,
+written invariantly as `tr (adj A · B)`, is strictly positive. -/
+theorem trace_adjugate_mul_pos_of_posDef
+    {A B : Matrix n n ℝ} [Nonempty n]
+    (hA : A.PosDef) (hB : B.PosDef) :
+    0 < Matrix.trace (A.adjugate * B) :=
+  real_trace_mul_pos_of_posDef (adjugate_posDef hA) hB
+
 end
 
 end ArithmeticHodge.Analysis.PositiveDefiniteMixedDeterminant
