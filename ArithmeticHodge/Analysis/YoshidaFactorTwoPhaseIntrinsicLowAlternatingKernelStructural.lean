@@ -244,6 +244,72 @@ private theorem intervalIntegrable_intrinsicAlternatingArchModel
     fun_prop
   · exact ContinuousAt.div (by fun_prop) (by fun_prop) hden
 
+/-- The regular alternating remainder is linear under profile subtraction. -/
+theorem intrinsicAlternatingRegularError_sub
+    (q r : ℝ → ℝ) (hq : Continuous q) (hr : Continuous r) :
+    intrinsicAlternatingRegularError (q - r) =
+      intrinsicAlternatingRegularError q -
+        intrinsicAlternatingRegularError r := by
+  have hqI := intervalIntegrable_intrinsicAlternatingRegularError
+    (intrinsicAlternatingCorrelation q) (by
+      unfold intrinsicAlternatingCorrelation
+      fun_prop)
+  have hrI := intervalIntegrable_intrinsicAlternatingRegularError
+    (intrinsicAlternatingCorrelation r) (by
+      unfold intrinsicAlternatingCorrelation
+      fun_prop)
+  have hqI' : IntervalIntegrable
+      (fun t ↦
+        (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          t / 10) * (t * (2 - t) * q t)) volume 0 2 := by
+    simpa only [intrinsicAlternatingCorrelation] using hqI
+  have hrI' : IntervalIntegrable
+      (fun t ↦
+        (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          t / 10) * (t * (2 - t) * r t)) volume 0 2 := by
+    simpa only [intrinsicAlternatingCorrelation] using hrI
+  unfold intrinsicAlternatingRegularError intrinsicAlternatingCorrelation
+  rw [show (fun t : ℝ ↦
+      (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+        t / 10) * (t * (2 - t) * ((q - r) t))) =
+    fun t ↦
+      (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+        t / 10) * (t * (2 - t) * q t) -
+      (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+        t / 10) * (t * (2 - t) * r t) by
+    funext t
+    simp only [Pi.sub_apply]
+    ring,
+    intervalIntegral.integral_sub hqI' hrI']
+
+/-- The explicit archimedean alternating model has the same subtraction
+linearity as its regular remainder. -/
+theorem intrinsicAlternatingArchModel_sub
+    (q r : ℝ → ℝ) (hq : Continuous q) (hr : Continuous r) :
+    intrinsicAlternatingArchModel (q - r) =
+      intrinsicAlternatingArchModel q - intrinsicAlternatingArchModel r := by
+  have hqI := intervalIntegrable_intrinsicAlternatingArchModel q hq
+  have hrI := intervalIntegrable_intrinsicAlternatingArchModel r hr
+  have hqI' : IntervalIntegrable
+      (fun t ↦ (t / 10) * (t * (2 - t) * q t) +
+        t ^ 2 * q t / (2 + t)) volume 0 2 := by
+    simpa only [intrinsicAlternatingCorrelation] using hqI
+  have hrI' : IntervalIntegrable
+      (fun t ↦ (t / 10) * (t * (2 - t) * r t) +
+        t ^ 2 * r t / (2 + t)) volume 0 2 := by
+    simpa only [intrinsicAlternatingCorrelation] using hrI
+  unfold intrinsicAlternatingArchModel intrinsicAlternatingCorrelation
+  rw [show (fun t : ℝ ↦
+      (t / 10) * (t * (2 - t) * ((q - r) t)) +
+        t ^ 2 * (q - r) t / (2 + t)) =
+    fun t ↦
+      ((t / 10) * (t * (2 - t) * q t) + t ^ 2 * q t / (2 + t)) -
+      ((t / 10) * (t * (2 - t) * r t) + t ^ 2 * r t / (2 + t)) by
+    funext t
+    simp only [Pi.sub_apply]
+    ring,
+    intervalIntegral.integral_sub hqI' hrI']
+
 private theorem endpoint_mul_integral_antisymmetricWeight_mul_eq_regular_poles
     (q : ℝ → ℝ) :
     yoshidaEndpointA *
