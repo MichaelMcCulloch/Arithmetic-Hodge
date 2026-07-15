@@ -9,10 +9,13 @@ noncomputable section
 
 open Matrix
 open Polynomial
+open ThreeByThreeConvexPencil
 open ThreeByThreePositiveMixedDeterminant
 open ThreeByThreePositiveMixedDiscriminant
+open ThreeByThreeRankOneSchur
 open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicLow
+open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveSchur
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveXGateCoefficientsStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFiveCoefficientsStructural
@@ -43,6 +46,20 @@ def rawSixOddPlusMatrix : Matrix (Fin 3) (Fin 3) ℝ :=
 
 def rawSixOddMinusMatrix : Matrix (Fin 3) (Fin 3) ℝ :=
   rawSixOddEndpointMatrix (-1)
+
+theorem rawSixOddEndpointMatrix_det_eq_symmetricDeterminant (a : ℝ) :
+    (rawSixOddEndpointMatrix a).det =
+      symmetricDeterminant
+        (factorTwoIntrinsicOddPhaseLow11 a)
+        (factorTwoIntrinsicOddPhaseLow13 a)
+        (factorTwoIntrinsicFourP45Cross15 a)
+        (factorTwoIntrinsicOddPhaseLow33 a)
+        (factorTwoIntrinsicFourP45Cross35 a)
+        (factorTwoIntrinsicSixP5Diagonal a) := by
+  unfold rawSixOddEndpointMatrix symmetricMatrix3
+  rw [Matrix.det_fin_three]
+  simp [symmetricDeterminant]
+  ring
 
 private def rawSixOddCoefficientMatrix : Matrix (Fin 3) (Fin 3) ℝ[X] :=
   !![coefficientOdd11Polynomial, coefficientOdd13Polynomial,
@@ -117,6 +134,82 @@ theorem rawSixOddDetCoeff_three_eq :
   rw [rawSixOddDeterminantPolynomial_eq_determinantPencil,
     determinantPencil_eq_coefficients]
   simp
+
+private theorem rawSixOddPlusMatrix_low_gates :
+    0 < factorTwoIntrinsicOddPhaseLow11 1 ∧
+      0 < leadingMinorTwo
+        (factorTwoIntrinsicOddPhaseLow11 1)
+        (factorTwoIntrinsicOddPhaseLow13 1)
+        (factorTwoIntrinsicOddPhaseLow33 1) := by
+  rcases oddStructuralLow_endpoint_gates with
+    ⟨h11, hdet, _hm11, _hmdet⟩
+  exact ⟨by
+      simpa [factorTwoIntrinsicOddPhaseLow11,
+        YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow11]
+        using h11,
+    by
+      simpa [leadingMinorTwo, factorTwoIntrinsicOddPhaseLow11,
+        factorTwoIntrinsicOddPhaseLow13, factorTwoIntrinsicOddPhaseLow33,
+        YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow11,
+        YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow13,
+        YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow33]
+        using hdet⟩
+
+private theorem rawSixOddMinusMatrix_low_gates :
+    0 < factorTwoIntrinsicOddPhaseLow11 (-1) ∧
+      0 < leadingMinorTwo
+        (factorTwoIntrinsicOddPhaseLow11 (-1))
+        (factorTwoIntrinsicOddPhaseLow13 (-1))
+        (factorTwoIntrinsicOddPhaseLow33 (-1)) := by
+  rcases oddStructuralLow_endpoint_gates with
+    ⟨_hp11, _hpdet, hm11, hmdet⟩
+  exact ⟨by
+      simpa [factorTwoIntrinsicOddPhaseLow11,
+        YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow11]
+        using hm11,
+    by
+      simpa [leadingMinorTwo, factorTwoIntrinsicOddPhaseLow11,
+        factorTwoIntrinsicOddPhaseLow13, factorTwoIntrinsicOddPhaseLow33,
+        YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow11,
+        YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow13,
+        YoshidaFactorTwoPhaseOddLowSchur.factorTwoOddStructuralPhaseLow33]
+        using hmdet⟩
+
+/-- At the plus endpoint the first two Sylvester pivots are already known;
+positive definiteness is therefore equivalent to the final determinant. -/
+theorem rawSixOddPlusMatrix_posDef_iff_det_pos :
+    rawSixOddPlusMatrix.PosDef ↔ 0 < rawSixOddPlusMatrix.det := by
+  constructor
+  · exact fun h ↦ h.det_pos
+  · intro hdet
+    unfold rawSixOddPlusMatrix
+    apply symmetricMatrix3_posDef
+    · exact rawSixOddPlusMatrix_low_gates.1
+    · exact rawSixOddPlusMatrix_low_gates.2
+    · rw [← rawSixOddEndpointMatrix_det_eq_symmetricDeterminant]
+      exact hdet
+
+/-- At the minus endpoint the first two Sylvester pivots are already known;
+positive definiteness is therefore equivalent to the final determinant. -/
+theorem rawSixOddMinusMatrix_posDef_iff_det_pos :
+    rawSixOddMinusMatrix.PosDef ↔ 0 < rawSixOddMinusMatrix.det := by
+  constructor
+  · exact fun h ↦ h.det_pos
+  · intro hdet
+    unfold rawSixOddMinusMatrix
+    apply symmetricMatrix3_posDef
+    · exact rawSixOddMinusMatrix_low_gates.1
+    · exact rawSixOddMinusMatrix_low_gates.2
+    · rw [← rawSixOddEndpointMatrix_det_eq_symmetricDeterminant]
+      exact hdet
+
+theorem rawSixOddPlusMatrix_posDef_iff_raw_coeff_zero_pos :
+    rawSixOddPlusMatrix.PosDef ↔ 0 < rawSixOddDetCoeff 0 := by
+  rw [rawSixOddPlusMatrix_posDef_iff_det_pos, rawSixOddDetCoeff_zero_eq]
+
+theorem rawSixOddMinusMatrix_posDef_iff_raw_coeff_three_pos :
+    rawSixOddMinusMatrix.PosDef ↔ 0 < rawSixOddDetCoeff 3 := by
+  rw [rawSixOddMinusMatrix_posDef_iff_det_pos, rawSixOddDetCoeff_three_eq]
 
 /-- Positive definiteness at the two phase endpoints makes every
 coefficient of the intervening odd determinant pencil strictly positive.
