@@ -981,6 +981,81 @@ private theorem hyperbolicQuadratic_p4_lt :
   have hMsq0 := sq_nonneg M
   nlinarith
 
+private theorem hyperbolicQuadratic_p4_lt_one_div_hundred_million :
+    yoshidaEndpointHyperbolicQuadratic
+        (fun x ↦ (factorTwoCenteredP4 x : ℂ)) <
+      (1 / 100000000 : ℝ) := by
+  let M : ℝ := centeredCoshMoment factorTwoCenteredP4
+    (yoshidaEndpointA / 2)
+  have hw := exp_weighted_centeredCoshMoment_P4_sq_le_profile
+    (yoshidaEndpointA / 2)
+    (div_nonneg yoshidaEndpointA_pos.le (by norm_num))
+  have hAupper : yoshidaEndpointA < (347 / 1000 : ℝ) := by
+    unfold yoshidaEndpointA
+    linarith [strict_log_two_fine_bounds.2]
+  have harg : yoshidaEndpointA / 2 ∈ Icc (0 : ℝ) 8 := by
+    constructor
+    · exact div_nonneg yoshidaEndpointA_pos.le (by norm_num)
+    · linarith
+  have hcap : (347 / 2000 : ℝ) ∈ Icc (0 : ℝ) 8 := by
+    norm_num
+  have hmono :
+      factorTwoP4RankProfile (yoshidaEndpointA / 2) ≤
+        factorTwoP4RankProfile (347 / 2000 : ℝ) :=
+    factorTwoP4RankProfile_monotoneOn harg hcap (by linarith)
+  have hprofile :
+      factorTwoP4RankProfile (yoshidaEndpointA / 2) <
+        (1 / 2000000000 : ℝ) := by
+    calc
+      factorTwoP4RankProfile (yoshidaEndpointA / 2) ≤
+          factorTwoP4RankProfile (347 / 2000 : ℝ) := hmono
+      _ < (1 / 2000000000 : ℝ) := by
+        norm_num [factorTwoP4RankProfile]
+  have hw' :
+      Real.exp (-yoshidaEndpointA) * M ^ 2 <
+        (1 / 2000000000 : ℝ) := by
+    dsimp only [M]
+    have hrewrite : -2 * (yoshidaEndpointA / 2) = -yoshidaEndpointA := by
+      ring
+    rw [hrewrite] at hw
+    exact hw.trans_lt hprofile
+  have hexpA : Real.exp yoshidaEndpointA < 2 := by
+    rw [show (2 : ℝ) = Real.exp (Real.log 2) by
+      symm
+      exact Real.exp_log (by norm_num)]
+    apply Real.exp_lt_exp.mpr
+    unfold yoshidaEndpointA
+    nlinarith [Real.log_pos (by norm_num : (1 : ℝ) < 2)]
+  have hexpNeg : (1 / 2 : ℝ) < Real.exp (-yoshidaEndpointA) := by
+    have hprod : Real.exp yoshidaEndpointA *
+        Real.exp (-yoshidaEndpointA) = 1 := by
+      rw [← Real.exp_add]
+      norm_num
+    have hpos := Real.exp_pos (-yoshidaEndpointA)
+    nlinarith
+  have hM : M ^ 2 < (1 / 1000000000 : ℝ) := by
+    have hscaled : (1 / 2 : ℝ) * M ^ 2 ≤
+        Real.exp (-yoshidaEndpointA) * M ^ 2 :=
+      mul_le_mul_of_nonneg_right hexpNeg.le (sq_nonneg M)
+    nlinarith
+  have hmoment : yoshidaEndpointCoshMoment factorTwoCenteredP4 = M := by
+    unfold yoshidaEndpointCoshMoment
+    dsimp only [M, centeredCoshMoment]
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    change Real.cosh (yoshidaEndpointA * x / 2) * factorTwoCenteredP4 x =
+      Real.cosh (yoshidaEndpointA / 2 * x) * factorTwoCenteredP4 x
+    rw [show yoshidaEndpointA * x / 2 =
+      yoshidaEndpointA / 2 * x by ring]
+  have hsinh := yoshidaEndpointSinhMoment_eq_zero_of_even
+    factorTwoCenteredP4 even_factorTwoCenteredP4
+  rw [yoshidaEndpointHyperbolicQuadratic_ofReal_eq_moments,
+    hsinh, hmoment]
+  norm_num
+  have hA0 := yoshidaEndpointA_pos
+  have hMsq0 := sq_nonneg M
+  nlinarith
+
 private theorem c44_lt : c44 < (8 / 25 : ℝ) := by
   have hmass := scalarMassLoss_gt_local
   have hreg := regularQuadratic_p4_nonneg
@@ -997,11 +1072,47 @@ private theorem c44_lt : c44 < (8 / 25 : ℝ) := by
   norm_num at hmass hregScaled hhyper hlog ⊢
   nlinarith
 
+private theorem c44_lt_three_hundred_fifteen_thousandths :
+    c44 < (315 / 1000 : ℝ) := by
+  have hmass := scalarMassLoss_gt_local
+  have hreg := regularQuadratic_p4_nonneg
+  have hregScaled : 0 ≤ yoshidaEndpointA *
+      (yoshidaEndpointRegularQuadratic
+        (fun x ↦ (factorTwoCenteredP4 x : ℂ))).re :=
+    mul_nonneg yoshidaEndpointA_pos.le hreg
+  have hhyper := hyperbolicQuadratic_p4_lt_one_div_hundred_million
+  have hlog := strict_log_two_fine_bounds.1
+  unfold c44 yoshidaEndpointOddCleanQuadratic
+  rw [centeredRawLogEnergy_p4_eq,
+    integral_endpointPotential_mul_factorTwoCenteredP4_sq,
+    integral_factorTwoCenteredP4_sq]
+  norm_num at hmass hregScaled hhyper hlog ⊢
+  nlinarith
+
 /-- Public structural upper bound for the clean `P₄` diagonal. -/
 theorem factorTwoP4_clean_diagonal_lt_eight_div_twenty_five :
     yoshidaEndpointOddCleanQuadratic factorTwoCenteredP4 <
       (8 / 25 : ℝ) := by
   simpa only [c44] using c44_lt
+
+/-- Tight clean `P₄` diagonal cap obtained by evaluating the structural
+rank profile at the actual endpoint scale. -/
+theorem factorTwoP4_clean_diagonal_lt_three_hundred_fifteen_thousandths :
+    yoshidaEndpointOddCleanQuadratic factorTwoCenteredP4 <
+      (315 / 1000 : ℝ) := by
+  simpa only [c44] using c44_lt_three_hundred_fifteen_thousandths
+
+/-- Tight positive-endpoint `P₄` diagonal cap. -/
+theorem factorTwoIntrinsicSixP4Diagonal_plus_lt_one_thirty_nine_thousandths :
+    factorTwoIntrinsicSixP4Diagonal 1 < (139 / 1000 : ℝ) := by
+  have hclean := c44_lt_three_hundred_fifteen_thousandths
+  have hpert := n44_gt
+  have heq : factorTwoIntrinsicSixP4Diagonal 1 = c44 - n44 := by
+    unfold factorTwoIntrinsicSixP4Diagonal factorTwoEndpointPhaseDiagonal
+      c44 n44
+    ring
+  rw [heq]
+  linarith
 
 /-- The negative-endpoint `P₄` diagonal inherits a convenient rational
 upper bound from the clean estimate and the proved perturbation lower
