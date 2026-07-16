@@ -53,6 +53,7 @@ open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFiveOddMinorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedAlternatingModelsStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSplitStructural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseOddAffineKernelEstimate
@@ -153,6 +154,50 @@ theorem factorTwoIntrinsicSixUnbalancedTPlus11_mul_det_eq_bordered :
     factorTwoIntrinsicSixUnbalancedTPlusMinor leadingMinorTwo
     plusP5BorderDiagonal plusP5BorderCross plusP5ShearCross plusShearCross
   ring
+
+/-! ## The exact six-dimensional form -/
+
+/-- The six-dimensional lower form obtained by adjoining the completed
+`P₅` coordinate to the public five-dimensional minor certificate. -/
+def factorTwoIntrinsicSixUnbalancedMinorPlusLowerSixQuadratic
+    (s d p u v w : ℝ) : ℝ :=
+  factorTwoIntrinsicSixUnbalancedMinorPlusLowerFiveQuadratic s d p u v +
+    2 * ((factorTwoIntrinsicSixUnbalancedKPlus05 +
+          factorTwoIntrinsicSixUnbalancedKPlus25) * s +
+      (factorTwoIntrinsicSixUnbalancedKPlus05 -
+          factorTwoIntrinsicSixUnbalancedKPlus25) * d +
+      factorTwoIntrinsicSixUnbalancedKPlus45 * p) * w +
+    2 * factorTwoIntrinsicSixUnbalancedOMinus15 *
+      (u - (25 / 24 : ℝ) * v) * w +
+    2 * factorTwoIntrinsicSixUnbalancedOMinus35 * v * w +
+    factorTwoIntrinsicSixUnbalancedOMinus55 * w ^ 2
+
+/-- The exact static-plus quadratic, split into the public exact minor and
+the final `P₅` row and column. -/
+def factorTwoIntrinsicSixUnbalancedMinorPlusExactSixQuadratic
+    (c0 c2 c4 c1 c3 c5 : ℝ) : ℝ :=
+  factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic
+      c0 c2 c4 c1 c3 +
+    2 * (c0 * factorTwoIntrinsicSixUnbalancedKPlus05 +
+      c2 * factorTwoIntrinsicSixUnbalancedKPlus25 +
+      c4 * factorTwoIntrinsicSixUnbalancedKPlus45) * c5 +
+    2 * factorTwoIntrinsicSixUnbalancedOMinus15 * c1 * c5 +
+    2 * factorTwoIntrinsicSixUnbalancedOMinus35 * c3 * c5 +
+    factorTwoIntrinsicSixUnbalancedOMinus55 * c5 ^ 2
+
+/-- The public five-dimensional comparison extends algebraically to the
+completed sixth coordinate. -/
+theorem factorTwoIntrinsicSixUnbalancedMinorPlusLowerSix_le_exact
+    (s d p u v w : ℝ) :
+    factorTwoIntrinsicSixUnbalancedMinorPlusLowerSixQuadratic
+        s d p u v w ≤
+      factorTwoIntrinsicSixUnbalancedMinorPlusExactSixQuadratic
+        (s + d) (s - d) p (u - (25 / 24 : ℝ) * v) v w := by
+  have h := factorTwoIntrinsicSixUnbalancedMinorPlusLowerFive_le_exact
+    s d p u v
+  unfold factorTwoIntrinsicSixUnbalancedMinorPlusLowerSixQuadratic
+    factorTwoIntrinsicSixUnbalancedMinorPlusExactSixQuadratic
+  nlinarith
 
 /-! ## The exact six-dimensional congruence
 
@@ -4388,6 +4433,355 @@ private theorem plusDetTransformedSixQuadratic_border_congruence
   unfold plusDetTransformedSixQuadratic plusDetTransformedFiveQuadratic
     plusDetFiveQuadratic
   ring
+
+/-! ## Strict positivity of the completed six-dimensional form -/
+
+private theorem plusDetAbsoluteComparison_le_actualTransformedFive
+    (x0 x1 x2 x3 x4 : ℝ) :
+    plusDetAbsoluteComparison x0 x1 x2 x3 x4 ≤
+      plusDetTransformedFiveQuadratic
+        plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+        plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+        x0 x1 x2 x3 x4 := by
+  have h :=
+    factorTwoIntrinsicSixUnbalancedMinorPlusAbsoluteComparison_le_transformed
+      x0 x1 x2 x3 x4
+  change plusDetAbsoluteComparison x0 x1 x2 x3 x4 ≤
+    plusDetTransformedFiveQuadratic
+      plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+      plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+      x0 x1 x2 x3 x4 at h
+  exact h
+
+private theorem plusDetAbsoluteComparison_pos_of_ne
+    (x0 x1 x2 x3 x4 : ℝ)
+    (hne : x0 ≠ 0 ∨ x1 ≠ 0 ∨ x2 ≠ 0 ∨ x3 ≠ 0 ∨ x4 ≠ 0) :
+    0 < plusDetAbsoluteComparison x0 x1 x2 x3 x4 := by
+  rw [plusDetAbsoluteComparison_eq_sos]
+  have hpairs := plusDetOldPairSquares_nonneg x0 x1 x2 x3 x4
+  unfold plusDetAbsoluteComparisonSOS plusDetReserve0 plusDetReserve1
+    plusDetReserve2 plusDetReserve3 plusDetReserve4
+  rcases hne with h0 | h1 | h2 | h3 | h4
+  all_goals positivity
+
+private theorem plusDetCompletedBorder_pos
+    (x0 x1 x2 x3 x4 z : ℝ)
+    (hne : x0 ≠ 0 ∨ x1 ≠ 0 ∨ x2 ≠ 0 ∨ x3 ≠ 0 ∨
+      x4 ≠ 0 ∨ z ≠ 0) :
+    0 <
+      plusDetTransformedFiveQuadratic
+          plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+          plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+          x0 x1 x2 x3 x4 +
+        2 * plusDetActualH0 * x0 * z + 2 * plusDetActualH1 * x1 * z +
+        2 * plusDetActualH2 * x2 * z + 2 * plusDetActualH3 * x3 * z +
+        2 * plusDetActualH4 * x4 * z + plusDetActualW * z ^ 2 := by
+  rcases plusP5BorderCombinedBounds_structural with
+    ⟨hH2, hH3, hH4, hW⟩
+  have hM := plusDetAbsoluteComparison_le_actualTransformedFive
+    x0 x1 x2 x3 x4
+  have hH0' : |plusDetActualH0| ≤ plusDetBorderRadius0 := by
+    simpa only [plusDetBorderRadius0] using plusDetActualH0_abs_lt.le
+  have hH1' : |plusDetActualH1| ≤ plusDetBorderRadius1 := by
+    simpa only [plusDetBorderRadius1] using plusDetActualH1_abs_lt.le
+  have hH2' : |plusDetActualH2| ≤ plusDetBorderRadius2 := by
+    simpa only [plusDetBorderRadius2] using hH2.le
+  have hH3' : |plusDetActualH3| ≤ plusDetBorderRadius3 := by
+    simpa only [plusDetBorderRadius3] using hH3.le
+  have hH4' : |plusDetActualH4| ≤ plusDetBorderRadius4 := by
+    simpa only [plusDetBorderRadius4] using hH4.le
+  have hW' : (63 / 1000 : ℝ) ≤ plusDetActualW := hW.le
+  have hcomp := plusDetBorderComparison_le
+    (M := plusDetTransformedFiveQuadratic
+      plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+      plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+      x0 x1 x2 x3 x4)
+    (h0 := plusDetActualH0) (h1 := plusDetActualH1)
+    (h2 := plusDetActualH2) (h3 := plusDetActualH3)
+    (h4 := plusDetActualH4) (W := plusDetActualW)
+    (x0 := x0) (x1 := x1) (x2 := x2) (x3 := x3) (x4 := x4) (z := z)
+    hM hH0' hH1' hH2' hH3' hH4' hW'
+  by_cases hz : z = 0
+  · have hxne : x0 ≠ 0 ∨ x1 ≠ 0 ∨ x2 ≠ 0 ∨ x3 ≠ 0 ∨ x4 ≠ 0 := by
+      rcases hne with h0 | h1 | h2 | h3 | h4 | hz'
+      · exact Or.inl h0
+      · exact Or.inr (Or.inl h1)
+      · exact Or.inr (Or.inr (Or.inl h2))
+      · exact Or.inr (Or.inr (Or.inr (Or.inl h3)))
+      · exact Or.inr (Or.inr (Or.inr (Or.inr h4)))
+      · exact (hz' hz).elim
+    have hbase := plusDetAbsoluteComparison_pos_of_ne
+      x0 x1 x2 x3 x4 hxne
+    have hfive := hbase.trans_le hM
+    simpa only [hz, mul_zero, zero_pow (by norm_num : (2 : ℕ) ≠ 0),
+      add_zero] using hfive
+  · exact (plusDetBorderComparison_pos_of_ne x0 x1 x2 x3 x4 z hz).trans_le
+      hcomp
+
+private theorem plusDetActualTransformedSix_pos
+    (y0 y1 y2 y3 y4 z : ℝ)
+    (hne : y0 ≠ 0 ∨ y1 ≠ 0 ∨ y2 ≠ 0 ∨ y3 ≠ 0 ∨
+      y4 ≠ 0 ∨ z ≠ 0) :
+    0 < plusDetTransformedSixQuadratic
+      plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+      plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+      plusDetA05 plusDetA25 plusDetA45 plusDetO15 plusDetO35 plusDetO55
+      y0 y1 y2 y3 y4 z := by
+  let x0 : ℝ := y0 - plusDetShift0 * z
+  let x1 : ℝ := y1 - plusDetShift1 * z
+  let x2 : ℝ := y2 - plusDetShift2 * z
+  let x3 : ℝ := y3 - plusDetShift3 * z
+  let x4 : ℝ := y4 - plusDetShift4 * z
+  have hneX :
+      x0 ≠ 0 ∨ x1 ≠ 0 ∨ x2 ≠ 0 ∨ x3 ≠ 0 ∨ x4 ≠ 0 ∨ z ≠ 0 := by
+    by_contra hzero
+    push_neg at hzero
+    rcases hzero with ⟨hx0, hx1, hx2, hx3, hx4, hz⟩
+    have hy0 : y0 = 0 := by
+      dsimp only [x0] at hx0
+      rw [hz] at hx0
+      simpa using hx0
+    have hy1 : y1 = 0 := by
+      dsimp only [x1] at hx1
+      rw [hz] at hx1
+      simpa using hx1
+    have hy2 : y2 = 0 := by
+      dsimp only [x2] at hx2
+      rw [hz] at hx2
+      simpa using hx2
+    have hy3 : y3 = 0 := by
+      dsimp only [x3] at hx3
+      rw [hz] at hx3
+      simpa using hx3
+    have hy4 : y4 = 0 := by
+      dsimp only [x4] at hx4
+      rw [hz] at hx4
+      simpa using hx4
+    rcases hne with hy0' | hy1' | hy2' | hy3' | hy4' | hz'
+    · exact hy0' hy0
+    · exact hy1' hy1
+    · exact hy2' hy2
+    · exact hy3' hy3
+    · exact hy4' hy4
+    · exact hz' hz
+  have hpos := plusDetCompletedBorder_pos x0 x1 x2 x3 x4 z hneX
+  have hcong := plusDetTransformedSixQuadratic_border_congruence
+    plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+    plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+    plusDetA05 plusDetA25 plusDetA45 plusDetO15 plusDetO35 plusDetO55
+    x0 x1 x2 x3 x4 z
+  have hx0 : x0 + plusDetShift0 * z = y0 := by
+    dsimp only [x0]
+    ring
+  have hx1 : x1 + plusDetShift1 * z = y1 := by
+    dsimp only [x1]
+    ring
+  have hx2 : x2 + plusDetShift2 * z = y2 := by
+    dsimp only [x2]
+    ring
+  have hx3 : x3 + plusDetShift3 * z = y3 := by
+    dsimp only [x3]
+    ring
+  have hx4 : x4 + plusDetShift4 * z = y4 := by
+    dsimp only [x4]
+    ring
+  rw [hx0, hx1, hx2, hx3, hx4] at hcong
+  rw [hcong]
+  exact hpos
+
+private theorem plusDetActualLowerFive_eq_public
+    (s d p u v : ℝ) :
+    plusDetLowerFiveQuadratic
+        plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+        plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+        s d p u v =
+      factorTwoIntrinsicSixUnbalancedMinorPlusLowerFiveQuadratic
+        s d p u v := by
+  rfl
+
+private theorem plusDetActualLowerSix_eq_public
+    (s d p u v w : ℝ) :
+    plusDetLowerSixQuadratic
+        plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+        plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+        plusDetA05 plusDetA25 plusDetA45 plusDetO15 plusDetO35 plusDetO55
+        s d p u v w =
+      factorTwoIntrinsicSixUnbalancedMinorPlusLowerSixQuadratic
+        s d p u v w := by
+  unfold plusDetLowerSixQuadratic
+    factorTwoIntrinsicSixUnbalancedMinorPlusLowerSixQuadratic
+  rw [plusDetActualLowerFive_eq_public]
+  unfold factorTwoIntrinsicSixUnbalancedKPlus05
+    factorTwoIntrinsicSixUnbalancedKPlus25
+    factorTwoIntrinsicSixUnbalancedKPlus45
+  ring
+
+private theorem factorTwoIntrinsicSixUnbalancedMinorPlusLowerSix_pos
+    (s d p u v w : ℝ)
+    (hne : s ≠ 0 ∨ d ≠ 0 ∨ p ≠ 0 ∨ u ≠ 0 ∨ v ≠ 0 ∨ w ≠ 0) :
+    0 < factorTwoIntrinsicSixUnbalancedMinorPlusLowerSixQuadratic
+      s d p u v w := by
+  let x4 : ℝ := v
+  let x3 : ℝ := u - (2 / 45 : ℝ) * x4
+  let x2 : ℝ := p - (27 / 25 : ℝ) * x3 - (83 / 32 : ℝ) * x4
+  let x1 : ℝ := d - (28 / 9 : ℝ) * x2 - (49 / 17 : ℝ) * x3 -
+    (75 / 19 : ℝ) * x4
+  let x0 : ℝ := s + x1 / 1000 + (16 / 45 : ℝ) * x2 +
+    (27 / 40 : ℝ) * x3 + x4
+  have hneX :
+      x0 ≠ 0 ∨ x1 ≠ 0 ∨ x2 ≠ 0 ∨ x3 ≠ 0 ∨ x4 ≠ 0 ∨ w ≠ 0 := by
+    by_contra hzero
+    push_neg at hzero
+    rcases hzero with ⟨hx0, hx1, hx2, hx3, hx4, hw⟩
+    have hv : v = 0 := by simpa only [x4] using hx4
+    have hu : u = 0 := by
+      dsimp only [x3, x4] at hx3
+      nlinarith
+    have hp : p = 0 := by
+      dsimp only [x2] at hx2
+      nlinarith
+    have hd : d = 0 := by
+      dsimp only [x1] at hx1
+      nlinarith
+    have hs : s = 0 := by
+      dsimp only [x0] at hx0
+      nlinarith
+    rcases hne with hs' | hd' | hp' | hu' | hv' | hw'
+    · exact hs' hs
+    · exact hd' hd
+    · exact hp' hp
+    · exact hu' hu
+    · exact hv' hv
+    · exact hw' hw
+  have htrans := plusDetActualTransformedSix_pos
+    x0 x1 x2 x3 x4 w hneX
+  have hcong := plusDetLowerSixQuadratic_congruence
+    plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+    plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+    plusDetA05 plusDetA25 plusDetA45 plusDetO15 plusDetO35 plusDetO55
+    x0 x1 x2 x3 x4 w
+  have hsMap :
+      x0 - x1 / 1000 - (16 / 45 : ℝ) * x2 -
+          (27 / 40 : ℝ) * x3 - x4 = s := by
+    dsimp only [x0]
+    ring
+  have hdMap :
+      x1 + (28 / 9 : ℝ) * x2 + (49 / 17 : ℝ) * x3 +
+          (75 / 19 : ℝ) * x4 = d := by
+    dsimp only [x1]
+    ring
+  have hpMap :
+      x2 + (27 / 25 : ℝ) * x3 + (83 / 32 : ℝ) * x4 = p := by
+    dsimp only [x2]
+    ring
+  have huMap : x3 + (2 / 45 : ℝ) * x4 = u := by
+    dsimp only [x3]
+    ring
+  rw [hsMap, hdMap, hpMap, huMap] at hcong
+  dsimp only [x4] at hcong
+  rw [← plusDetActualLowerSix_eq_public s d p u v w, hcong]
+  exact htrans
+
+/-- The completed exact six-dimensional form is strictly positive away from
+the origin. -/
+theorem factorTwoIntrinsicSixUnbalancedMinorPlusExactSix_pos
+    (c0 c2 c4 c1 c3 c5 : ℝ)
+    (hne : c0 ≠ 0 ∨ c2 ≠ 0 ∨ c4 ≠ 0 ∨ c1 ≠ 0 ∨ c3 ≠ 0 ∨ c5 ≠ 0) :
+    0 < factorTwoIntrinsicSixUnbalancedMinorPlusExactSixQuadratic
+      c0 c2 c4 c1 c3 c5 := by
+  let s : ℝ := (c0 + c2) / 2
+  let d : ℝ := (c0 - c2) / 2
+  let u : ℝ := c1 + (25 / 24 : ℝ) * c3
+  have hneAligned :
+      s ≠ 0 ∨ d ≠ 0 ∨ c4 ≠ 0 ∨ u ≠ 0 ∨ c3 ≠ 0 ∨ c5 ≠ 0 := by
+    by_contra hzero
+    push_neg at hzero
+    rcases hzero with ⟨hs, hd, hp, hu, hv, hw⟩
+    have hc0 : c0 = 0 := by
+      dsimp only [s, d] at hs hd
+      nlinarith
+    have hc2 : c2 = 0 := by
+      dsimp only [s, d] at hs hd
+      nlinarith
+    have hc1 : c1 = 0 := by
+      dsimp only [u] at hu
+      nlinarith
+    rcases hne with h0 | h2 | h4 | h1 | h3 | h5
+    · exact h0 hc0
+    · exact h2 hc2
+    · exact h4 hp
+    · exact h1 hc1
+    · exact h3 hv
+    · exact h5 hw
+  have hlow := factorTwoIntrinsicSixUnbalancedMinorPlusLowerSix_pos
+    s d c4 u c3 c5 hneAligned
+  have hle := factorTwoIntrinsicSixUnbalancedMinorPlusLowerSix_le_exact
+    s d c4 u c3 c5
+  have hsMap : s + d = c0 := by
+    dsimp only [s, d]
+    ring
+  have hdMap : s - d = c2 := by
+    dsimp only [s, d]
+    ring
+  have huMap : u - (25 / 24 : ℝ) * c3 = c1 := by
+    dsimp only [u]
+    ring
+  rw [hsMap, hdMap, huMap] at hle
+  exact hlow.trans_le hle
+
+private theorem plusDetExactFive_eq_block
+    (c0 c2 c4 c1 c3 : ℝ) :
+    factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic
+        c0 c2 c4 c1 c3 =
+      symmetricQuadratic
+          factorTwoIntrinsicSixUnbalancedEPlus00
+          factorTwoIntrinsicSixUnbalancedEPlus02
+          factorTwoIntrinsicSixUnbalancedEPlus04
+          factorTwoIntrinsicSixUnbalancedEPlus22
+          factorTwoIntrinsicSixUnbalancedEPlus24
+          factorTwoIntrinsicSixUnbalancedEPlus44 c0 c2 c4 +
+        2 * (c0 * factorTwoIntrinsicSixUnbalancedKPlus01 +
+          c2 * factorTwoIntrinsicSixUnbalancedKPlus21 +
+          c4 * factorTwoIntrinsicSixUnbalancedKPlus41) * c1 +
+        2 * (c0 * factorTwoIntrinsicSixUnbalancedKPlus03 +
+          c2 * factorTwoIntrinsicSixUnbalancedKPlus23 +
+          c4 * factorTwoIntrinsicSixUnbalancedKPlus43) * c3 +
+        factorTwoIntrinsicSixUnbalancedOMinus11 * c1 ^ 2 +
+        2 * factorTwoIntrinsicSixUnbalancedOMinus13 * c1 * c3 +
+        factorTwoIntrinsicSixUnbalancedOMinus33 * c3 ^ 2 := by
+  unfold factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic
+  rfl
+
+/-- The exact six-dimensional form is the original static-plus quadratic;
+there is no determinant scaling or coordinate permutation. -/
+theorem factorTwoIntrinsicSixUnbalancedMinorPlusExactSixQuadratic_eq_staticPlus
+    (c0 c2 c4 c1 c3 c5 : ℝ) :
+    factorTwoIntrinsicSixUnbalancedMinorPlusExactSixQuadratic
+        c0 c2 c4 c1 c3 c5 =
+      factorTwoIntrinsicSixUnbalancedStaticPlus c0 c2 c4 c1 c3 c5 := by
+  unfold factorTwoIntrinsicSixUnbalancedMinorPlusExactSixQuadratic
+  rw [plusDetExactFive_eq_block,
+    factorTwoIntrinsicSixUnbalancedStaticPlus_eq_block]
+  unfold symmetricQuadratic
+  ring
+
+/-- The positive static endpoint is nonnegative in every direction.  The
+proof is the direct six-dimensional congruence, without a determinant or
+adjugate detour. -/
+theorem factorTwoIntrinsicSixUnbalancedStaticPlusNonnegative :
+    FactorTwoIntrinsicSixUnbalancedStaticPlusNonnegative := by
+  intro c0 c2 c4 c1 c3 c5
+  by_cases hne :
+      c0 ≠ 0 ∨ c2 ≠ 0 ∨ c4 ≠ 0 ∨ c1 ≠ 0 ∨ c3 ≠ 0 ∨ c5 ≠ 0
+  · have hpos := factorTwoIntrinsicSixUnbalancedMinorPlusExactSix_pos
+      c0 c2 c4 c1 c3 c5 hne
+    rw [factorTwoIntrinsicSixUnbalancedMinorPlusExactSixQuadratic_eq_staticPlus]
+      at hpos
+    exact hpos.le
+  · push_neg at hne
+    rcases hne with ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+    rw [factorTwoIntrinsicSixUnbalancedStaticPlus_eq_block]
+    norm_num [symmetricQuadratic]
 
 end
 
