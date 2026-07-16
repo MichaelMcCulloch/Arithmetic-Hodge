@@ -457,7 +457,7 @@ private theorem canonicalPhaseLowBasisMixed_add_right
             (canonicalOddTailProfile o₂) a b at h
       exact h
 
-private theorem canonicalPhaseLowBasisMixed_smul_right
+theorem canonicalPhaseLowBasisMixed_smul_right
     (k : FactorTwoPhaseLowIndex)
     (e : YoshidaEvenOneNinetyNineTail) (o : YoshidaOddTenTail)
     (heReal : ∀ t : ℝ,
