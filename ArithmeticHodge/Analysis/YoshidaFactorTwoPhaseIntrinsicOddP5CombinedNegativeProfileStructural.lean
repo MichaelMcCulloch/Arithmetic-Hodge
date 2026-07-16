@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationOneSided
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
@@ -15,6 +16,7 @@ open CenteredEndpointCorrelation
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddResidualRegularity
 open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationOneSided
 open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicLow
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
@@ -26,6 +28,7 @@ open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseOddLowEndpointPositive
+open YoshidaFactorTwoPhaseOddAffineKernelEstimate
 
 /-!
 # The correlated negative-endpoint odd `P5` completion profile
@@ -341,6 +344,220 @@ theorem centeredEndpointCorrelation_plusP5OddCompletionProfile
     factorTwoCenteredCorrelationBilinear_p3_p5,
     centeredEndpointCorrelation_p5]
   unfold plusP5OddQCorrelation
+  ring
+
+/-! ## Linearity of the single pole-free profile error -/
+
+private theorem poleFreeAnalyticError_add_profile
+    (C D : ℝ → ℝ) (hC : Continuous C) (hD : Continuous D) :
+    poleFreeAnalyticError (C + D) =
+      poleFreeAnalyticError C + poleFreeAnalyticError D := by
+  have hCI := intervalIntegrable_poleFreeAnalyticError C hC
+  have hDI := intervalIntegrable_poleFreeAnalyticError D hD
+  unfold poleFreeAnalyticError
+  rw [show (fun t : ℝ ↦
+      (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) *
+        (C + D) t) =
+      fun t ↦
+        (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * C t +
+          (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * D t by
+    funext t
+    simp only [Pi.add_apply]
+    ring,
+    intervalIntegral.integral_add hCI hDI]
+
+private theorem poleFreeAnalyticError_const_mul_profile
+    (c : ℝ) (C : ℝ → ℝ) :
+    poleFreeAnalyticError (fun t ↦ c * C t) =
+      c * poleFreeAnalyticError C := by
+  unfold poleFreeAnalyticError
+  rw [show (fun t : ℝ ↦
+      (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) *
+        (c * C t)) =
+      fun t ↦ c *
+        ((oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * C t) by
+    funext t
+    ring,
+    intervalIntegral.integral_const_mul]
+
+theorem poleFreeAnalyticError_plusP5OddB1Correlation_eq :
+    poleFreeAnalyticError plusP5OddB1Correlation =
+      (-10319 / 4800 : ℝ) *
+          poleFreeAnalyticError oddStructuralCorrelation11 +
+        (15 / 8 : ℝ) *
+          poleFreeAnalyticError oddStructuralCorrelation13 +
+        poleFreeAnalyticError oddP5Correlation15 := by
+  let C11 : ℝ → ℝ := fun t ↦
+    (-10319 / 4800 : ℝ) * oddStructuralCorrelation11 t
+  let C13 : ℝ → ℝ := fun t ↦
+    (15 / 8 : ℝ) * oddStructuralCorrelation13 t
+  have h11 : Continuous oddStructuralCorrelation11 := by
+    unfold oddStructuralCorrelation11
+    fun_prop
+  have h13 : Continuous oddStructuralCorrelation13 := by
+    unfold oddStructuralCorrelation13
+    fun_prop
+  have h15 : Continuous oddP5Correlation15 := by
+    unfold oddP5Correlation15
+    fun_prop
+  have hC11 : Continuous C11 := by
+    dsimp only [C11]
+    exact continuous_const.mul h11
+  have hC13 : Continuous C13 := by
+    dsimp only [C13]
+    exact continuous_const.mul h13
+  have hprofile : plusP5OddB1Correlation = C11 + C13 + oddP5Correlation15 := by
+    funext t
+    dsimp only [C11, C13]
+    simp only [Pi.add_apply]
+    unfold plusP5OddB1Correlation
+    ring
+  rw [hprofile,
+    poleFreeAnalyticError_add_profile (C11 + C13) oddP5Correlation15
+      (hC11.add hC13) h15,
+    poleFreeAnalyticError_add_profile C11 C13 hC11 hC13]
+  dsimp only [C11, C13]
+  rw [poleFreeAnalyticError_const_mul_profile,
+    poleFreeAnalyticError_const_mul_profile]
+
+theorem poleFreeAnalyticError_plusP5OddB4Correlation_eq :
+    poleFreeAnalyticError plusP5OddB4Correlation =
+      (3704521 / 1728000 : ℝ) *
+          poleFreeAnalyticError oddStructuralCorrelation11 -
+        (9647 / 2400 : ℝ) *
+          poleFreeAnalyticError oddStructuralCorrelation13 +
+        (15 / 8 : ℝ) *
+          poleFreeAnalyticError oddStructuralCorrelation33 -
+        (359 / 360 : ℝ) * poleFreeAnalyticError oddP5Correlation15 +
+        poleFreeAnalyticError oddP5Correlation35 := by
+  let C11 : ℝ → ℝ := fun t ↦
+    (3704521 / 1728000 : ℝ) * oddStructuralCorrelation11 t
+  let C13 : ℝ → ℝ := fun t ↦
+    (-9647 / 2400 : ℝ) * oddStructuralCorrelation13 t
+  let C33 : ℝ → ℝ := fun t ↦
+    (15 / 8 : ℝ) * oddStructuralCorrelation33 t
+  let C15 : ℝ → ℝ := fun t ↦
+    (-359 / 360 : ℝ) * oddP5Correlation15 t
+  have h11 : Continuous oddStructuralCorrelation11 := by
+    unfold oddStructuralCorrelation11
+    fun_prop
+  have h13 : Continuous oddStructuralCorrelation13 := by
+    unfold oddStructuralCorrelation13
+    fun_prop
+  have h33 : Continuous oddStructuralCorrelation33 := by
+    unfold oddStructuralCorrelation33
+    fun_prop
+  have h15 : Continuous oddP5Correlation15 := by
+    unfold oddP5Correlation15
+    fun_prop
+  have h35 : Continuous oddP5Correlation35 := by
+    unfold oddP5Correlation35
+    fun_prop
+  have hC11 : Continuous C11 := by
+    dsimp only [C11]
+    exact continuous_const.mul h11
+  have hC13 : Continuous C13 := by
+    dsimp only [C13]
+    exact continuous_const.mul h13
+  have hC33 : Continuous C33 := by
+    dsimp only [C33]
+    exact continuous_const.mul h33
+  have hC15 : Continuous C15 := by
+    dsimp only [C15]
+    exact continuous_const.mul h15
+  have hprofile :
+      plusP5OddB4Correlation = C11 + C13 + C33 + C15 + oddP5Correlation35 := by
+    funext t
+    dsimp only [C11, C13, C33, C15]
+    simp only [Pi.add_apply]
+    unfold plusP5OddB4Correlation
+    ring
+  rw [hprofile,
+    poleFreeAnalyticError_add_profile (C11 + C13 + C33 + C15)
+      oddP5Correlation35 (((hC11.add hC13).add hC33).add hC15) h35,
+    poleFreeAnalyticError_add_profile (C11 + C13 + C33) C15
+      ((hC11.add hC13).add hC33) hC15,
+    poleFreeAnalyticError_add_profile (C11 + C13) C33
+      (hC11.add hC13) hC33,
+    poleFreeAnalyticError_add_profile C11 C13 hC11 hC13]
+  dsimp only [C11, C13, C33, C15]
+  repeat rw [poleFreeAnalyticError_const_mul_profile]
+  ring
+
+theorem poleFreeAnalyticError_plusP5OddQCorrelation_eq :
+    poleFreeAnalyticError plusP5OddQCorrelation =
+      (106481761 / 23040000 : ℝ) *
+          poleFreeAnalyticError oddStructuralCorrelation11 -
+        (10319 / 1280 : ℝ) *
+          poleFreeAnalyticError oddStructuralCorrelation13 +
+        (225 / 64 : ℝ) *
+          poleFreeAnalyticError oddStructuralCorrelation33 -
+        (10319 / 2400 : ℝ) * poleFreeAnalyticError oddP5Correlation15 +
+        (15 / 4 : ℝ) * poleFreeAnalyticError oddP5Correlation35 +
+        poleFreeAnalyticError oddP5Correlation55 := by
+  let C11 : ℝ → ℝ := fun t ↦
+    (106481761 / 23040000 : ℝ) * oddStructuralCorrelation11 t
+  let C13 : ℝ → ℝ := fun t ↦
+    (-10319 / 1280 : ℝ) * oddStructuralCorrelation13 t
+  let C33 : ℝ → ℝ := fun t ↦
+    (225 / 64 : ℝ) * oddStructuralCorrelation33 t
+  let C15 : ℝ → ℝ := fun t ↦
+    (-10319 / 2400 : ℝ) * oddP5Correlation15 t
+  let C35 : ℝ → ℝ := fun t ↦
+    (15 / 4 : ℝ) * oddP5Correlation35 t
+  have h11 : Continuous oddStructuralCorrelation11 := by
+    unfold oddStructuralCorrelation11
+    fun_prop
+  have h13 : Continuous oddStructuralCorrelation13 := by
+    unfold oddStructuralCorrelation13
+    fun_prop
+  have h33 : Continuous oddStructuralCorrelation33 := by
+    unfold oddStructuralCorrelation33
+    fun_prop
+  have h15 : Continuous oddP5Correlation15 := by
+    unfold oddP5Correlation15
+    fun_prop
+  have h35 : Continuous oddP5Correlation35 := by
+    unfold oddP5Correlation35
+    fun_prop
+  have h55 : Continuous oddP5Correlation55 :=
+    continuous_oddP5Correlation55
+  have hC11 : Continuous C11 := by
+    dsimp only [C11]
+    exact continuous_const.mul h11
+  have hC13 : Continuous C13 := by
+    dsimp only [C13]
+    exact continuous_const.mul h13
+  have hC33 : Continuous C33 := by
+    dsimp only [C33]
+    exact continuous_const.mul h33
+  have hC15 : Continuous C15 := by
+    dsimp only [C15]
+    exact continuous_const.mul h15
+  have hC35 : Continuous C35 := by
+    dsimp only [C35]
+    exact continuous_const.mul h35
+  have hprofile :
+      plusP5OddQCorrelation =
+        C11 + C13 + C33 + C15 + C35 + oddP5Correlation55 := by
+    funext t
+    dsimp only [C11, C13, C33, C15, C35]
+    simp only [Pi.add_apply]
+    unfold plusP5OddQCorrelation
+    ring
+  rw [hprofile,
+    poleFreeAnalyticError_add_profile (C11 + C13 + C33 + C15 + C35)
+      oddP5Correlation55
+      ((((hC11.add hC13).add hC33).add hC15).add hC35) h55,
+    poleFreeAnalyticError_add_profile (C11 + C13 + C33 + C15) C35
+      (((hC11.add hC13).add hC33).add hC15) hC35,
+    poleFreeAnalyticError_add_profile (C11 + C13 + C33) C15
+      ((hC11.add hC13).add hC33) hC15,
+    poleFreeAnalyticError_add_profile (C11 + C13) C33
+      (hC11.add hC13) hC33,
+    poleFreeAnalyticError_add_profile C11 C13 hC11 hC13]
+  dsimp only [C11, C13, C33, C15, C35]
+  repeat rw [poleFreeAnalyticError_const_mul_profile]
   ring
 
 /-! ## Global Bernstein bounds for the three complete correlations -/
