@@ -1,6 +1,7 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP5AlternatingBoundsStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedAlternatingModelsStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 
 set_option autoImplicit false
@@ -11,7 +12,9 @@ noncomputable section
 
 open ThreeByThreeRankOneSchur
 open YoshidaConstantBounds
+open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointHyperbolicBound
+open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddCleanPositive
 open YoshidaFactorTwoCenteredPhysical
 open YoshidaFactorTwoEndpointBilinear
@@ -20,6 +23,7 @@ open YoshidaFactorTwoPhaseDiskSchur
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicLow
+open YoshidaFactorTwoPhaseIntrinsicLowAlternatingKernelStructural
 open YoshidaFactorTwoPhaseIntrinsicLowAlternatingKernelSharp
 open YoshidaFactorTwoPhaseIntrinsicLowStaticMinusRationalSchur
 open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
@@ -30,12 +34,14 @@ open YoshidaFactorTwoPhaseIntrinsicSixP4P1AlternatingStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4PlusEndpointExactSchur
 open YoshidaFactorTwoPhaseIntrinsicSixP4Schur
 open YoshidaFactorTwoPhaseIntrinsicSixP5AlternatingBoundsStructural
+open YoshidaFactorTwoPhaseIntrinsicSixP5AlternatingCorrelations
 open YoshidaFactorTwoPhaseIntrinsicSixP5CleanSharpStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveSchur
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveP4P3AlternatingSharpStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFourC2Structural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFiveOddMinorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedAlternatingModelsStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
@@ -405,6 +411,536 @@ private abbrev plusDetActualW : ℝ :=
   plusDetW plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
     plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
     plusDetA05 plusDetA25 plusDetA45 plusDetO15 plusDetO35 plusDetO55
+
+/-! ## Combined alternating profiles
+
+The five border residuals do not tolerate entrywise alternating boxes.  We
+therefore form each full polynomial correlation first.  The following
+six-parameter identity is the common structural core: it expands one actual
+even/odd profile pairing, identifies its single endpoint correlation
+polynomial, and only then applies the sharp kernel decomposition. -/
+
+private def plusDetAlternatingEvenProfile
+    (c0 c2 c4 : ℝ) : ℝ → ℝ :=
+  c0 • centeredEvenP0 + c2 • centeredEvenP2 + c4 • factorTwoCenteredP4
+
+private def plusDetAlternatingOddProfile
+    (d1 d3 d5 : ℝ) : ℝ → ℝ :=
+  d1 • centeredP1 + d3 • centeredP3 + d5 • factorTwoCenteredP5
+
+private theorem continuous_centeredEvenP0_plusDet :
+    Continuous centeredEvenP0 := by
+  unfold centeredEvenP0
+  fun_prop
+
+private theorem continuous_centeredEvenP2_plusDet :
+    Continuous centeredEvenP2 := by
+  unfold centeredEvenP2
+  fun_prop
+
+private theorem continuous_centeredP1_plusDet :
+    Continuous centeredP1 := by
+  unfold centeredP1
+  fun_prop
+
+private theorem continuous_centeredP3_plusDet :
+    Continuous centeredP3 := by
+  unfold centeredP3
+  fun_prop
+
+private theorem continuous_plusDetAlternatingEvenProfile
+    (c0 c2 c4 : ℝ) :
+    Continuous (plusDetAlternatingEvenProfile c0 c2 c4) := by
+  unfold plusDetAlternatingEvenProfile
+  exact ((continuous_centeredEvenP0_plusDet.const_smul c0).add
+    (continuous_centeredEvenP2_plusDet.const_smul c2)).add
+      (continuous_factorTwoCenteredP4.const_smul c4)
+
+private theorem continuous_plusDetAlternatingOddProfile
+    (d1 d3 d5 : ℝ) :
+    Continuous (plusDetAlternatingOddProfile d1 d3 d5) := by
+  unfold plusDetAlternatingOddProfile
+  exact ((continuous_centeredP1_plusDet.const_smul d1).add
+    (continuous_centeredP3_plusDet.const_smul d3)).add
+      (continuous_factorTwoCenteredP5.const_smul d5)
+
+private def plusDetAlternatingCrossDifference
+    (e o : ℝ → ℝ) (t : ℝ) : ℝ :=
+  factorTwoCenteredCrossCorrelation o e t -
+    factorTwoCenteredCrossCorrelation e o t
+
+private def plusDetAlternatingQ
+    (c0 c2 c4 d1 d3 d5 t : ℝ) : ℝ :=
+  c0 * d1 +
+    c2 * d1 * (-1 + t / 2 + t ^ 2 / 4) +
+    c0 * d3 * (1 - (5 / 2 : ℝ) * t + (5 / 4 : ℝ) * t ^ 2) +
+    c2 * d3 *
+      (1 - t - t ^ 2 / 2 + t ^ 3 / 4 + t ^ 4 / 8) +
+    c4 * d1 * alternatingQ41 t + c4 * d3 * alternatingQ43 t +
+    c0 * d5 * alternatingQ05 t + c2 * d5 * alternatingQ25 t +
+    c4 * d5 * alternatingQ45 t
+
+private theorem plusDetAlternatingCoupling_evenProfile
+    (c0 c2 c4 : ℝ) (o : ℝ → ℝ) (ho : Continuous o) :
+    factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile c0 c2 c4) o =
+      c0 * factorTwoCenteredAlternatingCoupling centeredEvenP0 o +
+        c2 * factorTwoCenteredAlternatingCoupling centeredEvenP2 o +
+        c4 * factorTwoCenteredAlternatingCoupling factorTwoCenteredP4 o := by
+  have h0 : Continuous (c0 • centeredEvenP0) :=
+    continuous_centeredEvenP0_plusDet.const_smul c0
+  have h2 : Continuous (c2 • centeredEvenP2) :=
+    continuous_centeredEvenP2_plusDet.const_smul c2
+  have h4 : Continuous (c4 • factorTwoCenteredP4) :=
+    continuous_factorTwoCenteredP4.const_smul c4
+  unfold plusDetAlternatingEvenProfile
+  rw [factorTwoCenteredAlternatingCoupling_add_left
+      (c0 • centeredEvenP0 + c2 • centeredEvenP2)
+      (c4 • factorTwoCenteredP4) o (h0.add h2) h4 ho,
+    factorTwoCenteredAlternatingCoupling_add_left
+      (c0 • centeredEvenP0) (c2 • centeredEvenP2) o h0 h2 ho,
+    factorTwoCenteredAlternatingCoupling_smul_left,
+    factorTwoCenteredAlternatingCoupling_smul_left,
+    factorTwoCenteredAlternatingCoupling_smul_left]
+
+private theorem plusDetAlternatingCoupling_oddProfile
+    (e : ℝ → ℝ) (he : Continuous e) (d1 d3 d5 : ℝ) :
+    factorTwoCenteredAlternatingCoupling e
+        (plusDetAlternatingOddProfile d1 d3 d5) =
+      d1 * factorTwoCenteredAlternatingCoupling e centeredP1 +
+        d3 * factorTwoCenteredAlternatingCoupling e centeredP3 +
+        d5 * factorTwoCenteredAlternatingCoupling e factorTwoCenteredP5 := by
+  have h1 : Continuous (d1 • centeredP1) :=
+    continuous_centeredP1_plusDet.const_smul d1
+  have h3 : Continuous (d3 • centeredP3) :=
+    continuous_centeredP3_plusDet.const_smul d3
+  have h5 : Continuous (d5 • factorTwoCenteredP5) :=
+    continuous_factorTwoCenteredP5.const_smul d5
+  unfold plusDetAlternatingOddProfile
+  rw [factorTwoCenteredAlternatingCoupling_add_right e
+      (d1 • centeredP1 + d3 • centeredP3)
+      (d5 • factorTwoCenteredP5) he (h1.add h3) h5,
+    factorTwoCenteredAlternatingCoupling_add_right e
+      (d1 • centeredP1) (d3 • centeredP3) he h1 h3,
+    factorTwoCenteredAlternatingCoupling_smul_right,
+    factorTwoCenteredAlternatingCoupling_smul_right,
+    factorTwoCenteredAlternatingCoupling_smul_right]
+
+private theorem plusDetAlternatingCrossDifference_evenProfile
+    (c0 c2 c4 : ℝ) (o : ℝ → ℝ) (ho : Continuous o) (t : ℝ) :
+    plusDetAlternatingCrossDifference
+        (plusDetAlternatingEvenProfile c0 c2 c4) o t =
+      c0 * plusDetAlternatingCrossDifference centeredEvenP0 o t +
+        c2 * plusDetAlternatingCrossDifference centeredEvenP2 o t +
+        c4 * plusDetAlternatingCrossDifference factorTwoCenteredP4 o t := by
+  have h0 : Continuous (c0 • centeredEvenP0) :=
+    continuous_centeredEvenP0_plusDet.const_smul c0
+  have h2 : Continuous (c2 • centeredEvenP2) :=
+    continuous_centeredEvenP2_plusDet.const_smul c2
+  have h4 : Continuous (c4 • factorTwoCenteredP4) :=
+    continuous_factorTwoCenteredP4.const_smul c4
+  unfold plusDetAlternatingCrossDifference plusDetAlternatingEvenProfile
+  rw [factorTwoCenteredCrossCorrelation_add_right o
+      (c0 • centeredEvenP0 + c2 • centeredEvenP2)
+      (c4 • factorTwoCenteredP4) ho (h0.add h2) h4 t,
+    factorTwoCenteredCrossCorrelation_add_right o
+      (c0 • centeredEvenP0) (c2 • centeredEvenP2) ho h0 h2 t,
+    factorTwoCenteredCrossCorrelation_add_left
+      (c0 • centeredEvenP0 + c2 • centeredEvenP2)
+      (c4 • factorTwoCenteredP4) o (h0.add h2) h4 ho t,
+    factorTwoCenteredCrossCorrelation_add_left
+      (c0 • centeredEvenP0) (c2 • centeredEvenP2) o h0 h2 ho t]
+  repeat rw [factorTwoCenteredCrossCorrelation_smul_left,
+    factorTwoCenteredCrossCorrelation_smul_right]
+  ring
+
+private theorem plusDetAlternatingCrossDifference_oddProfile
+    (e : ℝ → ℝ) (he : Continuous e) (d1 d3 d5 t : ℝ) :
+    plusDetAlternatingCrossDifference e
+        (plusDetAlternatingOddProfile d1 d3 d5) t =
+      d1 * plusDetAlternatingCrossDifference e centeredP1 t +
+        d3 * plusDetAlternatingCrossDifference e centeredP3 t +
+        d5 * plusDetAlternatingCrossDifference e factorTwoCenteredP5 t := by
+  have h1 : Continuous (d1 • centeredP1) :=
+    continuous_centeredP1_plusDet.const_smul d1
+  have h3 : Continuous (d3 • centeredP3) :=
+    continuous_centeredP3_plusDet.const_smul d3
+  have h5 : Continuous (d5 • factorTwoCenteredP5) :=
+    continuous_factorTwoCenteredP5.const_smul d5
+  unfold plusDetAlternatingCrossDifference plusDetAlternatingOddProfile
+  rw [factorTwoCenteredCrossCorrelation_add_left
+      (d1 • centeredP1 + d3 • centeredP3)
+      (d5 • factorTwoCenteredP5) e (h1.add h3) h5 he t,
+    factorTwoCenteredCrossCorrelation_add_left
+      (d1 • centeredP1) (d3 • centeredP3) e h1 h3 he t,
+    factorTwoCenteredCrossCorrelation_add_right e
+      (d1 • centeredP1 + d3 • centeredP3)
+      (d5 • factorTwoCenteredP5) he (h1.add h3) h5 t,
+    factorTwoCenteredCrossCorrelation_add_right e
+      (d1 • centeredP1) (d3 • centeredP3) he h1 h3 t]
+  repeat rw [factorTwoCenteredCrossCorrelation_smul_left,
+    factorTwoCenteredCrossCorrelation_smul_right]
+  ring
+
+private theorem plusDetAlternatingCrossDifference_profile
+    (c0 c2 c4 d1 d3 d5 t : ℝ) (ht : t ∈ Set.Icc (0 : ℝ) 2) :
+    plusDetAlternatingCrossDifference
+        (plusDetAlternatingEvenProfile c0 c2 c4)
+        (plusDetAlternatingOddProfile d1 d3 d5) t =
+      intrinsicAlternatingCorrelation
+        (plusDetAlternatingQ c0 c2 c4 d1 d3 d5) t := by
+  rw [plusDetAlternatingCrossDifference_evenProfile c0 c2 c4
+      (plusDetAlternatingOddProfile d1 d3 d5)
+      (continuous_plusDetAlternatingOddProfile d1 d3 d5) t,
+    plusDetAlternatingCrossDifference_oddProfile centeredEvenP0
+      (by unfold centeredEvenP0; fun_prop) d1 d3 d5 t,
+    plusDetAlternatingCrossDifference_oddProfile centeredEvenP2
+      (by unfold centeredEvenP2; fun_prop) d1 d3 d5 t,
+    plusDetAlternatingCrossDifference_oddProfile factorTwoCenteredP4
+      continuous_factorTwoCenteredP4 d1 d3 d5 t]
+  have h01 := factorTwoCenteredCrossDifference_p0_p1 t
+  have h03 := factorTwoCenteredCrossDifference_p0_p3 t
+  have h21 := factorTwoCenteredCrossDifference_p2_p1 t
+  have h23 := factorTwoCenteredCrossDifference_p2_p3 t
+  have h41 := crossDifference_p4_p1 t ht
+  have h43 := crossDifference_p4_p3 t ht
+  have h05 := crossDifference_p0_p5 t ht
+  have h25 := crossDifference_p2_p5 t ht
+  have h45 := crossDifference_p4_p5 t ht
+  unfold plusDetAlternatingCrossDifference
+  rw [h01, h03, h21, h23, h41, h43, h05, h25, h45]
+  unfold plusDetAlternatingQ intrinsicAlternatingCorrelation
+  ring
+
+private theorem plusDetAlternatingCoupling_profile_expansion
+    (c0 c2 c4 d1 d3 d5 : ℝ) :
+    factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile c0 c2 c4)
+        (plusDetAlternatingOddProfile d1 d3 d5) =
+      c0 * d1 * factorTwoIntrinsicAlternating01 +
+        c2 * d1 * factorTwoIntrinsicAlternating21 +
+        c0 * d3 * factorTwoIntrinsicAlternating03 +
+        c2 * d3 * factorTwoIntrinsicAlternating23 +
+        c4 * d1 * factorTwoIntrinsicFourP45Cross41 +
+        c4 * d3 * factorTwoIntrinsicFourP45Cross43 +
+        c0 * d5 * factorTwoIntrinsicFourP45Cross05 +
+        c2 * d5 * factorTwoIntrinsicFourP45Cross25 +
+        c4 * d5 * factorTwoIntrinsicP45Alternating := by
+  rw [plusDetAlternatingCoupling_evenProfile c0 c2 c4
+      (plusDetAlternatingOddProfile d1 d3 d5)
+      (continuous_plusDetAlternatingOddProfile d1 d3 d5),
+    plusDetAlternatingCoupling_oddProfile centeredEvenP0
+      (by unfold centeredEvenP0; fun_prop) d1 d3 d5,
+    plusDetAlternatingCoupling_oddProfile centeredEvenP2
+      (by unfold centeredEvenP2; fun_prop) d1 d3 d5,
+    plusDetAlternatingCoupling_oddProfile factorTwoCenteredP4
+      continuous_factorTwoCenteredP4 d1 d3 d5]
+  unfold factorTwoIntrinsicAlternating01 factorTwoIntrinsicAlternating21
+    factorTwoIntrinsicAlternating03 factorTwoIntrinsicAlternating23
+    factorTwoIntrinsicFourP45Cross41 factorTwoIntrinsicFourP45Cross43
+    factorTwoIntrinsicFourP45Cross05 factorTwoIntrinsicFourP45Cross25
+    factorTwoIntrinsicP45Alternating
+  ring
+
+private theorem plusDetAlternatingCoupling_profile_eq_sharpModel
+    (c0 c2 c4 d1 d3 d5 : ℝ) :
+    factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile c0 c2 c4)
+        (plusDetAlternatingOddProfile d1 d3 d5) =
+      intrinsicAlternatingSharpRegularError
+          (plusDetAlternatingQ c0 c2 c4 d1 d3 d5) +
+        intrinsicAlternatingSharpArchModel
+          (plusDetAlternatingQ c0 c2 c4 d1 d3 d5) -
+        (Real.log 3 / Real.sqrt 3) *
+          intrinsicAlternatingCorrelation
+            (plusDetAlternatingQ c0 c2 c4 d1 d3 d5)
+              (factorTwoPrimeShift / yoshidaEndpointA) := by
+  calc
+    _ = intrinsicAlternatingRegularError
+          (plusDetAlternatingQ c0 c2 c4 d1 d3 d5) +
+        intrinsicAlternatingArchModel
+          (plusDetAlternatingQ c0 c2 c4 d1 d3 d5) -
+        (Real.log 3 / Real.sqrt 3) *
+          intrinsicAlternatingCorrelation
+            (plusDetAlternatingQ c0 c2 c4 d1 d3 d5)
+              (factorTwoPrimeShift / yoshidaEndpointA) :=
+      factorTwoCenteredAlternatingCoupling_eq_regularError_add_archModel
+        (plusDetAlternatingEvenProfile c0 c2 c4)
+        (plusDetAlternatingOddProfile d1 d3 d5)
+        (plusDetAlternatingQ c0 c2 c4 d1 d3 d5)
+        (by
+          unfold plusDetAlternatingQ alternatingQ41 alternatingQ43
+            alternatingQ05 alternatingQ25 alternatingQ45
+          fun_prop)
+        (plusDetAlternatingCrossDifference_profile c0 c2 c4 d1 d3 d5)
+    _ = _ := by rw [intrinsicAlternatingSharp_decomposition]
+
+private def plusDetAlternatingQH2 : ℝ → ℝ :=
+  plusDetAlternatingQ (124 / 45) (-52 / 15) 1
+    (-10319 / 4800) (15 / 8) 1
+
+private def plusDetAlternatingQH3 : ℝ → ℝ := fun t ↦
+  plusDetAlternatingQ (1501 / 680) (-2419 / 680) (27 / 25)
+      (-10319 / 4800) (15 / 8) 1 t +
+    plusDetAlternatingQ (-81600701 / 11628000)
+      (21466553 / 3876000) (337741 / 160000) 1 0 0 t
+
+private def plusDetAlternatingQH4 : ℝ → ℝ := fun t ↦
+  plusDetAlternatingQ (56 / 19) (-94 / 19) (83 / 32)
+      (-10319 / 4800) (15 / 8) 1 t +
+    plusDetAlternatingQ (-81600701 / 11628000)
+      (21466553 / 3876000) (337741 / 160000) (-359 / 360) 1 0 t
+
+private def plusDetAlternatingQW : ℝ → ℝ :=
+  plusDetAlternatingQ (-81600701 / 11628000)
+    (21466553 / 3876000) (337741 / 160000)
+    (-10319 / 4800) (15 / 8) 1
+
+private def plusDetAlternatingSharpModel (q : ℝ → ℝ) : ℝ :=
+  intrinsicAlternatingSharpRegularError q +
+    intrinsicAlternatingSharpArchModel q -
+    (Real.log 3 / Real.sqrt 3) *
+      intrinsicAlternatingCorrelation q
+        (factorTwoPrimeShift / yoshidaEndpointA)
+
+private theorem intrinsicAlternatingRegularError_zero_plusDet :
+    intrinsicAlternatingRegularError (fun _ : ℝ ↦ 0) = 0 := by
+  unfold intrinsicAlternatingRegularError intrinsicAlternatingCorrelation
+  simp
+
+private theorem intrinsicAlternatingArchModel_zero_plusDet :
+    intrinsicAlternatingArchModel (fun _ : ℝ ↦ 0) = 0 := by
+  unfold intrinsicAlternatingArchModel intrinsicAlternatingCorrelation
+  simp
+
+private theorem intrinsicAlternatingRegularError_neg_plusDet
+    (q : ℝ → ℝ) (hq : Continuous q) :
+    intrinsicAlternatingRegularError (-q) =
+      -intrinsicAlternatingRegularError q := by
+  have h := intrinsicAlternatingRegularError_sub
+    (fun _ : ℝ ↦ 0) q continuous_const hq
+  rw [show (fun _ : ℝ ↦ 0) - q = -q by
+      funext t
+      simp,
+    intrinsicAlternatingRegularError_zero_plusDet] at h
+  linarith
+
+private theorem intrinsicAlternatingArchModel_neg_plusDet
+    (q : ℝ → ℝ) (hq : Continuous q) :
+    intrinsicAlternatingArchModel (-q) =
+      -intrinsicAlternatingArchModel q := by
+  have h := intrinsicAlternatingArchModel_sub
+    (fun _ : ℝ ↦ 0) q continuous_const hq
+  rw [show (fun _ : ℝ ↦ 0) - q = -q by
+      funext t
+      simp,
+    intrinsicAlternatingArchModel_zero_plusDet] at h
+  linarith
+
+private theorem intrinsicAlternatingRegularError_add_plusDet
+    (q r : ℝ → ℝ) (hq : Continuous q) (hr : Continuous r) :
+    intrinsicAlternatingRegularError (q + r) =
+      intrinsicAlternatingRegularError q +
+        intrinsicAlternatingRegularError r := by
+  have h := intrinsicAlternatingRegularError_sub q (-r) hq hr.neg
+  rw [show q - (-r) = q + r by
+      funext t
+      simp,
+    intrinsicAlternatingRegularError_neg_plusDet r hr] at h
+  linarith
+
+private theorem intrinsicAlternatingArchModel_add_plusDet
+    (q r : ℝ → ℝ) (hq : Continuous q) (hr : Continuous r) :
+    intrinsicAlternatingArchModel (q + r) =
+      intrinsicAlternatingArchModel q + intrinsicAlternatingArchModel r := by
+  have h := intrinsicAlternatingArchModel_sub q (-r) hq hr.neg
+  rw [show q - (-r) = q + r by
+      funext t
+      simp,
+    intrinsicAlternatingArchModel_neg_plusDet r hr] at h
+  linarith
+
+private theorem plusDetAlternatingSharpModel_add
+    (q r : ℝ → ℝ) (hq : Continuous q) (hr : Continuous r) :
+    plusDetAlternatingSharpModel (q + r) =
+      plusDetAlternatingSharpModel q + plusDetAlternatingSharpModel r := by
+  have hreg := intrinsicAlternatingRegularError_add_plusDet q r hq hr
+  have harch := intrinsicAlternatingArchModel_add_plusDet q r hq hr
+  unfold plusDetAlternatingSharpModel
+    intrinsicAlternatingSharpRegularError intrinsicAlternatingSharpArchModel
+    intrinsicAlternatingCorrelation intrinsicAlternatingPolynomialCorrection
+  simp only [Pi.add_apply]
+  rw [hreg, harch]
+  ring
+
+private theorem plusDetAlternatingH2Coupling_eq_sharpModel :
+    factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile (124 / 45) (-52 / 15) 1)
+        (plusDetAlternatingOddProfile (-10319 / 4800) (15 / 8) 1) =
+      plusDetAlternatingSharpModel plusDetAlternatingQH2 := by
+  simpa only [plusDetAlternatingSharpModel, plusDetAlternatingQH2] using
+    plusDetAlternatingCoupling_profile_eq_sharpModel
+      (124 / 45) (-52 / 15) 1 (-10319 / 4800) (15 / 8) 1
+
+private theorem plusDetAlternatingH3Couplings_eq_sharpModel :
+    factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile (1501 / 680) (-2419 / 680) (27 / 25))
+        (plusDetAlternatingOddProfile (-10319 / 4800) (15 / 8) 1) +
+      factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile (-81600701 / 11628000)
+          (21466553 / 3876000) (337741 / 160000))
+        (plusDetAlternatingOddProfile 1 0 0) =
+      plusDetAlternatingSharpModel plusDetAlternatingQH3 := by
+  let q : ℝ → ℝ := plusDetAlternatingQ
+    (1501 / 680) (-2419 / 680) (27 / 25)
+    (-10319 / 4800) (15 / 8) 1
+  let r : ℝ → ℝ := plusDetAlternatingQ
+    (-81600701 / 11628000) (21466553 / 3876000)
+    (337741 / 160000) 1 0 0
+  have hq : Continuous q := by
+    dsimp only [q]
+    unfold plusDetAlternatingQ alternatingQ41 alternatingQ43
+      alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  have hr : Continuous r := by
+    dsimp only [r]
+    unfold plusDetAlternatingQ alternatingQ41 alternatingQ43
+      alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  have hmain := plusDetAlternatingCoupling_profile_eq_sharpModel
+    (1501 / 680) (-2419 / 680) (27 / 25)
+    (-10319 / 4800) (15 / 8) 1
+  have htail := plusDetAlternatingCoupling_profile_eq_sharpModel
+    (-81600701 / 11628000) (21466553 / 3876000)
+    (337741 / 160000) 1 0 0
+  have hmain' :
+      factorTwoCenteredAlternatingCoupling
+          (plusDetAlternatingEvenProfile
+            (1501 / 680) (-2419 / 680) (27 / 25))
+          (plusDetAlternatingOddProfile (-10319 / 4800) (15 / 8) 1) =
+        plusDetAlternatingSharpModel q := by
+    simpa only [plusDetAlternatingSharpModel] using hmain
+  have htail' :
+      factorTwoCenteredAlternatingCoupling
+          (plusDetAlternatingEvenProfile (-81600701 / 11628000)
+            (21466553 / 3876000) (337741 / 160000))
+          (plusDetAlternatingOddProfile 1 0 0) =
+        plusDetAlternatingSharpModel r := by
+    simpa only [plusDetAlternatingSharpModel] using htail
+  have hadd := plusDetAlternatingSharpModel_add q r hq hr
+  rw [hmain', htail', ← hadd]
+  rfl
+
+private theorem plusDetAlternatingH4Couplings_eq_sharpModel :
+    factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile (56 / 19) (-94 / 19) (83 / 32))
+        (plusDetAlternatingOddProfile (-10319 / 4800) (15 / 8) 1) +
+      factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile (-81600701 / 11628000)
+          (21466553 / 3876000) (337741 / 160000))
+        (plusDetAlternatingOddProfile (-359 / 360) 1 0) =
+      plusDetAlternatingSharpModel plusDetAlternatingQH4 := by
+  let q : ℝ → ℝ := plusDetAlternatingQ
+    (56 / 19) (-94 / 19) (83 / 32)
+    (-10319 / 4800) (15 / 8) 1
+  let r : ℝ → ℝ := plusDetAlternatingQ
+    (-81600701 / 11628000) (21466553 / 3876000)
+    (337741 / 160000) (-359 / 360) 1 0
+  have hq : Continuous q := by
+    dsimp only [q]
+    unfold plusDetAlternatingQ alternatingQ41 alternatingQ43
+      alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  have hr : Continuous r := by
+    dsimp only [r]
+    unfold plusDetAlternatingQ alternatingQ41 alternatingQ43
+      alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  have hmain := plusDetAlternatingCoupling_profile_eq_sharpModel
+    (56 / 19) (-94 / 19) (83 / 32)
+    (-10319 / 4800) (15 / 8) 1
+  have htail := plusDetAlternatingCoupling_profile_eq_sharpModel
+    (-81600701 / 11628000) (21466553 / 3876000)
+    (337741 / 160000) (-359 / 360) 1 0
+  have hmain' :
+      factorTwoCenteredAlternatingCoupling
+          (plusDetAlternatingEvenProfile (56 / 19) (-94 / 19) (83 / 32))
+          (plusDetAlternatingOddProfile (-10319 / 4800) (15 / 8) 1) =
+        plusDetAlternatingSharpModel q := by
+    simpa only [plusDetAlternatingSharpModel] using hmain
+  have htail' :
+      factorTwoCenteredAlternatingCoupling
+          (plusDetAlternatingEvenProfile (-81600701 / 11628000)
+            (21466553 / 3876000) (337741 / 160000))
+          (plusDetAlternatingOddProfile (-359 / 360) 1 0) =
+        plusDetAlternatingSharpModel r := by
+    simpa only [plusDetAlternatingSharpModel] using htail
+  have hadd := plusDetAlternatingSharpModel_add q r hq hr
+  rw [hmain', htail', ← hadd]
+  rfl
+
+private theorem plusDetAlternatingWCoupling_eq_sharpModel :
+    factorTwoCenteredAlternatingCoupling
+        (plusDetAlternatingEvenProfile (-81600701 / 11628000)
+          (21466553 / 3876000) (337741 / 160000))
+        (plusDetAlternatingOddProfile (-10319 / 4800) (15 / 8) 1) =
+      plusDetAlternatingSharpModel plusDetAlternatingQW := by
+  simpa only [plusDetAlternatingSharpModel, plusDetAlternatingQW] using
+    plusDetAlternatingCoupling_profile_eq_sharpModel
+      (-81600701 / 11628000) (21466553 / 3876000)
+      (337741 / 160000) (-10319 / 4800) (15 / 8) 1
+
+private theorem plusDetAlternatingQH2_polynomial (t : ℝ) :
+    plusDetAlternatingQH2 t =
+      (-611113 / 43200 : ℝ) - (42797 / 4000) * t +
+        (4597879 / 144000) * t ^ 2 - (1337453 / 57600) * t ^ 3 +
+        (1162387 / 115200) * t ^ 4 - (1913 / 1280) * t ^ 5 -
+        (1913 / 2560) * t ^ 6 + (7 / 64) * t ^ 7 +
+        (7 / 128) * t ^ 8 := by
+  unfold plusDetAlternatingQH2 plusDetAlternatingQ alternatingQ41
+    alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+  ring
+
+private theorem plusDetAlternatingQH3_polynomial (t : ℝ) :
+    plusDetAlternatingQH3 t =
+      (-13750902299 / 465120000 : ℝ) + (4380755963 / 620160000) * t +
+        (20323396423 / 1240320000) * t ^ 2 -
+        (526512517 / 32640000) * t ^ 3 +
+        (608243483 / 65280000) * t ^ 4 - (84951 / 54400) * t ^ 5 -
+        (84951 / 108800) * t ^ 6 + (189 / 1600) * t ^ 7 +
+        (189 / 3200) * t ^ 8 := by
+  unfold plusDetAlternatingQH3 plusDetAlternatingQ alternatingQ41
+    alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+  ring
+
+private theorem plusDetAlternatingQH4_polynomial (t : ℝ) :
+    plusDetAlternatingQH4 t =
+      (-701556616831 / 83721600000 : ℝ) -
+        (123472939931 / 13953600000) * t +
+        (75008376999 / 2067200000) * t ^ 2 -
+        (2849589069587 / 111628800000) * t ^ 3 +
+        (2332337330413 / 223257600000) * t ^ 4 -
+        (23436273 / 9728000) * t ^ 5 -
+        (23436273 / 19456000) * t ^ 6 + (581 / 2048) * t ^ 7 +
+        (581 / 4096) * t ^ 8 := by
+  unfold plusDetAlternatingQH4 plusDetAlternatingQ alternatingQ41
+    alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+  ring
+
+private theorem plusDetAlternatingQW_polynomial (t : ℝ) :
+    plusDetAlternatingQW t =
+      (3339755746409 / 131328000000 : ℝ) +
+        (388287114221 / 20672000000) * t -
+        (91814899302449 / 1488384000000) * t ^ 2 +
+        (182293898050181 / 2976768000000) * t ^ 3 -
+        (146720128381819 / 5953536000000) * t ^ 4 +
+        (6098875261 / 13230080000) * t ^ 5 +
+        (6098875261 / 26460160000) * t ^ 6 +
+        (2364187 / 10240000) * t ^ 7 +
+        (2364187 / 20480000) * t ^ 8 := by
+  unfold plusDetAlternatingQW plusDetAlternatingQ alternatingQ41
+    alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+  ring
 
 private theorem plusDetActualH0_bounds :
     (-11 / 5000 : ℝ) < plusDetActualH0 ∧
