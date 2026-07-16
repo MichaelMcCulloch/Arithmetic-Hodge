@@ -1,7 +1,9 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CombinedPositiveProfileStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP5AlternatingBoundsStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusMinorStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusDeterminantStructural
 
 set_option autoImplicit false
 
@@ -15,6 +17,7 @@ open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicLowStaticMinusRationalSchur
 open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP5CombinedPositiveProfileStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP5AlternatingBoundsStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4Schur
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveSchur
@@ -22,6 +25,7 @@ open YoshidaFactorTwoPhaseIntrinsicSixProjectiveP4PivotCombinedReserveStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticEvenPositiveStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusMinorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusPositiveStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusDeterminantStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
 
 /-!
@@ -100,6 +104,18 @@ private theorem minusDetTransformedFive_reserve
     minusDetMapP, minusDetMapU] using
     factorTwoIntrinsicSixUnbalancedMinorMinusLowerFive_transformed_reserve
       x0 x1 x2 x3 x4
+
+private theorem minusDetTransformedFive_eq_matrix
+    (x0 x1 x2 x3 x4 : ℝ) :
+    minusDetTransformedFiveQuadratic x0 x1 x2 x3 x4 =
+      minusMinorFiveQuadratic
+        minorMinusT00 minorMinusT01 minorMinusT02 minorMinusT03 minorMinusT04
+        minorMinusT11 minorMinusT12 minorMinusT13 minorMinusT14
+        minorMinusT22 minorMinusT23 minorMinusT24 minorMinusT33 minorMinusT34
+        minorMinusT44 x0 x1 x2 x3 x4 := by
+  simpa only [minusDetTransformedFiveQuadratic, minusDetMapS, minusDetMapD,
+    minusDetMapP, minusDetMapU] using
+      minorMinusLowerFive_congruence x0 x1 x2 x3 x4
 
 private def minusDetG0 : ℝ :=
   factorTwoIntrinsicSixUnbalancedKMinus05 +
@@ -239,6 +255,146 @@ private def minusDetW : ℝ :=
     (15 / 4) * factorTwoIntrinsicSixUnbalancedOPlus35 +
     factorTwoIntrinsicSixUnbalancedOPlus55
 
+/-! The border translation is carried out through the already-certified
+explicit matrix of the five-mode form.  This avoids expanding the full
+quadratic twice. -/
+
+private def minusDetMatrixH0 : ℝ :=
+  minorMinusT00 * minusDetShift0 + minorMinusT01 * minusDetShift1 +
+    minorMinusT02 * minusDetShift2 + minorMinusT03 * minusDetShift3 +
+    minorMinusT04 * minusDetShift4 + minusDetG0
+
+private def minusDetMatrixH1 : ℝ :=
+  minorMinusT01 * minusDetShift0 + minorMinusT11 * minusDetShift1 +
+    minorMinusT12 * minusDetShift2 + minorMinusT13 * minusDetShift3 +
+    minorMinusT14 * minusDetShift4 + minusDetG1
+
+private def minusDetMatrixH2 : ℝ :=
+  minorMinusT02 * minusDetShift0 + minorMinusT12 * minusDetShift1 +
+    minorMinusT22 * minusDetShift2 + minorMinusT23 * minusDetShift3 +
+    minorMinusT24 * minusDetShift4 + minusDetG2
+
+private def minusDetMatrixH3 : ℝ :=
+  minorMinusT03 * minusDetShift0 + minorMinusT13 * minusDetShift1 +
+    minorMinusT23 * minusDetShift2 + minorMinusT33 * minusDetShift3 +
+    minorMinusT34 * minusDetShift4 + minusDetG3
+
+private def minusDetMatrixH4 : ℝ :=
+  minorMinusT04 * minusDetShift0 + minorMinusT14 * minusDetShift1 +
+    minorMinusT24 * minusDetShift2 + minorMinusT34 * minusDetShift3 +
+    minorMinusT44 * minusDetShift4 + minusDetG4
+
+private def minusDetMatrixW : ℝ :=
+  minusMinorFiveQuadratic
+      minorMinusT00 minorMinusT01 minorMinusT02 minorMinusT03 minorMinusT04
+      minorMinusT11 minorMinusT12 minorMinusT13 minorMinusT14
+      minorMinusT22 minorMinusT23 minorMinusT24 minorMinusT33 minorMinusT34
+      minorMinusT44 minusDetShift0 minusDetShift1 minusDetShift2
+      minusDetShift3 minusDetShift4 +
+    2 * minusDetG0 * minusDetShift0 +
+    2 * minusDetG1 * minusDetShift1 +
+    2 * minusDetG2 * minusDetShift2 +
+    2 * minusDetG3 * minusDetShift3 +
+    2 * minusDetG4 * minusDetShift4 +
+    factorTwoIntrinsicSixUnbalancedOPlus55
+
+set_option maxHeartbeats 800000 in
+private theorem minusDetH0_eq_matrix : minusDetH0 = minusDetMatrixH0 := by
+  unfold minusDetH0 minusDetMatrixH0 minorMinusT00 minorMinusT01
+    minorMinusT02 minorMinusT03 minorMinusT04 minusMinorFiveBilinear
+    minusDetShift0 minusDetShift1 minusDetShift2 minusDetShift3
+    minusDetShift4 minusDetG0 factorTwoIntrinsicSixUnbalancedKMinus05
+    factorTwoIntrinsicSixUnbalancedKMinus25
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower00
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower02
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower22 minusP4Lower
+    intrinsicStaticMinusOddLower11 intrinsicStaticMinusOddLower13
+    intrinsicStaticMinusOddLower33
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem minusDetH1_eq_matrix : minusDetH1 = minusDetMatrixH1 := by
+  unfold minusDetH1 minusDetMatrixH1 minorMinusT01 minorMinusT11
+    minorMinusT12 minorMinusT13 minorMinusT14 minusMinorFiveBilinear
+    minusDetShift0 minusDetShift1 minusDetShift2 minusDetShift3
+    minusDetShift4 minusDetG1 minusDetG0
+    factorTwoIntrinsicSixUnbalancedKMinus05
+    factorTwoIntrinsicSixUnbalancedKMinus25
+    factorTwoIntrinsicSixUnbalancedKMinus45
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower00
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower02
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower22 minusP4Lower
+    intrinsicStaticMinusOddLower11 intrinsicStaticMinusOddLower13
+    intrinsicStaticMinusOddLower33
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem minusDetH2_eq_matrix : minusDetH2 = minusDetMatrixH2 := by
+  unfold minusDetH2 minusDetMatrixH2 minorMinusT02 minorMinusT12
+    minorMinusT22 minorMinusT23 minorMinusT24 minusMinorFiveBilinear
+    minusDetShift0 minusDetShift1 minusDetShift2 minusDetShift3
+    minusDetShift4 minusDetG2 minusDetG0
+    factorTwoIntrinsicSixUnbalancedKMinus05
+    factorTwoIntrinsicSixUnbalancedKMinus25
+    factorTwoIntrinsicSixUnbalancedKMinus45
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower00
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower02
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower22 minusP4Lower
+    intrinsicStaticMinusOddLower11 intrinsicStaticMinusOddLower13
+    intrinsicStaticMinusOddLower33
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem minusDetH3_eq_matrix : minusDetH3 = minusDetMatrixH3 := by
+  unfold minusDetH3 minusDetMatrixH3 minorMinusT03 minorMinusT13
+    minorMinusT23 minorMinusT33 minorMinusT34 minusMinorFiveBilinear
+    minusDetShift0 minusDetShift1 minusDetShift2 minusDetShift3
+    minusDetShift4 minusDetG3 minusDetG0
+    factorTwoIntrinsicSixUnbalancedKMinus05
+    factorTwoIntrinsicSixUnbalancedKMinus25
+    factorTwoIntrinsicSixUnbalancedKMinus45
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower00
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower02
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower22 minusP4Lower
+    intrinsicStaticMinusOddLower11 intrinsicStaticMinusOddLower13
+    intrinsicStaticMinusOddLower33
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem minusDetH4_eq_matrix : minusDetH4 = minusDetMatrixH4 := by
+  unfold minusDetH4 minusDetMatrixH4 minorMinusT04 minorMinusT14
+    minorMinusT24 minorMinusT34 minorMinusT44 minusMinorFiveBilinear
+    minusDetShift0 minusDetShift1 minusDetShift2 minusDetShift3
+    minusDetShift4 minusDetG4 minusDetG0
+    factorTwoIntrinsicSixUnbalancedKMinus05
+    factorTwoIntrinsicSixUnbalancedKMinus25
+    factorTwoIntrinsicSixUnbalancedKMinus45
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower00
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower02
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower22 minusP4Lower
+    intrinsicStaticMinusOddLower11 intrinsicStaticMinusOddLower13
+    intrinsicStaticMinusOddLower33
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem minusDetW_eq_matrix : minusDetW = minusDetMatrixW := by
+  unfold minusDetW minusDetMatrixW minusMinorFiveQuadratic
+    minorMinusT00 minorMinusT01 minorMinusT02 minorMinusT03 minorMinusT04
+    minorMinusT11 minorMinusT12 minorMinusT13 minorMinusT14
+    minorMinusT22 minorMinusT23 minorMinusT24 minorMinusT33 minorMinusT34
+    minorMinusT44 minusMinorFiveBilinear minusDetShift0 minusDetShift1
+    minusDetShift2 minusDetShift3 minusDetShift4 minusDetG1 minusDetG2
+    minusDetG3 minusDetG4 minusDetG0
+    factorTwoIntrinsicSixUnbalancedKMinus05
+    factorTwoIntrinsicSixUnbalancedKMinus25
+    factorTwoIntrinsicSixUnbalancedKMinus45
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower00
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower02
+    factorTwoIntrinsicSixUnbalancedMinorMinusLower22 minusP4Lower
+    intrinsicStaticMinusOddLower11 intrinsicStaticMinusOddLower13
+    intrinsicStaticMinusOddLower33
+  ring
+
 set_option maxHeartbeats 800000 in
 set_option maxRecDepth 4000 in
 private theorem minusDetTransformedSix_border_congruence
@@ -251,27 +407,13 @@ private theorem minusDetTransformedSix_border_congruence
         2 * minusDetH0 * x0 * z + 2 * minusDetH1 * x1 * z +
         2 * minusDetH2 * x2 * z + 2 * minusDetH3 * x3 * z +
         2 * minusDetH4 * x4 * z + minusDetW * z ^ 2 := by
-  unfold minusDetTransformedSixQuadratic minusDetTransformedFiveQuadratic
-    minusDetShift0 minusDetShift1 minusDetShift2 minusDetShift3
-    minusDetShift4 minusDetH0 minusDetH1 minusDetH2 minusDetH3 minusDetH4
-    minusDetW minusDetG1 minusDetG2 minusDetG3 minusDetG4 minusDetG0
-    minusDetMapS minusDetMapD minusDetMapP minusDetMapU
-    factorTwoIntrinsicSixUnbalancedMinorMinusLowerFiveQuadratic
-    factorTwoIntrinsicSixUnbalancedMinorMinusEvenLowerQuadratic
-    factorTwoIntrinsicSixUnbalancedMinorMinusLower00
-    factorTwoIntrinsicSixUnbalancedMinorMinusLower02
-    factorTwoIntrinsicSixUnbalancedMinorMinusLower22
-    factorTwoIntrinsicSixUnbalancedEMinusP4Sum
-    factorTwoIntrinsicSixUnbalancedEMinusP4Difference
-    factorTwoIntrinsicSixUnbalancedKMinusOneSum
-    factorTwoIntrinsicSixUnbalancedKMinusOneDifference
-    factorTwoIntrinsicSixUnbalancedKMinusShearSum
-    factorTwoIntrinsicSixUnbalancedKMinusShearDifference
-    factorTwoIntrinsicSixUnbalancedKMinusShearTail
-    factorTwoIntrinsicSixUnbalancedKMinus05
-    factorTwoIntrinsicSixUnbalancedKMinus25
-    factorTwoIntrinsicSixUnbalancedKMinus45
-    intrinsicStaticMinusOddLower minusP4Lower symmetricQuadratic
+  unfold minusDetTransformedSixQuadratic
+  simp only [minusDetTransformedFive_eq_matrix, minusDetH0_eq_matrix,
+    minusDetH1_eq_matrix, minusDetH2_eq_matrix, minusDetH3_eq_matrix,
+    minusDetH4_eq_matrix, minusDetW_eq_matrix]
+  unfold minusDetMatrixH0 minusDetMatrixH1 minusDetMatrixH2
+    minusDetMatrixH3 minusDetMatrixH4 minusDetMatrixW
+    minusMinorFiveQuadratic
   ring
 
 /-! ## Entrywise-safe part of the completed border -/
@@ -335,6 +477,55 @@ private theorem minusDetH012_bounds :
   · rw [abs_lt]
     constructor <;> linarith
 
+/-! ## The three cancellation-preserving border cores -/
+
+/-- The `H3` border coordinate with its positive-endpoint `P1-P5` tail
+removed.  This is the quantity whose symmetric and alternating profiles must
+be estimated jointly. -/
+private def minusDetH3Core : ℝ :=
+  minusDetH3 + (1 / 14 : ℝ) *
+    factorTwoIntrinsicSixUnbalancedOPlus15
+
+/-- The `H4` border coordinate with its complete positive-endpoint `P5`
+cross tail removed. -/
+private def minusDetH4Core : ℝ :=
+  minusDetH4 + (73 / 80 : ℝ) *
+      factorTwoIntrinsicSixUnbalancedOPlus15 -
+    factorTwoIntrinsicSixUnbalancedOPlus35
+
+/-- The completed diagonal with its whole correlated positive-endpoint odd
+`P5` tail removed. -/
+private def minusDetWCore : ℝ :=
+  minusDetW - minusP5OddPositiveTail
+
+private theorem minusDetH3_eq_core_add_tail :
+    minusDetH3 = minusDetH3Core -
+      (1 / 14 : ℝ) * factorTwoIntrinsicSixUnbalancedOPlus15 := by
+  unfold minusDetH3Core
+  ring
+
+private theorem minusDetH4_eq_core_add_tail :
+    minusDetH4 = minusDetH4Core -
+        (73 / 80 : ℝ) * factorTwoIntrinsicSixUnbalancedOPlus15 +
+      factorTwoIntrinsicSixUnbalancedOPlus35 := by
+  unfold minusDetH4Core
+  ring
+
+private theorem minusDetW_eq_core_add_tail :
+    minusDetW = minusDetWCore + minusP5OddPositiveTail := by
+  unfold minusDetWCore
+  ring
+
+/-- Rational boxes needed only for the three full non-`P5` profiles.  They
+are kept separate from the endpoint tails so that neither source is split
+entrywise. -/
+private def MinusP5BorderCoreBounds : Prop :=
+  (47 / 5000 : ℝ) < minusDetH3Core ∧
+    minusDetH3Core < (189 / 20000 : ℝ) ∧
+    (-6521 / 125000 : ℝ) < minusDetH4Core ∧
+    minusDetH4Core < (-26043 / 500000 : ℝ) ∧
+    (146357 / 1000000 : ℝ) < minusDetWCore
+
 /-! ## Six-dimensional weighted SOS -/
 
 /-- The only analytic frontier left after the safe border boxes have been
@@ -345,8 +536,37 @@ private def MinusP5BorderCombinedBounds : Prop :=
     |minusDetH4| < (1 / 4000 : ℝ) ∧
     (1 / 2000 : ℝ) < minusDetW
 
+/-- Once the three non-tail profiles have been bounded jointly, the public
+endpoint-cross boxes and the one whole-profile `P5` tail bound close the
+completed border. -/
+private theorem minusP5BorderCombinedBounds_of_coreBounds
+    (hcore : MinusP5BorderCoreBounds)
+    (htail : (-729 / 5000 : ℝ) < minusP5OddPositiveTail) :
+    MinusP5BorderCombinedBounds := by
+  rcases hcore with ⟨h3L, h3U, h4L, h4U, hWL⟩
+  have h15 := factorTwoIntrinsicFourP45Cross15_one_bounds
+  have h35 := factorTwoIntrinsicFourP45Cross35_one_bounds
+  change
+    (131727 / 1000000 : ℝ) <
+        factorTwoIntrinsicSixUnbalancedOPlus15 ∧
+      factorTwoIntrinsicSixUnbalancedOPlus15 < 131929 / 1000000
+    at h15
+  change
+    (172324 / 1000000 : ℝ) <
+        factorTwoIntrinsicSixUnbalancedOPlus35 ∧
+      factorTwoIntrinsicSixUnbalancedOPlus35 < 172427 / 1000000
+    at h35
+  constructor
+  · rw [minusDetH3_eq_core_add_tail, abs_lt]
+    constructor <;> linarith [h15.1, h15.2]
+  constructor
+  · rw [minusDetH4_eq_core_add_tail, abs_lt]
+    constructor <;> linarith [h15.1, h15.2, h35.1, h35.2]
+  · rw [minusDetW_eq_core_add_tail]
+    linarith
+
 private theorem two_mul_mul_ge_neg_weighted_square
-    {a e r x z : ℝ} (he : 0 < e) (hr : 0 < r)
+    {a e r x z : ℝ} (he : 0 < e) (_hr : 0 < r)
     (ha : |a| < e * r) :
     -e * x ^ 2 - e * r ^ 2 * z ^ 2 ≤ 2 * a * x * z := by
   rcases abs_lt.mp ha with ⟨haL, haU⟩
@@ -371,23 +591,28 @@ private theorem minusDetCompletedBorder_pos_of_combinedBounds
   have hH0' :
       |minusDetH0| <
         (8653 / 6250 : ℝ) * (75 / 34612 : ℝ) := by
-    convert hH0 using 1 <;> norm_num
+    convert hH0 using 1
+    all_goals norm_num
   have hH1' :
       |minusDetH1| <
         (24687 / 80000 : ℝ) * (56 / 8229 : ℝ) := by
-    convert hH1 using 1 <;> norm_num
+    convert hH1 using 1
+    all_goals norm_num
   have hH2' :
       |minusDetH2| <
         (6447 / 80000 : ℝ) * (80 / 6447 : ℝ) := by
-    convert hH2 using 1 <;> norm_num
+    convert hH2 using 1
+    all_goals norm_num
   have hH3' :
       |minusDetH3| <
         (2153 / 1500000 : ℝ) * (750 / 2153 : ℝ) := by
-    convert hH3 using 1 <;> norm_num
+    convert hH3 using 1
+    all_goals norm_num
   have hH4' :
       |minusDetH4| <
         (517 / 800000 : ℝ) * (200 / 517 : ℝ) := by
-    convert hH4 using 1 <;> norm_num
+    convert hH4 using 1
+    all_goals norm_num
   have hc0 := two_mul_mul_ge_neg_weighted_square
     (a := minusDetH0) (e := (8653 / 6250 : ℝ))
     (r := (75 / 34612 : ℝ)) (x := x0) (z := z)
@@ -863,9 +1088,12 @@ private theorem minusDetExactSix_adjugate_specialization
       rw [minusDetAdjugateVector_even_quadratic,
         minusDetAdjugateVector_cross_identity,
         minusDetOddQuadratic_scale]
+      ring_nf
     _ = _ := by
       rw [factorTwoIntrinsicSixUnbalancedTMinusQuadratic_eq_fractionFree]
-      ring
+      unfold minusDetAdjugateQuadratic minusDetEll0 minusDetEll2
+        minusDetEll4
+      ring_nf
 
 private theorem minusDetTQuadratic_determinant_witness :
     factorTwoIntrinsicSixUnbalancedTMinusQuadratic
