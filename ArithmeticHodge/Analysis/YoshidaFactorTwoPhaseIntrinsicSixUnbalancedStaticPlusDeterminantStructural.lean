@@ -2432,6 +2432,162 @@ private theorem plusDetCompositeJointErrorW_gt :
   rw [show (-1 / 2000 : ℝ) = -(1 / 2000) by ring]
   exact (neg_lt_neg hcert).trans_le hneg
 
+/-! ## Unconditional composite border boxes -/
+
+private theorem abs_plusDetCompositeCleanTransfer_lt
+    (u0 u2 : ℝ) (hu0 : u0 ≠ 0) (hu2 : u2 ≠ 0) :
+    |plusDetCompositeCleanTransfer u0 u2| <
+      |u0| * (1 / 350000 : ℝ) + |u2| * (1 / 850000 : ℝ) := by
+  let e0 : ℝ :=
+    (∫ x : ℝ in -1..1,
+      fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x) -
+        factorTwoIntrinsicP4CleanRemainderModel04
+  let e2 : ℝ :=
+    (∫ x : ℝ in -1..1,
+      fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x) -
+        factorTwoIntrinsicP4CleanRemainderModel24
+  have he0 : |e0| < (1 / 350000 : ℝ) := by
+    simpa only [e0] using
+      factorTwoIntrinsicP4CleanRemainder04_sub_model_abs_lt
+  have he2 : |e2| < (1 / 850000 : ℝ) := by
+    simpa only [e2] using
+      factorTwoIntrinsicP4CleanRemainder24_sub_model_abs_lt
+  unfold plusDetCompositeCleanTransfer
+  change |u0 * e0 + u2 * e2| < _
+  calc
+    |u0 * e0 + u2 * e2| ≤ |u0 * e0| + |u2 * e2| := abs_add_le _ _
+    _ = |u0| * |e0| + |u2| * |e2| := by rw [abs_mul, abs_mul]
+    _ < |u0| * (1 / 350000 : ℝ) +
+        |u2| * (1 / 850000 : ℝ) :=
+      add_lt_add
+        (mul_lt_mul_of_pos_left he0 (abs_pos.mpr hu0))
+        (mul_lt_mul_of_pos_left he2 (abs_pos.mpr hu2))
+
+private theorem abs_plusDetCompositeCleanTransferH2_lt :
+    |plusDetCompositeCleanTransfer (-698234417 / 581400000)
+        (-344846809 / 193800000)| < (1 / 180000 : ℝ) := by
+  have h := abs_plusDetCompositeCleanTransfer_lt
+    (-698234417 / 581400000) (-344846809 / 193800000)
+    (by norm_num) (by norm_num)
+  norm_num at h ⊢
+  linarith
+
+private theorem abs_plusDetCompositeCleanTransferH3_lt :
+    |plusDetCompositeCleanTransfer (-355017589 / 121600000)
+        (-185775269 / 121600000)| < (1 / 98000 : ℝ) := by
+  have h := abs_plusDetCompositeCleanTransfer_lt
+    (-355017589 / 121600000) (-185775269 / 121600000)
+    (by norm_num) (by norm_num)
+  norm_num at h ⊢
+  linarith
+
+private theorem abs_plusDetCompositeCleanTransferH4_lt :
+    |plusDetCompositeCleanTransfer (-22289231363 / 1860480000)
+        (2432098079 / 620160000)| < (1 / 25000 : ℝ) := by
+  have h := abs_plusDetCompositeCleanTransfer_lt
+    (-22289231363 / 1860480000) (2432098079 / 620160000)
+    (by norm_num) (by norm_num)
+  norm_num at h ⊢
+  linarith
+
+private theorem abs_plusDetCompositeCleanTransferW_lt :
+    |plusDetCompositeCleanTransfer (-27559902356441 / 930240000000)
+        (7250135076773 / 310080000000)| < (9 / 80000 : ℝ) := by
+  have h := abs_plusDetCompositeCleanTransfer_lt
+    (-27559902356441 / 930240000000)
+    (7250135076773 / 310080000000) (by norm_num) (by norm_num)
+  norm_num at h ⊢
+  linarith
+
+private theorem factorTwoPrimeRatio_ultrafine_bounds_plusDet :
+    (1169925001 / 1000000000 : ℝ) <
+        factorTwoPrimeShift / yoshidaEndpointA ∧
+      factorTwoPrimeShift / yoshidaEndpointA <
+        (1169925002 / 1000000000 : ℝ) := by
+  have hApos : 0 < yoshidaEndpointA := yoshidaEndpointA_pos
+  have hshift := strict_log_three_halves_fine_bounds
+  have hlog := strict_log_two_fine_bounds
+  constructor
+  · rw [lt_div_iff₀ hApos]
+    unfold factorTwoPrimeShift yoshidaEndpointA
+    nlinarith [hshift.1, hlog.2]
+  · rw [div_lt_iff₀ hApos]
+    unfold factorTwoPrimeShift yoshidaEndpointA
+    nlinarith [hshift.2, hlog.1]
+
+private theorem plusDetCompositePH2_polynomial (t : ℝ) :
+    plusDetCompositeP (-698234417 / 581400000)
+        (-344846809 / 193800000) (1 / 2) plusDetAlternatingQH2 t =
+      (-60295241 / 5400000 : ℝ) * t -
+        (27660978901 / 1744200000) * t ^ 2 +
+        (15007293923 / 290700000) * t ^ 3 -
+        (13779552013 / 310080000) * t ^ 4 +
+        (3145186837 / 145350000) * t ^ 5 -
+        (1506727 / 230400) * t ^ 6 +
+        (344846809 / 3100800000) * t ^ 7 +
+        (2473 / 5120) * t ^ 8 - (7 / 256) * t ^ 10 := by
+  rw [(plusDetH2_jointProfile_splits t).1]
+  unfold plusDetH2PPositive plusDetH2PNegative plusDetBernstein10B1
+    plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+    plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+    plusDetBernstein10B8 plusDetBernstein10B9
+  ring
+
+private theorem plusDetCompositePH3_polynomial (t : ℝ) :
+    plusDetCompositeP (-355017589 / 121600000)
+        (-185775269 / 121600000) (1 / 2) plusDetAlternatingQH3 t =
+      (-233647392343 / 9302400000 : ℝ) * t +
+        (70739225471 / 37209600000) * t ^ 2 +
+        (28697770147 / 729600000) * t ^ 3 -
+        (368094670133 / 9922560000) * t ^ 4 +
+        (156963857613 / 8268800000) * t ^ 5 -
+        (812125883 / 130560000) * t ^ 6 +
+        (185775269 / 1945600000) * t ^ 7 +
+        (22131 / 43520) * t ^ 8 - (189 / 6400) * t ^ 10 := by
+  rw [(plusDetH3_jointProfile_splits t).1]
+  unfold plusDetH3PPositive plusDetH3PNegative plusDetBernstein10B1
+    plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+    plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+    plusDetBernstein10B8 plusDetBernstein10B9
+  ring
+
+private theorem plusDetCompositePH4_polynomial (t : ℝ) :
+    plusDetCompositeP (-22289231363 / 1860480000)
+        (2432098079 / 620160000) (1 / 2) plusDetAlternatingQH4 t =
+      (-26874446161 / 83721600000 : ℝ) * t -
+        (2127985022759 / 41860800000) * t ^ 2 +
+        (331529131709 / 2790720000) * t ^ 3 -
+        (4290295392539 / 44651520000) * t ^ 4 +
+        (268983925363 / 7441920000) * t ^ 5 -
+        (3408062261113 / 446515200000) * t ^ 6 -
+        (2432098079 / 9922560000) * t ^ 7 +
+        (34475273 / 38912000) * t ^ 8 - (581 / 8192) * t ^ 10 := by
+  rw [(plusDetH4_jointProfile_splits t).1]
+  unfold plusDetH4PPositive plusDetH4PNegative plusDetBernstein10B1
+    plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+    plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+    plusDetBernstein10B8 plusDetBernstein10B9
+  ring
+
+private theorem plusDetCompositePW_polynomial (t : ℝ) :
+    plusDetCompositeP (-27559902356441 / 930240000000)
+        (7250135076773 / 310080000000) 1 plusDetAlternatingQW t =
+      (18749189482441 / 328320000000 : ℝ) * t -
+        (604606276799147 / 11162880000000) * t ^ 2 +
+        (36826030857377 / 3720960000000) * t ^ 3 +
+        (81189480857543 / 1488384000000) * t ^ 4 -
+        (260431861716659 / 3720960000000) * t ^ 5 +
+        (152209116116719 / 5953536000000) * t ^ 6 -
+        (7250135076773 / 4961280000000) * t ^ 7 +
+        (1223848631 / 5292032000) * t ^ 8 -
+        (2364187 / 20480000) * t ^ 10 := by
+  rw [(plusDetW_jointProfile_splits t).1]
+  unfold plusDetWPPositive plusDetWPNegative plusDetBernstein10B1
+    plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+    plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+    plusDetBernstein10B8 plusDetBernstein10B9
+  ring
+
 private theorem plusDetAlternatingQW_signed_bernstein (t : ℝ) :
     plusDetAlternatingQW t =
       plusDetAlternatingQWPositive t - plusDetAlternatingQWNegative t := by
@@ -3380,6 +3536,150 @@ private theorem offset_pow_lt_plusDet
     y ^ n < eps ^ n :=
   pow_lt_pow_left₀ hye hy hn
 
+private theorem plusDetCompositePH2_tau_bounds :
+    (-279913277 / 100000000 : ℝ) <
+        plusDetCompositeP (-698234417 / 581400000)
+          (-344846809 / 193800000) (1 / 2) plusDetAlternatingQH2
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      plusDetCompositeP (-698234417 / 581400000)
+          (-344846809 / 193800000) (1 / 2) plusDetAlternatingQH2
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (-279913275 / 100000000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 1169925001 / 1000000000
+  have htau := factorTwoPrimeRatio_ultrafine_bounds_plusDet
+  have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
+  have hyU : y < (1 / 1000000000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
+  have hy3 := offset_pow_lt_plusDet hy0.le hyU 3 (by norm_num)
+  have hy4 := offset_pow_lt_plusDet hy0.le hyU 4 (by norm_num)
+  have hy5 := offset_pow_lt_plusDet hy0.le hyU 5 (by norm_num)
+  have hy6 := offset_pow_lt_plusDet hy0.le hyU 6 (by norm_num)
+  have hy7 := offset_pow_lt_plusDet hy0.le hyU 7 (by norm_num)
+  have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
+  have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
+  have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
+  have htauy : tau = 1169925001 / 1000000000 + y := by
+    dsimp only [y]
+    ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy, plusDetCompositePH2_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8, hy9,
+    hy10, sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
+    pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
+
+private theorem plusDetCompositePH3_tau_bounds :
+    (-571057830 / 100000000 : ℝ) <
+        plusDetCompositeP (-355017589 / 121600000)
+          (-185775269 / 121600000) (1 / 2) plusDetAlternatingQH3
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      plusDetCompositeP (-355017589 / 121600000)
+          (-185775269 / 121600000) (1 / 2) plusDetAlternatingQH3
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (-571057827 / 100000000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 1169925001 / 1000000000
+  have htau := factorTwoPrimeRatio_ultrafine_bounds_plusDet
+  have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
+  have hyU : y < (1 / 1000000000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
+  have hy3 := offset_pow_lt_plusDet hy0.le hyU 3 (by norm_num)
+  have hy4 := offset_pow_lt_plusDet hy0.le hyU 4 (by norm_num)
+  have hy5 := offset_pow_lt_plusDet hy0.le hyU 5 (by norm_num)
+  have hy6 := offset_pow_lt_plusDet hy0.le hyU 6 (by norm_num)
+  have hy7 := offset_pow_lt_plusDet hy0.le hyU 7 (by norm_num)
+  have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
+  have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
+  have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
+  have htauy : tau = 1169925001 / 1000000000 + y := by
+    dsimp only [y]
+    ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy, plusDetCompositePH3_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8, hy9,
+    hy10, sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
+    pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
+
+private theorem plusDetCompositePH4_tau_bounds :
+    (195306474 / 100000000 : ℝ) <
+        plusDetCompositeP (-22289231363 / 1860480000)
+          (2432098079 / 620160000) (1 / 2) plusDetAlternatingQH4
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      plusDetCompositeP (-22289231363 / 1860480000)
+          (2432098079 / 620160000) (1 / 2) plusDetAlternatingQH4
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (195306475 / 100000000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 1169925001 / 1000000000
+  have htau := factorTwoPrimeRatio_ultrafine_bounds_plusDet
+  have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
+  have hyU : y < (1 / 1000000000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
+  have hy3 := offset_pow_lt_plusDet hy0.le hyU 3 (by norm_num)
+  have hy4 := offset_pow_lt_plusDet hy0.le hyU 4 (by norm_num)
+  have hy5 := offset_pow_lt_plusDet hy0.le hyU 5 (by norm_num)
+  have hy6 := offset_pow_lt_plusDet hy0.le hyU 6 (by norm_num)
+  have hy7 := offset_pow_lt_plusDet hy0.le hyU 7 (by norm_num)
+  have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
+  have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
+  have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
+  have htauy : tau = 1169925001 / 1000000000 + y := by
+    dsimp only [y]
+    ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy, plusDetCompositePH4_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8, hy9,
+    hy10, sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
+    pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
+
+private theorem plusDetCompositePW_tau_bounds :
+    (1874516325 / 100000000 : ℝ) <
+        plusDetCompositeP (-27559902356441 / 930240000000)
+          (7250135076773 / 310080000000) 1 plusDetAlternatingQW
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      plusDetCompositeP (-27559902356441 / 930240000000)
+          (7250135076773 / 310080000000) 1 plusDetAlternatingQW
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (1874516330 / 100000000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 1169925001 / 1000000000
+  have htau := factorTwoPrimeRatio_ultrafine_bounds_plusDet
+  have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
+  have hyU : y < (1 / 1000000000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
+  have hy3 := offset_pow_lt_plusDet hy0.le hyU 3 (by norm_num)
+  have hy4 := offset_pow_lt_plusDet hy0.le hyU 4 (by norm_num)
+  have hy5 := offset_pow_lt_plusDet hy0.le hyU 5 (by norm_num)
+  have hy6 := offset_pow_lt_plusDet hy0.le hyU 6 (by norm_num)
+  have hy7 := offset_pow_lt_plusDet hy0.le hyU 7 (by norm_num)
+  have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
+  have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
+  have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
+  have htauy : tau = 1169925001 / 1000000000 + y := by
+    dsimp only [y]
+    ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy, plusDetCompositePW_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8, hy9,
+    hy10, sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
+    pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
+
 private theorem plusDetAlternatingPrimeCorrelationH2_bounds :
     (-574037 / 100000 : ℝ) <
         intrinsicAlternatingCorrelation plusDetAlternatingQH2
@@ -3553,6 +3853,160 @@ private theorem mul_strict_bounds_plusDet
       a * c < aU * c := mul_lt_mul_of_pos_right ha.2 hc0
       _ < aU * cU := mul_lt_mul_of_pos_left hc.2 haU0
 
+private theorem plusDetCompositeR04_bounds :
+    (5008961 / 100000000 : ℝ) < plusDetCompositeR04 ∧
+      plusDetCompositeR04 < (5009062 / 100000000 : ℝ) := by
+  have hmodel := factorTwoIntrinsicP4CleanRemainderModel04_bounds
+  have hlog := strict_log_two_fine_bounds
+  have h5 := log_two_pow_fine_bounds_plusDet 5 (by norm_num)
+  have h6 := log_two_pow_fine_bounds_plusDet 6 (by norm_num)
+  have h7 := log_two_pow_fine_bounds_plusDet 7 (by norm_num)
+  unfold plusDetCompositeR04 poleFreeCoeff4 poleFreeCoeff6 yoshidaEndpointA
+  constructor <;> nlinarith [hmodel.1, hmodel.2, hlog.1, hlog.2,
+    h5.1, h5.2, h6.1, h6.2, h7.1, h7.2]
+
+private theorem plusDetCompositeR24_bounds :
+    (10549432 / 100000000 : ℝ) < plusDetCompositeR24 ∧
+      plusDetCompositeR24 < (10549633 / 100000000 : ℝ) := by
+  have hmodel := factorTwoIntrinsicP4CleanRemainderModel24_bounds
+  have hlog := strict_log_two_fine_bounds
+  have h7 := log_two_pow_fine_bounds_plusDet 7 (by norm_num)
+  unfold plusDetCompositeR24 poleFreeCoeff6 yoshidaEndpointA
+  constructor <;> nlinarith [hmodel.1, hmodel.2, hlog.1, hlog.2,
+    h7.1, h7.2]
+
+private theorem plusDetCompositeCoreH2_bounds :
+    (-3 / 25000 : ℝ) <
+        plusDetCompositeCore (25704453062981 / 104652000000000)
+          (-698234417 / 581400000) (-344846809 / 193800000)
+          (1 / 2) plusDetAlternatingQH2 ∧
+      plusDetCompositeCore (25704453062981 / 104652000000000)
+          (-698234417 / 581400000) (-344846809 / 193800000)
+          (1 / 2) plusDetAlternatingQH2 < (-11 / 100000 : ℝ) := by
+  have hR04 := plusDetCompositeR04_bounds
+  have hR24 := plusDetCompositeR24_bounds
+  have harch := plusDetAlternatingSharpArchModelH2_bounds
+  have hP := plusDetCompositePH2_tau_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hnegP :
+      (279913275 / 100000000 : ℝ) <
+          -plusDetCompositeP (-698234417 / 581400000)
+            (-344846809 / 193800000) (1 / 2) plusDetAlternatingQH2
+            (factorTwoPrimeShift / yoshidaEndpointA) ∧
+        -plusDetCompositeP (-698234417 / 581400000)
+            (-344846809 / 193800000) (1 / 2) plusDetAlternatingQH2
+            (factorTwoPrimeShift / yoshidaEndpointA) <
+          (279913277 / 100000000 : ℝ) := by
+    constructor <;> linarith [hP.1, hP.2]
+  have hprod := mul_strict_bounds_plusDet hbeta hnegP
+    (by norm_num) (by norm_num)
+  unfold plusDetCompositeCore
+  constructor <;> nlinarith [hR04.1, hR04.2, hR24.1, hR24.2,
+    harch.1, harch.2, hprod.1, hprod.2]
+
+private theorem plusDetCompositeCoreH3_bounds :
+    (-743 / 12500 : ℝ) <
+        plusDetCompositeCore (4071911594689399 / 9883800000000000)
+          (-355017589 / 121600000) (-185775269 / 121600000)
+          (1 / 2) plusDetAlternatingQH3 ∧
+      plusDetCompositeCore (4071911594689399 / 9883800000000000)
+          (-355017589 / 121600000) (-185775269 / 121600000)
+          (1 / 2) plusDetAlternatingQH3 < (-2971 / 50000 : ℝ) := by
+  have hR04 := plusDetCompositeR04_bounds
+  have hR24 := plusDetCompositeR24_bounds
+  have harch := plusDetAlternatingSharpArchModelH3_bounds
+  have hP := plusDetCompositePH3_tau_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hnegP :
+      (571057827 / 100000000 : ℝ) <
+          -plusDetCompositeP (-355017589 / 121600000)
+            (-185775269 / 121600000) (1 / 2) plusDetAlternatingQH3
+            (factorTwoPrimeShift / yoshidaEndpointA) ∧
+        -plusDetCompositeP (-355017589 / 121600000)
+            (-185775269 / 121600000) (1 / 2) plusDetAlternatingQH3
+            (factorTwoPrimeShift / yoshidaEndpointA) <
+          (571057830 / 100000000 : ℝ) := by
+    constructor <;> linarith [hP.1, hP.2]
+  have hprod := mul_strict_bounds_plusDet hbeta hnegP
+    (by norm_num) (by norm_num)
+  unfold plusDetCompositeCore
+  constructor <;> nlinarith [hR04.1, hR04.2, hR24.1, hR24.2,
+    harch.1, harch.2, hprod.1, hprod.2]
+
+private theorem plusDetCompositeCoreH4_bounds :
+    (-38289 / 100000 : ℝ) <
+        plusDetCompositeCore (12706719959751107 / 21209472000000000)
+          (-22289231363 / 1860480000) (2432098079 / 620160000)
+          (1 / 2) plusDetAlternatingQH4 ∧
+      plusDetCompositeCore (12706719959751107 / 21209472000000000)
+          (-22289231363 / 1860480000) (2432098079 / 620160000)
+          (1 / 2) plusDetAlternatingQH4 < (-7657 / 20000 : ℝ) := by
+  have hR04 := plusDetCompositeR04_bounds
+  have hR24 := plusDetCompositeR24_bounds
+  have harch := plusDetAlternatingSharpArchModelH4_bounds
+  have hP := plusDetCompositePH4_tau_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hprod := mul_strict_bounds_plusDet hbeta hP
+    (by norm_num) (by norm_num)
+  unfold plusDetCompositeCore
+  constructor <;> nlinarith [hR04.1, hR04.2, hR24.1, hR24.2,
+    harch.1, harch.2, hprod.1, hprod.2]
+
+private theorem plusDetCompositeCoreW_lower :
+    (-27084 / 25000 : ℝ) <
+      plusDetCompositeCore
+        (1057809782673918967591 / 5408415360000000000000)
+        (-27559902356441 / 930240000000)
+        (7250135076773 / 310080000000) 1 plusDetAlternatingQW := by
+  have hR04 := plusDetCompositeR04_bounds
+  have hR24 := plusDetCompositeR24_bounds
+  have harch := plusDetAlternatingSharpArchModelW_bounds
+  have hP := plusDetCompositePW_tau_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hprod := mul_strict_bounds_plusDet hbeta hP
+    (by norm_num) (by norm_num)
+  unfold plusDetCompositeCore
+  nlinarith [hR04.1, hR04.2, hR24.1, hR24.2,
+    harch.1, hprod.2]
+
+private theorem plusDetSharpModelH2_composite_bounds :
+    (-21 / 100000 : ℝ) < plusDetSharpModelH2 ∧
+      plusDetSharpModelH2 < (-1 / 50000 : ℝ) := by
+  have hcore := plusDetCompositeCoreH2_bounds
+  have hclean := abs_lt.mp abs_plusDetCompositeCleanTransferH2_lt
+  have hjoint := abs_lt.mp abs_plusDetCompositeJointErrorH2_lt
+  rw [plusDetSharpModelH2_composite_decomposition]
+  constructor <;> nlinarith [hcore.1, hcore.2, hclean.1, hclean.2,
+    hjoint.1, hjoint.2]
+
+private theorem plusDetSharpModelH3_composite_bounds :
+    (-2981 / 50000 : ℝ) < plusDetSharpModelH3 ∧
+      plusDetSharpModelH3 < (-1481 / 25000 : ℝ) := by
+  have hcore := plusDetCompositeCoreH3_bounds
+  have hclean := abs_lt.mp abs_plusDetCompositeCleanTransferH3_lt
+  have hjoint := abs_lt.mp abs_plusDetCompositeJointErrorH3_lt
+  rw [plusDetSharpModelH3_composite_decomposition]
+  constructor <;> nlinarith [hcore.1, hcore.2, hclean.1, hclean.2,
+    hjoint.1, hjoint.2]
+
+private theorem plusDetSharpModelH4_composite_bounds :
+    (-3831 / 10000 : ℝ) < plusDetSharpModelH4 ∧
+      plusDetSharpModelH4 < (-1913 / 5000 : ℝ) := by
+  have hcore := plusDetCompositeCoreH4_bounds
+  have hclean := abs_lt.mp abs_plusDetCompositeCleanTransferH4_lt
+  have hjoint := abs_lt.mp abs_plusDetCompositeJointErrorH4_lt
+  rw [plusDetSharpModelH4_composite_decomposition]
+  constructor <;> nlinarith [hcore.1, hcore.2, hclean.1, hclean.2,
+    hjoint.1, hjoint.2]
+
+private theorem plusDetSharpModelW_composite_lower :
+    (-271 / 250 : ℝ) < plusDetSharpModelW := by
+  have hcore := plusDetCompositeCoreW_lower
+  have hclean := abs_lt.mp abs_plusDetCompositeCleanTransferW_lt
+  have hjoint := plusDetCompositeJointErrorW_gt
+  rw [plusDetSharpModelW_composite_decomposition]
+  nlinarith [hcore, hclean.1]
+
 /-! ## Rational boxes for the four full sharp models -/
 
 private theorem plusDetAlternatingSharpModelH2_bounds :
@@ -3691,6 +4145,31 @@ def PlusP5BorderCombinedBounds : Prop :=
     |plusDetActualH3| < (1 / 625 : ℝ) ∧
     |plusDetActualH4| < (1 / 625 : ℝ) ∧
     (63 / 1000 : ℝ) < plusDetActualW
+
+/-- The four correlated border quantities satisfy the unconditional box
+required by the final six-dimensional completion.  The proof uses only
+global structural envelopes and exact polynomial identities. -/
+theorem plusP5BorderCombinedBounds_structural :
+    PlusP5BorderCombinedBounds := by
+  have h2 := plusDetSharpModelH2_composite_bounds
+  have h3 := plusDetSharpModelH3_composite_bounds
+  have h4 := plusDetSharpModelH4_composite_bounds
+  have hW := plusDetSharpModelW_composite_lower
+  have hB1 := plusP5OddB1_bounds
+  have hB4 := plusP5OddB4_bounds
+  have hQ := plusP5OddQ_gt_11473_div_10000
+  unfold PlusP5BorderCombinedBounds
+  constructor
+  · rw [plusDetActualH2_eq_sharpModel, abs_lt]
+    constructor <;> nlinarith [h2.1, h2.2]
+  constructor
+  · rw [plusDetActualH3_eq_sharpModel_add_B1, abs_lt]
+    constructor <;> nlinarith [h3.1, h3.2, hB1.1, hB1.2]
+  constructor
+  · rw [plusDetActualH4_eq_sharpModel_add_B4, abs_lt]
+    constructor <;> nlinarith [h4.1, h4.2, hB4.1, hB4.2]
+  · rw [plusDetActualW_eq_sharpModel_add_Q]
+    nlinarith
 
 /-! ## The six-dimensional weighted SOS -/
 
