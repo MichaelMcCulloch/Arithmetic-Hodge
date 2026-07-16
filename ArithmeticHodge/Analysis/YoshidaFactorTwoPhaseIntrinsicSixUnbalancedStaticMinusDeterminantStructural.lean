@@ -207,7 +207,7 @@ private def minusDetH2 : ℝ :=
     (2 / 35) * factorTwoIntrinsicP45Alternating +
     factorTwoIntrinsicSixUnbalancedOPlus15
 
-private def minusDetH3 : ℝ :=
+def minusDetH3 : ℝ :=
   -10888709537 / 352800000000 +
     (9701 / 224000) * factorTwoIntrinsicSixUnbalancedEMinusP4Sum +
     (23479 / 806400) * factorTwoIntrinsicSixUnbalancedKMinusOneSum +
@@ -222,7 +222,7 @@ private def minusDetH3 : ℝ :=
     (9 / 100) * factorTwoIntrinsicP45Alternating -
     (1 / 14) * factorTwoIntrinsicSixUnbalancedOPlus15
 
-private def minusDetH4 : ℝ :=
+def minusDetH4 : ℝ :=
   13226532359 / 268800000000 -
     (372317 / 3360000) * factorTwoIntrinsicSixUnbalancedEMinusP4Sum -
     (151423 / 1344000) * factorTwoIntrinsicSixUnbalancedKMinusOneSum -
@@ -238,7 +238,7 @@ private def minusDetH4 : ℝ :=
     (73 / 80) * factorTwoIntrinsicSixUnbalancedOPlus15 +
     factorTwoIntrinsicSixUnbalancedOPlus35
 
-private def minusDetW : ℝ :=
+def minusDetW : ℝ :=
   103412374889051 / 406425600000000 -
     (821671 / 8064000) * factorTwoIntrinsicSixUnbalancedEMinusP4Sum -
     (6256361 / 29030400) * factorTwoIntrinsicSixUnbalancedKMinusOneSum -
