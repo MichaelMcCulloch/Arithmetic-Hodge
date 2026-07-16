@@ -551,6 +551,333 @@ private theorem minor_poleFreeKernel_weighted_envelope
   rw [hdiff, abs_mul, abs_of_pos yoshidaEndpointA_pos]
   exact mul_le_mul_of_nonneg_left hinside yoshidaEndpointA_pos.le
 
+/-- The two-copy degree-eight `cosh` remainder charged to one translated
+endpoint in the joint symmetric/alternating kernel estimate. -/
+def jointCoshEnvelope (u : ℝ) : ℝ :=
+  u ^ 8 / 15120
+
+/-- The regular-kernel part of the pole-free envelope at one translated
+endpoint. -/
+def jointRegularEnvelope (u : ℝ) : ℝ :=
+  integratedPoleFreeEnvelope u - jointCoshEnvelope u
+
+theorem jointCoshEnvelope_nonneg (u : ℝ) :
+    0 ≤ jointCoshEnvelope u := by
+  unfold jointCoshEnvelope
+  positivity
+
+private theorem jointCoshEnvelope_eq_two_minorCoshError (u : ℝ) :
+    jointCoshEnvelope u = 2 * minorCoshError u := by
+  unfold jointCoshEnvelope minorCoshError
+  ring
+
+private theorem jointRegularEnvelope_eq_minorRegularError (u : ℝ) :
+    jointRegularEnvelope u = minorRegularError u := by
+  unfold jointRegularEnvelope integratedPoleFreeEnvelope
+  rw [jointCoshEnvelope_eq_two_minorCoshError]
+  ring
+
+theorem jointRegularEnvelope_nonneg
+    {u : ℝ} (hu : 0 ≤ u) :
+    0 ≤ jointRegularEnvelope u := by
+  rw [jointRegularEnvelope_eq_minorRegularError]
+  unfold minorRegularError minorWideSechError minorWideCschError
+  positivity
+
+theorem integratedPoleFreeEnvelope_eq_jointEnvelope (u : ℝ) :
+    integratedPoleFreeEnvelope u =
+      jointCoshEnvelope u + jointRegularEnvelope u := by
+  unfold jointRegularEnvelope
+  ring
+
+private theorem minor_jointKernelError_decomposition
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    ∃ ecp ecm erp erm : ℝ,
+      0 ≤ ecp ∧ 0 ≤ ecm ∧ 0 ≤ erp ∧ 0 ≤ erm ∧
+      2 * ecp ≤ jointCoshEnvelope
+        (yoshidaEndpointA * (2 + t) / 2) ∧
+      2 * ecm ≤ jointCoshEnvelope
+        (yoshidaEndpointA * (2 - t) / 2) ∧
+      erp ≤ jointRegularEnvelope
+        (yoshidaEndpointA * (2 + t) / 2) ∧
+      erm ≤ jointRegularEnvelope
+        (yoshidaEndpointA * (2 - t) / 2) ∧
+      oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t =
+        yoshidaEndpointA * (2 * ecp + 2 * ecm - erp - erm) ∧
+      yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          intrinsicAlternatingKernelPolynomial6 t =
+        yoshidaEndpointA * (2 * ecp - 2 * ecm - erp + erm) := by
+  let up : ℝ := yoshidaEndpointA * (2 + t)
+  let um : ℝ := yoshidaEndpointA * (2 - t)
+  let zp : ℝ := up / 2
+  let zm : ℝ := um / 2
+  have hup0 : 0 ≤ up := by
+    dsimp only [up]
+    exact mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.1])
+  have hum0 : 0 ≤ um := by
+    dsimp only [um]
+    exact mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.2])
+  have hupLog : up ≤ 2 * Real.log 2 := by
+    dsimp only [up]
+    unfold yoshidaEndpointA
+    have hlog0 : 0 ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
+    nlinarith [ht.2]
+  have humLog : um ≤ 2 * Real.log 2 := by
+    dsimp only [um]
+    unfold yoshidaEndpointA
+    have hlog0 : 0 ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
+    nlinarith [ht.1]
+  have hzp0 : 0 ≤ zp := by
+    dsimp only [zp]
+    positivity
+  have hzm0 : 0 ≤ zm := by
+    dsimp only [zm]
+    positivity
+  have hzp : zp < (7 / 10 : ℝ) := by
+    dsimp only [zp, up]
+    unfold yoshidaEndpointA
+    have hlog := strict_log_two_bounds.2
+    have hlog0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    nlinarith [ht.2]
+  have hzm : zm < (7 / 10 : ℝ) := by
+    dsimp only [zm, um]
+    unfold yoshidaEndpointA
+    have hlog := strict_log_two_bounds.2
+    have hlog0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    nlinarith [ht.1]
+  have hcp := minor_wide_cosh_taylor_bounds hzp0 hzp
+  have hcm := minor_wide_cosh_taylor_bounds hzm0 hzm
+  have hrp := minor_regularKernel_weighted_envelope hup0 hupLog
+  have hrm := minor_regularKernel_weighted_envelope hum0 humLog
+  let ecp : ℝ := Real.cosh zp - minorWideCoshPolynomial6 zp
+  let ecm : ℝ := Real.cosh zm - minorWideCoshPolynomial6 zm
+  let erp : ℝ := yoshidaRegularKernel up -
+    yoshidaRegularKernelPolynomial6 up
+  let erm : ℝ := yoshidaRegularKernel um -
+    yoshidaRegularKernelPolynomial6 um
+  have hecp0 : 0 ≤ ecp := by
+    dsimp only [ecp]
+    linarith [hcp.1]
+  have hecm0 : 0 ≤ ecm := by
+    dsimp only [ecm]
+    linarith [hcm.1]
+  have hecpE : ecp ≤ minorCoshError zp := by
+    dsimp only [ecp, minorCoshError]
+    unfold minorWideCoshUpper8 at hcp
+    linarith
+  have hecmE : ecm ≤ minorCoshError zm := by
+    dsimp only [ecm, minorCoshError]
+    unfold minorWideCoshUpper8 at hcm
+    linarith
+  have herp0 : 0 ≤ erp := by simpa only [erp] using hrp.1
+  have herm0 : 0 ≤ erm := by simpa only [erm] using hrm.1
+  have herpE : erp ≤ minorRegularError zp := by
+    have hz : up / 2 = zp := by rfl
+    simpa only [erp, hz] using hrp.2
+  have hermE : erm ≤ minorRegularError zm := by
+    have hz : um / 2 = zm := by rfl
+    simpa only [erm, hz] using hrm.2
+  have hecpJ : 2 * ecp ≤ jointCoshEnvelope zp := by
+    rw [jointCoshEnvelope_eq_two_minorCoshError]
+    exact mul_le_mul_of_nonneg_left hecpE (by norm_num)
+  have hecmJ : 2 * ecm ≤ jointCoshEnvelope zm := by
+    rw [jointCoshEnvelope_eq_two_minorCoshError]
+    exact mul_le_mul_of_nonneg_left hecmE (by norm_num)
+  have herpJ : erp ≤ jointRegularEnvelope zp := by
+    rwa [jointRegularEnvelope_eq_minorRegularError]
+  have hermJ : erm ≤ jointRegularEnvelope zm := by
+    rwa [jointRegularEnvelope_eq_minorRegularError]
+  have hpPoly :
+      yoshidaRegularKernelPolynomial6 up =
+        (1 / 4 : ℝ) *
+          (minorWideSechPolynomial6 zp +
+            minorWideCschRegularPolynomial5 zp) := by
+    rw [show up = 2 * zp by dsimp only [zp]; ring,
+      minor_yoshidaRegularKernelPolynomial6_two_mul_wide]
+  have hmPoly :
+      yoshidaRegularKernelPolynomial6 um =
+        (1 / 4 : ℝ) *
+          (minorWideSechPolynomial6 zm +
+            minorWideCschRegularPolynomial5 zm) := by
+    rw [show um = 2 * zm by dsimp only [zm]; ring,
+      minor_yoshidaRegularKernelPolynomial6_two_mul_wide]
+  have hsymm :
+      oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t =
+        yoshidaEndpointA * (2 * ecp + 2 * ecm - erp - erm) := by
+    rw [poleFreeKernelPolynomial6_expansion]
+    dsimp only [oddLowPoleFreeKernel,
+      factorTwoCenteredSymmetricRegularWeight, up, um, zp, zm,
+      ecp, ecm, erp, erm]
+    rw [hpPoly, hmPoly]
+    unfold minorWideCoshPolynomial6 minorWideSechPolynomial6
+      minorWideCschRegularPolynomial5 poleFreeCoeff0 poleFreeCoeff2
+      poleFreeCoeff4 poleFreeCoeff6
+    dsimp only [zp, zm, up, um]
+    ring_nf
+  have halt :
+      yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          intrinsicAlternatingKernelPolynomial6 t =
+        yoshidaEndpointA * (2 * ecp - 2 * ecm - erp + erm) := by
+    rw [intrinsicAlternatingKernelPolynomial6_expansion]
+    dsimp only [factorTwoCenteredAntisymmetricRegularWeight, up, um, zp, zm,
+      ecp, ecm, erp, erm]
+    rw [hpPoly, hmPoly]
+    unfold minorWideCoshPolynomial6 minorWideSechPolynomial6
+      minorWideCschRegularPolynomial5 intrinsicAlternatingKernelCoeff1
+      intrinsicAlternatingKernelCoeff3 intrinsicAlternatingKernelCoeff5
+    dsimp only [zp, zm, up, um]
+    ring_nf
+  refine ⟨ecp, ecm, erp, erm, hecp0, hecm0, herp0, herm0, ?_, ?_,
+    ?_, ?_, hsymm, halt⟩
+  · simpa only [zp, up] using hecpJ
+  · simpa only [zm, um] using hecmJ
+  · simpa only [zp, up] using herpJ
+  · simpa only [zm, um] using hermJ
+
+/-- A pointwise joint error bound which preserves the cancellation between
+the symmetric and alternating correlation profiles. -/
+theorem abs_jointSymmetricAlternatingKernelError_le
+    (Ce Ca : ℝ → ℝ) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    |(oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * Ce t +
+        (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          intrinsicAlternatingKernelPolynomial6 t) * Ca t| ≤
+      yoshidaEndpointA *
+        (integratedPoleFreeEnvelope
+            (yoshidaEndpointA * (2 + t) / 2) * |Ce t + Ca t| +
+          integratedPoleFreeEnvelope
+            (yoshidaEndpointA * (2 - t) / 2) * |Ce t - Ca t|) := by
+  rcases minor_jointKernelError_decomposition ht with
+    ⟨ecp, ecm, erp, erm, hecp0, hecm0, herp0, herm0,
+      hecpE, hecmE, herpE, hermE, hsymm, halt⟩
+  let zp : ℝ := yoshidaEndpointA * (2 + t) / 2
+  let zm : ℝ := yoshidaEndpointA * (2 - t) / 2
+  have hzp0 : 0 ≤ zp := by
+    dsimp only [zp]
+    exact div_nonneg
+      (mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.1])) (by norm_num)
+  have hzm0 : 0 ≤ zm := by
+    dsimp only [zm]
+    exact div_nonneg
+      (mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.2])) (by norm_num)
+  have hecpE' : 2 * ecp ≤ jointCoshEnvelope zp := by
+    simpa only [zp] using hecpE
+  have hecmE' : 2 * ecm ≤ jointCoshEnvelope zm := by
+    simpa only [zm] using hecmE
+  have herpE' : erp ≤ jointRegularEnvelope zp := by
+    simpa only [zp] using herpE
+  have hermE' : erm ≤ jointRegularEnvelope zm := by
+    simpa only [zm] using hermE
+  have hpabs :
+      |2 * ecp - erp| ≤ integratedPoleFreeEnvelope zp := by
+    rw [integratedPoleFreeEnvelope_eq_jointEnvelope, abs_le]
+    constructor <;>
+      nlinarith [jointCoshEnvelope_nonneg zp,
+        jointRegularEnvelope_nonneg hzp0]
+  have hmabs :
+      |2 * ecm - erm| ≤ integratedPoleFreeEnvelope zm := by
+    rw [integratedPoleFreeEnvelope_eq_jointEnvelope, abs_le]
+    constructor <;>
+      nlinarith [jointCoshEnvelope_nonneg zm,
+        jointRegularEnvelope_nonneg hzm0]
+  have hshared :
+      (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * Ce t +
+          (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+            intrinsicAlternatingKernelPolynomial6 t) * Ca t =
+        yoshidaEndpointA *
+          ((2 * ecp - erp) * (Ce t + Ca t) +
+            (2 * ecm - erm) * (Ce t - Ca t)) := by
+    rw [hsymm, halt]
+    ring
+  have htriangle :
+      |(2 * ecp - erp) * (Ce t + Ca t) +
+          (2 * ecm - erm) * (Ce t - Ca t)| ≤
+        |2 * ecp - erp| * |Ce t + Ca t| +
+          |2 * ecm - erm| * |Ce t - Ca t| := by
+    calc
+      _ ≤ |(2 * ecp - erp) * (Ce t + Ca t)| +
+          |(2 * ecm - erm) * (Ce t - Ca t)| := abs_add_le _ _
+      _ = _ := by rw [abs_mul, abs_mul]
+  rw [hshared, abs_mul, abs_of_pos yoshidaEndpointA_pos]
+  apply mul_le_mul_of_nonneg_left _ yoshidaEndpointA_pos.le
+  exact htriangle.trans (add_le_add
+    (mul_le_mul_of_nonneg_right hpabs (abs_nonneg _))
+    (mul_le_mul_of_nonneg_right hmabs (abs_nonneg _)))
+
+/-- A signed joint lower bound.  Positive profile parts are charged only to
+the regular error, while negative profile parts are charged only to the
+degree-eight `cosh` error. -/
+theorem jointSymmetricAlternatingKernelError_lower_of_signed_decomposition
+    (Ce Ca Pp Np Pm Nm : ℝ → ℝ) {t : ℝ}
+    (ht : t ∈ Icc (0 : ℝ) 2)
+    (hplus : Ce t + Ca t = Pp t - Np t)
+    (hminus : Ce t - Ca t = Pm t - Nm t)
+    (hPp0 : 0 ≤ Pp t) (hNp0 : 0 ≤ Np t)
+    (hPm0 : 0 ≤ Pm t) (hNm0 : 0 ≤ Nm t) :
+    -yoshidaEndpointA *
+        (jointRegularEnvelope (yoshidaEndpointA * (2 + t) / 2) * Pp t +
+          jointCoshEnvelope (yoshidaEndpointA * (2 + t) / 2) * Np t +
+          jointRegularEnvelope (yoshidaEndpointA * (2 - t) / 2) * Pm t +
+          jointCoshEnvelope (yoshidaEndpointA * (2 - t) / 2) * Nm t) ≤
+      (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * Ce t +
+        (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          intrinsicAlternatingKernelPolynomial6 t) * Ca t := by
+  rcases minor_jointKernelError_decomposition ht with
+    ⟨ecp, ecm, erp, erm, hecp0, hecm0, herp0, herm0,
+      hecpE, hecmE, herpE, hermE, hsymm, halt⟩
+  let zp : ℝ := yoshidaEndpointA * (2 + t) / 2
+  let zm : ℝ := yoshidaEndpointA * (2 - t) / 2
+  have hecpE' : 2 * ecp ≤ jointCoshEnvelope zp := by
+    simpa only [zp] using hecpE
+  have hecmE' : 2 * ecm ≤ jointCoshEnvelope zm := by
+    simpa only [zm] using hecmE
+  have herpE' : erp ≤ jointRegularEnvelope zp := by
+    simpa only [zp] using herpE
+  have hermE' : erm ≤ jointRegularEnvelope zm := by
+    simpa only [zm] using hermE
+  have hp :
+      -(jointRegularEnvelope zp * Pp t + jointCoshEnvelope zp * Np t) ≤
+        (2 * ecp - erp) * (Ce t + Ca t) := by
+    rw [hplus]
+    have h1 : 0 ≤ 2 * ecp * Pp t :=
+      mul_nonneg (mul_nonneg (by norm_num) hecp0) hPp0
+    have h2 : 0 ≤ erp * Np t := mul_nonneg herp0 hNp0
+    have h3 : 0 ≤ (jointRegularEnvelope zp - erp) * Pp t :=
+      mul_nonneg (sub_nonneg.mpr herpE') hPp0
+    have h4 : 0 ≤ (jointCoshEnvelope zp - 2 * ecp) * Np t :=
+      mul_nonneg (sub_nonneg.mpr hecpE') hNp0
+    nlinarith
+  have hm :
+      -(jointRegularEnvelope zm * Pm t + jointCoshEnvelope zm * Nm t) ≤
+        (2 * ecm - erm) * (Ce t - Ca t) := by
+    rw [hminus]
+    have h1 : 0 ≤ 2 * ecm * Pm t :=
+      mul_nonneg (mul_nonneg (by norm_num) hecm0) hPm0
+    have h2 : 0 ≤ erm * Nm t := mul_nonneg herm0 hNm0
+    have h3 : 0 ≤ (jointRegularEnvelope zm - erm) * Pm t :=
+      mul_nonneg (sub_nonneg.mpr hermE') hPm0
+    have h4 : 0 ≤ (jointCoshEnvelope zm - 2 * ecm) * Nm t :=
+      mul_nonneg (sub_nonneg.mpr hecmE') hNm0
+    nlinarith
+  have hinside :
+      -(jointRegularEnvelope zp * Pp t + jointCoshEnvelope zp * Np t +
+          jointRegularEnvelope zm * Pm t + jointCoshEnvelope zm * Nm t) ≤
+        (2 * ecp - erp) * (Ce t + Ca t) +
+          (2 * ecm - erm) * (Ce t - Ca t) := by
+    linarith
+  rw [hsymm, halt]
+  dsimp only [zp, zm] at hinside ⊢
+  calc
+    _ = yoshidaEndpointA *
+        (-(jointRegularEnvelope (yoshidaEndpointA * (2 + t) / 2) * Pp t +
+          jointCoshEnvelope (yoshidaEndpointA * (2 + t) / 2) * Np t +
+          jointRegularEnvelope (yoshidaEndpointA * (2 - t) / 2) * Pm t +
+          jointCoshEnvelope (yoshidaEndpointA * (2 - t) / 2) * Nm t)) := by ring
+    _ ≤ yoshidaEndpointA *
+        ((2 * ecp - erp) * (Ce t + Ca t) +
+          (2 * ecm - erm) * (Ce t - Ca t)) :=
+      mul_le_mul_of_nonneg_left hinside yoshidaEndpointA_pos.le
+    _ = _ := by ring
+
 theorem integratedPoleFreeEnvelope_expansion (u : ℝ) :
     integratedPoleFreeEnvelope u =
       (193 / 3628800 : ℝ) * u ^ 7 +
