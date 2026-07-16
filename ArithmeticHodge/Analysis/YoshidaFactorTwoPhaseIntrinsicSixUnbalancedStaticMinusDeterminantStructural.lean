@@ -482,20 +482,20 @@ private theorem minusDetH012_bounds :
 /-- The `H3` border coordinate with its positive-endpoint `P1-P5` tail
 removed.  This is the quantity whose symmetric and alternating profiles must
 be estimated jointly. -/
-private def minusDetH3Core : ℝ :=
+def minusDetH3Core : ℝ :=
   minusDetH3 + (1 / 14 : ℝ) *
     factorTwoIntrinsicSixUnbalancedOPlus15
 
 /-- The `H4` border coordinate with its complete positive-endpoint `P5`
 cross tail removed. -/
-private def minusDetH4Core : ℝ :=
+def minusDetH4Core : ℝ :=
   minusDetH4 + (73 / 80 : ℝ) *
       factorTwoIntrinsicSixUnbalancedOPlus15 -
     factorTwoIntrinsicSixUnbalancedOPlus35
 
 /-- The completed diagonal with its whole correlated positive-endpoint odd
 `P5` tail removed. -/
-private def minusDetWCore : ℝ :=
+def minusDetWCore : ℝ :=
   minusDetW - minusP5OddPositiveTail
 
 private theorem minusDetH3_eq_core_add_tail :
@@ -519,7 +519,7 @@ private theorem minusDetW_eq_core_add_tail :
 /-- Rational boxes needed only for the three full non-`P5` profiles.  They
 are kept separate from the endpoint tails so that neither source is split
 entrywise. -/
-private def MinusP5BorderCoreBounds : Prop :=
+def MinusP5BorderCoreBounds : Prop :=
   (47 / 5000 : ℝ) < minusDetH3Core ∧
     minusDetH3Core < (189 / 20000 : ℝ) ∧
     (-6521 / 125000 : ℝ) < minusDetH4Core ∧
@@ -531,7 +531,7 @@ private def MinusP5BorderCoreBounds : Prop :=
 /-- The only analytic frontier left after the safe border boxes have been
 discharged.  These bounds are intentionally formed on the two complete
 correlated profiles and on the completed diagonal. -/
-private def MinusP5BorderCombinedBounds : Prop :=
+def MinusP5BorderCombinedBounds : Prop :=
   |minusDetH3| < (1 / 2000 : ℝ) ∧
     |minusDetH4| < (1 / 4000 : ℝ) ∧
     (1 / 2000 : ℝ) < minusDetW
@@ -539,7 +539,7 @@ private def MinusP5BorderCombinedBounds : Prop :=
 /-- Once the three non-tail profiles have been bounded jointly, the public
 endpoint-cross boxes and the one whole-profile `P5` tail bound close the
 completed border. -/
-private theorem minusP5BorderCombinedBounds_of_coreBounds
+theorem minusP5BorderCombinedBounds_of_coreBounds
     (hcore : MinusP5BorderCoreBounds)
     (htail : (-729 / 5000 : ℝ) < minusP5OddPositiveTail) :
     MinusP5BorderCombinedBounds := by
@@ -1114,7 +1114,7 @@ private theorem minusDetTQuadratic_determinant_witness :
     symmetricQuadratic symmetricDeterminant
   ring
 
-private theorem factorTwoIntrinsicSixUnbalancedTMinusDet_pos_of_combinedBounds
+theorem factorTwoIntrinsicSixUnbalancedTMinusDet_pos_of_combinedBounds
     (hfrontier : MinusP5BorderCombinedBounds) :
     0 < factorTwoIntrinsicSixUnbalancedTMinusDet := by
   let d : ℝ := factorTwoIntrinsicSixUnbalancedEMinusDet
