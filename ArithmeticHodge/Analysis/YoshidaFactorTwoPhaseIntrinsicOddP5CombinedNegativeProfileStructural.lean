@@ -1,10 +1,13 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP3SinhStructural
+import ArithmeticHodge.Analysis.YoshidaEndpointOddOneThreeRawPolarization
 import ArithmeticHodge.Analysis.YoshidaDiagonalFineBase
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationOneSided
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseSymmetricCarleman
 
 set_option autoImplicit false
 
@@ -14,10 +17,16 @@ noncomputable section
 
 open MeasureTheory Real Set
 open CenteredEndpointCorrelation
+open UnitIntervalLogEnergyAffine
+open YoshidaEndpointEvenFullPolarization
+open YoshidaEndpointEvenConstantCross
+open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddCleanPositive
 open YoshidaEndpointOddResidualRegularity
+open YoshidaEndpointOddOneThreeRawPolarization
+open YoshidaEndpointRegularCorrelation
 open YoshidaConstantBounds
 open YoshidaDiagonalFineBase
 open YoshidaFactorTwoCenteredPhysical
@@ -34,12 +43,18 @@ open YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP3SinhStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
+open YoshidaFactorTwoPhaseIntrinsicSixP4Schur
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseOddLowEndpointPositive
 open YoshidaFactorTwoPhaseOddAffineKernelEstimate
+open YoshidaFactorTwoPhaseSymmetricCarleman
+open YoshidaFactorTwoPhaseSymmetricCoercivity
+open YoshidaRegularKernelBound
+open YoshidaRegularKernelSchur
 
 /-!
 # The correlated negative-endpoint odd `P5` completion profile
@@ -1596,6 +1611,411 @@ theorem plusP5OddB4_bounds :
   rw [plusP5OddB4_eq_structuralProfile]
   constructor <;> nlinarith [hbase.1, hbase.2, henv.1, henv.2,
     hhyper.1, hhyper.2, herr.1, herr.2]
+
+/-! ## The whole correlated `P₁/P₃/P₅` square -/
+
+/-- The exact sixth-order regular-kernel model of the single completed
+profile.  It is formed before taking any estimate, so all mixed-mode
+cancellation is retained. -/
+def plusP5OddQCleanPolynomial : ℝ :=
+  (17580370823 / 296524800000 : ℝ) * yoshidaEndpointA +
+    (106481761 / 829440000 : ℝ) * yoshidaEndpointA ^ 2 -
+    (9126616739 / 2737152000000 : ℝ) * yoshidaEndpointA ^ 3 -
+    (559630327 / 23224320000 : ℝ) * yoshidaEndpointA ^ 4 +
+    (5236079823901 / 32011868528640000 : ℝ) * yoshidaEndpointA ^ 5 +
+    (2558186668753 / 536481792000000 : ℝ) * yoshidaEndpointA ^ 6
+
+/-- The one signed global regular-kernel envelope of the completed profile. -/
+def plusP5OddQCleanEnvelope : ℝ :=
+  oddCleanRegularEnvelopeError plusP5OddQCorrelation
+
+/-- The combined pole-free polynomial moment of the completed correlation. -/
+def plusP5OddQPolynomialMoment : ℝ :=
+  -(106481761 / 51840000 : ℝ) * polynomialD2 -
+    (559630327 / 151200000 : ℝ) * polynomialD4 -
+    (41937486373 / 5821200000 : ℝ) * polynomialD6
+
+/-- The exact nonnegative logarithmic reserve left in the fifth mode. -/
+def plusP5OddQRawReserve : ℝ :=
+  centeredRawLogEnergy factorTwoCenteredP5 / 4 - 137 / 330
+
+/-- All explicit contributions of the completed square, prior to the three
+global analytic remainders. -/
+def plusP5OddQAlgebraicBase : ℝ :=
+  27837295643700157 / 38419920000000 -
+    (9949613 / 9600 : ℝ) * Real.log 2 -
+    (11355935597 / 2661120000 : ℝ) * yoshidaEndpointScalarMassLoss +
+    (11355935597 / 2661120000 : ℝ) * (Real.log 2 / Real.sqrt 2) +
+    (Real.log 3 / Real.sqrt 3) *
+      plusP5OddQCorrelation (factorTwoPrimeShift / yoshidaEndpointA) -
+    yoshidaEndpointA * plusP5OddQCleanPolynomial -
+    plusP5OddQPolynomialMoment
+
+/-- The diagonal `P5` contribution to the sixth-order regular model. -/
+def oddP5CleanRegularPolynomial55 : ℝ :=
+  yoshidaEndpointA / 7722 + yoshidaEndpointA ^ 3 / 1544400 +
+    31 * yoshidaEndpointA ^ 5 / 2315673360
+
+theorem integral_regularKernelPolynomial6_mul_oddP5Correlation55 :
+    2 * (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+        oddP5Correlation55 t) = oddP5CleanRegularPolynomial55 := by
+  unfold yoshidaRegularKernelPolynomial6 oddP5Correlation55
+    oddP5CleanRegularPolynomial55
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  rw [show (fun x : ℝ ↦ yoshidaEndpointA * x) =
+      fun x ↦ yoshidaEndpointA * x ^ 1 by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul, integral_pow]
+  norm_num
+  ring
+
+private theorem measurable_yoshidaRegularKernel_q :
+    Measurable yoshidaRegularKernel := by
+  unfold yoshidaRegularKernel
+  apply Measurable.ite
+  · simpa only [Set.setOf_eq_eq_singleton] using
+      measurableSet_singleton (0 : ℝ)
+  · exact measurable_const
+  · exact ((Real.measurable_exp.comp (measurable_id.div_const 2)).div
+      (measurable_const.mul Real.measurable_sinh)).sub
+        (measurable_const.div (measurable_const.mul measurable_id))
+
+private theorem intervalIntegrable_regularKernel_mul_q
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    IntervalIntegrable
+      (fun t ↦ yoshidaRegularKernel (yoshidaEndpointA * t) * C t)
+      volume 0 2 := by
+  let f : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (yoshidaEndpointA * t) * C t
+  let g : ℝ → ℝ := fun t ↦ (1 / 4 : ℝ) * |C t|
+  have hgIcc : IntegrableOn g (Icc (0 : ℝ) 2) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact (continuous_const.mul hC.abs).continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (0 : ℝ) 2)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (0 : ℝ) 2)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact (measurable_yoshidaRegularKernel_q.comp
+      (measurable_const.mul measurable_id)).mul hC.measurable
+  have hfg : ∀ᵐ t : ℝ ∂(volume.restrict (Ioc (0 : ℝ) 2)),
+      ‖f t‖ ≤ g t := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have htIcc : t ∈ Icc (0 : ℝ) 2 := ⟨ht.1.le, ht.2⟩
+    have harg0 : 0 ≤ yoshidaEndpointA * t :=
+      mul_nonneg yoshidaEndpointA_pos.le htIcc.1
+    have harg2 : yoshidaEndpointA * t ≤ Real.log 2 := by
+      unfold yoshidaEndpointA
+      nlinarith [mul_le_mul_of_nonneg_left htIcc.2
+        (by positivity : 0 ≤ Real.log 2 / 2)]
+    have hK := yoshidaRegularKernel_mem_Icc harg0 harg2
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hK.1]
+    exact mul_le_mul_of_nonneg_right hK.2 (abs_nonneg (C t))
+  constructor
+  · exact Integrable.mono' hg hfmeas hfg
+  · simp
+
+theorem re_yoshidaEndpointRegularQuadratic_p5_eq :
+    (yoshidaEndpointRegularQuadratic
+      (fun x ↦ (factorTwoCenteredP5 x : ℂ))).re =
+      oddP5CleanRegularPolynomial55 +
+        oddCleanRegularEnvelopeError oddP5Correlation55 := by
+  rw [re_yoshidaEndpointRegularQuadratic_eq_correlation _
+    continuous_factorTwoCenteredP5]
+  simp_rw [centeredEndpointCorrelation_p5]
+  have hactual := intervalIntegrable_regularKernel_mul_q oddP5Correlation55
+    continuous_oddP5Correlation55
+  have hpoly : IntervalIntegrable
+      (fun t : ℝ ↦
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+          oddP5Correlation55 t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    · unfold yoshidaRegularKernelPolynomial6 oddP5Correlation55
+      fun_prop
+  have herr : IntervalIntegrable
+      (fun t : ℝ ↦
+        (yoshidaRegularKernel (yoshidaEndpointA * t) -
+          yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) *
+            oddP5Correlation55 t) volume 0 2 := by
+    apply (hactual.sub hpoly).congr
+    intro t _ht
+    ring
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (yoshidaEndpointA * t) * oddP5Correlation55 t) =
+      fun t ↦
+        (yoshidaRegularKernel (yoshidaEndpointA * t) -
+          yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) *
+            oddP5Correlation55 t +
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) *
+          oddP5Correlation55 t by
+      funext t
+      ring,
+    intervalIntegral.integral_add herr hpoly]
+  have hmodel := integral_regularKernelPolynomial6_mul_oddP5Correlation55
+  unfold oddCleanRegularEnvelopeError
+  nlinarith
+
+private theorem yoshidaEndpointCoshMoment_p5_eq_zero :
+    yoshidaEndpointCoshMoment factorTwoCenteredP5 = 0 := by
+  have h := centeredCoshMoment_eq_zero_of_odd odd_factorTwoCenteredP5
+    (yoshidaEndpointA / 2)
+  rw [show yoshidaEndpointCoshMoment factorTwoCenteredP5 =
+      centeredCoshMoment factorTwoCenteredP5 (yoshidaEndpointA / 2) by
+    unfold centeredCoshMoment yoshidaEndpointCoshMoment
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    ring]
+  exact h
+
+theorem yoshidaEndpointOddCleanQuadratic_p5_eq :
+    yoshidaEndpointOddCleanQuadratic factorTwoCenteredP5 =
+      (25402 / 38115 : ℝ) -
+        (2 / 11 : ℝ) * (Real.log 2 + yoshidaEndpointScalarMassLoss) +
+        plusP5OddQRawReserve -
+        yoshidaEndpointA *
+          (oddP5CleanRegularPolynomial55 +
+            oddCleanRegularEnvelopeError oddP5Correlation55) -
+        2 * yoshidaEndpointA * oddP5CleanSinhMoment ^ 2 := by
+  unfold yoshidaEndpointOddCleanQuadratic
+  dsimp only
+  rw [integral_endpointPotential_mul_factorTwoCenteredP5_sq,
+    integral_factorTwoCenteredP5_sq,
+    re_yoshidaEndpointRegularQuadratic_p5_eq,
+    yoshidaEndpointHyperbolicQuadratic_ofReal_eq_moments,
+    yoshidaEndpointCoshMoment_p5_eq_zero]
+  unfold plusP5OddQRawReserve oddP5CleanSinhMoment
+  ring
+
+theorem integral_plusP5OddCompletionProfile_sq :
+    (∫ x : ℝ in -1..1, plusP5OddCompletionProfile x ^ 2) =
+      (11355935597 / 2661120000 : ℝ) := by
+  calc
+    (∫ x : ℝ in -1..1, plusP5OddCompletionProfile x ^ 2) =
+        centeredEndpointCorrelation plusP5OddCompletionProfile 0 := by
+      unfold centeredEndpointCorrelation
+      simp only [sub_zero, zero_add]
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      ring
+    _ = plusP5OddQCorrelation 0 :=
+      centeredEndpointCorrelation_plusP5OddCompletionProfile 0
+    _ = (11355935597 / 2661120000 : ℝ) := by
+      norm_num [plusP5OddQCorrelation, oddStructuralCorrelation11,
+        oddStructuralCorrelation13, oddStructuralCorrelation33,
+        oddP5Correlation15, oddP5Correlation35, oddP5Correlation55]
+
+theorem centeredRawLogEnergy_plusP5OddCompletionProfile_eq :
+    centeredRawLogEnergy plusP5OddCompletionProfile =
+      (8 / 3 : ℝ) * (-10319 / 4800 : ℝ) ^ 2 +
+        (44 / 21 : ℝ) * (15 / 8 : ℝ) ^ 2 +
+        centeredRawLogEnergy factorTwoCenteredP5 := by
+  have h := centeredRawLogEnergy_one_three_add_tail_explicit
+    factorTwoCenteredP5 locallyLipschitzOn_factorTwoCenteredP5
+    factorTwoCenteredP5_intrinsic_coefficients_zero.1
+    factorTwoCenteredP5_intrinsic_coefficients_zero.2
+    (-10319 / 4800 : ℝ) (15 / 8 : ℝ)
+  simpa only [plusP5OddCompletionProfile] using h
+
+private theorem intervalIntegrable_regularEnvelope_mul_q
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    IntervalIntegrable
+      (fun t : ℝ ↦
+        (yoshidaRegularKernel (yoshidaEndpointA * t) -
+          yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) * C t)
+      volume 0 2 := by
+  have hactual := intervalIntegrable_regularKernel_mul_q C hC
+  have hpoly : IntervalIntegrable
+      (fun t : ℝ ↦
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t) * C t)
+      volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    · apply Continuous.mul
+      · unfold yoshidaRegularKernelPolynomial6
+        fun_prop
+      · exact hC
+  apply (hactual.sub hpoly).congr
+  intro t _ht
+  ring
+
+private theorem oddCleanRegularEnvelopeError_add_q
+    (C D : ℝ → ℝ) (hC : Continuous C) (hD : Continuous D) :
+    oddCleanRegularEnvelopeError (C + D) =
+      oddCleanRegularEnvelopeError C + oddCleanRegularEnvelopeError D := by
+  have hCI := intervalIntegrable_regularEnvelope_mul_q C hC
+  have hDI := intervalIntegrable_regularEnvelope_mul_q D hD
+  unfold oddCleanRegularEnvelopeError
+  rw [show (fun t : ℝ ↦
+      (yoshidaRegularKernel (yoshidaEndpointA * t) -
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) *
+          (C + D) t) =
+      fun t ↦
+        (yoshidaRegularKernel (yoshidaEndpointA * t) -
+          yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) * C t +
+        (yoshidaRegularKernel (yoshidaEndpointA * t) -
+          yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) * D t by
+    funext t
+    simp only [Pi.add_apply]
+    ring,
+    intervalIntegral.integral_add hCI hDI]
+  ring
+
+private theorem oddCleanRegularEnvelopeError_const_mul_q
+    (c : ℝ) (C : ℝ → ℝ) :
+    oddCleanRegularEnvelopeError (fun t ↦ c * C t) =
+      c * oddCleanRegularEnvelopeError C := by
+  unfold oddCleanRegularEnvelopeError
+  rw [show (fun t : ℝ ↦
+      (yoshidaRegularKernel (yoshidaEndpointA * t) -
+        yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) *
+          (c * C t)) =
+      fun t ↦ c *
+        ((yoshidaRegularKernel (yoshidaEndpointA * t) -
+          yoshidaRegularKernelPolynomial6 (yoshidaEndpointA * t)) * C t) by
+    funext t
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+theorem plusP5OddQCleanEnvelope_eq_entries :
+    plusP5OddQCleanEnvelope =
+      (106481761 / 23040000 : ℝ) *
+          oddCleanRegularEnvelopeError oddStructuralCorrelation11 -
+        (10319 / 1280 : ℝ) *
+          oddCleanRegularEnvelopeError oddStructuralCorrelation13 +
+        (225 / 64 : ℝ) *
+          oddCleanRegularEnvelopeError oddStructuralCorrelation33 -
+        (10319 / 2400 : ℝ) * oddP5CleanRegularEnvelopeError15 +
+        (15 / 4 : ℝ) * oddP5CleanRegularEnvelopeError35 +
+        oddCleanRegularEnvelopeError oddP5Correlation55 := by
+  let C11 : ℝ → ℝ := fun t ↦
+    (106481761 / 23040000 : ℝ) * oddStructuralCorrelation11 t
+  let C13 : ℝ → ℝ := fun t ↦
+    (-10319 / 1280 : ℝ) * oddStructuralCorrelation13 t
+  let C33 : ℝ → ℝ := fun t ↦
+    (225 / 64 : ℝ) * oddStructuralCorrelation33 t
+  let C15 : ℝ → ℝ := fun t ↦
+    (-10319 / 2400 : ℝ) * oddP5Correlation15 t
+  let C35 : ℝ → ℝ := fun t ↦
+    (15 / 4 : ℝ) * oddP5Correlation35 t
+  have h11 : Continuous oddStructuralCorrelation11 := by
+    unfold oddStructuralCorrelation11; fun_prop
+  have h13 : Continuous oddStructuralCorrelation13 := by
+    unfold oddStructuralCorrelation13; fun_prop
+  have h33 : Continuous oddStructuralCorrelation33 := by
+    unfold oddStructuralCorrelation33; fun_prop
+  have h15 : Continuous oddP5Correlation15 := by
+    unfold oddP5Correlation15; fun_prop
+  have h35 : Continuous oddP5Correlation35 := by
+    unfold oddP5Correlation35; fun_prop
+  have hC11 : Continuous C11 := by
+    dsimp only [C11]; exact continuous_const.mul h11
+  have hC13 : Continuous C13 := by
+    dsimp only [C13]; exact continuous_const.mul h13
+  have hC33 : Continuous C33 := by
+    dsimp only [C33]; exact continuous_const.mul h33
+  have hC15 : Continuous C15 := by
+    dsimp only [C15]; exact continuous_const.mul h15
+  have hC35 : Continuous C35 := by
+    dsimp only [C35]; exact continuous_const.mul h35
+  have hprofile : plusP5OddQCorrelation =
+      C11 + C13 + C33 + C15 + C35 + oddP5Correlation55 := by
+    funext t
+    dsimp only [C11, C13, C33, C15, C35]
+    simp only [Pi.add_apply]
+    unfold plusP5OddQCorrelation
+    ring
+  unfold plusP5OddQCleanEnvelope
+  rw [hprofile,
+    oddCleanRegularEnvelopeError_add_q (C11 + C13 + C33 + C15 + C35)
+      oddP5Correlation55
+      ((((hC11.add hC13).add hC33).add hC15).add hC35)
+      continuous_oddP5Correlation55,
+    oddCleanRegularEnvelopeError_add_q (C11 + C13 + C33 + C15) C35
+      (((hC11.add hC13).add hC33).add hC15) hC35,
+    oddCleanRegularEnvelopeError_add_q (C11 + C13 + C33) C15
+      ((hC11.add hC13).add hC33) hC15,
+    oddCleanRegularEnvelopeError_add_q (C11 + C13) C33
+      (hC11.add hC13) hC33,
+    oddCleanRegularEnvelopeError_add_q C11 C13 hC11 hC13]
+  dsimp only [C11, C13, C33, C15, C35]
+  repeat rw [oddCleanRegularEnvelopeError_const_mul_q]
+  unfold oddP5CleanRegularEnvelopeError15 oddP5CleanRegularEnvelopeError35
+  ring
+
+theorem plusP5OddQCleanPolynomial_eq_entries :
+    plusP5OddQCleanPolynomial =
+      (106481761 / 23040000 : ℝ) * oddCleanRegularPolynomialGram11 -
+        (10319 / 1280 : ℝ) * oddCleanRegularPolynomialGram13 +
+        (225 / 64 : ℝ) * oddCleanRegularPolynomialGram33 -
+        (10319 / 2400 : ℝ) * oddP5CleanRegularPolynomial15 +
+        (15 / 4 : ℝ) * oddP5CleanRegularPolynomial35 +
+        oddP5CleanRegularPolynomial55 := by
+  unfold plusP5OddQCleanPolynomial oddCleanRegularPolynomialGram11
+    oddCleanRegularPolynomialGram13 oddCleanRegularPolynomialGram33
+    oddP5CleanRegularPolynomial15 oddP5CleanRegularPolynomial35
+    oddP5CleanRegularPolynomial55
+  ring
+
+theorem plusP5OddQPolynomialMoment_eq_entries :
+    plusP5OddQPolynomialMoment =
+      (106481761 / 23040000 : ℝ) * oddPolynomialMoment11 -
+        (10319 / 1280 : ℝ) * oddPolynomialMoment13 +
+        (225 / 64 : ℝ) * oddPolynomialMoment33 -
+        (10319 / 2400 : ℝ) * oddP5PolynomialMoment15 +
+        (15 / 4 : ℝ) * oddP5PolynomialMoment35 := by
+  unfold plusP5OddQPolynomialMoment oddPolynomialMoment11
+    oddPolynomialMoment13 oddPolynomialMoment33 oddP5PolynomialMoment15
+    oddP5PolynomialMoment35
+  ring
+
+/-- Exact whole-profile identity for the completed negative-endpoint square.
+Only one regular envelope and one pole-free analytic remainder survive. -/
+theorem plusP5OddQ_eq_structuralProfile :
+    plusP5OddQ =
+      plusP5OddQAlgebraicBase + plusP5OddQRawReserve -
+        yoshidaEndpointA * plusP5OddQCleanEnvelope -
+        2 * yoshidaEndpointA * plusP5OddCompletionSinhMoment ^ 2 -
+        poleFreeAnalyticError plusP5OddQCorrelation := by
+  rw [poleFreeAnalyticError_plusP5OddQCorrelation_eq,
+    plusP5OddQCleanEnvelope_eq_entries]
+  unfold plusP5OddQ plusP5OddQAlgebraicBase plusP5OddQRawReserve
+    plusP5OddCompletionSinhMoment
+    factorTwoIntrinsicSixUnbalancedOMinus11
+    factorTwoIntrinsicSixUnbalancedOMinus13
+    factorTwoIntrinsicSixUnbalancedOMinus15
+    factorTwoIntrinsicSixUnbalancedOMinus33
+    factorTwoIntrinsicSixUnbalancedOMinus35
+    factorTwoIntrinsicSixUnbalancedOMinus55
+    factorTwoIntrinsicOddPhaseLow11 factorTwoIntrinsicOddPhaseLow13
+    factorTwoIntrinsicOddPhaseLow33 factorTwoIntrinsicFourP45Cross15
+    factorTwoIntrinsicFourP45Cross35 factorTwoIntrinsicP5PhaseDiagonal
+  rw [plusP5OddQCleanPolynomial_eq_entries,
+    plusP5OddQPolynomialMoment_eq_entries]
+  rw [yoshidaEndpointOddLowGram11_structural_eq,
+    yoshidaEndpointOddLowGram13_structural_eq,
+    yoshidaEndpointOddLowGram33_structural_eq,
+    cleanBilinear_p1_p5_eq, cleanBilinear_p3_p5_eq,
+    yoshidaEndpointOddCleanQuadratic_p5_eq,
+    factorTwoCenteredSymmetricPerturbation_p1_structural_eq,
+    factorTwoCenteredSymmetricPerturbationBilinear_p1_p3_structural_eq,
+    factorTwoCenteredSymmetricPerturbation_p3_structural_eq,
+    factorTwoCenteredSymmetricPerturbationBilinear_p1_p5_structural_eq,
+    factorTwoCenteredSymmetricPerturbationBilinear_p3_p5_structural_eq,
+    factorTwoCenteredSymmetricPerturbation_p5_structural_eq,
+    oddStructuralRegularError11_sharp_expansion,
+    oddStructuralRegularError13_sharp_expansion,
+    oddStructuralRegularError33_sharp_expansion]
+  unfold plusP5OddQCorrelation plusP5OddQRawReserve
+  ring
 
 end
 
