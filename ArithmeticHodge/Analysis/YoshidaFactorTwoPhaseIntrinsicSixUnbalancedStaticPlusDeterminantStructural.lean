@@ -477,11 +477,11 @@ six-parameter identity is the common structural core: it expands one actual
 even/odd profile pairing, identifies its single endpoint correlation
 polynomial, and only then applies the sharp kernel decomposition. -/
 
-private def plusDetAlternatingEvenProfile
+def plusDetAlternatingEvenProfile
     (c0 c2 c4 : ℝ) : ℝ → ℝ :=
   c0 • centeredEvenP0 + c2 • centeredEvenP2 + c4 • factorTwoCenteredP4
 
-private def plusDetAlternatingOddProfile
+def plusDetAlternatingOddProfile
     (d1 d3 d5 : ℝ) : ℝ → ℝ :=
   d1 • centeredP1 + d3 • centeredP3 + d5 • factorTwoCenteredP5
 
@@ -526,7 +526,7 @@ private def plusDetAlternatingCrossDifference
   factorTwoCenteredCrossCorrelation o e t -
     factorTwoCenteredCrossCorrelation e o t
 
-private def plusDetAlternatingQ
+def plusDetAlternatingQ
     (c0 c2 c4 d1 d3 d5 t : ℝ) : ℝ :=
   c0 * d1 +
     c2 * d1 * (-1 + t / 2 + t ^ 2 / 4) +
@@ -669,7 +669,7 @@ private theorem plusDetAlternatingCrossDifference_profile
   unfold plusDetAlternatingQ intrinsicAlternatingCorrelation
   ring
 
-private theorem plusDetAlternatingCoupling_profile_expansion
+theorem plusDetAlternatingCoupling_profile_expansion
     (c0 c2 c4 d1 d3 d5 : ℝ) :
     factorTwoCenteredAlternatingCoupling
         (plusDetAlternatingEvenProfile c0 c2 c4)
@@ -699,7 +699,7 @@ private theorem plusDetAlternatingCoupling_profile_expansion
     factorTwoIntrinsicP45Alternating
   ring
 
-private theorem plusDetAlternatingCoupling_profile_eq_sharpModel
+theorem plusDetAlternatingCoupling_profile_eq_sharpModel
     (c0 c2 c4 d1 d3 d5 : ℝ) :
     factorTwoCenteredAlternatingCoupling
         (plusDetAlternatingEvenProfile c0 c2 c4)
@@ -770,7 +770,7 @@ private def plusDetAlternatingQWNegative (t : ℝ) : ℝ :=
   (42929072419607 / 1116288000000 : ℝ) *
     (t / 2) ^ 7 * (1 - t / 2)
 
-private def plusDetAlternatingSharpModel (q : ℝ → ℝ) : ℝ :=
+def plusDetAlternatingSharpModel (q : ℝ → ℝ) : ℝ :=
   intrinsicAlternatingSharpRegularError q +
     intrinsicAlternatingSharpArchModel q -
     (Real.log 3 / Real.sqrt 3) *
@@ -834,7 +834,7 @@ private theorem intrinsicAlternatingArchModel_add_plusDet
     intrinsicAlternatingArchModel_neg_plusDet r hr] at h
   linarith
 
-private theorem plusDetAlternatingSharpModel_add
+theorem plusDetAlternatingSharpModel_add
     (q r : ℝ → ℝ) (hq : Continuous q) (hr : Continuous r) :
     plusDetAlternatingSharpModel (q + r) =
       plusDetAlternatingSharpModel q + plusDetAlternatingSharpModel r := by
@@ -1049,21 +1049,21 @@ private theorem plusDetActualW_eq_sharpModel_add_Q :
 /-! ## Exact composite sharp decompositions -/
 
 /-- The even correlation profile carried by the two low-mode coordinates. -/
-private def plusDetCompositeCe (u0 u2 t : ℝ) : ℝ :=
+def plusDetCompositeCe (u0 u2 t : ℝ) : ℝ :=
   u0 * factorTwoIntrinsicP4Correlation04 t +
     u2 * factorTwoIntrinsicP4Correlation24 t
 
 /-- The scaled alternating correlation profile. -/
-private def plusDetCompositeCa (k : ℝ) (q : ℝ → ℝ) (t : ℝ) : ℝ :=
+def plusDetCompositeCa (k : ℝ) (q : ℝ → ℝ) (t : ℝ) : ℝ :=
   k * intrinsicAlternatingCorrelation q t
 
 /-- Sum profile used by the retained-prime term. -/
-private def plusDetCompositeP
+def plusDetCompositeP
     (u0 u2 k : ℝ) (q : ℝ → ℝ) (t : ℝ) : ℝ :=
   plusDetCompositeCe u0 u2 t + plusDetCompositeCa k q t
 
 /-- Difference profile retained for the joint regular-kernel analysis. -/
-private def plusDetCompositeM
+def plusDetCompositeM
     (u0 u2 k : ℝ) (q : ℝ → ℝ) (t : ℝ) : ℝ :=
   plusDetCompositeCe u0 u2 t - plusDetCompositeCa k q t
 
@@ -1091,7 +1091,7 @@ private def plusDetCompositeCore
 
 /-- Difference between the two exact clean pairings and their polynomial
 models. -/
-private def plusDetCompositeCleanTransfer (u0 u2 : ℝ) : ℝ :=
+def plusDetCompositeCleanTransfer (u0 u2 : ℝ) : ℝ :=
   u0 * ((∫ x : ℝ in -1..1,
       fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x) -
         factorTwoIntrinsicP4CleanRemainderModel04) +
@@ -1101,7 +1101,7 @@ private def plusDetCompositeCleanTransfer (u0 u2 : ℝ) : ℝ :=
 
 /-- The even pole-free error and alternating sharp regular error, kept as one
 joint analytic remainder. -/
-private def plusDetCompositeJointError
+def plusDetCompositeJointError
     (u0 u2 k : ℝ) (q : ℝ → ℝ) : ℝ :=
   poleFreeAnalyticError (plusDetCompositeCe u0 u2) +
     k * intrinsicAlternatingSharpRegularError q
@@ -1139,7 +1139,7 @@ private theorem poleFreeAnalyticError_const_mul_plusDetComposite
     intervalIntegral.integral_const_mul]
 
 /-- Linearity packages the two even analytic errors into the profile `Ce`. -/
-private theorem poleFreeAnalyticError_plusDetCompositeCe
+theorem poleFreeAnalyticError_plusDetCompositeCe
     (u0 u2 : ℝ) :
     poleFreeAnalyticError (plusDetCompositeCe u0 u2) =
       u0 * poleFreeAnalyticError factorTwoIntrinsicP4Correlation04 +
@@ -1303,7 +1303,7 @@ private def plusDetJointKernelIntegrand
     (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
       intrinsicAlternatingKernelPolynomial6 t) * Ca t
 
-private def plusDetJointAbsoluteMajorant
+def plusDetJointAbsoluteMajorant
     (P M : ℝ → ℝ) (t : ℝ) : ℝ :=
   yoshidaEndpointA *
     (integratedPoleFreeEnvelope
@@ -1311,7 +1311,7 @@ private def plusDetJointAbsoluteMajorant
       integratedPoleFreeEnvelope
         (yoshidaEndpointA * (2 - t) / 2) * M t)
 
-private def plusDetJointSignedCost
+def plusDetJointSignedCost
     (Pp Np Pm Nm : ℝ → ℝ) (t : ℝ) : ℝ :=
   yoshidaEndpointA *
     (jointRegularEnvelope (yoshidaEndpointA * (2 + t) / 2) * Pp t +
@@ -1485,7 +1485,7 @@ private theorem plusDetCompositeJointError_eq_integral
 
 /-- Absolute joint-error transfer through nonnegative Bernstein splits of
 the sum and difference profiles. -/
-private theorem abs_plusDetCompositeJointError_le_of_signed_splits
+theorem abs_plusDetCompositeJointError_le_of_signed_splits
     (u0 u2 k : ℝ) (q Pp Np Pm Nm : ℝ → ℝ)
     (hq : Continuous q) (hPp : Continuous Pp) (hNp : Continuous Np)
     (hPm : Continuous Pm) (hNm : Continuous Nm)
@@ -1561,7 +1561,7 @@ private theorem abs_plusDetCompositeJointError_le_of_signed_splits
 
 /-- Signed lower transfer: positive Bernstein pieces pay only the regular
 envelope, while negative pieces pay only the degree-eight cosh envelope. -/
-private theorem plusDetCompositeJointError_lower_of_signed_splits
+theorem plusDetCompositeJointError_lower_of_signed_splits
     (u0 u2 k : ℝ) (q Pp Np Pm Nm : ℝ → ℝ)
     (hq : Continuous q) (hPp : Continuous Pp) (hNp : Continuous Np)
     (hPm : Continuous Pm) (hNm : Continuous Nm)
@@ -1616,9 +1616,9 @@ private theorem plusDetCompositeJointError_lower_of_signed_splits
 
 /-! ## Rational envelope transfer -/
 
-private def plusDetJointRationalA : ℝ := 347 / 1000
+def plusDetJointRationalA : ℝ := 347 / 1000
 
-private def plusDetJointRationalAbsoluteMajorant
+def plusDetJointRationalAbsoluteMajorant
     (P M : ℝ → ℝ) (t : ℝ) : ℝ :=
   plusDetJointRationalA *
     (integratedPoleFreeEnvelope
@@ -1626,7 +1626,7 @@ private def plusDetJointRationalAbsoluteMajorant
       integratedPoleFreeEnvelope
         (plusDetJointRationalA * (2 - t) / 2) * M t)
 
-private def plusDetJointRationalSignedCost
+def plusDetJointRationalSignedCost
     (Pp Np Pm Nm : ℝ → ℝ) (t : ℝ) : ℝ :=
   plusDetJointRationalA *
     (jointRegularEnvelope (plusDetJointRationalA * (2 + t) / 2) * Pp t +
@@ -1653,7 +1653,7 @@ private theorem integratedPoleFreeEnvelope_mono_plusDet
   norm_num at h7 h8 h9 h10 h11 h12 ⊢
   linarith
 
-private theorem jointRegularEnvelope_expansion_plusDet (u : ℝ) :
+theorem jointRegularEnvelope_expansion_plusDet (u : ℝ) :
     jointRegularEnvelope u =
       (193 / 3628800 : ℝ) * u ^ 7 +
         (11 / 1280 : ℝ) * u ^ 8 +
@@ -1815,7 +1815,7 @@ private theorem plusDetJointSignedCost_le_rational
       unfold plusDetJointRationalA
       norm_num)
 
-private theorem integral_plusDetJointAbsoluteMajorant_le_rational
+theorem integral_plusDetJointAbsoluteMajorant_le_rational
     (P M : ℝ → ℝ) (hP : Continuous P) (hM : Continuous M)
     (hnonneg : ∀ t ∈ Icc (0 : ℝ) 2, 0 ≤ P t ∧ 0 ≤ M t) :
     (∫ t : ℝ in 0..2, plusDetJointAbsoluteMajorant P M t) ≤
@@ -1835,7 +1835,7 @@ private theorem integral_plusDetJointAbsoluteMajorant_le_rational
   exact plusDetJointAbsoluteMajorant_le_rational P M ht
     (hnonneg t ht).1 (hnonneg t ht).2
 
-private theorem integral_plusDetJointSignedCost_le_rational
+theorem integral_plusDetJointSignedCost_le_rational
     (Pp Np Pm Nm : ℝ → ℝ)
     (hPp : Continuous Pp) (hNp : Continuous Np)
     (hPm : Continuous Pm) (hNm : Continuous Nm)
@@ -1914,31 +1914,31 @@ private theorem plusDetAlternatingQW_polynomial (t : ℝ) :
 
 /-! ## Degree-ten Bernstein splits of the joint profiles -/
 
-private def plusDetBernstein10B1 (t : ℝ) : ℝ :=
+def plusDetBernstein10B1 (t : ℝ) : ℝ :=
   10 * (t / 2) * (1 - t / 2) ^ 9
 
-private def plusDetBernstein10B2 (t : ℝ) : ℝ :=
+def plusDetBernstein10B2 (t : ℝ) : ℝ :=
   45 * (t / 2) ^ 2 * (1 - t / 2) ^ 8
 
-private def plusDetBernstein10B3 (t : ℝ) : ℝ :=
+def plusDetBernstein10B3 (t : ℝ) : ℝ :=
   120 * (t / 2) ^ 3 * (1 - t / 2) ^ 7
 
-private def plusDetBernstein10B4 (t : ℝ) : ℝ :=
+def plusDetBernstein10B4 (t : ℝ) : ℝ :=
   210 * (t / 2) ^ 4 * (1 - t / 2) ^ 6
 
-private def plusDetBernstein10B5 (t : ℝ) : ℝ :=
+def plusDetBernstein10B5 (t : ℝ) : ℝ :=
   252 * (t / 2) ^ 5 * (1 - t / 2) ^ 5
 
-private def plusDetBernstein10B6 (t : ℝ) : ℝ :=
+def plusDetBernstein10B6 (t : ℝ) : ℝ :=
   210 * (t / 2) ^ 6 * (1 - t / 2) ^ 4
 
-private def plusDetBernstein10B7 (t : ℝ) : ℝ :=
+def plusDetBernstein10B7 (t : ℝ) : ℝ :=
   120 * (t / 2) ^ 7 * (1 - t / 2) ^ 3
 
-private def plusDetBernstein10B8 (t : ℝ) : ℝ :=
+def plusDetBernstein10B8 (t : ℝ) : ℝ :=
   45 * (t / 2) ^ 8 * (1 - t / 2) ^ 2
 
-private def plusDetBernstein10B9 (t : ℝ) : ℝ :=
+def plusDetBernstein10B9 (t : ℝ) : ℝ :=
   10 * (t / 2) ^ 9 * (1 - t / 2)
 
 private def plusDetH2PPositive (t : ℝ) : ℝ :=
@@ -2479,7 +2479,7 @@ private theorem plusDetCompositeJointErrorW_gt :
 
 /-! ## Unconditional composite border boxes -/
 
-private theorem abs_plusDetCompositeCleanTransfer_lt
+theorem abs_plusDetCompositeCleanTransfer_lt
     (u0 u2 : ℝ) (hu0 : u0 ≠ 0) (hu2 : u2 ≠ 0) :
     |plusDetCompositeCleanTransfer u0 u2| <
       |u0| * (1 / 350000 : ℝ) + |u2| * (1 / 850000 : ℝ) := by
@@ -2544,7 +2544,7 @@ private theorem abs_plusDetCompositeCleanTransferW_lt :
   norm_num at h ⊢
   linarith
 
-private theorem factorTwoPrimeRatio_ultrafine_bounds_plusDet :
+theorem factorTwoPrimeRatio_ultrafine_bounds_plusDet :
     (1169925001 / 1000000000 : ℝ) <
         factorTwoPrimeShift / yoshidaEndpointA ∧
       factorTwoPrimeShift / yoshidaEndpointA <
@@ -2991,7 +2991,7 @@ private theorem intrinsicAlternatingSharpArchModel_eq_integral_plusDet
   dsimp only [f, g, C]
   ring
 
-private theorem intrinsicAlternatingSharpArchModel_eq_data_plusDet
+theorem intrinsicAlternatingSharpArchModel_eq_data_plusDet
     (q quotient : ℝ → ℝ) (r P m1 m3 m5 : ℝ)
     (hq : Continuous q) (hquotient : Continuous quotient)
     (hdiv : ∀ t ∈ Icc (0 : ℝ) 2,
@@ -3474,7 +3474,7 @@ private theorem plusDetAlternatingSharpArchModelW_eq :
   · exact integral_plusDetAlternatingQW_moment_three
   · exact integral_plusDetAlternatingQW_moment_five
 
-private theorem log_two_pow_fine_bounds_plusDet
+theorem log_two_pow_fine_bounds_plusDet
     (n : ℕ) (hn : n ≠ 0) :
     (69314718055 / 100000000000 : ℝ) ^ n < (Real.log 2) ^ n ∧
       (Real.log 2) ^ n <
@@ -3575,7 +3575,7 @@ private theorem factorTwoPrimeRatio_fine_bounds_plusDet :
     unfold factorTwoPrimeShift yoshidaEndpointA
     nlinarith [hshift.2, hlog.1]
 
-private theorem offset_pow_lt_plusDet
+theorem offset_pow_lt_plusDet
     {y eps : ℝ} (hy : 0 ≤ y) (hye : y < eps)
     (n : ℕ) (hn : n ≠ 0) :
     y ^ n < eps ^ n :=
@@ -3861,7 +3861,7 @@ private theorem plusDetAlternatingPrimeCorrelationW_bounds :
     pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
     pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
 
-private theorem log_three_div_sqrt_three_fine_bounds_plusDet :
+theorem log_three_div_sqrt_three_fine_bounds_plusDet :
     (6342841 / 10000000 : ℝ) < Real.log 3 / Real.sqrt 3 ∧
       Real.log 3 / Real.sqrt 3 < (6342842 / 10000000 : ℝ) := by
   have hlog2 := strict_log_two_fine_bounds
@@ -3882,7 +3882,7 @@ private theorem log_three_div_sqrt_three_fine_bounds_plusDet :
   rw [lt_div_iff₀ hspos, div_lt_iff₀ hspos, hlog3]
   constructor <;> nlinarith
 
-private theorem mul_strict_bounds_plusDet
+theorem mul_strict_bounds_plusDet
     {a c aL aU cL cU : ℝ}
     (ha : aL < a ∧ a < aU) (hc : cL < c ∧ c < cU)
     (haL0 : 0 < aL) (hcL0 : 0 < cL) :
