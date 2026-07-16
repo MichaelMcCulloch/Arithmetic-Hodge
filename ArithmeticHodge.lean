@@ -74,6 +74,7 @@ import ArithmeticHodge.Analysis.YoshidaOddGramPosDef
 import ArithmeticHodge.Analysis.CoerciveRieszCorrection
 import ArithmeticHodge.Analysis.ComplexCoerciveRieszCorrection
 import ArithmeticHodge.Analysis.BilinearFormCompletion
+import ArithmeticHodge.Analysis.BilinearFormCompletionCoercive
 import ArithmeticHodge.Analysis.CenteredAddCircleFourier
 import ArithmeticHodge.Analysis.YoshidaClippedCircleBridge
 import ArithmeticHodge.Analysis.YoshidaClippedCircleFaithful
