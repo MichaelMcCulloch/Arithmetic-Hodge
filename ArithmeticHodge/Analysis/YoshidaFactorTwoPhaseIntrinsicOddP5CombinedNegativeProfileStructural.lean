@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
+import ArithmeticHodge.Analysis.YoshidaDiagonalFineBase
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationOneSided
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
@@ -17,6 +18,8 @@ open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddCleanPositive
 open YoshidaEndpointOddResidualRegularity
+open YoshidaConstantBounds
+open YoshidaDiagonalFineBase
 open YoshidaFactorTwoCenteredPhysical
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationOneSided
@@ -838,6 +841,336 @@ theorem abs_poleFreeAnalyticError_plusP5OddQCorrelation_lt :
         abs_plusP5OddQCorrelation_le_forty_three_tenths ht0 ht2)
   norm_num at h ⊢
   exact h
+
+/-! ## Structural rational box for the first correlated border coordinate -/
+
+private theorem plusP5_log_pi_mul_log_two_bounds :
+    (7782169 / 10000000 : ℝ) < Real.log (Real.pi * Real.log 2) ∧
+      Real.log (Real.pi * Real.log 2) < (7782170 / 10000000 : ℝ) := by
+  have hlogTwoPos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hprodLower :
+      (21775860 / 10000000 : ℝ) < Real.pi * Real.log 2 := by
+    calc
+      (21775860 / 10000000 : ℝ) <
+          (3.14159265358979323846 : ℝ) *
+            (69314718055 / 100000000000 : ℝ) := by norm_num
+      _ < Real.pi * (69314718055 / 100000000000 : ℝ) :=
+        mul_lt_mul_of_pos_right Real.pi_gt_d20 (by norm_num)
+      _ < Real.pi * Real.log 2 :=
+        mul_lt_mul_of_pos_left strict_log_two_fine_bounds.1 Real.pi_pos
+  have hprodUpper :
+      Real.pi * Real.log 2 < (21775861 / 10000000 : ℝ) := by
+    calc
+      Real.pi * Real.log 2 <
+          (3.14159265358979323847 : ℝ) * Real.log 2 :=
+        mul_lt_mul_of_pos_right Real.pi_lt_d20 hlogTwoPos
+      _ < (3.14159265358979323847 : ℝ) *
+          (69314718057 / 100000000000 : ℝ) :=
+        mul_lt_mul_of_pos_left strict_log_two_fine_bounds.2 (by norm_num)
+      _ < (21775861 / 10000000 : ℝ) := by norm_num
+  have hseriesLower := Real.sum_range_le_log_div
+    (x := (588793 / 1588793 : ℝ)) (by norm_num) (by norm_num) 10
+  have hlogLower :
+      (7782169 / 10000000 : ℝ) <
+        Real.log (21775860 / 10000000 : ℝ) := by
+    norm_num [Finset.sum_range_succ] at hseriesLower ⊢
+    linarith
+  have hseriesUpper := Real.log_div_le_sum_range_add
+    (x := (11775861 / 31775861 : ℝ)) (by norm_num) (by norm_num) 10
+  have hlogUpper :
+      Real.log (21775861 / 10000000 : ℝ) <
+        (7782170 / 10000000 : ℝ) := by
+    norm_num [Finset.sum_range_succ] at hseriesUpper ⊢
+    linarith
+  constructor
+  · exact hlogLower.trans
+      (Real.strictMonoOn_log (by norm_num)
+        (mul_pos Real.pi_pos hlogTwoPos) hprodLower)
+  · exact (Real.strictMonoOn_log (mul_pos Real.pi_pos hlogTwoPos)
+      (by norm_num) hprodUpper).trans hlogUpper
+
+private theorem plusP5_scalarMassLoss_fine_bounds :
+    (13554324 / 10000000 : ℝ) < yoshidaEndpointScalarMassLoss ∧
+      yoshidaEndpointScalarMassLoss < (13554329 / 10000000 : ℝ) := by
+  have hgamma := fineGammaInterval_contains
+  have hgammaLower : (5772155 / 10000000 : ℝ) ≤
+      Real.eulerMascheroniConstant := by
+    norm_num [fineGammaInterval, RatInterval.Contains] at hgamma ⊢
+    exact hgamma.1
+  have hgammaUpper : Real.eulerMascheroniConstant ≤
+      (5772159 / 10000000 : ℝ) := by
+    norm_num [fineGammaInterval, RatInterval.Contains] at hgamma ⊢
+    exact hgamma.2
+  unfold yoshidaEndpointScalarMassLoss
+  constructor <;> linarith [plusP5_log_pi_mul_log_two_bounds.1,
+    plusP5_log_pi_mul_log_two_bounds.2]
+
+private theorem plusP5_endpointA_pow_fine_bounds (n : ℕ) (hn : n ≠ 0) :
+    (69314718055 / 200000000000 : ℝ) ^ n < yoshidaEndpointA ^ n ∧
+      yoshidaEndpointA ^ n <
+        (69314718057 / 200000000000 : ℝ) ^ n := by
+  have hA :
+      (69314718055 / 200000000000 : ℝ) < yoshidaEndpointA ∧
+        yoshidaEndpointA < (69314718057 / 200000000000 : ℝ) := by
+    unfold yoshidaEndpointA
+    constructor <;> linarith [strict_log_two_fine_bounds.1,
+      strict_log_two_fine_bounds.2]
+  constructor
+  · exact pow_lt_pow_left₀ hA.1 (by norm_num) hn
+  · exact pow_lt_pow_left₀ hA.2 yoshidaEndpointA_pos.le hn
+
+private theorem plusP5OddB1_cleanPolynomialContribution_bounds :
+    (5445 / 1000000 : ℝ) <
+        -yoshidaEndpointA *
+          ((-10319 / 4800 : ℝ) * oddCleanRegularPolynomialGram11 +
+            (15 / 8 : ℝ) * oddCleanRegularPolynomialGram13 +
+            oddP5CleanRegularPolynomial15) ∧
+      -yoshidaEndpointA *
+          ((-10319 / 4800 : ℝ) * oddCleanRegularPolynomialGram11 +
+            (15 / 8 : ℝ) * oddCleanRegularPolynomialGram13 +
+            oddP5CleanRegularPolynomial15) < (5447 / 1000000 : ℝ) := by
+  have h2 := plusP5_endpointA_pow_fine_bounds 2 (by norm_num)
+  have h3 := plusP5_endpointA_pow_fine_bounds 3 (by norm_num)
+  have h4 := plusP5_endpointA_pow_fine_bounds 4 (by norm_num)
+  have h5 := plusP5_endpointA_pow_fine_bounds 5 (by norm_num)
+  have h6 := plusP5_endpointA_pow_fine_bounds 6 (by norm_num)
+  have h7 := plusP5_endpointA_pow_fine_bounds 7 (by norm_num)
+  unfold oddCleanRegularPolynomialGram11 oddCleanRegularPolynomialGram13
+    oddP5CleanRegularPolynomial15
+  ring_nf
+  constructor <;> nlinarith
+
+private theorem plusP5_log_two_div_sqrt_two_fine_bounds :
+    (12253 / 25000 : ℝ) < Real.log 2 / Real.sqrt 2 ∧
+      Real.log 2 / Real.sqrt 2 < (49014 / 100000 : ℝ) := by
+  have hspos : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  constructor
+  · exact log_two_div_sqrt_two_kernel_lower
+  · rw [div_lt_iff₀ hspos]
+    nlinarith [strict_log_two_fine_bounds.2, sqrt_two_kernel_bounds.1]
+
+private theorem plusP5OddB1Correlation_prime_bounds :
+    (69408 / 100000 : ℝ) <
+        plusP5OddB1Correlation
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      plusP5OddB1Correlation
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (69411 / 100000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 116992 / 100000
+  have htau := factorTwoPrimeRatio_sharp_bounds
+  have hy0 : 0 < y := by
+    dsimp only [y, tau]
+    linarith [htau.1]
+  have hyU : y < (1 / 100000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (2 : ℕ) ≠ 0)
+  have hy3 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (3 : ℕ) ≠ 0)
+  have hy4 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (4 : ℕ) ≠ 0)
+  have hy5 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (5 : ℕ) ≠ 0)
+  have hy6 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (6 : ℕ) ≠ 0)
+  have hy7 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (7 : ℕ) ≠ 0)
+  have htauy : tau = 116992 / 100000 + y := by
+    dsimp only [y]
+    ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy, plusP5OddB1Correlation_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7,
+    sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6,
+    pow_nonneg hy0.le 7]
+
+private theorem plusP5OddB1PrimeProduct_bounds :
+    (44023 / 100000 : ℝ) <
+        (Real.log 3 / Real.sqrt 3) *
+          plusP5OddB1Correlation
+            (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      (Real.log 3 / Real.sqrt 3) *
+          plusP5OddB1Correlation
+            (factorTwoPrimeShift / yoshidaEndpointA) <
+        (11007 / 25000 : ℝ) := by
+  have hbeta := log_three_div_sqrt_three_kernel_bounds
+  have hcorr := plusP5OddB1Correlation_prime_bounds
+  have hbeta0 : 0 < Real.log 3 / Real.sqrt 3 := by
+    linarith [hbeta.1]
+  have hcorr0 : 0 < plusP5OddB1Correlation
+      (factorTwoPrimeShift / yoshidaEndpointA) := by
+    linarith [hcorr.1]
+  constructor
+  · calc
+      (44023 / 100000 : ℝ) <
+          (63427 / 100000 : ℝ) * (69408 / 100000 : ℝ) := by
+        norm_num
+      _ < (Real.log 3 / Real.sqrt 3) * (69408 / 100000 : ℝ) :=
+        mul_lt_mul_of_pos_right hbeta.1 (by norm_num)
+      _ < (Real.log 3 / Real.sqrt 3) *
+          plusP5OddB1Correlation
+            (factorTwoPrimeShift / yoshidaEndpointA) :=
+        mul_lt_mul_of_pos_left hcorr.1 hbeta0
+  · calc
+      (Real.log 3 / Real.sqrt 3) *
+          plusP5OddB1Correlation
+            (factorTwoPrimeShift / yoshidaEndpointA) <
+          (6343 / 10000 : ℝ) *
+            plusP5OddB1Correlation
+              (factorTwoPrimeShift / yoshidaEndpointA) :=
+        mul_lt_mul_of_pos_right hbeta.2 hcorr0
+      _ < (6343 / 10000 : ℝ) * (69411 / 100000 : ℝ) :=
+        mul_lt_mul_of_pos_left hcorr.2 (by norm_num)
+      _ < (11007 / 25000 : ℝ) := by norm_num
+
+private theorem plusP5OddB1Base_bounds :
+    (3891 / 100000 : ℝ) < plusP5OddB1Base ∧
+      plusP5OddB1Base < (391 / 10000 : ℝ) := by
+  have hmass := plusP5_scalarMassLoss_fine_bounds
+  have hclean := plusP5OddB1_cleanPolynomialContribution_bounds
+  have halpha := plusP5_log_two_div_sqrt_two_fine_bounds
+  have hprime := plusP5OddB1PrimeProduct_bounds
+  have hm := oddPolynomialMoment_bounds
+  have hm15 := oddP5PolynomialMoment_bounds
+  have hlog := strict_log_two_fine_bounds
+  unfold plusP5OddB1Base
+  constructor <;> nlinarith [hm.1, hm.2.1, hm.2.2.1, hm.2.2.2.1,
+    hm15.1, hm15.2.1]
+
+private theorem abs_plusP5OddB1CleanEnvelope_lt :
+    |plusP5OddB1CleanEnvelope| < (1 / 125000 : ℝ) := by
+  have h11 := abs_le.mp abs_oddCleanRegularEnvelopeError11_le
+  have h13 := abs_lt.mp abs_oddCleanRegularEnvelopeError13_lt
+  have h15 := abs_lt.mp abs_oddP5CleanRegularEnvelopeError15_lt
+  unfold plusP5OddB1CleanEnvelope
+  rw [abs_lt]
+  constructor <;> nlinarith [h11.1, h11.2, h13.1, h13.2, h15.1, h15.2]
+
+private theorem abs_plusP5OddB1CleanEnvelope_scaled_lt :
+    |yoshidaEndpointA * plusP5OddB1CleanEnvelope| <
+      (1 / 250000 : ℝ) := by
+  have hA : yoshidaEndpointA < (7 / 20 : ℝ) := by
+    unfold yoshidaEndpointA
+    linarith [strict_log_two_fine_bounds.2]
+  rw [abs_mul, abs_of_nonneg yoshidaEndpointA_pos.le]
+  calc
+    yoshidaEndpointA * |plusP5OddB1CleanEnvelope| ≤
+        (7 / 20 : ℝ) * |plusP5OddB1CleanEnvelope| :=
+      mul_le_mul_of_nonneg_right hA.le (abs_nonneg _)
+    _ < (7 / 20 : ℝ) * (1 / 125000 : ℝ) :=
+      mul_lt_mul_of_pos_left abs_plusP5OddB1CleanEnvelope_lt (by norm_num)
+    _ < (1 / 250000 : ℝ) := by norm_num
+
+private theorem plusP5OddB1HyperbolicMain_bounds :
+    (10003 / 500000 : ℝ) <
+        2 * yoshidaEndpointA * (10319 / 4800 : ℝ) *
+          oddCleanSinhMoment1 ^ 2 ∧
+      2 * yoshidaEndpointA * (10319 / 4800 : ℝ) *
+          oddCleanSinhMoment1 ^ 2 < (2001 / 100000 : ℝ) := by
+  have hA := plusP5_endpointA_pow_fine_bounds 1 (by norm_num)
+  have hAlo : (69314718055 / 200000000000 : ℝ) < yoshidaEndpointA := by
+    simpa using hA.1
+  have hAhi : yoshidaEndpointA <
+      (69314718057 / 200000000000 : ℝ) := by
+    simpa using hA.2
+  have hmLower := oddCleanSinhMoment1_gt
+  have hmSqLower :
+      (11587142 / 100000000 : ℝ) ^ 2 < oddCleanSinhMoment1 ^ 2 := by
+    nlinarith [sq_nonneg
+      (oddCleanSinhMoment1 - (11587142 / 100000000 : ℝ))]
+  have hmSqUpper := oddCleanSinhMoment1_sq_lt
+  have hA0 := yoshidaEndpointA_pos
+  rw [show 2 * yoshidaEndpointA * (10319 / 4800 : ℝ) *
+      oddCleanSinhMoment1 ^ 2 =
+        yoshidaEndpointA * (10319 / 2400 : ℝ) *
+          oddCleanSinhMoment1 ^ 2 by ring]
+  constructor
+  · calc
+      (10003 / 500000 : ℝ) <
+          (69314718055 / 200000000000 : ℝ) *
+            (10319 / 2400 : ℝ) *
+              (11587142 / 100000000 : ℝ) ^ 2 := by norm_num
+      _ < yoshidaEndpointA * (10319 / 2400 : ℝ) *
+          (11587142 / 100000000 : ℝ) ^ 2 := by
+        exact mul_lt_mul_of_pos_right
+          (mul_lt_mul_of_pos_right hAlo (by norm_num)) (by norm_num)
+      _ < yoshidaEndpointA * (10319 / 2400 : ℝ) *
+          oddCleanSinhMoment1 ^ 2 := by
+        exact mul_lt_mul_of_pos_left hmSqLower
+          (mul_pos hA0 (by norm_num))
+  · calc
+      yoshidaEndpointA * (10319 / 2400 : ℝ) *
+          oddCleanSinhMoment1 ^ 2 ≤
+          (69314718057 / 200000000000 : ℝ) *
+            (10319 / 2400 : ℝ) * oddCleanSinhMoment1 ^ 2 := by
+        exact mul_le_mul_of_nonneg_right
+          (mul_le_mul_of_nonneg_right hAhi.le (by norm_num))
+          (sq_nonneg _)
+      _ < (69314718057 / 200000000000 : ℝ) *
+          (10319 / 2400 : ℝ) * (134263 / 10000000 : ℝ) := by
+        exact mul_lt_mul_of_pos_left hmSqUpper (by norm_num)
+      _ < (2001 / 100000 : ℝ) := by norm_num
+
+private theorem abs_plusP5OddB1HyperbolicCross13_lt :
+    |2 * yoshidaEndpointA * (15 / 8 : ℝ) *
+        (oddCleanSinhMoment1 * oddCleanSinhMoment3)| <
+      (1 / 30000 : ℝ) := by
+  have hA := plusP5_endpointA_pow_fine_bounds 1 (by norm_num)
+  have hAhi : yoshidaEndpointA <
+      (69314718057 / 200000000000 : ℝ) := by
+    simpa using hA.2
+  have hcross := abs_oddCleanSinhMoment1_mul_moment3_lt
+  rw [show |2 * yoshidaEndpointA * (15 / 8 : ℝ) *
+      (oddCleanSinhMoment1 * oddCleanSinhMoment3)| =
+        (15 / 4 : ℝ) * yoshidaEndpointA *
+          |oddCleanSinhMoment1 * oddCleanSinhMoment3| by
+    rw [abs_mul, abs_mul, abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2),
+      abs_of_nonneg yoshidaEndpointA_pos.le,
+      abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 15 / 8)]
+    ring]
+  calc
+    (15 / 4 : ℝ) * yoshidaEndpointA *
+        |oddCleanSinhMoment1 * oddCleanSinhMoment3| ≤
+        (15 / 4 : ℝ) * (69314718057 / 200000000000 : ℝ) *
+          |oddCleanSinhMoment1 * oddCleanSinhMoment3| := by
+      exact mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_left hAhi.le (by norm_num)) (abs_nonneg _)
+    _ < (15 / 4 : ℝ) * (69314718057 / 200000000000 : ℝ) *
+        (1 / 39000 : ℝ) := by
+      exact mul_lt_mul_of_pos_left hcross (by norm_num)
+    _ < (1 / 30000 : ℝ) := by norm_num
+
+private theorem plusP5OddB1Hyperbolic_bounds :
+    (1997 / 100000 : ℝ) <
+        -2 * yoshidaEndpointA * oddCleanSinhMoment1 *
+          plusP5OddCompletionSinhMoment ∧
+      -2 * yoshidaEndpointA * oddCleanSinhMoment1 *
+          plusP5OddCompletionSinhMoment < (2005 / 100000 : ℝ) := by
+  have hmain := plusP5OddB1HyperbolicMain_bounds
+  have h13 := abs_lt.mp abs_plusP5OddB1HyperbolicCross13_lt
+  have h15 := abs_lt.mp abs_oddP5_hyperbolicCross15_lt
+  rw [show -2 * yoshidaEndpointA * oddCleanSinhMoment1 *
+      plusP5OddCompletionSinhMoment =
+        2 * yoshidaEndpointA * (10319 / 4800 : ℝ) *
+            oddCleanSinhMoment1 ^ 2 -
+          2 * yoshidaEndpointA * (15 / 8 : ℝ) *
+            (oddCleanSinhMoment1 * oddCleanSinhMoment3) -
+          2 * yoshidaEndpointA * oddCleanSinhMoment1 *
+            oddP5CleanSinhMoment by
+    unfold plusP5OddCompletionSinhMoment
+    ring]
+  constructor <;> nlinarith [hmain.1, hmain.2, h13.1, h13.2,
+    h15.1, h15.2]
+
+theorem plusP5OddB1_bounds :
+    (1173 / 20000 : ℝ) < plusP5OddB1 ∧
+      plusP5OddB1 < (297 / 5000 : ℝ) := by
+  have hbase := plusP5OddB1Base_bounds
+  have henv := abs_lt.mp abs_plusP5OddB1CleanEnvelope_scaled_lt
+  have hhyper := plusP5OddB1Hyperbolic_bounds
+  have herr := abs_lt.mp
+    abs_poleFreeAnalyticError_plusP5OddB1Correlation_lt
+  rw [plusP5OddB1_eq_structuralProfile]
+  constructor <;> nlinarith [hbase.1, hbase.2, henv.1, henv.2,
+    hhyper.1, hhyper.2, herr.1, herr.2]
 
 end
 
