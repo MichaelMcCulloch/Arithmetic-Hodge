@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CombinedNegativeProfileStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP5AlternatingBoundsStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedAlternatingModelsStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
@@ -29,6 +30,7 @@ open YoshidaFactorTwoPhaseIntrinsicLowAlternatingKernelSharp
 open YoshidaFactorTwoPhaseIntrinsicLowStaticMinusRationalSchur
 open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP5CombinedNegativeProfileStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicOddPerturbationLoewnerSharp
 open YoshidaFactorTwoPhaseIntrinsicResidual
@@ -908,6 +910,88 @@ private theorem plusDetAlternatingWCoupling_eq_sharpModel :
     plusDetAlternatingCoupling_profile_eq_sharpModel
       (-81600701 / 11628000) (21466553 / 3876000)
       (337741 / 160000) (-10319 / 4800) (15 / 8) 1
+
+/-! ## Exact full affine sharp models -/
+
+private def plusDetSharpModelH2 : ℝ :=
+  (25704453062981 / 104652000000000 : ℝ) -
+    (1341157 / 900000 : ℝ) * plusDetS -
+    (33630601 / 116280000 : ℝ) * plusDetD +
+    (1 / 2 : ℝ) * plusDetAlternatingSharpModel plusDetAlternatingQH2
+
+private def plusDetSharpModelH3 : ℝ :=
+  (4071911594689399 / 9883800000000000 : ℝ) -
+    (14231391 / 6400000 : ℝ) * plusDetS +
+    (2115529 / 3040000 : ℝ) * plusDetD +
+    (1 / 2 : ℝ) * plusDetAlternatingSharpModel plusDetAlternatingQH3
+
+private def plusDetSharpModelH4 : ℝ :=
+  (12706719959751107 / 21209472000000000 : ℝ) -
+    (23208881 / 5760000 : ℝ) * plusDetS +
+    (36981907 / 4651200 : ℝ) * plusDetD +
+    (1 / 2 : ℝ) * plusDetAlternatingSharpModel plusDetAlternatingQH4
+
+private def plusDetSharpModelW : ℝ :=
+  (1057809782673918967591 / 5408415360000000000000 : ℝ) -
+    (8993029607 / 2880000000 : ℝ) * plusDetS +
+    (1232757689669 / 46512000000 : ℝ) * plusDetD +
+    plusDetAlternatingSharpModel plusDetAlternatingQW
+
+private theorem plusDetActualH2_eq_sharpModel :
+    plusDetActualH2 = plusDetSharpModelH2 := by
+  unfold plusDetSharpModelH2
+  rw [← plusDetAlternatingH2Coupling_eq_sharpModel,
+    plusDetAlternatingCoupling_profile_expansion]
+  unfold plusDetActualH2 plusDetH2 plusDetT02
+    plusDetT12 plusDetT22 plusDetT23 plusDetT24 plusDetG2 plusDetG0
+    plusDetShift0 plusDetShift1 plusDetShift2 plusDetShift3 plusDetShift4
+    plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3 plusDetD3
+    plusDetA41 plusDetA43 plusDetA05 plusDetA25 plusDetA45
+  ring
+
+private theorem plusDetActualH3_eq_sharpModel_add_B1 :
+    plusDetActualH3 = plusDetSharpModelH3 + plusP5OddB1 := by
+  unfold plusDetSharpModelH3
+  rw [← plusDetAlternatingH3Couplings_eq_sharpModel]
+  repeat rw [plusDetAlternatingCoupling_profile_expansion]
+  unfold plusDetActualH3 plusP5OddB1 plusDetH3
+    plusDetT03 plusDetT13 plusDetT23 plusDetT33 plusDetT34 plusDetG3
+    plusDetG0 plusDetShift0 plusDetShift1 plusDetShift2 plusDetShift3
+    plusDetShift4 plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3
+    plusDetD3 plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetA05
+    plusDetA25 plusDetA45 plusDetO15
+  ring
+
+private theorem plusDetActualH4_eq_sharpModel_add_B4 :
+    plusDetActualH4 = plusDetSharpModelH4 + plusP5OddB4 := by
+  unfold plusDetSharpModelH4
+  rw [← plusDetAlternatingH4Couplings_eq_sharpModel]
+  repeat rw [plusDetAlternatingCoupling_profile_expansion]
+  unfold plusDetActualH4 plusP5OddB4 plusDetH4
+    plusDetT04 plusDetT14 plusDetT24 plusDetT34 plusDetT44 plusDetG4
+    plusDetG0 plusDetShift0 plusDetShift1 plusDetShift2 plusDetShift3
+    plusDetShift4 plusDetS plusDetD plusDetS1 plusDetD1 plusDetS3
+    plusDetD3 plusDetA41 plusDetA43 plusDetO11 plusDetO13 plusDetO33
+    plusDetA05 plusDetA25 plusDetA45 plusDetO15 plusDetO35
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem plusDetActualW_eq_sharpModel_add_Q :
+    plusDetActualW = plusDetSharpModelW + plusP5OddQ := by
+  unfold plusDetSharpModelW
+  rw [← plusDetAlternatingWCoupling_eq_sharpModel,
+    plusDetAlternatingCoupling_profile_expansion]
+  unfold plusDetActualW plusP5OddQ plusDetW
+    plusDetTransformedSixQuadratic plusDetTransformedFiveQuadratic
+    plusDetFiveQuadratic plusDetT00 plusDetT01 plusDetT02 plusDetT03
+    plusDetT04 plusDetT11 plusDetT12 plusDetT13 plusDetT14 plusDetT22
+    plusDetT23 plusDetT24 plusDetT33 plusDetT34 plusDetT44 plusDetG1
+    plusDetG2 plusDetG3 plusDetG4 plusDetG0 plusDetShift0 plusDetShift1
+    plusDetShift2 plusDetShift3 plusDetShift4 plusDetS plusDetD plusDetS1
+    plusDetD1 plusDetS3 plusDetD3 plusDetA41 plusDetA43 plusDetO11
+    plusDetO13 plusDetO33 plusDetA05 plusDetA25 plusDetA45 plusDetO15
+    plusDetO35 plusDetO55
+  ring
 
 private theorem plusDetAlternatingQH2_polynomial (t : ℝ) :
     plusDetAlternatingQH2 t =
