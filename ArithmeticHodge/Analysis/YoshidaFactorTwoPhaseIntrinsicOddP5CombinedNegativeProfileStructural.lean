@@ -11,15 +11,21 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CombinedNe
 noncomputable section
 
 open MeasureTheory Real Set
+open CenteredEndpointCorrelation
 open YoshidaEndpointOcticPotential
+open YoshidaEndpointOddResidualRegularity
+open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicLow
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
+open YoshidaFactorTwoPhaseIntrinsicOddPerturbationLoewnerSharp
 open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
+open YoshidaFactorTwoPhaseLowSchur
+open YoshidaFactorTwoPhaseOddLowEndpointPositive
 
 /-!
 # The correlated negative-endpoint odd `P5` completion profile
@@ -163,6 +169,179 @@ theorem continuous_plusP5OddQCorrelation :
     oddStructuralCorrelation13 oddStructuralCorrelation33 oddP5Correlation15
     oddP5Correlation35 oddP5Correlation55
   fun_prop
+
+/-! ## Exact profile-correlation bridges -/
+
+private theorem factorTwoCenteredCorrelationBilinear_add_left_profile
+    (u v w : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (hw : Continuous w) (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear (u + v) w t =
+      factorTwoCenteredCorrelationBilinear u w t +
+        factorTwoCenteredCorrelationBilinear v w t := by
+  unfold factorTwoCenteredCorrelationBilinear
+  rw [factorTwoCenteredCrossCorrelation_add_left u v w hu hv hw t,
+    factorTwoCenteredCrossCorrelation_add_right w u v hw hu hv t]
+  ring
+
+private theorem factorTwoCenteredCorrelationBilinear_add_right_profile
+    (u v w : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (hw : Continuous w) (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear u (v + w) t =
+      factorTwoCenteredCorrelationBilinear u v t +
+        factorTwoCenteredCorrelationBilinear u w t := by
+  unfold factorTwoCenteredCorrelationBilinear
+  rw [factorTwoCenteredCrossCorrelation_add_right u v w hu hv hw t,
+    factorTwoCenteredCrossCorrelation_add_left v w u hv hw hu t]
+  ring
+
+private theorem factorTwoCenteredCorrelationBilinear_smul_left_profile
+    (c : ℝ) (u v : ℝ → ℝ) (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear (c • u) v t =
+      c * factorTwoCenteredCorrelationBilinear u v t := by
+  simpa using
+    factorTwoCenteredCorrelationBilinear_smul_smul c 1 u v t
+
+private theorem factorTwoCenteredCorrelationBilinear_smul_right_profile
+    (c : ℝ) (u v : ℝ → ℝ) (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear u (c • v) t =
+      c * factorTwoCenteredCorrelationBilinear u v t := by
+  simpa using
+    factorTwoCenteredCorrelationBilinear_smul_smul 1 c u v t
+
+private theorem plusP5OddCompletionProfile_eq_smul_add :
+    plusP5OddCompletionProfile =
+      (-10319 / 4800 : ℝ) • centeredP1 +
+        (15 / 8 : ℝ) • centeredP3 + factorTwoCenteredP5 := by
+  funext x
+  simp only [plusP5OddCompletionProfile, Pi.add_apply, Pi.smul_apply,
+    smul_eq_mul]
+
+private theorem plusP5OddBorderProfile_eq_smul_add :
+    plusP5OddBorderProfile =
+      (-359 / 360 : ℝ) • centeredP1 + centeredP3 := by
+  funext x
+  simp only [plusP5OddBorderProfile, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+
+theorem factorTwoCenteredCorrelationBilinear_p1_plusP5OddCompletionProfile
+    (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear centeredP1
+        plusP5OddCompletionProfile t =
+      plusP5OddB1Correlation t := by
+  have h1 : Continuous centeredP1 := by unfold centeredP1; fun_prop
+  have h3 : Continuous centeredP3 := by unfold centeredP3; fun_prop
+  have h5 : Continuous factorTwoCenteredP5 :=
+    continuous_factorTwoCenteredP5
+  rw [plusP5OddCompletionProfile_eq_smul_add,
+    factorTwoCenteredCorrelationBilinear_add_right_profile centeredP1
+      ((-10319 / 4800 : ℝ) • centeredP1 +
+        (15 / 8 : ℝ) • centeredP3) factorTwoCenteredP5 h1
+      ((h1.const_smul (-10319 / 4800 : ℝ)).add
+        (h3.const_smul (15 / 8 : ℝ))) h5 t,
+    factorTwoCenteredCorrelationBilinear_add_right_profile centeredP1
+      ((-10319 / 4800 : ℝ) • centeredP1)
+      ((15 / 8 : ℝ) • centeredP3) h1
+      (h1.const_smul (-10319 / 4800 : ℝ))
+      (h3.const_smul (15 / 8 : ℝ)) t,
+    factorTwoCenteredCorrelationBilinear_smul_right_profile,
+    factorTwoCenteredCorrelationBilinear_smul_right_profile,
+    factorTwoCenteredCorrelationBilinear_p1_p1,
+    factorTwoCenteredCorrelationBilinear_p1_p3,
+    factorTwoCenteredCorrelationBilinear_p1_p5]
+  unfold plusP5OddB1Correlation oddStructuralCorrelation11
+    oddStructuralCorrelation13
+  ring
+
+private theorem factorTwoCenteredCorrelationBilinear_p3_plusP5OddCompletionProfile
+    (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear centeredP3
+        plusP5OddCompletionProfile t =
+      (-10319 / 4800 : ℝ) * oddStructuralCorrelation13 t +
+        (15 / 8 : ℝ) * oddStructuralCorrelation33 t +
+        oddP5Correlation35 t := by
+  have h1 : Continuous centeredP1 := by unfold centeredP1; fun_prop
+  have h3 : Continuous centeredP3 := by unfold centeredP3; fun_prop
+  have h5 : Continuous factorTwoCenteredP5 :=
+    continuous_factorTwoCenteredP5
+  rw [plusP5OddCompletionProfile_eq_smul_add,
+    factorTwoCenteredCorrelationBilinear_add_right_profile centeredP3
+      ((-10319 / 4800 : ℝ) • centeredP1 +
+        (15 / 8 : ℝ) • centeredP3) factorTwoCenteredP5 h3
+      ((h1.const_smul (-10319 / 4800 : ℝ)).add
+        (h3.const_smul (15 / 8 : ℝ))) h5 t,
+    factorTwoCenteredCorrelationBilinear_add_right_profile centeredP3
+      ((-10319 / 4800 : ℝ) • centeredP1)
+      ((15 / 8 : ℝ) • centeredP3) h3
+      (h1.const_smul (-10319 / 4800 : ℝ))
+      (h3.const_smul (15 / 8 : ℝ)) t,
+    factorTwoCenteredCorrelationBilinear_smul_right_profile,
+    factorTwoCenteredCorrelationBilinear_smul_right_profile,
+    factorTwoCenteredCorrelationBilinear_comm centeredP3 centeredP1,
+    factorTwoCenteredCorrelationBilinear_p1_p3,
+    factorTwoCenteredCorrelationBilinear_p3_p3,
+    factorTwoCenteredCorrelationBilinear_p3_p5]
+  unfold oddStructuralCorrelation13 oddStructuralCorrelation33
+  ring
+
+theorem factorTwoCenteredCorrelationBilinear_plusP5OddProfiles
+    (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear plusP5OddBorderProfile
+        plusP5OddCompletionProfile t =
+      plusP5OddB4Correlation t := by
+  have h1 : Continuous centeredP1 := by unfold centeredP1; fun_prop
+  have h3 : Continuous centeredP3 := by unfold centeredP3; fun_prop
+  have hr : Continuous plusP5OddCompletionProfile :=
+    continuous_plusP5OddCompletionProfile
+  rw [plusP5OddBorderProfile_eq_smul_add,
+    factorTwoCenteredCorrelationBilinear_add_left_profile
+      ((-359 / 360 : ℝ) • centeredP1) centeredP3
+      plusP5OddCompletionProfile (h1.const_smul (-359 / 360 : ℝ)) h3 hr t,
+    factorTwoCenteredCorrelationBilinear_smul_left_profile,
+    factorTwoCenteredCorrelationBilinear_p1_plusP5OddCompletionProfile,
+    factorTwoCenteredCorrelationBilinear_p3_plusP5OddCompletionProfile]
+  unfold plusP5OddB1Correlation plusP5OddB4Correlation
+  ring
+
+theorem centeredEndpointCorrelation_plusP5OddCompletionProfile
+    (t : ℝ) :
+    centeredEndpointCorrelation plusP5OddCompletionProfile t =
+      plusP5OddQCorrelation t := by
+  let q : ℝ → ℝ := factorTwoOddStructuralLowProfile
+    (-10319 / 4800) (15 / 8)
+  have hq : Continuous q := by
+    dsimp only [q]
+    exact continuous_factorTwoOddStructuralLowProfile _ _
+  have h5 : Continuous factorTwoCenteredP5 :=
+    continuous_factorTwoCenteredP5
+  have hprofile :
+      plusP5OddCompletionProfile = q + factorTwoCenteredP5 := by
+    funext x
+    dsimp only [q]
+    unfold plusP5OddCompletionProfile factorTwoOddStructuralLowProfile
+    simp only [Pi.add_apply]
+  have hqprofile :
+      q = (-10319 / 4800 : ℝ) • centeredP1 +
+        (15 / 8 : ℝ) • centeredP3 := by
+    funext x
+    dsimp only [q]
+    unfold factorTwoOddStructuralLowProfile
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  rw [hprofile, centeredEndpointCorrelation_add q factorTwoCenteredP5 hq h5 t,
+    centeredEndpointCorrelation_oddStructuralProfile,
+    hqprofile,
+    factorTwoCenteredCorrelationBilinear_add_left_profile
+      ((-10319 / 4800 : ℝ) • centeredP1)
+      ((15 / 8 : ℝ) • centeredP3) factorTwoCenteredP5
+      ((by unfold centeredP1; fun_prop : Continuous centeredP1).const_smul
+        (-10319 / 4800 : ℝ))
+      ((by unfold centeredP3; fun_prop : Continuous centeredP3).const_smul
+        (15 / 8 : ℝ)) h5 t,
+    factorTwoCenteredCorrelationBilinear_smul_left_profile,
+    factorTwoCenteredCorrelationBilinear_smul_left_profile,
+    factorTwoCenteredCorrelationBilinear_p1_p5,
+    factorTwoCenteredCorrelationBilinear_p3_p5,
+    centeredEndpointCorrelation_p5]
+  unfold plusP5OddQCorrelation
+  ring
 
 /-! ## Global Bernstein bounds for the three complete correlations -/
 
