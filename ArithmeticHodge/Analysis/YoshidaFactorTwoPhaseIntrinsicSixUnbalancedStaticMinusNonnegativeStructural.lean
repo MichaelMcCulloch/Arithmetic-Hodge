@@ -1,0 +1,66 @@
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CombinedPositiveProfileStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusBorderH3Structural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusBorderH4Structural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusBorderWStructural
+
+set_option autoImplicit false
+
+namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusNonnegativeStructural
+
+noncomputable section
+
+open YoshidaFactorTwoPhaseIntrinsicOddP5CombinedPositiveProfileStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticEvenPositiveStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusBorderH3Structural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusBorderH4Structural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusBorderWStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusDeterminantStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusMinorStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusPositiveStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSplitStructural
+
+/-!
+# The unconditional negative static endpoint
+
+The three cancellation-preserving border profiles are assembled before the
+positive-endpoint odd `P5` tail is inserted.  Thus the last Sylvester gate is
+closed from four whole-profile structural bounds, without entrywise error
+splitting or sampled evaluation.
+-/
+
+theorem minusP5BorderCoreBounds_structural : MinusP5BorderCoreBounds := by
+  rcases minusDetH3Core_bounds_structural with ⟨h3L, h3U⟩
+  rcases minusDetH4Core_bounds_structural with ⟨h4L, h4U⟩
+  have hW := minusDetWCore_lower_structural
+  exact ⟨h3L, h3U, h4L, h4U, hW⟩
+
+theorem minusP5BorderCombinedBounds_structural :
+    MinusP5BorderCombinedBounds :=
+  minusP5BorderCombinedBounds_of_coreBounds
+    minusP5BorderCoreBounds_structural
+    neg_729_div_5000_lt_minusP5OddPositiveTail
+
+theorem factorTwoIntrinsicSixUnbalancedTMinusDet_pos :
+    0 < factorTwoIntrinsicSixUnbalancedTMinusDet :=
+  factorTwoIntrinsicSixUnbalancedTMinusDet_pos_of_combinedBounds
+    minusP5BorderCombinedBounds_structural
+
+theorem factorTwoIntrinsicSixUnbalancedTMinusNonnegative :
+    FactorTwoIntrinsicSixUnbalancedTMinusNonnegative :=
+  factorTwoIntrinsicSixUnbalancedTMinusNonnegative_of_sylvester
+    factorTwoIntrinsicSixUnbalancedTMinus11_pos
+    factorTwoIntrinsicSixUnbalancedTMinusMinor_pos
+    factorTwoIntrinsicSixUnbalancedTMinusDet_pos
+
+/-- The corrected negative static endpoint is nonnegative in every
+six-dimensional direction. -/
+theorem factorTwoIntrinsicSixUnbalancedStaticMinusNonnegative :
+    FactorTwoIntrinsicSixUnbalancedStaticMinusNonnegative :=
+  factorTwoIntrinsicSixUnbalancedStaticMinusNonnegative_of_schur
+    factorTwoIntrinsicSixUnbalancedEMinus_positive
+    factorTwoIntrinsicSixUnbalancedTMinusNonnegative
+
+end
+
+end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusNonnegativeStructural
