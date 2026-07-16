@@ -10,6 +10,7 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedSt
 
 noncomputable section
 
+open MeasureTheory Real Set
 open ThreeByThreeRankOneSchur
 open YoshidaConstantBounds
 open YoshidaEndpointEvenStructuralReduction
@@ -29,6 +30,7 @@ open YoshidaFactorTwoPhaseIntrinsicLowStaticMinusRationalSchur
 open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
+open YoshidaFactorTwoPhaseIntrinsicOddPerturbationLoewnerSharp
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicSixP4P1AlternatingStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4PlusEndpointExactSchur
@@ -941,6 +943,1132 @@ private theorem plusDetAlternatingQW_polynomial (t : ℝ) :
   unfold plusDetAlternatingQW plusDetAlternatingQ alternatingQ41
     alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
   ring
+
+/-! ## Global Bernstein certificates for the complete profiles -/
+
+private theorem abs_plusDetAlternatingQH2_le_seventeen
+    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
+    |plusDetAlternatingQH2 t| ≤ 17 := by
+  let x : ℝ := t / 2
+  have hx0 : 0 ≤ x := by dsimp only [x]; linarith
+  have hx1 : 0 ≤ 1 - x := by dsimp only [x]; linarith
+  rw [abs_le]
+  constructor
+  · have h : 0 ≤ (17 : ℝ) + plusDetAlternatingQH2 t := by
+      rw [show (17 : ℝ) + plusDetAlternatingQH2 t =
+          (123287 / 43200 : ℝ) * (1 - x) ^ 8 +
+            (77351 / 54000 : ℝ) * x * (1 - x) ^ 7 +
+            (6246461 / 108000 : ℝ) * x ^ 2 * (1 - x) ^ 6 +
+            (31428409 / 108000 : ℝ) * x ^ 3 * (1 - x) ^ 5 +
+            (1618007 / 2700 : ℝ) * x ^ 4 * (1 - x) ^ 4 +
+            (1905169 / 2700 : ℝ) * x ^ 5 * (1 - x) ^ 3 +
+            (50339327 / 108000 : ℝ) * x ^ 6 * (1 - x) ^ 2 +
+            (14171041 / 108000 : ℝ) * x ^ 7 * (1 - x) +
+            (3717253 / 216000 : ℝ) * x ^ 8 by
+        rw [plusDetAlternatingQH2_polynomial]
+        dsimp only [x]
+        ring]
+      positivity
+    linarith
+  · have h : 0 ≤ (17 : ℝ) - plusDetAlternatingQH2 t := by
+      rw [show (17 : ℝ) - plusDetAlternatingQH2 t =
+          (1345513 / 43200 : ℝ) * (1 - x) ^ 8 +
+            (14610649 / 54000 : ℝ) * x * (1 - x) ^ 7 +
+            (96569539 / 108000 : ℝ) * x ^ 2 * (1 - x) ^ 6 +
+            (174203591 / 108000 : ℝ) * x ^ 3 * (1 - x) ^ 5 +
+            (4807993 / 2700 : ℝ) * x ^ 4 * (1 - x) ^ 4 +
+            (3235631 / 2700 : ℝ) * x ^ 5 * (1 - x) ^ 3 +
+            (52476673 / 108000 : ℝ) * x ^ 6 * (1 - x) ^ 2 +
+            (15204959 / 108000 : ℝ) * x ^ 7 * (1 - x) +
+            (3626747 / 216000 : ℝ) * x ^ 8 by
+        rw [plusDetAlternatingQH2_polynomial]
+        dsimp only [x]
+        ring]
+      positivity
+    linarith
+
+private theorem abs_plusDetAlternatingQH3_le_thirty
+    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
+    |plusDetAlternatingQH3 t| ≤ 30 := by
+  let x : ℝ := t / 2
+  have hx0 : 0 ≤ x := by dsimp only [x]; linarith
+  have hx1 : 0 ≤ 1 - x := by dsimp only [x]; linarith
+  rw [abs_le]
+  constructor
+  · have h : 0 ≤ (30 : ℝ) + plusDetAlternatingQH3 t := by
+      rw [show (30 : ℝ) + plusDetAlternatingQH3 t =
+          (202697701 / 465120000 : ℝ) * (1 - x) ^ 8 +
+            (3277086221 / 186048000 : ℝ) * x * (1 - x) ^ 7 +
+            (41079283937 / 232560000 : ℝ) * x ^ 2 * (1 - x) ^ 6 +
+            (544466049919 / 930240000 : ℝ) * x ^ 3 * (1 - x) ^ 5 +
+            (470682569017 / 465120000 : ℝ) * x ^ 4 * (1 - x) ^ 4 +
+            (53151033397 / 48960000 : ℝ) * x ^ 5 * (1 - x) ^ 3 +
+            (80947416643 / 116280000 : ℝ) * x ^ 6 * (1 - x) ^ 2 +
+            (197193253969 / 930240000 : ℝ) * x ^ 7 * (1 - x) +
+            (10956887 / 360000 : ℝ) * x ^ 8 by
+        rw [plusDetAlternatingQH3_polynomial]
+        dsimp only [x]
+        ring]
+      positivity
+    linarith
+  · have h : 0 ≤ (30 : ℝ) - plusDetAlternatingQH3 t := by
+      rw [show (30 : ℝ) - plusDetAlternatingQH3 t =
+          (27704502299 / 465120000 : ℝ) * (1 - x) ^ 8 +
+            (86025953779 / 186048000 : ℝ) * x * (1 - x) ^ 7 +
+            (349621516063 / 232560000 : ℝ) * x ^ 2 * (1 - x) ^ 6 +
+            (2581140350081 / 930240000 : ℝ) * x ^ 3 * (1 - x) ^ 5 +
+            (1482821430983 / 465120000 : ℝ) * x ^ 4 * (1 - x) ^ 4 +
+            (111354566603 / 48960000 : ℝ) * x ^ 5 * (1 - x) ^ 3 +
+            (114402983357 / 116280000 : ℝ) * x ^ 6 * (1 - x) ^ 2 +
+            (249321946031 / 930240000 : ℝ) * x ^ 7 * (1 - x) +
+            (10643113 / 360000 : ℝ) * x ^ 8 by
+        rw [plusDetAlternatingQH3_polynomial]
+        dsimp only [x]
+        ring]
+      positivity
+    linarith
+
+private theorem abs_plusDetAlternatingQH4_le_eleven
+    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
+    |plusDetAlternatingQH4 t| ≤ 11 := by
+  let x : ℝ := t / 2
+  have hx0 : 0 ≤ x := by dsimp only [x]; linarith
+  have hx1 : 0 ≤ 1 - x := by dsimp only [x]; linarith
+  rw [abs_le]
+  constructor
+  · have h : 0 ≤ (11 : ℝ) + plusDetAlternatingQH4 t := by
+      rw [show (11 : ℝ) + plusDetAlternatingQH4 t =
+          (219380983169 / 83721600000 : ℝ) * (1 - x) ^ 8 +
+            (13668629309 / 4186080000 : ℝ) * x * (1 - x) ^ 7 +
+            (3961148824183 / 41860800000 : ℝ) * x ^ 2 * (1 - x) ^ 6 +
+            (18490381110179 / 41860800000 : ℝ) * x ^ 3 * (1 - x) ^ 5 +
+            (580271422291 / 654075000 : ℝ) * x ^ 4 * (1 - x) ^ 4 +
+            (160156726433 / 163518750 : ℝ) * x ^ 5 * (1 - x) ^ 3 +
+            (22234622078269 / 41860800000 : ℝ) * x ^ 6 * (1 - x) ^ 2 +
+            (2774139937739 / 41860800000 : ℝ) * x ^ 7 * (1 - x) +
+            (2963264317 / 259200000 : ℝ) * x ^ 8 by
+        rw [plusDetAlternatingQH4_polynomial]
+        dsimp only [x]
+        ring]
+      positivity
+    linarith
+  · have h : 0 ≤ (11 : ℝ) - plusDetAlternatingQH4 t := by
+      rw [show (11 : ℝ) - plusDetAlternatingQH4 t =
+          (1622494216831 / 83721600000 : ℝ) * (1 - x) ^ 8 +
+            (723081450691 / 4186080000 : ℝ) * x * (1 - x) ^ 7 +
+            (21825103975817 / 41860800000 : ℝ) * x ^ 2 * (1 - x) ^ 6 +
+            (33082124489821 / 41860800000 : ℝ) * x ^ 3 * (1 - x) ^ 5 +
+            (427004077709 / 654075000 : ℝ) * x ^ 4 * (1 - x) ^ 4 +
+            (41298373567 / 163518750 : ℝ) * x ^ 5 * (1 - x) ^ 3 +
+            (3551630721731 / 41860800000 : ℝ) * x ^ 6 * (1 - x) ^ 2 +
+            (4593360862261 / 41860800000 : ℝ) * x ^ 7 * (1 - x) +
+            (2739135683 / 259200000 : ℝ) * x ^ 8 by
+        rw [plusDetAlternatingQH4_polynomial]
+        dsimp only [x]
+        ring]
+      positivity
+    linarith
+
+private theorem abs_plusDetAlternatingQW_le_thirty_one
+    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
+    |plusDetAlternatingQW t| ≤ 31 := by
+  let x : ℝ := t / 2
+  have hx0 : 0 ≤ x := by dsimp only [x]; linarith
+  have hx1 : 0 ≤ 1 - x := by dsimp only [x]; linarith
+  rw [abs_le]
+  constructor
+  · have h : 0 ≤ (31 : ℝ) + plusDetAlternatingQW t := by
+      rw [show (31 : ℝ) + plusDetAlternatingQW t =
+          (7410923746409 / 131328000000 : ℝ) * (1 - x) ^ 8 +
+            (3411736394323 / 6976800000 : ℝ) * x * (1 - x) ^ 7 +
+            (1781900212089071 / 1116288000000 : ℝ) * x ^ 2 * (1 - x) ^ 6 +
+            (3302448385050373 / 1116288000000 : ℝ) * x ^ 3 * (1 - x) ^ 5 +
+            (1009950634466447 / 279072000000 : ℝ) * x ^ 4 * (1 - x) ^ 4 +
+            (1605536700513713 / 558144000000 : ℝ) * x ^ 5 * (1 - x) ^ 3 +
+            (1406487041539853 / 1116288000000 : ℝ) * x ^ 6 * (1 - x) ^ 2 +
+            (233910351580393 / 1116288000000 : ℝ) * x ^ 7 * (1 - x) +
+            (217438000829 / 6912000000 : ℝ) * x ^ 8 by
+        rw [plusDetAlternatingQW_polynomial]
+        dsimp only [x]
+        ring]
+      positivity
+    linarith
+  · have h : 0 ≤ (31 : ℝ) - plusDetAlternatingQW t := by
+      rw [show (31 : ℝ) - plusDetAlternatingQW t =
+          (731412253591 / 131328000000 : ℝ) * (1 - x) ^ 8 +
+            (48756405677 / 6976800000 : ℝ) * x * (1 - x) ^ 7 +
+            (155975755910929 / 1116288000000 : ℝ) * x ^ 2 * (1 - x) ^ 6 +
+            (573303550949627 / 1116288000000 : ℝ) * x ^ 3 * (1 - x) ^ 5 +
+            (201221845533553 / 279072000000 : ℝ) * x ^ 4 * (1 - x) ^ 4 +
+            (332339267486287 / 558144000000 : ℝ) * x ^ 5 * (1 - x) ^ 3 +
+            (531388926460147 / 1116288000000 : ℝ) * x ^ 6 * (1 - x) ^ 2 +
+            (319768496419607 / 1116288000000 : ℝ) * x ^ 7 * (1 - x) +
+            (211105999171 / 6912000000 : ℝ) * x ^ 8 by
+        rw [plusDetAlternatingQW_polynomial]
+        dsimp only [x]
+        ring]
+      positivity
+    linarith
+
+/-! ## One sharp remainder estimate per complete profile -/
+
+private theorem abs_plusDetAlternatingSharpRegularErrorH2_lt :
+    |intrinsicAlternatingSharpRegularError plusDetAlternatingQH2| <
+      (17 / 25000 : ℝ) := by
+  exact abs_intrinsicAlternatingSharpRegularError_lt_of_uniform_q_bound
+    plusDetAlternatingQH2
+    (by
+      unfold plusDetAlternatingQH2 plusDetAlternatingQ alternatingQ41
+        alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+      fun_prop)
+    17 (by norm_num)
+    (fun t ht0 ht2 ↦ abs_plusDetAlternatingQH2_le_seventeen ht0 ht2)
+
+private theorem abs_plusDetAlternatingSharpRegularErrorH3_lt :
+    |intrinsicAlternatingSharpRegularError plusDetAlternatingQH3| <
+      (30 / 25000 : ℝ) := by
+  exact abs_intrinsicAlternatingSharpRegularError_lt_of_uniform_q_bound
+    plusDetAlternatingQH3
+    (by
+      unfold plusDetAlternatingQH3 plusDetAlternatingQ alternatingQ41
+        alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+      fun_prop)
+    30 (by norm_num)
+    (fun t ht0 ht2 ↦ abs_plusDetAlternatingQH3_le_thirty ht0 ht2)
+
+private theorem abs_plusDetAlternatingSharpRegularErrorH4_lt :
+    |intrinsicAlternatingSharpRegularError plusDetAlternatingQH4| <
+      (11 / 25000 : ℝ) := by
+  exact abs_intrinsicAlternatingSharpRegularError_lt_of_uniform_q_bound
+    plusDetAlternatingQH4
+    (by
+      unfold plusDetAlternatingQH4 plusDetAlternatingQ alternatingQ41
+        alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+      fun_prop)
+    11 (by norm_num)
+    (fun t ht0 ht2 ↦ abs_plusDetAlternatingQH4_le_eleven ht0 ht2)
+
+private theorem abs_plusDetAlternatingSharpRegularErrorW_lt :
+    |intrinsicAlternatingSharpRegularError plusDetAlternatingQW| <
+      (31 / 25000 : ℝ) := by
+  exact abs_intrinsicAlternatingSharpRegularError_lt_of_uniform_q_bound
+    plusDetAlternatingQW
+    (by
+      unfold plusDetAlternatingQW plusDetAlternatingQ alternatingQ41
+        alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+      fun_prop)
+    31 (by norm_num)
+    (fun t ht0 ht2 ↦ abs_plusDetAlternatingQW_le_thirty_one ht0 ht2)
+
+/-! ## Exact sharp archimedean model for a polynomial profile -/
+
+private theorem integral_inv_two_add_plusDet :
+    (∫ t : ℝ in 0..2, 1 / (2 + t)) = Real.log 2 := by
+  let F : ℝ → ℝ := fun t ↦ Real.log (2 + t)
+  have hderiv (t : ℝ) (ht : 2 + t ≠ 0) :
+      HasDerivAt F (1 / (2 + t)) t := by
+    have hadd : HasDerivAt (fun x : ℝ ↦ 2 + x) 1 t := by
+      simpa using (hasDerivAt_const t 2).add (hasDerivAt_id t)
+    simpa only [F, Function.comp_apply, one_div, mul_one] using
+      (Real.hasDerivAt_log ht).comp t hadd
+  have hcont : ContinuousOn (fun t : ℝ ↦ 1 / (2 + t))
+      (uIcc (0 : ℝ) 2) := by
+    intro t ht
+    have ht' : t ∈ Icc (0 : ℝ) 2 := by
+      simpa [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)] using ht
+    have hne : 2 + t ≠ 0 := by linarith [ht'.1]
+    exact (continuousAt_const.div
+      (continuousAt_const.add continuousAt_id) hne).continuousWithinAt
+  have hint := intervalIntegral.integral_eq_sub_of_hasDerivAt
+    (fun t ht ↦ hderiv t (by
+      have ht' : t ∈ Icc (0 : ℝ) 2 := by
+        simpa [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)] using ht
+      linarith [ht'.1])) hcont.intervalIntegrable
+  rw [hint]
+  dsimp only [F]
+  norm_num
+  rw [show Real.log 4 = 2 * Real.log 2 by
+    rw [show (4 : ℝ) = 2 * 2 by norm_num,
+      Real.log_mul (by norm_num : (2 : ℝ) ≠ 0)
+        (by norm_num : (2 : ℝ) ≠ 0)]
+    ring]
+  ring
+
+private theorem intervalIntegrable_inv_two_add_plusDet :
+    IntervalIntegrable (fun t : ℝ ↦ 1 / (2 + t)) volume 0 2 := by
+  apply ContinuousOn.intervalIntegrable
+  intro t ht
+  have ht' : t ∈ Icc (0 : ℝ) 2 := by
+    simpa [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)] using ht
+  have hne : 2 + t ≠ 0 := by linarith [ht'.1]
+  exact (continuousAt_const.div
+    (continuousAt_const.add continuousAt_id) hne).continuousWithinAt
+
+private theorem intrinsicAlternatingSharpArchModel_eq_integral_plusDet
+    (q : ℝ → ℝ) (hq : Continuous q) :
+    intrinsicAlternatingSharpArchModel q =
+      ∫ t : ℝ in 0..2,
+        intrinsicAlternatingKernelPolynomial6 t *
+            intrinsicAlternatingCorrelation q t +
+          t ^ 2 * q t / (2 + t) := by
+  let C : ℝ → ℝ := intrinsicAlternatingCorrelation q
+  let f : ℝ → ℝ := fun t ↦ (t / 10) * C t + t ^ 2 * q t / (2 + t)
+  let g : ℝ → ℝ := fun t ↦
+    (intrinsicAlternatingKernelPolynomial6 t - t / 10) * C t
+  have hC : Continuous C := by
+    dsimp only [C]
+    unfold intrinsicAlternatingCorrelation
+    fun_prop
+  have hK : Continuous intrinsicAlternatingKernelPolynomial6 := by
+    rw [show intrinsicAlternatingKernelPolynomial6 = fun t : ℝ ↦
+        intrinsicAlternatingKernelCoeff1 yoshidaEndpointA * t +
+          intrinsicAlternatingKernelCoeff3 yoshidaEndpointA * t ^ 3 +
+          intrinsicAlternatingKernelCoeff5 yoshidaEndpointA * t ^ 5 by
+      funext t
+      exact intrinsicAlternatingKernelPolynomial6_expansion t]
+    fun_prop
+  have hrat : ContinuousOn (fun t : ℝ ↦ t ^ 2 * q t / (2 + t))
+      (uIcc (0 : ℝ) 2) := by
+    intro t ht
+    have ht' : t ∈ Icc (0 : ℝ) 2 := by
+      simpa [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)] using ht
+    have hden : 2 + t ≠ 0 := by linarith [ht'.1]
+    exact (((continuousAt_id.pow 2).mul hq.continuousAt).div
+      (continuousAt_const.add continuousAt_id) hden).continuousWithinAt
+  have hf : IntervalIntegrable f volume 0 2 := by
+    apply ContinuousOn.intervalIntegrable
+    exact ((continuous_id.div_const 10).mul hC).continuousOn.add hrat
+  have hg : IntervalIntegrable g volume 0 2 := by
+    exact ((hK.sub (continuous_id.div_const 10)).mul hC).intervalIntegrable 0 2
+  unfold intrinsicAlternatingSharpArchModel intrinsicAlternatingArchModel
+    intrinsicAlternatingPolynomialCorrection
+  change (∫ t : ℝ in 0..2, f t) + (∫ t : ℝ in 0..2, g t) = _
+  rw [← intervalIntegral.integral_add hf hg]
+  apply intervalIntegral.integral_congr
+  intro t _ht
+  dsimp only [f, g, C]
+  ring
+
+private theorem intrinsicAlternatingSharpArchModel_eq_data_plusDet
+    (q quotient : ℝ → ℝ) (r P m1 m3 m5 : ℝ)
+    (hq : Continuous q) (hquotient : Continuous quotient)
+    (hdiv : ∀ t ∈ Icc (0 : ℝ) 2,
+      t ^ 2 * q t / (2 + t) = quotient t + r * (1 / (2 + t)))
+    (hP : (∫ t : ℝ in 0..2, quotient t) = P)
+    (hm1 : (∫ t : ℝ in 0..2,
+      t * intrinsicAlternatingCorrelation q t) = m1)
+    (hm3 : (∫ t : ℝ in 0..2,
+      t ^ 3 * intrinsicAlternatingCorrelation q t) = m3)
+    (hm5 : (∫ t : ℝ in 0..2,
+      t ^ 5 * intrinsicAlternatingCorrelation q t) = m5) :
+    intrinsicAlternatingSharpArchModel q =
+      P + r * Real.log 2 +
+        m1 * intrinsicAlternatingKernelCoeff1 yoshidaEndpointA +
+        m3 * intrinsicAlternatingKernelCoeff3 yoshidaEndpointA +
+        m5 * intrinsicAlternatingKernelCoeff5 yoshidaEndpointA := by
+  rw [intrinsicAlternatingSharpArchModel_eq_integral_plusDet q hq]
+  let C : ℝ → ℝ := intrinsicAlternatingCorrelation q
+  have hC : Continuous C := by
+    dsimp only [C]
+    unfold intrinsicAlternatingCorrelation
+    fun_prop
+  have h1I : IntervalIntegrable
+      (fun t : ℝ ↦ intrinsicAlternatingKernelCoeff1 yoshidaEndpointA *
+        (t * C t)) volume 0 2 :=
+    (by fun_prop : Continuous (fun t : ℝ ↦
+      intrinsicAlternatingKernelCoeff1 yoshidaEndpointA * (t * C t))).intervalIntegrable 0 2
+  have h3I : IntervalIntegrable
+      (fun t : ℝ ↦ intrinsicAlternatingKernelCoeff3 yoshidaEndpointA *
+        (t ^ 3 * C t)) volume 0 2 :=
+    (by fun_prop : Continuous (fun t : ℝ ↦
+      intrinsicAlternatingKernelCoeff3 yoshidaEndpointA *
+        (t ^ 3 * C t))).intervalIntegrable 0 2
+  have h5I : IntervalIntegrable
+      (fun t : ℝ ↦ intrinsicAlternatingKernelCoeff5 yoshidaEndpointA *
+        (t ^ 5 * C t)) volume 0 2 :=
+    (by fun_prop : Continuous (fun t : ℝ ↦
+      intrinsicAlternatingKernelCoeff5 yoshidaEndpointA *
+        (t ^ 5 * C t))).intervalIntegrable 0 2
+  have hqI : IntervalIntegrable quotient volume 0 2 :=
+    hquotient.intervalIntegrable 0 2
+  have hinvI : IntervalIntegrable
+      (fun t : ℝ ↦ r * (1 / (2 + t))) volume 0 2 :=
+    intervalIntegrable_inv_two_add_plusDet.const_mul r
+  calc
+    (∫ t : ℝ in 0..2,
+        intrinsicAlternatingKernelPolynomial6 t *
+            intrinsicAlternatingCorrelation q t +
+          t ^ 2 * q t / (2 + t)) =
+      ∫ t : ℝ in 0..2,
+        intrinsicAlternatingKernelCoeff1 yoshidaEndpointA * (t * C t) +
+          (intrinsicAlternatingKernelCoeff3 yoshidaEndpointA *
+              (t ^ 3 * C t) +
+            (intrinsicAlternatingKernelCoeff5 yoshidaEndpointA *
+                (t ^ 5 * C t) +
+              (quotient t + r * (1 / (2 + t))))) := by
+        apply intervalIntegral.integral_congr
+        intro t ht
+        rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)] at ht
+        change intrinsicAlternatingKernelPolynomial6 t *
+            intrinsicAlternatingCorrelation q t +
+              t ^ 2 * q t / (2 + t) = _
+        rw [hdiv t ht, intrinsicAlternatingKernelPolynomial6_expansion]
+        dsimp only [C]
+        ring
+    _ = _ := by
+      rw [intervalIntegral.integral_add h1I
+          (h3I.add (h5I.add (hqI.add hinvI))),
+        intervalIntegral.integral_add h3I (h5I.add (hqI.add hinvI)),
+        intervalIntegral.integral_add h5I (hqI.add hinvI),
+        intervalIntegral.integral_add hqI hinvI]
+      repeat rw [intervalIntegral.integral_const_mul]
+      dsimp only [C]
+      rw [hP, hm1, hm3, hm5, integral_inv_two_add_plusDet]
+      ring
+
+private def plusDetAlternatingArchQuotientH2 (t : ℝ) : ℝ :=
+  (-20829797 / 21600 : ℝ) + (20829797 / 43200) * t -
+    (714697 / 2880) * t ^ 2 + (17097079 / 144000) * t ^ 3 -
+    (217 / 5) * t ^ 4 + (1162387 / 115200) * t ^ 5 -
+    (1913 / 2560) * t ^ 7 + (7 / 128) * t ^ 9
+
+private theorem plusDetAlternatingArchDivisionH2
+    (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 2) :
+    t ^ 2 * plusDetAlternatingQH2 t / (2 + t) =
+      plusDetAlternatingArchQuotientH2 t +
+        (20829797 / 10800 : ℝ) * (1 / (2 + t)) := by
+  have hden : 2 + t ≠ 0 := by linarith [ht.1]
+  rw [plusDetAlternatingQH2_polynomial]
+  unfold plusDetAlternatingArchQuotientH2
+  field_simp [hden]
+  ring
+
+private theorem integral_plusDetAlternatingArchQuotientH2 :
+    (∫ t : ℝ in 0..2, plusDetAlternatingArchQuotientH2 t) =
+      (-9042463 / 6750 : ℝ) := by
+  unfold plusDetAlternatingArchQuotientH2
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_const]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  repeat rw [integral_id]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH2_moment_one :
+    (∫ t : ℝ in 0..2,
+      t * intrinsicAlternatingCorrelation plusDetAlternatingQH2 t) =
+        (-319889 / 40500 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH2_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH2_moment_three :
+    (∫ t : ℝ in 0..2,
+      t ^ 3 * intrinsicAlternatingCorrelation plusDetAlternatingQH2 t) =
+        (-1060561 / 141750 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH2_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH2_moment_five :
+    (∫ t : ℝ in 0..2,
+      t ^ 5 * intrinsicAlternatingCorrelation plusDetAlternatingQH2 t) =
+        (-81252041 / 7796250 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH2_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem plusDetAlternatingSharpArchModelH2_eq :
+    intrinsicAlternatingSharpArchModel plusDetAlternatingQH2 =
+      (-9042463 / 6750 : ℝ) +
+        (20829797 / 10800) * Real.log 2 +
+        (-319889 / 40500) *
+          intrinsicAlternatingKernelCoeff1 yoshidaEndpointA +
+        (-1060561 / 141750) *
+          intrinsicAlternatingKernelCoeff3 yoshidaEndpointA +
+        (-81252041 / 7796250) *
+          intrinsicAlternatingKernelCoeff5 yoshidaEndpointA := by
+  apply intrinsicAlternatingSharpArchModel_eq_data_plusDet
+    plusDetAlternatingQH2 plusDetAlternatingArchQuotientH2
+    (20829797 / 10800) (-9042463 / 6750)
+    (-319889 / 40500) (-1060561 / 141750) (-81252041 / 7796250)
+  · unfold plusDetAlternatingQH2 plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  · unfold plusDetAlternatingArchQuotientH2
+    fun_prop
+  · exact plusDetAlternatingArchDivisionH2
+  · exact integral_plusDetAlternatingArchQuotientH2
+  · exact integral_plusDetAlternatingQH2_moment_one
+  · exact integral_plusDetAlternatingQH2_moment_three
+  · exact integral_plusDetAlternatingQH2_moment_five
+
+private def plusDetAlternatingArchQuotientH3 (t : ℝ) : ℝ :=
+  (-139525242391 / 232560000 : ℝ) +
+    (139525242391 / 465120000) * t -
+    (268905517 / 1632000) * t ^ 2 +
+    (106564852423 / 1240320000) * t ^ 3 -
+    (94563 / 2720) * t ^ 4 + (608243483 / 65280000) * t ^ 5 -
+    (84951 / 108800) * t ^ 7 + (189 / 3200) * t ^ 9
+
+private theorem plusDetAlternatingArchDivisionH3
+    (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 2) :
+    t ^ 2 * plusDetAlternatingQH3 t / (2 + t) =
+      plusDetAlternatingArchQuotientH3 t +
+        (139525242391 / 116280000 : ℝ) * (1 / (2 + t)) := by
+  have hden : 2 + t ≠ 0 := by linarith [ht.1]
+  rw [plusDetAlternatingQH3_polynomial]
+  unfold plusDetAlternatingArchQuotientH3
+  field_simp [hden]
+  ring
+
+private theorem integral_plusDetAlternatingArchQuotientH3 :
+    (∫ t : ℝ in 0..2, plusDetAlternatingArchQuotientH3 t) =
+      (-779285785199 / 930240000 : ℝ) := by
+  unfold plusDetAlternatingArchQuotientH3
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_const]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  repeat rw [integral_id]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH3_moment_one :
+    (∫ t : ℝ in 0..2,
+      t * intrinsicAlternatingCorrelation plusDetAlternatingQH3 t) =
+        (-2188473899 / 139536000 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH3_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH3_moment_three :
+    (∫ t : ℝ in 0..2,
+      t ^ 3 * intrinsicAlternatingCorrelation plusDetAlternatingQH3 t) =
+        (-3933625 / 229824 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH3_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH3_moment_five :
+    (∫ t : ℝ in 0..2,
+      t ^ 5 * intrinsicAlternatingCorrelation plusDetAlternatingQH3 t) =
+        (-1547548853 / 56430000 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH3_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem plusDetAlternatingSharpArchModelH3_eq :
+    intrinsicAlternatingSharpArchModel plusDetAlternatingQH3 =
+      (-779285785199 / 930240000 : ℝ) +
+        (139525242391 / 116280000) * Real.log 2 +
+        (-2188473899 / 139536000) *
+          intrinsicAlternatingKernelCoeff1 yoshidaEndpointA +
+        (-3933625 / 229824) *
+          intrinsicAlternatingKernelCoeff3 yoshidaEndpointA +
+        (-1547548853 / 56430000) *
+          intrinsicAlternatingKernelCoeff5 yoshidaEndpointA := by
+  apply intrinsicAlternatingSharpArchModel_eq_data_plusDet
+    plusDetAlternatingQH3 plusDetAlternatingArchQuotientH3
+    (139525242391 / 116280000) (-779285785199 / 930240000)
+    (-2188473899 / 139536000) (-3933625 / 229824)
+    (-1547548853 / 56430000)
+  · unfold plusDetAlternatingQH3 plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  · unfold plusDetAlternatingArchQuotientH3
+    fun_prop
+  · exact plusDetAlternatingArchDivisionH3
+  · exact integral_plusDetAlternatingArchQuotientH3
+  · exact integral_plusDetAlternatingQH3_moment_one
+  · exact integral_plusDetAlternatingQH3_moment_three
+  · exact integral_plusDetAlternatingQH3_moment_five
+
+private def plusDetAlternatingArchQuotientH4 (t : ℝ) : ℝ :=
+  (-2317001796641 / 2203200000 : ℝ) +
+    (2317001796641 / 4406400000) * t -
+    (1490819691767 / 5581440000) * t ^ 2 +
+    (266931576999 / 2067200000) * t ^ 3 -
+    (882 / 19) * t ^ 4 + (2332337330413 / 223257600000) * t ^ 5 -
+    (23436273 / 19456000) * t ^ 7 + (581 / 4096) * t ^ 9
+
+private theorem plusDetAlternatingArchDivisionH4
+    (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 2) :
+    t ^ 2 * plusDetAlternatingQH4 t / (2 + t) =
+      plusDetAlternatingArchQuotientH4 t +
+        (2317001796641 / 1101600000 : ℝ) * (1 / (2 + t)) := by
+  have hden : 2 + t ≠ 0 := by linarith [ht.1]
+  rw [plusDetAlternatingQH4_polynomial]
+  unfold plusDetAlternatingArchQuotientH4
+  field_simp [hden]
+  ring
+
+private theorem integral_plusDetAlternatingArchQuotientH4 :
+    (∫ t : ℝ in 0..2, plusDetAlternatingArchQuotientH4 t) =
+      (-1906108694057 / 1308150000 : ℝ) := by
+  unfold plusDetAlternatingArchQuotientH4
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_const]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  repeat rw [integral_id]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH4_moment_one :
+    (∫ t : ℝ in 0..2,
+      t * intrinsicAlternatingCorrelation plusDetAlternatingQH4 t) =
+        (2770694059 / 3139560000 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH4_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH4_moment_three :
+    (∫ t : ℝ in 0..2,
+      t ^ 3 * intrinsicAlternatingCorrelation plusDetAlternatingQH4 t) =
+        (5962046723 / 1569780000 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH4_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem integral_plusDetAlternatingQH4_moment_five :
+    (∫ t : ℝ in 0..2,
+      t ^ 5 * intrinsicAlternatingCorrelation plusDetAlternatingQH4 t) =
+        (29549817047 / 3453516000 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQH4_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem plusDetAlternatingSharpArchModelH4_eq :
+    intrinsicAlternatingSharpArchModel plusDetAlternatingQH4 =
+      (-1906108694057 / 1308150000 : ℝ) +
+        (2317001796641 / 1101600000) * Real.log 2 +
+        (2770694059 / 3139560000) *
+          intrinsicAlternatingKernelCoeff1 yoshidaEndpointA +
+        (5962046723 / 1569780000) *
+          intrinsicAlternatingKernelCoeff3 yoshidaEndpointA +
+        (29549817047 / 3453516000) *
+          intrinsicAlternatingKernelCoeff5 yoshidaEndpointA := by
+  apply intrinsicAlternatingSharpArchModel_eq_data_plusDet
+    plusDetAlternatingQH4 plusDetAlternatingArchQuotientH4
+    (2317001796641 / 1101600000) (-1906108694057 / 1308150000)
+    (2770694059 / 3139560000) (5962046723 / 1569780000)
+    (29549817047 / 3453516000)
+  · unfold plusDetAlternatingQH4 plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  · unfold plusDetAlternatingArchQuotientH4
+    fun_prop
+  · exact plusDetAlternatingArchDivisionH4
+  · exact integral_plusDetAlternatingArchQuotientH4
+  · exact integral_plusDetAlternatingQH4_moment_one
+  · exact integral_plusDetAlternatingQH4_moment_three
+  · exact integral_plusDetAlternatingQH4_moment_five
+
+private def plusDetAlternatingArchQuotientW (t : ℝ) : ℝ :=
+  (2552067723389477 / 1116288000000 : ℝ) -
+    (2552067723389477 / 2232576000000) * t +
+    (86961452369281 / 148838400000) * t ^ 2 -
+    (420828925734449 / 1488384000000) * t ^ 3 +
+    (571204907 / 5168000) * t ^ 4 -
+    (146720128381819 / 5953536000000) * t ^ 5 +
+    (6098875261 / 26460160000) * t ^ 7 +
+    (2364187 / 20480000) * t ^ 9
+
+private theorem plusDetAlternatingArchDivisionW
+    (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 2) :
+    t ^ 2 * plusDetAlternatingQW t / (2 + t) =
+      plusDetAlternatingArchQuotientW t -
+        (2552067723389477 / 558144000000 : ℝ) * (1 / (2 + t)) := by
+  have hden : 2 + t ≠ 0 := by linarith [ht.1]
+  rw [plusDetAlternatingQW_polynomial]
+  unfold plusDetAlternatingArchQuotientW
+  field_simp [hden]
+  ring
+
+private theorem integral_plusDetAlternatingArchQuotientW :
+    (∫ t : ℝ in 0..2, plusDetAlternatingArchQuotientW t) =
+      (93327169729909 / 29376000000 : ℝ) := by
+  unfold plusDetAlternatingArchQuotientW
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_const]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  repeat rw [integral_id]
+  norm_num
+
+private theorem integral_plusDetAlternatingQW_moment_one :
+    (∫ t : ℝ in 0..2,
+      t * intrinsicAlternatingCorrelation plusDetAlternatingQW t) =
+        (49531625507 / 2462400000 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQW_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem integral_plusDetAlternatingQW_moment_three :
+    (∫ t : ℝ in 0..2,
+      t ^ 3 * intrinsicAlternatingCorrelation plusDetAlternatingQW t) =
+        (477772978451 / 20930400000 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQW_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem integral_plusDetAlternatingQW_moment_five :
+    (∫ t : ℝ in 0..2,
+      t ^ 5 * intrinsicAlternatingCorrelation plusDetAlternatingQW t) =
+        (16531028919223 / 460468800000 : ℝ) := by
+  unfold intrinsicAlternatingCorrelation
+  simp_rw [plusDetAlternatingQW_polynomial]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem plusDetAlternatingSharpArchModelW_eq :
+    intrinsicAlternatingSharpArchModel plusDetAlternatingQW =
+      (93327169729909 / 29376000000 : ℝ) +
+        (-2552067723389477 / 558144000000) * Real.log 2 +
+        (49531625507 / 2462400000) *
+          intrinsicAlternatingKernelCoeff1 yoshidaEndpointA +
+        (477772978451 / 20930400000) *
+          intrinsicAlternatingKernelCoeff3 yoshidaEndpointA +
+        (16531028919223 / 460468800000) *
+          intrinsicAlternatingKernelCoeff5 yoshidaEndpointA := by
+  apply intrinsicAlternatingSharpArchModel_eq_data_plusDet
+    plusDetAlternatingQW plusDetAlternatingArchQuotientW
+    (-2552067723389477 / 558144000000)
+    (93327169729909 / 29376000000)
+    (49531625507 / 2462400000) (477772978451 / 20930400000)
+    (16531028919223 / 460468800000)
+  · unfold plusDetAlternatingQW plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  · unfold plusDetAlternatingArchQuotientW
+    fun_prop
+  · intro t ht
+    have h := plusDetAlternatingArchDivisionW t ht
+    linarith
+  · exact integral_plusDetAlternatingArchQuotientW
+  · exact integral_plusDetAlternatingQW_moment_one
+  · exact integral_plusDetAlternatingQW_moment_three
+  · exact integral_plusDetAlternatingQW_moment_five
+
+private theorem log_two_pow_fine_bounds_plusDet
+    (n : ℕ) (hn : n ≠ 0) :
+    (69314718055 / 100000000000 : ℝ) ^ n < (Real.log 2) ^ n ∧
+      (Real.log 2) ^ n <
+        (69314718057 / 100000000000 : ℝ) ^ n := by
+  have hlog := strict_log_two_fine_bounds
+  have hlog0 : 0 ≤ Real.log 2 := by linarith [hlog.1]
+  constructor
+  · exact pow_lt_pow_left₀ hlog.1 (by norm_num) hn
+  · exact pow_lt_pow_left₀ hlog.2 hlog0 hn
+
+private theorem plusDetAlternatingSharpArchModelH2_bounds :
+    (-3546612 / 1000000 : ℝ) <
+        intrinsicAlternatingSharpArchModel plusDetAlternatingQH2 ∧
+      intrinsicAlternatingSharpArchModel plusDetAlternatingQH2 <
+        (-3546611 / 1000000 : ℝ) := by
+  rw [plusDetAlternatingSharpArchModelH2_eq]
+  unfold intrinsicAlternatingKernelCoeff1 intrinsicAlternatingKernelCoeff3
+    intrinsicAlternatingKernelCoeff5 yoshidaEndpointA
+  have hlog := strict_log_two_fine_bounds
+  have h2 := log_two_pow_fine_bounds_plusDet 2 (by norm_num)
+  have h3 := log_two_pow_fine_bounds_plusDet 3 (by norm_num)
+  have h4 := log_two_pow_fine_bounds_plusDet 4 (by norm_num)
+  have h5 := log_two_pow_fine_bounds_plusDet 5 (by norm_num)
+  have h6 := log_two_pow_fine_bounds_plusDet 6 (by norm_num)
+  have h7 := log_two_pow_fine_bounds_plusDet 7 (by norm_num)
+  constructor <;> nlinarith [hlog.1, hlog.2, h2.1, h2.2, h3.1, h3.2,
+    h4.1, h4.2, h5.1, h5.2, h6.1, h6.2, h7.1, h7.2]
+
+private theorem plusDetAlternatingSharpArchModelH3_bounds :
+    (-7572248 / 1000000 : ℝ) <
+        intrinsicAlternatingSharpArchModel plusDetAlternatingQH3 ∧
+      intrinsicAlternatingSharpArchModel plusDetAlternatingQH3 <
+        (-7572247 / 1000000 : ℝ) := by
+  rw [plusDetAlternatingSharpArchModelH3_eq]
+  unfold intrinsicAlternatingKernelCoeff1 intrinsicAlternatingKernelCoeff3
+    intrinsicAlternatingKernelCoeff5 yoshidaEndpointA
+  have hlog := strict_log_two_fine_bounds
+  have h2 := log_two_pow_fine_bounds_plusDet 2 (by norm_num)
+  have h3 := log_two_pow_fine_bounds_plusDet 3 (by norm_num)
+  have h4 := log_two_pow_fine_bounds_plusDet 4 (by norm_num)
+  have h5 := log_two_pow_fine_bounds_plusDet 5 (by norm_num)
+  have h6 := log_two_pow_fine_bounds_plusDet 6 (by norm_num)
+  have h7 := log_two_pow_fine_bounds_plusDet 7 (by norm_num)
+  constructor <;> nlinarith [hlog.1, hlog.2, h2.1, h2.2, h3.1, h3.2,
+    h4.1, h4.2, h5.1, h5.2, h6.1, h6.2, h7.1, h7.2]
+
+private theorem plusDetAlternatingSharpArchModelH4_bounds :
+    (886397 / 1000000 : ℝ) <
+        intrinsicAlternatingSharpArchModel plusDetAlternatingQH4 ∧
+      intrinsicAlternatingSharpArchModel plusDetAlternatingQH4 <
+        (886398 / 1000000 : ℝ) := by
+  rw [plusDetAlternatingSharpArchModelH4_eq]
+  unfold intrinsicAlternatingKernelCoeff1 intrinsicAlternatingKernelCoeff3
+    intrinsicAlternatingKernelCoeff5 yoshidaEndpointA
+  have hlog := strict_log_two_fine_bounds
+  have h2 := log_two_pow_fine_bounds_plusDet 2 (by norm_num)
+  have h3 := log_two_pow_fine_bounds_plusDet 3 (by norm_num)
+  have h4 := log_two_pow_fine_bounds_plusDet 4 (by norm_num)
+  have h5 := log_two_pow_fine_bounds_plusDet 5 (by norm_num)
+  have h6 := log_two_pow_fine_bounds_plusDet 6 (by norm_num)
+  have h7 := log_two_pow_fine_bounds_plusDet 7 (by norm_num)
+  constructor <;> nlinarith [hlog.1, hlog.2, h2.1, h2.2, h3.1, h3.2,
+    h4.1, h4.2, h5.1, h5.2, h6.1, h6.2, h7.1, h7.2]
+
+private theorem plusDetAlternatingSharpArchModelW_bounds :
+    (4814111 / 500000 : ℝ) <
+        intrinsicAlternatingSharpArchModel plusDetAlternatingQW ∧
+      intrinsicAlternatingSharpArchModel plusDetAlternatingQW <
+        (9628223 / 1000000 : ℝ) := by
+  rw [plusDetAlternatingSharpArchModelW_eq]
+  unfold intrinsicAlternatingKernelCoeff1 intrinsicAlternatingKernelCoeff3
+    intrinsicAlternatingKernelCoeff5 yoshidaEndpointA
+  have hlog := strict_log_two_fine_bounds
+  have h2 := log_two_pow_fine_bounds_plusDet 2 (by norm_num)
+  have h3 := log_two_pow_fine_bounds_plusDet 3 (by norm_num)
+  have h4 := log_two_pow_fine_bounds_plusDet 4 (by norm_num)
+  have h5 := log_two_pow_fine_bounds_plusDet 5 (by norm_num)
+  have h6 := log_two_pow_fine_bounds_plusDet 6 (by norm_num)
+  have h7 := log_two_pow_fine_bounds_plusDet 7 (by norm_num)
+  constructor <;> nlinarith [hlog.1, hlog.2, h2.1, h2.2, h3.1, h3.2,
+    h4.1, h4.2, h5.1, h5.2, h6.1, h6.2, h7.1, h7.2]
+
+/-! ## The retained-prime value of each complete correlation -/
+
+private theorem offset_pow_lt_plusDet
+    {y eps : ℝ} (hy : 0 ≤ y) (hye : y < eps)
+    (n : ℕ) (hn : n ≠ 0) :
+    y ^ n < eps ^ n :=
+  pow_lt_pow_left₀ hye hy hn
+
+private theorem plusDetAlternatingPrimeCorrelationH2_bounds :
+    (-574037 / 100000 : ℝ) <
+        intrinsicAlternatingCorrelation plusDetAlternatingQH2
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      intrinsicAlternatingCorrelation plusDetAlternatingQH2
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (-574021 / 100000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 116992 / 100000
+  have htau := factorTwoPrimeRatio_sharp_bounds
+  have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
+  have hyU : y < (1 / 100000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
+  have hy3 := offset_pow_lt_plusDet hy0.le hyU 3 (by norm_num)
+  have hy4 := offset_pow_lt_plusDet hy0.le hyU 4 (by norm_num)
+  have hy5 := offset_pow_lt_plusDet hy0.le hyU 5 (by norm_num)
+  have hy6 := offset_pow_lt_plusDet hy0.le hyU 6 (by norm_num)
+  have hy7 := offset_pow_lt_plusDet hy0.le hyU 7 (by norm_num)
+  have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
+  have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
+  have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
+  have htauy : tau = 116992 / 100000 + y := by dsimp only [y]; ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy]
+  unfold intrinsicAlternatingCorrelation
+  rw [plusDetAlternatingQH2_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8, hy9, hy10,
+    sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
+    pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
+
+private theorem plusDetAlternatingPrimeCorrelationH3_bounds :
+    (-1176118 / 100000 : ℝ) <
+        intrinsicAlternatingCorrelation plusDetAlternatingQH3
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      intrinsicAlternatingCorrelation plusDetAlternatingQH3
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (-1176096 / 100000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 116992 / 100000
+  have htau := factorTwoPrimeRatio_sharp_bounds
+  have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
+  have hyU : y < (1 / 100000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
+  have hy3 := offset_pow_lt_plusDet hy0.le hyU 3 (by norm_num)
+  have hy4 := offset_pow_lt_plusDet hy0.le hyU 4 (by norm_num)
+  have hy5 := offset_pow_lt_plusDet hy0.le hyU 5 (by norm_num)
+  have hy6 := offset_pow_lt_plusDet hy0.le hyU 6 (by norm_num)
+  have hy7 := offset_pow_lt_plusDet hy0.le hyU 7 (by norm_num)
+  have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
+  have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
+  have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
+  have htauy : tau = 116992 / 100000 + y := by dsimp only [y]; ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy]
+  unfold intrinsicAlternatingCorrelation
+  rw [plusDetAlternatingQH3_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8, hy9, hy10,
+    sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
+    pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
+
+private theorem plusDetAlternatingPrimeCorrelationH4_bounds :
+    (63269 / 25000 : ℝ) <
+        intrinsicAlternatingCorrelation plusDetAlternatingQH4
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      intrinsicAlternatingCorrelation plusDetAlternatingQH4
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (63271 / 25000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 116992 / 100000
+  have htau := factorTwoPrimeRatio_sharp_bounds
+  have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
+  have hyU : y < (1 / 100000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
+  have hy3 := offset_pow_lt_plusDet hy0.le hyU 3 (by norm_num)
+  have hy4 := offset_pow_lt_plusDet hy0.le hyU 4 (by norm_num)
+  have hy5 := offset_pow_lt_plusDet hy0.le hyU 5 (by norm_num)
+  have hy6 := offset_pow_lt_plusDet hy0.le hyU 6 (by norm_num)
+  have hy7 := offset_pow_lt_plusDet hy0.le hyU 7 (by norm_num)
+  have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
+  have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
+  have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
+  have htauy : tau = 116992 / 100000 + y := by dsimp only [y]; ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy]
+  unfold intrinsicAlternatingCorrelation
+  rw [plusDetAlternatingQH4_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8, hy9, hy10,
+    sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
+    pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
+
+private theorem plusDetAlternatingPrimeCorrelationW_bounds :
+    (852879 / 50000 : ℝ) <
+        intrinsicAlternatingCorrelation plusDetAlternatingQW
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      intrinsicAlternatingCorrelation plusDetAlternatingQW
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (852891 / 50000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 116992 / 100000
+  have htau := factorTwoPrimeRatio_sharp_bounds
+  have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
+  have hyU : y < (1 / 100000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
+  have hy3 := offset_pow_lt_plusDet hy0.le hyU 3 (by norm_num)
+  have hy4 := offset_pow_lt_plusDet hy0.le hyU 4 (by norm_num)
+  have hy5 := offset_pow_lt_plusDet hy0.le hyU 5 (by norm_num)
+  have hy6 := offset_pow_lt_plusDet hy0.le hyU 6 (by norm_num)
+  have hy7 := offset_pow_lt_plusDet hy0.le hyU 7 (by norm_num)
+  have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
+  have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
+  have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
+  have htauy : tau = 116992 / 100000 + y := by dsimp only [y]; ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy]
+  unfold intrinsicAlternatingCorrelation
+  rw [plusDetAlternatingQW_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8, hy9, hy10,
+    sq_nonneg y, pow_nonneg hy0.le 3, pow_nonneg hy0.le 4,
+    pow_nonneg hy0.le 5, pow_nonneg hy0.le 6, pow_nonneg hy0.le 7,
+    pow_nonneg hy0.le 8, pow_nonneg hy0.le 9, pow_nonneg hy0.le 10]
+
+private theorem log_three_div_sqrt_three_fine_bounds_plusDet :
+    (6342841 / 10000000 : ℝ) < Real.log 3 / Real.sqrt 3 ∧
+      Real.log 3 / Real.sqrt 3 < (6342842 / 10000000 : ℝ) := by
+  have hlog2 := strict_log_two_fine_bounds
+  have hlog32 := strict_log_three_halves_fine_bounds
+  have hlog3 : Real.log 3 = Real.log 2 + Real.log (3 / 2) := by
+    calc
+      Real.log 3 = Real.log (2 * (3 / 2 : ℝ)) := by norm_num
+      _ = Real.log 2 + Real.log (3 / 2) := by
+        rw [Real.log_mul (by norm_num : (2 : ℝ) ≠ 0)
+          (by norm_num : (3 / 2 : ℝ) ≠ 0)]
+  have hsSq : (Real.sqrt 3) ^ 2 = 3 := Real.sq_sqrt (by norm_num)
+  have hs0 : 0 ≤ Real.sqrt 3 := Real.sqrt_nonneg 3
+  have hspos : 0 < Real.sqrt 3 := Real.sqrt_pos.2 (by norm_num)
+  have hsLower : (17320508 / 10000000 : ℝ) < Real.sqrt 3 := by
+    nlinarith
+  have hsUpper : Real.sqrt 3 < (17320509 / 10000000 : ℝ) := by
+    nlinarith
+  rw [lt_div_iff₀ hspos, div_lt_iff₀ hspos, hlog3]
+  constructor <;> nlinarith
+
+private theorem mul_strict_bounds_plusDet
+    {a c aL aU cL cU : ℝ}
+    (ha : aL < a ∧ a < aU) (hc : cL < c ∧ c < cU)
+    (haL0 : 0 < aL) (hcL0 : 0 < cL) :
+    aL * cL < a * c ∧ a * c < aU * cU := by
+  have ha0 : 0 < a := haL0.trans ha.1
+  have hc0 : 0 < c := hcL0.trans hc.1
+  have haU0 : 0 < aU := ha0.trans ha.2
+  constructor
+  · calc
+      aL * cL < a * cL := mul_lt_mul_of_pos_right ha.1 hcL0
+      _ < a * c := mul_lt_mul_of_pos_left hc.1 ha0
+  · calc
+      a * c < aU * c := mul_lt_mul_of_pos_right ha.2 hc0
+      _ < aU * cU := mul_lt_mul_of_pos_left hc.2 haU0
+
+/-! ## Rational boxes for the four full sharp models -/
+
+private theorem plusDetAlternatingSharpModelH2_bounds :
+    (4681 / 50000 : ℝ) <
+        plusDetAlternatingSharpModel plusDetAlternatingQH2 ∧
+      plusDetAlternatingSharpModel plusDetAlternatingQH2 <
+        (4756 / 50000 : ℝ) := by
+  have herr := abs_lt.mp abs_plusDetAlternatingSharpRegularErrorH2_lt
+  have harch := plusDetAlternatingSharpArchModelH2_bounds
+  have hcorr := plusDetAlternatingPrimeCorrelationH2_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hnegcorr :
+      (574021 / 100000 : ℝ) <
+          -intrinsicAlternatingCorrelation plusDetAlternatingQH2
+            (factorTwoPrimeShift / yoshidaEndpointA) ∧
+        -intrinsicAlternatingCorrelation plusDetAlternatingQH2
+            (factorTwoPrimeShift / yoshidaEndpointA) <
+          (574037 / 100000 : ℝ) := by
+    constructor <;> linarith [hcorr.1, hcorr.2]
+  have hprod := mul_strict_bounds_plusDet hbeta hnegcorr
+    (by norm_num) (by norm_num)
+  unfold plusDetAlternatingSharpModel
+  constructor <;> nlinarith [hprod.1, hprod.2]
+
+private theorem plusDetAlternatingSharpModelH3_bounds :
+    (-5685 / 50000 : ℝ) <
+        plusDetAlternatingSharpModel plusDetAlternatingQH3 ∧
+      plusDetAlternatingSharpModel plusDetAlternatingQH3 <
+        (-5555 / 50000 : ℝ) := by
+  have herr := abs_lt.mp abs_plusDetAlternatingSharpRegularErrorH3_lt
+  have harch := plusDetAlternatingSharpArchModelH3_bounds
+  have hcorr := plusDetAlternatingPrimeCorrelationH3_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hnegcorr :
+      (1176096 / 100000 : ℝ) <
+          -intrinsicAlternatingCorrelation plusDetAlternatingQH3
+            (factorTwoPrimeShift / yoshidaEndpointA) ∧
+        -intrinsicAlternatingCorrelation plusDetAlternatingQH3
+            (factorTwoPrimeShift / yoshidaEndpointA) <
+          (1176118 / 100000 : ℝ) := by
+    constructor <;> linarith [hcorr.1, hcorr.2]
+  have hprod := mul_strict_bounds_plusDet hbeta hnegcorr
+    (by norm_num) (by norm_num)
+  unfold plusDetAlternatingSharpModel
+  constructor <;> nlinarith [hprod.1, hprod.2]
+
+private theorem plusDetAlternatingSharpModelH4_bounds :
+    (-35968 / 50000 : ℝ) <
+        plusDetAlternatingSharpModel plusDetAlternatingQH4 ∧
+      plusDetAlternatingSharpModel plusDetAlternatingQH4 <
+        (-35917 / 50000 : ℝ) := by
+  have herr := abs_lt.mp abs_plusDetAlternatingSharpRegularErrorH4_lt
+  have harch := plusDetAlternatingSharpArchModelH4_bounds
+  have hcorr := plusDetAlternatingPrimeCorrelationH4_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hprod := mul_strict_bounds_plusDet hbeta hcorr
+    (by norm_num) (by norm_num)
+  unfold plusDetAlternatingSharpModel
+  constructor <;> nlinarith [hprod.1, hprod.2]
+
+private theorem plusDetAlternatingSharpModelW_bounds :
+    (-11926 / 10000 : ℝ) <
+        plusDetAlternatingSharpModel plusDetAlternatingQW ∧
+      plusDetAlternatingSharpModel plusDetAlternatingQW <
+        (-11898 / 10000 : ℝ) := by
+  have herr := abs_lt.mp abs_plusDetAlternatingSharpRegularErrorW_lt
+  have harch := plusDetAlternatingSharpArchModelW_bounds
+  have hcorr := plusDetAlternatingPrimeCorrelationW_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hprod := mul_strict_bounds_plusDet hbeta hcorr
+    (by norm_num) (by norm_num)
+  unfold plusDetAlternatingSharpModel
+  constructor <;> nlinarith [hprod.1, hprod.2]
 
 private theorem plusDetActualH0_bounds :
     (-11 / 5000 : ℝ) < plusDetActualH0 ∧
