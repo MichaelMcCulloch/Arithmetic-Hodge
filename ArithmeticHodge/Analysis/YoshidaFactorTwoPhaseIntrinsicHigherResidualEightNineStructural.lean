@@ -24,11 +24,14 @@ open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOddSharpMassLoss
 open YoshidaEndpointPotentialBound
+open YoshidaEndpointPotentialIntegrable
+open YoshidaEndpointPullbackLipschitz
 open YoshidaEndpointScalarStructuralUpper
 open YoshidaFactorTwoPhaseFullProfile
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicProjectedRemainder
 open YoshidaFactorTwoPhaseIntrinsicResidual
+open TwoByTwoSchur
 
 noncomputable section
 
@@ -485,6 +488,414 @@ private theorem shiftedLegendrePairing_centeredCoordinate_nine
     linear_combination (f t) * h,
     integral_sub (h8.const_mul _) (h10.const_mul _),
     integral_const_mul, integral_const_mul]
+
+private theorem repr_centeredCoordinate_seven
+    (f : unitInterval → ℝ) (hfcont : Continuous f)
+    (hf : MemLp f 2)
+    (hg : MemLp (fun t : unitInterval ↦ (2 * (t : ℝ) - 1) * f t) 2)
+    (h6 : shiftedLegendreHilbertBasis.repr (hf.toLp f) 6 = 0) :
+    shiftedLegendreHilbertBasis.repr
+        (hg.toLp (fun t : unitInterval ↦ (2 * (t : ℝ) - 1) * f t)) 7 =
+      -boundaryJacobiA7 *
+        shiftedLegendreHilbertBasis.repr (hf.toLp f) 8 := by
+  have hpair := shiftedLegendrePairing_centeredCoordinate_seven f hfcont
+  rw [shiftedLegendrePairing_eq_norm_mul_repr _ hg 7,
+    shiftedLegendrePairing_eq_norm_mul_repr f hf 8,
+    shiftedLegendrePairing_eq_norm_mul_repr f hf 6, h6, mul_zero,
+    mul_zero, sub_zero] at hpair
+  have hne : ‖shiftedLegendreL2 7‖ ≠ 0 :=
+    norm_ne_zero_iff.mpr (shiftedLegendreL2_ne_zero 7)
+  unfold boundaryJacobiA7
+  field_simp [hne] at ⊢
+  nlinarith
+
+private theorem repr_centeredCoordinate_nine
+    (f : unitInterval → ℝ) (hfcont : Continuous f)
+    (hf : MemLp f 2)
+    (hg : MemLp (fun t : unitInterval ↦ (2 * (t : ℝ) - 1) * f t) 2) :
+    shiftedLegendreHilbertBasis.repr
+        (hg.toLp (fun t : unitInterval ↦ (2 * (t : ℝ) - 1) * f t)) 9 =
+      -(boundaryJacobiA8 *
+          shiftedLegendreHilbertBasis.repr (hf.toLp f) 8 +
+        boundaryJacobiA9 *
+          shiftedLegendreHilbertBasis.repr (hf.toLp f) 10) := by
+  have hpair := shiftedLegendrePairing_centeredCoordinate_nine f hfcont
+  rw [shiftedLegendrePairing_eq_norm_mul_repr _ hg 9,
+    shiftedLegendrePairing_eq_norm_mul_repr f hf 8,
+    shiftedLegendrePairing_eq_norm_mul_repr f hf 10] at hpair
+  have hne : ‖shiftedLegendreL2 9‖ ≠ 0 :=
+    norm_ne_zero_iff.mpr (shiftedLegendreL2_ne_zero 9)
+  unfold boundaryJacobiA8 boundaryJacobiA9
+  field_simp [hne] at ⊢
+  nlinarith
+
+private theorem boundaryJacobi_two_by_two
+    (c d : ℝ) :
+    (1 / 5 : ℝ) * (c ^ 2 + d ^ 2) ≤
+      2 * ((harmonic 10 : ℝ) - harmonic 8) * d ^ 2 +
+        (1 / 2 : ℝ) *
+          (boundaryJacobiA7 ^ 2 * c ^ 2 +
+            (boundaryJacobiA8 * c + boundaryJacobiA9 * d) ^ 2) := by
+  let q00 : ℝ := (1 / 2 : ℝ) *
+    (boundaryJacobiA7 ^ 2 + boundaryJacobiA8 ^ 2) - 1 / 5
+  let q02 : ℝ := (1 / 2 : ℝ) * boundaryJacobiA8 * boundaryJacobiA9
+  let q22 : ℝ := 2 * ((harmonic 10 : ℝ) - harmonic 8) +
+    (1 / 2 : ℝ) * boundaryJacobiA9 ^ 2 - 1 / 5
+  have h00 : q00 = (29 / 570 : ℝ) := by
+    dsimp only [q00]
+    rw [boundaryJacobiA7_sq, boundaryJacobiA8_sq]
+    norm_num
+  have h22 : q22 = (416 / 1197 : ℝ) := by
+    dsimp only [q22]
+    rw [boundaryJacobiA9_sq]
+    norm_num [harmonic, Finset.sum_range_succ]
+  have h02sq : q02 ^ 2 = (675 / 42959 : ℝ) := by
+    dsimp only [q02]
+    rw [mul_pow, mul_pow, boundaryJacobiA8_sq, boundaryJacobiA9_sq]
+    norm_num
+  have hfirst : 0 < q00 := by rw [h00]; norm_num
+  have hdet : 0 < q00 * q22 - q02 ^ 2 := by
+    rw [h00, h22, h02sq]
+    norm_num
+  have hquad := quadratic_add_tail_nonneg
+    q00 q02 q22 0 0 0 c d hfirst hdet (by norm_num)
+  dsimp only [q00, q02, q22] at hquad
+  norm_num [harmonic, Finset.sum_range_succ] at hquad ⊢
+  nlinarith
+
+private theorem boundaryJacobi_with_tail
+    (c d T : ℝ) (hdT : d ^ 2 ≤ T) :
+    (1 / 5 : ℝ) * (c ^ 2 + T) ≤
+      2 * ((harmonic 10 : ℝ) - harmonic 8) * T +
+        (1 / 2 : ℝ) *
+          (boundaryJacobiA7 ^ 2 * c ^ 2 +
+            (boundaryJacobiA8 * c + boundaryJacobiA9 * d) ^ 2) := by
+  have hboundary := boundaryJacobi_two_by_two c d
+  norm_num [harmonic, Finset.sum_range_succ] at hboundary ⊢
+  nlinarith
+
+private theorem harmonic_ten_norm_sq_le_logEnergy_add_boundary
+    (f : unitInterval → ℝ) (hf : MemLp f 2)
+    (henergy : Integrable (unitIntervalRawLogEnergyIntegrand f))
+    (hlow : ∀ n < 8,
+      shiftedLegendreHilbertBasis.repr (hf.toLp f) n = 0)
+    (hodd : ∀ n, Odd n →
+      shiftedLegendreHilbertBasis.repr (hf.toLp f) n = 0) :
+    (2 * (harmonic 10 : ℝ)) * ‖hf.toLp f‖ ^ 2 ≤
+      unitIntervalLogEnergy f +
+        2 * ((harmonic 10 : ℝ) - harmonic 8) *
+          shiftedLegendreHilbertBasis.repr (hf.toLp f) 8 ^ 2 := by
+  classical
+  let F : UnitIntervalL2 := hf.toLp f
+  let delta : ℝ := 2 * ((harmonic 10 : ℝ) - harmonic 8)
+  let corr : ℝ := delta * shiftedLegendreHilbertBasis.repr F 8 ^ 2
+  have hdelta : 0 ≤ delta := by
+    dsimp only [delta]
+    have hH := harmonic_cast_mono (by norm_num : 8 ≤ 10)
+    linarith
+  have hcorr : 0 ≤ corr :=
+    mul_nonneg hdelta (sq_nonneg _)
+  have hfinite : ∀ N : ℕ,
+      (2 * (harmonic 10 : ℝ)) * shiftedLegendrePartialNormSq F N ≤
+        unitIntervalLogEnergy f + corr := by
+    intro N
+    have hterm : ∀ n ∈ Finset.range N,
+        (2 * (harmonic 10 : ℝ)) *
+            shiftedLegendreHilbertBasis.repr F n ^ 2 ≤
+          (2 * (harmonic n : ℝ)) *
+              shiftedLegendreHilbertBasis.repr F n ^ 2 +
+            if n = 8 then corr else 0 := by
+      intro n _hn
+      by_cases hnlow : n < 8
+      · have hz : shiftedLegendreHilbertBasis.repr F n = 0 := by
+          simpa only [F] using hlow n hnlow
+        have hn8 : n ≠ 8 := by omega
+        simp [hz, hn8]
+      · by_cases hn8 : n = 8
+        · subst n
+          simp only [if_pos]
+          dsimp only [corr, delta]
+          ring_nf
+          exact le_rfl
+        · by_cases hn9 : n = 9
+          · subst n
+            have hz : shiftedLegendreHilbertBasis.repr F 9 = 0 := by
+              simpa only [F] using hodd 9 (by norm_num)
+            simp [hz]
+          · have hn10 : 10 ≤ n := by omega
+            have hH := harmonic_cast_mono hn10
+            simp only [if_neg hn8, add_zero]
+            exact mul_le_mul_of_nonneg_right (by nlinarith)
+              (sq_nonneg _)
+    have hindicator :
+        (∑ n ∈ Finset.range N, if n = 8 then corr else 0) ≤ corr := by
+      by_cases hmem : 8 ∈ Finset.range N
+      · simp [hmem]
+      · simp [hmem, hcorr]
+    have hspectral := partialSpectralEnergy_le_unitIntervalLogEnergy
+      f hf henergy N
+    change (∑ n ∈ Finset.range N,
+        (2 * (harmonic n : ℝ)) *
+          shiftedLegendreHilbertBasis.repr F n ^ 2) ≤
+      unitIntervalLogEnergy f at hspectral
+    change (2 * (harmonic 10 : ℝ)) *
+        (∑ n ∈ Finset.range N,
+          shiftedLegendreHilbertBasis.repr F n ^ 2) ≤
+      unitIntervalLogEnergy f + corr
+    rw [Finset.mul_sum]
+    calc
+      (∑ n ∈ Finset.range N,
+          (2 * (harmonic 10 : ℝ)) *
+            shiftedLegendreHilbertBasis.repr F n ^ 2) ≤
+          ∑ n ∈ Finset.range N,
+            ((2 * (harmonic n : ℝ)) *
+                shiftedLegendreHilbertBasis.repr F n ^ 2 +
+              if n = 8 then corr else 0) :=
+        Finset.sum_le_sum hterm
+      _ = (∑ n ∈ Finset.range N,
+            (2 * (harmonic n : ℝ)) *
+              shiftedLegendreHilbertBasis.repr F n ^ 2) +
+          (∑ n ∈ Finset.range N, if n = 8 then corr else 0) := by
+        rw [Finset.sum_add_distrib]
+      _ ≤ (∑ n ∈ Finset.range N,
+            (2 * (harmonic n : ℝ)) *
+              shiftedLegendreHilbertBasis.repr F n ^ 2) + corr :=
+        add_le_add le_rfl hindicator
+      _ ≤ unitIntervalLogEnergy f + corr :=
+        add_le_add hspectral le_rfl
+  dsimp only [F, corr, delta] at hfinite ⊢
+  apply le_of_tendsto
+    ((tendsto_shiftedLegendrePartialNormSq (hf.toLp f)).const_mul
+      (2 * (harmonic 10 : ℝ)))
+  exact Filter.Eventually.of_forall hfinite
+
+private theorem two_repr_sq_le_norm_sq
+    (F : UnitIntervalL2) (m n : ℕ) (hmn : m ≠ n) :
+    shiftedLegendreHilbertBasis.repr F m ^ 2 +
+        shiftedLegendreHilbertBasis.repr F n ^ 2 ≤
+      ‖F‖ ^ 2 := by
+  classical
+  have hbessel := shiftedLegendreHilbertBasis.orthonormal.sum_inner_products_le
+    F (s := {m, n})
+  have hm := shiftedLegendreHilbertBasis.repr_apply_apply F m
+  have hn := shiftedLegendreHilbertBasis.repr_apply_apply F n
+  rw [Finset.sum_insert (by simpa using hmn), Finset.sum_singleton,
+    ← hm, ← hn] at hbessel
+  simpa only [Real.norm_eq_abs, sq_abs] using hbessel
+
+private theorem boundary_pairing_bessel
+    (f : unitInterval → ℝ) (hfcont : Continuous f)
+    (hf : MemLp f 2)
+    (hg : MemLp (fun t : unitInterval ↦ (2 * (t : ℝ) - 1) * f t) 2)
+    (h6 : shiftedLegendreHilbertBasis.repr (hf.toLp f) 6 = 0) :
+    boundaryJacobiA7 ^ 2 *
+          shiftedLegendreHilbertBasis.repr (hf.toLp f) 8 ^ 2 +
+        (boundaryJacobiA8 *
+            shiftedLegendreHilbertBasis.repr (hf.toLp f) 8 +
+          boundaryJacobiA9 *
+            shiftedLegendreHilbertBasis.repr (hf.toLp f) 10) ^ 2 ≤
+      ‖hg.toLp (fun t : unitInterval ↦ (2 * (t : ℝ) - 1) * f t)‖ ^ 2 := by
+  let G := hg.toLp (fun t : unitInterval ↦ (2 * (t : ℝ) - 1) * f t)
+  have hbessel := two_repr_sq_le_norm_sq G 7 9 (by norm_num)
+  have h7 := repr_centeredCoordinate_seven f hfcont hf hg h6
+  have h9 := repr_centeredCoordinate_nine f hfcont hf hg
+  change shiftedLegendreHilbertBasis.repr G 7 = _ at h7
+  change shiftedLegendreHilbertBasis.repr G 9 = _ at h9
+  rw [h7, h9] at hbessel
+  dsimp only [G] at hbessel ⊢
+  nlinarith
+
+private theorem integral_centeredCoordinate_sq_le_intrinsicPotential
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ t : unitInterval,
+        ((2 * (t : ℝ) - 1) * centeredPullback w (t : ℝ)) ^ 2) ≤
+      factorTwoIntrinsicPotentialEnergy w := by
+  let u : ℝ → ℝ := fun x ↦ x * w x
+  have hbridge := integral_unitInterval_centeredPullback_sq u
+  have hbridge' :
+      (∫ t : unitInterval,
+          ((2 * (t : ℝ) - 1) * centeredPullback w (t : ℝ)) ^ 2) =
+        (1 / 2 : ℝ) * ∫ x : ℝ in -1..1, (x * w x) ^ 2 := by
+    simpa only [u, centeredPullback, mul_assoc] using hbridge
+  have hleft : IntervalIntegrable
+      (fun x : ℝ ↦ (1 / 2 : ℝ) * (x * w x) ^ 2)
+      volume (-1) 1 := by
+    exact (by fun_prop : Continuous
+      (fun x : ℝ ↦ (1 / 2 : ℝ) * (x * w x) ^ 2)).intervalIntegrable _ _
+  have hpotential := intervalIntegrable_endpointPotential_mul_sq w hw
+  have hmono :
+      (∫ x : ℝ in -1..1, (1 / 2 : ℝ) * (x * w x) ^ 2) ≤
+        ∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2 := by
+    apply intervalIntegral.integral_mono_on_of_le_Ioo
+      (by norm_num) hleft hpotential
+    intro x hx
+    have hquartic := quartic_le_endpointPotential
+      (show |x| < 1 by rw [abs_lt]; exact hx)
+    have hscaled := mul_le_mul_of_nonneg_right hquartic (sq_nonneg (w x))
+    unfold yoshidaEndpointQuartic at hscaled
+    nlinarith [sq_nonneg x, sq_nonneg (w x), sq_nonneg (x ^ 2 * w x)]
+  unfold factorTwoIntrinsicPotentialEnergy
+  rw [intervalIntegral.integral_const_mul] at hmono
+  rw [hbridge']
+  exact hmono
+
+/-- The first surviving even mode at cutoff eight receives a structural
+`1 / 10` reserve from the endpoint potential.  Only the boundary Jacobi
+coupling `P₈/P₁₀` is isolated; every higher mode is controlled at once by
+harmonic monotonicity. -/
+theorem harmonic_eight_add_one_tenth_mul_intrinsicEnergy_le_raw_add_half_potential
+    (w : ℝ → ℝ) (hw : Continuous w) (hweven : Function.Even w)
+    (hlocal : LocallyLipschitzOn (Icc (-1) 1) w)
+    (hlow : centeredLegendreMomentsVanishBelow w 8) :
+    ((harmonic 8 : ℝ) + 1 / 10) * factorTwoIntrinsicEnergy w ≤
+      centeredRawLogEnergy w / 4 +
+        (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy w := by
+  obtain ⟨C, hLip⟩ := exists_lipschitzWith_centeredPullback w hlocal
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback w (t : ℝ)
+  let g : unitInterval → ℝ := fun t ↦ (2 * (t : ℝ) - 1) * f t
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    fun_prop
+  have hgcont : Continuous g := by
+    dsimp only [g]
+    fun_prop
+  have hf : MemLp f 2 :=
+    hfcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
+  have hg : MemLp g 2 :=
+    hgcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace g)
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f
+      (by simpa only [f] using hLip)
+  let F : UnitIntervalL2 := hf.toLp f
+  let G : UnitIntervalL2 := hg.toLp g
+  let c : ℝ := shiftedLegendreHilbertBasis.repr F 8
+  let d : ℝ := shiftedLegendreHilbertBasis.repr F 10
+  let T : ℝ := ‖F‖ ^ 2 - c ^ 2
+  have hreprLow : ∀ n < 8,
+      shiftedLegendreHilbertBasis.repr F n = 0 := by
+    intro n hn
+    rw [shiftedLegendreHilbertBasis_repr_eq f hf n]
+    have hm : shiftedLegendrePairing f n = 0 := by
+      simpa only [shiftedLegendrePairing, f] using hlow n hn
+    rw [show (∫ t : unitInterval,
+        f t * (shiftedLegendreReal n).eval (t : ℝ)) =
+          shiftedLegendrePairing f n by rfl, hm, mul_zero]
+  have hreprOdd : ∀ n, Odd n →
+      shiftedLegendreHilbertBasis.repr F n = 0 := by
+    intro n hn
+    simpa only [F, f] using
+      centeredPullback_repr_eq_zero_of_even_of_odd w hf hweven n hn
+  have hraw := harmonic_ten_norm_sq_le_logEnergy_add_boundary
+    f hf henergy hreprLow hreprOdd
+  change (2 * (harmonic 10 : ℝ)) * ‖F‖ ^ 2 ≤
+      unitIntervalLogEnergy f +
+        2 * ((harmonic 10 : ℝ) - harmonic 8) * c ^ 2 at hraw
+  have hcd := two_repr_sq_le_norm_sq F 8 10 (by norm_num)
+  change c ^ 2 + d ^ 2 ≤ ‖F‖ ^ 2 at hcd
+  have hdT : d ^ 2 ≤ T := by
+    dsimp only [T]
+    linarith
+  have hboundary := boundaryJacobi_with_tail c d T hdT
+  have h6 : shiftedLegendreHilbertBasis.repr F 6 = 0 :=
+    hreprLow 6 (by norm_num)
+  have hGbessel := boundary_pairing_bessel f hfcont hf hg h6
+  change boundaryJacobiA7 ^ 2 * c ^ 2 +
+        (boundaryJacobiA8 * c + boundaryJacobiA9 * d) ^ 2 ≤
+      ‖G‖ ^ 2 at hGbessel
+  have hboundary' :
+      (1 / 5 : ℝ) * ‖F‖ ^ 2 ≤
+        2 * ((harmonic 10 : ℝ) - harmonic 8) * T +
+          (1 / 2 : ℝ) * ‖G‖ ^ 2 := by
+    have hT : c ^ 2 + T = ‖F‖ ^ 2 := by
+      dsimp only [T]
+      ring
+    rw [hT] at hboundary
+    nlinarith
+  have hraw' :
+      2 * (harmonic 8 : ℝ) * ‖F‖ ^ 2 +
+          2 * ((harmonic 10 : ℝ) - harmonic 8) * T ≤
+        unitIntervalLogEnergy f := by
+    dsimp only [T] at ⊢
+    nlinarith
+  have hunit :
+      2 * ((harmonic 8 : ℝ) + 1 / 10) * ‖F‖ ^ 2 ≤
+        unitIntervalLogEnergy f + (1 / 2 : ℝ) * ‖G‖ ^ 2 := by
+    nlinarith
+  have hGnorm := norm_sq_toLp_eq_integral_sq g hg
+  have hpotential := integral_centeredCoordinate_sq_le_intrinsicPotential w hw
+  have hGpotential : ‖G‖ ^ 2 ≤ factorTwoIntrinsicPotentialEnergy w := by
+    change ‖hg.toLp g‖ ^ 2 ≤ factorTwoIntrinsicPotentialEnergy w
+    rw [hGnorm]
+    simpa only [g, f] using hpotential
+  have hunitPotential :
+      2 * ((harmonic 8 : ℝ) + 1 / 10) * ‖F‖ ^ 2 ≤
+        unitIntervalLogEnergy f +
+          (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy w := by
+    nlinarith
+  have hFnorm := norm_sq_toLp_eq_integral_sq f hf
+  change ‖F‖ ^ 2 =
+    ∫ t : unitInterval, centeredPullback w (t : ℝ) ^ 2 at hFnorm
+  rw [integral_unitInterval_centeredPullback_sq w] at hFnorm
+  change ‖F‖ ^ 2 = (1 / 2 : ℝ) * factorTwoIntrinsicEnergy w at hFnorm
+  have henergy' : Integrable (unitIntervalRawLogEnergyIntegrand
+      (fun t : unitInterval ↦ centeredPullback w (t : ℝ))) := by
+    simpa only [f] using henergy
+  have hlog : unitIntervalLogEnergy f =
+      (1 / 4 : ℝ) * centeredRawLogEnergy w := by
+    simpa only [f] using unitIntervalLogEnergy_centeredPullback w henergy'
+  rw [hFnorm, hlog] at hunitPotential
+  nlinarith
+
+/-- The sharpened projected loss fits the cutoff-eight harmonic reserve once
+the structural `1 / 10` potential gain is retained. -/
+theorem projectedEvenRemainderLoss_le_harmonic_eight_add_tenth
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    factorTwoIntrinsicProjectedEvenRemainderLoss a b ≤
+      (harmonic 8 : ℝ) + 1 / 10 - Real.log 2 / 2 := by
+  have hloss := projectedEvenRemainderLoss_lt_4926971_div_2000000 a b hab
+  have hlog : Real.log 2 < (7 / 10 : ℝ) :=
+    log_two_lt_one_thousand_seven_hundred_thirty_three_div_two_thousand_five_hundred.trans
+      (by norm_num)
+  norm_num [harmonic, Finset.sum_range_succ] at hloss ⊢
+  linarith
+
+/-- Complete phase positivity on the infinite structural residual above
+even cutoff eight and odd cutoff nine.  The finite low obstruction is
+therefore reduced to `P₀,P₂,P₄,P₆` and `P₁,P₃,P₅,P₇`; no retained
+phase point or matrix entry is enumerated. -/
+theorem factorTwoEndpointChannelPhase_nonneg_of_eight_nine_higher_residual
+    (e o : ℝ → ℝ) (hec : Continuous e) (hoc : Continuous o)
+    (he : Function.Even e) (ho : Function.Odd o)
+    (he0 : centeredEvenP0Coefficient e = 0)
+    (helocal : LocallyLipschitzOn (Icc (-1) 1) e)
+    (holocal : LocallyLipschitzOn (Icc (-1) 1) o)
+    (heLow : centeredLegendreMomentsVanishBelow e 8)
+    (hoLow : centeredLegendreMomentsVanishBelow o 9)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    0 ≤ factorTwoEndpointChannelPhase e o a b := by
+  have heReserve :=
+    harmonic_eight_add_one_tenth_mul_intrinsicEnergy_le_raw_add_half_potential
+      e hec he helocal heLow
+  have hoRaw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    o hoc holocal 9 hoLow
+  have hprotected := raw_add_half_potential_sub_half_logMass_le_protected
+    e o hec hoc helocal holocal a b hab
+  have heLoss := projectedEvenRemainderLoss_le_harmonic_eight_add_tenth
+    a b hab
+  have hoLoss := projectedOddRemainderLoss_le_harmonic_nine a b hab
+  have hremainder := neg_factorTwoIntrinsicSignedRemainder_le_projected_energy
+    e o hec hoc he ho he0 a b hab
+  have heEnergy := factorTwoIntrinsicEnergy_nonneg e
+  have hoEnergy := factorTwoIntrinsicEnergy_nonneg o
+  have heLossScaled := mul_le_mul_of_nonneg_right heLoss heEnergy
+  have hoLossScaled := mul_le_mul_of_nonneg_right hoLoss hoEnergy
+  have hoPotential : 0 ≤
+      (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy o := by
+    exact mul_nonneg (by norm_num)
+      (factorTwoIntrinsicPotentialEnergy_nonneg o)
+  rw [factorTwoEndpointChannelPhase_eq_protected_add_signedRemainder
+    e o hec hoc a b]
+  nlinarith
 
 end
 
