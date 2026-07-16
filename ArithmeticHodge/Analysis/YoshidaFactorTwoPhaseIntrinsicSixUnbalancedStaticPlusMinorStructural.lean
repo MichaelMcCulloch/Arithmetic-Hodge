@@ -1453,6 +1453,55 @@ private theorem minorLowerFiveQuadratic_le_exact
   rw [heq]
   exact le_add_of_nonneg_right hrem
 
+def factorTwoIntrinsicSixUnbalancedMinorPlusAbsoluteComparison
+    (x0 x1 x2 x3 x4 : ℝ) : ℝ :=
+  minorAbsoluteComparison x0 x1 x2 x3 x4
+
+def factorTwoIntrinsicSixUnbalancedMinorPlusTransformedFiveQuadratic
+    (x0 x1 x2 x3 x4 : ℝ) : ℝ :=
+  minorFiveQuadratic minorT00 minorT01 (minorT02 minorS)
+    (minorT03 minorS minorS1) (minorT04 minorS minorS1 minorS3)
+    minorT11 (minorT12 minorS minorD)
+    (minorT13 minorS minorD minorS1 minorD1)
+    (minorT14 minorS minorD minorS1 minorD1 minorS3 minorD3)
+    (minorT22 minorS minorD)
+    (minorT23 minorS minorD minorS1 minorD1 minorA41)
+    (minorT24 minorS minorD minorS1 minorD1 minorS3 minorD3
+      minorA41 minorA43)
+    (minorT33 minorS minorD minorS1 minorD1 minorA41 minorO11)
+    (minorT34 minorS minorD minorS1 minorD1 minorS3 minorD3
+      minorA41 minorA43 minorO11 minorO13)
+    (minorT44 minorS minorD minorS1 minorD1 minorS3 minorD3
+      minorA41 minorA43 minorO11 minorO13 minorO33)
+    x0 x1 x2 x3 x4
+
+theorem factorTwoIntrinsicSixUnbalancedMinorPlusAbsoluteComparison_le_transformed
+    (x0 x1 x2 x3 x4 : ℝ) :
+    factorTwoIntrinsicSixUnbalancedMinorPlusAbsoluteComparison x0 x1 x2 x3 x4 ≤
+      factorTwoIntrinsicSixUnbalancedMinorPlusTransformedFiveQuadratic
+        x0 x1 x2 x3 x4 := by
+  simpa only [factorTwoIntrinsicSixUnbalancedMinorPlusAbsoluteComparison,
+    factorTwoIntrinsicSixUnbalancedMinorPlusTransformedFiveQuadratic] using
+    minorActualTransformedQuadratic_ge_comparison x0 x1 x2 x3 x4
+
+def factorTwoIntrinsicSixUnbalancedMinorPlusLowerFiveQuadratic
+    (s d p u v : ℝ) : ℝ :=
+  minorLowerFiveQuadratic minorS minorD minorS1 minorD1 minorS3 minorD3
+    minorA41 minorA43 minorO11 minorO13 minorO33 s d p u v
+
+def factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic
+    (c0 c2 c4 c1 c3 : ℝ) : ℝ :=
+  minorExactFiveQuadratic c0 c2 c4 c1 c3
+
+theorem factorTwoIntrinsicSixUnbalancedMinorPlusLowerFive_le_exact
+    (s d p u v : ℝ) :
+    factorTwoIntrinsicSixUnbalancedMinorPlusLowerFiveQuadratic s d p u v ≤
+      factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic
+        (s + d) (s - d) p (u - (25 / 24 : ℝ) * v) v := by
+  simpa only [factorTwoIntrinsicSixUnbalancedMinorPlusLowerFiveQuadratic,
+    factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic] using
+    minorLowerFiveQuadratic_le_exact s d p u v
+
 private theorem minorExactFiveQuadratic_ge_sheared_last_square
     (s d p u v : ℝ) :
     (26049 / 200000000 : ℝ) * v ^ 2 ≤
