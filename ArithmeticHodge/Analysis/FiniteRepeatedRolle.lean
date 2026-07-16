@@ -1,6 +1,7 @@
 import Mathlib.Analysis.Calculus.ContDiff.Deriv
 import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
 import Mathlib.Analysis.Calculus.LocalExtr.Rolle
+import Mathlib.Data.Finset.Sort
 
 set_option autoImplicit false
 
@@ -54,6 +55,26 @@ theorem exists_iteratedDeriv_eq_zero_of_strictMono_zeros
           simpa using (hy_mem (Fin.last n)).2.le)
       · rw [iteratedDeriv_succ']
         exact hc_zero
+
+/-- Finset form of repeated Rolle.  Sorting is used only to expose the
+adjacent intervals; the hypothesis and conclusion remain invariant under the
+original ordering of the zeros. -/
+theorem exists_iteratedDeriv_eq_zero_of_finset_zeros
+    (n : ℕ) (f : ℝ → ℝ) (hf : ContDiff ℝ n f)
+    (s : Finset ℝ) (hs : s.card = n + 1)
+    {a b : ℝ} (hsIcc : ∀ x ∈ s, x ∈ Icc a b)
+    (hzero : ∀ x ∈ s, f x = 0) :
+    ∃ c ∈ Icc a b, iteratedDeriv n f c = 0 := by
+  let x : Fin (n + 1) → ℝ := s.orderEmbOfFin hs
+  have hx : StrictMono x := (s.orderEmbOfFin hs).strictMono
+  have hxmem (i : Fin (n + 1)) : x i ∈ s := by
+    exact Finset.orderEmbOfFin_mem s hs i
+  obtain ⟨c, hc, hczero⟩ :=
+    exists_iteratedDeriv_eq_zero_of_strictMono_zeros
+      n f hf x hx (fun i ↦ hzero (x i) (hxmem i))
+  have hfirst := hsIcc (x 0) (hxmem 0)
+  have hlast := hsIcc (x (Fin.last n)) (hxmem (Fin.last n))
+  exact ⟨c, ⟨hfirst.1.trans hc.1, hc.2.trans hlast.2⟩, hczero⟩
 
 end
 
