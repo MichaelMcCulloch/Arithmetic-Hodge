@@ -427,26 +427,30 @@ theorem exists_dyadicNine_interpolant_L2_remainder
 /-! ## Moment-gap pairing -/
 
 private theorem sq_intervalIntegral_mul_le_dyadic
-    (f g : ℝ → ℝ) (hf : Continuous f) (hg : Continuous g) :
+    (f g : ℝ → ℝ)
+    (hf : ContinuousOn f (Icc (-1 : ℝ) 1))
+    (hg : ContinuousOn g (Icc (-1 : ℝ) 1)) :
     (∫ x : ℝ in -1..1, f x * g x) ^ 2 ≤
       (∫ x : ℝ in -1..1, f x ^ 2) *
         (∫ x : ℝ in -1..1, g x ^ 2) := by
   let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
-  have hfMeas : AEStronglyMeasurable f μ :=
-    hf.aestronglyMeasurable.restrict
-  have hgMeas : AEStronglyMeasurable g μ :=
-    hg.aestronglyMeasurable.restrict
+  have hfMeas : AEStronglyMeasurable f μ := by
+    dsimp only [μ]
+    exact (hf.mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
+  have hgMeas : AEStronglyMeasurable g μ := by
+    dsimp only [μ]
+    exact (hg.mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
   have hfLp : MemLp f 2 μ := by
     rw [memLp_two_iff_integrable_sq_norm hfMeas]
     have hcompact : IntegrableOn (fun x : ℝ ↦ ‖f x‖ ^ 2)
         (Icc (-1 : ℝ) 1) :=
-      (hf.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+      (hf.norm.pow 2).integrableOn_compact isCompact_Icc
     exact hcompact.mono_set Ioc_subset_Icc_self
   have hgLp : MemLp g 2 μ := by
     rw [memLp_two_iff_integrable_sq_norm hgMeas]
     have hcompact : IntegrableOn (fun x : ℝ ↦ ‖g x‖ ^ 2)
         (Icc (-1 : ℝ) 1) :=
-      (hg.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+      (hg.norm.pow 2).integrableOn_compact isCompact_Icc
     exact hcompact.mono_set Ioc_subset_Icc_self
   have h := sq_integral_mul_le_weighted μ (fun _ : ℝ ↦ 1) f g
     (by simp) (by simpa using hfLp) (by simpa using hgLp)
@@ -457,7 +461,8 @@ private theorem sq_intervalIntegral_mul_le_dyadic
 representer pairing at once.  The polynomial interpolant disappears by the
 moment gap; Cauchy--Schwarz sees only the single dyadic remainder mass. -/
 theorem sq_intervalIntegral_mul_le_dyadicNineRemainder
-    (w F : ℝ → ℝ) (hw : Continuous w) (hF : Continuous F)
+    (w F : ℝ → ℝ) (hw : Continuous w)
+    (hF : ContinuousOn F (Icc (-1 : ℝ) 1))
     (hF9 : ContDiffOn ℝ 9 F (Icc (-1 : ℝ) 1))
     (hlow : centeredLegendreMomentsVanishBelow w 9)
     (M : ℝ)
@@ -469,14 +474,16 @@ theorem sq_intervalIntegral_mul_le_dyadicNineRemainder
   obtain ⟨Q, hQ, _hrem, hmass⟩ :=
     exists_dyadicNine_interpolant_L2_remainder F hF9 M h9
   let R : ℝ → ℝ := fun x ↦ F x - Q.eval ((x + 1) / 2)
-  have hR : Continuous R := by
+  have hR : ContinuousOn R (Icc (-1 : ℝ) 1) := by
     dsimp only [R]
-    fun_prop
+    exact hF.sub (by fun_prop : Continuous
+      (fun x : ℝ ↦ Q.eval ((x + 1) / 2))).continuousOn
   have hpoly :
       (∫ x : ℝ in -1..1, w x * Q.eval ((x + 1) / 2)) = 0 :=
     intervalIntegral_mul_shiftedPolynomial_eq_zero w hw hlow Q hQ
   have hwR : IntervalIntegrable (fun x : ℝ ↦ w x * R x)
-      volume (-1) 1 := (hw.mul hR).intervalIntegrable (-1) 1
+      volume (-1) 1 :=
+    (hw.continuousOn.mul hR).intervalIntegrable_of_Icc (by norm_num)
   have hwQ : IntervalIntegrable
       (fun x : ℝ ↦ w x * Q.eval ((x + 1) / 2))
       volume (-1) 1 := by
@@ -502,7 +509,8 @@ theorem sq_intervalIntegral_mul_le_dyadicNineRemainder
         apply intervalIntegral.integral_congr
         intro x _hx
         ring
-  have hcauchy := sq_intervalIntegral_mul_le_dyadic R w hR hw
+  have hcauchy :=
+    sq_intervalIntegral_mul_le_dyadic R w hR hw.continuousOn
   have hwNonneg : 0 ≤ ∫ x : ℝ in -1..1, w x ^ 2 := by
     exact intervalIntegral.integral_nonneg (by norm_num) fun x _hx ↦
       sq_nonneg (w x)
