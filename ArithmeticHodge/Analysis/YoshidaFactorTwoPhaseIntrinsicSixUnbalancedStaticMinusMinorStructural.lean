@@ -779,7 +779,7 @@ theorem factorTwoIntrinsicSixUnbalancedMinorMinusLowerFive_le_exact
 
 /-! ## Rational congruence certificate -/
 
-private def minusMinorFiveBilinear
+def minusMinorFiveBilinear
     (s d p u v r e q w z : ℝ) : ℝ :=
   (factorTwoIntrinsicSixUnbalancedMinorMinusLower00 +
       2 * factorTwoIntrinsicSixUnbalancedMinorMinusLower02 +
@@ -805,7 +805,7 @@ private def minusMinorFiveBilinear
       2 * intrinsicStaticMinusOddLower13 +
       intrinsicStaticMinusOddLower33) * v * z
 
-private def minusMinorFiveQuadratic
+def minusMinorFiveQuadratic
     (a00 a01 a02 a03 a04 a11 a12 a13 a14 a22 a23 a24 a33 a34 a44
       x0 x1 x2 x3 x4 : ℝ) : ℝ :=
   a00 * x0 ^ 2 + 2 * a01 * x0 * x1 + 2 * a02 * x0 * x2 +
@@ -831,63 +831,63 @@ private theorem factorTwoIntrinsicSixUnbalancedMinorMinusLowerFive_eq_bilinear
     intrinsicStaticMinusOddLower
   ring
 
-private def minorMinusT00 : ℝ :=
+def minorMinusT00 : ℝ :=
   minusMinorFiveBilinear 1 0 0 0 0 1 0 0 0 0
 
-private def minorMinusT01 : ℝ :=
+def minorMinusT01 : ℝ :=
   minusMinorFiveBilinear 1 0 0 0 0 (-2 / 15) 0 1 0 0
 
-private def minorMinusT02 : ℝ :=
+def minorMinusT02 : ℝ :=
   minusMinorFiveBilinear 1 0 0 0 0 (-1 / 6) 0 (-4 / 35) 1 0
 
-private def minorMinusT03 : ℝ :=
+def minorMinusT03 : ℝ :=
   minusMinorFiveBilinear 1 0 0 0 0 (-1 / 20) 1 (9 / 50) (-1 / 14) 0
 
-private def minorMinusT04 : ℝ :=
+def minorMinusT04 : ℝ :=
   minusMinorFiveBilinear 1 0 0 0 0 (4 / 25) (-11 / 4) (-3 / 8)
     (7 / 80) 1
 
-private def minorMinusT11 : ℝ :=
+def minorMinusT11 : ℝ :=
   minusMinorFiveBilinear (-2 / 15) 0 1 0 0 (-2 / 15) 0 1 0 0
 
-private def minorMinusT12 : ℝ :=
+def minorMinusT12 : ℝ :=
   minusMinorFiveBilinear (-2 / 15) 0 1 0 0
     (-1 / 6) 0 (-4 / 35) 1 0
 
-private def minorMinusT13 : ℝ :=
+def minorMinusT13 : ℝ :=
   minusMinorFiveBilinear (-2 / 15) 0 1 0 0
     (-1 / 20) 1 (9 / 50) (-1 / 14) 0
 
-private def minorMinusT14 : ℝ :=
+def minorMinusT14 : ℝ :=
   minusMinorFiveBilinear (-2 / 15) 0 1 0 0
     (4 / 25) (-11 / 4) (-3 / 8) (7 / 80) 1
 
-private def minorMinusT22 : ℝ :=
+def minorMinusT22 : ℝ :=
   minusMinorFiveBilinear (-1 / 6) 0 (-4 / 35) 1 0
     (-1 / 6) 0 (-4 / 35) 1 0
 
-private def minorMinusT23 : ℝ :=
+def minorMinusT23 : ℝ :=
   minusMinorFiveBilinear (-1 / 6) 0 (-4 / 35) 1 0
     (-1 / 20) 1 (9 / 50) (-1 / 14) 0
 
-private def minorMinusT24 : ℝ :=
+def minorMinusT24 : ℝ :=
   minusMinorFiveBilinear (-1 / 6) 0 (-4 / 35) 1 0
     (4 / 25) (-11 / 4) (-3 / 8) (7 / 80) 1
 
-private def minorMinusT33 : ℝ :=
+def minorMinusT33 : ℝ :=
   minusMinorFiveBilinear (-1 / 20) 1 (9 / 50) (-1 / 14) 0
     (-1 / 20) 1 (9 / 50) (-1 / 14) 0
 
-private def minorMinusT34 : ℝ :=
+def minorMinusT34 : ℝ :=
   minusMinorFiveBilinear (-1 / 20) 1 (9 / 50) (-1 / 14) 0
     (4 / 25) (-11 / 4) (-3 / 8) (7 / 80) 1
 
-private def minorMinusT44 : ℝ :=
+def minorMinusT44 : ℝ :=
   minusMinorFiveBilinear (4 / 25) (-11 / 4) (-3 / 8) (7 / 80) 1
     (4 / 25) (-11 / 4) (-3 / 8) (7 / 80) 1
 
 set_option maxHeartbeats 800000 in
-private theorem minorMinusLowerFive_congruence
+theorem minorMinusLowerFive_congruence
     (x0 x1 x2 x3 x4 : ℝ) :
     factorTwoIntrinsicSixUnbalancedMinorMinusLowerFiveQuadratic
         (x0 - (2 / 15 : ℝ) * x1 - (1 / 6 : ℝ) * x2 -
