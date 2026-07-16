@@ -18,11 +18,14 @@ open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddCleanPositive
+open YoshidaEndpointEvenProjectedRemainderMoments
 open YoshidaFactorTwoCenteredPhysical
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointClean
 open YoshidaFactorTwoPhaseDiskSchur
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
+open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationOneSided
+open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicLow
 open YoshidaFactorTwoPhaseIntrinsicLowAlternatingKernelStructural
@@ -34,7 +37,10 @@ open YoshidaFactorTwoPhaseIntrinsicOddP5CombinedNegativeProfileStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicOddPerturbationLoewnerSharp
 open YoshidaFactorTwoPhaseIntrinsicResidual
+open YoshidaFactorTwoPhaseIntrinsicSixP4CleanCrossStructural
+open YoshidaFactorTwoPhaseIntrinsicSixP4CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4P1AlternatingStructural
+open YoshidaFactorTwoPhaseIntrinsicSixP4PerturbationStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4PlusEndpointExactSchur
 open YoshidaFactorTwoPhaseIntrinsicSixP4Schur
 open YoshidaFactorTwoPhaseIntrinsicSixP5AlternatingBoundsStructural
@@ -49,6 +55,7 @@ open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedAlternatingModelsStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
+open YoshidaFactorTwoPhaseOddAffineKernelEstimate
 open YoshidaFactorTwoStructuralConstantBounds
 
 /-!
@@ -992,6 +999,255 @@ private theorem plusDetActualW_eq_sharpModel_add_Q :
     plusDetO13 plusDetO33 plusDetA05 plusDetA25 plusDetA45 plusDetO15
     plusDetO35 plusDetO55
   ring
+
+/-! ## Exact composite sharp decompositions -/
+
+/-- The even correlation profile carried by the two low-mode coordinates. -/
+private def plusDetCompositeCe (u0 u2 t : ℝ) : ℝ :=
+  u0 * factorTwoIntrinsicP4Correlation04 t +
+    u2 * factorTwoIntrinsicP4Correlation24 t
+
+/-- The scaled alternating correlation profile. -/
+private def plusDetCompositeCa (k : ℝ) (q : ℝ → ℝ) (t : ℝ) : ℝ :=
+  k * intrinsicAlternatingCorrelation q t
+
+/-- Sum profile used by the retained-prime term. -/
+private def plusDetCompositeP
+    (u0 u2 k : ℝ) (q : ℝ → ℝ) (t : ℝ) : ℝ :=
+  plusDetCompositeCe u0 u2 t + plusDetCompositeCa k q t
+
+/-- Difference profile retained for the joint regular-kernel analysis. -/
+private def plusDetCompositeM
+    (u0 u2 k : ℝ) (q : ℝ → ℝ) (t : ℝ) : ℝ :=
+  plusDetCompositeCe u0 u2 t - plusDetCompositeCa k q t
+
+/-- Explicit `P₀-P₄` core after the clean model is inserted. -/
+private def plusDetCompositeR04 : ℝ :=
+  (1 / 10 : ℝ) + factorTwoIntrinsicP4CleanRemainderModel04 +
+    poleFreeCoeff4 yoshidaEndpointA * (16 / 315) +
+    poleFreeCoeff6 yoshidaEndpointA * (32 / 99) +
+    187 / 3 - 90 * Real.log 2
+
+/-- Explicit `P₂-P₄` core after the clean model is inserted. -/
+private def plusDetCompositeR24 : ℝ :=
+  (1 / 7 : ℝ) + factorTwoIntrinsicP4CleanRemainderModel24 +
+    poleFreeCoeff6 yoshidaEndpointA * (32 / 315) +
+    29 / 3 - 14 * Real.log 2
+
+/-- Shared explicit core of one complete affine sharp model. -/
+private def plusDetCompositeCore
+    (C u0 u2 k : ℝ) (q : ℝ → ℝ) : ℝ :=
+  C + u0 * plusDetCompositeR04 + u2 * plusDetCompositeR24 +
+    k * intrinsicAlternatingSharpArchModel q -
+    (Real.log 3 / Real.sqrt 3) *
+      plusDetCompositeP u0 u2 k q
+        (factorTwoPrimeShift / yoshidaEndpointA)
+
+/-- Difference between the two exact clean pairings and their polynomial
+models. -/
+private def plusDetCompositeCleanTransfer (u0 u2 : ℝ) : ℝ :=
+  u0 * ((∫ x : ℝ in -1..1,
+      fixedProjectedShiftedRemainder0 x * factorTwoCenteredP4 x) -
+        factorTwoIntrinsicP4CleanRemainderModel04) +
+    u2 * ((∫ x : ℝ in -1..1,
+      fixedProjectedShiftedRemainder2 x * factorTwoCenteredP4 x) -
+        factorTwoIntrinsicP4CleanRemainderModel24)
+
+/-- The even pole-free error and alternating sharp regular error, kept as one
+joint analytic remainder. -/
+private def plusDetCompositeJointError
+    (u0 u2 k : ℝ) (q : ℝ → ℝ) : ℝ :=
+  poleFreeAnalyticError (plusDetCompositeCe u0 u2) +
+    k * intrinsicAlternatingSharpRegularError q
+
+private theorem poleFreeAnalyticError_add_plusDetComposite
+    (C D : ℝ → ℝ) (hC : Continuous C) (hD : Continuous D) :
+    poleFreeAnalyticError (C + D) =
+      poleFreeAnalyticError C + poleFreeAnalyticError D := by
+  have hCI := intervalIntegrable_poleFreeAnalyticError C hC
+  have hDI := intervalIntegrable_poleFreeAnalyticError D hD
+  unfold poleFreeAnalyticError
+  rw [show (fun t : ℝ ↦
+      (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) *
+        (C + D) t) =
+      fun t ↦
+        (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * C t +
+          (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * D t by
+    funext t
+    simp only [Pi.add_apply]
+    ring,
+    intervalIntegral.integral_add hCI hDI]
+
+private theorem poleFreeAnalyticError_const_mul_plusDetComposite
+    (c : ℝ) (C : ℝ → ℝ) :
+    poleFreeAnalyticError (fun t ↦ c * C t) =
+      c * poleFreeAnalyticError C := by
+  unfold poleFreeAnalyticError
+  rw [show (fun t : ℝ ↦
+      (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) *
+        (c * C t)) =
+      fun t ↦ c *
+        ((oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * C t) by
+    funext t
+    ring,
+    intervalIntegral.integral_const_mul]
+
+/-- Linearity packages the two even analytic errors into the profile `Ce`. -/
+private theorem poleFreeAnalyticError_plusDetCompositeCe
+    (u0 u2 : ℝ) :
+    poleFreeAnalyticError (plusDetCompositeCe u0 u2) =
+      u0 * poleFreeAnalyticError factorTwoIntrinsicP4Correlation04 +
+        u2 * poleFreeAnalyticError factorTwoIntrinsicP4Correlation24 := by
+  let C0 : ℝ → ℝ := fun t ↦
+    u0 * factorTwoIntrinsicP4Correlation04 t
+  let C2 : ℝ → ℝ := fun t ↦
+    u2 * factorTwoIntrinsicP4Correlation24 t
+  have hC0 : Continuous C0 := by
+    dsimp only [C0]
+    exact continuous_const.mul continuous_factorTwoIntrinsicP4Correlation04
+  have hC2 : Continuous C2 := by
+    dsimp only [C2]
+    exact continuous_const.mul continuous_factorTwoIntrinsicP4Correlation24
+  have hCe : plusDetCompositeCe u0 u2 = C0 + C2 := by
+    funext t
+    simp only [plusDetCompositeCe, C0, C2, Pi.add_apply]
+  rw [hCe, poleFreeAnalyticError_add_plusDetComposite C0 C2 hC0 hC2]
+  dsimp only [C0, C2]
+  rw [poleFreeAnalyticError_const_mul_plusDetComposite,
+    poleFreeAnalyticError_const_mul_plusDetComposite]
+
+set_option maxHeartbeats 800000 in
+/-- Every complete affine model is exactly an explicit core, the clean-model
+transfer, and one joint analytic error. -/
+private theorem plusDetCompositeSharp_decomposition
+    (C u0 u2 k : ℝ) (q : ℝ → ℝ) :
+    C + u0 * factorTwoIntrinsicFourP45Cross04 1 +
+        u2 * factorTwoIntrinsicFourP45Cross24 1 +
+        k * plusDetAlternatingSharpModel q =
+      plusDetCompositeCore C u0 u2 k q +
+        plusDetCompositeCleanTransfer u0 u2 +
+        plusDetCompositeJointError u0 u2 k q := by
+  have hclean04 :=
+    factorTwoIntrinsicP4CleanCross04_eq_potential_add_remainder
+  have hclean24 :=
+    factorTwoIntrinsicP4CleanCross24_eq_potential_add_remainder
+  rcases factorTwoIntrinsicP4_perturbation_structural_eq with
+    ⟨hpert04, hpert24, _hpert44⟩
+  have herror := poleFreeAnalyticError_plusDetCompositeCe u0 u2
+  unfold factorTwoIntrinsicFourP45Cross04
+    factorTwoIntrinsicFourP45Cross24
+  rw [hclean04, hclean24, hpert04, hpert24]
+  unfold factorTwoIntrinsicP4PerturbationBase04
+    factorTwoIntrinsicP4PerturbationBase24 plusDetAlternatingSharpModel
+    plusDetCompositeCore plusDetCompositeCleanTransfer
+    plusDetCompositeJointError plusDetCompositeR04 plusDetCompositeR24
+  rw [herror]
+  unfold plusDetCompositeP plusDetCompositeCe plusDetCompositeCa
+  ring
+
+private theorem plusDetSharpModelH2_composite_decomposition :
+    plusDetSharpModelH2 =
+      plusDetCompositeCore
+          (25704453062981 / 104652000000000)
+          (-698234417 / 581400000) (-344846809 / 193800000)
+          (1 / 2) plusDetAlternatingQH2 +
+        plusDetCompositeCleanTransfer
+          (-698234417 / 581400000) (-344846809 / 193800000) +
+        plusDetCompositeJointError
+          (-698234417 / 581400000) (-344846809 / 193800000)
+          (1 / 2) plusDetAlternatingQH2 := by
+  calc
+    plusDetSharpModelH2 =
+        (25704453062981 / 104652000000000 : ℝ) +
+          (-698234417 / 581400000) *
+            factorTwoIntrinsicFourP45Cross04 1 +
+          (-344846809 / 193800000) *
+            factorTwoIntrinsicFourP45Cross24 1 +
+          (1 / 2) * plusDetAlternatingSharpModel
+            plusDetAlternatingQH2 := by
+      unfold plusDetSharpModelH2 plusDetS plusDetD
+        factorTwoIntrinsicP4PlusCrossSum
+        factorTwoIntrinsicP4PlusCrossDifference
+      ring
+    _ = _ := plusDetCompositeSharp_decomposition _ _ _ _ _
+
+private theorem plusDetSharpModelH3_composite_decomposition :
+    plusDetSharpModelH3 =
+      plusDetCompositeCore
+          (4071911594689399 / 9883800000000000)
+          (-355017589 / 121600000) (-185775269 / 121600000)
+          (1 / 2) plusDetAlternatingQH3 +
+        plusDetCompositeCleanTransfer
+          (-355017589 / 121600000) (-185775269 / 121600000) +
+        plusDetCompositeJointError
+          (-355017589 / 121600000) (-185775269 / 121600000)
+          (1 / 2) plusDetAlternatingQH3 := by
+  calc
+    plusDetSharpModelH3 =
+        (4071911594689399 / 9883800000000000 : ℝ) +
+          (-355017589 / 121600000) *
+            factorTwoIntrinsicFourP45Cross04 1 +
+          (-185775269 / 121600000) *
+            factorTwoIntrinsicFourP45Cross24 1 +
+          (1 / 2) * plusDetAlternatingSharpModel
+            plusDetAlternatingQH3 := by
+      unfold plusDetSharpModelH3 plusDetS plusDetD
+        factorTwoIntrinsicP4PlusCrossSum
+        factorTwoIntrinsicP4PlusCrossDifference
+      ring
+    _ = _ := plusDetCompositeSharp_decomposition _ _ _ _ _
+
+private theorem plusDetSharpModelH4_composite_decomposition :
+    plusDetSharpModelH4 =
+      plusDetCompositeCore
+          (12706719959751107 / 21209472000000000)
+          (-22289231363 / 1860480000) (2432098079 / 620160000)
+          (1 / 2) plusDetAlternatingQH4 +
+        plusDetCompositeCleanTransfer
+          (-22289231363 / 1860480000) (2432098079 / 620160000) +
+        plusDetCompositeJointError
+          (-22289231363 / 1860480000) (2432098079 / 620160000)
+          (1 / 2) plusDetAlternatingQH4 := by
+  calc
+    plusDetSharpModelH4 =
+        (12706719959751107 / 21209472000000000 : ℝ) +
+          (-22289231363 / 1860480000) *
+            factorTwoIntrinsicFourP45Cross04 1 +
+          (2432098079 / 620160000) *
+            factorTwoIntrinsicFourP45Cross24 1 +
+          (1 / 2) * plusDetAlternatingSharpModel
+            plusDetAlternatingQH4 := by
+      unfold plusDetSharpModelH4 plusDetS plusDetD
+        factorTwoIntrinsicP4PlusCrossSum
+        factorTwoIntrinsicP4PlusCrossDifference
+      ring
+    _ = _ := plusDetCompositeSharp_decomposition _ _ _ _ _
+
+private theorem plusDetSharpModelW_composite_decomposition :
+    plusDetSharpModelW =
+      plusDetCompositeCore
+          (1057809782673918967591 / 5408415360000000000000)
+          (-27559902356441 / 930240000000)
+          (7250135076773 / 310080000000) 1 plusDetAlternatingQW +
+        plusDetCompositeCleanTransfer
+          (-27559902356441 / 930240000000)
+          (7250135076773 / 310080000000) +
+        plusDetCompositeJointError
+          (-27559902356441 / 930240000000)
+          (7250135076773 / 310080000000) 1 plusDetAlternatingQW := by
+  calc
+    plusDetSharpModelW =
+        (1057809782673918967591 / 5408415360000000000000 : ℝ) +
+          (-27559902356441 / 930240000000) *
+            factorTwoIntrinsicFourP45Cross04 1 +
+          (7250135076773 / 310080000000) *
+            factorTwoIntrinsicFourP45Cross24 1 +
+          1 * plusDetAlternatingSharpModel plusDetAlternatingQW := by
+      unfold plusDetSharpModelW plusDetS plusDetD
+        factorTwoIntrinsicP4PlusCrossSum
+        factorTwoIntrinsicP4PlusCrossDifference
+      ring
+    _ = _ := plusDetCompositeSharp_decomposition _ _ _ _ _
 
 private theorem plusDetAlternatingQH2_polynomial (t : ℝ) :
     plusDetAlternatingQH2 t =
