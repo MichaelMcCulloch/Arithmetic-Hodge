@@ -698,6 +698,23 @@ private def plusDetAlternatingQW : ℝ → ℝ :=
     (21466553 / 3876000) (337741 / 160000)
     (-10319 / 4800) (15 / 8) 1
 
+/-- The positive Bernstein part of the complete `W` alternating profile. -/
+private def plusDetAlternatingQWPositive (t : ℝ) : ℝ :=
+  (3339755746409 / 131328000000 : ℝ) * (1 - t / 2) ^ 8 +
+    (1681489994323 / 6976800000) * (t / 2) * (1 - t / 2) ^ 7 +
+    (812962228089071 / 1116288000000) * (t / 2) ^ 2 * (1 - t / 2) ^ 6 +
+    (1364572417050373 / 1116288000000) * (t / 2) ^ 3 * (1 - t / 2) ^ 5 +
+    (404364394466447 / 279072000000) * (t / 2) ^ 4 * (1 - t / 2) ^ 4 +
+    (636598716513713 / 558144000000) * (t / 2) ^ 5 * (1 - t / 2) ^ 3 +
+    (437549057539853 / 1116288000000) * (t / 2) ^ 6 * (1 - t / 2) ^ 2 +
+    (3166000829 / 6912000000) * (t / 2) ^ 8
+
+/-- The sole negative Bernstein term of the complete `W` alternating
+profile, recorded with positive sign. -/
+private def plusDetAlternatingQWNegative (t : ℝ) : ℝ :=
+  (42929072419607 / 1116288000000 : ℝ) *
+    (t / 2) ^ 7 * (1 - t / 2)
+
 private def plusDetAlternatingSharpModel (q : ℝ → ℝ) : ℝ :=
   intrinsicAlternatingSharpRegularError q +
     intrinsicAlternatingSharpArchModel q -
@@ -944,6 +961,22 @@ private theorem plusDetAlternatingQW_polynomial (t : ℝ) :
     alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
   ring
 
+private theorem plusDetAlternatingQW_signed_bernstein (t : ℝ) :
+    plusDetAlternatingQW t =
+      plusDetAlternatingQWPositive t - plusDetAlternatingQWNegative t := by
+  rw [plusDetAlternatingQW_polynomial]
+  unfold plusDetAlternatingQWPositive plusDetAlternatingQWNegative
+  ring
+
+private theorem plusDetAlternatingQW_signed_parts_nonneg
+    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
+    0 ≤ plusDetAlternatingQWPositive t ∧
+      0 ≤ plusDetAlternatingQWNegative t := by
+  have hx0 : 0 ≤ t / 2 := by linarith
+  have hx1 : 0 ≤ 1 - t / 2 := by linarith
+  unfold plusDetAlternatingQWPositive plusDetAlternatingQWNegative
+  constructor <;> positivity
+
 /-! ## Global Bernstein certificates for the complete profiles -/
 
 private theorem abs_plusDetAlternatingQH2_le_seventeen
@@ -1111,6 +1144,43 @@ private theorem abs_plusDetAlternatingQW_le_thirty_one
     linarith
 
 /-! ## One sharp remainder estimate per complete profile -/
+
+private theorem integral_plusDetAlternatingQW_signed_majorant :
+    (∫ t : ℝ in 0..2,
+      intrinsicAlternatingSignedLowerMagnitude t *
+          intrinsicAlternatingCorrelation plusDetAlternatingQWPositive t +
+        intrinsicAlternatingSignedUpperMagnitude t *
+          intrinsicAlternatingCorrelation plusDetAlternatingQWNegative t) <
+      (463 / 1000000 : ℝ) := by
+  unfold intrinsicAlternatingSignedLowerMagnitude
+    intrinsicAlternatingSignedUpperMagnitude intrinsicAlternatingCorrelation
+    plusDetAlternatingQWPositive plusDetAlternatingQWNegative
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  norm_num
+
+private theorem plusDetAlternatingSharpRegularErrorW_signed_lower :
+    (-(463 / 1000000) : ℝ) <
+      intrinsicAlternatingSharpRegularError plusDetAlternatingQW := by
+  apply intrinsicAlternatingSharpRegularError_lower_of_signed_decomposition
+    plusDetAlternatingQW plusDetAlternatingQWPositive
+      plusDetAlternatingQWNegative
+  · unfold plusDetAlternatingQW plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  · unfold plusDetAlternatingQWPositive
+    fun_prop
+  · unfold plusDetAlternatingQWNegative
+    fun_prop
+  · funext t
+    exact plusDetAlternatingQW_signed_bernstein t
+  · intro t ht0 ht2
+    exact (plusDetAlternatingQW_signed_parts_nonneg ht0 ht2).1
+  · intro t ht0 ht2
+    exact (plusDetAlternatingQW_signed_parts_nonneg ht0 ht2).2
+  · exact integral_plusDetAlternatingQW_signed_majorant
 
 private theorem abs_plusDetAlternatingSharpRegularErrorH2_lt :
     |intrinsicAlternatingSharpRegularError plusDetAlternatingQH2| <
@@ -1817,6 +1887,22 @@ private theorem plusDetAlternatingSharpArchModelW_bounds :
 
 /-! ## The retained-prime value of each complete correlation -/
 
+private theorem factorTwoPrimeRatio_fine_bounds_plusDet :
+    (1169925 / 1000000 : ℝ) <
+        factorTwoPrimeShift / yoshidaEndpointA ∧
+      factorTwoPrimeShift / yoshidaEndpointA <
+        (1169926 / 1000000 : ℝ) := by
+  have hApos : 0 < yoshidaEndpointA := yoshidaEndpointA_pos
+  have hshift := strict_log_three_halves_fine_bounds
+  have hlog := strict_log_two_fine_bounds
+  constructor
+  · rw [lt_div_iff₀ hApos]
+    unfold factorTwoPrimeShift yoshidaEndpointA
+    nlinarith [hshift.1, hlog.2]
+  · rw [div_lt_iff₀ hApos]
+    unfold factorTwoPrimeShift yoshidaEndpointA
+    nlinarith [hshift.2, hlog.1]
+
 private theorem offset_pow_lt_plusDet
     {y eps : ℝ} (hy : 0 ≤ y) (hye : y < eps)
     (n : ℕ) (hn : n ≠ 0) :
@@ -1931,12 +2017,12 @@ private theorem plusDetAlternatingPrimeCorrelationW_bounds :
           (factorTwoPrimeShift / yoshidaEndpointA) ∧
       intrinsicAlternatingCorrelation plusDetAlternatingQW
           (factorTwoPrimeShift / yoshidaEndpointA) <
-        (852891 / 50000 : ℝ) := by
+        (1705771 / 100000 : ℝ) := by
   let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
-  let y : ℝ := tau - 116992 / 100000
-  have htau := factorTwoPrimeRatio_sharp_bounds
+  let y : ℝ := tau - 1169925 / 1000000
+  have htau := factorTwoPrimeRatio_fine_bounds_plusDet
   have hy0 : 0 < y := by dsimp only [y, tau]; linarith [htau.1]
-  have hyU : y < (1 / 100000 : ℝ) := by
+  have hyU : y < (1 / 1000000 : ℝ) := by
     dsimp only [y, tau]
     linarith [htau.2]
   have hy2 := offset_pow_lt_plusDet hy0.le hyU 2 (by norm_num)
@@ -1948,7 +2034,7 @@ private theorem plusDetAlternatingPrimeCorrelationW_bounds :
   have hy8 := offset_pow_lt_plusDet hy0.le hyU 8 (by norm_num)
   have hy9 := offset_pow_lt_plusDet hy0.le hyU 9 (by norm_num)
   have hy10 := offset_pow_lt_plusDet hy0.le hyU 10 (by norm_num)
-  have htauy : tau = 116992 / 100000 + y := by dsimp only [y]; ring
+  have htauy : tau = 1169925 / 1000000 + y := by dsimp only [y]; ring
   dsimp only [tau] at htauy ⊢
   rw [htauy]
   unfold intrinsicAlternatingCorrelation
@@ -2069,6 +2155,18 @@ private theorem plusDetAlternatingSharpModelW_bounds :
     (by norm_num) (by norm_num)
   unfold plusDetAlternatingSharpModel
   constructor <;> nlinarith [hprod.1, hprod.2]
+
+private theorem plusDetAlternatingSharpModelW_strong_lower :
+    (-11917 / 10000 : ℝ) <
+      plusDetAlternatingSharpModel plusDetAlternatingQW := by
+  have herr := plusDetAlternatingSharpRegularErrorW_signed_lower
+  have harch := plusDetAlternatingSharpArchModelW_bounds
+  have hcorr := plusDetAlternatingPrimeCorrelationW_bounds
+  have hbeta := log_three_div_sqrt_three_fine_bounds_plusDet
+  have hprod := mul_strict_bounds_plusDet hbeta hcorr
+    (by norm_num) (by norm_num)
+  unfold plusDetAlternatingSharpModel
+  nlinarith [hprod.2]
 
 private theorem plusDetActualH0_bounds :
     (-11 / 5000 : ℝ) < plusDetActualH0 ∧

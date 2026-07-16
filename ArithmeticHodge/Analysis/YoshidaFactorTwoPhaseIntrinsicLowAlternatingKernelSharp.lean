@@ -1226,6 +1226,22 @@ private def intrinsicAlternatingRationalUpperMagnitude (t : ℝ) : ℝ :=
       (37 / 4000 : ℝ) * (347 / 2000 : ℝ) ^ 8 * (2 - t) ^ 8 +
       (23 / 400000 : ℝ) * (347 / 2000 : ℝ) ^ 7 * (2 - t) ^ 7)
 
+/-- A public rational majorant for the magnitude of the negative part of the
+sharp alternating kernel residual. -/
+def intrinsicAlternatingSignedLowerMagnitude (t : ℝ) : ℝ :=
+  (347 / 1000 : ℝ) *
+    ((1 / 15120 : ℝ) * (347 / 2000 : ℝ) ^ 8 * (2 - t) ^ 8 +
+      (37 / 4000 : ℝ) * (347 / 2000 : ℝ) ^ 8 * (2 + t) ^ 8 +
+      (23 / 400000 : ℝ) * (347 / 2000 : ℝ) ^ 7 * (2 + t) ^ 7)
+
+/-- A public rational majorant for the magnitude of the positive part of the
+sharp alternating kernel residual. -/
+def intrinsicAlternatingSignedUpperMagnitude (t : ℝ) : ℝ :=
+  (347 / 1000 : ℝ) *
+    ((1 / 15120 : ℝ) * (347 / 2000 : ℝ) ^ 8 * (2 + t) ^ 8 +
+      (37 / 4000 : ℝ) * (347 / 2000 : ℝ) ^ 8 * (2 - t) ^ 8 +
+      (23 / 400000 : ℝ) * (347 / 2000 : ℝ) ^ 7 * (2 - t) ^ 7)
+
 private def intrinsicAlternatingRefinedRationalUpper (t : ℝ) : ℝ :=
   ((1 / 15120 : ℝ) - 3 / 500) *
       (3465735 / 10000000 : ℝ) ^ 9 / 2 ^ 8 * (2 + t) ^ 8 +
@@ -1477,6 +1493,25 @@ private theorem intrinsicAlternatingResidualMagnitude_le_rational
   · exact mul_le_mul hA hsumLower (by positivity) (by positivity)
   · exact mul_le_mul hA hsumUpper (by positivity) (by positivity)
 
+/-- The sharp alternating residual lies between two explicit rational
+polynomials on the whole endpoint interval.  Keeping the two sides separate
+allows a signed correlation to retain cancellation. -/
+theorem intrinsicAlternatingSharpResidual_signed_envelope
+    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
+    -intrinsicAlternatingSignedLowerMagnitude t ≤
+        yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          intrinsicAlternatingKernelPolynomial6 t ∧
+      yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          intrinsicAlternatingKernelPolynomial6 t ≤
+        intrinsicAlternatingSignedUpperMagnitude t := by
+  have hres := intrinsicAlternatingKernel_residual_envelope ht0 ht2
+  have hrat := intrinsicAlternatingResidualMagnitude_le_rational ht0 ht2
+  unfold intrinsicAlternatingSignedLowerMagnitude
+    intrinsicAlternatingSignedUpperMagnitude at ⊢
+  unfold intrinsicAlternatingRationalLowerMagnitude
+    intrinsicAlternatingRationalUpperMagnitude at hrat
+  constructor <;> linarith [hres.1, hres.2, hrat.1, hrat.2]
+
 private theorem integral_rational_lower_q01Plus21 :
     (∫ t : ℝ in 0..2,
       intrinsicAlternatingRationalLowerMagnitude t *
@@ -1613,6 +1648,94 @@ private theorem intrinsicAlternatingRationalMagnitude_nonneg
   unfold intrinsicAlternatingRationalLowerMagnitude
     intrinsicAlternatingRationalUpperMagnitude
   constructor <;> positivity
+
+/-- A one-sided sharp-error estimate which preserves a global signed
+decomposition `q = p - n`.  Both profiles are nonnegative on the endpoint
+interval, so the negative part is charged only to the upper residual envelope
+instead of paying a uniform absolute-value bound. -/
+theorem intrinsicAlternatingSharpRegularError_lower_of_signed_decomposition
+    (q p n : ℝ → ℝ) (hq : Continuous q) (hp : Continuous p)
+    (hn : Continuous n) (hdecomp : q = p - n)
+    (hp0 : ∀ t, 0 ≤ t → t ≤ 2 → 0 ≤ p t)
+    (hn0 : ∀ t, 0 ≤ t → t ≤ 2 → 0 ≤ n t)
+    (B : ℝ)
+    (hmajor : (∫ t : ℝ in 0..2,
+      intrinsicAlternatingSignedLowerMagnitude t *
+          intrinsicAlternatingCorrelation p t +
+        intrinsicAlternatingSignedUpperMagnitude t *
+          intrinsicAlternatingCorrelation n t) < B) :
+    -B < intrinsicAlternatingSharpRegularError q := by
+  let Dq : ℝ → ℝ := intrinsicAlternatingCorrelation q
+  let Dp : ℝ → ℝ := intrinsicAlternatingCorrelation p
+  let Dn : ℝ → ℝ := intrinsicAlternatingCorrelation n
+  let R : ℝ → ℝ := fun t ↦
+    yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+      intrinsicAlternatingKernelPolynomial6 t
+  let G : ℝ → ℝ := fun t ↦
+    intrinsicAlternatingSignedLowerMagnitude t * Dp t +
+      intrinsicAlternatingSignedUpperMagnitude t * Dn t
+  have hDq : Continuous Dq := by
+    dsimp only [Dq]
+    unfold intrinsicAlternatingCorrelation
+    fun_prop
+  have hRI : IntervalIntegrable (fun t ↦ R t * Dq t) volume 0 2 := by
+    dsimp only [R]
+    exact intervalIntegrable_intrinsicAlternatingSharpResidual Dq hDq
+  have hGI : IntervalIntegrable (fun t ↦ -G t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    dsimp only [G, Dp, Dn]
+    unfold intrinsicAlternatingSignedLowerMagnitude
+      intrinsicAlternatingSignedUpperMagnitude intrinsicAlternatingCorrelation
+    fun_prop
+  have hlowerIntegral :
+      (∫ t : ℝ in 0..2, -G t) ≤ ∫ t : ℝ in 0..2, R t * Dq t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hGI hRI
+    intro t ht
+    have henv := intrinsicAlternatingSharpResidual_signed_envelope ht.1 ht.2
+    have hcommon : 0 ≤ t * (2 - t) :=
+      mul_nonneg ht.1 (sub_nonneg.mpr ht.2)
+    have hDp0 : 0 ≤ Dp t := by
+      dsimp only [Dp]
+      unfold intrinsicAlternatingCorrelation
+      exact mul_nonneg hcommon (hp0 t ht.1 ht.2)
+    have hDn0 : 0 ≤ Dn t := by
+      dsimp only [Dn]
+      unfold intrinsicAlternatingCorrelation
+      exact mul_nonneg hcommon (hn0 t ht.1 ht.2)
+    have hDqEq : Dq t = Dp t - Dn t := by
+      dsimp only [Dq, Dp, Dn]
+      unfold intrinsicAlternatingCorrelation
+      rw [show q t = p t - n t by
+        simpa only [Pi.sub_apply] using congrFun hdecomp t]
+      ring
+    have hpositive := mul_le_mul_of_nonneg_right henv.1 hDp0
+    have hnegative := mul_le_mul_of_nonneg_right henv.2 hDn0
+    rw [hDqEq]
+    dsimp only [G, R]
+    calc
+      -(intrinsicAlternatingSignedLowerMagnitude t * Dp t +
+          intrinsicAlternatingSignedUpperMagnitude t * Dn t) =
+          (-intrinsicAlternatingSignedLowerMagnitude t) * Dp t -
+            intrinsicAlternatingSignedUpperMagnitude t * Dn t := by ring
+      _ ≤ (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+            intrinsicAlternatingKernelPolynomial6 t) * Dp t -
+          (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+            intrinsicAlternatingKernelPolynomial6 t) * Dn t :=
+        sub_le_sub hpositive hnegative
+      _ = (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+            intrinsicAlternatingKernelPolynomial6 t) * (Dp t - Dn t) := by ring
+  have hnegIntegral :
+      (∫ t : ℝ in 0..2, -G t) = -(∫ t : ℝ in 0..2, G t) := by
+    rw [intervalIntegral.integral_neg]
+  have herr := intrinsicAlternatingSharpRegularError_eq_integral q hq
+  calc
+    -B < -(∫ t : ℝ in 0..2, G t) := by
+      apply neg_lt_neg
+      simpa only [G, Dp, Dn] using hmajor
+    _ = ∫ t : ℝ in 0..2, -G t := hnegIntegral.symm
+    _ ≤ ∫ t : ℝ in 0..2, R t * Dq t := hlowerIntegral
+    _ = intrinsicAlternatingSharpRegularError q := by
+      simpa only [R, Dq] using herr.symm
 
 private theorem intrinsicAlternatingCorrelation_q01Plus21_nonneg_sharp
     {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ 2) :
