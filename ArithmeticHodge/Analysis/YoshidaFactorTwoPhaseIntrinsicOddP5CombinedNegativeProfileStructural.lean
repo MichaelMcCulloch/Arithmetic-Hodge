@@ -907,7 +907,7 @@ private theorem plusP5_log_pi_mul_log_two_bounds :
   · exact (Real.strictMonoOn_log (mul_pos Real.pi_pos hlogTwoPos)
       (by norm_num) hprodUpper).trans hlogUpper
 
-private theorem plusP5_scalarMassLoss_fine_bounds :
+theorem plusP5_scalarMassLoss_fine_bounds :
     (13554324 / 10000000 : ℝ) < yoshidaEndpointScalarMassLoss ∧
       yoshidaEndpointScalarMassLoss < (13554329 / 10000000 : ℝ) := by
   have hgamma := fineGammaInterval_contains
