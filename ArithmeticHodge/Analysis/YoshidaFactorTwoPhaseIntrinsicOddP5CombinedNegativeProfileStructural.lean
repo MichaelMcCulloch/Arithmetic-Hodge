@@ -13,15 +13,23 @@ noncomputable section
 
 open MeasureTheory Real Set
 open CenteredEndpointCorrelation
+open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOcticPotential
+open YoshidaEndpointOddCleanPositive
 open YoshidaEndpointOddResidualRegularity
+open YoshidaFactorTwoCenteredPhysical
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationOneSided
 open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
+open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
+open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicLow
+open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseIntrinsicOddPerturbationLoewnerSharp
+open YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
@@ -558,6 +566,80 @@ theorem poleFreeAnalyticError_plusP5OddQCorrelation_eq :
     poleFreeAnalyticError_add_profile C11 C13 hC11 hC13]
   dsimp only [C11, C13, C33, C15, C35]
   repeat rw [poleFreeAnalyticError_const_mul_profile]
+  ring
+
+/-! ## Exact negative-endpoint B1 profile assembly -/
+
+private theorem oddStructuralRegularError11_sharp_expansion :
+    oddStructuralRegularError oddStructuralCorrelation11 =
+      poleFreeAnalyticError oddStructuralCorrelation11 + oddPolynomialMoment11 := by
+  have h := evenStructuralRegularError_eq_analytic_add_polynomial
+    oddStructuralCorrelation11 (by unfold oddStructuralCorrelation11; fun_prop)
+  rw [integral_polynomialDifference_mul_oddCorrelations.1] at h
+  simpa [evenStructuralRegularError, oddStructuralRegularError] using h
+
+private theorem oddStructuralRegularError13_sharp_expansion :
+    oddStructuralRegularError oddStructuralCorrelation13 =
+      poleFreeAnalyticError oddStructuralCorrelation13 + oddPolynomialMoment13 := by
+  have h := evenStructuralRegularError_eq_analytic_add_polynomial
+    oddStructuralCorrelation13 (by unfold oddStructuralCorrelation13; fun_prop)
+  rw [integral_polynomialDifference_mul_oddCorrelations.2.1] at h
+  simpa [evenStructuralRegularError, oddStructuralRegularError] using h
+
+def plusP5OddCompletionSinhMoment : ℝ :=
+  (-10319 / 4800 : ℝ) * oddCleanSinhMoment1 +
+    (15 / 8 : ℝ) * oddCleanSinhMoment3 + oddP5CleanSinhMoment
+
+def plusP5OddB1CleanEnvelope : ℝ :=
+  (-10319 / 4800 : ℝ) *
+      oddCleanRegularEnvelopeError oddStructuralCorrelation11 +
+    (15 / 8 : ℝ) *
+      oddCleanRegularEnvelopeError oddStructuralCorrelation13 +
+    oddP5CleanRegularEnvelopeError15
+
+def plusP5OddB1Base : ℝ :=
+  (-10319 / 4800 : ℝ) *
+      ((14 / 9 : ℝ) - (2 / 3 : ℝ) *
+        (Real.log 2 + yoshidaEndpointScalarMassLoss)) +
+    (15 / 8 : ℝ) * (1 / 5 : ℝ) + (1 / 14 : ℝ) -
+    yoshidaEndpointA *
+      ((-10319 / 4800 : ℝ) * oddCleanRegularPolynomialGram11 +
+        (15 / 8 : ℝ) * oddCleanRegularPolynomialGram13 +
+        oddP5CleanRegularPolynomial15) -
+    ((-10319 / 4800 : ℝ) *
+        (oddPolynomialMoment11 - 4 / 375 +
+          (2 / 3 - (2 / 3 : ℝ) * Real.log 2) -
+          (Real.log 2 / Real.sqrt 2) * (2 / 3)) +
+      (15 / 8 : ℝ) *
+        (oddPolynomialMoment13 + (7 - 10 * Real.log 2)) +
+      (oddP5PolynomialMoment15 + (165 - 238 * Real.log 2)) -
+      (Real.log 3 / Real.sqrt 3) * plusP5OddB1Correlation
+        (factorTwoPrimeShift / yoshidaEndpointA))
+
+theorem plusP5OddB1_eq_structuralProfile :
+    plusP5OddB1 =
+      plusP5OddB1Base -
+        yoshidaEndpointA * plusP5OddB1CleanEnvelope -
+        2 * yoshidaEndpointA * oddCleanSinhMoment1 *
+          plusP5OddCompletionSinhMoment -
+        poleFreeAnalyticError plusP5OddB1Correlation := by
+  rw [poleFreeAnalyticError_plusP5OddB1Correlation_eq]
+  unfold plusP5OddB1 plusP5OddB1Base plusP5OddB1CleanEnvelope
+    plusP5OddCompletionSinhMoment
+    factorTwoIntrinsicSixUnbalancedOMinus11
+    factorTwoIntrinsicSixUnbalancedOMinus13
+    factorTwoIntrinsicSixUnbalancedOMinus15
+    factorTwoIntrinsicOddPhaseLow11 factorTwoIntrinsicOddPhaseLow13
+    factorTwoIntrinsicFourP45Cross15
+  rw [yoshidaEndpointOddLowGram11_structural_eq,
+    yoshidaEndpointOddLowGram13_structural_eq,
+    cleanBilinear_p1_p5_eq,
+    factorTwoCenteredSymmetricPerturbation_p1_structural_eq,
+    factorTwoCenteredSymmetricPerturbationBilinear_p1_p3_structural_eq,
+    factorTwoCenteredSymmetricPerturbationBilinear_p1_p5_structural_eq,
+    oddStructuralRegularError11_sharp_expansion,
+    oddStructuralRegularError13_sharp_expansion]
+  unfold plusP5OddB1Correlation
   ring
 
 /-! ## Global Bernstein bounds for the three complete correlations -/
