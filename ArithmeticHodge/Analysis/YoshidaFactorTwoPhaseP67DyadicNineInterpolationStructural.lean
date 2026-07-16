@@ -9,6 +9,11 @@ set_option autoImplicit false
 
 open Matrix MeasureTheory Polynomial Real Set
 open ArithmeticHodge.Analysis.FiniteRepeatedRolle
+open ArithmeticHodge.Analysis.ShiftedLegendreOrthogonality
+open ArithmeticHodge.Analysis.YoshidaEndpointWeightedCauchy
+open ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicHigherResidual
+open ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicResidual
+open ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualPolynomialCancellationStructural
 
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67DyadicNineInterpolationStructural
 
@@ -332,6 +337,179 @@ theorem integral_factorTwoDyadicNineNodalPolynomial_sq_le :
   repeat rw [intervalIntegral.integral_mul_const]
   repeat rw [YoshidaEndpointOcticPotential.integral_pow_nat]
   norm_num
+
+/-- The fixed dyadic grid converts a pointwise ninth-derivative envelope
+into the universal centered `L²` constant
+`(3/200000) / (9!)² = 1/8778792960000000`. -/
+theorem integral_sq_sub_polynomial_le_dyadicNineRemainder
+    (F : ℝ → ℝ) (hF : ContinuousOn F (Icc (-1 : ℝ) 1))
+    (Q : ℝ[X]) (M : ℝ) (hM : 0 ≤ M)
+    (hrem : ∀ x ∈ Icc (-1 : ℝ) 1,
+      |F x - Q.eval ((x + 1) / 2)| ≤
+        (M / 362880) *
+          |factorTwoDyadicNineNodalPolynomial.eval x|) :
+    (∫ x : ℝ in -1..1,
+      (F x - Q.eval ((x + 1) / 2)) ^ 2) ≤
+        (1 / 8778792960000000 : ℝ) * M ^ 2 := by
+  have hQcont : Continuous
+      (fun x : ℝ ↦ Q.eval ((x + 1) / 2)) := by
+    fun_prop
+  have hRcont : ContinuousOn
+      (fun x : ℝ ↦ (F x - Q.eval ((x + 1) / 2)) ^ 2)
+      (Icc (-1 : ℝ) 1) := (hF.sub hQcont.continuousOn).pow 2
+  have hPcont : Continuous
+      (fun x : ℝ ↦
+        (M / 362880) ^ 2 *
+          factorTwoDyadicNineNodalPolynomial.eval x ^ 2) := by
+    fun_prop
+  have hmono :
+      (∫ x : ℝ in -1..1,
+        (F x - Q.eval ((x + 1) / 2)) ^ 2) ≤
+      ∫ x : ℝ in -1..1,
+        (M / 362880) ^ 2 *
+          factorTwoDyadicNineNodalPolynomial.eval x ^ 2 := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      (hRcont.intervalIntegrable_of_Icc (by norm_num))
+      (hPcont.intervalIntegrable (-1) 1)
+    intro x hx
+    have h := hrem x hx
+    have hright :
+        0 ≤ (M / 362880) *
+          |factorTwoDyadicNineNodalPolynomial.eval x| := by
+      positivity
+    have hsquare := (sq_le_sq₀ (abs_nonneg _) hright).2 h
+    rw [sq_abs] at hsquare
+    calc
+      (F x - Q.eval ((x + 1) / 2)) ^ 2 ≤
+          ((M / 362880) *
+            |factorTwoDyadicNineNodalPolynomial.eval x|) ^ 2 := hsquare
+      _ = (M / 362880) ^ 2 *
+          factorTwoDyadicNineNodalPolynomial.eval x ^ 2 := by
+        rw [mul_pow, sq_abs]
+  calc
+    _ ≤ ∫ x : ℝ in -1..1,
+        (M / 362880) ^ 2 *
+          factorTwoDyadicNineNodalPolynomial.eval x ^ 2 := hmono
+    _ = (M / 362880) ^ 2 *
+        (∫ x : ℝ in -1..1,
+          factorTwoDyadicNineNodalPolynomial.eval x ^ 2) := by
+      rw [intervalIntegral.integral_const_mul]
+    _ ≤ (M / 362880) ^ 2 * (3 / 200000 : ℝ) :=
+      mul_le_mul_of_nonneg_left
+        integral_factorTwoDyadicNineNodalPolynomial_sq_le (sq_nonneg _)
+    _ = (1 / 8778792960000000 : ℝ) * M ^ 2 := by
+      ring
+
+/-- Combined interpolation-and-mass form.  This is the interface consumed
+by the four forward-Hankel representers: only their ninth derivative bound
+remains representer-specific. -/
+theorem exists_dyadicNine_interpolant_L2_remainder
+    (F : ℝ → ℝ) (hF : ContDiffOn ℝ 9 F (Icc (-1 : ℝ) 1))
+    (M : ℝ)
+    (h9 : ∀ x ∈ Icc (-1 : ℝ) 1,
+      |iteratedDerivWithin 9 F (Icc (-1 : ℝ) 1) x| ≤ M) :
+    ∃ Q : ℝ[X], Q.natDegree < 9 ∧
+      (∀ x ∈ Icc (-1 : ℝ) 1,
+        |F x - Q.eval ((x + 1) / 2)| ≤
+          (M / 362880) *
+            |factorTwoDyadicNineNodalPolynomial.eval x|) ∧
+      (∫ x : ℝ in -1..1,
+        (F x - Q.eval ((x + 1) / 2)) ^ 2) ≤
+          (1 / 8778792960000000 : ℝ) * M ^ 2 := by
+  have hM : 0 ≤ M :=
+    (abs_nonneg (iteratedDerivWithin 9 F (Icc (-1 : ℝ) 1) 0)).trans
+      (h9 0 (by norm_num))
+  obtain ⟨Q, hQ, hrem⟩ := exists_dyadicNine_interpolant_remainder F hF M h9
+  exact ⟨Q, hQ, hrem,
+    integral_sq_sub_polynomial_le_dyadicNineRemainder
+      F hF.continuousOn Q M hM hrem⟩
+
+/-! ## Moment-gap pairing -/
+
+private theorem sq_intervalIntegral_mul_le_dyadic
+    (f g : ℝ → ℝ) (hf : Continuous f) (hg : Continuous g) :
+    (∫ x : ℝ in -1..1, f x * g x) ^ 2 ≤
+      (∫ x : ℝ in -1..1, f x ^ 2) *
+        (∫ x : ℝ in -1..1, g x ^ 2) := by
+  let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  have hfMeas : AEStronglyMeasurable f μ :=
+    hf.aestronglyMeasurable.restrict
+  have hgMeas : AEStronglyMeasurable g μ :=
+    hg.aestronglyMeasurable.restrict
+  have hfLp : MemLp f 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hfMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖f x‖ ^ 2)
+        (Icc (-1 : ℝ) 1) :=
+      (hf.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hgLp : MemLp g 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hgMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖g x‖ ^ 2)
+        (Icc (-1 : ℝ) 1) :=
+      (hg.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have h := sq_integral_mul_le_weighted μ (fun _ : ℝ ↦ 1) f g
+    (by simp) (by simpa using hfLp) (by simpa using hgLp)
+  repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+  simpa only [μ, div_one, one_mul] using h
+
+/-- A nine-moment gap and a ninth-derivative envelope bound the whole
+representer pairing at once.  The polynomial interpolant disappears by the
+moment gap; Cauchy--Schwarz sees only the single dyadic remainder mass. -/
+theorem sq_intervalIntegral_mul_le_dyadicNineRemainder
+    (w F : ℝ → ℝ) (hw : Continuous w) (hF : Continuous F)
+    (hF9 : ContDiffOn ℝ 9 F (Icc (-1 : ℝ) 1))
+    (hlow : centeredLegendreMomentsVanishBelow w 9)
+    (M : ℝ)
+    (h9 : ∀ x ∈ Icc (-1 : ℝ) 1,
+      |iteratedDerivWithin 9 F (Icc (-1 : ℝ) 1) x| ≤ M) :
+    (∫ x : ℝ in -1..1, w x * F x) ^ 2 ≤
+      (1 / 8778792960000000 : ℝ) * M ^ 2 *
+        factorTwoIntrinsicEnergy w := by
+  obtain ⟨Q, hQ, _hrem, hmass⟩ :=
+    exists_dyadicNine_interpolant_L2_remainder F hF9 M h9
+  let R : ℝ → ℝ := fun x ↦ F x - Q.eval ((x + 1) / 2)
+  have hR : Continuous R := by
+    dsimp only [R]
+    fun_prop
+  have hpoly :
+      (∫ x : ℝ in -1..1, w x * Q.eval ((x + 1) / 2)) = 0 :=
+    intervalIntegral_mul_shiftedPolynomial_eq_zero w hw hlow Q hQ
+  have hwR : IntervalIntegrable (fun x : ℝ ↦ w x * R x)
+      volume (-1) 1 := (hw.mul hR).intervalIntegrable (-1) 1
+  have hwQ : IntervalIntegrable
+      (fun x : ℝ ↦ w x * Q.eval ((x + 1) / 2))
+      volume (-1) 1 := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hpair :
+      (∫ x : ℝ in -1..1, w x * F x) =
+        ∫ x : ℝ in -1..1, R x * w x := by
+    calc
+      (∫ x : ℝ in -1..1, w x * F x) =
+          ∫ x : ℝ in -1..1,
+            w x * R x + w x * Q.eval ((x + 1) / 2) := by
+        apply intervalIntegral.integral_congr
+        intro x _hx
+        dsimp only [R]
+        ring
+      _ = (∫ x : ℝ in -1..1, w x * R x) +
+          ∫ x : ℝ in -1..1,
+            w x * Q.eval ((x + 1) / 2) := by
+        rw [intervalIntegral.integral_add hwR hwQ]
+      _ = ∫ x : ℝ in -1..1, R x * w x := by
+        rw [hpoly, add_zero]
+        apply intervalIntegral.integral_congr
+        intro x _hx
+        ring
+  have hcauchy := sq_intervalIntegral_mul_le_dyadic R w hR hw
+  have hwNonneg : 0 ≤ ∫ x : ℝ in -1..1, w x ^ 2 := by
+    exact intervalIntegral.integral_nonneg (by norm_num) fun x _hx ↦
+      sq_nonneg (w x)
+  rw [hpair]
+  exact hcauchy.trans <| by
+    unfold factorTwoIntrinsicEnergy
+    exact mul_le_mul_of_nonneg_right hmass hwNonneg
 
 end
 
