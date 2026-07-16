@@ -57,6 +57,7 @@ open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseOddAffineKernelEstimate
 open YoshidaFactorTwoStructuralConstantBounds
+open YoshidaRegularKernelBound
 
 /-!
 # The final positive static Schur gate
@@ -1249,6 +1250,571 @@ private theorem plusDetSharpModelW_composite_decomposition :
       ring
     _ = _ := plusDetCompositeSharp_decomposition _ _ _ _ _
 
+/-! ## Joint symmetric--alternating analytic error -/
+
+private def plusDetJointKernelIntegrand
+    (Ce Ca : ℝ → ℝ) (t : ℝ) : ℝ :=
+  (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * Ce t +
+    (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+      intrinsicAlternatingKernelPolynomial6 t) * Ca t
+
+private def plusDetJointAbsoluteMajorant
+    (P M : ℝ → ℝ) (t : ℝ) : ℝ :=
+  yoshidaEndpointA *
+    (integratedPoleFreeEnvelope
+        (yoshidaEndpointA * (2 + t) / 2) * P t +
+      integratedPoleFreeEnvelope
+        (yoshidaEndpointA * (2 - t) / 2) * M t)
+
+private def plusDetJointSignedCost
+    (Pp Np Pm Nm : ℝ → ℝ) (t : ℝ) : ℝ :=
+  yoshidaEndpointA *
+    (jointRegularEnvelope (yoshidaEndpointA * (2 + t) / 2) * Pp t +
+      jointCoshEnvelope (yoshidaEndpointA * (2 + t) / 2) * Np t +
+      jointRegularEnvelope (yoshidaEndpointA * (2 - t) / 2) * Pm t +
+      jointCoshEnvelope (yoshidaEndpointA * (2 - t) / 2) * Nm t)
+
+private theorem continuous_plusDetCompositeCe (u0 u2 : ℝ) :
+    Continuous (plusDetCompositeCe u0 u2) := by
+  unfold plusDetCompositeCe
+  exact (continuous_const.mul continuous_factorTwoIntrinsicP4Correlation04).add
+    (continuous_const.mul continuous_factorTwoIntrinsicP4Correlation24)
+
+private theorem continuous_plusDetCompositeCa
+    (k : ℝ) (q : ℝ → ℝ) (hq : Continuous q) :
+    Continuous (plusDetCompositeCa k q) := by
+  unfold plusDetCompositeCa intrinsicAlternatingCorrelation
+  fun_prop
+
+@[fun_prop]
+private theorem continuous_integratedPoleFreeEnvelope_plusDet :
+    Continuous integratedPoleFreeEnvelope := by
+  rw [show integratedPoleFreeEnvelope = fun u : ℝ ↦
+      (193 / 3628800 : ℝ) * u ^ 7 +
+        (419 / 48384 : ℝ) * u ^ 8 +
+        (1 / 302400 : ℝ) * u ^ 9 +
+        (7 / 8640 : ℝ) * u ^ 10 +
+        (31 / 304819200 : ℝ) * u ^ 11 +
+        (61 / 2073600 : ℝ) * u ^ 12 by
+    funext u
+    exact integratedPoleFreeEnvelope_expansion u]
+  fun_prop
+
+@[fun_prop]
+private theorem continuous_jointCoshEnvelope_plusDet :
+    Continuous jointCoshEnvelope := by
+  unfold jointCoshEnvelope
+  fun_prop
+
+@[fun_prop]
+private theorem continuous_jointRegularEnvelope_plusDet :
+    Continuous jointRegularEnvelope := by
+  unfold jointRegularEnvelope
+  exact continuous_integratedPoleFreeEnvelope_plusDet.sub
+    continuous_jointCoshEnvelope_plusDet
+
+private theorem measurable_yoshidaRegularKernel_plusDet :
+    Measurable yoshidaRegularKernel := by
+  unfold yoshidaRegularKernel
+  apply Measurable.ite
+  · simpa only [Set.setOf_eq_eq_singleton] using
+      measurableSet_singleton (0 : ℝ)
+  · exact measurable_const
+  · exact ((Real.measurable_exp.comp (measurable_id.div_const 2)).div
+      (measurable_const.mul Real.measurable_sinh)).sub
+        (measurable_const.div (measurable_const.mul measurable_id))
+
+private theorem measurable_symmetricRegularWeight_plusDet :
+    Measurable factorTwoCenteredSymmetricRegularWeight := by
+  unfold factorTwoCenteredSymmetricRegularWeight
+  exact (((measurable_const.mul
+      (Real.measurable_cosh.comp (by fun_prop))).add
+        (measurable_const.mul
+          (Real.measurable_cosh.comp (by fun_prop)))).sub
+      (measurable_yoshidaRegularKernel_plusDet.comp (by fun_prop))).sub
+        (measurable_yoshidaRegularKernel_plusDet.comp (by fun_prop))
+
+private theorem measurable_antisymmetricRegularWeight_plusDet :
+    Measurable factorTwoCenteredAntisymmetricRegularWeight := by
+  unfold factorTwoCenteredAntisymmetricRegularWeight
+  exact (((measurable_const.mul
+      (Real.measurable_cosh.comp (by fun_prop))).sub
+        (measurable_const.mul
+          (Real.measurable_cosh.comp (by fun_prop)))).sub
+      (measurable_yoshidaRegularKernel_plusDet.comp (by fun_prop))).add
+        (measurable_yoshidaRegularKernel_plusDet.comp (by fun_prop))
+
+private theorem intervalIntegrable_plusDetJointKernelIntegrand
+    (Ce Ca : ℝ → ℝ) (hCe : Continuous Ce) (hCa : Continuous Ca) :
+    IntervalIntegrable (plusDetJointKernelIntegrand Ce Ca) volume 0 2 := by
+  let g : ℝ → ℝ := fun t ↦
+    plusDetJointAbsoluteMajorant (fun s ↦ |Ce s + Ca s|)
+      (fun s ↦ |Ce s - Ca s|) t
+  have hg : IntervalIntegrable g volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    dsimp only [g]
+    unfold plusDetJointAbsoluteMajorant
+    fun_prop
+  have hfmeas : AEStronglyMeasurable
+      (plusDetJointKernelIntegrand Ce Ca)
+      (volume.restrict (Ioc (0 : ℝ) 2)) := by
+    apply Measurable.aestronglyMeasurable
+    unfold plusDetJointKernelIntegrand oddLowPoleFreeKernel
+    exact (((measurable_const.mul
+      measurable_symmetricRegularWeight_plusDet).sub
+        continuous_poleFreeKernelPolynomial6.measurable).mul hCe.measurable).add
+      (((measurable_const.mul
+        measurable_antisymmetricRegularWeight_plusDet).sub
+          (by
+            rw [show intrinsicAlternatingKernelPolynomial6 = fun t : ℝ ↦
+                intrinsicAlternatingKernelCoeff1 yoshidaEndpointA * t +
+                  intrinsicAlternatingKernelCoeff3 yoshidaEndpointA * t ^ 3 +
+                  intrinsicAlternatingKernelCoeff5 yoshidaEndpointA * t ^ 5 by
+              funext t
+              exact intrinsicAlternatingKernelPolynomial6_expansion t]
+            fun_prop : Measurable intrinsicAlternatingKernelPolynomial6)).mul
+        hCa.measurable)
+  have hfg : ∀ᵐ t : ℝ ∂(volume.restrict (Ioc (0 : ℝ) 2)),
+      ‖plusDetJointKernelIntegrand Ce Ca t‖ ≤ g t := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have htIcc : t ∈ Icc (0 : ℝ) 2 := ⟨ht.1.le, ht.2⟩
+    have hpoint := abs_jointSymmetricAlternatingKernelError_le Ce Ca htIcc
+    dsimp only [g, plusDetJointAbsoluteMajorant]
+    rw [Real.norm_eq_abs]
+    exact hpoint
+  constructor
+  · exact Integrable.mono' hg.1 hfmeas hfg
+  · simp
+
+/-- The two analytic remainders are exactly one joint kernel integral. -/
+private theorem plusDetCompositeJointError_eq_integral
+    (u0 u2 k : ℝ) (q : ℝ → ℝ) (hq : Continuous q) :
+    plusDetCompositeJointError u0 u2 k q =
+      ∫ t : ℝ in 0..2,
+        plusDetJointKernelIntegrand (plusDetCompositeCe u0 u2)
+          (plusDetCompositeCa k q) t := by
+  let Ce : ℝ → ℝ := plusDetCompositeCe u0 u2
+  let Ca : ℝ → ℝ := plusDetCompositeCa k q
+  have hCe : Continuous Ce := by
+    simpa only [Ce] using continuous_plusDetCompositeCe u0 u2
+  have hCa : Continuous Ca := by
+    simpa only [Ca] using continuous_plusDetCompositeCa k q hq
+  have hsym := intervalIntegrable_poleFreeAnalyticError Ce hCe
+  have hjoint := intervalIntegrable_plusDetJointKernelIntegrand Ce Ca hCe hCa
+  have halt : IntervalIntegrable
+      (fun t : ℝ ↦
+        (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+          intrinsicAlternatingKernelPolynomial6 t) * Ca t) volume 0 2 := by
+    have hsub := hjoint.sub hsym
+    rw [show (fun t : ℝ ↦
+        plusDetJointKernelIntegrand Ce Ca t -
+          (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * Ce t) =
+        fun t ↦
+          (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+            intrinsicAlternatingKernelPolynomial6 t) * Ca t by
+      funext t
+      unfold plusDetJointKernelIntegrand
+      ring] at hsub
+    exact hsub
+  have hsharp := intrinsicAlternatingSharpRegularError_eq_integral q hq
+  have hscale :
+      k * intrinsicAlternatingSharpRegularError q =
+        ∫ t : ℝ in 0..2,
+          (yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+            intrinsicAlternatingKernelPolynomial6 t) * Ca t := by
+    rw [hsharp, ← intervalIntegral.integral_const_mul]
+    apply intervalIntegral.integral_congr
+    intro t _ht
+    dsimp only [Ca]
+    unfold plusDetCompositeCa
+    ring
+  unfold plusDetCompositeJointError
+  change poleFreeAnalyticError Ce +
+      k * intrinsicAlternatingSharpRegularError q = _
+  rw [hscale]
+  unfold poleFreeAnalyticError
+  rw [← intervalIntegral.integral_add hsym halt]
+  apply intervalIntegral.integral_congr
+  intro t _ht
+  rfl
+
+/-- Absolute joint-error transfer through nonnegative Bernstein splits of
+the sum and difference profiles. -/
+private theorem abs_plusDetCompositeJointError_le_of_signed_splits
+    (u0 u2 k : ℝ) (q Pp Np Pm Nm : ℝ → ℝ)
+    (hq : Continuous q) (hPp : Continuous Pp) (hNp : Continuous Np)
+    (hPm : Continuous Pm) (hNm : Continuous Nm)
+    (hplus : ∀ t, plusDetCompositeP u0 u2 k q t = Pp t - Np t)
+    (hminus : ∀ t, plusDetCompositeM u0 u2 k q t = Pm t - Nm t)
+    (hnonneg : ∀ t ∈ Icc (0 : ℝ) 2,
+      0 ≤ Pp t ∧ 0 ≤ Np t ∧ 0 ≤ Pm t ∧ 0 ≤ Nm t) :
+    |plusDetCompositeJointError u0 u2 k q| ≤
+      ∫ t : ℝ in 0..2,
+        plusDetJointAbsoluteMajorant (fun s ↦ Pp s + Np s)
+          (fun s ↦ Pm s + Nm s) t := by
+  let Ce : ℝ → ℝ := plusDetCompositeCe u0 u2
+  let Ca : ℝ → ℝ := plusDetCompositeCa k q
+  let g : ℝ → ℝ := fun t ↦
+    plusDetJointAbsoluteMajorant (fun s ↦ Pp s + Np s)
+      (fun s ↦ Pm s + Nm s) t
+  have hCe : Continuous Ce := by
+    simpa only [Ce] using continuous_plusDetCompositeCe u0 u2
+  have hCa : Continuous Ca := by
+    simpa only [Ca] using continuous_plusDetCompositeCa k q hq
+  have hf := intervalIntegrable_plusDetJointKernelIntegrand Ce Ca hCe hCa
+  have hg : IntervalIntegrable g volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    dsimp only [g]
+    unfold plusDetJointAbsoluteMajorant
+    fun_prop
+  have habs :
+      |∫ t : ℝ in 0..2, plusDetJointKernelIntegrand Ce Ca t| ≤
+        ∫ t : ℝ in 0..2, |plusDetJointKernelIntegrand Ce Ca t| :=
+    intervalIntegral.abs_integral_le_integral_abs (by norm_num)
+  have hmono :
+      (∫ t : ℝ in 0..2, |plusDetJointKernelIntegrand Ce Ca t|) ≤
+        ∫ t : ℝ in 0..2, g t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hf.abs hg
+    intro t ht
+    have hpoint := abs_jointSymmetricAlternatingKernelError_le Ce Ca ht
+    have hsplit := hnonneg t ht
+    have hpEq : Ce t + Ca t = Pp t - Np t := by
+      simpa only [Ce, Ca, plusDetCompositeP] using hplus t
+    have hmEq : Ce t - Ca t = Pm t - Nm t := by
+      simpa only [Ce, Ca, plusDetCompositeM] using hminus t
+    have hpabs : |Ce t + Ca t| ≤ Pp t + Np t := by
+      rw [hpEq]
+      calc
+        |Pp t - Np t| ≤ |Pp t| + |Np t| := abs_sub _ _
+        _ = Pp t + Np t := by
+          rw [abs_of_nonneg hsplit.1, abs_of_nonneg hsplit.2.1]
+    have hmabs : |Ce t - Ca t| ≤ Pm t + Nm t := by
+      rw [hmEq]
+      calc
+        |Pm t - Nm t| ≤ |Pm t| + |Nm t| := abs_sub _ _
+        _ = Pm t + Nm t := by
+          rw [abs_of_nonneg hsplit.2.2.1,
+            abs_of_nonneg hsplit.2.2.2]
+    have hzp0 : 0 ≤ yoshidaEndpointA * (2 + t) / 2 := by
+      exact div_nonneg
+        (mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.1]))
+        (by norm_num)
+    have hzm0 : 0 ≤ yoshidaEndpointA * (2 - t) / 2 := by
+      exact div_nonneg
+        (mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.2]))
+        (by norm_num)
+    have hEp0 := integratedPoleFreeEnvelope_nonneg hzp0
+    have hEm0 := integratedPoleFreeEnvelope_nonneg hzm0
+    dsimp only [g, plusDetJointAbsoluteMajorant]
+    exact hpoint.trans (mul_le_mul_of_nonneg_left
+      (add_le_add (mul_le_mul_of_nonneg_left hpabs hEp0)
+        (mul_le_mul_of_nonneg_left hmabs hEm0))
+      yoshidaEndpointA_pos.le)
+  rw [plusDetCompositeJointError_eq_integral u0 u2 k q hq]
+  change |∫ t : ℝ in 0..2, plusDetJointKernelIntegrand Ce Ca t| ≤ _
+  exact habs.trans hmono
+
+/-- Signed lower transfer: positive Bernstein pieces pay only the regular
+envelope, while negative pieces pay only the degree-eight cosh envelope. -/
+private theorem plusDetCompositeJointError_lower_of_signed_splits
+    (u0 u2 k : ℝ) (q Pp Np Pm Nm : ℝ → ℝ)
+    (hq : Continuous q) (hPp : Continuous Pp) (hNp : Continuous Np)
+    (hPm : Continuous Pm) (hNm : Continuous Nm)
+    (hplus : ∀ t, plusDetCompositeP u0 u2 k q t = Pp t - Np t)
+    (hminus : ∀ t, plusDetCompositeM u0 u2 k q t = Pm t - Nm t)
+    (hnonneg : ∀ t ∈ Icc (0 : ℝ) 2,
+      0 ≤ Pp t ∧ 0 ≤ Np t ∧ 0 ≤ Pm t ∧ 0 ≤ Nm t) :
+    -(∫ t : ℝ in 0..2, plusDetJointSignedCost Pp Np Pm Nm t) ≤
+      plusDetCompositeJointError u0 u2 k q := by
+  let Ce : ℝ → ℝ := plusDetCompositeCe u0 u2
+  let Ca : ℝ → ℝ := plusDetCompositeCa k q
+  let g : ℝ → ℝ := plusDetJointSignedCost Pp Np Pm Nm
+  have hCe : Continuous Ce := by
+    simpa only [Ce] using continuous_plusDetCompositeCe u0 u2
+  have hCa : Continuous Ca := by
+    simpa only [Ca] using continuous_plusDetCompositeCa k q hq
+  have hf := intervalIntegrable_plusDetJointKernelIntegrand Ce Ca hCe hCa
+  have hg : IntervalIntegrable g volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    dsimp only [g]
+    unfold plusDetJointSignedCost
+    fun_prop
+  have hmono :
+      (∫ t : ℝ in 0..2, -g t) ≤
+        ∫ t : ℝ in 0..2, plusDetJointKernelIntegrand Ce Ca t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hg.neg hf
+    intro t ht
+    have hsplit := hnonneg t ht
+    have hpEq : Ce t + Ca t = Pp t - Np t := by
+      simpa only [Ce, Ca, plusDetCompositeP] using hplus t
+    have hmEq : Ce t - Ca t = Pm t - Nm t := by
+      simpa only [Ce, Ca, plusDetCompositeM] using hminus t
+    have hpoint := jointSymmetricAlternatingKernelError_lower_of_signed_decomposition
+      Ce Ca Pp Np Pm Nm ht hpEq hmEq hsplit.1 hsplit.2.1
+        hsplit.2.2.1 hsplit.2.2.2
+    calc
+      (-g) t = -yoshidaEndpointA *
+          (jointRegularEnvelope (yoshidaEndpointA * (2 + t) / 2) * Pp t +
+            jointCoshEnvelope (yoshidaEndpointA * (2 + t) / 2) * Np t +
+            jointRegularEnvelope (yoshidaEndpointA * (2 - t) / 2) * Pm t +
+            jointCoshEnvelope (yoshidaEndpointA * (2 - t) / 2) * Nm t) := by
+        dsimp only [g, Pi.neg_apply]
+        unfold plusDetJointSignedCost
+        ring
+      _ ≤ plusDetJointKernelIntegrand Ce Ca t := by
+        simpa only [plusDetJointKernelIntegrand] using hpoint
+  rw [intervalIntegral.integral_neg] at hmono
+  rw [plusDetCompositeJointError_eq_integral u0 u2 k q hq]
+  change -(∫ t : ℝ in 0..2, g t) ≤
+    ∫ t : ℝ in 0..2, plusDetJointKernelIntegrand Ce Ca t
+  exact hmono
+
+/-! ## Rational envelope transfer -/
+
+private def plusDetJointRationalA : ℝ := 347 / 1000
+
+private def plusDetJointRationalAbsoluteMajorant
+    (P M : ℝ → ℝ) (t : ℝ) : ℝ :=
+  plusDetJointRationalA *
+    (integratedPoleFreeEnvelope
+        (plusDetJointRationalA * (2 + t) / 2) * P t +
+      integratedPoleFreeEnvelope
+        (plusDetJointRationalA * (2 - t) / 2) * M t)
+
+private def plusDetJointRationalSignedCost
+    (Pp Np Pm Nm : ℝ → ℝ) (t : ℝ) : ℝ :=
+  plusDetJointRationalA *
+    (jointRegularEnvelope (plusDetJointRationalA * (2 + t) / 2) * Pp t +
+      jointCoshEnvelope (plusDetJointRationalA * (2 + t) / 2) * Np t +
+      jointRegularEnvelope (plusDetJointRationalA * (2 - t) / 2) * Pm t +
+      jointCoshEnvelope (plusDetJointRationalA * (2 - t) / 2) * Nm t)
+
+private theorem yoshidaEndpointA_lt_plusDetJointRationalA :
+    yoshidaEndpointA < plusDetJointRationalA := by
+  unfold yoshidaEndpointA plusDetJointRationalA
+  nlinarith [strict_log_two_bounds.2]
+
+private theorem integratedPoleFreeEnvelope_mono_plusDet
+    {u v : ℝ} (hu0 : 0 ≤ u) (huv : u ≤ v) :
+    integratedPoleFreeEnvelope u ≤ integratedPoleFreeEnvelope v := by
+  have h7 := pow_le_pow_left₀ hu0 huv 7
+  have h8 := pow_le_pow_left₀ hu0 huv 8
+  have h9 := pow_le_pow_left₀ hu0 huv 9
+  have h10 := pow_le_pow_left₀ hu0 huv 10
+  have h11 := pow_le_pow_left₀ hu0 huv 11
+  have h12 := pow_le_pow_left₀ hu0 huv 12
+  rw [integratedPoleFreeEnvelope_expansion,
+    integratedPoleFreeEnvelope_expansion]
+  norm_num at h7 h8 h9 h10 h11 h12 ⊢
+  linarith
+
+private theorem jointRegularEnvelope_expansion_plusDet (u : ℝ) :
+    jointRegularEnvelope u =
+      (193 / 3628800 : ℝ) * u ^ 7 +
+        (11 / 1280 : ℝ) * u ^ 8 +
+        (1 / 302400 : ℝ) * u ^ 9 +
+        (7 / 8640 : ℝ) * u ^ 10 +
+        (31 / 304819200 : ℝ) * u ^ 11 +
+        (61 / 2073600 : ℝ) * u ^ 12 := by
+  unfold jointRegularEnvelope jointCoshEnvelope
+  rw [integratedPoleFreeEnvelope_expansion]
+  ring
+
+private theorem jointRegularEnvelope_mono_plusDet
+    {u v : ℝ} (hu0 : 0 ≤ u) (huv : u ≤ v) :
+    jointRegularEnvelope u ≤ jointRegularEnvelope v := by
+  have h7 := pow_le_pow_left₀ hu0 huv 7
+  have h8 := pow_le_pow_left₀ hu0 huv 8
+  have h9 := pow_le_pow_left₀ hu0 huv 9
+  have h10 := pow_le_pow_left₀ hu0 huv 10
+  have h11 := pow_le_pow_left₀ hu0 huv 11
+  have h12 := pow_le_pow_left₀ hu0 huv 12
+  rw [jointRegularEnvelope_expansion_plusDet,
+    jointRegularEnvelope_expansion_plusDet]
+  norm_num at h7 h8 h9 h10 h11 h12 ⊢
+  linarith
+
+private theorem jointCoshEnvelope_mono_plusDet
+    {u v : ℝ} (hu0 : 0 ≤ u) (huv : u ≤ v) :
+    jointCoshEnvelope u ≤ jointCoshEnvelope v := by
+  have h8 := pow_le_pow_left₀ hu0 huv 8
+  unfold jointCoshEnvelope
+  nlinarith
+
+private theorem plusDetJointAbsoluteMajorant_le_rational
+    (P M : ℝ → ℝ) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2)
+    (hP0 : 0 ≤ P t) (hM0 : 0 ≤ M t) :
+    plusDetJointAbsoluteMajorant P M t ≤
+      plusDetJointRationalAbsoluteMajorant P M t := by
+  let ap : ℝ := yoshidaEndpointA * (2 + t) / 2
+  let am : ℝ := yoshidaEndpointA * (2 - t) / 2
+  let bp : ℝ := plusDetJointRationalA * (2 + t) / 2
+  let bm : ℝ := plusDetJointRationalA * (2 - t) / 2
+  have hap0 : 0 ≤ ap := by
+    dsimp only [ap]
+    exact div_nonneg
+      (mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.1])) (by norm_num)
+  have ham0 : 0 ≤ am := by
+    dsimp only [am]
+    exact div_nonneg
+      (mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.2])) (by norm_num)
+  have hap : ap ≤ bp := by
+    dsimp only [ap, bp]
+    exact div_le_div_of_nonneg_right
+      (mul_le_mul_of_nonneg_right
+        yoshidaEndpointA_lt_plusDetJointRationalA.le (by linarith [ht.1]))
+      (by norm_num)
+  have ham : am ≤ bm := by
+    dsimp only [am, bm]
+    exact div_le_div_of_nonneg_right
+      (mul_le_mul_of_nonneg_right
+        yoshidaEndpointA_lt_plusDetJointRationalA.le (by linarith [ht.2]))
+      (by norm_num)
+  have hEp := integratedPoleFreeEnvelope_mono_plusDet hap0 hap
+  have hEm := integratedPoleFreeEnvelope_mono_plusDet ham0 ham
+  have hsum :
+      integratedPoleFreeEnvelope ap * P t +
+          integratedPoleFreeEnvelope am * M t ≤
+        integratedPoleFreeEnvelope bp * P t +
+          integratedPoleFreeEnvelope bm * M t :=
+    add_le_add (mul_le_mul_of_nonneg_right hEp hP0)
+      (mul_le_mul_of_nonneg_right hEm hM0)
+  have hsum0 :
+      0 ≤ integratedPoleFreeEnvelope ap * P t +
+        integratedPoleFreeEnvelope am * M t :=
+    add_nonneg
+      (mul_nonneg (integratedPoleFreeEnvelope_nonneg hap0) hP0)
+      (mul_nonneg (integratedPoleFreeEnvelope_nonneg ham0) hM0)
+  dsimp only [ap, am, bp, bm] at hsum hsum0
+  unfold plusDetJointAbsoluteMajorant
+    plusDetJointRationalAbsoluteMajorant
+  calc
+    _ ≤ plusDetJointRationalA *
+        (integratedPoleFreeEnvelope
+            (yoshidaEndpointA * (2 + t) / 2) * P t +
+          integratedPoleFreeEnvelope
+            (yoshidaEndpointA * (2 - t) / 2) * M t) :=
+      mul_le_mul_of_nonneg_right
+        yoshidaEndpointA_lt_plusDetJointRationalA.le hsum0
+    _ ≤ _ := mul_le_mul_of_nonneg_left hsum (by
+      unfold plusDetJointRationalA
+      norm_num)
+
+private theorem plusDetJointSignedCost_le_rational
+    (Pp Np Pm Nm : ℝ → ℝ) {t : ℝ}
+    (ht : t ∈ Icc (0 : ℝ) 2)
+    (hPp0 : 0 ≤ Pp t) (hNp0 : 0 ≤ Np t)
+    (hPm0 : 0 ≤ Pm t) (hNm0 : 0 ≤ Nm t) :
+    plusDetJointSignedCost Pp Np Pm Nm t ≤
+      plusDetJointRationalSignedCost Pp Np Pm Nm t := by
+  let ap : ℝ := yoshidaEndpointA * (2 + t) / 2
+  let am : ℝ := yoshidaEndpointA * (2 - t) / 2
+  let bp : ℝ := plusDetJointRationalA * (2 + t) / 2
+  let bm : ℝ := plusDetJointRationalA * (2 - t) / 2
+  have hap0 : 0 ≤ ap := by
+    dsimp only [ap]
+    exact div_nonneg
+      (mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.1])) (by norm_num)
+  have ham0 : 0 ≤ am := by
+    dsimp only [am]
+    exact div_nonneg
+      (mul_nonneg yoshidaEndpointA_pos.le (by linarith [ht.2])) (by norm_num)
+  have hap : ap ≤ bp := by
+    dsimp only [ap, bp]
+    exact div_le_div_of_nonneg_right
+      (mul_le_mul_of_nonneg_right
+        yoshidaEndpointA_lt_plusDetJointRationalA.le (by linarith [ht.1]))
+      (by norm_num)
+  have ham : am ≤ bm := by
+    dsimp only [am, bm]
+    exact div_le_div_of_nonneg_right
+      (mul_le_mul_of_nonneg_right
+        yoshidaEndpointA_lt_plusDetJointRationalA.le (by linarith [ht.2]))
+      (by norm_num)
+  have hRp := jointRegularEnvelope_mono_plusDet hap0 hap
+  have hCp := jointCoshEnvelope_mono_plusDet hap0 hap
+  have hRm := jointRegularEnvelope_mono_plusDet ham0 ham
+  have hCm := jointCoshEnvelope_mono_plusDet ham0 ham
+  have hsum :
+      jointRegularEnvelope ap * Pp t + jointCoshEnvelope ap * Np t +
+          jointRegularEnvelope am * Pm t + jointCoshEnvelope am * Nm t ≤
+        jointRegularEnvelope bp * Pp t + jointCoshEnvelope bp * Np t +
+          jointRegularEnvelope bm * Pm t + jointCoshEnvelope bm * Nm t := by
+    exact add_le_add
+      (add_le_add
+        (add_le_add (mul_le_mul_of_nonneg_right hRp hPp0)
+          (mul_le_mul_of_nonneg_right hCp hNp0))
+        (mul_le_mul_of_nonneg_right hRm hPm0))
+      (mul_le_mul_of_nonneg_right hCm hNm0)
+  have hsum0 :
+      0 ≤ jointRegularEnvelope ap * Pp t + jointCoshEnvelope ap * Np t +
+        jointRegularEnvelope am * Pm t + jointCoshEnvelope am * Nm t := by
+    exact add_nonneg
+      (add_nonneg
+        (add_nonneg
+          (mul_nonneg (jointRegularEnvelope_nonneg hap0) hPp0)
+          (mul_nonneg (jointCoshEnvelope_nonneg ap) hNp0))
+        (mul_nonneg (jointRegularEnvelope_nonneg ham0) hPm0))
+      (mul_nonneg (jointCoshEnvelope_nonneg am) hNm0)
+  dsimp only [ap, am, bp, bm] at hsum hsum0
+  unfold plusDetJointSignedCost plusDetJointRationalSignedCost
+  calc
+    _ ≤ plusDetJointRationalA *
+        (jointRegularEnvelope (yoshidaEndpointA * (2 + t) / 2) * Pp t +
+          jointCoshEnvelope (yoshidaEndpointA * (2 + t) / 2) * Np t +
+          jointRegularEnvelope (yoshidaEndpointA * (2 - t) / 2) * Pm t +
+          jointCoshEnvelope (yoshidaEndpointA * (2 - t) / 2) * Nm t) :=
+      mul_le_mul_of_nonneg_right
+        yoshidaEndpointA_lt_plusDetJointRationalA.le hsum0
+    _ ≤ _ := mul_le_mul_of_nonneg_left hsum (by
+      unfold plusDetJointRationalA
+      norm_num)
+
+private theorem integral_plusDetJointAbsoluteMajorant_le_rational
+    (P M : ℝ → ℝ) (hP : Continuous P) (hM : Continuous M)
+    (hnonneg : ∀ t ∈ Icc (0 : ℝ) 2, 0 ≤ P t ∧ 0 ≤ M t) :
+    (∫ t : ℝ in 0..2, plusDetJointAbsoluteMajorant P M t) ≤
+      ∫ t : ℝ in 0..2, plusDetJointRationalAbsoluteMajorant P M t := by
+  have hleft : IntervalIntegrable
+      (plusDetJointAbsoluteMajorant P M) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    unfold plusDetJointAbsoluteMajorant
+    fun_prop
+  have hright : IntervalIntegrable
+      (plusDetJointRationalAbsoluteMajorant P M) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    unfold plusDetJointRationalAbsoluteMajorant
+    fun_prop
+  apply intervalIntegral.integral_mono_on (by norm_num) hleft hright
+  intro t ht
+  exact plusDetJointAbsoluteMajorant_le_rational P M ht
+    (hnonneg t ht).1 (hnonneg t ht).2
+
+private theorem integral_plusDetJointSignedCost_le_rational
+    (Pp Np Pm Nm : ℝ → ℝ)
+    (hPp : Continuous Pp) (hNp : Continuous Np)
+    (hPm : Continuous Pm) (hNm : Continuous Nm)
+    (hnonneg : ∀ t ∈ Icc (0 : ℝ) 2,
+      0 ≤ Pp t ∧ 0 ≤ Np t ∧ 0 ≤ Pm t ∧ 0 ≤ Nm t) :
+    (∫ t : ℝ in 0..2, plusDetJointSignedCost Pp Np Pm Nm t) ≤
+      ∫ t : ℝ in 0..2,
+        plusDetJointRationalSignedCost Pp Np Pm Nm t := by
+  have hleft : IntervalIntegrable
+      (plusDetJointSignedCost Pp Np Pm Nm) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    unfold plusDetJointSignedCost
+    fun_prop
+  have hright : IntervalIntegrable
+      (plusDetJointRationalSignedCost Pp Np Pm Nm) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    unfold plusDetJointRationalSignedCost
+    fun_prop
+  apply intervalIntegral.integral_mono_on (by norm_num) hleft hright
+  intro t ht
+  have h := hnonneg t ht
+  exact plusDetJointSignedCost_le_rational Pp Np Pm Nm ht
+    h.1 h.2.1 h.2.2.1 h.2.2.2
+
 private theorem plusDetAlternatingQH2_polynomial (t : ℝ) :
     plusDetAlternatingQH2 t =
       (-611113 / 43200 : ℝ) - (42797 / 4000) * t +
@@ -1300,6 +1866,571 @@ private theorem plusDetAlternatingQW_polynomial (t : ℝ) :
   unfold plusDetAlternatingQW plusDetAlternatingQ alternatingQ41
     alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
   ring
+
+/-! ## Degree-ten Bernstein splits of the joint profiles -/
+
+private def plusDetBernstein10B1 (t : ℝ) : ℝ :=
+  10 * (t / 2) * (1 - t / 2) ^ 9
+
+private def plusDetBernstein10B2 (t : ℝ) : ℝ :=
+  45 * (t / 2) ^ 2 * (1 - t / 2) ^ 8
+
+private def plusDetBernstein10B3 (t : ℝ) : ℝ :=
+  120 * (t / 2) ^ 3 * (1 - t / 2) ^ 7
+
+private def plusDetBernstein10B4 (t : ℝ) : ℝ :=
+  210 * (t / 2) ^ 4 * (1 - t / 2) ^ 6
+
+private def plusDetBernstein10B5 (t : ℝ) : ℝ :=
+  252 * (t / 2) ^ 5 * (1 - t / 2) ^ 5
+
+private def plusDetBernstein10B6 (t : ℝ) : ℝ :=
+  210 * (t / 2) ^ 6 * (1 - t / 2) ^ 4
+
+private def plusDetBernstein10B7 (t : ℝ) : ℝ :=
+  120 * (t / 2) ^ 7 * (1 - t / 2) ^ 3
+
+private def plusDetBernstein10B8 (t : ℝ) : ℝ :=
+  45 * (t / 2) ^ 8 * (1 - t / 2) ^ 2
+
+private def plusDetBernstein10B9 (t : ℝ) : ℝ :=
+  10 * (t / 2) ^ 9 * (1 - t / 2)
+
+private def plusDetH2PPositive (t : ℝ) : ℝ :=
+  (3086235853 / 5232600000 : ℝ) * plusDetBernstein10B7 t +
+    (246412021 / 1569780000) * plusDetBernstein10B8 t
+
+private def plusDetH2PNegative (t : ℝ) : ℝ :=
+  (60295241 / 27000000 : ℝ) * plusDetBernstein10B1 t +
+    (230600223389 / 39244500000) * plusDetBernstein10B2 t +
+    (195878417653 / 26163000000) * plusDetBernstein10B3 t +
+    (1283799758789 / 183141000000) * plusDetBernstein10B4 t +
+    (138106548593 / 27471150000) * plusDetBernstein10B5 t +
+    (367128730043 / 183141000000) * plusDetBernstein10B6 t +
+    (14962559 / 27000000) * plusDetBernstein10B9 t
+
+private def plusDetH2MPositive (t : ℝ) : ℝ :=
+  (92483009 / 27000000 : ℝ) * plusDetBernstein10B1 t +
+    (238825302011 / 39244500000) * plusDetBernstein10B2 t +
+    (42200252443 / 6540750000) * plusDetBernstein10B3 t +
+    (1022019430511 / 183141000000) * plusDetBernstein10B4 t +
+    (119484820907 / 27471150000) * plusDetBernstein10B5 t +
+    (492349721957 / 183141000000) * plusDetBernstein10B6 t +
+    (1203035687 / 1308150000) * plusDetBernstein10B7 t +
+    (914323049 / 1569780000) * plusDetBernstein10B8 t
+
+private def plusDetH2MNegative (t : ℝ) : ℝ :=
+  (17225209 / 27000000 : ℝ) * plusDetBernstein10B9 t
+
+private def plusDetH3PPositive (_t : ℝ) : ℝ := 0
+
+private def plusDetH3PNegative (t : ℝ) : ℝ :=
+  (233647392343 / 46512000000 : ℝ) * plusDetBernstein10B1 t +
+    (217627044037 / 22032000000) * plusDetBernstein10B2 t +
+    (6664762944967 / 558144000000) * plusDetBernstein10B3 t +
+    (22303275767473 / 1953504000000) * plusDetBernstein10B4 t +
+    (1307809001693 / 146512800000) * plusDetBernstein10B5 t +
+    (9747458098741 / 1953504000000) * plusDetBernstein10B6 t +
+    (146121980297 / 111628800000) * plusDetBernstein10B7 t +
+    (2826198119 / 3348864000) * plusDetBernstein10B8 t +
+    (115531559 / 144000000) * plusDetBernstein10B9 t
+
+private def plusDetH3MPositive (t : ℝ) : ℝ :=
+  (316388699617 / 46512000000 : ℝ) * plusDetBernstein10B1 t +
+    (4139972919097 / 418608000000) * plusDetBernstein10B2 t +
+    (5676926340073 / 558144000000) * plusDetBernstein10B3 t +
+    (18430210235767 / 1953504000000) * plusDetBernstein10B4 t +
+    (611269076611 / 73256400000) * plusDetBernstein10B5 t +
+    (12369884519539 / 1953504000000) * plusDetBernstein10B6 t +
+    (389167087127 / 111628800000) * plusDetBernstein10B7 t +
+    (137859815273 / 83721600000) * plusDetBernstein10B8 t
+
+private def plusDetH3MNegative (t : ℝ) : ℝ :=
+  (140633479 / 144000000 : ℝ) * plusDetBernstein10B9 t
+
+private def plusDetH4PPositive (t : ℝ) : ℝ :=
+  (2211138478651 / 1318615200000 : ℝ) * plusDetBernstein10B5 t +
+    (7074437503963 / 1255824000000) * plusDetBernstein10B6 t +
+    (6867968816147 / 1255824000000) * plusDetBernstein10B7 t
+
+private def plusDetH4PNegative (t : ℝ) : ℝ :=
+  (26874446161 / 418608000000 : ℝ) * plusDetBernstein10B1 t +
+    (1750762021297 / 376747200000) * plusDetBernstein10B2 t +
+    (7319876246251 / 1255824000000) * plusDetBernstein10B3 t +
+    (26461736279057 / 8790768000000) * plusDetBernstein10B4 t +
+    (112080972413 / 99144000000) * plusDetBernstein10B8 t +
+    (1976734973 / 1296000000) * plusDetBernstein10B9 t
+
+private def plusDetH4MPositive (t : ℝ) : ℝ :=
+  (1376238787501 / 418608000000 : ℝ) * plusDetBernstein10B1 t +
+    (1086889264231 / 376747200000) * plusDetBernstein10B2 t +
+    (806050664783 / 627912000000) * plusDetBernstein10B3 t +
+    (2721750480227 / 8790768000000) * plusDetBernstein10B4 t +
+    (1508903373197 / 1883736000000) * plusDetBernstein10B8 t
+
+private def plusDetH4MNegative (t : ℝ) : ℝ :=
+  (34448433523 / 188373600000 : ℝ) * plusDetBernstein10B5 t +
+    (11334414139651 / 8790768000000) * plusDetBernstein10B6 t +
+    (1236763431061 / 627912000000) * plusDetBernstein10B7 t +
+    (2200863607 / 1296000000) * plusDetBernstein10B9 t
+
+private def plusDetWPPositive (t : ℝ) : ℝ :=
+  (18749189482441 / 1641600000000 : ℝ) * plusDetBernstein10B1 t +
+    (1132009857007163 / 62791200000000) * plusDetBernstein10B2 t +
+    (3429304967002489 / 167443200000000) * plusDetBernstein10B3 t +
+    (3456811138071439 / 146512800000000) * plusDetBernstein10B4 t +
+    (2413329266477977 / 87907680000000) * plusDetBernstein10B5 t +
+    (7710753719447171 / 293025600000000) * plusDetBernstein10B6 t +
+    (92049669424579 / 6697728000000) * plusDetBernstein10B7 t
+
+private def plusDetWPNegative (t : ℝ) : ℝ :=
+  (19648525889627 / 3139560000000 : ℝ) * plusDetBernstein10B8 t +
+    (92086351139 / 86400000000) * plusDetBernstein10B9 t
+
+private def plusDetWMPositive (t : ℝ) : ℝ :=
+  (3632020640353 / 6279120000000 : ℝ) * plusDetBernstein10B8 t
+
+private def plusDetWMNegative (t : ℝ) : ℝ :=
+  (14648367981649 / 1641600000000 : ℝ) * plusDetBernstein10B1 t +
+    (1558374133909637 / 62791200000000) * plusDetBernstein10B2 t +
+    (4700317313888221 / 167443200000000) * plusDetBernstein10B3 t +
+    (1683025473590213 / 73256400000000) * plusDetBernstein10B4 t +
+    (1630314678186493 / 87907680000000) * plusDetBernstein10B5 t +
+    (5021220610827089 / 293025600000000) * plusDetBernstein10B6 t +
+    (414849767956811 / 33488640000000) * plusDetBernstein10B7 t +
+    (123746359429 / 86400000000) * plusDetBernstein10B9 t
+
+private theorem plusDetH2_jointProfile_splits (t : ℝ) :
+    plusDetCompositeP (-698234417 / 581400000)
+        (-344846809 / 193800000) (1 / 2) plusDetAlternatingQH2 t =
+      plusDetH2PPositive t - plusDetH2PNegative t ∧
+    plusDetCompositeM (-698234417 / 581400000)
+        (-344846809 / 193800000) (1 / 2) plusDetAlternatingQH2 t =
+      plusDetH2MPositive t - plusDetH2MNegative t := by
+  constructor
+  · unfold plusDetCompositeP plusDetCompositeCe plusDetCompositeCa
+      intrinsicAlternatingCorrelation
+    rw [plusDetAlternatingQH2_polynomial]
+    unfold factorTwoIntrinsicP4Correlation04 factorTwoIntrinsicP4Correlation24
+      plusDetH2PPositive plusDetH2PNegative plusDetBernstein10B1
+      plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+      plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+      plusDetBernstein10B8 plusDetBernstein10B9
+    ring
+  · unfold plusDetCompositeM plusDetCompositeCe plusDetCompositeCa
+      intrinsicAlternatingCorrelation
+    rw [plusDetAlternatingQH2_polynomial]
+    unfold factorTwoIntrinsicP4Correlation04 factorTwoIntrinsicP4Correlation24
+      plusDetH2MPositive plusDetH2MNegative plusDetBernstein10B1
+      plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+      plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+      plusDetBernstein10B8 plusDetBernstein10B9
+    ring
+
+private theorem plusDetH3_jointProfile_splits (t : ℝ) :
+    plusDetCompositeP (-355017589 / 121600000)
+        (-185775269 / 121600000) (1 / 2) plusDetAlternatingQH3 t =
+      plusDetH3PPositive t - plusDetH3PNegative t ∧
+    plusDetCompositeM (-355017589 / 121600000)
+        (-185775269 / 121600000) (1 / 2) plusDetAlternatingQH3 t =
+      plusDetH3MPositive t - plusDetH3MNegative t := by
+  constructor
+  · unfold plusDetCompositeP plusDetCompositeCe plusDetCompositeCa
+      intrinsicAlternatingCorrelation
+    rw [plusDetAlternatingQH3_polynomial]
+    unfold factorTwoIntrinsicP4Correlation04 factorTwoIntrinsicP4Correlation24
+      plusDetH3PPositive plusDetH3PNegative plusDetBernstein10B1
+      plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+      plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+      plusDetBernstein10B8 plusDetBernstein10B9
+    ring
+  · unfold plusDetCompositeM plusDetCompositeCe plusDetCompositeCa
+      intrinsicAlternatingCorrelation
+    rw [plusDetAlternatingQH3_polynomial]
+    unfold factorTwoIntrinsicP4Correlation04 factorTwoIntrinsicP4Correlation24
+      plusDetH3MPositive plusDetH3MNegative plusDetBernstein10B1
+      plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+      plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+      plusDetBernstein10B8 plusDetBernstein10B9
+    ring
+
+private theorem plusDetH4_jointProfile_splits (t : ℝ) :
+    plusDetCompositeP (-22289231363 / 1860480000)
+        (2432098079 / 620160000) (1 / 2) plusDetAlternatingQH4 t =
+      plusDetH4PPositive t - plusDetH4PNegative t ∧
+    plusDetCompositeM (-22289231363 / 1860480000)
+        (2432098079 / 620160000) (1 / 2) plusDetAlternatingQH4 t =
+      plusDetH4MPositive t - plusDetH4MNegative t := by
+  constructor
+  · unfold plusDetCompositeP plusDetCompositeCe plusDetCompositeCa
+      intrinsicAlternatingCorrelation
+    rw [plusDetAlternatingQH4_polynomial]
+    unfold factorTwoIntrinsicP4Correlation04 factorTwoIntrinsicP4Correlation24
+      plusDetH4PPositive plusDetH4PNegative plusDetBernstein10B1
+      plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+      plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+      plusDetBernstein10B8 plusDetBernstein10B9
+    ring
+  · unfold plusDetCompositeM plusDetCompositeCe plusDetCompositeCa
+      intrinsicAlternatingCorrelation
+    rw [plusDetAlternatingQH4_polynomial]
+    unfold factorTwoIntrinsicP4Correlation04 factorTwoIntrinsicP4Correlation24
+      plusDetH4MPositive plusDetH4MNegative plusDetBernstein10B1
+      plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+      plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+      plusDetBernstein10B8 plusDetBernstein10B9
+    ring
+
+private theorem plusDetW_jointProfile_splits (t : ℝ) :
+    plusDetCompositeP (-27559902356441 / 930240000000)
+        (7250135076773 / 310080000000) 1 plusDetAlternatingQW t =
+      plusDetWPPositive t - plusDetWPNegative t ∧
+    plusDetCompositeM (-27559902356441 / 930240000000)
+        (7250135076773 / 310080000000) 1 plusDetAlternatingQW t =
+      plusDetWMPositive t - plusDetWMNegative t := by
+  constructor
+  · unfold plusDetCompositeP plusDetCompositeCe plusDetCompositeCa
+      intrinsicAlternatingCorrelation
+    rw [plusDetAlternatingQW_polynomial]
+    unfold factorTwoIntrinsicP4Correlation04 factorTwoIntrinsicP4Correlation24
+      plusDetWPPositive plusDetWPNegative plusDetBernstein10B1
+      plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+      plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+      plusDetBernstein10B8 plusDetBernstein10B9
+    ring
+  · unfold plusDetCompositeM plusDetCompositeCe plusDetCompositeCa
+      intrinsicAlternatingCorrelation
+    rw [plusDetAlternatingQW_polynomial]
+    unfold factorTwoIntrinsicP4Correlation04 factorTwoIntrinsicP4Correlation24
+      plusDetWMPositive plusDetWMNegative plusDetBernstein10B1
+      plusDetBernstein10B2 plusDetBernstein10B3 plusDetBernstein10B4
+      plusDetBernstein10B5 plusDetBernstein10B6 plusDetBernstein10B7
+      plusDetBernstein10B8 plusDetBernstein10B9
+    ring
+
+private theorem plusDetH2_signedProfiles_nonneg
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ plusDetH2PPositive t ∧ 0 ≤ plusDetH2PNegative t ∧
+      0 ≤ plusDetH2MPositive t ∧ 0 ≤ plusDetH2MNegative t := by
+  have hx0 : 0 ≤ t / 2 := by linarith [ht.1]
+  have hx1 : 0 ≤ 1 - t / 2 := by linarith [ht.2]
+  unfold plusDetH2PPositive plusDetH2PNegative plusDetH2MPositive
+    plusDetH2MNegative plusDetBernstein10B1 plusDetBernstein10B2
+    plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+    plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    plusDetBernstein10B9
+  constructor
+  · positivity
+  constructor
+  · positivity
+  constructor <;> positivity
+
+private theorem plusDetH3_signedProfiles_nonneg
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ plusDetH3PPositive t ∧ 0 ≤ plusDetH3PNegative t ∧
+      0 ≤ plusDetH3MPositive t ∧ 0 ≤ plusDetH3MNegative t := by
+  have hx0 : 0 ≤ t / 2 := by linarith [ht.1]
+  have hx1 : 0 ≤ 1 - t / 2 := by linarith [ht.2]
+  unfold plusDetH3PPositive plusDetH3PNegative plusDetH3MPositive
+    plusDetH3MNegative plusDetBernstein10B1 plusDetBernstein10B2
+    plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+    plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    plusDetBernstein10B9
+  constructor
+  · positivity
+  constructor
+  · positivity
+  constructor <;> positivity
+
+private theorem plusDetH4_signedProfiles_nonneg
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ plusDetH4PPositive t ∧ 0 ≤ plusDetH4PNegative t ∧
+      0 ≤ plusDetH4MPositive t ∧ 0 ≤ plusDetH4MNegative t := by
+  have hx0 : 0 ≤ t / 2 := by linarith [ht.1]
+  have hx1 : 0 ≤ 1 - t / 2 := by linarith [ht.2]
+  unfold plusDetH4PPositive plusDetH4PNegative plusDetH4MPositive
+    plusDetH4MNegative plusDetBernstein10B1 plusDetBernstein10B2
+    plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+    plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    plusDetBernstein10B9
+  constructor
+  · positivity
+  constructor
+  · positivity
+  constructor <;> positivity
+
+private theorem plusDetW_signedProfiles_nonneg
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ plusDetWPPositive t ∧ 0 ≤ plusDetWPNegative t ∧
+      0 ≤ plusDetWMPositive t ∧ 0 ≤ plusDetWMNegative t := by
+  have hx0 : 0 ≤ t / 2 := by linarith [ht.1]
+  have hx1 : 0 ≤ 1 - t / 2 := by linarith [ht.2]
+  unfold plusDetWPPositive plusDetWPNegative plusDetWMPositive
+    plusDetWMNegative plusDetBernstein10B1 plusDetBernstein10B2
+    plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+    plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    plusDetBernstein10B9
+  constructor
+  · positivity
+  constructor
+  · positivity
+  constructor <;> positivity
+
+/-! ## Exact rational-envelope integrals -/
+
+set_option maxHeartbeats 4000000 in
+private theorem integral_plusDetH2_rationalAbsoluteMajorant :
+    (∫ t : ℝ in 0..2,
+      plusDetJointRationalAbsoluteMajorant
+        (fun s ↦ plusDetH2PPositive s + plusDetH2PNegative s)
+        (fun s ↦ plusDetH2MPositive s + plusDetH2MNegative s) t) =
+      (494185010509163496463549151100171555084567777922495985857 /
+        5963339137029120000000000000000000000000000000000000000000000 : ℝ) := by
+  unfold plusDetJointRationalAbsoluteMajorant plusDetJointRationalA
+    plusDetH2PPositive plusDetH2PNegative plusDetH2MPositive
+    plusDetH2MNegative plusDetBernstein10B1 plusDetBernstein10B2
+    plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+    plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    plusDetBernstein10B9
+  simp_rw [integratedPoleFreeEnvelope_expansion]
+  ring_nf
+  repeat' rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  norm_num
+
+set_option maxHeartbeats 4000000 in
+private theorem integral_plusDetH3_rationalAbsoluteMajorant :
+    (∫ t : ℝ in 0..2,
+      plusDetJointRationalAbsoluteMajorant
+        (fun s ↦ plusDetH3PPositive s + plusDetH3PNegative s)
+        (fun s ↦ plusDetH3MPositive s + plusDetH3MNegative s) t) =
+      (202177133266358166877303429464798596531032164982128863899253 /
+        1291002072767447040000000000000000000000000000000000000000000000 : ℝ) := by
+  unfold plusDetJointRationalAbsoluteMajorant plusDetJointRationalA
+    plusDetH3PPositive plusDetH3PNegative plusDetH3MPositive
+    plusDetH3MNegative plusDetBernstein10B1 plusDetBernstein10B2
+    plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+    plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    plusDetBernstein10B9
+  simp_rw [integratedPoleFreeEnvelope_expansion]
+  ring_nf
+  repeat' rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  norm_num
+
+set_option maxHeartbeats 4000000 in
+private theorem integral_plusDetH4_rationalAbsoluteMajorant :
+    (∫ t : ℝ in 0..2,
+      plusDetJointRationalAbsoluteMajorant
+        (fun s ↦ plusDetH4PPositive s + plusDetH4PNegative s)
+        (fun s ↦ plusDetH4MPositive s + plusDetH4MNegative s) t) =
+      (1233262040965070832401425652586954899860442536090255404099621343 /
+        8539978711356662169600000000000000000000000000000000000000000000000 : ℝ) := by
+  unfold plusDetJointRationalAbsoluteMajorant plusDetJointRationalA
+    plusDetH4PPositive plusDetH4PNegative plusDetH4MPositive
+    plusDetH4MNegative plusDetBernstein10B1 plusDetBernstein10B2
+    plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+    plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    plusDetBernstein10B9
+  simp_rw [integratedPoleFreeEnvelope_expansion]
+  ring_nf
+  repeat' rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  norm_num
+
+set_option maxHeartbeats 4000000 in
+private theorem integral_plusDetW_rationalSignedCost :
+    (∫ t : ℝ in 0..2,
+      plusDetJointRationalSignedCost plusDetWPPositive plusDetWPNegative
+        plusDetWMPositive plusDetWMNegative t) =
+      (548240178092039427189443484822344115703860561260393955740105899523 /
+        1138663828180888289280000000000000000000000000000000000000000000000000 : ℝ) := by
+  unfold plusDetJointRationalSignedCost plusDetJointRationalA
+    plusDetWPPositive plusDetWPNegative plusDetWMPositive plusDetWMNegative
+    plusDetBernstein10B1 plusDetBernstein10B2 plusDetBernstein10B3
+    plusDetBernstein10B4 plusDetBernstein10B5 plusDetBernstein10B6
+    plusDetBernstein10B7 plusDetBernstein10B8 plusDetBernstein10B9
+  simp_rw [jointRegularEnvelope_expansion_plusDet]
+  unfold jointCoshEnvelope
+  ring_nf
+  repeat' rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  norm_num
+
+/-! ## Four certified joint-error targets -/
+
+private theorem abs_plusDetCompositeJointErrorH2_lt :
+    |plusDetCompositeJointError (-698234417 / 581400000)
+        (-344846809 / 193800000) (1 / 2) plusDetAlternatingQH2| <
+      (1 / 12000 : ℝ) := by
+  have hq : Continuous plusDetAlternatingQH2 := by
+    unfold plusDetAlternatingQH2 plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  have hPp : Continuous plusDetH2PPositive := by
+    unfold plusDetH2PPositive plusDetBernstein10B7 plusDetBernstein10B8
+    fun_prop
+  have hNp : Continuous plusDetH2PNegative := by
+    unfold plusDetH2PNegative plusDetBernstein10B1 plusDetBernstein10B2
+      plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+      plusDetBernstein10B6 plusDetBernstein10B9
+    fun_prop
+  have hPm : Continuous plusDetH2MPositive := by
+    unfold plusDetH2MPositive plusDetBernstein10B1 plusDetBernstein10B2
+      plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+      plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    fun_prop
+  have hNm : Continuous plusDetH2MNegative := by
+    unfold plusDetH2MNegative plusDetBernstein10B9
+    fun_prop
+  have habs := abs_plusDetCompositeJointError_le_of_signed_splits
+    (-698234417 / 581400000) (-344846809 / 193800000) (1 / 2)
+    plusDetAlternatingQH2 plusDetH2PPositive plusDetH2PNegative
+    plusDetH2MPositive plusDetH2MNegative hq hPp hNp hPm hNm
+    (fun t ↦ (plusDetH2_jointProfile_splits t).1)
+    (fun t ↦ (plusDetH2_jointProfile_splits t).2)
+    (fun t ht ↦ plusDetH2_signedProfiles_nonneg ht)
+  have hrat := integral_plusDetJointAbsoluteMajorant_le_rational
+    (fun s ↦ plusDetH2PPositive s + plusDetH2PNegative s)
+    (fun s ↦ plusDetH2MPositive s + plusDetH2MNegative s)
+    (hPp.add hNp) (hPm.add hNm) (fun t ht ↦ by
+      have h := plusDetH2_signedProfiles_nonneg ht
+      exact ⟨add_nonneg h.1 h.2.1,
+        add_nonneg h.2.2.1 h.2.2.2⟩)
+  rw [integral_plusDetH2_rationalAbsoluteMajorant] at hrat
+  exact (habs.trans hrat).trans_lt (by norm_num)
+
+private theorem abs_plusDetCompositeJointErrorH3_lt :
+    |plusDetCompositeJointError (-355017589 / 121600000)
+        (-185775269 / 121600000) (1 / 2) plusDetAlternatingQH3| <
+      (1 / 6250 : ℝ) := by
+  have hq : Continuous plusDetAlternatingQH3 := by
+    unfold plusDetAlternatingQH3 plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  have hPp : Continuous plusDetH3PPositive := by
+    unfold plusDetH3PPositive
+    fun_prop
+  have hNp : Continuous plusDetH3PNegative := by
+    unfold plusDetH3PNegative plusDetBernstein10B1 plusDetBernstein10B2
+      plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+      plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+      plusDetBernstein10B9
+    fun_prop
+  have hPm : Continuous plusDetH3MPositive := by
+    unfold plusDetH3MPositive plusDetBernstein10B1 plusDetBernstein10B2
+      plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+      plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B8
+    fun_prop
+  have hNm : Continuous plusDetH3MNegative := by
+    unfold plusDetH3MNegative plusDetBernstein10B9
+    fun_prop
+  have habs := abs_plusDetCompositeJointError_le_of_signed_splits
+    (-355017589 / 121600000) (-185775269 / 121600000) (1 / 2)
+    plusDetAlternatingQH3 plusDetH3PPositive plusDetH3PNegative
+    plusDetH3MPositive plusDetH3MNegative hq hPp hNp hPm hNm
+    (fun t ↦ (plusDetH3_jointProfile_splits t).1)
+    (fun t ↦ (plusDetH3_jointProfile_splits t).2)
+    (fun t ht ↦ plusDetH3_signedProfiles_nonneg ht)
+  have hrat := integral_plusDetJointAbsoluteMajorant_le_rational
+    (fun s ↦ plusDetH3PPositive s + plusDetH3PNegative s)
+    (fun s ↦ plusDetH3MPositive s + plusDetH3MNegative s)
+    (hPp.add hNp) (hPm.add hNm) (fun t ht ↦ by
+      have h := plusDetH3_signedProfiles_nonneg ht
+      exact ⟨add_nonneg h.1 h.2.1,
+        add_nonneg h.2.2.1 h.2.2.2⟩)
+  rw [integral_plusDetH3_rationalAbsoluteMajorant] at hrat
+  exact (habs.trans hrat).trans_lt (by norm_num)
+
+private theorem abs_plusDetCompositeJointErrorH4_lt :
+    |plusDetCompositeJointError (-22289231363 / 1860480000)
+        (2432098079 / 620160000) (1 / 2) plusDetAlternatingQH4| <
+      (3 / 20000 : ℝ) := by
+  have hq : Continuous plusDetAlternatingQH4 := by
+    unfold plusDetAlternatingQH4 plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  have hPp : Continuous plusDetH4PPositive := by
+    unfold plusDetH4PPositive plusDetBernstein10B5 plusDetBernstein10B6
+      plusDetBernstein10B7
+    fun_prop
+  have hNp : Continuous plusDetH4PNegative := by
+    unfold plusDetH4PNegative plusDetBernstein10B1 plusDetBernstein10B2
+      plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B8
+      plusDetBernstein10B9
+    fun_prop
+  have hPm : Continuous plusDetH4MPositive := by
+    unfold plusDetH4MPositive plusDetBernstein10B1 plusDetBernstein10B2
+      plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B8
+    fun_prop
+  have hNm : Continuous plusDetH4MNegative := by
+    unfold plusDetH4MNegative plusDetBernstein10B5 plusDetBernstein10B6
+      plusDetBernstein10B7 plusDetBernstein10B9
+    fun_prop
+  have habs := abs_plusDetCompositeJointError_le_of_signed_splits
+    (-22289231363 / 1860480000) (2432098079 / 620160000) (1 / 2)
+    plusDetAlternatingQH4 plusDetH4PPositive plusDetH4PNegative
+    plusDetH4MPositive plusDetH4MNegative hq hPp hNp hPm hNm
+    (fun t ↦ (plusDetH4_jointProfile_splits t).1)
+    (fun t ↦ (plusDetH4_jointProfile_splits t).2)
+    (fun t ht ↦ plusDetH4_signedProfiles_nonneg ht)
+  have hrat := integral_plusDetJointAbsoluteMajorant_le_rational
+    (fun s ↦ plusDetH4PPositive s + plusDetH4PNegative s)
+    (fun s ↦ plusDetH4MPositive s + plusDetH4MNegative s)
+    (hPp.add hNp) (hPm.add hNm) (fun t ht ↦ by
+      have h := plusDetH4_signedProfiles_nonneg ht
+      exact ⟨add_nonneg h.1 h.2.1,
+        add_nonneg h.2.2.1 h.2.2.2⟩)
+  rw [integral_plusDetH4_rationalAbsoluteMajorant] at hrat
+  exact (habs.trans hrat).trans_lt (by norm_num)
+
+private theorem plusDetCompositeJointErrorW_gt :
+    (-1 / 2000 : ℝ) <
+      plusDetCompositeJointError (-27559902356441 / 930240000000)
+        (7250135076773 / 310080000000) 1 plusDetAlternatingQW := by
+  have hq : Continuous plusDetAlternatingQW := by
+    unfold plusDetAlternatingQW plusDetAlternatingQ alternatingQ41
+      alternatingQ43 alternatingQ05 alternatingQ25 alternatingQ45
+    fun_prop
+  have hPp : Continuous plusDetWPPositive := by
+    unfold plusDetWPPositive plusDetBernstein10B1 plusDetBernstein10B2
+      plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+      plusDetBernstein10B6 plusDetBernstein10B7
+    fun_prop
+  have hNp : Continuous plusDetWPNegative := by
+    unfold plusDetWPNegative plusDetBernstein10B8 plusDetBernstein10B9
+    fun_prop
+  have hPm : Continuous plusDetWMPositive := by
+    unfold plusDetWMPositive plusDetBernstein10B8
+    fun_prop
+  have hNm : Continuous plusDetWMNegative := by
+    unfold plusDetWMNegative plusDetBernstein10B1 plusDetBernstein10B2
+      plusDetBernstein10B3 plusDetBernstein10B4 plusDetBernstein10B5
+      plusDetBernstein10B6 plusDetBernstein10B7 plusDetBernstein10B9
+    fun_prop
+  have hlower := plusDetCompositeJointError_lower_of_signed_splits
+    (-27559902356441 / 930240000000) (7250135076773 / 310080000000) 1
+    plusDetAlternatingQW plusDetWPPositive plusDetWPNegative
+    plusDetWMPositive plusDetWMNegative hq hPp hNp hPm hNm
+    (fun t ↦ (plusDetW_jointProfile_splits t).1)
+    (fun t ↦ (plusDetW_jointProfile_splits t).2)
+    (fun t ht ↦ plusDetW_signedProfiles_nonneg ht)
+  have hrat := integral_plusDetJointSignedCost_le_rational
+    plusDetWPPositive plusDetWPNegative plusDetWMPositive plusDetWMNegative
+    hPp hNp hPm hNm (fun t ht ↦ plusDetW_signedProfiles_nonneg ht)
+  have hneg := (neg_le_neg hrat).trans hlower
+  have hcert :
+      (∫ t : ℝ in 0..2,
+        plusDetJointRationalSignedCost plusDetWPPositive plusDetWPNegative
+          plusDetWMPositive plusDetWMNegative t) < (1 / 2000 : ℝ) := by
+    rw [integral_plusDetW_rationalSignedCost]
+    norm_num
+  rw [show (-1 / 2000 : ℝ) = -(1 / 2000) by ring]
+  exact (neg_lt_neg hcert).trans_le hneg
 
 private theorem plusDetAlternatingQW_signed_bernstein (t : ℝ) :
     plusDetAlternatingQW t =
