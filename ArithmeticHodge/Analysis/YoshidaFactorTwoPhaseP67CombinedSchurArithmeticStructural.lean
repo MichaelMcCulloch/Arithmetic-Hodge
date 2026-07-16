@@ -134,6 +134,34 @@ def factorTwoP67ForwardWeight₀₁ : ℝ := 40625 / 13716864
 def factorTwoP67ForwardWeight₁₀ : ℝ := 1953125 / 146313216
 def factorTwoP67ForwardWeight₁₁ : ℝ := 66015625 / 292626432
 
+/-- Exact conversion of the `KP6` derivative envelope to the normalized
+`P6`/even-residual cell. -/
+theorem factorTwoP67ForwardWeight₀₀_normalization :
+    (1 / 16 : ℝ) * (1 / 8778792960000000) * 14000 ^ 2 =
+      factorTwoP67ForwardWeight₀₀ * (1 / 100) * (2 / 13) * (1 / 250) := by
+  norm_num [factorTwoP67ForwardWeight₀₀]
+
+/-- Exact conversion of the `LP6` derivative envelope to the normalized
+`P6`/odd-residual cell. -/
+theorem factorTwoP67ForwardWeight₀₁_normalization :
+    (1 / 16 : ℝ) * (1 / 8778792960000000) * 16000 ^ 2 =
+      factorTwoP67ForwardWeight₀₁ * (1 / 100) * (2 / 13) * (1 / 2500) := by
+  norm_num [factorTwoP67ForwardWeight₀₁]
+
+/-- Exact conversion of the `LP7` derivative envelope to the normalized
+`P7`/even-residual cell. -/
+theorem factorTwoP67ForwardWeight₁₀_normalization :
+    (1 / 16 : ℝ) * (1 / 8778792960000000) * 100000 ^ 2 =
+      factorTwoP67ForwardWeight₁₀ * (1 / 100) * (2 / 15) * (1 / 250) := by
+  norm_num [factorTwoP67ForwardWeight₁₀]
+
+/-- Exact conversion of the `KP7` derivative envelope to the normalized
+`P7`/odd-residual cell. -/
+theorem factorTwoP67ForwardWeight₁₁_normalization :
+    (1 / 16 : ℝ) * (1 / 8778792960000000) * 130000 ^ 2 =
+      factorTwoP67ForwardWeight₁₁ * (1 / 100) * (2 / 15) * (1 / 2500) := by
+  norm_num [factorTwoP67ForwardWeight₁₁]
+
 def factorTwoP67YoungParameter₀₀ : ℝ := 1 / 4
 def factorTwoP67YoungParameter₀₁ : ℝ := 1 / 9
 def factorTwoP67YoungParameter₁₀ : ℝ := 3 / 4
