@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CombinedNegativeProfileStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP1P3ShearCorrelationStructural
 
 set_option autoImplicit false
 
@@ -35,6 +36,7 @@ open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5EndpointDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP1P3ShearCorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4Schur
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveSchur
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticSchurReductionStructural
@@ -552,6 +554,391 @@ theorem minusP5OddPositiveTail_eq_structuralProfile :
     factorTwoCenteredSymmetricPerturbation_p5_structural_eq]
   unfold minusP5OddPositiveTailCorrelation
   ring
+
+/-! ## One global correlation budget -/
+
+/-- Exact squared mass of the complete signed tail correlation.  This is
+the cancellation invariant used below; no pointwise partition of `[0,2]`
+is introduced. -/
+theorem integral_sq_minusP5OddPositiveTailCorrelation :
+    (∫ t : ℝ in 0..2, minusP5OddPositiveTailCorrelation t ^ 2) =
+      (1951516266677 / 55557998496000 : ℝ) := by
+  let p0 : ℝ → ℝ := fun t ↦
+    (4 / 121 : ℝ) + (11279 / 55440 : ℝ) * t -
+      (1106352469 / 4470681600 : ℝ) * t ^ 2 -
+      (1898668691 / 319334400 : ℝ) * t ^ 3 -
+      (707167051 / 4470681600 : ℝ) * t ^ 4 +
+      (1153523429 / 18923520 : ℝ) * t ^ 5 +
+      (3997085123 / 162570240 : ℝ) * t ^ 6 -
+      (77529125129 / 127733760 : ℝ) * t ^ 7
+  let p1 : ℝ → ℝ := fun t ↦
+    (11071777500227 / 8670412800 : ℝ) * t ^ 8 -
+      (2535698246467 / 2270822400 : ℝ) * t ^ 9 +
+      (1524553456733 / 5202247680 : ℝ) * t ^ 10 +
+      (1909742469881 / 9991618560 : ℝ) * t ^ 11 -
+      (9129541513 / 77856768 : ℝ) * t ^ 12 -
+      (523695329 / 21626880 : ℝ) * t ^ 13
+  let p2 : ℝ → ℝ := fun t ↦
+    (3374725322131 / 127166054400 : ℝ) * t ^ 14 +
+      (927381 / 720896 : ℝ) * t ^ 15 -
+      (220026869 / 60555264 : ℝ) * t ^ 16 +
+      (4672141 / 14417920 : ℝ) * t ^ 18 -
+      (13545 / 720896 : ℝ) * t ^ 20 +
+      (3969 / 7929856 : ℝ) * t ^ 22
+  have hp0c : Continuous p0 := by
+    dsimp only [p0]
+    fun_prop
+  have hp1c : Continuous p1 := by
+    dsimp only [p1]
+    fun_prop
+  have hp2c : Continuous p2 := by
+    dsimp only [p2]
+    fun_prop
+  have hp0 : (∫ t : ℝ in 0..2, p0 t) =
+      (-11842715292348799 / 645454656000 : ℝ) := by
+    dsimp only [p0]
+    ring_nf
+    repeat rw [intervalIntegral.integral_add
+      (Continuous.intervalIntegrable (by fun_prop) 0 2)
+      (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+    norm_num
+  have hp1 : (∫ t : ℝ in 0..2, p1 t) =
+      (-28922010075414413 / 1198701504000 : ℝ) := by
+    dsimp only [p1]
+    ring_nf
+    repeat rw [intervalIntegral.integral_add
+      (Continuous.intervalIntegrable (by fun_prop) 0 2)
+      (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+    norm_num
+  have hp2 : (∫ t : ℝ in 0..2, p2 t) =
+      (11885761843452367 / 279825084000 : ℝ) := by
+    dsimp only [p2]
+    ring_nf
+    repeat rw [intervalIntegral.integral_add
+      (Continuous.intervalIntegrable (by fun_prop) 0 2)
+      (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+    norm_num
+  calc
+    (∫ t : ℝ in 0..2, minusP5OddPositiveTailCorrelation t ^ 2) =
+        ∫ t : ℝ in 0..2, (p0 + p1 + p2) t := by
+      apply intervalIntegral.integral_congr
+      intro t _ht
+      simp only [Pi.add_apply]
+      dsimp only [p0, p1, p2]
+      rw [minusP5OddPositiveTailCorrelation_polynomial]
+      ring
+    _ = (∫ t : ℝ in 0..2, p0 t) +
+          (∫ t : ℝ in 0..2, p1 t) +
+          (∫ t : ℝ in 0..2, p2 t) := by
+      have h01 : (∫ t : ℝ in 0..2, p0 t + p1 t) =
+          (∫ t : ℝ in 0..2, p0 t) +
+            (∫ t : ℝ in 0..2, p1 t) := by
+        simpa only [Pi.add_apply] using
+          intervalIntegral.integral_add
+            (hp0c.intervalIntegrable 0 2) (hp1c.intervalIntegrable 0 2)
+      have h012 : (∫ t : ℝ in 0..2, (p0 t + p1 t) + p2 t) =
+          (∫ t : ℝ in 0..2, p0 t + p1 t) +
+            (∫ t : ℝ in 0..2, p2 t) := by
+        simpa only [Pi.add_apply] using
+          intervalIntegral.integral_add
+            ((hp0c.add hp1c).intervalIntegrable 0 2)
+            (hp2c.intervalIntegrable 0 2)
+      simp only [Pi.add_apply]
+      rw [h012, h01]
+    _ = (1951516266677 / 55557998496000 : ℝ) := by
+      rw [hp0, hp1, hp2]
+      norm_num
+
+/-- The exact squared mass gives one global `L¹` envelope by
+Cauchy--Schwarz. -/
+theorem integral_abs_minusP5OddPositiveTailCorrelation_lt :
+    (∫ t : ℝ in 0..2, |minusP5OddPositiveTailCorrelation t|) <
+      (133 / 500 : ℝ) := by
+  have hcs := sq_intervalIntegral_mul_le_zero_two
+    (fun _ : ℝ ↦ 1)
+    (fun t ↦ |minusP5OddPositiveTailCorrelation t|)
+    continuous_const continuous_minusP5OddPositiveTailCorrelation.abs
+  simp only [one_mul, one_pow, sq_abs] at hcs
+  rw [show (∫ _t : ℝ in 0..2, (1 : ℝ)) = 2 by norm_num,
+    integral_sq_minusP5OddPositiveTailCorrelation] at hcs
+  have hnonneg : 0 ≤ ∫ t : ℝ in 0..2,
+      |minusP5OddPositiveTailCorrelation t| :=
+    intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ abs_nonneg _)
+  have hrat :
+      (2 : ℝ) * (1951516266677 / 55557998496000) <
+        (133 / 500 : ℝ) ^ 2 := by
+    norm_num
+  nlinarith
+
+private theorem abs_poleFreeAnalyticError_minusP5OddPositiveTail_lt :
+    |poleFreeAnalyticError minusP5OddPositiveTailCorrelation| <
+      (399 / 4000000 : ℝ) := by
+  have herr := abs_poleFreeAnalyticError_le
+    minusP5OddPositiveTailCorrelation
+    continuous_minusP5OddPositiveTailCorrelation
+  calc
+    |poleFreeAnalyticError minusP5OddPositiveTailCorrelation| ≤
+        (3 / 8000 : ℝ) *
+          (∫ t : ℝ in 0..2,
+            |minusP5OddPositiveTailCorrelation t|) := herr
+    _ < (3 / 8000 : ℝ) * (133 / 500 : ℝ) :=
+      mul_lt_mul_of_pos_left
+        integral_abs_minusP5OddPositiveTailCorrelation_lt (by norm_num)
+    _ = (399 / 4000000 : ℝ) := by norm_num
+
+private theorem abs_minusP5OddPositiveTailCleanEnvelope_scaled_lt :
+    |yoshidaEndpointA * minusP5OddPositiveTailCleanEnvelope| <
+      (1 / 2000000 : ℝ) := by
+  have herr := abs_oddCleanRegularEnvelopeError_le
+    minusP5OddPositiveTailCorrelation
+    continuous_minusP5OddPositiveTailCorrelation
+  rw [← minusP5OddPositiveTailCleanEnvelope_eq_profile] at herr
+  have henv : |minusP5OddPositiveTailCleanEnvelope| <
+      (133 / 125000000 : ℝ) := by
+    calc
+      |minusP5OddPositiveTailCleanEnvelope| ≤
+          (1 / 250000 : ℝ) *
+            (∫ t : ℝ in 0..2,
+              |minusP5OddPositiveTailCorrelation t|) := herr
+      _ < (1 / 250000 : ℝ) * (133 / 500 : ℝ) :=
+        mul_lt_mul_of_pos_left
+          integral_abs_minusP5OddPositiveTailCorrelation_lt (by norm_num)
+      _ = (133 / 125000000 : ℝ) := by norm_num
+  have hA : yoshidaEndpointA < (7 / 20 : ℝ) := by
+    unfold yoshidaEndpointA
+    linarith [strict_log_two_fine_bounds.2]
+  rw [abs_mul, abs_of_pos yoshidaEndpointA_pos]
+  calc
+    yoshidaEndpointA * |minusP5OddPositiveTailCleanEnvelope| ≤
+        (7 / 20 : ℝ) * |minusP5OddPositiveTailCleanEnvelope| :=
+      mul_le_mul_of_nonneg_right hA.le (abs_nonneg _)
+    _ < (7 / 20 : ℝ) * (133 / 125000000 : ℝ) :=
+      mul_lt_mul_of_pos_left henv (by norm_num)
+    _ < (1 / 2000000 : ℝ) := by norm_num
+
+/-! ## Rational boxes for the explicit base -/
+
+private theorem sqrt_two_positiveProfile_ultra_bounds :
+    (14142135623 / 10000000000 : ℝ) < Real.sqrt 2 ∧
+      Real.sqrt 2 < (14142135624 / 10000000000 : ℝ) := by
+  have hs : (Real.sqrt 2) ^ 2 = 2 := Real.sq_sqrt (by norm_num)
+  have hs0 : 0 ≤ Real.sqrt 2 := Real.sqrt_nonneg 2
+  constructor <;> nlinarith
+
+private theorem log_two_div_sqrt_two_positiveProfile_ultra_bounds :
+    (4901290717 / 10000000000 : ℝ) < Real.log 2 / Real.sqrt 2 ∧
+      Real.log 2 / Real.sqrt 2 < (4901290718 / 10000000000 : ℝ) := by
+  have hlog := strict_log_two_fine_bounds
+  have hs := sqrt_two_positiveProfile_ultra_bounds
+  have hspos : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  rw [lt_div_iff₀ hspos, div_lt_iff₀ hspos]
+  constructor <;> nlinarith
+
+private theorem log_three_div_sqrt_three_positiveProfile_ultra_bounds :
+    (6342841 / 10000000 : ℝ) < Real.log 3 / Real.sqrt 3 ∧
+      Real.log 3 / Real.sqrt 3 < (6342842 / 10000000 : ℝ) := by
+  have hlog2 := strict_log_two_fine_bounds
+  have hlog32 := strict_log_three_halves_fine_bounds
+  have hlog3 : Real.log 3 = Real.log 2 + Real.log (3 / 2) := by
+    calc
+      Real.log 3 = Real.log (2 * (3 / 2 : ℝ)) := by norm_num
+      _ = Real.log 2 + Real.log (3 / 2) := by
+        rw [Real.log_mul (by norm_num : (2 : ℝ) ≠ 0)
+          (by norm_num : (3 / 2 : ℝ) ≠ 0)]
+  have hsSq : (Real.sqrt 3) ^ 2 = 3 := Real.sq_sqrt (by norm_num)
+  have hs0 : 0 ≤ Real.sqrt 3 := Real.sqrt_nonneg 3
+  have hspos : 0 < Real.sqrt 3 := Real.sqrt_pos.2 (by norm_num)
+  have hsLower : (17320508 / 10000000 : ℝ) < Real.sqrt 3 := by
+    nlinarith
+  have hsUpper : Real.sqrt 3 < (17320509 / 10000000 : ℝ) := by
+    nlinarith
+  rw [lt_div_iff₀ hspos, div_lt_iff₀ hspos, hlog3]
+  constructor <;> nlinarith
+
+private theorem factorTwoPrimeRatio_positiveProfile_ultra_bounds :
+    (11699250014 / 10000000000 : ℝ) <
+        factorTwoPrimeShift / yoshidaEndpointA ∧
+      factorTwoPrimeShift / yoshidaEndpointA <
+        (11699250015 / 10000000000 : ℝ) := by
+  have hlog := strict_log_two_fine_bounds
+  have hshift := strict_log_three_halves_fine_bounds
+  constructor
+  · rw [lt_div_iff₀ yoshidaEndpointA_pos]
+    unfold factorTwoPrimeShift yoshidaEndpointA
+    nlinarith
+  · rw [div_lt_iff₀ yoshidaEndpointA_pos]
+    unfold factorTwoPrimeShift yoshidaEndpointA
+    nlinarith
+
+private theorem minusP5OddPositiveTailCorrelation_prime_ultra_bounds :
+    (137093206 / 1000000000 : ℝ) <
+        minusP5OddPositiveTailCorrelation
+          (factorTwoPrimeShift / yoshidaEndpointA) ∧
+      minusP5OddPositiveTailCorrelation
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (137093207 / 1000000000 : ℝ) := by
+  let tau : ℝ := factorTwoPrimeShift / yoshidaEndpointA
+  let y : ℝ := tau - 11699250014 / 10000000000
+  have htau := factorTwoPrimeRatio_positiveProfile_ultra_bounds
+  have hy0 : 0 < y := by
+    dsimp only [y, tau]
+    linarith [htau.1]
+  have hyU : y < (1 / 10000000000 : ℝ) := by
+    dsimp only [y, tau]
+    linarith [htau.2]
+  have hy2 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (2 : ℕ) ≠ 0)
+  have hy3 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (3 : ℕ) ≠ 0)
+  have hy4 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (4 : ℕ) ≠ 0)
+  have hy5 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (5 : ℕ) ≠ 0)
+  have hy6 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (6 : ℕ) ≠ 0)
+  have hy7 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (7 : ℕ) ≠ 0)
+  have hy8 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (8 : ℕ) ≠ 0)
+  have hy9 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (9 : ℕ) ≠ 0)
+  have hy10 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (10 : ℕ) ≠ 0)
+  have hy11 := pow_lt_pow_left₀ hyU hy0.le (by norm_num : (11 : ℕ) ≠ 0)
+  have htauy : tau = 11699250014 / 10000000000 + y := by
+    dsimp only [y]
+    ring
+  dsimp only [tau] at htauy ⊢
+  rw [htauy, minusP5OddPositiveTailCorrelation_polynomial]
+  ring_nf
+  constructor <;> nlinarith [hy2, hy3, hy4, hy5, hy6, hy7, hy8,
+    hy9, hy10, hy11, sq_nonneg y, pow_nonneg hy0.le 3,
+    pow_nonneg hy0.le 4, pow_nonneg hy0.le 5, pow_nonneg hy0.le 6,
+    pow_nonneg hy0.le 7, pow_nonneg hy0.le 8, pow_nonneg hy0.le 9,
+    pow_nonneg hy0.le 10, pow_nonneg hy0.le 11]
+
+private theorem minusP5OddPositiveTailPrimeProduct_lt :
+    (Real.log 3 / Real.sqrt 3) *
+        minusP5OddPositiveTailCorrelation
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+      (1087 / 12500 : ℝ) := by
+  have hbeta := log_three_div_sqrt_three_positiveProfile_ultra_bounds
+  have hcorr := minusP5OddPositiveTailCorrelation_prime_ultra_bounds
+  have hbeta0 : 0 < Real.log 3 / Real.sqrt 3 := by
+    linarith [hbeta.1]
+  have hcorr0 : 0 < minusP5OddPositiveTailCorrelation
+      (factorTwoPrimeShift / yoshidaEndpointA) := by
+    linarith [hcorr.1]
+  calc
+    (Real.log 3 / Real.sqrt 3) *
+        minusP5OddPositiveTailCorrelation
+          (factorTwoPrimeShift / yoshidaEndpointA) <
+        (6342842 / 10000000 : ℝ) *
+          minusP5OddPositiveTailCorrelation
+            (factorTwoPrimeShift / yoshidaEndpointA) :=
+      mul_lt_mul_of_pos_right hbeta.2 hcorr0
+    _ < (6342842 / 10000000 : ℝ) *
+        (137093207 / 1000000000 : ℝ) :=
+      mul_lt_mul_of_pos_left hcorr.2 (by norm_num)
+    _ < (1087 / 12500 : ℝ) := by norm_num
+
+private theorem minusP5OddPositiveTailCleanPolynomial_scaled_lt :
+    yoshidaEndpointA * minusP5OddPositiveTailCleanPolynomial <
+      (37 / 500000 : ℝ) := by
+  have hA : yoshidaEndpointA < (7 / 20 : ℝ) := by
+    unfold yoshidaEndpointA
+    linarith [strict_log_two_fine_bounds.2]
+  have hA0 : 0 ≤ yoshidaEndpointA := yoshidaEndpointA_pos.le
+  have hA3 := pow_lt_pow_left₀ hA hA0
+    (by norm_num : (3 : ℕ) ≠ 0)
+  have hA5 := pow_lt_pow_left₀ hA hA0
+    (by norm_num : (5 : ℕ) ≠ 0)
+  have h55 : oddP5CleanRegularPolynomial55 < (23 / 500000 : ℝ) := by
+    unfold oddP5CleanRegularPolynomial55
+    norm_num at hA3 hA5 ⊢
+    nlinarith
+  have h55nonneg : 0 ≤ oddP5CleanRegularPolynomial55 := by
+    unfold oddP5CleanRegularPolynomial55
+    positivity
+  have h15 := oddP5CleanRegularPolynomial15_bounds
+  have h35 := neg_oddP5CleanRegularPolynomial35_bounds
+  have hpoly0 : 0 ≤ minusP5OddPositiveTailCleanPolynomial := by
+    unfold minusP5OddPositiveTailCleanPolynomial
+    nlinarith [h15.1, h35.1, h55nonneg]
+  have hpoly : minusP5OddPositiveTailCleanPolynomial <
+      (21 / 100000 : ℝ) := by
+    unfold minusP5OddPositiveTailCleanPolynomial
+    nlinarith [h15.2, h35.2, h55]
+  calc
+    yoshidaEndpointA * minusP5OddPositiveTailCleanPolynomial ≤
+        (7 / 20 : ℝ) * minusP5OddPositiveTailCleanPolynomial :=
+      mul_le_mul_of_nonneg_right hA.le hpoly0
+    _ < (7 / 20 : ℝ) * (21 / 100000 : ℝ) :=
+      mul_lt_mul_of_pos_left hpoly (by norm_num)
+    _ < (37 / 500000 : ℝ) := by norm_num
+
+private theorem minusP5OddPositiveTailAlgebraicBase_gt :
+    (-14569 / 100000 : ℝ) < minusP5OddPositiveTailAlgebraicBase := by
+  have hmass := plusP5_scalarMassLoss_fine_bounds
+  have halpha := log_two_div_sqrt_two_positiveProfile_ultra_bounds
+  have hprime := minusP5OddPositiveTailPrimeProduct_lt
+  have hclean := minusP5OddPositiveTailCleanPolynomial_scaled_lt
+  have hmoment := oddP5PolynomialMoment_bounds
+  have hlog := strict_log_two_fine_bounds
+  unfold minusP5OddPositiveTailAlgebraicBase
+  nlinarith
+
+private theorem plusP5OddQRawReserve_nonneg_positiveProfile :
+    0 ≤ plusP5OddQRawReserve := by
+  have hraw := factorTwoCenteredP5_raw_reserve
+  have henergy : factorTwoIntrinsicEnergy factorTwoCenteredP5 =
+      (2 / 11 : ℝ) := by
+    simpa [factorTwoIntrinsicEnergy] using integral_factorTwoCenteredP5_sq
+  rw [henergy] at hraw
+  unfold plusP5OddQRawReserve
+  nlinarith
+
+private theorem minusP5OddPositiveTailHyperbolic_lt :
+    2 * yoshidaEndpointA * oddP5CleanSinhMoment *
+        minusP5OddPositiveTailSinhFactor < (3 / 1000000 : ℝ) := by
+  have hA : yoshidaEndpointA < (7 / 20 : ℝ) := by
+    unfold yoshidaEndpointA
+    linarith [strict_log_two_fine_bounds.2]
+  have h2A : 2 * yoshidaEndpointA ≤ 1 := by linarith
+  have hm5 := oddP5CleanSinhMoment_lt
+  have hm50 := oddP5CleanSinhMoment_nonneg
+  have hm5sq : oddP5CleanSinhMoment ^ 2 <
+      (1 / 125000 : ℝ) ^ 2 := by
+    nlinarith [sq_nonneg oddP5CleanSinhMoment]
+  have hdiag : 2 * yoshidaEndpointA * oddP5CleanSinhMoment ^ 2 <
+      (1 / 1000000000 : ℝ) := by
+    calc
+      2 * yoshidaEndpointA * oddP5CleanSinhMoment ^ 2 ≤
+          1 * oddP5CleanSinhMoment ^ 2 :=
+        mul_le_mul_of_nonneg_right h2A (sq_nonneg _)
+      _ < (1 / 125000 : ℝ) ^ 2 := by simpa using hm5sq
+      _ < (1 / 1000000000 : ℝ) := by norm_num
+  have h15 := abs_lt.mp abs_oddP5_hyperbolicCross15_lt
+  have h35 := abs_lt.mp abs_oddP5_hyperbolicCross35_lt
+  rw [show 2 * yoshidaEndpointA * oddP5CleanSinhMoment *
+      minusP5OddPositiveTailSinhFactor =
+        (44161 / 20160 : ℝ) *
+            (2 * yoshidaEndpointA * oddCleanSinhMoment1 *
+              oddP5CleanSinhMoment) -
+          (15 / 4 : ℝ) *
+            (2 * yoshidaEndpointA * oddCleanSinhMoment3 *
+              oddP5CleanSinhMoment) +
+          2 * yoshidaEndpointA * oddP5CleanSinhMoment ^ 2 by
+    unfold minusP5OddPositiveTailSinhFactor
+    ring]
+  nlinarith [h15.2, h35.1, hdiag]
+
+/-- Sharp structural lower bound for the completed positive `P5` tail.
+All analytic estimates use the one global correlation on `[0,2]`; there is
+no subdivision or sampled polynomial check. -/
+theorem neg_729_div_5000_lt_minusP5OddPositiveTail :
+    (-729 / 5000 : ℝ) < minusP5OddPositiveTail := by
+  have hbase := minusP5OddPositiveTailAlgebraicBase_gt
+  have hraw := plusP5OddQRawReserve_nonneg_positiveProfile
+  have henv := abs_lt.mp
+    abs_minusP5OddPositiveTailCleanEnvelope_scaled_lt
+  have hhyper := minusP5OddPositiveTailHyperbolic_lt
+  have hpfe := abs_lt.mp
+    abs_poleFreeAnalyticError_minusP5OddPositiveTail_lt
+  rw [minusP5OddPositiveTail_eq_structuralProfile]
+  nlinarith
 
 end
 
