@@ -11,6 +11,7 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP
 open ThreeByThreePositiveMixedDeterminant
 open ThreeByThreeRankOneSchur
 open ShiftedLegendreBasis
+open ShiftedLegendreLogEnergyOrthogonalProjection
 open ShiftedLegendreOrthogonality
 open MatrixIntervalQuadraticSOS
 open YoshidaFactorTwoPhaseIntrinsicElevenConstrainedWeightedDualStructural
@@ -627,6 +628,108 @@ def retainedP024SelectorSOSGram :
     (retainedP024SelectorBoundaryGapQuadratic +
       retainedP024SelectorSOSReserve)
 
+/-! ## Asymmetric off-block realization
+
+The affine lift only sees the sum of the two off-diagonal blocks.  We use
+that freedom to retain the oriented base--symmetric selector pairing instead
+of replacing it by its symmetric part.  This is the matrix coordinate in
+which the analytic selector loss becomes one whole weighted residual square.
+-/
+
+/-- Endpoint-average of two polynomial selectors. -/
+def retainedP024BaseSelector (qPlus qMinus : ℝ[X]) : ℝ[X] :=
+  (1 / 2 : ℝ) • (qPlus + qMinus)
+
+/-- The endpoint-average residual is exactly the phase-independent base
+residual. -/
+theorem retainedP024BaseSelectorResidual_eq_endpoint_half_add
+    (gamma : ℝ) (p qPlus qMinus : ℝ[X]) (x : ℝ) :
+    factorTwoIntrinsicElevenSelectorResidual
+        (retainedEvenBaseRepresenterAt gamma p)
+        (retainedP024BaseSelector qPlus qMinus) x =
+      (1 / 2 : ℝ) *
+        (factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0) qPlus x +
+          factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0) qMinus x) := by
+  unfold factorTwoIntrinsicElevenSelectorResidual retainedP024BaseSelector
+  rw [centeredPolynomialLift_smul, centeredPolynomialLift_add,
+    retainedEvenRepresenterAt_zero_odd_phase_split,
+    retainedEvenRepresenterAt_zero_odd_phase_split]
+  ring
+
+/-- The symmetric residual is the complementary endpoint half-difference.
+This public form is used to orient the off-block Gram. -/
+theorem retainedP024SymmetricSelectorResidual_eq_endpoint_half_sub
+    (gamma : ℝ) (p qPlus qMinus : ℝ[X]) (x : ℝ) :
+    factorTwoIntrinsicElevenSelectorResidual
+        (retainedEvenSymmetricRepresenterAt gamma p)
+        (retainedP024SymmetricSelector qPlus qMinus) x =
+      (1 / 2 : ℝ) *
+        (factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0) qPlus x -
+          factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0) qMinus x) := by
+  unfold factorTwoIntrinsicElevenSelectorResidual
+    retainedP024SymmetricSelector retainedEvenSymmetricRepresenterAt
+    retainedEvenBaseRepresenterAt
+  rw [centeredPolynomialLift_smul]
+  have hsub : centeredPolynomialLift (qPlus - qMinus) x =
+      centeredPolynomialLift qPlus x - centeredPolynomialLift qMinus x := by
+    unfold centeredPolynomialLift
+    rw [Polynomial.eval_sub]
+  rw [hsub,
+    retainedEvenRepresenterAt_zero_odd_phase_split gamma p (-1) 0 x]
+  simp only [retainedEvenSymmetricRepresenterAt,
+    retainedEvenBaseRepresenterAt]
+  ring
+
+/-- Endpoint-average selector attached to one of the three retained even
+rows. -/
+def retainedP024SelectorBasePolynomial (i : Fin 3) : ℝ[X] :=
+  retainedP024BaseSelector
+    (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+      retainedP024SelectorPlus4] i)
+    (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+      retainedP024SelectorMinus4] i)
+
+/-- Oriented weighted Gram from the endpoint-average residual to the
+symmetric half-difference residual.  Unlike the ordinary selector Grams this
+matrix need not be symmetric. -/
+def retainedP024SelectorBaseSymmetricCrossGram :
+    Matrix (Fin 3) (Fin 3) ℝ := fun i j ↦
+  factorTwoIntrinsicElevenSelectorCrossDual
+    factorTwoIntrinsicElevenRetainedEvenWeight
+    (retainedEvenBaseRepresenterAt
+      (1 / 512 : ℝ) (shiftedLegendreReal (2 * i.1)))
+    (retainedEvenSymmetricRepresenterAt
+      (1 / 512 : ℝ) (shiftedLegendreReal (2 * j.1)))
+    (retainedP024SelectorBasePolynomial i)
+    (retainedP024SymmetricSelector
+      (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+        retainedP024SelectorPlus4] j)
+      (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+        retainedP024SelectorMinus4] j))
+
+/-- The same boundary pencil with the skew part of the oriented selector
+cross Gram retained in the off-diagonal blocks. -/
+def retainedP024SelectorAsymmetricSOSGram :
+    Matrix (Fin 3 ⊕ Fin 3) (Fin 3 ⊕ Fin 3) ℝ :=
+  let G := retainedP024SelectorBaseSymmetricCrossGram
+  Matrix.fromBlocks
+    (retainedP024SelectorBoundaryGapConstant -
+      retainedP024SelectorSOSReserve)
+    ((1 / 2 : ℝ) • retainedP024SelectorBoundaryGapLinear +
+      (1 / 2 : ℝ) • (Gᴴ - G))
+    ((1 / 2 : ℝ) • retainedP024SelectorBoundaryGapLinear +
+      (1 / 2 : ℝ) • (G - Gᴴ))
+    (retainedP024SelectorBoundaryGapQuadratic +
+      retainedP024SelectorSOSReserve)
+
 /-- Exact affine-lift SOS identity for the full P024 boundary-gap pencil. -/
 theorem retainedP024SelectorBoundaryGapMatrix_eq_sos (a : ℝ) :
     retainedP024SelectorBoundaryGapMatrix a =
@@ -635,6 +738,22 @@ theorem retainedP024SelectorBoundaryGapMatrix_eq_sos (a : ℝ) :
         (1 - a ^ 2) • retainedP024SelectorSOSReserve := by
   rw [retainedP024SelectorBoundaryGapMatrix_eq_coefficients,
     retainedP024SelectorSOSGram,
+    affineLiftMatrix_conjTranspose_mul_fromBlocks_mul_affineLiftMatrix]
+  ext i j
+  simp
+  ring
+
+/-- Exact affine-lift SOS identity with the oriented off-block selector
+pairing exposed.  No analytic estimate is used here: the added skew blocks
+cancel identically under the affine lift. -/
+theorem retainedP024SelectorBoundaryGapMatrix_eq_asymmetric_sos (a : ℝ) :
+    retainedP024SelectorBoundaryGapMatrix a =
+      (affineLiftMatrix (n := Fin 3) a)ᴴ *
+          retainedP024SelectorAsymmetricSOSGram *
+          affineLiftMatrix (n := Fin 3) a +
+        (1 - a ^ 2) • retainedP024SelectorSOSReserve := by
+  rw [retainedP024SelectorBoundaryGapMatrix_eq_coefficients,
+    retainedP024SelectorAsymmetricSOSGram,
     affineLiftMatrix_conjTranspose_mul_fromBlocks_mul_affineLiftMatrix]
   ext i j
   simp
