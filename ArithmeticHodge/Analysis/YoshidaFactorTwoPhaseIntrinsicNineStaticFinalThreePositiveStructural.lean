@@ -997,6 +997,36 @@ theorem factorTwoIntrinsicNineRetunedPlus_firstSchur_eq
   unfold symmetricQuadratic unbalancedThreeAdjugatePair adjugateQuadratic
   ring
 
+/-- The first retuned plus Schur identity specialized to the first two odd
+coordinates.  Unlike the general identity, this public form contains no
+private lower-block abbreviations. -/
+theorem factorTwoIntrinsicNineRetunedTPlusTwoQuadratic_eq_fractionFree
+    (y1 y3 : ℝ) :
+    factorTwoIntrinsicSixUnbalancedEPlusDet *
+          (factorTwoIntrinsicNineRetunedOPlus 0 0 * y1 ^ 2 +
+            2 * factorTwoIntrinsicNineRetunedOPlus 0 1 * y1 * y3 +
+            factorTwoIntrinsicNineRetunedOPlus 1 1 * y3 ^ 2) -
+        adjugateQuadratic
+          factorTwoIntrinsicSixUnbalancedEPlus00
+          factorTwoIntrinsicSixUnbalancedEPlus02
+          factorTwoIntrinsicSixUnbalancedEPlus04
+          factorTwoIntrinsicSixUnbalancedEPlus22
+          factorTwoIntrinsicSixUnbalancedEPlus24
+          factorTwoIntrinsicSixUnbalancedEPlus44
+          (factorTwoIntrinsicNineRetunedBPlus 0 0 * y1 +
+            factorTwoIntrinsicNineRetunedBPlus 1 0 * y3)
+          (factorTwoIntrinsicNineRetunedBPlus 0 1 * y1 +
+            factorTwoIntrinsicNineRetunedBPlus 1 1 * y3)
+          (factorTwoIntrinsicNineRetunedBPlus 0 2 * y1 +
+            factorTwoIntrinsicNineRetunedBPlus 1 2 * y3) =
+      factorTwoIntrinsicNineRetunedTPlus 0 0 * y1 ^ 2 +
+        2 * factorTwoIntrinsicNineRetunedTPlus 0 1 * y1 * y3 +
+        factorTwoIntrinsicNineRetunedTPlus 1 1 * y3 ^ 2 := by
+  have h := factorTwoIntrinsicNineRetunedPlus_firstSchur_eq
+    y1 y3 0 0 0 0
+  unfold retunedLowerPlus retunedEllPlus at h
+  simpa [symmetricQuadratic] using h
+
 /-- Exact first fraction-free completion for the retuned minus endpoint. -/
 theorem factorTwoIntrinsicNineRetunedMinus_firstSchur_eq
     (c1 c3 c5 c6 c8 c7 : ℝ) :

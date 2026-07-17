@@ -1829,6 +1829,53 @@ theorem factorTwoIntrinsicSixUnbalancedMinorPlusLowerFive_le_exact
     factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic] using
     minorLowerFiveQuadratic_le_exact s d p u v
 
+/-- The public absolute comparison transports through the exact five-variable
+congruence and is absorbed by the correlated exact form.  This exposes the
+private congruence in the form needed by later retunings without exposing its
+auxiliary coefficients. -/
+theorem factorTwoIntrinsicSixUnbalancedMinorPlusAbsoluteComparison_le_exact_congruence
+    (x0 x1 x2 x3 x4 : ℝ) :
+    (27 / 50 : ℝ) * x0 ^ 2 + (63 / 10000 : ℝ) * x1 ^ 2 +
+        (397 / 50000 : ℝ) * x2 ^ 2 + (12 / 125 : ℝ) * x3 ^ 2 +
+        (149 / 50000 : ℝ) * x4 ^ 2 -
+        2 * (41 / 500000 : ℝ) * |x0 * x1| -
+        2 * (51 / 100000 : ℝ) * |x0 * x2| -
+        2 * (237 / 500000 : ℝ) * |x0 * x3| -
+        2 * (5891 / 1000000 : ℝ) * |x0 * x4| -
+        2 * (79 / 500000 : ℝ) * |x1 * x2| -
+        2 * (41 / 250000 : ℝ) * |x1 * x3| -
+        2 * (107 / 250000 : ℝ) * |x1 * x4| -
+        2 * (1893 / 1000000 : ℝ) * |x2 * x3| -
+        2 * (1813 / 500000 : ℝ) * |x2 * x4| -
+        2 * (897 / 100000 : ℝ) * |x3 * x4| ≤
+      factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic
+        ((x0 - x1 / 1000 - (16 / 45 : ℝ) * x2 -
+            (27 / 40 : ℝ) * x3 - x4) +
+          (x1 + (28 / 9 : ℝ) * x2 + (49 / 17 : ℝ) * x3 +
+            (75 / 19 : ℝ) * x4))
+        ((x0 - x1 / 1000 - (16 / 45 : ℝ) * x2 -
+            (27 / 40 : ℝ) * x3 - x4) -
+          (x1 + (28 / 9 : ℝ) * x2 + (49 / 17 : ℝ) * x3 +
+            (75 / 19 : ℝ) * x4))
+        (x2 + (27 / 25 : ℝ) * x3 + (83 / 32 : ℝ) * x4)
+        ((x3 + (2 / 45 : ℝ) * x4) - (25 / 24 : ℝ) * x4) x4 := by
+  have hcomparison :=
+    minorActualTransformedQuadratic_ge_comparison x0 x1 x2 x3 x4
+  have hcongruence := minorLowerFiveQuadratic_congruence
+    minorS minorD minorS1 minorD1 minorS3 minorD3 minorA41 minorA43
+    minorO11 minorO13 minorO33 x0 x1 x2 x3 x4
+  have hlower := minorLowerFiveQuadratic_le_exact
+    (x0 - x1 / 1000 - (16 / 45 : ℝ) * x2 -
+      (27 / 40 : ℝ) * x3 - x4)
+    (x1 + (28 / 9 : ℝ) * x2 + (49 / 17 : ℝ) * x3 +
+      (75 / 19 : ℝ) * x4)
+    (x2 + (27 / 25 : ℝ) * x3 + (83 / 32 : ℝ) * x4)
+    (x3 + (2 / 45 : ℝ) * x4) x4
+  rw [hcongruence] at hlower
+  simpa only [minorAbsoluteComparison,
+    factorTwoIntrinsicSixUnbalancedMinorPlusExactFiveQuadratic] using
+    hcomparison.trans hlower
+
 private theorem minorExactFiveQuadratic_ge_sheared_last_square
     (s d p u v : ℝ) :
     (26049 / 200000000 : ℝ) * v ^ 2 ≤
