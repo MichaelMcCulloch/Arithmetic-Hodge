@@ -11,6 +11,8 @@ open scoped unitInterval
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
 
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open ShiftedLegendreBasis
+open ShiftedLegendreOrthogonality
 open ShiftedLegendreLogKernel
 open ShiftedLogKernelCrossEnergy
 open ShiftedLogKernelTriangular
@@ -20,12 +22,31 @@ open UnitIntervalLogEnergyLipschitz
 open UnitIntervalLogEnergyProjection
 open YoshidaEndpointEvenFullPolarization
 open YoshidaEndpointEvenStructuralReduction
+open YoshidaEndpointHyperbolicBound
+open YoshidaEndpointOcticPotential
+open YoshidaEndpointOddCleanPositive
+open YoshidaEndpointOddResidualRegularity
+open YoshidaEndpointPotentialBound
 open YoshidaEndpointPullbackLipschitz
 open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoCenteredPhysical
+open YoshidaFactorTwoEndpointClean
 open YoshidaFactorTwoPhaseEnvelope
+open YoshidaFactorTwoPhaseFullProfile
 open YoshidaFactorTwoPhaseHigherLegendreStructuralPositive
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
+open YoshidaFactorTwoPhaseIntrinsicResidual
+open YoshidaFactorTwoPhaseIntrinsicRemainderBound
+open YoshidaFactorTwoPhaseIntrinsicEightUnbalancedStaticDiskStructural
 open YoshidaFactorTwoPhaseIntrinsicNineResidualDecompositionStructural
+open YoshidaFactorTwoPhaseIntrinsicNineUnbalancedStaticDiskStructural
+open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
+open YoshidaFactorTwoPhaseLegendreFourFiveStructural
+open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
+open YoshidaFactorTwoPhaseLowSchur
+open YoshidaFactorTwoPhaseP678CombinedResidualSchurStructural
+open YoshidaFactorTwoPhaseP8StructuralReserve
+open YoshidaRegularKernelSchur
 open YoshidaFactorTwoPhaseP67ResidualAffineCancellationStructural
 open YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural
 open YoshidaFactorTwoPhaseP67ResidualPolynomialCancellationStructural
@@ -308,6 +329,350 @@ theorem integral_linear_mul_residualAlternatingCrossSum_eq_zero
     unfold factorTwoP67ResidualAlternatingCrossSum
     ring,
     intervalIntegral.integral_add hoInt heInt, hoRow', heRow', add_zero]
+
+/-! ## The honest surviving cutoff-nine aggregate -/
+
+/-- The five nonpolynomial families which genuinely survive between a
+cutoff-nine low pair and its moment-nine residual pair.  The endpoint
+potential, reflected pole, clean regular quadratic, hyperbolic correction,
+and retained `p = 3` lag remain in one signed expression.  In particular,
+this definition makes no triangle-inequality split between them. -/
+def factorTwoIntrinsicNineNonpolynomialMixed
+    (eLow oLow eR oR : ℝ → ℝ) (a b : ℝ) : ℝ :=
+  ((∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * eLow x * eR x) +
+      ∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * oLow x * oR x) -
+    (1 / 4 : ℝ) *
+      ((∫ t : ℝ in 0..2,
+          factorTwoCenteredPhaseCorrelation
+              (eLow + eR) (oLow + oR) a (-b) t / (2 - t)) -
+        (∫ t : ℝ in 0..2,
+          factorTwoCenteredPhaseCorrelation eLow oLow a (-b) t / (2 - t)) -
+        ∫ t : ℝ in 0..2,
+          factorTwoCenteredPhaseCorrelation eR oR a (-b) t / (2 - t)) -
+    (yoshidaEndpointA / 2) *
+      ((((yoshidaEndpointRegularQuadratic
+            (fun x ↦ (((eLow + eR) x : ℝ) : ℂ))).re -
+          (yoshidaEndpointRegularQuadratic
+            (fun x ↦ (eLow x : ℂ))).re -
+          (yoshidaEndpointRegularQuadratic
+            (fun x ↦ (eR x : ℂ))).re) +
+        ((yoshidaEndpointRegularQuadratic
+            (fun x ↦ (((oLow + oR) x : ℝ) : ℂ))).re -
+          (yoshidaEndpointRegularQuadratic
+            (fun x ↦ (oLow x : ℂ))).re -
+          (yoshidaEndpointRegularQuadratic
+            (fun x ↦ (oR x : ℂ))).re))) +
+    (1 / 2 : ℝ) *
+      ((yoshidaEndpointHyperbolicQuadratic
+            (fun x ↦ (((eLow + eR) x : ℝ) : ℂ)) -
+          yoshidaEndpointHyperbolicQuadratic (fun x ↦ (eLow x : ℂ)) -
+          yoshidaEndpointHyperbolicQuadratic (fun x ↦ (eR x : ℂ))) +
+        (yoshidaEndpointHyperbolicQuadratic
+            (fun x ↦ (((oLow + oR) x : ℝ) : ℂ)) -
+          yoshidaEndpointHyperbolicQuadratic (fun x ↦ (oLow x : ℂ)) -
+          yoshidaEndpointHyperbolicQuadratic (fun x ↦ (oR x : ℂ)))) -
+    (Real.log 3 / (2 * Real.sqrt 3)) *
+      (factorTwoCenteredPhaseCorrelation
+          (eLow + eR) (oLow + oR) a b
+            (factorTwoPrimeShift / yoshidaEndpointA) -
+        factorTwoCenteredPhaseCorrelation eLow oLow a b
+          (factorTwoPrimeShift / yoshidaEndpointA) -
+        factorTwoCenteredPhaseCorrelation eR oR a b
+          (factorTwoPrimeShift / yoshidaEndpointA))
+
+set_option maxHeartbeats 800000 in
+/-- For transported low polynomials below the moment cutoff, the complete
+endpoint low--residual half-cross is the nonsingular regular half-cross plus
+exactly the five-family nonpolynomial aggregate.  The raw logarithmic and
+both ordinary `L²` rows have vanished structurally. -/
+theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_eq
+    (pE pO : ℝ[X]) (eR oR : ℝ → ℝ)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heLocal : LocallyLipschitzOn (Icc (-1) 1) eR)
+    (hoLocal : LocallyLipschitzOn (Icc (-1) 1) oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 9)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 9)
+    (hpEdeg : pE.natDegree < 9) (hpOdeg : pO.natDegree < 9)
+    (a b : ℝ) :
+    factorTwoEndpointLowTailMixed
+        (centeredPolynomialLift pE) eR
+        (centeredPolynomialLift pO) oR a b =
+      (1 / 2 : ℝ) * (∫ t : ℝ in 0..2,
+        factorTwoP67ResidualSmoothMixedIntegrand
+          (centeredPolynomialLift pE) (centeredPolynomialLift pO)
+          eR oR a b t) +
+        factorTwoIntrinsicNineNonpolynomialMixed
+          (centeredPolynomialLift pE) (centeredPolynomialLift pO)
+          eR oR a b := by
+  let eLow : ℝ → ℝ := centeredPolynomialLift pE
+  let oLow : ℝ → ℝ := centeredPolynomialLift pO
+  have heLowc : Continuous eLow := by
+    dsimp only [eLow, centeredPolynomialLift]
+    have hp : Continuous (fun x : ℝ ↦ pE.eval x) := by
+      rw [continuous_iff_continuousAt]
+      intro x
+      exact (pE.hasDerivAt x).continuousAt
+    exact hp.comp ((continuous_id.add continuous_const).div_const 2)
+  have hoLowc : Continuous oLow := by
+    dsimp only [oLow, centeredPolynomialLift]
+    have hp : Continuous (fun x : ℝ ↦ pO.eval x) := by
+      rw [continuous_iff_continuousAt]
+      intro x
+      exact (pO.hasDerivAt x).continuousAt
+    exact hp.comp ((continuous_id.add continuous_const).div_const 2)
+  have heRaw := centeredRawLogEnergy_centeredPolynomialLift_add_tail
+    pE eR heRc heLocal heGap hpEdeg
+  have hoRaw := centeredRawLogEnergy_centeredPolynomialLift_add_tail
+    pO oR hoRc hoLocal hoGap hpOdeg
+  have heMassZero := intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+    pE eR heRc heGap hpEdeg
+  have hoMassZero := intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+    pO oR hoRc hoGap hpOdeg
+  have hePotential := integral_endpointPotential_add_sq eLow eR heLowc heRc
+  have hoPotential := integral_endpointPotential_add_sq oLow oR hoLowc hoRc
+  have heMass := integral_add_sq eLow eR heLowc heRc
+  have hoMass := integral_add_sq oLow oR hoLowc hoRc
+  have hRegular := factorTwoIntrinsicRegularPhaseBlock_add_add_eq
+    eLow oLow eR oR heLowc hoLowc heRc hoRc a b
+  have hPhase := factorTwoEndpointChannelPhase_add_add_eq_low_mixed_tail
+    eLow eR oLow oR heLowc heRc hoLowc hoRc a b
+  have hFull := factorTwoEndpointChannelPhase_eq_protected_add_signedRemainder
+    (eLow + eR) (oLow + oR) (heLowc.add heRc) (hoLowc.add hoRc) a b
+  have hLow := factorTwoEndpointChannelPhase_eq_protected_add_signedRemainder
+    eLow oLow heLowc hoLowc a b
+  have hResidual :=
+    factorTwoEndpointChannelPhase_eq_protected_add_signedRemainder
+      eR oR heRc hoRc a b
+  rw [hFull, hLow, hResidual] at hPhase
+  unfold factorTwoIntrinsicProtectedBlock factorTwoIntrinsicPotentialEnergy
+    factorTwoIntrinsicSignedRemainder factorTwoIntrinsicEnergy at hPhase
+  simp only [Pi.add_apply] at hPhase
+  unfold factorTwoIntrinsicRegularPhaseBlock at hRegular
+  rw [heRaw, hoRaw, hePotential, hoPotential, heMass, hoMass,
+    hRegular, heMassZero, hoMassZero] at hPhase
+  unfold factorTwoIntrinsicNineNonpolynomialMixed
+  dsimp only [eLow, oLow] at hPhase
+  simp only [Pi.add_apply] at hPhase ⊢
+  ring_nf at hPhase ⊢
+  linarith
+
+/-! ## Intrinsic-coordinate specialization -/
+
+/-- The even cutoff-nine intrinsic profile as a unit-interval polynomial. -/
+def factorTwoIntrinsicNineEvenPolynomial
+    (c0 c2 c4 c6 c8 : ℝ) : ℝ[X] :=
+  c0 • shiftedLegendreReal 0 + c2 • shiftedLegendreReal 2 +
+    c4 • shiftedLegendreReal 4 + c6 • shiftedLegendreReal 6 +
+    c8 • shiftedLegendreReal 8
+
+/-- The odd cutoff-nine intrinsic profile as a unit-interval polynomial.
+The signs convert the shifted odd convention to the classical centered
+Legendre convention used by the intrinsic coordinates. -/
+def factorTwoIntrinsicNineOddPolynomial
+    (c1 c3 c5 c7 : ℝ) : ℝ[X] :=
+  (-c1) • shiftedLegendreReal 1 + (-c3) • shiftedLegendreReal 3 +
+    (-c5) • shiftedLegendreReal 5 + (-c7) • shiftedLegendreReal 7
+
+private theorem shiftedLegendreReal_zero_centered (x : ℝ) :
+    (shiftedLegendreReal 0).eval ((x + 1) / 2) = centeredEvenP0 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredEvenP0]
+
+private theorem shiftedLegendreReal_one_centered (x : ℝ) :
+    (shiftedLegendreReal 1).eval ((x + 1) / 2) = -centeredP1 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredP1]
+  ring
+
+private theorem shiftedLegendreReal_two_centered (x : ℝ) :
+    (shiftedLegendreReal 2).eval ((x + 1) / 2) = centeredEvenP2 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredEvenP2]
+  ring
+
+private theorem shiftedLegendreReal_three_centered (x : ℝ) :
+    (shiftedLegendreReal 3).eval ((x + 1) / 2) = -centeredP3 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredP3]
+  ring
+
+private theorem shiftedLegendreReal_four_centered (x : ℝ) :
+    (shiftedLegendreReal 4).eval ((x + 1) / 2) =
+      factorTwoCenteredP4 x := by
+  norm_num [factorTwoCenteredP4, shiftedLegendreReal,
+    Polynomial.shiftedLegendre, Polynomial.eval_map,
+    Polynomial.eval_finset_sum, Finset.sum_range_succ, Nat.choose]
+  ring
+
+private theorem shiftedLegendreReal_five_centered (x : ℝ) :
+    (shiftedLegendreReal 5).eval ((x + 1) / 2) =
+      -factorTwoCenteredP5 x := by
+  norm_num [factorTwoCenteredP5, shiftedLegendreReal,
+    Polynomial.shiftedLegendre, Polynomial.eval_map,
+    Polynomial.eval_finset_sum, Finset.sum_range_succ, Nat.choose]
+  ring
+
+theorem centeredPolynomialLift_intrinsicNineEvenPolynomial
+    (c0 c2 c4 c6 c8 : ℝ) :
+    centeredPolynomialLift
+        (factorTwoIntrinsicNineEvenPolynomial c0 c2 c4 c6 c8) =
+      factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8 := by
+  funext x
+  unfold factorTwoIntrinsicNineEvenPolynomial centeredPolynomialLift
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  rw [shiftedLegendreReal_zero_centered,
+    shiftedLegendreReal_two_centered, shiftedLegendreReal_four_centered]
+  unfold factorTwoIntrinsicNineEvenProfile factorTwoIntrinsicEightEvenProfile
+    factorTwoIntrinsicSixEvenTail factorTwoEvenStructuralLowProfile
+    factorTwoCenteredP6 factorTwoCenteredP8
+  simp only [Pi.add_apply]
+
+theorem centeredPolynomialLift_intrinsicNineOddPolynomial
+    (c1 c3 c5 c7 : ℝ) :
+    centeredPolynomialLift
+        (factorTwoIntrinsicNineOddPolynomial c1 c3 c5 c7) =
+      factorTwoIntrinsicNineOddProfile c1 c3 c5 c7 := by
+  funext x
+  unfold factorTwoIntrinsicNineOddPolynomial centeredPolynomialLift
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  rw [shiftedLegendreReal_one_centered,
+    shiftedLegendreReal_three_centered, shiftedLegendreReal_five_centered]
+  unfold factorTwoIntrinsicNineOddProfile factorTwoIntrinsicEightOddProfile
+    factorTwoIntrinsicSixOddTail factorTwoOddStructuralLowProfile
+    factorTwoCenteredP7
+  simp only [Pi.add_apply]
+  ring
+
+private theorem factorTwoIntrinsicNineEvenProfile_eq_lower_add_upper
+    (c0 c2 c4 c6 c8 : ℝ) :
+    factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8 =
+      (factorTwoEvenStructuralLowProfile c0 c2 +
+          factorTwoIntrinsicSixEvenTail c4) +
+        ((c6 • factorTwoCenteredP6) + (c8 • factorTwoCenteredP8)) := by
+  funext x
+  unfold factorTwoIntrinsicNineEvenProfile factorTwoIntrinsicEightEvenProfile
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  ring
+
+private theorem factorTwoIntrinsicNineOddProfile_eq_lower_add_upper
+    (c1 c3 c5 c7 : ℝ) :
+    factorTwoIntrinsicNineOddProfile c1 c3 c5 c7 =
+      factorTwoIntrinsicSixOddTail c1 c3 c5 +
+        (c7 • factorTwoCenteredP7) := by
+  funext x
+  unfold factorTwoIntrinsicNineOddProfile factorTwoIntrinsicEightOddProfile
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+
+/-- Exact cutoff-nine production identity in intrinsic coordinates.  The
+lower `P0,...,P5` smooth cross remains as one integral, the certified
+`P6/P7/P8` border is the existing forward mixed symbol, and every other
+genuinely surviving family is retained in `factorTwoIntrinsicNineNonpolynomialMixed`. -/
+theorem factorTwoEndpointLowTailMixed_intrinsicNine_eq
+    (eR oR : ℝ → ℝ) (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heLocal : LocallyLipschitzOn (Icc (-1) 1) eR)
+    (hoLocal : LocallyLipschitzOn (Icc (-1) 1) oR)
+    (hoRo : Function.Odd oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 9)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 9)
+    (c0 c2 c4 c6 c8 c1 c3 c5 c7 a b : ℝ) :
+    factorTwoEndpointLowTailMixed
+        (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8) eR
+        (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) oR a b =
+      (1 / 2 : ℝ) * (∫ t : ℝ in 0..2,
+        factorTwoP67ResidualSmoothMixedIntegrand
+          (factorTwoEvenStructuralLowProfile c0 c2 +
+            factorTwoIntrinsicSixEvenTail c4)
+          (factorTwoIntrinsicSixOddTail c1 c3 c5)
+          eR oR a b t) +
+        factorTwoP678ResidualCombinedForwardMixed
+          eR oR c6 c7 c8 a b +
+        factorTwoIntrinsicNineNonpolynomialMixed
+          (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+          (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7)
+          eR oR a b := by
+  let pE : ℝ[X] :=
+    factorTwoIntrinsicNineEvenPolynomial c0 c2 c4 c6 c8
+  let pO : ℝ[X] :=
+    factorTwoIntrinsicNineOddPolynomial c1 c3 c5 c7
+  let eLower : ℝ → ℝ :=
+    factorTwoEvenStructuralLowProfile c0 c2 +
+      factorTwoIntrinsicSixEvenTail c4
+  let oLower : ℝ → ℝ := factorTwoIntrinsicSixOddTail c1 c3 c5
+  let eUpper : ℝ → ℝ :=
+    (c6 • factorTwoCenteredP6) + (c8 • factorTwoCenteredP8)
+  let oUpper : ℝ → ℝ := c7 • factorTwoCenteredP7
+  have hpEdeg : pE.natDegree < 9 := by
+    dsimp only [pE, factorTwoIntrinsicNineEvenPolynomial]
+    have hdeg : (c0 • shiftedLegendreReal 0 + c2 • shiftedLegendreReal 2 +
+        c4 • shiftedLegendreReal 4 + c6 • shiftedLegendreReal 6 +
+        c8 • shiftedLegendreReal 8).natDegree ≤ 8 := by
+      compute_degree
+    omega
+  have hpOdeg : pO.natDegree < 9 := by
+    dsimp only [pO, factorTwoIntrinsicNineOddPolynomial]
+    have hdeg : ((-c1) • shiftedLegendreReal 1 +
+        (-c3) • shiftedLegendreReal 3 +
+        (-c5) • shiftedLegendreReal 5 +
+        (-c7) • shiftedLegendreReal 7).natDegree ≤ 7 := by
+      compute_degree
+    omega
+  have heLowerc : Continuous eLower := by
+    dsimp only [eLower, factorTwoIntrinsicSixEvenTail]
+    exact (continuous_factorTwoEvenStructuralLowProfile c0 c2).add
+      (continuous_const.mul continuous_factorTwoCenteredP4)
+  have hoLowerc : Continuous oLower := by
+    dsimp only [oLower, factorTwoIntrinsicSixOddTail]
+    exact (continuous_factorTwoOddStructuralLowProfile c1 c3).add
+      (continuous_const.mul continuous_factorTwoCenteredP5)
+  have heUpperc : Continuous eUpper := by
+    dsimp only [eUpper]
+    exact (continuous_factorTwoCenteredP6.const_smul c6).add
+      (continuous_factorTwoCenteredP8.const_smul c8)
+  have hoUpperc : Continuous oUpper := by
+    dsimp only [oUpper]
+    exact continuous_factorTwoCenteredP7.const_smul c7
+  have hBase := factorTwoEndpointLowTailMixed_centeredPolynomialLift_eq
+    pE pO eR oR heRc hoRc heLocal hoLocal heGap hoGap
+      hpEdeg hpOdeg a b
+  have hePoly := centeredPolynomialLift_intrinsicNineEvenPolynomial
+    c0 c2 c4 c6 c8
+  have hoPoly := centeredPolynomialLift_intrinsicNineOddPolynomial
+    c1 c3 c5 c7
+  dsimp only [pE, pO] at hBase
+  rw [hePoly, hoPoly] at hBase
+  have hSplit :=
+    integral_factorTwoP67ResidualSmoothMixedIntegrand_add_low_eq
+      eLower eUpper oLower oUpper eR oR
+      heLowerc heUpperc hoLowerc hoUpperc heRc hoRc a b
+  have hUpper := integral_factorTwoP678ResidualSmoothMixedIntegrand_eq
+    eR oR heRc hoRc hoRo heGap hoGap c6 c7 c8 a b
+  have heProfile := factorTwoIntrinsicNineEvenProfile_eq_lower_add_upper
+    c0 c2 c4 c6 c8
+  have hoProfile := factorTwoIntrinsicNineOddProfile_eq_lower_add_upper
+    c1 c3 c5 c7
+  have hMixed :
+      (∫ t : ℝ in 0..2,
+        factorTwoP67ResidualSmoothMixedIntegrand
+          (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+          (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7)
+          eR oR a b t) =
+        (∫ t : ℝ in 0..2,
+          factorTwoP67ResidualSmoothMixedIntegrand
+            eLower oLower eR oR a b t) +
+          2 * factorTwoP678ResidualCombinedForwardMixed
+            eR oR c6 c7 c8 a b := by
+    rw [heProfile, hoProfile]
+    dsimp only [eLower, eUpper, oLower, oUpper] at hSplit hUpper ⊢
+    rw [hSplit, hUpper]
+  rw [hMixed] at hBase
+  dsimp only [eLower, oLower] at hBase ⊢
+  linarith
 
 end
 
