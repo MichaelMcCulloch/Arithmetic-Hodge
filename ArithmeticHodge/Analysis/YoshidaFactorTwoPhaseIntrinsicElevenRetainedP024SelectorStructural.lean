@@ -3,13 +3,14 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedSele
 
 set_option autoImplicit false
 
-open Polynomial Real Set
+open MeasureTheory Polynomial Real Set
 
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorStructural
 
 open ThreeByThreeRankOneSchur
 open ShiftedLegendreLogEnergyOrthogonalProjection
 open ShiftedLegendreOrthogonality
+open YoshidaFactorTwoPhaseIntrinsicElevenConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedRepresentersStructural
@@ -233,6 +234,298 @@ theorem exists_sharpRetunedP024Selector_of_strict_gap_pivots
     hzero,
     retainedP024SharpLowComplement_eq_symmetricQuadratic]
   exact hselector
+
+/-! ## A phase chord for selector costs -/
+
+/-- Positive-endpoint barycentric coordinate for the symmetric phase. -/
+def retainedP024ChordPlus (a : ℝ) : ℝ := (1 + a) / 2
+
+/-- Negative-endpoint barycentric coordinate for the symmetric phase. -/
+def retainedP024ChordMinus (a : ℝ) : ℝ := (1 - a) / 2
+
+/-- Affine interpolation of two endpoint even selectors. -/
+def retainedP024EvenChordSelector
+    (a : ℝ) (qPlus qMinus : ℝ[X]) : ℝ[X] :=
+  retainedP024ChordPlus a • qPlus + retainedP024ChordMinus a • qMinus
+
+/-- Half-difference selector paired with the symmetric phase row. -/
+def retainedP024SymmetricSelector
+    (qPlus qMinus : ℝ[X]) : ℝ[X] :=
+  (1 / 2 : ℝ) • (qPlus - qMinus)
+
+/-- Alternating selector scaled by the alternating disk coordinate. -/
+def retainedP024OddChordSelector (b : ℝ) (qAlt : ℝ[X]) : ℝ[X] :=
+  b • qAlt
+
+private theorem retainedEvenRepresenterAt_eq_endpoint_chord
+    (gamma : ℝ) (p : ℝ[X]) (a b x : ℝ) :
+    factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+        gamma p 0 a b x =
+      retainedP024ChordPlus a *
+          factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            gamma p 0 1 0 x +
+        retainedP024ChordMinus a *
+          factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            gamma p 0 (-1) 0 x := by
+  rw [retainedEvenRepresenterAt_zero_odd_phase_split,
+    retainedEvenRepresenterAt_zero_odd_phase_split,
+    retainedEvenRepresenterAt_zero_odd_phase_split]
+  unfold retainedP024ChordPlus retainedP024ChordMinus
+  ring
+
+private theorem retainedEvenSymmetricRepresenterAt_eq_endpoint_half_sub
+    (gamma : ℝ) (p : ℝ[X]) (x : ℝ) :
+    retainedEvenSymmetricRepresenterAt gamma p x =
+      (1 / 2 : ℝ) *
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            gamma p 0 1 0 x -
+          factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            gamma p 0 (-1) 0 x) := by
+  rw [retainedEvenRepresenterAt_zero_odd_phase_split,
+    retainedEvenRepresenterAt_zero_odd_phase_split]
+  ring
+
+private theorem retainedEvenChordResidual_eq
+    (gamma : ℝ) (p qPlus qMinus : ℝ[X]) (a b x : ℝ) :
+    factorTwoIntrinsicElevenSelectorResidual
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+          gamma p 0 a b)
+        (retainedP024EvenChordSelector a qPlus qMinus) x =
+      retainedP024ChordPlus a *
+          factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0) qPlus x +
+        retainedP024ChordMinus a *
+          factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0) qMinus x := by
+  unfold factorTwoIntrinsicElevenSelectorResidual
+    retainedP024EvenChordSelector
+  rw [retainedEvenRepresenterAt_eq_endpoint_chord,
+    centeredPolynomialLift_add, centeredPolynomialLift_smul,
+    centeredPolynomialLift_smul]
+  ring
+
+private theorem retainedEvenSymmetricResidual_eq_endpoint_half_sub
+    (gamma : ℝ) (p qPlus qMinus : ℝ[X]) (x : ℝ) :
+    factorTwoIntrinsicElevenSelectorResidual
+        (retainedEvenSymmetricRepresenterAt gamma p)
+        (retainedP024SymmetricSelector qPlus qMinus) x =
+      (1 / 2 : ℝ) *
+        (factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0) qPlus x -
+          factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0) qMinus x) := by
+  unfold factorTwoIntrinsicElevenSelectorResidual
+    retainedP024SymmetricSelector
+  rw [retainedEvenSymmetricRepresenterAt_eq_endpoint_half_sub,
+    centeredPolynomialLift_smul]
+  have hsub : centeredPolynomialLift (qPlus - qMinus) x =
+      centeredPolynomialLift qPlus x - centeredPolynomialLift qMinus x := by
+    unfold centeredPolynomialLift
+    rw [Polynomial.eval_sub]
+  rw [hsub]
+  ring
+
+/-- Exact Hilbert-space chord identity for the retained even selector cost.
+It is an algebraic polarization identity after the two endpoint residuals
+have been placed in the same fixed weighted `L²` space. -/
+theorem retainedEvenSelectorDual_eq_endpoint_chord
+    (gamma : ℝ) (p qPlus qMinus : ℝ[X]) (a b : ℝ) :
+    factorTwoIntrinsicElevenSelectorDual
+        factorTwoIntrinsicElevenRetainedEvenWeight
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+          gamma p 0 a b)
+        (retainedP024EvenChordSelector a qPlus qMinus) =
+      retainedP024ChordPlus a *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0) qPlus +
+        retainedP024ChordMinus a *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0) qMinus -
+        (1 - a ^ 2) *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (retainedEvenSymmetricRepresenterAt gamma p)
+            (retainedP024SymmetricSelector qPlus qMinus) := by
+  let FPlus := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma p 0 1 0
+  let FMinus := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma p 0 (-1) 0
+  let FS := retainedEvenSymmetricRepresenterAt gamma p
+  let RPlus := factorTwoIntrinsicElevenSelectorResidual FPlus qPlus
+  let RMinus := factorTwoIntrinsicElevenSelectorResidual FMinus qMinus
+  let RS := factorTwoIntrinsicElevenSelectorResidual FS
+    (retainedP024SymmetricSelector qPlus qMinus)
+  let W := factorTwoIntrinsicElevenRetainedEvenWeight
+  have hPlusLp :=
+    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qPlus 1 0
+  have hMinusLp :=
+    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qMinus (-1) 0
+  have hPlusInt : IntervalIntegrable (fun x ↦ RPlus x ^ 2 / W x)
+      volume (-1) 1 := by
+    simpa only [RPlus, W, FPlus, pow_two] using
+      intervalIntegrable_selectorCross_of_memLp W FPlus FPlus qPlus qPlus
+        (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+        hPlusLp hPlusLp
+  have hMinusInt : IntervalIntegrable (fun x ↦ RMinus x ^ 2 / W x)
+      volume (-1) 1 := by
+    simpa only [RMinus, W, FMinus, pow_two] using
+      intervalIntegrable_selectorCross_of_memLp W FMinus FMinus qMinus qMinus
+        (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+        hMinusLp hMinusLp
+  have hSLp : MemLp (fun x ↦ RS x / Real.sqrt (W x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    have hcomb := (hPlusLp.sub hMinusLp).const_mul (1 / 2 : ℝ)
+    apply (memLp_congr_ae (μ := volume.restrict (Ioc (-1 : ℝ) 1)) ?_).mpr hcomb
+    filter_upwards [] with x
+    rw [show RS x = (1 / 2 : ℝ) * (RPlus x - RMinus x) by
+      simpa only [RS, RPlus, RMinus, FS, FPlus, FMinus] using
+        retainedEvenSymmetricResidual_eq_endpoint_half_sub
+          gamma p qPlus qMinus x]
+    dsimp only [Pi.sub_apply]
+    ring
+  have hSInt : IntervalIntegrable (fun x ↦ RS x ^ 2 / W x)
+      volume (-1) 1 := by
+    simpa only [RS, W, FS, pow_two] using
+      intervalIntegrable_selectorCross_of_memLp W FS FS
+        (retainedP024SymmetricSelector qPlus qMinus)
+        (retainedP024SymmetricSelector qPlus qMinus)
+        (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+        hSLp hSLp
+  unfold factorTwoIntrinsicElevenSelectorDual
+  rw [show (fun x : ℝ ↦
+      factorTwoIntrinsicElevenSelectorResidual
+          (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            gamma p 0 a b)
+          (retainedP024EvenChordSelector a qPlus qMinus) x ^ 2 /
+        factorTwoIntrinsicElevenRetainedEvenWeight x) =
+      fun x ↦ retainedP024ChordPlus a * (RPlus x ^ 2 / W x) +
+        retainedP024ChordMinus a * (RMinus x ^ 2 / W x) -
+        (1 - a ^ 2) * (RS x ^ 2 / W x) by
+    funext x
+    rw [retainedEvenChordResidual_eq gamma p qPlus qMinus a b x,
+      show RS x = (1 / 2 : ℝ) * (RPlus x - RMinus x) by
+        simpa only [RS, RPlus, RMinus, FS, FPlus, FMinus] using
+          retainedEvenSymmetricResidual_eq_endpoint_half_sub
+            gamma p qPlus qMinus x]
+    unfold retainedP024ChordPlus retainedP024ChordMinus
+    dsimp only [RPlus, RMinus, W, FPlus, FMinus]
+    ring]
+  rw [intervalIntegral.integral_sub
+      ((hPlusInt.const_mul _).add (hMinusInt.const_mul _))
+      (hSInt.const_mul _),
+    intervalIntegral.integral_add (hPlusInt.const_mul _)
+      (hMinusInt.const_mul _)]
+  repeat rw [intervalIntegral.integral_const_mul]
+
+/-- The retained odd selector cost is exactly quadratic in the alternating
+disk coordinate when the odd low polynomial vanishes. -/
+theorem retainedOddSelectorDual_eq_scaled_alternating
+    (gamma : ℝ) (p qAlt : ℝ[X]) (a b : ℝ) :
+    factorTwoIntrinsicElevenSelectorDual
+        factorTwoIntrinsicElevenRetainedOddWeight
+        (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+          gamma p 0 a b)
+        (retainedP024OddChordSelector b qAlt) =
+      b ^ 2 * factorTwoIntrinsicElevenSelectorDual
+        factorTwoIntrinsicElevenRetainedOddWeight
+        (retainedOddAlternatingRepresenterAt gamma p) qAlt := by
+  have hrow :
+      factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+          gamma p 0 a b =
+        fun x ↦ b * retainedOddAlternatingRepresenterAt gamma p x := by
+    funext x
+    exact retainedOddRepresenterAt_zero_odd_phase_split gamma p a b x
+  rw [hrow]
+  unfold retainedP024OddChordSelector
+  exact factorTwoIntrinsicElevenSelectorDual_smul
+    factorTwoIntrinsicElevenRetainedOddWeight
+    (retainedOddAlternatingRepresenterAt gamma p) b qAlt
+
+/-- Exact two-channel phase chord.  It reduces the full disk dependence of a
+phase-affine selector to two endpoint even costs, one symmetric half-difference
+cost, and one alternating cost. -/
+theorem retainedConstrainedSelectorDual_eq_phase_chord
+    (gamma : ℝ) (p qPlus qMinus qAlt : ℝ[X]) (a b : ℝ) :
+    factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+          gamma p 0 a b)
+        (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+          gamma p 0 a b)
+        (retainedP024EvenChordSelector a qPlus qMinus)
+        (retainedP024OddChordSelector b qAlt) =
+      retainedP024ChordPlus a *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0) qPlus +
+        retainedP024ChordMinus a *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0) qMinus -
+        (1 - a ^ 2) *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (retainedEvenSymmetricRepresenterAt gamma p)
+            (retainedP024SymmetricSelector qPlus qMinus) +
+        b ^ 2 * factorTwoIntrinsicElevenSelectorDual
+          factorTwoIntrinsicElevenRetainedOddWeight
+          (retainedOddAlternatingRepresenterAt gamma p) qAlt := by
+  unfold factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+  rw [retainedEvenSelectorDual_eq_endpoint_chord,
+    retainedOddSelectorDual_eq_scaled_alternating]
+
+/-- On the closed phase disk the alternating selector cost is largest on the
+boundary `b² = 1 - a²`.  This removes the second phase coordinate without a
+phase subdivision. -/
+theorem retainedConstrainedSelectorDual_le_boundary_chord
+    (gamma : ℝ) (p qPlus qMinus qAlt : ℝ[X]) (a b : ℝ)
+    (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+          gamma p 0 a b)
+        (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+          gamma p 0 a b)
+        (retainedP024EvenChordSelector a qPlus qMinus)
+        (retainedP024OddChordSelector b qAlt) ≤
+      retainedP024ChordPlus a *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0) qPlus +
+        retainedP024ChordMinus a *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0) qMinus -
+        (1 - a ^ 2) *
+          factorTwoIntrinsicElevenSelectorDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (retainedEvenSymmetricRepresenterAt gamma p)
+            (retainedP024SymmetricSelector qPlus qMinus) +
+        (1 - a ^ 2) * factorTwoIntrinsicElevenSelectorDual
+          factorTwoIntrinsicElevenRetainedOddWeight
+          (retainedOddAlternatingRepresenterAt gamma p) qAlt := by
+  rw [retainedConstrainedSelectorDual_eq_phase_chord]
+  have hAlt : 0 ≤ factorTwoIntrinsicElevenSelectorDual
+      factorTwoIntrinsicElevenRetainedOddWeight
+      (retainedOddAlternatingRepresenterAt gamma p) qAlt :=
+    factorTwoIntrinsicElevenSelectorDual_nonneg _ _ _
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedOddWeight_pos_on_Icc hx)
+  have hb : b ^ 2 ≤ 1 - a ^ 2 := by
+    linarith
+  have hscaled := mul_le_mul_of_nonneg_right hb hAlt
+  linarith
 
 end
 
