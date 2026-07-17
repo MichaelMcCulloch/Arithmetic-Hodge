@@ -40,6 +40,22 @@ def factorTwoIntrinsicElevenPotentialPoleOddRepresenter
   yoshidaEndpointPotential x * centeredPolynomialLift pO x +
     factorTwoIntrinsicElevenReflectedOddRepresenter pE pO a b x
 
+/-- Complete even representer after removing an arbitrary coefficient of
+the potential/reflected-pole polarization. -/
+def factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    (gamma : ℝ) (pE pO : ℝ[X]) (a b : ℝ) (x : ℝ) : ℝ :=
+  factorTwoIntrinsicElevenEvenMixedRepresenter pE pO a b x -
+    gamma *
+      factorTwoIntrinsicElevenPotentialPoleEvenRepresenter pE pO a b x
+
+/-- Complete odd representer after removing an arbitrary coefficient of
+the potential/reflected-pole polarization. -/
+def factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+    (gamma : ℝ) (pE pO : ℝ[X]) (a b : ℝ) (x : ℝ) : ℝ :=
+  factorTwoIntrinsicElevenOddMixedRepresenter pE pO a b x -
+    gamma *
+      factorTwoIntrinsicElevenPotentialPoleOddRepresenter pE pO a b x
+
 /-- Complete even representer after spending `1 / 64` of the singular Gram. -/
 def factorTwoIntrinsicElevenRetainedEvenMixedRepresenter
     (pE pO : ℝ[X]) (a b : ℝ) (x : ℝ) : ℝ :=
@@ -213,6 +229,79 @@ theorem factorTwoIntrinsicElevenMixedPairing_sub_const_mul
     intervalIntegral.integral_sub hFO (hGO.const_mul c)]
   repeat rw [intervalIntegral.integral_const_mul]
   ring
+
+theorem intervalIntegrable_retainedEvenRepresenterAt_mul
+    (gamma : ℝ) (pE pO : ℝ[X]) (r : ℝ → ℝ) (hr : Continuous r)
+    (a b : ℝ) :
+    IntervalIntegrable (fun x ↦
+      factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+        gamma pE pO a b x * r x) volume (-1) 1 := by
+  have hF := intervalIntegrable_completeEvenRepresenter_mul pE pO r hr a b
+  have hP := intervalIntegrable_potentialPoleEvenRepresenter_mul
+    pE pO r hr a b
+  apply (hF.sub (hP.const_mul gamma)).congr
+  intro x _hx
+  unfold factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+  ring
+
+theorem intervalIntegrable_retainedOddRepresenterAt_mul
+    (gamma : ℝ) (pE pO : ℝ[X]) (r : ℝ → ℝ) (hr : Continuous r)
+    (a b : ℝ) :
+    IntervalIntegrable (fun x ↦
+      factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+        gamma pE pO a b x * r x) volume (-1) 1 := by
+  have hF := intervalIntegrable_completeOddRepresenter_mul pE pO r hr a b
+  have hP := intervalIntegrable_potentialPoleOddRepresenter_mul
+    pE pO r hr a b
+  apply (hF.sub (hP.const_mul gamma)).congr
+  intro x _hx
+  unfold factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+  ring
+
+/-- Removing any scalar multiple of the potential/reflected-pole row is
+exactly represented by the correspondingly parameterized cutoff-eleven
+representers. -/
+theorem factorTwoEndpointLowTailMixed_sub_potentialPole_eq_pairing
+    (gamma : ℝ) (pE pO : ℝ[X]) (e o : ℝ → ℝ)
+    (he : Continuous e) (ho : Continuous o)
+    (heLocal : LocallyLipschitzOn (Icc (-1) 1) e)
+    (hoLocal : LocallyLipschitzOn (Icc (-1) 1) o)
+    (heGap : centeredLegendreMomentsVanishBelow e 11)
+    (hoGap : centeredLegendreMomentsVanishBelow o 11)
+    (hpEdeg : pE.natDegree < 11) (hpOdeg : pO.natDegree < 11)
+    (a b : ℝ) :
+    factorTwoEndpointLowTailMixed
+          (centeredPolynomialLift pE) e
+          (centeredPolynomialLift pO) o a b -
+        gamma * factorTwoPhasePotentialPoleMixed
+          (centeredPolynomialLift pE) (centeredPolynomialLift pO)
+          e o a b =
+      factorTwoIntrinsicElevenMixedPairing
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+          gamma pE pO a b)
+        (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+          gamma pE pO a b)
+        e o := by
+  have hComplete :=
+    factorTwoEndpointLowTailMixed_centeredPolynomialLift_eq_intrinsicElevenPairing
+      pE pO e o he ho heLocal hoLocal heGap hoGap hpEdeg hpOdeg a b
+  have hPole := factorTwoPhasePotentialPoleMixed_centeredPolynomialLift_eq_pairing
+    pE pO e o he ho heGap hoGap hpEdeg hpOdeg a b
+  have hFE := intervalIntegrable_completeEvenRepresenter_mul pE pO e he a b
+  have hFO := intervalIntegrable_completeOddRepresenter_mul pE pO o ho a b
+  have hPE := intervalIntegrable_potentialPoleEvenRepresenter_mul
+    pE pO e he a b
+  have hPO := intervalIntegrable_potentialPoleOddRepresenter_mul
+    pE pO o ho a b
+  have hLinear := factorTwoIntrinsicElevenMixedPairing_sub_const_mul
+    (factorTwoIntrinsicElevenEvenMixedRepresenter pE pO a b)
+    (factorTwoIntrinsicElevenOddMixedRepresenter pE pO a b)
+    (factorTwoIntrinsicElevenPotentialPoleEvenRepresenter pE pO a b)
+    (factorTwoIntrinsicElevenPotentialPoleOddRepresenter pE pO a b)
+    e o gamma hFE hPE hFO hPO
+  rw [hComplete, hPole]
+  simpa only [factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt,
+    factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt] using hLinear.symm
 
 theorem intervalIntegrable_retainedEvenRepresenter_mul
     (pE pO : ℝ[X]) (r : ℝ → ℝ) (hr : Continuous r) (a b : ℝ) :
