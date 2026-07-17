@@ -508,6 +508,112 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_asymmetric
         heGap hoGap hpE hpO a b lowComplement hab hlowComplement
         hlowRetains hremaining
 
+/-- Retuned retained-selector handoff with low fraction `1 / 2048`, tail
+fraction `1 / 64`, and pole-row coefficient `1 / 512`.  It keeps the existing
+cutoff-eleven tail reserve while replacing the nonviable positive-endpoint
+low charge. -/
+theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_retunedAsymmetricRetainedSelector
+    (pE pO : ℝ[X]) (eR oR : ℝ → ℝ)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heR : Function.Even eR) (hoR : Function.Odd oR)
+    (heR0 : centeredEvenP0Coefficient eR = 0)
+    (heRlocal : LocallyLipschitzOn (Icc (-1) 1) eR)
+    (hoRlocal : LocallyLipschitzOn (Icc (-1) 1) oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 11)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 11)
+    (hpE : pE.natDegree < 11) (hpO : pO.natDegree < 11)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (qE qO : ℝ[X]) (hqE : qE.natDegree < 11)
+    (hqO : qO.natDegree < 11)
+    (hdualE : MemLp (fun x ↦
+        factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              (1 / 512 : ℝ) pE pO a b) qE x /
+          Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)))
+    (hdualO : MemLp (fun x ↦
+        factorTwoIntrinsicElevenSelectorResidual
+            (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+              (1 / 512 : ℝ) pE pO a b) qO x /
+          Real.sqrt (factorTwoIntrinsicElevenRetainedOddWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)))
+    (hfiniteSelector :
+      factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+          (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            (1 / 512 : ℝ) pE pO a b)
+          (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+            (1 / 512 : ℝ) pE pO a b)
+          qE qO ≤
+        factorTwoEndpointChannelPhase
+            (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b -
+          (1 / 4096 : ℝ) * factorTwoPhaseSingularWeightedEnergy
+            (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b) :
+    factorTwoEndpointLowTailMixed
+        (centeredPolynomialLift pE) eR
+        (centeredPolynomialLift pO) oR a b ^ 2 ≤
+      factorTwoEndpointChannelPhase
+          (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b *
+        factorTwoEndpointChannelPhase eR oR a b := by
+  let lowComplement : ℝ :=
+    factorTwoEndpointChannelPhase
+        (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b -
+      (1 / 4096 : ℝ) * factorTwoPhaseSingularWeightedEnergy
+        (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b
+  have hfiniteSelector' :
+      factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+          (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            (1 / 512 : ℝ) pE pO a b)
+          (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+            (1 / 512 : ℝ) pE pO a b)
+          qE qO ≤ lowComplement := by
+    simpa only [lowComplement] using hfiniteSelector
+  have hdualNonneg :=
+    factorTwoIntrinsicElevenRetainedConstrainedSelectorDual_nonneg
+      (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+        (1 / 512 : ℝ) pE pO a b)
+      (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+        (1 / 512 : ℝ) pE pO a b)
+      qE qO
+  have hlowComplement : 0 ≤ lowComplement :=
+    hdualNonneg.trans hfiniteSelector'
+  have hlowRetains :
+      (1 / 2048 : ℝ) * ((1 / 2 : ℝ) *
+          factorTwoPhaseSingularWeightedEnergy
+            (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b) +
+        lowComplement ≤
+          factorTwoEndpointChannelPhase
+            (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b := by
+    dsimp only [lowComplement]
+    ring_nf
+    exact le_rfl
+  have hpairing := factorTwoIntrinsicElevenMixedPairing_sq_le_retained
+    (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+      (1 / 512 : ℝ) pE pO a b)
+    (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+      (1 / 512 : ℝ) pE pO a b)
+    eR oR heRc hoRc heGap hoGap qE qO hqE hqO hdualE hdualO
+  have hreserve0 :=
+    factorTwoIntrinsicElevenRetainedWeightedReserve_nonneg eR oR
+  have hremaining :
+      (factorTwoEndpointLowTailMixed
+          (centeredPolynomialLift pE) eR
+          (centeredPolynomialLift pO) oR a b -
+        (1 / 512 : ℝ) * factorTwoPhasePotentialPoleMixed
+          (centeredPolynomialLift pE) (centeredPolynomialLift pO)
+          eR oR a b) ^ 2 ≤
+        lowComplement *
+          factorTwoIntrinsicElevenRetainedWeightedReserve eR oR := by
+    rw [factorTwoEndpointLowTailMixed_sub_potentialPole_eq_pairing
+      (1 / 512 : ℝ) pE pO eR oR heRc hoRc heRlocal hoRlocal
+      heGap hoGap hpE hpO a b]
+    exact hpairing.trans
+      (mul_le_mul_of_nonneg_right hfiniteSelector' hreserve0)
+  exact
+    factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_retain_one_div_two_thousand_forty_eight
+      pE pO eR oR heRc hoRc heR hoR heR0 heRlocal hoRlocal
+        heGap hoGap hpE hpO a b lowComplement hab hlowComplement
+        hlowRetains hremaining
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedConstrainedWeightedDualStructural

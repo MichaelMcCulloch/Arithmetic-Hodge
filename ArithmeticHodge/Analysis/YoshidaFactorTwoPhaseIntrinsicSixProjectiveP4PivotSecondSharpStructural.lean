@@ -240,6 +240,31 @@ private theorem clean_low_sharp_bounds :
     norm_num at hS hR22 hH22 hlog ⊢
     linarith
 
+/-- The endpoint-vanishing clean direction is slightly sharper than the
+entrywise box used below.  Keeping the three clean entries correlated avoids
+losing the small reserve to independent decimal roundings. -/
+theorem cleanWeak_gt_thirteen_thousand_two_hundred_forty_three_div_million :
+    (13243 / 1000000 : ℝ) <
+      yoshidaEndpointEvenLowGram00 -
+        2 * yoshidaEndpointEvenLowGram02 +
+        yoshidaEndpointEvenLowGram22 := by
+  have hS := scalarMassLoss_lt_27109_div_20000
+  have hR00 := regular00_scaled_upper_here
+  have hR02 := regular02_scaled_bounds_here
+  have hR22 := regular22_scaled_upper_here
+  have hH00 := hyper00_lower_here
+  have hH02 := hyper02_bounds_here
+  have hH22 := hyper22_lower_here
+  have hlog := strict_log_two_fine_bounds.2
+  rw [intrinsicEven_cleanGram00_expansion,
+    intrinsicEven_cleanGram02_expansion,
+    intrinsicEven_cleanGram22_expansion,
+    integral_endpointPotential_one,
+    integral_endpointPotential_mul_centeredEvenP2,
+    integral_endpointPotential_mul_centeredEvenP2_sq]
+  norm_num at hS hR00 hR02 hR22 hH00 hH02 hH22 hlog ⊢
+  linarith
+
 private theorem negative_weak_eq_midpoint_sub_profile_error :
     evenNegativePerturbation00 - 2 * evenNegativePerturbation02 +
         evenNegativePerturbation22 =

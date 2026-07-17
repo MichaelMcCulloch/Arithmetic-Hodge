@@ -179,6 +179,74 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_retain_one
       heRaw hoRaw heOrth hoOrth
       hlowComplement htailComplement hlowRetains htailRetains hremaining
 
+/-- Retuned asymmetric cutoff-eleven Schur handoff.  The low block retains
+`1 / 2048` of the half singular energy, the tail keeps its unconditional
+`1 / 64` reserve, and `1 / 512` of the pole row is removed.  The geometric
+condition has slack:
+`(1 / 512)^2 ≤ (1 / 2048) * (1 / 64)`. -/
+theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_retain_one_div_two_thousand_forty_eight
+    (pE pO : ℝ[X]) (eR oR : ℝ → ℝ)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heR : Function.Even eR) (hoR : Function.Odd oR)
+    (heR0 : centeredEvenP0Coefficient eR = 0)
+    (heRlocal : LocallyLipschitzOn (Icc (-1) 1) eR)
+    (hoRlocal : LocallyLipschitzOn (Icc (-1) 1) oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 11)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 11)
+    (hpE : pE.natDegree < 11) (hpO : pO.natDegree < 11)
+    (a b lowComplement : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (hlowComplement : 0 ≤ lowComplement)
+    (hlowRetains :
+      (1 / 2048 : ℝ) * ((1 / 2 : ℝ) *
+          factorTwoPhaseSingularWeightedEnergy
+            (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b) +
+        lowComplement ≤
+          factorTwoEndpointChannelPhase
+            (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b)
+    (hremaining :
+      (factorTwoEndpointLowTailMixed
+          (centeredPolynomialLift pE) eR
+          (centeredPolynomialLift pO) oR a b -
+        (1 / 512 : ℝ) * factorTwoPhasePotentialPoleMixed
+          (centeredPolynomialLift pE) (centeredPolynomialLift pO)
+          eR oR a b) ^ 2 ≤
+        lowComplement *
+          factorTwoIntrinsicElevenRetainedWeightedReserve eR oR) :
+    factorTwoEndpointLowTailMixed
+        (centeredPolynomialLift pE) eR
+        (centeredPolynomialLift pO) oR a b ^ 2 ≤
+      factorTwoEndpointChannelPhase
+          (centeredPolynomialLift pE) (centeredPolynomialLift pO) a b *
+        factorTwoEndpointChannelPhase eR oR a b := by
+  have heLowc := continuous_centeredPolynomialLift pE
+  have hoLowc := continuous_centeredPolynomialLift pO
+  have heLowLocal := locallyLipschitzOn_centeredPolynomialLift pE
+  have hoLowLocal := locallyLipschitzOn_centeredPolynomialLift pO
+  have heRaw := centeredRawLogEnergy_centeredPolynomialLift_add_tail
+    pE eR heRc heRlocal heGap hpE
+  have hoRaw := centeredRawLogEnergy_centeredPolynomialLift_add_tail
+    pO oR hoRc hoRlocal hoGap hpO
+  have heOrth := intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+    pE eR heRc heGap hpE
+  have hoOrth := intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+    pO oR hoRc hoGap hpO
+  have htailComplement :=
+    factorTwoIntrinsicElevenRetainedWeightedReserve_nonneg eR oR
+  have htailRetains :=
+    factorTwoEndpointChannelPhase_gap_eleven_retain_one_div_sixty_four
+      eR oR heRc hoRc heR hoR heR0 heRlocal hoRlocal
+        heGap hoGap a b hab
+  exact
+    factorTwoEndpointLowTailMixed_sq_le_of_asymmetrically_retained_singular
+      (centeredPolynomialLift pE) (centeredPolynomialLift pO) eR oR
+      heLowc hoLowc heRc hoRc
+      heLowLocal hoLowLocal heRlocal hoRlocal
+      a b (1 / 2048 : ℝ) (1 / 64 : ℝ) (1 / 512 : ℝ) lowComplement
+      (factorTwoIntrinsicElevenRetainedWeightedReserve eR oR)
+      hab (by norm_num) (by norm_num) (by norm_num)
+      heRaw hoRaw heOrth hoOrth
+      hlowComplement htailComplement hlowRetains htailRetains hremaining
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedSingularSchurStructural

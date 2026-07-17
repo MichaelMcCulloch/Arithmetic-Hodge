@@ -28,6 +28,8 @@ open YoshidaFactorTwoPhaseIntrinsicEvenPositiveEndpointSharp
 open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicLow
 open YoshidaFactorTwoPhaseIntrinsicLowAlternatingKernelSharp
+open YoshidaFactorTwoPhaseIntrinsicLowControlStep01MidpointReserve
+open YoshidaFactorTwoPhaseIntrinsicLowControlStep23EvenSlopeStructural
 open YoshidaFactorTwoPhaseIntrinsicLowStaticMinusRationalSchur
 open YoshidaFactorTwoPhaseIntrinsicSixP4CleanDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4P1AlternatingStructural
@@ -1171,6 +1173,99 @@ theorem abs_poleFreeAnalyticError_profile_refined_le
   change |poleFreeAnalyticError C| ≤ (1 / 10000 : ℝ) * energy
   rw [mul_comm]
   exact hbase.trans (hmono.trans (hgEq.trans_le hscaled))
+
+/-- The same profile majorant with the sharper integrated envelope mass.
+This retains the correlation energy and gains the small weak-direction
+reserve needed by later singular retunings. -/
+theorem abs_poleFreeAnalyticError_profile_three_div_forty_thousand_le
+    (c d : ℝ) :
+    |poleFreeAnalyticError
+        (centeredEndpointCorrelation
+          (factorTwoEvenStructuralLowProfile c d))| ≤
+      (3 / 40000 : ℝ) * (2 * c ^ 2 + (2 / 5 : ℝ) * d ^ 2) := by
+  let C : ℝ → ℝ := centeredEndpointCorrelation
+    (factorTwoEvenStructuralLowProfile c d)
+  let energy : ℝ := 2 * c ^ 2 + (2 / 5 : ℝ) * d ^ 2
+  let W : ℝ → ℝ := integratedPoleFreeWeight
+  have hprofile : Continuous (factorTwoEvenStructuralLowProfile c d) :=
+    continuous_factorTwoEvenStructuralLowProfile c d
+  have hC : Continuous C := by
+    dsimp only [C]
+    exact continuous_centeredEndpointCorrelation_of_continuous
+      (factorTwoEvenStructuralLowProfile c d) hprofile
+  have henergy : 0 ≤ energy := by
+    dsimp only [energy]
+    positivity
+  have hW : Continuous W := by
+    simpa only [W] using continuous_integratedPoleFreeWeight
+  have hbase : |poleFreeAnalyticError C| ≤
+      ∫ t : ℝ in 0..2, W t * |C t| := by
+    simpa only [W] using
+      abs_poleFreeAnalyticError_le_integratedPoleFreeWeight C hC
+  have hmono :
+      (∫ t : ℝ in 0..2, W t * |C t|) ≤
+        ∫ t : ℝ in 0..2, W t * energy := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      ((hW.mul hC.abs).intervalIntegrable 0 2)
+      ((hW.mul continuous_const).intervalIntegrable 0 2)
+    intro t ht
+    have htIcc : t ∈ Icc (0 : ℝ) 2 := ht
+    have hcorr := abs_centeredEndpointCorrelation_le_energy
+      (factorTwoEvenStructuralLowProfile c d) hprofile htIcc.1 htIcc.2
+    have hcorr' : |C t| ≤ energy := by
+      dsimp only [C, energy]
+      rw [integral_evenStructuralProfile_sq] at hcorr
+      exact hcorr
+    exact mul_le_mul_of_nonneg_left hcorr'
+      (by simpa only [W] using integratedPoleFreeWeight_nonneg htIcc)
+  have hWint : (∫ t : ℝ in 0..2, W t) < (3 / 40000 : ℝ) := by
+    simpa only [W] using
+      integratedPoleFreeWeight_integral_lt_three_div_40000
+  have hgEq :
+      (∫ t : ℝ in 0..2, W t * energy) =
+        energy * (∫ t : ℝ in 0..2, W t) := by
+    rw [show (fun t : ℝ ↦ W t * energy) =
+        fun t ↦ energy * W t by
+      funext t
+      ring,
+      intervalIntegral.integral_const_mul]
+  have hscaled :
+      energy * (∫ t : ℝ in 0..2, W t) ≤
+        energy * (3 / 40000 : ℝ) :=
+    mul_le_mul_of_nonneg_left hWint.le henergy
+  change |poleFreeAnalyticError C| ≤ (3 / 40000 : ℝ) * energy
+  rw [mul_comm]
+  exact hbase.trans (hmono.trans (hgEq.trans_le hscaled))
+
+/-- A cancellation-preserving lower bound for the positive endpoint in the
+weak aligned direction `P₀ - P₂`. -/
+theorem factorTwoIntrinsicP4_positive_weak_gt_six_thousand_seven_hundred_ninety_div_million :
+    (6790 / 1000000 : ℝ) <
+      factorTwoStructuralPhaseLow00 1 -
+        2 * factorTwoStructuralPhaseLow02 1 +
+        factorTwoStructuralPhaseLow22 1 := by
+  have hclean :=
+    cleanWeak_gt_thirteen_thousand_two_hundred_forty_three_div_million
+  have hm00 := step01Midpoint00_lt
+  have hm02 := step01Midpoint02_gt
+  have hm22 := step01Midpoint22_lt
+  have herr :=
+    abs_poleFreeAnalyticError_profile_three_div_forty_thousand_le 1 (-1)
+  have hneg := evenNegativePerturbation_profile_eq 1 (-1)
+  have hkernel := factorTwoCenteredSymmetricPerturbation_even_profile_kernel_eq
+    1 (-1)
+  have hreg := evenStructuralRegularError_profile_sharp_expansion 1 (-1)
+  rw [hkernel] at hneg
+  simp only [step01Midpoint00, step01Midpoint02, step01Midpoint22,
+    evenNegativePerturbationTaylor00, evenNegativePerturbationTaylor02,
+    evenNegativePerturbationTaylor22] at hm00 hm02 hm22
+  rw [abs_le] at herr
+  unfold evenNegativePerturbation00 evenNegativePerturbation02
+    evenNegativePerturbation22 at hneg
+  unfold factorTwoStructuralPhaseLow00 factorTwoStructuralPhaseLow02
+    factorTwoStructuralPhaseLow22 at ⊢
+  norm_num at hneg hreg herr ⊢
+  nlinarith
 
 /-! ## A sharpened lower even Gram -/
 
