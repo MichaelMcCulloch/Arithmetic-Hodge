@@ -8,6 +8,8 @@ open MeasureTheory Polynomial Real Set
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedSelectorHomogeneityStructural
 
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open ShiftedLegendreBasis
+open ShiftedLegendreOrthogonality
 open ThreeByThreeRankOneSchur
 open YoshidaEndpointEvenConstantCross
 open YoshidaEndpointEvenTailRepresenter
@@ -15,12 +17,21 @@ open YoshidaEndpointHyperbolicBound
 open YoshidaFactorTwoContinuousLagRepresenterStructural
 open YoshidaFactorTwoFixedLagRepresenterStructural
 open YoshidaFactorTwoForwardPolePolynomialReductionStructural
+open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenCompleteRepresentersStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenConcreteSelectorsStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedRepresentersStructural
+open YoshidaFactorTwoPhaseIntrinsicElevenRetainedSingularSchurStructural
+open YoshidaFactorTwoPhaseIntrinsicEightUnbalancedStaticDiskStructural
+open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
+open YoshidaFactorTwoPhaseIntrinsicNineUnbalancedStaticDiskStructural
+open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
+open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
+open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoReflectedPolePolynomialReductionStructural
+open YoshidaRegularKernelBound
 
 noncomputable section
 
@@ -40,6 +51,13 @@ theorem centeredPolynomialLift_smul
       c * centeredPolynomialLift p x := by
   unfold centeredPolynomialLift
   simp only [Polynomial.eval_smul, smul_eq_mul]
+
+theorem centeredPolynomialLift_add
+    (p q : ℝ[X]) (x : ℝ) :
+    centeredPolynomialLift (p + q) x =
+      centeredPolynomialLift p x + centeredPolynomialLift q x := by
+  unfold centeredPolynomialLift
+  rw [Polynomial.eval_add]
 
 theorem factorTwoIntrinsicElevenSelectorResidual_smul
     (c : ℝ) (F : ℝ → ℝ) (p : ℝ[X]) (x : ℝ) :
@@ -342,6 +360,747 @@ theorem threeSelectorPolynomial_natDegree_lt
       (natDegree_smul_lt_eleven c0 q0 hq0)
       (natDegree_smul_lt_eleven c2 q2 hq2))
     (natDegree_smul_lt_eleven c4 q4 hq4)
+
+/-! ## The concrete `P₀/P₂/P₄` polynomial -/
+
+/-- Unit-interval polynomial whose centered lift is the intrinsic even
+`P₀/P₂/P₄` profile.  Naming this slice keeps the selector construction tied
+to the production coordinates rather than to an abstract three-vector. -/
+def retainedP024Polynomial (c0 c2 c4 : ℝ) : ℝ[X] :=
+  factorTwoIntrinsicNineEvenPolynomial c0 c2 c4 0 0
+
+/-- The production `P₀/P₂/P₄` polynomial is literally the three-coordinate
+selector synthesis in the shifted Legendre basis. -/
+theorem retainedP024Polynomial_eq_threeSelectorPolynomial
+    (c0 c2 c4 : ℝ) :
+    retainedP024Polynomial c0 c2 c4 =
+      threeSelectorPolynomial c0 c2 c4
+        (shiftedLegendreReal 0) (shiftedLegendreReal 2)
+        (shiftedLegendreReal 4) := by
+  unfold retainedP024Polynomial factorTwoIntrinsicNineEvenPolynomial
+    threeSelectorPolynomial
+  simp
+
+theorem retainedP024Polynomial_natDegree_lt
+    (c0 c2 c4 : ℝ) :
+    (retainedP024Polynomial c0 c2 c4).natDegree < 11 := by
+  rw [retainedP024Polynomial_eq_threeSelectorPolynomial]
+  apply threeSelectorPolynomial_natDegree_lt
+  all_goals
+    rw [natDegree_shiftedLegendreReal]
+    omega
+
+/-- Centering the concrete polynomial recovers exactly the profile used by
+the retained `P₀/P₂/P₄` low-complement theorem. -/
+theorem centeredPolynomialLift_retainedP024Polynomial
+    (c0 c2 c4 : ℝ) :
+    centeredPolynomialLift (retainedP024Polynomial c0 c2 c4) =
+      factorTwoIntrinsicEvenP024Profile c0 c2 c4 := by
+  unfold retainedP024Polynomial
+  rw [centeredPolynomialLift_intrinsicNineEvenPolynomial]
+  funext x
+  unfold factorTwoIntrinsicNineEvenProfile factorTwoIntrinsicEightEvenProfile
+    factorTwoIntrinsicEvenP024Profile factorTwoIntrinsicSixEvenTail
+    factorTwoEvenStructuralLowProfile
+  simp
+
+private theorem centeredPolynomialLift_threeSelectorPolynomial
+    (c0 c2 c4 : ℝ) (q0 q2 q4 : ℝ[X]) (x : ℝ) :
+    centeredPolynomialLift
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) x =
+      c0 * centeredPolynomialLift q0 x +
+        c2 * centeredPolynomialLift q2 x +
+        c4 * centeredPolynomialLift q4 x := by
+  unfold threeSelectorPolynomial centeredPolynomialLift
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+
+private theorem integrableOn_regularKernel_mul_centeredPolynomialLift
+    (p : ℝ[X]) (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    IntegrableOn
+      (fun y : ℝ ↦
+        yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+          centeredPolynomialLift p y)
+      (Icc (-1 : ℝ) 1) volume := by
+  let g : ℝ → ℝ := fun y ↦
+    (1 / 4 : ℝ) * |centeredPolynomialLift p y|
+  have hg : IntegrableOn g (Icc (-1 : ℝ) 1) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    dsimp only [g]
+    exact (continuous_const.mul (continuous_centeredPolynomialLift p).abs).continuousOn
+  apply hg.mono'
+  · exact ((measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul
+        ((measurable_const.sub measurable_id).abs))).mul
+      (continuous_centeredPolynomialLift p).measurable).aestronglyMeasurable
+  · filter_upwards [ae_restrict_mem measurableSet_Icc] with y hy
+    have hdist : |x - y| ≤ 2 := by
+      rw [abs_le]
+      constructor <;> linarith [hx.1, hx.2, hy.1, hy.2]
+    have harg0 : 0 ≤ yoshidaEndpointA * |x - y| :=
+      mul_nonneg yoshidaEndpointA_pos.le (abs_nonneg _)
+    have harg2 : yoshidaEndpointA * |x - y| ≤ Real.log 2 := by
+      unfold yoshidaEndpointA
+      nlinarith [mul_le_mul_of_nonneg_left hdist
+        (by positivity : 0 ≤ Real.log 2 / 2)]
+    have hkernel := yoshidaRegularKernel_mem_Icc harg0 harg2
+    dsimp only [g]
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hkernel.1]
+    exact mul_le_mul_of_nonneg_right hkernel.2 (abs_nonneg _)
+
+private theorem regularRepresenter_threeSelectorPolynomial_on_Icc
+    (c0 c2 c4 : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    yoshidaEndpointEvenRegularRepresenter
+        (centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4)) x =
+      c0 * yoshidaEndpointEvenRegularRepresenter
+          (centeredPolynomialLift q0) x +
+        c2 * yoshidaEndpointEvenRegularRepresenter
+          (centeredPolynomialLift q2) x +
+        c4 * yoshidaEndpointEvenRegularRepresenter
+          (centeredPolynomialLift q4) x := by
+  have h0 := integrableOn_regularKernel_mul_centeredPolynomialLift q0 x hx
+  have h2 := integrableOn_regularKernel_mul_centeredPolynomialLift q2 x hx
+  have h4 := integrableOn_regularKernel_mul_centeredPolynomialLift q4 x hx
+  have hinner :
+      (∫ y : ℝ in Icc (-1) 1,
+          c0 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+            centeredPolynomialLift q0 y) +
+          c2 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+            centeredPolynomialLift q2 y)) =
+        (∫ y : ℝ in Icc (-1) 1,
+          c0 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+            centeredPolynomialLift q0 y)) +
+        ∫ y : ℝ in Icc (-1) 1,
+          c2 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+            centeredPolynomialLift q2 y) := by
+    simpa only [Pi.add_apply] using
+      (MeasureTheory.integral_add
+        (μ := volume.restrict (Icc (-1 : ℝ) 1))
+        (h0.const_mul c0) (h2.const_mul c2))
+  have houter :
+      (∫ y : ℝ in Icc (-1) 1,
+          (c0 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+              centeredPolynomialLift q0 y) +
+            c2 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+              centeredPolynomialLift q2 y)) +
+          c4 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+            centeredPolynomialLift q4 y)) =
+        (∫ y : ℝ in Icc (-1) 1,
+          c0 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+              centeredPolynomialLift q0 y) +
+            c2 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+              centeredPolynomialLift q2 y)) +
+        ∫ y : ℝ in Icc (-1) 1,
+          c4 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+            centeredPolynomialLift q4 y) := by
+    simpa only [Pi.add_apply] using
+      (MeasureTheory.integral_add
+        (μ := volume.restrict (Icc (-1 : ℝ) 1))
+        ((h0.const_mul c0).add (h2.const_mul c2)) (h4.const_mul c4))
+  unfold yoshidaEndpointEvenRegularRepresenter
+  rw [show (fun y : ℝ ↦
+      yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+        centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) y) =
+      fun y ↦
+        c0 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+          centeredPolynomialLift q0 y) +
+        c2 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+          centeredPolynomialLift q2 y) +
+        c4 * (yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+          centeredPolynomialLift q4 y) by
+    funext y
+    rw [centeredPolynomialLift_threeSelectorPolynomial]
+    ring,
+    houter, hinner]
+  repeat rw [MeasureTheory.integral_const_mul]
+
+private theorem intervalIntegrable_boundedLag_right_centeredPolynomialLift
+    (q : ℝ → ℝ) (p : ℝ[X]) (x : ℝ)
+    (hq : Measurable q) (C : ℝ)
+    (hqC : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C)
+    (hx : x ∈ Icc (-1 : ℝ) 1) :
+    IntervalIntegrable
+      (fun y : ℝ ↦ q (y - x) * centeredPolynomialLift p y)
+      volume x 1 := by
+  let g : ℝ → ℝ := fun y ↦ C * |centeredPolynomialLift p y|
+  have hgIcc : IntegrableOn g (Icc x 1) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    dsimp only [g]
+    exact (continuous_const.mul (continuous_centeredPolynomialLift p).abs).continuousOn
+  have hg : Integrable g (volume.restrict (Ioc x 1)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hmeas : AEStronglyMeasurable
+      (fun y : ℝ ↦ q (y - x) * centeredPolynomialLift p y)
+      (volume.restrict (Ioc x 1)) :=
+    ((hq.comp (measurable_id.sub measurable_const)).mul
+      (continuous_centeredPolynomialLift p).measurable).aestronglyMeasurable
+  have hbound : ∀ᵐ y : ℝ ∂(volume.restrict (Ioc x 1)),
+      ‖q (y - x) * centeredPolynomialLift p y‖ ≤ g y := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with y hy
+    have hlag : y - x ∈ Icc (0 : ℝ) 2 :=
+      ⟨by linarith [hy.1], by linarith [hx.1, hy.2]⟩
+    have hqbound := hqC (y - x) hlag
+    dsimp only [g]
+    rw [Real.norm_eq_abs, abs_mul]
+    exact mul_le_mul_of_nonneg_right hqbound (abs_nonneg _)
+  constructor
+  · exact Integrable.mono' hg hmeas hbound
+  · simp [hx.2]
+
+private theorem intervalIntegrable_boundedLag_left_centeredPolynomialLift
+    (q : ℝ → ℝ) (p : ℝ[X]) (x : ℝ)
+    (hq : Measurable q) (C : ℝ)
+    (hqC : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C)
+    (hx : x ∈ Icc (-1 : ℝ) 1) :
+    IntervalIntegrable
+      (fun y : ℝ ↦ q (x - y) * centeredPolynomialLift p y)
+      volume (-1) x := by
+  let g : ℝ → ℝ := fun y ↦ C * |centeredPolynomialLift p y|
+  have hgIcc : IntegrableOn g (Icc (-1) x) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    dsimp only [g]
+    exact (continuous_const.mul (continuous_centeredPolynomialLift p).abs).continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (-1) x)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hmeas : AEStronglyMeasurable
+      (fun y : ℝ ↦ q (x - y) * centeredPolynomialLift p y)
+      (volume.restrict (Ioc (-1) x)) :=
+    ((hq.comp (measurable_const.sub measurable_id)).mul
+      (continuous_centeredPolynomialLift p).measurable).aestronglyMeasurable
+  have hbound : ∀ᵐ y : ℝ ∂(volume.restrict (Ioc (-1) x)),
+      ‖q (x - y) * centeredPolynomialLift p y‖ ≤ g y := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with y hy
+    have hlag : x - y ∈ Icc (0 : ℝ) 2 :=
+      ⟨by linarith [hy.2], by linarith [hx.2, hy.1]⟩
+    have hqbound := hqC (x - y) hlag
+    dsimp only [g]
+    rw [Real.norm_eq_abs, abs_mul]
+    exact mul_le_mul_of_nonneg_right hqbound (abs_nonneg _)
+  constructor
+  · exact Integrable.mono' hg hmeas hbound
+  · simp [hx.1]
+
+private theorem continuousLagRight_centeredPolynomialLift_add_on_Icc
+    (q : ℝ → ℝ) (p r : ℝ[X]) (x : ℝ)
+    (hq : Measurable q) (C : ℝ)
+    (hqC : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C)
+    (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoContinuousLagRightRepresenter q
+        (centeredPolynomialLift (p + r)) x =
+      factorTwoContinuousLagRightRepresenter q
+          (centeredPolynomialLift p) x +
+        factorTwoContinuousLagRightRepresenter q
+          (centeredPolynomialLift r) x := by
+  have hp := intervalIntegrable_boundedLag_right_centeredPolynomialLift
+    q p x hq C hqC hx
+  have hr := intervalIntegrable_boundedLag_right_centeredPolynomialLift
+    q r x hq C hqC hx
+  unfold factorTwoContinuousLagRightRepresenter
+  rw [show (fun y : ℝ ↦ q (y - x) *
+      centeredPolynomialLift (p + r) y) =
+      fun y ↦ q (y - x) * centeredPolynomialLift p y +
+        q (y - x) * centeredPolynomialLift r y by
+    funext y
+    rw [centeredPolynomialLift_add]
+    ring]
+  exact intervalIntegral.integral_add hp hr
+
+private theorem continuousLagLeft_centeredPolynomialLift_add_on_Icc
+    (q : ℝ → ℝ) (p r : ℝ[X]) (x : ℝ)
+    (hq : Measurable q) (C : ℝ)
+    (hqC : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C)
+    (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoContinuousLagLeftRepresenter q
+        (centeredPolynomialLift (p + r)) x =
+      factorTwoContinuousLagLeftRepresenter q
+          (centeredPolynomialLift p) x +
+        factorTwoContinuousLagLeftRepresenter q
+          (centeredPolynomialLift r) x := by
+  have hp := intervalIntegrable_boundedLag_left_centeredPolynomialLift
+    q p x hq C hqC hx
+  have hr := intervalIntegrable_boundedLag_left_centeredPolynomialLift
+    q r x hq C hqC hx
+  unfold factorTwoContinuousLagLeftRepresenter
+  rw [show (fun y : ℝ ↦ q (x - y) *
+      centeredPolynomialLift (p + r) y) =
+      fun y ↦ q (x - y) * centeredPolynomialLift p y +
+        q (x - y) * centeredPolynomialLift r y by
+    funext y
+    rw [centeredPolynomialLift_add]
+    ring]
+  exact intervalIntegral.integral_add hp hr
+
+private theorem continuousLagRight_centeredPolynomialLift_smul
+    (q : ℝ → ℝ) (c : ℝ) (p : ℝ[X]) (x : ℝ) :
+    factorTwoContinuousLagRightRepresenter q
+        (centeredPolynomialLift (c • p)) x =
+      c * factorTwoContinuousLagRightRepresenter q
+        (centeredPolynomialLift p) x := by
+  unfold factorTwoContinuousLagRightRepresenter
+  rw [show (fun y : ℝ ↦ q (y - x) *
+      centeredPolynomialLift (c • p) y) =
+      fun y ↦ c * (q (y - x) * centeredPolynomialLift p y) by
+    funext y
+    rw [centeredPolynomialLift_smul]
+    ring,
+    intervalIntegral.integral_const_mul]
+
+private theorem continuousLagLeft_centeredPolynomialLift_smul
+    (q : ℝ → ℝ) (c : ℝ) (p : ℝ[X]) (x : ℝ) :
+    factorTwoContinuousLagLeftRepresenter q
+        (centeredPolynomialLift (c • p)) x =
+      c * factorTwoContinuousLagLeftRepresenter q
+        (centeredPolynomialLift p) x := by
+  unfold factorTwoContinuousLagLeftRepresenter
+  rw [show (fun y : ℝ ↦ q (x - y) *
+      centeredPolynomialLift (c • p) y) =
+      fun y ↦ c * (q (x - y) * centeredPolynomialLift p y) by
+    funext y
+    rw [centeredPolynomialLift_smul]
+    ring,
+    intervalIntegral.integral_const_mul]
+
+private theorem continuousLagK_threeSelectorPolynomial_on_Icc
+    (q : ℝ → ℝ) (c0 c2 c4 : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hq : Measurable q) (C : ℝ)
+    (hqC : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C)
+    (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoContinuousLagK q
+        (centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4)) x =
+      c0 * factorTwoContinuousLagK q (centeredPolynomialLift q0) x +
+        c2 * factorTwoContinuousLagK q (centeredPolynomialLift q2) x +
+        c4 * factorTwoContinuousLagK q (centeredPolynomialLift q4) x := by
+  unfold factorTwoContinuousLagK threeSelectorPolynomial
+  rw [continuousLagRight_centeredPolynomialLift_add_on_Icc
+      q (c0 • q0 + c2 • q2) (c4 • q4) x hq C hqC hx,
+    continuousLagRight_centeredPolynomialLift_add_on_Icc
+      q (c0 • q0) (c2 • q2) x hq C hqC hx,
+    continuousLagLeft_centeredPolynomialLift_add_on_Icc
+      q (c0 • q0 + c2 • q2) (c4 • q4) x hq C hqC hx,
+    continuousLagLeft_centeredPolynomialLift_add_on_Icc
+      q (c0 • q0) (c2 • q2) x hq C hqC hx,
+    continuousLagRight_centeredPolynomialLift_smul,
+    continuousLagRight_centeredPolynomialLift_smul,
+    continuousLagRight_centeredPolynomialLift_smul,
+    continuousLagLeft_centeredPolynomialLift_smul,
+    continuousLagLeft_centeredPolynomialLift_smul,
+    continuousLagLeft_centeredPolynomialLift_smul]
+  ring
+
+private theorem continuousLagJ_threeSelectorPolynomial_on_Icc
+    (q : ℝ → ℝ) (c0 c2 c4 : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hq : Measurable q) (C : ℝ)
+    (hqC : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C)
+    (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoContinuousLagJ q
+        (centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4)) x =
+      c0 * factorTwoContinuousLagJ q (centeredPolynomialLift q0) x +
+        c2 * factorTwoContinuousLagJ q (centeredPolynomialLift q2) x +
+        c4 * factorTwoContinuousLagJ q (centeredPolynomialLift q4) x := by
+  unfold factorTwoContinuousLagJ threeSelectorPolynomial
+  rw [continuousLagRight_centeredPolynomialLift_add_on_Icc
+      q (c0 • q0 + c2 • q2) (c4 • q4) x hq C hqC hx,
+    continuousLagRight_centeredPolynomialLift_add_on_Icc
+      q (c0 • q0) (c2 • q2) x hq C hqC hx,
+    continuousLagLeft_centeredPolynomialLift_add_on_Icc
+      q (c0 • q0 + c2 • q2) (c4 • q4) x hq C hqC hx,
+    continuousLagLeft_centeredPolynomialLift_add_on_Icc
+      q (c0 • q0) (c2 • q2) x hq C hqC hx,
+    continuousLagRight_centeredPolynomialLift_smul,
+    continuousLagRight_centeredPolynomialLift_smul,
+    continuousLagRight_centeredPolynomialLift_smul,
+    continuousLagLeft_centeredPolynomialLift_smul,
+    continuousLagLeft_centeredPolynomialLift_smul,
+    continuousLagLeft_centeredPolynomialLift_smul]
+  ring
+
+private theorem centeredMoment_threeSelectorPolynomial
+    (k : ℝ → ℝ) (hk : Continuous k)
+    (c0 c2 c4 : ℝ) (q0 q2 q4 : ℝ[X]) :
+    (∫ x : ℝ in -1..1,
+        k x * centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) x) =
+      c0 * (∫ x : ℝ in -1..1,
+        k x * centeredPolynomialLift q0 x) +
+      c2 * (∫ x : ℝ in -1..1,
+        k x * centeredPolynomialLift q2 x) +
+      c4 * (∫ x : ℝ in -1..1,
+        k x * centeredPolynomialLift q4 x) := by
+  have h0 : IntervalIntegrable
+      (fun x : ℝ ↦ k x * centeredPolynomialLift q0 x)
+      volume (-1) 1 :=
+    (hk.mul (continuous_centeredPolynomialLift q0)).intervalIntegrable (-1) 1
+  have h2 : IntervalIntegrable
+      (fun x : ℝ ↦ k x * centeredPolynomialLift q2 x)
+      volume (-1) 1 :=
+    (hk.mul (continuous_centeredPolynomialLift q2)).intervalIntegrable (-1) 1
+  have h4 : IntervalIntegrable
+      (fun x : ℝ ↦ k x * centeredPolynomialLift q4 x)
+      volume (-1) 1 :=
+    (hk.mul (continuous_centeredPolynomialLift q4)).intervalIntegrable (-1) 1
+  rw [show (fun x : ℝ ↦ k x *
+      centeredPolynomialLift
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) x) =
+      fun x ↦
+        c0 * (k x * centeredPolynomialLift q0 x) +
+        c2 * (k x * centeredPolynomialLift q2 x) +
+        c4 * (k x * centeredPolynomialLift q4 x) by
+    funext x
+    rw [centeredPolynomialLift_threeSelectorPolynomial]
+    ring,
+    intervalIntegral.integral_add
+      ((h0.const_mul c0).add (h2.const_mul c2)) (h4.const_mul c4),
+    intervalIntegral.integral_add (h0.const_mul c0) (h2.const_mul c2)]
+  repeat rw [intervalIntegral.integral_const_mul]
+
+private theorem coshMoment_threeSelectorPolynomial
+    (c0 c2 c4 : ℝ) (q0 q2 q4 : ℝ[X]) :
+    yoshidaEndpointCoshMoment
+        (centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4)) =
+      c0 * yoshidaEndpointCoshMoment (centeredPolynomialLift q0) +
+        c2 * yoshidaEndpointCoshMoment (centeredPolynomialLift q2) +
+        c4 * yoshidaEndpointCoshMoment (centeredPolynomialLift q4) := by
+  unfold yoshidaEndpointCoshMoment
+  exact centeredMoment_threeSelectorPolynomial
+    (fun x : ℝ ↦ Real.cosh (yoshidaEndpointA * x / 2))
+    (by fun_prop) c0 c2 c4 q0 q2 q4
+
+private theorem sinhMoment_threeSelectorPolynomial
+    (c0 c2 c4 : ℝ) (q0 q2 q4 : ℝ[X]) :
+    yoshidaEndpointSinhMoment
+        (centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4)) =
+      c0 * yoshidaEndpointSinhMoment (centeredPolynomialLift q0) +
+        c2 * yoshidaEndpointSinhMoment (centeredPolynomialLift q2) +
+        c4 * yoshidaEndpointSinhMoment (centeredPolynomialLift q4) := by
+  unfold yoshidaEndpointSinhMoment
+  exact centeredMoment_threeSelectorPolynomial
+    (fun x : ℝ ↦ Real.sinh (yoshidaEndpointA * x / 2))
+    (by fun_prop) c0 c2 c4 q0 q2 q4
+
+private theorem cleanSurvivor_threeSelectorPolynomial_on_Icc
+    (c0 c2 c4 : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenCleanSurvivorRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) x =
+      c0 * factorTwoIntrinsicElevenCleanSurvivorRepresenter q0 x +
+        c2 * factorTwoIntrinsicElevenCleanSurvivorRepresenter q2 x +
+        c4 * factorTwoIntrinsicElevenCleanSurvivorRepresenter q4 x := by
+  unfold factorTwoIntrinsicElevenCleanSurvivorRepresenter
+  rw [centeredPolynomialLift_threeSelectorPolynomial,
+    regularRepresenter_threeSelectorPolynomial_on_Icc c0 c2 c4 q0 q2 q4 x hx,
+    coshMoment_threeSelectorPolynomial,
+    sinhMoment_threeSelectorPolynomial]
+  ring
+
+private theorem fixedLagK_threeSelectorPolynomial
+    (tau c0 c2 c4 x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    factorTwoFixedLagK tau
+        (centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4)) x =
+      c0 * factorTwoFixedLagK tau (centeredPolynomialLift q0) x +
+        c2 * factorTwoFixedLagK tau (centeredPolynomialLift q2) x +
+        c4 * factorTwoFixedLagK tau (centeredPolynomialLift q4) x := by
+  unfold factorTwoFixedLagK factorTwoFixedLagRightRepresenter
+    factorTwoFixedLagLeftRepresenter
+  by_cases hR : x ∈ Icc (-1 : ℝ) (1 - tau) <;>
+    by_cases hL : x ∈ Icc (-1 + tau) 1 <;>
+    simp [hR, hL] <;>
+    repeat' rw [centeredPolynomialLift_threeSelectorPolynomial] <;>
+    ring
+
+private theorem fixedLagJ_threeSelectorPolynomial
+    (tau c0 c2 c4 x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    factorTwoFixedLagJ tau
+        (centeredPolynomialLift
+          (threeSelectorPolynomial c0 c2 c4 q0 q2 q4)) x =
+      c0 * factorTwoFixedLagJ tau (centeredPolynomialLift q0) x +
+        c2 * factorTwoFixedLagJ tau (centeredPolynomialLift q2) x +
+        c4 * factorTwoFixedLagJ tau (centeredPolynomialLift q4) x := by
+  unfold factorTwoFixedLagJ factorTwoFixedLagRightRepresenter
+    factorTwoFixedLagLeftRepresenter
+  by_cases hR : x ∈ Icc (-1 : ℝ) (1 - tau) <;>
+    by_cases hL : x ∈ Icc (-1 + tau) 1 <;>
+    simp [hR, hL] <;>
+    repeat' rw [centeredPolynomialLift_threeSelectorPolynomial] <;>
+    ring
+
+private theorem forwardPoleKLogSelector_threeSelectorPolynomial
+    (c0 c2 c4 x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    forwardPoleKLogSelector
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) x =
+      c0 * forwardPoleKLogSelector q0 x +
+        c2 * forwardPoleKLogSelector q2 x +
+        c4 * forwardPoleKLogSelector q4 x := by
+  unfold forwardPoleKLogSelector threeSelectorPolynomial
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  ring
+
+private theorem forwardPoleLLogSelector_threeSelectorPolynomial
+    (c0 c2 c4 x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    forwardPoleLLogSelector
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) x =
+      c0 * forwardPoleLLogSelector q0 x +
+        c2 * forwardPoleLLogSelector q2 x +
+        c4 * forwardPoleLLogSelector q4 x := by
+  unfold forwardPoleLLogSelector threeSelectorPolynomial
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  ring
+
+private theorem reflectedPoleKLogSelector_threeSelectorPolynomial
+    (c0 c2 c4 x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    reflectedPoleKLogSelector
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) x =
+      c0 * reflectedPoleKLogSelector q0 x +
+        c2 * reflectedPoleKLogSelector q2 x +
+        c4 * reflectedPoleKLogSelector q4 x := by
+  unfold reflectedPoleKLogSelector threeSelectorPolynomial
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  ring
+
+private theorem reflectedPoleJLogSelector_threeSelectorPolynomial
+    (c0 c2 c4 x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    reflectedPoleJLogSelector
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) x =
+      c0 * reflectedPoleJLogSelector q0 x +
+        c2 * reflectedPoleJLogSelector q2 x +
+        c4 * reflectedPoleJLogSelector q4 x := by
+  unfold reflectedPoleJLogSelector threeSelectorPolynomial
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  ring
+
+private theorem analyticEven_threeSelectorPolynomial_zero_odd_on_Icc
+    (c0 c2 c4 a b : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenAnalyticEvenRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenAnalyticEvenRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenAnalyticEvenRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenAnalyticEvenRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenAnalyticEvenRepresenter
+  rw [continuousLagK_threeSelectorPolynomial_on_Icc
+      factorTwoSymmetricAnalyticLag c0 c2 c4 q0 q2 q4 x
+      measurable_factorTwoSymmetricAnalyticLag (3 / 8000)
+      (fun _t ht ↦ abs_factorTwoSymmetricAnalyticLag_le ht) hx,
+    centeredPolynomialLift_zero_fun]
+  repeat rw [factorTwoContinuousLagJ_zero_right]
+  ring
+
+private theorem analyticOdd_threeSelectorPolynomial_zero_odd_on_Icc
+    (c0 c2 c4 a b : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenAnalyticOddRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenAnalyticOddRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenAnalyticOddRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenAnalyticOddRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenAnalyticOddRepresenter
+  rw [continuousLagJ_threeSelectorPolynomial_on_Icc
+      factorTwoAlternatingAnalyticLag c0 c2 c4 q0 q2 q4 x
+      measurable_factorTwoAlternatingAnalyticLag (1 / 1000)
+      (fun _t ht ↦ abs_factorTwoAlternatingAnalyticLag_le ht) hx,
+    centeredPolynomialLift_zero_fun]
+  repeat rw [factorTwoContinuousLagK_zero_right]
+  ring
+
+private theorem forwardEven_threeSelectorPolynomial_zero_odd
+    (c0 c2 c4 a b x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    factorTwoIntrinsicElevenForwardEvenRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenForwardEvenRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenForwardEvenRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenForwardEvenRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenForwardEvenRepresenter
+  rw [forwardPoleKLogSelector_threeSelectorPolynomial]
+  repeat rw [forwardPoleLLogSelector_zero]
+  ring
+
+private theorem forwardOdd_threeSelectorPolynomial_zero_odd
+    (c0 c2 c4 a b x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    factorTwoIntrinsicElevenForwardOddRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenForwardOddRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenForwardOddRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenForwardOddRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenForwardOddRepresenter
+  rw [forwardPoleLLogSelector_threeSelectorPolynomial]
+  repeat rw [forwardPoleKLogSelector_zero]
+  ring
+
+private theorem reflectedEven_threeSelectorPolynomial_zero_odd
+    (c0 c2 c4 a b x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    factorTwoIntrinsicElevenReflectedEvenRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenReflectedEvenRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenReflectedEvenRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenReflectedEvenRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenReflectedEvenRepresenter
+  rw [reflectedPoleKLogSelector_threeSelectorPolynomial]
+  repeat rw [reflectedPoleJLogSelector_zero]
+  ring
+
+private theorem reflectedOdd_threeSelectorPolynomial_zero_odd
+    (c0 c2 c4 a b x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    factorTwoIntrinsicElevenReflectedOddRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenReflectedOddRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenReflectedOddRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenReflectedOddRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenReflectedOddRepresenter
+  rw [reflectedPoleJLogSelector_threeSelectorPolynomial]
+  repeat rw [reflectedPoleKLogSelector_zero]
+  ring
+
+private theorem primeEven_threeSelectorPolynomial_zero_odd
+    (c0 c2 c4 a b x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    factorTwoIntrinsicElevenPrimeEvenRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenPrimeEvenRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenPrimeEvenRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenPrimeEvenRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenPrimeEvenRepresenter
+  rw [fixedLagK_threeSelectorPolynomial, centeredPolynomialLift_zero_fun]
+  repeat rw [factorTwoFixedLagJ_zero_right]
+  ring
+
+private theorem primeOdd_threeSelectorPolynomial_zero_odd
+    (c0 c2 c4 a b x : ℝ) (q0 q2 q4 : ℝ[X]) :
+    factorTwoIntrinsicElevenPrimeOddRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenPrimeOddRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenPrimeOddRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenPrimeOddRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenPrimeOddRepresenter
+  rw [fixedLagJ_threeSelectorPolynomial, centeredPolynomialLift_zero_fun]
+  repeat rw [factorTwoFixedLagK_zero_right]
+  ring
+
+private theorem completeEven_threeSelectorPolynomial_zero_odd_on_Icc
+    (c0 c2 c4 a b : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenEvenMixedRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenEvenMixedRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenEvenMixedRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenEvenMixedRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenEvenMixedRepresenter
+  rw [cleanSurvivor_threeSelectorPolynomial_on_Icc c0 c2 c4 q0 q2 q4 x hx,
+    analyticEven_threeSelectorPolynomial_zero_odd_on_Icc
+      c0 c2 c4 a b q0 q2 q4 x hx,
+    forwardEven_threeSelectorPolynomial_zero_odd,
+    reflectedEven_threeSelectorPolynomial_zero_odd,
+    primeEven_threeSelectorPolynomial_zero_odd]
+  ring
+
+private theorem completeOdd_threeSelectorPolynomial_zero_odd_on_Icc
+    (c0 c2 c4 a b : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenOddMixedRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenOddMixedRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenOddMixedRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenOddMixedRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenOddMixedRepresenter
+  repeat rw [factorTwoIntrinsicElevenCleanSurvivorRepresenter_zero]
+  rw [analyticOdd_threeSelectorPolynomial_zero_odd_on_Icc
+      c0 c2 c4 a b q0 q2 q4 x hx,
+    forwardOdd_threeSelectorPolynomial_zero_odd,
+    reflectedOdd_threeSelectorPolynomial_zero_odd,
+    primeOdd_threeSelectorPolynomial_zero_odd]
+  ring
+
+private theorem potentialPoleEven_threeSelectorPolynomial_zero_odd_on_Icc
+    (c0 c2 c4 a b : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (_hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenPotentialPoleEvenRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenPotentialPoleEvenRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenPotentialPoleEvenRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenPotentialPoleEvenRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenPotentialPoleEvenRepresenter
+  rw [centeredPolynomialLift_threeSelectorPolynomial,
+    reflectedEven_threeSelectorPolynomial_zero_odd]
+  ring
+
+private theorem potentialPoleOdd_threeSelectorPolynomial_zero_odd_on_Icc
+    (c0 c2 c4 a b : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (_hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenPotentialPoleOddRepresenter
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      c0 * factorTwoIntrinsicElevenPotentialPoleOddRepresenter q0 0 a b x +
+        c2 * factorTwoIntrinsicElevenPotentialPoleOddRepresenter q2 0 a b x +
+        c4 * factorTwoIntrinsicElevenPotentialPoleOddRepresenter q4 0 a b x := by
+  unfold factorTwoIntrinsicElevenPotentialPoleOddRepresenter
+  repeat rw [centeredPolynomialLift_zero]
+  rw [reflectedOdd_threeSelectorPolynomial_zero_odd]
+  ring
+
+/-- On the physical interval, the retained even production row is linear in
+the concrete three-coordinate low polynomial. -/
+theorem retainedEvenMixedRepresenterAt_threeSelectorPolynomial_on_Icc
+    (gamma c0 c2 c4 a b : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt gamma
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      threeSelectorRepresenter c0 c2 c4
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt gamma q0 0 a b)
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt gamma q2 0 a b)
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt gamma q4 0 a b) x := by
+  unfold factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    threeSelectorRepresenter
+  rw [completeEven_threeSelectorPolynomial_zero_odd_on_Icc
+      c0 c2 c4 a b q0 q2 q4 x hx,
+    potentialPoleEven_threeSelectorPolynomial_zero_odd_on_Icc
+      c0 c2 c4 a b q0 q2 q4 x hx]
+  ring
+
+/-- Odd-channel analogue of
+`retainedEvenMixedRepresenterAt_threeSelectorPolynomial_on_Icc`. -/
+theorem retainedOddMixedRepresenterAt_threeSelectorPolynomial_on_Icc
+    (gamma c0 c2 c4 a b : ℝ) (q0 q2 q4 : ℝ[X])
+    (x : ℝ) (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt gamma
+        (threeSelectorPolynomial c0 c2 c4 q0 q2 q4) 0 a b x =
+      threeSelectorRepresenter c0 c2 c4
+        (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt gamma q0 0 a b)
+        (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt gamma q2 0 a b)
+        (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt gamma q4 0 a b) x := by
+  unfold factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+    threeSelectorRepresenter
+  rw [completeOdd_threeSelectorPolynomial_zero_odd_on_Icc
+      c0 c2 c4 a b q0 q2 q4 x hx,
+    potentialPoleOdd_threeSelectorPolynomial_zero_odd_on_Icc
+      c0 c2 c4 a b q0 q2 q4 x hx]
+  ring
+
+/-- A pointwise equality of both retained rows on the physical interval
+preserves every two-channel selector cost. -/
+theorem factorTwoIntrinsicElevenRetainedConstrainedSelectorDual_congr_on_Icc
+    (FE GE FO GO : ℝ → ℝ) (qE qO : ℝ[X])
+    (hE : ∀ x ∈ Icc (-1 : ℝ) 1, FE x = GE x)
+    (hO : ∀ x ∈ Icc (-1 : ℝ) 1, FO x = GO x) :
+    factorTwoIntrinsicElevenRetainedConstrainedSelectorDual FE FO qE qO =
+      factorTwoIntrinsicElevenRetainedConstrainedSelectorDual GE GO qE qO := by
+  unfold factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+    factorTwoIntrinsicElevenSelectorDual
+  congr 1
+  · apply intervalIntegral.integral_congr
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+    dsimp only
+    unfold factorTwoIntrinsicElevenSelectorResidual
+    rw [hE x hx]
+  · apply intervalIntegral.integral_congr
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+    dsimp only
+    unfold factorTwoIntrinsicElevenSelectorResidual
+    rw [hO x hx]
 
 theorem threeSelectorResidual_eq
     (c0 c2 c4 : ℝ) (F0 F2 F4 : ℝ → ℝ)
