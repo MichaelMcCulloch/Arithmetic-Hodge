@@ -245,54 +245,49 @@ private theorem integrable_openPositiveDistanceTriangle_profileDensity
   · dsimp only [H, B]
     simp [Set.indicator_of_notMem hz]
 
-/-- Fubini identifies the absolute ordered-correlation majorant with the
-reciprocal density on the positive-distance triangle. -/
-private theorem integral_abs_cross_div_two_sub_eq_openTriangle
-    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+/-- Fubini identifies an integrable ordered-correlation density with the
+corresponding reciprocal density on the positive-distance triangle. -/
+private theorem integral_cross_div_two_sub_eq_openTriangle_of_integrable
+    (u v : ℝ → ℝ)
+    (hDensity : Integrable
+      (openPositiveDistanceTriangle.indicator
+        (fun z : ℝ × ℝ ↦
+          u (z.1 + z.2) * v z.2 / (2 - z.1)))
+      ((volume : Measure ℝ).prod volume)) :
     (∫ t : ℝ in 0..2,
-      factorTwoCenteredCrossCorrelation
-          (fun x ↦ |u x|) (fun x ↦ |v x|) t / (2 - t)) =
+      factorTwoCenteredCrossCorrelation u v t / (2 - t)) =
       ∫ z : ℝ × ℝ in openPositiveDistanceTriangle,
-        |u (z.1 + z.2) * v z.2| / (2 - z.1) := by
-  let ua : ℝ → ℝ := fun x ↦ |u x|
-  let va : ℝ → ℝ := fun x ↦ |v x|
+        u (z.1 + z.2) * v z.2 / (2 - z.1) := by
   let q : ℝ → ℝ := fun t ↦
-    factorTwoCenteredCrossCorrelation ua va t / (2 - t)
+    factorTwoCenteredCrossCorrelation u v t / (2 - t)
   let H : ℝ × ℝ → ℝ :=
     openPositiveDistanceTriangle.indicator
-      (fun z : ℝ × ℝ ↦ |u (z.1 + z.2) * v z.2| / (2 - z.1))
-  have hua : Continuous ua := by
-    dsimp only [ua]
-    fun_prop
-  have hva : Continuous va := by
-    dsimp only [va]
-    fun_prop
+      (fun z : ℝ × ℝ ↦ u (z.1 + z.2) * v z.2 / (2 - z.1))
   have hH : Integrable H ((volume : Measure ℝ).prod volume) := by
-    simpa only [H] using
-      integrable_openPositiveDistanceTriangle_profileDensity u v hu hv
+    simpa only [H] using hDensity
   have hinner (t : ℝ) (ht : t ∈ Ioo (0 : ℝ) 2) :
       (∫ x : ℝ, H (t, x)) = q t := by
     have hrow : (fun x : ℝ ↦ H (t, x)) =
         (Icc (-1 : ℝ) (1 - t)).indicator
-          (fun x ↦ |u (t + x) * v x| / (2 - t)) := by
+          (fun x ↦ u (t + x) * v x / (2 - t)) := by
       funext x
       by_cases hx : x ∈ Icc (-1 : ℝ) (1 - t)
       · rw [Set.indicator_of_mem hx]
         change openPositiveDistanceTriangle.indicator
-            (fun z : ℝ × ℝ ↦ |u (z.1 + z.2) * v z.2| / (2 - z.1))
+            (fun z : ℝ × ℝ ↦ u (z.1 + z.2) * v z.2 / (2 - z.1))
               (t, x) = _
         have hmem : (t, x) ∈ openPositiveDistanceTriangle := ⟨ht, hx⟩
         rw [Set.indicator_of_mem hmem]
       · rw [Set.indicator_of_notMem hx]
         change openPositiveDistanceTriangle.indicator
-            (fun z : ℝ × ℝ ↦ |u (z.1 + z.2) * v z.2| / (2 - z.1))
+            (fun z : ℝ × ℝ ↦ u (z.1 + z.2) * v z.2 / (2 - z.1))
               (t, x) = 0
         rw [Set.indicator_of_notMem]
         exact fun hmem ↦ hx hmem.2
     rw [show (∫ x : ℝ, H (t, x)) =
         ∫ x : ℝ,
           (Icc (-1 : ℝ) (1 - t)).indicator
-            (fun x ↦ |u (t + x) * v x| / (2 - t)) x by
+            (fun x ↦ u (t + x) * v x / (2 - t)) x by
       apply integral_congr_ae
       filter_upwards [] with x
       exact congrFun hrow x,
@@ -301,12 +296,7 @@ private theorem integral_abs_cross_div_two_sub_eq_openTriangle
       ← intervalIntegral.integral_of_le (by linarith [ht.2]),
       intervalIntegral.integral_div]
     dsimp only [q]
-    congr 1
-    unfold factorTwoCenteredCrossCorrelation
-    apply intervalIntegral.integral_congr
-    intro x _hx
-    dsimp only [ua, va]
-    rw [abs_mul]
+    rfl
   have hwhole :
       (∫ t : ℝ, (Ioc (0 : ℝ) 2).indicator q t) =
         ∫ t : ℝ, ∫ x : ℝ, H (t, x) := by
@@ -322,7 +312,7 @@ private theorem integral_abs_cross_div_two_sub_eq_openTriangle
       have hzero : (fun x : ℝ ↦ H (t, x)) = 0 := by
         funext x
         change openPositiveDistanceTriangle.indicator
-            (fun z : ℝ × ℝ ↦ |u (z.1 + z.2) * v z.2| / (2 - z.1))
+            (fun z : ℝ × ℝ ↦ u (z.1 + z.2) * v z.2 / (2 - z.1))
               (t, x) = 0
         rw [Set.indicator_of_notMem]
         exact fun hmem ↦ htOpen hmem.1
@@ -330,8 +320,7 @@ private theorem integral_abs_cross_div_two_sub_eq_openTriangle
       simp
   calc
     (∫ t : ℝ in 0..2,
-        factorTwoCenteredCrossCorrelation
-            (fun x ↦ |u x|) (fun x ↦ |v x|) t / (2 - t)) =
+        factorTwoCenteredCrossCorrelation u v t / (2 - t)) =
         ∫ t : ℝ, (Ioc (0 : ℝ) 2).indicator q t := by
       rw [intervalIntegral.integral_of_le (by norm_num),
         ← integral_indicator measurableSet_Ioc]
@@ -340,8 +329,47 @@ private theorem integral_abs_cross_div_two_sub_eq_openTriangle
       rw [Measure.volume_eq_prod ℝ ℝ]
       rw [← MeasureTheory.integral_prod H hH]
     _ = ∫ z : ℝ × ℝ in openPositiveDistanceTriangle,
-        |u (z.1 + z.2) * v z.2| / (2 - z.1) := by
+        u (z.1 + z.2) * v z.2 / (2 - z.1) := by
       rw [← integral_indicator measurableSet_openPositiveDistanceTriangle]
+
+/-- Fubini identifies the absolute ordered-correlation majorant with the
+reciprocal density on the positive-distance triangle. -/
+private theorem integral_abs_cross_div_two_sub_eq_openTriangle
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (∫ t : ℝ in 0..2,
+      factorTwoCenteredCrossCorrelation
+          (fun x ↦ |u x|) (fun x ↦ |v x|) t / (2 - t)) =
+      ∫ z : ℝ × ℝ in openPositiveDistanceTriangle,
+        |u (z.1 + z.2) * v z.2| / (2 - z.1) := by
+  simp only [abs_mul]
+  apply integral_cross_div_two_sub_eq_openTriangle_of_integrable
+    (fun x ↦ |u x|) (fun x ↦ |v x|)
+  simpa only [abs_mul] using
+    integrable_openPositiveDistanceTriangle_profileDensity u v hu hv
+
+/-- Signed ordered-correlation Fubini follows from the absolute-density
+majorant by equality of pointwise norms. -/
+private theorem integral_cross_div_two_sub_eq_openTriangle
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (∫ t : ℝ in 0..2,
+      factorTwoCenteredCrossCorrelation u v t / (2 - t)) =
+      ∫ z : ℝ × ℝ in openPositiveDistanceTriangle,
+        u (z.1 + z.2) * v z.2 / (2 - z.1) := by
+  apply integral_cross_div_two_sub_eq_openTriangle_of_integrable u v
+  have hAbs :=
+    integrable_openPositiveDistanceTriangle_profileDensity u v hu hv
+  have hmeas : AEStronglyMeasurable
+      (openPositiveDistanceTriangle.indicator
+        (fun z : ℝ × ℝ ↦
+          u (z.1 + z.2) * v z.2 / (2 - z.1)))
+      ((volume : Measure ℝ).prod volume) :=
+    ((by fun_prop : Measurable (fun z : ℝ × ℝ ↦
+      u (z.1 + z.2) * v z.2 / (2 - z.1))).indicator
+        measurableSet_openPositiveDistanceTriangle).aestronglyMeasurable
+  refine hAbs.congr' hmeas ?_
+  filter_upwards [] with z
+  simp only [norm_indicator_eq_indicator_norm, Real.norm_eq_abs,
+    abs_div, abs_abs]
 
 /-- A fixed first coordinate is null for planar Lebesgue measure. -/
 private theorem ae_fst_ne (c : ℝ) :
@@ -411,6 +439,33 @@ theorem integral_abs_cross_div_two_sub_eq_centeredUpperTriangle
       setIntegral_positiveDistanceTriangle_shear F
     _ = ∫ z : ℝ × ℝ in centeredUpperTriangle,
         |u z.1 * v z.2| / (2 - z.1 + z.2) := by rfl
+
+/-- The positive-distance shear turns the signed ordered-correlation
+quotient into its reciprocal density on the centered upper triangle. -/
+theorem integral_cross_div_two_sub_eq_centeredUpperTriangle
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (∫ t : ℝ in 0..2,
+      factorTwoCenteredCrossCorrelation u v t / (2 - t)) =
+      ∫ z : ℝ × ℝ in centeredUpperTriangle,
+        u z.1 * v z.2 / (2 - z.1 + z.2) := by
+  let F : ℝ × ℝ → ℝ := fun z ↦
+    u z.1 * v z.2 / (2 - z.1 + z.2)
+  rw [integral_cross_div_two_sub_eq_openTriangle u v hu hv,
+    setIntegral_openTriangle_eq_closedTriangle]
+  calc
+    (∫ z : ℝ × ℝ in positiveDistanceTriangle,
+        u (z.1 + z.2) * v z.2 / (2 - z.1)) =
+        ∫ z : ℝ × ℝ in positiveDistanceTriangle,
+          F (z.1 + z.2, z.2) := by
+      apply setIntegral_congr_fun measurableSet_positiveDistanceTriangle
+      intro z _hz
+      dsimp only [F]
+      congr 2
+      ring
+    _ = ∫ z : ℝ × ℝ in centeredUpperTriangle, F z :=
+      setIntegral_positiveDistanceTriangle_shear F
+    _ = ∫ z : ℝ × ℝ in centeredUpperTriangle,
+        u z.1 * v z.2 / (2 - z.1 + z.2) := by rfl
 
 /-- Reusable set-integral transport under a measure-preserving measurable
 embedding whose preimage identifies the two domains. -/
@@ -543,6 +598,26 @@ theorem integrableOn_centeredUpper_absDensity
     rw [hpre, hcomp]
     exact hGClosed
   exact (hmeasure.integrableOn_comp_preimage hSemb).1 hpreInt
+
+/-- The signed reciprocal density is integrable on the centered upper
+triangle because its norm is the absolute density above. -/
+theorem integrableOn_centeredUpper_density
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    IntegrableOn
+      (fun z : ℝ × ℝ ↦ u z.1 * v z.2 / (2 - z.1 + z.2))
+      centeredUpperTriangle ((volume : Measure ℝ).prod volume) := by
+  have hAbs := integrableOn_centeredUpper_absDensity u v hu hv
+  change Integrable _
+      (((volume : Measure ℝ).prod volume).restrict centeredUpperTriangle)
+    at hAbs ⊢
+  have hmeas : AEStronglyMeasurable
+      (fun z : ℝ × ℝ ↦ u z.1 * v z.2 / (2 - z.1 + z.2))
+      (((volume : Measure ℝ).prod volume).restrict centeredUpperTriangle) :=
+    (by fun_prop : Measurable (fun z : ℝ × ℝ ↦
+      u z.1 * v z.2 / (2 - z.1 + z.2))).aestronglyMeasurable
+  refine hAbs.congr' hmeas ?_
+  filter_upwards [] with z
+  simp only [Real.norm_eq_abs, abs_div, abs_abs]
 
 private theorem centeredUpperTriangle_eq_sign_regions :
     centeredUpperTriangle =
