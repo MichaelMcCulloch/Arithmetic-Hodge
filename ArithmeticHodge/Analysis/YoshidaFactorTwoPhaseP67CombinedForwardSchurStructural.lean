@@ -65,7 +65,7 @@ private theorem mul_sq_le_mul_of_sq_le
 
 /-- Same-cell Schur assembly once the four actual forward-Hankel pairings
 have their normalized square bounds. -/
-theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_reserve_mul_of_pairing_sq_bounds
+theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_five_six_mul_reserve_mul_of_pairing_sq_bounds
     (eR oR : ℝ → ℝ)
     (heRc : Continuous eR) (hoRc : Continuous oR)
     (heRe : Function.Even eR) (hoRo : Function.Odd oR)
@@ -93,11 +93,12 @@ theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_reserve_mul_of_pairing_sq
     factorTwoP67ResidualCombinedForwardMixed
         (c • factorTwoCenteredP6) (d • factorTwoCenteredP7)
         eR oR a b ^ 2 ≤
-      ((1 / 100 : ℝ) *
-          (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
-            factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) *
-        ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
-          (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR) := by
+      (5 / 6 : ℝ) *
+        (((1 / 100 : ℝ) *
+            (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+              factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) *
+          ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+            (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR)) := by
   let E₆ := factorTwoIntrinsicEnergy factorTwoCenteredP6
   let E₇ := factorTwoIntrinsicEnergy factorTwoCenteredP7
   let Ee := factorTwoIntrinsicEnergy eR
@@ -420,15 +421,15 @@ theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_reserve_mul_of_pairing_sq
     dsimp only [z₁₁]
     simpa only [mul_assoc] using hz₁₁Base
 
-  have hschur := four_row_schur_of_normalized_sq_bounds
-    factorTwoP67CombinedWeight₀₀ factorTwoP67CombinedWeight₀₁
+  have hschur := four_row_schur_of_normalized_sq_bounds_with_budget
+    (5 / 6) factorTwoP67CombinedWeight₀₀ factorTwoP67CombinedWeight₀₁
     factorTwoP67CombinedWeight₁₀ factorTwoP67CombinedWeight₁₁
     z₀₀ z₀₁ z₁₀ z₁₁ x₀ x₁ y₀ y₁
     (by norm_num [factorTwoP67CombinedWeight₀₀])
     (by norm_num [factorTwoP67CombinedWeight₀₁])
     (by norm_num [factorTwoP67CombinedWeight₁₀])
     (by norm_num [factorTwoP67CombinedWeight₁₁])
-    factorTwoP67CombinedWeight_sum_le_one
+    factorTwoP67CombinedWeight_sum_lt_five_six.le
     hx₀ hx₁ hy₀ hy₁ hz₀₀ hz₀₁ hz₁₀ hz₁₁
   have hforward := factorTwoP67ResidualForwardHankelMixed_scaled_P67_eq_pairings
     eR oR heRc hoRc c d a b
@@ -445,14 +446,83 @@ theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_reserve_mul_of_pairing_sq
           Iₖ₆, Iₗ₆, Iₗ₇, Iₖ₇]
         unfold factorTwoP67ResidualAnalyticMixed
         ring
-    _ ≤ (x₀ + x₁) * (y₀ + y₁) := hschur
-    _ = ((1 / 100 : ℝ) *
+    _ ≤ (5 / 6 : ℝ) * ((x₀ + x₁) * (y₀ + y₁)) := hschur
+    _ = (5 / 6 : ℝ) *
+        (((1 / 100 : ℝ) *
+            (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+              factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) *
+          ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+            (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR)) := by
+      dsimp only [x₀, x₁, y₀, y₁, E₆, E₇, Ee, Eo]
+      ring
+
+/-- Compatibility wrapper which rounds the retained `5/6` budget up to the
+original unit reserve. -/
+theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_reserve_mul_of_pairing_sq_bounds
+    (eR oR : ℝ → ℝ)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heRe : Function.Even eR) (hoRo : Function.Odd oR)
+    (c d a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (hK₆ :
+      (∫ x : ℝ in -1..1,
+        eR x * factorTwoForwardHankelK factorTwoCenteredP6 x) ^ 2 ≤
+        (1 / 8778792960000000 : ℝ) * 14000 ^ 2 *
+          factorTwoIntrinsicEnergy eR)
+    (hL₆ :
+      (∫ x : ℝ in -1..1,
+        oR x * factorTwoForwardHankelL factorTwoCenteredP6 x) ^ 2 ≤
+        (1 / 8778792960000000 : ℝ) * 16000 ^ 2 *
+          factorTwoIntrinsicEnergy oR)
+    (hL₇ :
+      (∫ x : ℝ in -1..1,
+        eR x * factorTwoForwardHankelL factorTwoCenteredP7 x) ^ 2 ≤
+        (1 / 8778792960000000 : ℝ) * 100000 ^ 2 *
+          factorTwoIntrinsicEnergy eR)
+    (hK₇ :
+      (∫ x : ℝ in -1..1,
+        oR x * factorTwoForwardHankelK factorTwoCenteredP7 x) ^ 2 ≤
+        (1 / 8778792960000000 : ℝ) * 130000 ^ 2 *
+          factorTwoIntrinsicEnergy oR) :
+    factorTwoP67ResidualCombinedForwardMixed
+        (c • factorTwoCenteredP6) (d • factorTwoCenteredP7)
+        eR oR a b ^ 2 ≤
+      ((1 / 100 : ℝ) *
           (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
             factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) *
         ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
           (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR) := by
-      dsimp only [x₀, x₁, y₀, y₁, E₆, E₇, Ee, Eo]
-      ring
+  have hstrong :=
+    factorTwoP67ResidualCombinedForwardMixed_sq_le_five_six_mul_reserve_mul_of_pairing_sq_bounds
+      eR oR heRc hoRc heRe hoRo c d a b hab hK₆ hL₆ hL₇ hK₇
+  have hlow : 0 ≤
+      (1 / 100 : ℝ) *
+        (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+          factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2) := by
+    have hP₆ := factorTwoIntrinsicEnergy_nonneg factorTwoCenteredP6
+    have hP₇ := factorTwoIntrinsicEnergy_nonneg factorTwoCenteredP7
+    positivity
+  have hresidual : 0 ≤
+      (1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+        (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR := by
+    have he := factorTwoIntrinsicEnergy_nonneg eR
+    have ho := factorTwoIntrinsicEnergy_nonneg oR
+    positivity
+  calc
+    factorTwoP67ResidualCombinedForwardMixed
+        (c • factorTwoCenteredP6) (d • factorTwoCenteredP7)
+        eR oR a b ^ 2 ≤
+      (5 / 6 : ℝ) *
+        (((1 / 100 : ℝ) *
+            (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+              factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) *
+          ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+            (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR)) := hstrong
+    _ ≤ ((1 / 100 : ℝ) *
+          (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+            factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) *
+        ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+          (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR) :=
+      mul_le_of_le_one_left (mul_nonneg hlow hresidual) (by norm_num)
 
 /-- Dyadic wrapper for the same-cell theorem.  Once the four reduction
 equalities and four derivative envelopes are supplied, no further analytic
@@ -522,6 +592,104 @@ theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_reserve_mul_of_reduced_pa
     exact hL₇reduced
   · rw [hK₇reduce]
     exact hK₇reduced
+
+/-- Dyadic wrapper which retains the exact `5/6` budget through the four
+reduced representer pairings. -/
+theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_five_six_mul_reserve_mul_of_reduced_pairings
+    (eR oR : ℝ → ℝ)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heRe : Function.Even eR) (hoRo : Function.Odd oR)
+    (heLow : centeredLegendreMomentsVanishBelow eR 9)
+    (hoLow : centeredLegendreMomentsVanishBelow oR 9)
+    (c d a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (hK₆reduce :
+      (∫ x : ℝ in -1..1,
+        eR x * factorTwoForwardHankelK factorTwoCenteredP6 x) =
+      ∫ x : ℝ in -1..1, eR x * factorTwoForwardKP6 x)
+    (hL₆reduce :
+      (∫ x : ℝ in -1..1,
+        oR x * factorTwoForwardHankelL factorTwoCenteredP6 x) =
+      ∫ x : ℝ in -1..1, oR x * factorTwoForwardLP6 x)
+    (hL₇reduce :
+      (∫ x : ℝ in -1..1,
+        eR x * factorTwoForwardHankelL factorTwoCenteredP7 x) =
+      ∫ x : ℝ in -1..1, eR x * factorTwoForwardLP7 x)
+    (hK₇reduce :
+      (∫ x : ℝ in -1..1,
+        oR x * factorTwoForwardHankelK factorTwoCenteredP7 x) =
+      ∫ x : ℝ in -1..1, oR x * factorTwoForwardKP7 x)
+    (hKP₆ : ∀ x ∈ Icc (-1 : ℝ) 1,
+      |iteratedDerivWithin 9 factorTwoForwardKP6 (Icc (-1 : ℝ) 1) x| ≤
+        14000)
+    (hLP₆ : ∀ x ∈ Icc (-1 : ℝ) 1,
+      |iteratedDerivWithin 9 factorTwoForwardLP6 (Icc (-1 : ℝ) 1) x| ≤
+        16000)
+    (hLP₇ : ∀ x ∈ Icc (-1 : ℝ) 1,
+      |iteratedDerivWithin 9 factorTwoForwardLP7 (Icc (-1 : ℝ) 1) x| ≤
+        100000)
+    (hKP₇ : ∀ x ∈ Icc (-1 : ℝ) 1,
+      |iteratedDerivWithin 9 factorTwoForwardKP7 (Icc (-1 : ℝ) 1) x| ≤
+        130000) :
+    factorTwoP67ResidualCombinedForwardMixed
+        (c • factorTwoCenteredP6) (d • factorTwoCenteredP7)
+        eR oR a b ^ 2 ≤
+      (5 / 6 : ℝ) *
+        (((1 / 100 : ℝ) *
+            (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+              factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) *
+          ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+            (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR)) := by
+  have hK₆reduced := sq_intervalIntegral_mul_le_dyadicNineRemainder
+    eR factorTwoForwardKP6 heRc continuousOn_factorTwoForwardKP6
+    contDiffOn_factorTwoForwardKP6 heLow 14000 hKP₆
+  have hL₆reduced := sq_intervalIntegral_mul_le_dyadicNineRemainder
+    oR factorTwoForwardLP6 hoRc continuousOn_factorTwoForwardLP6
+    contDiffOn_factorTwoForwardLP6 hoLow 16000 hLP₆
+  have hL₇reduced := sq_intervalIntegral_mul_le_dyadicNineRemainder
+    eR factorTwoForwardLP7 heRc continuousOn_factorTwoForwardLP7
+    contDiffOn_factorTwoForwardLP7 heLow 100000 hLP₇
+  have hK₇reduced := sq_intervalIntegral_mul_le_dyadicNineRemainder
+    oR factorTwoForwardKP7 hoRc continuousOn_factorTwoForwardKP7
+    contDiffOn_factorTwoForwardKP7 hoLow 130000 hKP₇
+  apply factorTwoP67ResidualCombinedForwardMixed_sq_le_five_six_mul_reserve_mul_of_pairing_sq_bounds
+    eR oR heRc hoRc heRe hoRo c d a b hab
+  · rw [hK₆reduce]
+    exact hK₆reduced
+  · rw [hL₆reduce]
+    exact hL₆reduced
+  · rw [hL₇reduce]
+    exact hL₇reduced
+  · rw [hK₇reduce]
+    exact hK₇reduced
+
+/-- Production form retaining the strict `5/6` combined `P6/P7` Schur
+budget. -/
+theorem factorTwoP67ResidualCombinedForwardMixed_sq_le_five_six_mul_reserve_mul
+    (eR oR : ℝ → ℝ)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heRe : Function.Even eR) (hoRo : Function.Odd oR)
+    (heLow : centeredLegendreMomentsVanishBelow eR 9)
+    (hoLow : centeredLegendreMomentsVanishBelow oR 9)
+    (c d a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    factorTwoP67ResidualCombinedForwardMixed
+        (c • factorTwoCenteredP6) (d • factorTwoCenteredP7)
+        eR oR a b ^ 2 ≤
+      (5 / 6 : ℝ) *
+        (((1 / 100 : ℝ) *
+            (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+              factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) *
+          ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+            (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR)) := by
+  apply factorTwoP67ResidualCombinedForwardMixed_sq_le_five_six_mul_reserve_mul_of_reduced_pairings
+    eR oR heRc hoRc heRe hoRo heLow hoLow c d a b hab
+  · exact integral_mul_factorTwoForwardHankelK_P6_eq_reduced eR heRc heLow
+  · exact integral_mul_factorTwoForwardHankelL_P6_eq_reduced oR hoRc hoLow
+  · exact integral_mul_factorTwoForwardHankelL_P7_eq_reduced eR heRc heLow
+  · exact integral_mul_factorTwoForwardHankelK_P7_eq_reduced oR hoRc hoLow
+  · exact abs_iteratedDerivWithin_nine_factorTwoForwardKP6_le
+  · exact abs_iteratedDerivWithin_nine_factorTwoForwardLP6_le
+  · exact abs_iteratedDerivWithin_nine_factorTwoForwardLP7_le
+  · exact abs_iteratedDerivWithin_nine_factorTwoForwardKP7_le
 
 /-- Production form: the exact polynomial-reduction bridges and the four
 certified ninth-derivative envelopes discharge all hypotheses of the dyadic

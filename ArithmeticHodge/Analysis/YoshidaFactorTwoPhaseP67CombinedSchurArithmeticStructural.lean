@@ -52,14 +52,15 @@ theorem sq_add_le_combined_cell
           positivity)
     _ = ((1 + r) * A + (1 + 1 / r) * F) * X := by ring
 
-/-- Generic square-root-free four-row Schur lemma.  The four normalized
-weights may be any positive rationals whose sum is at most one. -/
-theorem four_row_schur_of_normalized_sq_bounds
-    (c₀₀ c₀₁ c₁₀ c₁₁ : ℝ)
+/-- Generic square-root-free four-row Schur lemma which retains an arbitrary
+total normalized budget.  In particular, strict slack in the sum of the four
+row weights survives the Schur assembly instead of being rounded up to one. -/
+theorem four_row_schur_of_normalized_sq_bounds_with_budget
+    (B c₀₀ c₀₁ c₁₀ c₁₁ : ℝ)
     (z₀₀ z₀₁ z₁₀ z₁₁ x₀ x₁ y₀ y₁ : ℝ)
     (hc₀₀ : 0 < c₀₀) (hc₀₁ : 0 < c₀₁)
     (hc₁₀ : 0 < c₁₀) (hc₁₁ : 0 < c₁₁)
-    (hbudget : c₀₀ + c₀₁ + c₁₀ + c₁₁ ≤ 1)
+    (hbudget : c₀₀ + c₀₁ + c₁₀ + c₁₁ ≤ B)
     (hx₀ : 0 ≤ x₀) (hx₁ : 0 ≤ x₁)
     (hy₀ : 0 ≤ y₀) (hy₁ : 0 ≤ y₁)
     (hz₀₀ : z₀₀ ^ 2 ≤ c₀₀ * x₀ * y₀)
@@ -67,7 +68,7 @@ theorem four_row_schur_of_normalized_sq_bounds
     (hz₁₀ : z₁₀ ^ 2 ≤ c₁₀ * x₁ * y₀)
     (hz₁₁ : z₁₁ ^ 2 ≤ c₁₁ * x₁ * y₁) :
     (z₀₀ + z₀₁ + z₁₀ + z₁₁) ^ 2 ≤
-      (x₀ + x₁) * (y₀ + y₁) := by
+      B * ((x₀ + x₁) * (y₀ + y₁)) := by
   have h₀₀ : z₀₀ ^ 2 / c₀₀ ≤ x₀ * y₀ := by
     apply (div_le_iff₀ hc₀₀).2
     nlinarith
@@ -118,9 +119,32 @@ theorem four_row_schur_of_normalized_sq_bounds
     _ ≤ (c₀₀ + c₀₁ + c₁₀ + c₁₁) *
         (x₀ * y₀ + x₀ * y₁ + x₁ * y₀ + x₁ * y₁) :=
       mul_le_mul_of_nonneg_left hrows hweightNonneg
-    _ ≤ x₀ * y₀ + x₀ * y₁ + x₁ * y₀ + x₁ * y₁ :=
-      mul_le_of_le_one_left hpairs hbudget
-    _ = (x₀ + x₁) * (y₀ + y₁) := by ring
+    _ ≤ B * (x₀ * y₀ + x₀ * y₁ + x₁ * y₀ + x₁ * y₁) :=
+      mul_le_mul_of_nonneg_right hbudget hpairs
+    _ = B * ((x₀ + x₁) * (y₀ + y₁)) := by ring
+
+/-- Compatibility wrapper for the original unit-budget four-row Schur
+lemma. -/
+theorem four_row_schur_of_normalized_sq_bounds
+    (c₀₀ c₀₁ c₁₀ c₁₁ : ℝ)
+    (z₀₀ z₀₁ z₁₀ z₁₁ x₀ x₁ y₀ y₁ : ℝ)
+    (hc₀₀ : 0 < c₀₀) (hc₀₁ : 0 < c₀₁)
+    (hc₁₀ : 0 < c₁₀) (hc₁₁ : 0 < c₁₁)
+    (hbudget : c₀₀ + c₀₁ + c₁₀ + c₁₁ ≤ 1)
+    (hx₀ : 0 ≤ x₀) (hx₁ : 0 ≤ x₁)
+    (hy₀ : 0 ≤ y₀) (hy₁ : 0 ≤ y₁)
+    (hz₀₀ : z₀₀ ^ 2 ≤ c₀₀ * x₀ * y₀)
+    (hz₀₁ : z₀₁ ^ 2 ≤ c₀₁ * x₀ * y₁)
+    (hz₁₀ : z₁₀ ^ 2 ≤ c₁₀ * x₁ * y₀)
+    (hz₁₁ : z₁₁ ^ 2 ≤ c₁₁ * x₁ * y₁) :
+    (z₀₀ + z₀₁ + z₁₀ + z₁₁) ^ 2 ≤
+      (x₀ + x₁) * (y₀ + y₁) := by
+  simpa only [one_mul] using
+    four_row_schur_of_normalized_sq_bounds_with_budget
+      1 c₀₀ c₀₁ c₁₀ c₁₁
+      z₀₀ z₀₁ z₁₀ z₁₁ x₀ x₁ y₀ y₁
+      hc₀₀ hc₀₁ hc₁₀ hc₁₁ hbudget
+      hx₀ hx₁ hy₀ hy₁ hz₀₀ hz₀₁ hz₁₀ hz₁₁
 
 /-! ## Exact combined budget -/
 
