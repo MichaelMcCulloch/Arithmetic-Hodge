@@ -51,6 +51,17 @@ theorem affineLiftMatrix_mulVec_injective (a : ℝ) :
   have hi := congrFun hxy (Sum.inl i)
   simpa using hi
 
+/-- Multiplying a fixed `2 x 2` block Gram by the affine lift extracts its
+matrix quadratic in the phase parameter. -/
+theorem affineLiftMatrix_conjTranspose_mul_fromBlocks_mul_affineLiftMatrix
+    (A B C D : Matrix n n ℝ) (a : ℝ) :
+    (affineLiftMatrix (n := n) a)ᴴ * Matrix.fromBlocks A B C D *
+        affineLiftMatrix (n := n) a =
+      A + a • (B + C) + a ^ 2 • D := by
+  ext i j
+  simp [Matrix.mul_apply, affineLiftMatrix, Fintype.sum_sum_type]
+  ring
+
 /-- A fixed positive affine-lift Gram plus a positive interval reserve makes
 the represented matrix positive definite at every `a` with `a² ≤ 1`. -/
 theorem posDef_of_intervalQuadratic_sos
