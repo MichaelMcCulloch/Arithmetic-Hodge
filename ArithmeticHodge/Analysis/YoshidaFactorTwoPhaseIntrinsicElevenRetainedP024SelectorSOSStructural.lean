@@ -195,6 +195,18 @@ def retainedP024ThreeSelectorGramMatrix
     (factorTwoIntrinsicElevenSelectorCrossDual W F2 F4 q2 q4)
     (factorTwoIntrinsicElevenSelectorCrossDual W F4 F4 q4 q4)
 
+/-- The symmetric three-row package agrees entrywise with the full polarized
+selector Gram. -/
+theorem retainedP024ThreeSelectorGramMatrix_apply
+    (W F0 F2 F4 : ℝ → ℝ) (q0 q2 q4 : ℝ[X]) (i j : Fin 3) :
+    retainedP024ThreeSelectorGramMatrix W F0 F2 F4 q0 q2 q4 i j =
+      factorTwoIntrinsicElevenSelectorCrossDual W
+        (![F0, F2, F4] i) (![F0, F2, F4] j)
+        (![q0, q2, q4] i) (![q0, q2, q4] j) := by
+  fin_cases i <;> fin_cases j <;>
+    simp [retainedP024ThreeSelectorGramMatrix, symmetricMatrix3,
+      factorTwoIntrinsicElevenSelectorCrossDual_comm]
+
 private theorem quadraticForm_symmetricMatrix3
     (q00 q02 q04 q22 q24 q44 c0 c2 c4 : ℝ) :
     star (![c0, c2, c4] : Fin 3 → ℝ) ⬝ᵥ
@@ -690,6 +702,215 @@ theorem retainedP024SymmetricSelectorResidual_eq_endpoint_half_sub
     retainedEvenBaseRepresenterAt]
   ring
 
+/-- Every endpoint-average selector residual lies in the same retained
+weighted `L²` space as its two endpoint residuals. -/
+theorem retainedEvenBaseSelectorResidual_div_sqrt_memLp_two
+    (gamma : ℝ) (p qPlus qMinus : ℝ[X]) :
+    MemLp (fun x ↦
+      factorTwoIntrinsicElevenSelectorResidual
+          (retainedEvenBaseRepresenterAt gamma p)
+          (retainedP024BaseSelector qPlus qMinus) x /
+        Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hPlus :=
+    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qPlus 1 0
+  have hMinus :=
+    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qMinus (-1) 0
+  have hAverage := (hPlus.add hMinus).const_mul (1 / 2 : ℝ)
+  apply (memLp_congr_ae (μ := volume.restrict (Ioc (-1 : ℝ) 1)) ?_).mpr
+    hAverage
+  filter_upwards [] with x
+  rw [retainedP024BaseSelectorResidual_eq_endpoint_half_add
+    gamma p qPlus qMinus x]
+  dsimp only [Pi.add_apply]
+  ring
+
+/-- Polarization of two endpoint-average residual rows.  This is the
+index-free identity behind the upper-left block of the whole residual Gram. -/
+private theorem retainedEvenBaseCross_eq_endpoint_average_sub_symmetric
+    (gamma : ℝ) (p r qPlus qMinus sPlus sMinus : ℝ[X]) :
+    factorTwoIntrinsicElevenSelectorCrossDual
+        factorTwoIntrinsicElevenRetainedEvenWeight
+        (retainedEvenBaseRepresenterAt gamma p)
+        (retainedEvenBaseRepresenterAt gamma r)
+        (retainedP024BaseSelector qPlus qMinus)
+        (retainedP024BaseSelector sPlus sMinus) =
+      (1 / 2 : ℝ) *
+        (factorTwoIntrinsicElevenSelectorCrossDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0)
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma r 0 1 0) qPlus sPlus +
+          factorTwoIntrinsicElevenSelectorCrossDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0)
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma r 0 (-1) 0) qMinus sMinus) -
+        factorTwoIntrinsicElevenSelectorCrossDual
+          factorTwoIntrinsicElevenRetainedEvenWeight
+          (retainedEvenSymmetricRepresenterAt gamma p)
+          (retainedEvenSymmetricRepresenterAt gamma r)
+          (retainedP024SymmetricSelector qPlus qMinus)
+          (retainedP024SymmetricSelector sPlus sMinus) := by
+  let W := factorTwoIntrinsicElevenRetainedEvenWeight
+  let FP := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma p 0 1 0
+  let FM := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma p 0 (-1) 0
+  let GP := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma r 0 1 0
+  let GM := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma r 0 (-1) 0
+  let FS := retainedEvenSymmetricRepresenterAt gamma p
+  let GS := retainedEvenSymmetricRepresenterAt gamma r
+  have hP := intervalIntegrable_selectorCross_of_memLp
+    W FP GP qPlus sPlus
+    (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qPlus 1 0)
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma r 0 sPlus 1 0)
+  have hM := intervalIntegrable_selectorCross_of_memLp
+    W FM GM qMinus sMinus
+    (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qMinus (-1) 0)
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma r 0 sMinus (-1) 0)
+  have hS := intervalIntegrable_selectorCross_of_memLp W FS GS
+    (retainedP024SymmetricSelector qPlus qMinus)
+    (retainedP024SymmetricSelector sPlus sMinus)
+    (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+    (retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+      gamma p qPlus qMinus)
+    (retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+      gamma r sPlus sMinus)
+  unfold factorTwoIntrinsicElevenSelectorCrossDual
+  rw [show (fun x : ℝ ↦
+      factorTwoIntrinsicElevenSelectorResidual
+          (retainedEvenBaseRepresenterAt gamma p)
+          (retainedP024BaseSelector qPlus qMinus) x *
+        factorTwoIntrinsicElevenSelectorResidual
+          (retainedEvenBaseRepresenterAt gamma r)
+          (retainedP024BaseSelector sPlus sMinus) x /
+        factorTwoIntrinsicElevenRetainedEvenWeight x) =
+      fun x ↦ (1 / 2 : ℝ) *
+          (factorTwoIntrinsicElevenSelectorResidual FP qPlus x *
+                factorTwoIntrinsicElevenSelectorResidual GP sPlus x / W x +
+            factorTwoIntrinsicElevenSelectorResidual FM qMinus x *
+                factorTwoIntrinsicElevenSelectorResidual GM sMinus x / W x) -
+        factorTwoIntrinsicElevenSelectorResidual FS
+              (retainedP024SymmetricSelector qPlus qMinus) x *
+            factorTwoIntrinsicElevenSelectorResidual GS
+              (retainedP024SymmetricSelector sPlus sMinus) x / W x by
+    funext x
+    rw [retainedP024BaseSelectorResidual_eq_endpoint_half_add
+        gamma p qPlus qMinus x,
+      retainedP024BaseSelectorResidual_eq_endpoint_half_add
+        gamma r sPlus sMinus x,
+      retainedP024SymmetricSelectorResidual_eq_endpoint_half_sub
+        gamma p qPlus qMinus x,
+      retainedP024SymmetricSelectorResidual_eq_endpoint_half_sub
+        gamma r sPlus sMinus x]
+    dsimp only [W, FP, FM, GP, GM, FS, GS]
+    ring]
+  rw [intervalIntegral.integral_sub ((hP.add hM).const_mul _) hS,
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_add hP hM]
+
+/-- The symmetric part of the oriented base--symmetric cross is the
+half-difference of the two endpoint Grams. -/
+private theorem retainedEvenBaseSymmetricCross_add_swap_eq_endpoint_half_sub
+    (gamma : ℝ) (p r qPlus qMinus sPlus sMinus : ℝ[X]) :
+    factorTwoIntrinsicElevenSelectorCrossDual
+        factorTwoIntrinsicElevenRetainedEvenWeight
+        (retainedEvenBaseRepresenterAt gamma p)
+        (retainedEvenSymmetricRepresenterAt gamma r)
+        (retainedP024BaseSelector qPlus qMinus)
+        (retainedP024SymmetricSelector sPlus sMinus) +
+      factorTwoIntrinsicElevenSelectorCrossDual
+        factorTwoIntrinsicElevenRetainedEvenWeight
+        (retainedEvenSymmetricRepresenterAt gamma p)
+        (retainedEvenBaseRepresenterAt gamma r)
+        (retainedP024SymmetricSelector qPlus qMinus)
+        (retainedP024BaseSelector sPlus sMinus) =
+      (1 / 2 : ℝ) *
+        (factorTwoIntrinsicElevenSelectorCrossDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 1 0)
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma r 0 1 0) qPlus sPlus -
+          factorTwoIntrinsicElevenSelectorCrossDual
+            factorTwoIntrinsicElevenRetainedEvenWeight
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma p 0 (-1) 0)
+            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+              gamma r 0 (-1) 0) qMinus sMinus) := by
+  let W := factorTwoIntrinsicElevenRetainedEvenWeight
+  let FP := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma p 0 1 0
+  let FM := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma p 0 (-1) 0
+  let GP := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma r 0 1 0
+  let GM := factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+    gamma r 0 (-1) 0
+  let FB := retainedEvenBaseRepresenterAt gamma p
+  let GB := retainedEvenBaseRepresenterAt gamma r
+  let FS := retainedEvenSymmetricRepresenterAt gamma p
+  let GS := retainedEvenSymmetricRepresenterAt gamma r
+  have hP := intervalIntegrable_selectorCross_of_memLp
+    W FP GP qPlus sPlus
+    (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qPlus 1 0)
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma r 0 sPlus 1 0)
+  have hM := intervalIntegrable_selectorCross_of_memLp
+    W FM GM qMinus sMinus
+    (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qMinus (-1) 0)
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma r 0 sMinus (-1) 0)
+  have hBS := intervalIntegrable_selectorCross_of_memLp W FB GS
+    (retainedP024BaseSelector qPlus qMinus)
+    (retainedP024SymmetricSelector sPlus sMinus)
+    (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+    (retainedEvenBaseSelectorResidual_div_sqrt_memLp_two
+      gamma p qPlus qMinus)
+    (retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+      gamma r sPlus sMinus)
+  have hSB := intervalIntegrable_selectorCross_of_memLp W FS GB
+    (retainedP024SymmetricSelector qPlus qMinus)
+    (retainedP024BaseSelector sPlus sMinus)
+    (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+    (retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+      gamma p qPlus qMinus)
+    (retainedEvenBaseSelectorResidual_div_sqrt_memLp_two
+      gamma r sPlus sMinus)
+  unfold factorTwoIntrinsicElevenSelectorCrossDual
+  rw [← intervalIntegral.integral_add hBS hSB,
+    ← intervalIntegral.integral_sub hP hM,
+    ← intervalIntegral.integral_const_mul]
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  dsimp only [W, FP, FM, GP, GM, FB, GB, FS, GS]
+  rw [retainedP024BaseSelectorResidual_eq_endpoint_half_add
+      gamma p qPlus qMinus x,
+    retainedP024BaseSelectorResidual_eq_endpoint_half_add
+      gamma r sPlus sMinus x,
+    retainedP024SymmetricSelectorResidual_eq_endpoint_half_sub
+      gamma p qPlus qMinus x,
+    retainedP024SymmetricSelectorResidual_eq_endpoint_half_sub
+      gamma r sPlus sMinus x]
+  ring
+
 /-- Endpoint-average selector attached to one of the three retained even
 rows. -/
 def retainedP024SelectorBasePolynomial (i : Fin 3) : ℝ[X] :=
@@ -698,6 +919,17 @@ def retainedP024SelectorBasePolynomial (i : Fin 3) : ℝ[X] :=
       retainedP024SelectorPlus4] i)
     (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
       retainedP024SelectorMinus4] i)
+
+/-- Exact Gram of the three endpoint-average residual rows. -/
+def retainedP024SelectorBaseGram : Matrix (Fin 3) (Fin 3) ℝ := fun i j ↦
+  factorTwoIntrinsicElevenSelectorCrossDual
+    factorTwoIntrinsicElevenRetainedEvenWeight
+    (retainedEvenBaseRepresenterAt
+      (1 / 512 : ℝ) (shiftedLegendreReal (2 * i.1)))
+    (retainedEvenBaseRepresenterAt
+      (1 / 512 : ℝ) (shiftedLegendreReal (2 * j.1)))
+    (retainedP024SelectorBasePolynomial i)
+    (retainedP024SelectorBasePolynomial j)
 
 /-- The endpoint-average normalized residual belongs to the retained weighted
 `L²` space. -/
@@ -709,30 +941,12 @@ theorem retainedP024BaseSelectorResidual_div_sqrt_memLp_two (i : Fin 3) :
           (retainedP024SelectorBasePolynomial i) x /
         Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
       (volume.restrict (Ioc (-1 : ℝ) 1)) := by
-  let qPlus : ℝ[X] :=
-    ![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
-      retainedP024SelectorPlus4] i
-  let qMinus : ℝ[X] :=
-    ![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
-      retainedP024SelectorMinus4] i
-  let p : ℝ[X] := shiftedLegendreReal (2 * i.1)
-  have hPlus :=
-    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
-      (1 / 512 : ℝ) p 0 qPlus 1 0
-  have hMinus :=
-    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
-      (1 / 512 : ℝ) p 0 qMinus (-1) 0
-  have hAverage := (hPlus.add hMinus).const_mul (1 / 2 : ℝ)
-  apply (memLp_congr_ae (μ := volume.restrict (Ioc (-1 : ℝ) 1)) ?_).mpr
-    hAverage
-  filter_upwards [] with x
-  rw [show retainedP024SelectorBasePolynomial i =
-      retainedP024BaseSelector qPlus qMinus by
-        rfl,
-    retainedP024BaseSelectorResidual_eq_endpoint_half_add
-      (1 / 512 : ℝ) p qPlus qMinus x]
-  dsimp only [Pi.add_apply]
-  ring
+  exact retainedEvenBaseSelectorResidual_div_sqrt_memLp_two
+    (1 / 512 : ℝ) (shiftedLegendreReal (2 * i.1))
+    (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+      retainedP024SelectorPlus4] i)
+    (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+      retainedP024SelectorMinus4] i)
 
 /-- The base and symmetric residual rows as one six-row family. -/
 def retainedP024SelectorWholeEvenRepresenter :
@@ -816,6 +1030,184 @@ def retainedP024SelectorBaseSymmetricCrossGram :
       (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
         retainedP024SelectorMinus4] j))
 
+/-- The combined retained-even residual Gram has its literal base, oriented
+cross, and symmetric blocks. -/
+theorem retainedP024SelectorWholeEvenGram_eq_fromBlocks :
+    retainedP024SelectorWholeEvenGram =
+      Matrix.fromBlocks
+        retainedP024SelectorBaseGram
+        retainedP024SelectorBaseSymmetricCrossGram
+        retainedP024SelectorBaseSymmetricCrossGramᴴ
+        retainedP024SelectorSymmetricGram := by
+  ext i j
+  rcases i with i | i <;> rcases j with j | j
+  · rfl
+  · rfl
+  · simp only [retainedP024SelectorWholeEvenGram,
+      factorTwoIntrinsicElevenSelectorGram,
+      retainedP024SelectorWholeEvenRepresenter,
+      retainedP024SelectorWholeEvenPolynomial,
+      Matrix.fromBlocks_apply₂₁, Matrix.conjTranspose_apply,
+      retainedP024SelectorBaseSymmetricCrossGram, star_trivial]
+    exact factorTwoIntrinsicElevenSelectorCrossDual_comm _ _ _ _ _
+  · fin_cases i <;> fin_cases j <;>
+      simp [retainedP024SelectorWholeEvenGram,
+        factorTwoIntrinsicElevenSelectorGram,
+        retainedP024SelectorWholeEvenRepresenter,
+        retainedP024SelectorWholeEvenPolynomial,
+        retainedP024SelectorSymmetricGram,
+        retainedP024SymmetricSelectorGram,
+        retainedP024ThreeSelectorGramMatrix, symmetricMatrix3,
+        factorTwoIntrinsicElevenSelectorCrossDual_comm]
+
+/-- Endpoint averaging is exactly the sum of the base and symmetric Grams. -/
+theorem retainedP024SelectorEndpointAverageGram_eq :
+    (1 / 2 : ℝ) •
+        (retainedP024SelectorPlusGram + retainedP024SelectorMinusGram) =
+      retainedP024SelectorBaseGram + retainedP024SelectorSymmetricGram := by
+  ext i j
+  have h := retainedEvenBaseCross_eq_endpoint_average_sub_symmetric
+    (1 / 512 : ℝ)
+    (shiftedLegendreReal (2 * i.1))
+    (shiftedLegendreReal (2 * j.1))
+    (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+      retainedP024SelectorPlus4] i)
+    (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+      retainedP024SelectorMinus4] i)
+    (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+      retainedP024SelectorPlus4] j)
+    (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+      retainedP024SelectorMinus4] j)
+  fin_cases i <;> fin_cases j <;>
+    simp [retainedP024SelectorPlusGram, retainedP024SelectorMinusGram,
+      retainedP024EvenEndpointSelectorGram,
+      retainedP024SelectorBaseGram, retainedP024SelectorBasePolynomial,
+      retainedP024SelectorSymmetricGram,
+      retainedP024SymmetricSelectorGram,
+      retainedP024ThreeSelectorGramMatrix, symmetricMatrix3,
+      factorTwoIntrinsicElevenSelectorCrossDual_comm] at h ⊢ <;>
+    linarith
+
+/-- The half-difference of the endpoint Grams is the Hermitian part of the
+oriented base--symmetric cross Gram. -/
+theorem retainedP024SelectorEndpointHalfDifferenceGram_eq :
+    (1 / 2 : ℝ) •
+        (retainedP024SelectorPlusGram - retainedP024SelectorMinusGram) =
+      retainedP024SelectorBaseSymmetricCrossGram +
+        retainedP024SelectorBaseSymmetricCrossGramᴴ := by
+  ext i j
+  have h := retainedEvenBaseSymmetricCross_add_swap_eq_endpoint_half_sub
+    (1 / 512 : ℝ)
+    (shiftedLegendreReal (2 * i.1))
+    (shiftedLegendreReal (2 * j.1))
+    (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+      retainedP024SelectorPlus4] i)
+    (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+      retainedP024SelectorMinus4] i)
+    (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+      retainedP024SelectorPlus4] j)
+    (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+      retainedP024SelectorMinus4] j)
+  fin_cases i <;> fin_cases j <;>
+    simp [retainedP024SelectorPlusGram, retainedP024SelectorMinusGram,
+      retainedP024EvenEndpointSelectorGram,
+      retainedP024SelectorBaseSymmetricCrossGram,
+      retainedP024SelectorBasePolynomial,
+      retainedP024ThreeSelectorGramMatrix, symmetricMatrix3,
+      factorTwoIntrinsicElevenSelectorCrossDual_comm] at h ⊢ <;>
+    linarith
+
+/-- Constant coefficient of the gap after endpoint polarization. -/
+theorem retainedP024SelectorBoundaryGapConstant_eq_polarized :
+    retainedP024SelectorBoundaryGapConstant =
+      retainedP024SharpLowMatrix 0 - retainedP024SelectorBaseGram -
+        retainedP024SelectorAlternatingGram := by
+  have hHalf :
+      (1 / 2 : ℝ) • retainedP024SelectorPlusGram +
+          (1 / 2 : ℝ) • retainedP024SelectorMinusGram =
+        retainedP024SelectorBaseGram + retainedP024SelectorSymmetricGram := by
+    simpa only [smul_add] using retainedP024SelectorEndpointAverageGram_eq
+  unfold retainedP024SelectorBoundaryGapConstant
+    retainedP024SelectorBoundaryGapMatrix retainedP024BoundarySelectorGram
+  simp only [retainedP024ChordPlus, retainedP024ChordMinus]
+  norm_num only [zero_pow, sub_zero, one_smul]
+  rw [hHalf]
+  module
+
+/-- Linear coefficient of the gap after endpoint polarization. -/
+theorem retainedP024SelectorBoundaryGapLinear_eq_polarized :
+    retainedP024SelectorBoundaryGapLinear =
+      (1 / 2 : ℝ) •
+          (retainedP024SharpLowMatrix 1 - retainedP024SharpLowMatrix (-1)) -
+        (retainedP024SelectorBaseSymmetricCrossGram +
+          retainedP024SelectorBaseSymmetricCrossGramᴴ) := by
+  have hBoundary :
+      (1 / 2 : ℝ) •
+          (retainedP024BoundarySelectorGram 1 -
+            retainedP024BoundarySelectorGram (-1)) =
+        retainedP024SelectorBaseSymmetricCrossGram +
+          retainedP024SelectorBaseSymmetricCrossGramᴴ := by
+    simpa [retainedP024BoundarySelectorGram, retainedP024ChordPlus,
+      retainedP024ChordMinus] using
+        retainedP024SelectorEndpointHalfDifferenceGram_eq
+  unfold retainedP024SelectorBoundaryGapLinear
+    retainedP024SelectorBoundaryGapMatrix
+  calc
+    (1 / 2 : ℝ) •
+        ((retainedP024SharpLowMatrix 1 -
+            retainedP024BoundarySelectorGram 1) -
+          (retainedP024SharpLowMatrix (-1) -
+            retainedP024BoundarySelectorGram (-1))) =
+      (1 / 2 : ℝ) •
+          (retainedP024SharpLowMatrix 1 -
+            retainedP024SharpLowMatrix (-1)) -
+        (1 / 2 : ℝ) •
+          (retainedP024BoundarySelectorGram 1 -
+            retainedP024BoundarySelectorGram (-1)) := by
+      module
+    _ = _ := by rw [hBoundary]
+
+/-- Quadratic coefficient of the gap after endpoint polarization. -/
+theorem retainedP024SelectorBoundaryGapQuadratic_eq_polarized :
+    retainedP024SelectorBoundaryGapQuadratic =
+      (1 / 2 : ℝ) •
+          (retainedP024SharpLowMatrix 1 + retainedP024SharpLowMatrix (-1)) -
+        retainedP024SharpLowMatrix 0 -
+        retainedP024SelectorSymmetricGram +
+        retainedP024SelectorAlternatingGram := by
+  have hBoundary :
+      (1 / 2 : ℝ) •
+          (retainedP024BoundarySelectorGram 1 +
+            retainedP024BoundarySelectorGram (-1)) -
+        retainedP024BoundarySelectorGram 0 =
+      retainedP024SelectorSymmetricGram -
+        retainedP024SelectorAlternatingGram := by
+    unfold retainedP024BoundarySelectorGram
+    simp only [retainedP024ChordPlus, retainedP024ChordMinus]
+    norm_num only [one_pow, neg_sq, zero_pow, sub_self, zero_smul,
+      add_zero, zero_add, one_smul]
+    module
+  unfold retainedP024SelectorBoundaryGapQuadratic
+    retainedP024SelectorBoundaryGapMatrix
+  calc
+    (1 / 2 : ℝ) •
+          ((retainedP024SharpLowMatrix 1 -
+              retainedP024BoundarySelectorGram 1) +
+            (retainedP024SharpLowMatrix (-1) -
+              retainedP024BoundarySelectorGram (-1))) -
+        (retainedP024SharpLowMatrix 0 -
+          retainedP024BoundarySelectorGram 0) =
+      ((1 / 2 : ℝ) •
+          (retainedP024SharpLowMatrix 1 +
+            retainedP024SharpLowMatrix (-1)) -
+        retainedP024SharpLowMatrix 0) -
+      ((1 / 2 : ℝ) •
+          (retainedP024BoundarySelectorGram 1 +
+            retainedP024BoundarySelectorGram (-1)) -
+        retainedP024BoundarySelectorGram 0) := by
+      module
+    _ = _ := by rw [hBoundary]; module
+
 /-- The same boundary pencil with the skew part of the oriented selector
 cross Gram retained in the off-diagonal blocks. -/
 def retainedP024SelectorAsymmetricSOSGram :
@@ -830,6 +1222,57 @@ def retainedP024SelectorAsymmetricSOSGram :
       (1 / 2 : ℝ) • (G - Gᴴ))
     (retainedP024SelectorBoundaryGapQuadratic +
       retainedP024SelectorSOSReserve)
+
+/-- The phase-affine lift of the sharp low budget, with the fixed reserve
+shifted from the constant block to the quadratic block. -/
+def retainedP024SharpLowSOSGram :
+    Matrix (Fin 3 ⊕ Fin 3) (Fin 3 ⊕ Fin 3) ℝ :=
+  Matrix.fromBlocks
+    (retainedP024SharpLowMatrix 0 -
+      retainedP024SelectorSOSReserve)
+    ((1 / 4 : ℝ) •
+      (retainedP024SharpLowMatrix 1 -
+        retainedP024SharpLowMatrix (-1)))
+    ((1 / 4 : ℝ) •
+      (retainedP024SharpLowMatrix 1 -
+        retainedP024SharpLowMatrix (-1)))
+    ((1 / 2 : ℝ) •
+        (retainedP024SharpLowMatrix 1 +
+          retainedP024SharpLowMatrix (-1)) -
+      retainedP024SharpLowMatrix 0 +
+      retainedP024SelectorSOSReserve)
+
+/-- The alternating selector contributes with opposite signs to the constant
+and quadratic affine-lift blocks. -/
+def retainedP024SelectorAlternatingSignedLiftGram :
+    Matrix (Fin 3 ⊕ Fin 3) (Fin 3 ⊕ Fin 3) ℝ :=
+  Matrix.fromBlocks
+    (-retainedP024SelectorAlternatingGram) 0 0
+    retainedP024SelectorAlternatingGram
+
+/-- Exact structural decomposition of the asymmetric selector SOS Gram.  The
+only non-low whole-square term is the Gram of the complete even retained
+residual; the alternating selector is isolated as a signed affine lift. -/
+theorem retainedP024SelectorAsymmetricSOSGram_eq_structural :
+    retainedP024SelectorAsymmetricSOSGram =
+      retainedP024SharpLowSOSGram -
+        retainedP024SelectorWholeEvenGram +
+        retainedP024SelectorAlternatingSignedLiftGram := by
+  rw [retainedP024SelectorWholeEvenGram_eq_fromBlocks]
+  unfold retainedP024SelectorAsymmetricSOSGram retainedP024SharpLowSOSGram
+    retainedP024SelectorAlternatingSignedLiftGram
+  rw [retainedP024SelectorBoundaryGapConstant_eq_polarized,
+    retainedP024SelectorBoundaryGapLinear_eq_polarized,
+    retainedP024SelectorBoundaryGapQuadratic_eq_polarized]
+  ext i j
+  rcases i with i | i <;> rcases j with j | j
+  all_goals
+    simp only [Matrix.fromBlocks_apply₁₁, Matrix.fromBlocks_apply₁₂,
+      Matrix.fromBlocks_apply₂₁, Matrix.fromBlocks_apply₂₂,
+      Matrix.add_apply, Matrix.sub_apply, Matrix.neg_apply,
+      Matrix.smul_apply, Matrix.zero_apply, Matrix.conjTranspose_apply,
+      star_trivial]
+    module
 
 /-- Exact affine-lift SOS identity for the full P024 boundary-gap pencil. -/
 theorem retainedP024SelectorBoundaryGapMatrix_eq_sos (a : ℝ) :
