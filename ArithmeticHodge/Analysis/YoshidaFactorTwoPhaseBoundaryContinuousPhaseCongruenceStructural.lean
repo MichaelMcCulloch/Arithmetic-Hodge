@@ -285,6 +285,25 @@ theorem factorTwoCenteredCleanPolarization_congr_Icc
     yoshidaEndpointOddCleanQuadratic_congr_Icc hu,
     yoshidaEndpointOddCleanQuadratic_congr_Icc hv]
 
+/-- The complete low--tail polarization depends only on the endpoint-interval
+restrictions of all four profiles. -/
+theorem factorTwoEndpointLowTailMixed_congr_Icc
+    {uLow uLow' uTail uTail' vLow vLow' vTail vTail' : ℝ → ℝ}
+    (huLow : ∀ x ∈ Icc (-1 : ℝ) 1, uLow x = uLow' x)
+    (huTail : ∀ x ∈ Icc (-1 : ℝ) 1, uTail x = uTail' x)
+    (hvLow : ∀ x ∈ Icc (-1 : ℝ) 1, vLow x = vLow' x)
+    (hvTail : ∀ x ∈ Icc (-1 : ℝ) 1, vTail x = vTail' x)
+    (a b : ℝ) :
+    factorTwoEndpointLowTailMixed uLow uTail vLow vTail a b =
+      factorTwoEndpointLowTailMixed uLow' uTail' vLow' vTail' a b := by
+  unfold factorTwoEndpointLowTailMixed
+  rw [factorTwoCenteredCleanPolarization_congr_Icc huLow huTail,
+    factorTwoCenteredCleanPolarization_congr_Icc hvLow hvTail,
+    factorTwoCenteredSymmetricPerturbationBilinear_congr_Icc huLow huTail,
+    factorTwoCenteredSymmetricPerturbationBilinear_congr_Icc hvLow hvTail,
+    factorTwoCenteredAlternatingCoupling_congr_Icc huLow hvTail,
+    factorTwoCenteredAlternatingCoupling_congr_Icc huTail hvLow]
+
 /-- The complete one-channel phase only depends on the restrictions of its two
 profiles to `[-1,1]`.  This is the representative-change theorem used by the
 boundary-continuous low--tail assembly. -/
