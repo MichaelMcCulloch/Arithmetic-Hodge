@@ -31,36 +31,6 @@ step uses its exact cofactor or secant sign; no determinant box is expanded
 over corners.
 -/
 
-/-- A six-coordinate lower telescope for a symmetric `3 x 3` determinant.
-The hypotheses are exactly the cofactor and secant signs at the stage where
-the corresponding coordinate is moved. -/
-private theorem symmetricDeterminant_corner_le_of_six_coordinate_telescope
-    {a b c d e f A B C D E F : ℝ}
-    (hA : a ≤ A) (hB : B ≤ b) (hC : c ≤ C)
-    (hD : d ≤ D) (hE : E ≤ e) (hF : f ≤ F)
-    (hminor00 : 0 ≤ d * f - e ^ 2)
-    (hslope01 : 2 * c * e ≤ f * (B + b))
-    (hslope02 : d * (c + C) ≤ 2 * B * e)
-    (hminor11 : 0 ≤ A * f - C ^ 2)
-    (hslope12 : 2 * B * C ≤ A * (E + e))
-    (hminor22 : 0 ≤ A * D - B ^ 2) :
-    symmetricDeterminant a b c d e f ≤
-      symmetricDeterminant A B C D E F := by
-  calc
-    symmetricDeterminant a b c d e f ≤
-        symmetricDeterminant A b c d e f :=
-      symmetricDeterminant_mono_q00 hA hminor00
-    _ ≤ symmetricDeterminant A B c d e f :=
-      symmetricDeterminant_antitone_q01 hB hslope01
-    _ ≤ symmetricDeterminant A B C d e f :=
-      symmetricDeterminant_mono_q02 hC hslope02
-    _ ≤ symmetricDeterminant A B C D e f :=
-      symmetricDeterminant_mono_q11 hD hminor11
-    _ ≤ symmetricDeterminant A B C D E f :=
-      symmetricDeterminant_antitone_q12 hE hslope12
-    _ ≤ symmetricDeterminant A B C D E F :=
-      symmetricDeterminant_mono_q22 hF hminor22
-
 /-! ## Plus endpoint -/
 
 /-- The plus-endpoint determinant retains a strict rational margin. -/
