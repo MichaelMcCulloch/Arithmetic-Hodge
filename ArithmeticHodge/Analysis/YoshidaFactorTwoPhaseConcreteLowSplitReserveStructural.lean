@@ -235,7 +235,11 @@ private theorem weightedCoordinateSquare_phase_lifts
     weightedCoordinateSquare_smul]
   ring
 
-private theorem factorTwoConcreteLowPhase_eq_toeplitz_lifts_add_clean_remainder
+/-- Exact decomposition of the phase quadratic into its two oriented
+Toeplitz lifts and the nonnegative clean remainder.  This public form is the
+transport interface for reserves that are stronger than coordinatewise
+diagonal weights. -/
+theorem factorTwoConcreteLowPhase_eq_toeplitz_lifts_add_clean_remainder
     (e : YoshidaEvenIndex → ℝ) (o : YoshidaOddIndex → ℝ)
     (a b : ℝ) :
     let x := factorTwoPhaseLowCoefficients e o
