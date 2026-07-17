@@ -3,8 +3,10 @@ import ArithmeticHodge.Analysis.YoshidaEndpointEvenFullPolarization
 import ArithmeticHodge.Analysis.YoshidaEndpointOddOneThreeRawPolarization
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicRetainedSingularGapStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4CleanCrossStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4CorrelationStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFourC2Structural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseStructuralLowData
 
 set_option autoImplicit false
 
@@ -14,6 +16,7 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP
 
 noncomputable section
 
+open CenteredEndpointCorrelation
 open ThreeByThreeRankOneSchur
 open ThreeByThreeConvexPencil
 open ThreeByThreeSymmetricDeterminantMonotone
@@ -25,15 +28,18 @@ open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointEvenTailRepresenter
 open YoshidaEndpointOddCleanPositive
 open YoshidaEndpointPotentialBound
+open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseEnvelope
 open YoshidaFactorTwoPhaseFullProfile
 open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicEvenCleanSharp
+open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicLow
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicRetainedSingularGapStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4CleanCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4CleanDiagonalStructural
+open YoshidaFactorTwoPhaseIntrinsicSixP4CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
 open YoshidaFactorTwoPhaseIntrinsicSixP4Schur
 open YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
@@ -42,6 +48,7 @@ open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseSingularWeightedCauchyStructural
+open YoshidaFactorTwoPhaseStructuralLowData
 
 /-!
 # The retained singular operator on the even `P₀/P₂/P₄` core
@@ -233,6 +240,259 @@ theorem half_singularWeightedEnergy_intrinsicEvenP024_zero
   unfold symmetricQuadratic
   norm_num at hs ⊢
   ring_nf at hs ⊢
+  nlinarith
+
+/-- Exact overlap correlation of the retained even core. -/
+private theorem centeredEndpointCorrelation_intrinsicEvenP024
+    (c0 c2 c4 t : ℝ) :
+    centeredEndpointCorrelation
+        (factorTwoIntrinsicEvenP024Profile c0 c2 c4) t =
+      c0 ^ 2 * (2 - t) +
+        2 * c0 * c2 *
+          (-t * (t - 2) * (t - 1) / 2) +
+        c2 ^ 2 *
+          (-(t - 2) *
+            (3 * t ^ 4 + 6 * t ^ 3 - 8 * t ^ 2 - 16 * t + 8) / 40) +
+        2 * c0 * c4 * factorTwoIntrinsicP4Correlation04 t +
+        2 * c2 * c4 * factorTwoIntrinsicP4Correlation24 t +
+        c4 ^ 2 * factorTwoIntrinsicP4Correlation44 t := by
+  let p : ℝ → ℝ := factorTwoEvenStructuralLowProfile c0 c2
+  let r : ℝ → ℝ := c4 • factorTwoCenteredP4
+  have hp : Continuous p := by
+    simpa only [p] using continuous_factorTwoEvenStructuralLowProfile c0 c2
+  have hr : Continuous r := by
+    exact continuous_factorTwoCenteredP4.const_smul c4
+  have hp0 : Continuous centeredEvenP0 := by
+    unfold centeredEvenP0
+    fun_prop
+  have hp2 : Continuous centeredEvenP2 := by
+    unfold centeredEvenP2
+    fun_prop
+  have hw : factorTwoIntrinsicEvenP024Profile c0 c2 c4 = p + r := by
+    funext x
+    unfold factorTwoIntrinsicEvenP024Profile factorTwoIntrinsicSixEvenTail
+      p r
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  rw [hw, centeredEndpointCorrelation_add p r hp hr]
+  have hcross : factorTwoCenteredCorrelationBilinear p r t =
+      c0 * c4 * factorTwoIntrinsicP4Correlation04 t +
+        c2 * c4 * factorTwoIntrinsicP4Correlation24 t := by
+    have hadd : factorTwoCenteredCorrelationBilinear
+        (c0 • centeredEvenP0 + c2 • centeredEvenP2)
+        (c4 • factorTwoCenteredP4) t =
+      factorTwoCenteredCorrelationBilinear
+          (c0 • centeredEvenP0) (c4 • factorTwoCenteredP4) t +
+        factorTwoCenteredCorrelationBilinear
+          (c2 • centeredEvenP2) (c4 • factorTwoCenteredP4) t := by
+      unfold factorTwoCenteredCorrelationBilinear
+      rw [factorTwoCenteredCrossCorrelation_add_left
+          (c0 • centeredEvenP0) (c2 • centeredEvenP2)
+          (c4 • factorTwoCenteredP4)
+          (hp0.const_smul c0) (hp2.const_smul c2) hr t,
+        factorTwoCenteredCrossCorrelation_add_right
+          (c4 • factorTwoCenteredP4) (c0 • centeredEvenP0)
+          (c2 • centeredEvenP2) hr
+          (hp0.const_smul c0) (hp2.const_smul c2) t]
+      ring
+    rw [show p = c0 • centeredEvenP0 + c2 • centeredEvenP2 by
+        simpa only [p] using factorTwoEvenStructuralLowProfile_eq_smul_add c0 c2,
+      show r = c4 • factorTwoCenteredP4 by rfl, hadd,
+      factorTwoCenteredCorrelationBilinear_smul_smul,
+      factorTwoCenteredCorrelationBilinear_smul_smul,
+      factorTwoCenteredCorrelationBilinear_p0_p4,
+      factorTwoCenteredCorrelationBilinear_p2_p4]
+  have hpCorr := centeredEndpointCorrelation_evenStructuralProfile c0 c2 t
+  have hrCorr : centeredEndpointCorrelation r t =
+      c4 ^ 2 * factorTwoIntrinsicP4Correlation44 t := by
+    rw [← factorTwoCenteredCorrelationBilinear_self,
+      show r = c4 • factorTwoCenteredP4 by rfl,
+      factorTwoCenteredCorrelationBilinear_smul_smul,
+      factorTwoCenteredCorrelationBilinear_self,
+      centeredEndpointCorrelation_p4]
+    ring
+  rw [show centeredEndpointCorrelation p t =
+      c0 ^ 2 * (2 - t) +
+        2 * c0 * c2 * (-t * (t - 2) * (t - 1) / 2) +
+        c2 ^ 2 * (-(t - 2) *
+          (3 * t ^ 4 + 6 * t ^ 3 - 8 * t ^ 2 - 16 * t + 8) / 40) by
+      simpa only [p, evenStructuralCorrelation00,
+        evenStructuralCorrelation02, evenStructuralCorrelation22] using hpCorr,
+    hcross, hrCorr]
+  ring
+
+private theorem integral_polynomial_eight
+    (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ l r : ℝ) :
+    (∫ x : ℝ in l..r,
+      a₀ * x ^ 0 + (a₁ * x ^ 1 + (a₂ * x ^ 2 +
+        (a₃ * x ^ 3 + (a₄ * x ^ 4 + (a₅ * x ^ 5 +
+          (a₆ * x ^ 6 + (a₇ * x ^ 7 + a₈ * x ^ 8)))))))) =
+      a₀ * (r - l) + a₁ * (r ^ 2 - l ^ 2) / 2 +
+        a₂ * (r ^ 3 - l ^ 3) / 3 + a₃ * (r ^ 4 - l ^ 4) / 4 +
+        a₄ * (r ^ 5 - l ^ 5) / 5 + a₅ * (r ^ 6 - l ^ 6) / 6 +
+        a₆ * (r ^ 7 - l ^ 7) / 7 + a₇ * (r ^ 8 - l ^ 8) / 8 +
+        a₈ * (r ^ 9 - l ^ 9) / 9 := by
+  repeat' rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) l r)
+    (Continuous.intervalIntegrable (by fun_prop) l r)]
+  repeat' rw [intervalIntegral.integral_const_mul, integral_pow]
+  norm_num
+  ring
+
+/-- The reflected-pole Gram matrix on `P₀/P₂/P₄` is exact and rational. -/
+private theorem integral_centeredEndpointCorrelation_intrinsicEvenP024_div_two_sub
+    (c0 c2 c4 : ℝ) :
+    (∫ t : ℝ in 0..2,
+        centeredEndpointCorrelation
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4) t / (2 - t)) =
+      symmetricQuadratic
+        2 (1 / 3) (1 / 10) (11 / 75) (8 / 105) (269 / 5670)
+        c0 c2 c4 := by
+  have heq : ∀ᵐ t : ℝ ∂volume,
+      centeredEndpointCorrelation
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4) t / (2 - t) =
+        c0 ^ 2 +
+          2 * c0 * c2 * (t * (t - 1) / 2) +
+          c2 ^ 2 *
+            ((3 * t ^ 4 + 6 * t ^ 3 - 8 * t ^ 2 - 16 * t + 8) / 40) +
+          2 * c0 * c4 *
+            (t * (t - 1) * (7 * t ^ 2 - 14 * t + 4) / 8) +
+          2 * c2 * c4 *
+            (t * (t ^ 5 + 2 * t ^ 4 - 6 * t ^ 3 - 12 * t ^ 2 +
+              24 * t - 8) / 16) +
+          c4 ^ 2 *
+            ((35 * t ^ 8 + 70 * t ^ 7 - 220 * t ^ 6 - 440 * t ^ 5 +
+              416 * t ^ 4 + 832 * t ^ 3 - 256 * t ^ 2 - 512 * t + 128) /
+              1152) := by
+    filter_upwards [MeasureTheory.Measure.ae_ne volume (2 : ℝ)] with t ht
+    rw [centeredEndpointCorrelation_intrinsicEvenP024]
+    have hden : 2 - t ≠ 0 := sub_ne_zero.mpr (Ne.symm ht)
+    unfold factorTwoIntrinsicP4Correlation04
+      factorTwoIntrinsicP4Correlation24 factorTwoIntrinsicP4Correlation44
+    field_simp [hden]
+    ring
+  have heqI : ∀ᵐ t : ℝ ∂volume, t ∈ uIoc (0 : ℝ) 2 →
+      centeredEndpointCorrelation
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4) t / (2 - t) =
+        c0 ^ 2 +
+          2 * c0 * c2 * (t * (t - 1) / 2) +
+          c2 ^ 2 *
+            ((3 * t ^ 4 + 6 * t ^ 3 - 8 * t ^ 2 - 16 * t + 8) / 40) +
+          2 * c0 * c4 *
+            (t * (t - 1) * (7 * t ^ 2 - 14 * t + 4) / 8) +
+          2 * c2 * c4 *
+            (t * (t ^ 5 + 2 * t ^ 4 - 6 * t ^ 3 - 12 * t ^ 2 +
+              24 * t - 8) / 16) +
+          c4 ^ 2 *
+            ((35 * t ^ 8 + 70 * t ^ 7 - 220 * t ^ 6 - 440 * t ^ 5 +
+              416 * t ^ 4 + 832 * t ^ 3 - 256 * t ^ 2 - 512 * t + 128) /
+              1152) := heq.mono fun _ ht _ ↦ ht
+  rw [intervalIntegral.integral_congr_ae heqI]
+  rw [show (fun t : ℝ ↦
+        c0 ^ 2 +
+          2 * c0 * c2 * (t * (t - 1) / 2) +
+          c2 ^ 2 *
+            ((3 * t ^ 4 + 6 * t ^ 3 - 8 * t ^ 2 - 16 * t + 8) / 40) +
+          2 * c0 * c4 *
+            (t * (t - 1) * (7 * t ^ 2 - 14 * t + 4) / 8) +
+          2 * c2 * c4 *
+            (t * (t ^ 5 + 2 * t ^ 4 - 6 * t ^ 3 - 12 * t ^ 2 +
+              24 * t - 8) / 16) +
+          c4 ^ 2 *
+            ((35 * t ^ 8 + 70 * t ^ 7 - 220 * t ^ 6 - 440 * t ^ 5 +
+              416 * t ^ 4 + 832 * t ^ 3 - 256 * t ^ 2 - 512 * t + 128) /
+              1152)) =
+      fun t ↦
+        (c0 ^ 2 + c2 ^ 2 / 5 + c4 ^ 2 / 9) * t ^ 0 +
+        ((-c0 * c2 - c0 * c4 - c2 * c4 - 2 * c2 ^ 2 / 5 -
+            4 * c4 ^ 2 / 9) * t ^ 1 +
+        ((c0 * c2 + 9 * c0 * c4 / 2 + 3 * c2 * c4 - c2 ^ 2 / 5 -
+            2 * c4 ^ 2 / 9) * t ^ 2 +
+        ((-21 * c0 * c4 / 4 - 3 * c2 * c4 / 2 + 3 * c2 ^ 2 / 20 +
+            13 * c4 ^ 2 / 18) * t ^ 3 +
+        ((7 * c0 * c4 / 4 - 3 * c2 * c4 / 4 + 3 * c2 ^ 2 / 40 +
+            13 * c4 ^ 2 / 36) * t ^ 4 +
+        ((c2 * c4 / 4 - 55 * c4 ^ 2 / 144) * t ^ 5 +
+        ((c2 * c4 / 8 - 55 * c4 ^ 2 / 288) * t ^ 6 +
+        ((35 * c4 ^ 2 / 576) * t ^ 7 +
+          (35 * c4 ^ 2 / 1152) * t ^ 8))))))) by
+    funext t
+    ring,
+    integral_polynomial_eight]
+  unfold symmetricQuadratic
+  norm_num
+  ring
+
+/-- Exact phase-dependent half-singular Gram matrix on the retained even
+core.  The alternating phase coordinate disappears because the odd profile
+is zero. -/
+theorem half_singularWeightedEnergy_intrinsicEvenP024
+    (c0 c2 c4 a b : ℝ) :
+    (1 / 2 : ℝ) * factorTwoPhaseSingularWeightedEnergy
+        (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+        (0 : ℝ → ℝ) a b =
+      symmetricQuadratic
+        (2 - a) ((2 - a) / 6) ((2 - a) / 20)
+        ((172 - 11 * a) / 150) ((15 - 4 * a) / 105)
+        ((8728 - 269 * a) / 11340) c0 c2 c4 := by
+  let w := factorTwoIntrinsicEvenP024Profile c0 c2 c4
+  have hwc : Continuous w := by
+    dsimp only [w]
+    unfold factorTwoIntrinsicEvenP024Profile
+      factorTwoEvenStructuralLowProfile factorTwoIntrinsicSixEvenTail
+      centeredEvenP0 centeredEvenP2 factorTwoCenteredP4
+    fun_prop
+  have hwLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w := by
+    have hd : ContDiff ℝ 1 w := by
+      have hlow : ContDiff ℝ 1
+          (factorTwoEvenStructuralLowProfile c0 c2) := by
+        unfold factorTwoEvenStructuralLowProfile centeredEvenP0 centeredEvenP2
+        fun_prop
+      have htail : ContDiff ℝ 1 (factorTwoIntrinsicSixEvenTail c4) := by
+        unfold factorTwoIntrinsicSixEvenTail factorTwoCenteredP4
+        fun_prop
+      simpa only [w, factorTwoIntrinsicEvenP024Profile] using hlow.add htail
+    exact hd.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have h0local : LocallyLipschitzOn (Icc (-1 : ℝ) 1)
+      (0 : ℝ → ℝ) := by
+    have hd : ContDiff ℝ 1 (fun _ : ℝ ↦ (0 : ℝ)) := contDiff_const
+    change LocallyLipschitzOn (Icc (-1 : ℝ) 1) (fun _ : ℝ ↦ (0 : ℝ))
+    exact hd.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hs := half_singularWeightedEnergy_eq_protected_add_logMass
+    w (0 : ℝ → ℝ) hwc continuous_zero hwLocal h0local a b
+  have hs0 := half_singularWeightedEnergy_eq_protected_add_logMass
+    w (0 : ℝ → ℝ) hwc continuous_zero hwLocal h0local 0 0
+  have hphase : factorTwoCenteredPhaseCorrelation
+      w (0 : ℝ → ℝ) a (-b) =
+        fun t ↦ a * centeredEndpointCorrelation w t := by
+    funext t
+    unfold factorTwoCenteredPhaseCorrelation
+      factorTwoCenteredCrossCorrelation centeredEndpointCorrelation
+    simp
+  unfold factorTwoIntrinsicProtectedBlock at hs hs0
+  rw [hphase] at hs
+  simp [factorTwoCenteredPhaseCorrelation,
+    factorTwoCenteredCrossCorrelation] at hs0
+  rw [show (fun t : ℝ ↦
+      a * centeredEndpointCorrelation w t / (2 - t)) =
+      fun t ↦ a * (centeredEndpointCorrelation w t / (2 - t)) by
+        funext t
+        ring,
+    intervalIntegral.integral_const_mul,
+    show (∫ t : ℝ in 0..2, centeredEndpointCorrelation w t / (2 - t)) =
+        symmetricQuadratic
+          2 (1 / 3) (1 / 10) (11 / 75) (8 / 105) (269 / 5670)
+          c0 c2 c4 by
+      simpa only [w] using
+        integral_centeredEndpointCorrelation_intrinsicEvenP024_div_two_sub
+          c0 c2 c4] at hs
+  have hzero := half_singularWeightedEnergy_intrinsicEvenP024_zero c0 c2 c4
+  change (1 / 2 : ℝ) * factorTwoPhaseSingularWeightedEnergy
+      w (0 : ℝ → ℝ) a b = _
+  change (1 / 2 : ℝ) * factorTwoPhaseSingularWeightedEnergy
+      w (0 : ℝ → ℝ) 0 0 = _ at hzero
+  unfold symmetricQuadratic at hs hzero ⊢
+  norm_num at hs hs0 hzero ⊢
+  ring_nf at hs hs0 hzero ⊢
   nlinarith
 
 /-! ## Structural coercivity at the first viable retained charge -/
