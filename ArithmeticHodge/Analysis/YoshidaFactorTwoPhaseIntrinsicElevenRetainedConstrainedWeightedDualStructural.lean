@@ -111,6 +111,44 @@ private theorem measurable_retainedOddWeight :
   unfold factorTwoIntrinsicElevenRetainedOddWeight yoshidaEndpointPotential
   fun_prop
 
+/-- A residual with at most linear growth in a positive multiplication
+weight belongs to the corresponding weighted dual `L²` space.  This packages
+the endpoint cancellation `W / sqrt W = sqrt W`; it avoids proving square
+integrability of the logarithmic weight itself. -/
+theorem div_sqrt_memLp_two_of_abs_le_const_mul_weight
+    (W G : ℝ → ℝ) (hW : Measurable W)
+    (hG : AEStronglyMeasurable G
+      (volume.restrict (Ioc (-1 : ℝ) 1)))
+    (C : ℝ)
+    (hWpos : ∀ x ∈ Ioc (-1 : ℝ) 1, 0 < W x)
+    (hbound : ∀ x ∈ Ioc (-1 : ℝ) 1, |G x| ≤ C * W x)
+    (hsqrt : MemLp (fun x : ℝ ↦ Real.sqrt (W x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1))) :
+    MemLp (fun x : ℝ ↦ G x / Real.sqrt (W x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have htargetMeas : AEStronglyMeasurable
+      (fun x : ℝ ↦ G x / Real.sqrt (W x))
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    by
+      simpa only [div_eq_mul_inv] using
+        hG.mul hW.sqrt.inv.aestronglyMeasurable
+  refine MemLp.of_le_mul (c := C) hsqrt htargetMeas ?_
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+  have hWx : 0 < W x := hWpos x hx
+  have hsqrtPos : 0 < Real.sqrt (W x) := Real.sqrt_pos.2 hWx
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_div,
+    abs_of_pos hsqrtPos]
+  calc
+    |G x| / Real.sqrt (W x) ≤
+        (C * W x) / Real.sqrt (W x) :=
+      (div_le_div_iff_of_pos_right hsqrtPos).2 (hbound x hx)
+    _ = C * Real.sqrt (W x) := by
+      apply (div_eq_iff hsqrtPos.ne').2
+      calc
+        C * W x = C * Real.sqrt (W x) ^ 2 :=
+          congrArg (fun t : ℝ ↦ C * t) (Real.sq_sqrt hWx.le).symm
+        _ = C * Real.sqrt (W x) * Real.sqrt (W x) := by ring
+
 /-- Continuity of a residual profile automatically supplies the retained
 even primal `L²` hypothesis. -/
 theorem sqrt_retainedEvenWeight_mul_memLp_two
