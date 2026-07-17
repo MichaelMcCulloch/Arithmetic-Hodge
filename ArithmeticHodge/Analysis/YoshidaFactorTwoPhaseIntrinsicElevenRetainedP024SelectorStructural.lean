@@ -1,13 +1,15 @@
+import ArithmeticHodge.Analysis.MatrixIntervalQuadraticSOS
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedSelectorHomogeneityStructural
 
 set_option autoImplicit false
 
-open MeasureTheory Polynomial Real Set
+open Matrix MeasureTheory Polynomial Real Set
 
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorStructural
 
 open ThreeByThreeRankOneSchur
+open MatrixIntervalQuadraticSOS
 open ShiftedLegendreLogEnergyOrthogonalProjection
 open ShiftedLegendreOrthogonality
 open YoshidaFactorTwoPhaseIntrinsicElevenConcreteSelectorsStructural
@@ -642,6 +644,90 @@ theorem exists_sharpRetunedP024Selector_of_boundary_chord
   rw [centeredPolynomialLift_retainedP024Polynomial, hzero,
     retainedP024SharpLowComplement_eq_symmetricQuadratic]
   exact hfinite
+
+/-! ## A fixed matrix-SOS certificate for the boundary pencil -/
+
+/-- A positive affine-lift Gram representation of the boundary gap supplies
+the sole inequality hypothesis of
+`exists_sharpRetunedP024Selector_of_boundary_chord`.  For the `P₀/P₂/P₄`
+slice this asks for one fixed `6 x 6` positive Gram, one fixed `3 x 3`
+positive reserve, and an exact quadratic identity in `a`. -/
+theorem exists_sharpRetunedP024Selector_of_boundary_matrix_sos
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (qP0 qP2 qP4 qM0 qM2 qM4 qA0 qA2 qA4 : ℝ[X])
+    (hqP0 : qP0.natDegree < 11) (hqP2 : qP2.natDegree < 11)
+    (hqP4 : qP4.natDegree < 11) (hqM0 : qM0.natDegree < 11)
+    (hqM2 : qM2.natDegree < 11) (hqM4 : qM4.natDegree < 11)
+    (hqA0 : qA0.natDegree < 11) (hqA2 : qA2.natDegree < 11)
+    (hqA4 : qA4.natDegree < 11)
+    (K : Matrix (Fin 3) (Fin 3) ℝ)
+    (Q : Matrix (Fin 3 ⊕ Fin 3) (Fin 3 ⊕ Fin 3) ℝ)
+    (R : Matrix (Fin 3) (Fin 3) ℝ)
+    (hQ : Q.PosDef) (hR : R.PosSemidef)
+    (hGap : ∀ c0 c2 c4 : ℝ,
+      symmetricQuadratic
+          (retainedP024SharpLow00 a)
+          (retainedP024SharpLow02 a)
+          (retainedP024SharpLow04 a)
+          (retainedP024SharpLow22 a)
+          (retainedP024SharpLow24 a)
+          (retainedP024SharpLow44 a)
+          c0 c2 c4 -
+        retainedP024BoundaryChordCost (1 / 512 : ℝ)
+          (retainedP024Polynomial c0 c2 c4)
+          (threeSelectorPolynomial c0 c2 c4 qP0 qP2 qP4)
+          (threeSelectorPolynomial c0 c2 c4 qM0 qM2 qM4)
+          (threeSelectorPolynomial c0 c2 c4 qA0 qA2 qA4) a =
+        star (![c0, c2, c4] : Fin 3 → ℝ) ⬝ᵥ
+          (K *ᵥ (![c0, c2, c4] : Fin 3 → ℝ)))
+    (hSOS : K =
+      (affineLiftMatrix (n := Fin 3) a)ᴴ * Q *
+          affineLiftMatrix (n := Fin 3) a +
+        (1 - a ^ 2) • R)
+    (c0 c2 c4 : ℝ) :
+    ∃ qE qO : ℝ[X],
+      qE.natDegree < 11 ∧ qO.natDegree < 11 ∧
+      factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+          (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            (1 / 512 : ℝ) (retainedP024Polynomial c0 c2 c4) 0 a b)
+          (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+            (1 / 512 : ℝ) (retainedP024Polynomial c0 c2 c4) 0 a b)
+          qE qO ≤
+        factorTwoEndpointChannelPhase
+            (centeredPolynomialLift (retainedP024Polynomial c0 c2 c4))
+            (centeredPolynomialLift 0) a b -
+          (1 / 8192 : ℝ) * factorTwoPhaseSingularWeightedEnergy
+            (centeredPolynomialLift (retainedP024Polynomial c0 c2 c4))
+            (centeredPolynomialLift 0) a b := by
+  have ha : a ^ 2 ≤ 1 := by
+    nlinarith [sq_nonneg b]
+  have hK : K.PosDef := posDef_of_intervalQuadratic_sos
+    Q R K a hQ hR ha hSOS
+  have hboundary : ∀ d0 d2 d4 : ℝ,
+      retainedP024BoundaryChordCost (1 / 512 : ℝ)
+          (retainedP024Polynomial d0 d2 d4)
+          (threeSelectorPolynomial d0 d2 d4 qP0 qP2 qP4)
+          (threeSelectorPolynomial d0 d2 d4 qM0 qM2 qM4)
+          (threeSelectorPolynomial d0 d2 d4 qA0 qA2 qA4) a ≤
+        symmetricQuadratic
+          (retainedP024SharpLow00 a)
+          (retainedP024SharpLow02 a)
+          (retainedP024SharpLow04 a)
+          (retainedP024SharpLow22 a)
+          (retainedP024SharpLow24 a)
+          (retainedP024SharpLow44 a)
+          d0 d2 d4 := by
+    intro d0 d2 d4
+    let x : Fin 3 → ℝ := ![d0, d2, d4]
+    have hnonneg := hK.posSemidef.re_dotProduct_nonneg x
+    have hidentity := hGap d0 d2 d4
+    change 0 ≤ star x ⬝ᵥ (K *ᵥ x) at hnonneg
+    rw [← hidentity] at hnonneg
+    linarith
+  exact exists_sharpRetunedP024Selector_of_boundary_chord
+    a b hab qP0 qP2 qP4 qM0 qM2 qM4 qA0 qA2 qA4
+    hqP0 hqP2 hqP4 hqM0 hqM2 hqM4 hqA0 hqA2 hqA4
+    hboundary c0 c2 c4
 
 end
 
