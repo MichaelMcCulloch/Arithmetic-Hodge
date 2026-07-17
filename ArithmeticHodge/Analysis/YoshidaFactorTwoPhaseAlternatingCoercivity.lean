@@ -491,7 +491,7 @@ private theorem measurableSet_unitUpperTriangle :
 
 /-- Product integrability survives the distance shear, so the centered upper
 triangle may be split into its three sign regions. -/
-private theorem integrableOn_centeredUpper_absDensity
+theorem integrableOn_centeredUpper_absDensity
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
     IntegrableOn
       (fun z : ℝ × ℝ ↦ |u z.1 * v z.2| / (2 - z.1 + z.2))
