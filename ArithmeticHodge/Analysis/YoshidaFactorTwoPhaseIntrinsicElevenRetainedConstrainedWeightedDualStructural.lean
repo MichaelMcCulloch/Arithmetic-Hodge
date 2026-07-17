@@ -9,12 +9,22 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedC
 
 open TwoByTwoSchur
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open YoshidaEndpointEvenConstantCross
 open YoshidaEndpointEvenMeanZeroPositive
 open YoshidaEndpointEvenStructuralReduction
+open YoshidaEndpointEvenTailRepresenter
+open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialIntegrable
+open YoshidaFactorTwoContinuousLagRepresenterStructural
+open YoshidaFactorTwoCenteredPhysical
+open YoshidaFactorTwoFixedLagRepresenterStructural
+open YoshidaFactorTwoForwardPolePolynomialReductionStructural
+open YoshidaFactorTwoIntegrableLagRepresenterStructural
+open YoshidaFactorTwoPhaseEnvelope
 open YoshidaFactorTwoPhaseFullProfile
 open YoshidaFactorTwoPhaseIntrinsicElevenCompleteRepresentersStructural
+open YoshidaFactorTwoPhaseIntrinsicElevenConcreteSelectorsStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedRepresentersStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedSingularReserveStructural
@@ -22,6 +32,8 @@ open YoshidaFactorTwoPhaseIntrinsicElevenRetainedSingularSchurStructural
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseSingularWeightedCauchyStructural
+open YoshidaFactorTwoReflectedPolePolynomialReductionStructural
+open YoshidaRegularKernelBound
 
 noncomputable section
 
@@ -149,6 +161,750 @@ theorem div_sqrt_memLp_two_of_abs_le_const_mul_weight
           congrArg (fun t : ℝ ↦ C * t) (Real.sq_sqrt hWx.le).symm
         _ = C * Real.sqrt (W x) * Real.sqrt (W x) := by ring
 
+private theorem reflectedEndpointLogs_sum
+    {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
+    -Real.log ((x + 1) / 2) + -Real.log ((1 - x) / 2) =
+      2 * (yoshidaEndpointPotential x + Real.log 2) := by
+  have hplus : x + 1 ≠ 0 := by linarith [hx.1]
+  have hminus : 1 - x ≠ 0 := by linarith [hx.2]
+  rw [Real.log_div hplus (by norm_num),
+    Real.log_div hminus (by norm_num)]
+  unfold yoshidaEndpointPotential
+  rw [show 1 - x ^ 2 = (x + 1) * (1 - x) by ring,
+    Real.log_mul hplus hminus]
+  ring
+
+private theorem reflectedEndpointLogPlus_nonneg
+    {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
+    0 ≤ -Real.log ((x + 1) / 2) := by
+  exact neg_nonneg.mpr (Real.log_nonpos (by linarith [hx.1]) (by linarith [hx.2]))
+
+private theorem reflectedEndpointLogMinus_nonneg
+    {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
+    0 ≤ -Real.log ((1 - x) / 2) := by
+  exact neg_nonneg.mpr (Real.log_nonpos (by linarith [hx.2]) (by linarith [hx.1]))
+
+private theorem reflectedEndpointLogs_sum_le
+    {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
+    -Real.log ((x + 1) / 2) + -Real.log ((1 - x) / 2) ≤
+      2 * (1 + yoshidaEndpointPotential x) := by
+  rw [reflectedEndpointLogs_sum hx]
+  linarith [Real.log_two_lt_d9]
+
+private theorem exists_polynomial_eval_abs_bound (p : ℝ[X]) :
+    ∃ M : ℝ, 0 < M ∧ ∀ z ∈ Icc (-1 : ℝ) 2, |p.eval z| ≤ M := by
+  have hp : Continuous (fun z : ℝ ↦ p.eval z) := by fun_prop
+  obtain ⟨M, hM⟩ := IsCompact.exists_bound_of_continuousOn
+    (isCompact_Icc : IsCompact (Icc (-1 : ℝ) 2)) hp.continuousOn
+  refine ⟨|M| + 1, by positivity, ?_⟩
+  intro z hz
+  have hzBound := hM z hz
+  rw [Real.norm_eq_abs] at hzBound
+  linarith [le_abs_self M]
+
+private theorem exists_reflectedPoleLogSelectors_linearGrowth
+    (p : ℝ[X]) :
+    ∃ C : ℝ, 0 < C ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |reflectedPoleKLogSelector p x| ≤
+          C * (1 + yoshidaEndpointPotential x) ∧
+        |reflectedPoleJLogSelector p x| ≤
+          C * (1 + yoshidaEndpointPotential x) := by
+  obtain ⟨M, hMpos, hM⟩ := exists_polynomial_eval_abs_bound p
+  refine ⟨2 * M, mul_pos (by norm_num) hMpos, ?_⟩
+  intro x hx
+  by_cases hxOne : x = 1
+  · subst x
+    constructor <;>
+      simp [reflectedPoleKLogSelector, reflectedPoleJLogSelector,
+        yoshidaEndpointPotential] <;>
+      nlinarith [hMpos]
+  · have hxIoo : x ∈ Ioo (-1 : ℝ) 1 :=
+      ⟨hx.1, lt_of_le_of_ne hx.2 hxOne⟩
+    let Lplus : ℝ := -Real.log ((x + 1) / 2)
+    let Lminus : ℝ := -Real.log ((1 - x) / 2)
+    have hLplus : 0 ≤ Lplus := by
+      simpa only [Lplus] using reflectedEndpointLogPlus_nonneg hxIoo
+    have hLminus : 0 ≤ Lminus := by
+      simpa only [Lminus] using reflectedEndpointLogMinus_nonneg hxIoo
+    have hLsum : Lplus + Lminus ≤
+        2 * (1 + yoshidaEndpointPotential x) := by
+      simpa only [Lplus, Lminus] using reflectedEndpointLogs_sum_le hxIoo
+    have hEvalPlus : |p.eval ((x + 3) / 2)| ≤ M :=
+      hM _ ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    have hEvalMinus : |p.eval ((x - 1) / 2)| ≤ M :=
+      hM _ ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    have hterms :
+        |p.eval ((x + 3) / 2)| * Lplus +
+            |p.eval ((x - 1) / 2)| * Lminus ≤
+          M * (Lplus + Lminus) := by
+      calc
+        |p.eval ((x + 3) / 2)| * Lplus +
+              |p.eval ((x - 1) / 2)| * Lminus ≤
+            M * Lplus + M * Lminus :=
+          add_le_add (mul_le_mul_of_nonneg_right hEvalPlus hLplus)
+            (mul_le_mul_of_nonneg_right hEvalMinus hLminus)
+        _ = M * (Lplus + Lminus) := by ring
+    have hscale : M * (Lplus + Lminus) ≤
+        (2 * M) * (1 + yoshidaEndpointPotential x) := by
+      calc
+        M * (Lplus + Lminus) ≤
+            M * (2 * (1 + yoshidaEndpointPotential x)) :=
+          mul_le_mul_of_nonneg_left hLsum hMpos.le
+        _ = (2 * M) * (1 + yoshidaEndpointPotential x) := by ring
+    have habsTerms :
+        |p.eval ((x + 3) / 2) * Lplus| +
+            |p.eval ((x - 1) / 2) * Lminus| ≤
+          M * (Lplus + Lminus) := by
+      rw [abs_mul, abs_mul, abs_of_nonneg hLplus,
+        abs_of_nonneg hLminus]
+      exact hterms
+    constructor
+    · unfold reflectedPoleKLogSelector
+      rw [show
+        -p.eval ((x + 3) / 2) * Real.log ((x + 1) / 2) -
+            p.eval ((x - 1) / 2) * Real.log ((1 - x) / 2) =
+          p.eval ((x + 3) / 2) * Lplus +
+            p.eval ((x - 1) / 2) * Lminus by
+        dsimp only [Lplus, Lminus]
+        ring]
+      exact (abs_add_le _ _).trans (habsTerms.trans hscale)
+    · unfold reflectedPoleJLogSelector
+      rw [show
+        -p.eval ((x + 3) / 2) * Real.log ((x + 1) / 2) +
+            p.eval ((x - 1) / 2) * Real.log ((1 - x) / 2) =
+          p.eval ((x + 3) / 2) * Lplus -
+            p.eval ((x - 1) / 2) * Lminus by
+        dsimp only [Lplus, Lminus]
+        ring]
+      exact (abs_sub _ _).trans (habsTerms.trans hscale)
+
+private def HasRetainedEndpointLinearGrowth (f : ℝ → ℝ) : Prop :=
+  ∃ C : ℝ, 0 < C ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+    |f x| ≤ C * (1 + yoshidaEndpointPotential x)
+
+private theorem hasRetainedEndpointLinearGrowth_add
+    {f g : ℝ → ℝ} (hf : HasRetainedEndpointLinearGrowth f)
+    (hg : HasRetainedEndpointLinearGrowth g) :
+    HasRetainedEndpointLinearGrowth (fun x ↦ f x + g x) := by
+  obtain ⟨C, hC, hf⟩ := hf
+  obtain ⟨D, hD, hg⟩ := hg
+  refine ⟨C + D, add_pos hC hD, ?_⟩
+  intro x hx
+  calc
+    |f x + g x| ≤ |f x| + |g x| := abs_add_le _ _
+    _ ≤ C * (1 + yoshidaEndpointPotential x) +
+        D * (1 + yoshidaEndpointPotential x) :=
+      add_le_add (hf x hx) (hg x hx)
+    _ = (C + D) * (1 + yoshidaEndpointPotential x) := by ring
+
+private theorem hasRetainedEndpointLinearGrowth_sub
+    {f g : ℝ → ℝ} (hf : HasRetainedEndpointLinearGrowth f)
+    (hg : HasRetainedEndpointLinearGrowth g) :
+    HasRetainedEndpointLinearGrowth (fun x ↦ f x - g x) := by
+  obtain ⟨C, hC, hf⟩ := hf
+  obtain ⟨D, hD, hg⟩ := hg
+  refine ⟨C + D, add_pos hC hD, ?_⟩
+  intro x hx
+  calc
+    |f x - g x| ≤ |f x| + |g x| := abs_sub _ _
+    _ ≤ C * (1 + yoshidaEndpointPotential x) +
+        D * (1 + yoshidaEndpointPotential x) :=
+      add_le_add (hf x hx) (hg x hx)
+    _ = (C + D) * (1 + yoshidaEndpointPotential x) := by ring
+
+private theorem hasRetainedEndpointLinearGrowth_const_mul
+    (c : ℝ) {f : ℝ → ℝ} (hf : HasRetainedEndpointLinearGrowth f) :
+    HasRetainedEndpointLinearGrowth (fun x ↦ c * f x) := by
+  obtain ⟨C, hC, hf⟩ := hf
+  refine ⟨|c| * C + 1, by positivity, ?_⟩
+  intro x hx
+  have hV := yoshidaEndpointPotential_nonneg_on_Icc
+    (show x ∈ Icc (-1 : ℝ) 1 from ⟨hx.1.le, hx.2⟩)
+  calc
+    |c * f x| = |c| * |f x| := abs_mul _ _
+    _ ≤ |c| * (C * (1 + yoshidaEndpointPotential x)) :=
+      mul_le_mul_of_nonneg_left (hf x hx) (abs_nonneg c)
+    _ = (|c| * C) * (1 + yoshidaEndpointPotential x) := by ring
+    _ ≤ (|c| * C + 1) * (1 + yoshidaEndpointPotential x) :=
+      mul_le_mul_of_nonneg_right (le_add_of_nonneg_right (by norm_num))
+        (by linarith)
+
+private theorem hasRetainedEndpointLinearGrowth_of_abs_bound
+    (f : ℝ → ℝ) (B : ℝ) (hB : 0 < B)
+    (hf : ∀ x ∈ Ioc (-1 : ℝ) 1, |f x| ≤ B) :
+    HasRetainedEndpointLinearGrowth f := by
+  refine ⟨B, hB, ?_⟩
+  intro x hx
+  have hV := yoshidaEndpointPotential_nonneg_on_Icc
+    (show x ∈ Icc (-1 : ℝ) 1 from ⟨hx.1.le, hx.2⟩)
+  exact (hf x hx).trans (by nlinarith)
+
+private theorem hasRetainedEndpointLinearGrowth_potential_mul_of_abs_bound
+    (f : ℝ → ℝ) (B : ℝ) (hB : 0 < B)
+    (hf : ∀ x ∈ Ioc (-1 : ℝ) 1, |f x| ≤ B) :
+    HasRetainedEndpointLinearGrowth
+      (fun x ↦ yoshidaEndpointPotential x * f x) := by
+  refine ⟨B, hB, ?_⟩
+  intro x hx
+  have hV := yoshidaEndpointPotential_nonneg_on_Icc
+    (show x ∈ Icc (-1 : ℝ) 1 from ⟨hx.1.le, hx.2⟩)
+  rw [abs_mul, abs_of_nonneg hV]
+  calc
+    yoshidaEndpointPotential x * |f x| ≤
+        yoshidaEndpointPotential x * B :=
+      mul_le_mul_of_nonneg_left (hf x hx) hV
+    _ ≤ B * (1 + yoshidaEndpointPotential x) := by nlinarith
+
+private theorem exists_abs_bound_of_continuousOn_Icc
+    (f : ℝ → ℝ) (hf : ContinuousOn f (Icc (-1 : ℝ) 1)) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Icc (-1 : ℝ) 1, |f x| ≤ B := by
+  obtain ⟨B, hB⟩ := IsCompact.exists_bound_of_continuousOn
+    (isCompact_Icc : IsCompact (Icc (-1 : ℝ) 1)) hf
+  refine ⟨|B| + 1, by positivity, ?_⟩
+  intro x hx
+  have hxBound := hB x hx
+  rw [Real.norm_eq_abs] at hxBound
+  linarith [le_abs_self B]
+
+private theorem hasRetainedEndpointLinearGrowth_of_continuousOn_Icc
+    (f : ℝ → ℝ) (hf : ContinuousOn f (Icc (-1 : ℝ) 1)) :
+    HasRetainedEndpointLinearGrowth f := by
+  obtain ⟨B, hB, hbound⟩ := exists_abs_bound_of_continuousOn_Icc f hf
+  exact hasRetainedEndpointLinearGrowth_of_abs_bound f B hB
+    (fun x hx ↦ hbound x ⟨hx.1.le, hx.2⟩)
+
+private theorem exists_regularRepresenter_abs_bound (p : ℝ[X]) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |yoshidaEndpointEvenRegularRepresenter
+          (centeredPolynomialLift p) x| ≤ B := by
+  obtain ⟨M, hMpos, hM⟩ := exists_polynomial_eval_abs_bound p
+  refine ⟨M / 2, by positivity, ?_⟩
+  intro x hx
+  have hxIcc : x ∈ Icc (-1 : ℝ) 1 := ⟨hx.1.le, hx.2⟩
+  rw [← Real.norm_eq_abs]
+  unfold yoshidaEndpointEvenRegularRepresenter
+  calc
+    ‖∫ y : ℝ in Icc (-1) 1,
+        yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+          centeredPolynomialLift p y‖ ≤
+        (M / 4) * volume.real (Icc (-1 : ℝ) 1) := by
+      apply MeasureTheory.norm_setIntegral_le_of_norm_le_const
+        (measure_Icc_lt_top (a := (-1 : ℝ)) (b := 1))
+      intro y hy
+      have hdist : |x - y| ≤ 2 := by
+        rw [abs_le]
+        constructor <;> linarith [hxIcc.1, hxIcc.2, hy.1, hy.2]
+      have harg0 : 0 ≤ yoshidaEndpointA * |x - y| :=
+        mul_nonneg yoshidaEndpointA_pos.le (abs_nonneg _)
+      have harg2 : yoshidaEndpointA * |x - y| ≤ Real.log 2 := by
+        unfold yoshidaEndpointA
+        nlinarith [mul_le_mul_of_nonneg_left hdist
+          (by positivity : 0 ≤ Real.log 2 / 2)]
+      have hkernel := yoshidaRegularKernel_mem_Icc harg0 harg2
+      have hyEval : |p.eval ((y + 1) / 2)| ≤ M :=
+        hM _ ⟨by linarith [hy.1], by linarith [hy.2]⟩
+      rw [norm_mul, Real.norm_eq_abs, abs_of_nonneg hkernel.1,
+        Real.norm_eq_abs]
+      unfold centeredPolynomialLift
+      calc
+        yoshidaRegularKernel (yoshidaEndpointA * |x - y|) *
+            |p.eval ((y + 1) / 2)| ≤ (1 / 4 : ℝ) * M :=
+          mul_le_mul hkernel.2 hyEval (abs_nonneg _) (by norm_num)
+        _ = M / 4 := by ring
+    _ = M / 2 := by
+      norm_num [Measure.real, Real.volume_Icc]
+      ring
+
+private theorem hasRetainedEndpointLinearGrowth_cleanSurvivor
+    (p : ℝ[X]) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenCleanSurvivorRepresenter p) := by
+  obtain ⟨M, hMpos, hp⟩ := exists_polynomial_eval_abs_bound p
+  have hpoly : ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |centeredPolynomialLift p x| ≤ M := by
+    intro x hx
+    unfold centeredPolynomialLift
+    exact hp _ ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  have hpotential :=
+    hasRetainedEndpointLinearGrowth_potential_mul_of_abs_bound
+      (centeredPolynomialLift p) M hMpos hpoly
+  obtain ⟨R, hR, hregular⟩ := exists_regularRepresenter_abs_bound p
+  have hregularGrowth := hasRetainedEndpointLinearGrowth_const_mul
+    yoshidaEndpointA
+    (hasRetainedEndpointLinearGrowth_of_abs_bound
+      (yoshidaEndpointEvenRegularRepresenter (centeredPolynomialLift p))
+      R hR hregular)
+  let rankRow : ℝ → ℝ := fun x ↦
+    2 * yoshidaEndpointA *
+      (yoshidaEndpointCoshMoment (centeredPolynomialLift p) *
+          Real.cosh (yoshidaEndpointA * x / 2) -
+        yoshidaEndpointSinhMoment (centeredPolynomialLift p) *
+          Real.sinh (yoshidaEndpointA * x / 2))
+  have hrank : HasRetainedEndpointLinearGrowth rankRow :=
+    hasRetainedEndpointLinearGrowth_of_continuousOn_Icc rankRow (by
+      dsimp only [rankRow]
+      fun_prop)
+  have hsum := hasRetainedEndpointLinearGrowth_add
+    (hasRetainedEndpointLinearGrowth_sub hpotential hregularGrowth) hrank
+  simpa only [factorTwoIntrinsicElevenCleanSurvivorRepresenter, rankRow] using hsum
+
+private theorem continuousOn_forwardPoleKLogSelector (p : ℝ[X]) :
+    ContinuousOn (forwardPoleKLogSelector p) (Icc (-1 : ℝ) 1) := by
+  have hminus : ContinuousOn (fun x : ℝ ↦ Real.log ((3 - x) / 2))
+      (Icc (-1 : ℝ) 1) := by
+    apply ContinuousOn.log (by fun_prop)
+    intro x hx
+    norm_num
+    linarith [hx.2]
+  have hplus : ContinuousOn (fun x : ℝ ↦ Real.log ((3 + x) / 2))
+      (Icc (-1 : ℝ) 1) := by
+    apply ContinuousOn.log (by fun_prop)
+    intro x hx
+    norm_num
+    linarith [hx.1]
+  unfold forwardPoleKLogSelector
+  exact (by fun_prop : Continuous (fun x : ℝ ↦ p.eval ((x - 1) / 2)))
+    |>.continuousOn.mul hminus |>.add
+      ((by fun_prop : Continuous (fun x : ℝ ↦ p.eval ((x + 3) / 2)))
+        |>.continuousOn.mul hplus)
+
+private theorem continuousOn_forwardPoleLLogSelector (p : ℝ[X]) :
+    ContinuousOn (forwardPoleLLogSelector p) (Icc (-1 : ℝ) 1) := by
+  have hminus : ContinuousOn (fun x : ℝ ↦ Real.log ((3 - x) / 2))
+      (Icc (-1 : ℝ) 1) := by
+    apply ContinuousOn.log (by fun_prop)
+    intro x hx
+    norm_num
+    linarith [hx.2]
+  have hplus : ContinuousOn (fun x : ℝ ↦ Real.log ((3 + x) / 2))
+      (Icc (-1 : ℝ) 1) := by
+    apply ContinuousOn.log (by fun_prop)
+    intro x hx
+    norm_num
+    linarith [hx.1]
+  unfold forwardPoleLLogSelector
+  exact (by fun_prop : Continuous (fun x : ℝ ↦ p.eval ((x - 1) / 2)))
+    |>.continuousOn.mul hminus |>.sub
+      ((by fun_prop : Continuous (fun x : ℝ ↦ p.eval ((x + 3) / 2)))
+        |>.continuousOn.mul hplus)
+
+private theorem hasRetainedEndpointLinearGrowth_forwardPoleKLogSelector
+    (p : ℝ[X]) : HasRetainedEndpointLinearGrowth (forwardPoleKLogSelector p) :=
+  hasRetainedEndpointLinearGrowth_of_continuousOn_Icc _
+    (continuousOn_forwardPoleKLogSelector p)
+
+private theorem hasRetainedEndpointLinearGrowth_forwardPoleLLogSelector
+    (p : ℝ[X]) : HasRetainedEndpointLinearGrowth (forwardPoleLLogSelector p) :=
+  hasRetainedEndpointLinearGrowth_of_continuousOn_Icc _
+    (continuousOn_forwardPoleLLogSelector p)
+
+private theorem hasRetainedEndpointLinearGrowth_reflectedPoleKLogSelector
+    (p : ℝ[X]) : HasRetainedEndpointLinearGrowth (reflectedPoleKLogSelector p) := by
+  obtain ⟨C, hC, hbound⟩ := exists_reflectedPoleLogSelectors_linearGrowth p
+  exact ⟨C, hC, fun x hx ↦ (hbound x hx).1⟩
+
+private theorem hasRetainedEndpointLinearGrowth_reflectedPoleJLogSelector
+    (p : ℝ[X]) : HasRetainedEndpointLinearGrowth (reflectedPoleJLogSelector p) := by
+  obtain ⟨C, hC, hbound⟩ := exists_reflectedPoleLogSelectors_linearGrowth p
+  exact ⟨C, hC, fun x hx ↦ (hbound x hx).2⟩
+
+private theorem abs_continuousLagKJ_le
+    (q : ℝ → ℝ) (p : ℝ[X]) (C M : ℝ)
+    (hC : 0 ≤ C) (hM : 0 ≤ M)
+    (hq : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C)
+    (hp : ∀ z ∈ Icc (-1 : ℝ) 2, |p.eval z| ≤ M)
+    {x : ℝ} (hx : x ∈ Ioc (-1 : ℝ) 1) :
+    |factorTwoContinuousLagK q (centeredPolynomialLift p) x| ≤
+        4 * C * M ∧
+      |factorTwoContinuousLagJ q (centeredPolynomialLift p) x| ≤
+        4 * C * M := by
+  have hpLift {y : ℝ} (hy : y ∈ Icc (-1 : ℝ) 1) :
+      |centeredPolynomialLift p y| ≤ M := by
+    unfold centeredPolynomialLift
+    exact hp _ ⟨by linarith [hy.1], by linarith [hy.2]⟩
+  have hright :
+      |factorTwoContinuousLagRightRepresenter
+          q (centeredPolynomialLift p) x| ≤ 2 * C * M := by
+    rw [← Real.norm_eq_abs]
+    unfold factorTwoContinuousLagRightRepresenter
+    calc
+      ‖∫ y : ℝ in x..1, q (y - x) * centeredPolynomialLift p y‖ ≤
+          (C * M) * |1 - x| := by
+        apply intervalIntegral.norm_integral_le_of_norm_le_const
+        intro y hy
+        rw [uIoc_of_le hx.2] at hy
+        have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+          ⟨by linarith [hx.1, hy.1], hy.2⟩
+        have hlag : y - x ∈ Icc (0 : ℝ) 2 :=
+          ⟨by linarith [hy.1], by linarith [hy.2, hx.1]⟩
+        rw [Real.norm_eq_abs, abs_mul]
+        exact mul_le_mul (hq _ hlag) (hpLift hyIcc)
+          (abs_nonneg _) hC
+      _ ≤ (C * M) * 2 := by
+        apply mul_le_mul_of_nonneg_left _ (mul_nonneg hC hM)
+        rw [abs_of_nonneg (by linarith [hx.2])]
+        linarith [hx.1]
+      _ = 2 * C * M := by ring
+  have hleft :
+      |factorTwoContinuousLagLeftRepresenter
+          q (centeredPolynomialLift p) x| ≤ 2 * C * M := by
+    rw [← Real.norm_eq_abs]
+    unfold factorTwoContinuousLagLeftRepresenter
+    calc
+      ‖∫ y : ℝ in -1..x, q (x - y) * centeredPolynomialLift p y‖ ≤
+          (C * M) * |x - (-1)| := by
+        apply intervalIntegral.norm_integral_le_of_norm_le_const
+        intro y hy
+        rw [uIoc_of_le hx.1.le] at hy
+        have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+          ⟨hy.1.le, by linarith [hy.2, hx.2]⟩
+        have hlag : x - y ∈ Icc (0 : ℝ) 2 :=
+          ⟨by linarith [hy.2], by linarith [hx.2, hy.1]⟩
+        rw [Real.norm_eq_abs, abs_mul]
+        exact mul_le_mul (hq _ hlag) (hpLift hyIcc)
+          (abs_nonneg _) hC
+      _ ≤ (C * M) * 2 := by
+        apply mul_le_mul_of_nonneg_left _ (mul_nonneg hC hM)
+        rw [abs_of_nonneg (by linarith [hx.1])]
+        linarith [hx.2]
+      _ = 2 * C * M := by ring
+  constructor
+  · unfold factorTwoContinuousLagK
+    exact (abs_add_le _ _).trans
+      ((add_le_add hright hleft).trans_eq (by ring))
+  · unfold factorTwoContinuousLagJ
+    exact (abs_sub _ _).trans
+      ((add_le_add hright hleft).trans_eq (by ring))
+
+private theorem hasRetainedEndpointLinearGrowth_continuousLagK_of_abs_le
+    (q : ℝ → ℝ) (p : ℝ[X]) (C : ℝ) (hC : 0 < C)
+    (hq : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoContinuousLagK q (centeredPolynomialLift p)) := by
+  obtain ⟨M, hM, hp⟩ := exists_polynomial_eval_abs_bound p
+  refine hasRetainedEndpointLinearGrowth_of_abs_bound _ (4 * C * M)
+    (by positivity) ?_
+  intro x hx
+  exact (abs_continuousLagKJ_le q p C M hC.le hM.le hq hp hx).1
+
+private theorem hasRetainedEndpointLinearGrowth_continuousLagJ_of_abs_le
+    (q : ℝ → ℝ) (p : ℝ[X]) (C : ℝ) (hC : 0 < C)
+    (hq : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoContinuousLagJ q (centeredPolynomialLift p)) := by
+  obtain ⟨M, hM, hp⟩ := exists_polynomial_eval_abs_bound p
+  refine hasRetainedEndpointLinearGrowth_of_abs_bound _ (4 * C * M)
+    (by positivity) ?_
+  intro x hx
+  exact (abs_continuousLagKJ_le q p C M hC.le hM.le hq hp hx).2
+
+private theorem exists_fixedLagKJ_abs_bound
+    (τ : ℝ) (hτ : τ ∈ Icc (0 : ℝ) 2) (p : ℝ[X]) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |factorTwoFixedLagK τ (centeredPolynomialLift p) x| ≤ B ∧
+        |factorTwoFixedLagJ τ (centeredPolynomialLift p) x| ≤ B := by
+  obtain ⟨M, hMpos, hM⟩ := exists_polynomial_eval_abs_bound p
+  refine ⟨2 * M, mul_pos (by norm_num) hMpos, ?_⟩
+  intro x hx
+  have hRightEval : |centeredPolynomialLift p (τ + x)| ≤ M := by
+    unfold centeredPolynomialLift
+    exact hM _ ⟨by linarith [hx.1, hτ.1], by linarith [hx.2, hτ.2]⟩
+  have hLeftEval : |centeredPolynomialLift p (x - τ)| ≤ M := by
+    unfold centeredPolynomialLift
+    exact hM _ ⟨by linarith [hx.1, hτ.2], by linarith [hx.2, hτ.1]⟩
+  have hright :
+      |factorTwoFixedLagRightRepresenter τ
+          (centeredPolynomialLift p) x| ≤ M := by
+    unfold factorTwoFixedLagRightRepresenter
+    by_cases hs : x ∈ Icc (-1 : ℝ) (1 - τ)
+    · rw [Set.indicator_of_mem hs]
+      exact hRightEval
+    · rw [Set.indicator_of_notMem hs, abs_zero]
+      exact hMpos.le
+  have hleft :
+      |factorTwoFixedLagLeftRepresenter τ
+          (centeredPolynomialLift p) x| ≤ M := by
+    unfold factorTwoFixedLagLeftRepresenter
+    by_cases hs : x ∈ Icc (-1 + τ) (1 : ℝ)
+    · rw [Set.indicator_of_mem hs]
+      exact hLeftEval
+    · rw [Set.indicator_of_notMem hs, abs_zero]
+      exact hMpos.le
+  constructor
+  · unfold factorTwoFixedLagK
+    exact (abs_add_le _ _).trans
+      ((add_le_add hright hleft).trans_eq (by ring))
+  · unfold factorTwoFixedLagJ
+    exact (abs_sub _ _).trans
+      ((add_le_add hright hleft).trans_eq (by ring))
+
+private theorem hasRetainedEndpointLinearGrowth_fixedLagK
+    (τ : ℝ) (hτ : τ ∈ Icc (0 : ℝ) 2) (p : ℝ[X]) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoFixedLagK τ (centeredPolynomialLift p)) := by
+  obtain ⟨B, hB, hbound⟩ := exists_fixedLagKJ_abs_bound τ hτ p
+  exact hasRetainedEndpointLinearGrowth_of_abs_bound _ B hB
+    (fun x hx ↦ (hbound x hx).1)
+
+private theorem hasRetainedEndpointLinearGrowth_fixedLagJ
+    (τ : ℝ) (hτ : τ ∈ Icc (0 : ℝ) 2) (p : ℝ[X]) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoFixedLagJ τ (centeredPolynomialLift p)) := by
+  obtain ⟨B, hB, hbound⟩ := exists_fixedLagKJ_abs_bound τ hτ p
+  exact hasRetainedEndpointLinearGrowth_of_abs_bound _ B hB
+    (fun x hx ↦ (hbound x hx).2)
+
+private theorem hasRetainedEndpointLinearGrowth_analyticEvenRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenAnalyticEvenRepresenter pE pO a b) := by
+  have hK := hasRetainedEndpointLinearGrowth_continuousLagK_of_abs_le
+    factorTwoSymmetricAnalyticLag pE (3 / 8000 : ℝ) (by norm_num)
+      (fun _t ht ↦ abs_factorTwoSymmetricAnalyticLag_le ht)
+  have hJ := hasRetainedEndpointLinearGrowth_continuousLagJ_of_abs_le
+    factorTwoAlternatingAnalyticLag pO (1 / 1000 : ℝ) (by norm_num)
+      (fun _t ht ↦ abs_factorTwoAlternatingAnalyticLag_le ht)
+  simpa only [factorTwoIntrinsicElevenAnalyticEvenRepresenter] using
+    hasRetainedEndpointLinearGrowth_add
+      (hasRetainedEndpointLinearGrowth_const_mul (a / 2) hK)
+      (hasRetainedEndpointLinearGrowth_const_mul (b / 2) hJ)
+
+private theorem hasRetainedEndpointLinearGrowth_analyticOddRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenAnalyticOddRepresenter pE pO a b) := by
+  have hK := hasRetainedEndpointLinearGrowth_continuousLagK_of_abs_le
+    factorTwoSymmetricAnalyticLag pO (3 / 8000 : ℝ) (by norm_num)
+      (fun _t ht ↦ abs_factorTwoSymmetricAnalyticLag_le ht)
+  have hJ := hasRetainedEndpointLinearGrowth_continuousLagJ_of_abs_le
+    factorTwoAlternatingAnalyticLag pE (1 / 1000 : ℝ) (by norm_num)
+      (fun _t ht ↦ abs_factorTwoAlternatingAnalyticLag_le ht)
+  simpa only [factorTwoIntrinsicElevenAnalyticOddRepresenter] using
+    hasRetainedEndpointLinearGrowth_sub
+      (hasRetainedEndpointLinearGrowth_const_mul (a / 2) hK)
+      (hasRetainedEndpointLinearGrowth_const_mul (b / 2) hJ)
+
+private theorem hasRetainedEndpointLinearGrowth_forwardEvenRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenForwardEvenRepresenter pE pO a b) := by
+  simpa only [factorTwoIntrinsicElevenForwardEvenRepresenter] using
+    hasRetainedEndpointLinearGrowth_sub
+      (hasRetainedEndpointLinearGrowth_const_mul (-(a / 4))
+        (hasRetainedEndpointLinearGrowth_forwardPoleKLogSelector pE))
+      (hasRetainedEndpointLinearGrowth_const_mul (b / 4)
+        (hasRetainedEndpointLinearGrowth_forwardPoleLLogSelector pO))
+
+private theorem hasRetainedEndpointLinearGrowth_forwardOddRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenForwardOddRepresenter pE pO a b) := by
+  simpa only [factorTwoIntrinsicElevenForwardOddRepresenter] using
+    hasRetainedEndpointLinearGrowth_add
+      (hasRetainedEndpointLinearGrowth_const_mul (-(a / 4))
+        (hasRetainedEndpointLinearGrowth_forwardPoleKLogSelector pO))
+      (hasRetainedEndpointLinearGrowth_const_mul (b / 4)
+        (hasRetainedEndpointLinearGrowth_forwardPoleLLogSelector pE))
+
+private theorem hasRetainedEndpointLinearGrowth_reflectedEvenRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenReflectedEvenRepresenter pE pO a b) := by
+  simpa only [factorTwoIntrinsicElevenReflectedEvenRepresenter] using
+    hasRetainedEndpointLinearGrowth_add
+      (hasRetainedEndpointLinearGrowth_const_mul (-(a / 4))
+        (hasRetainedEndpointLinearGrowth_reflectedPoleKLogSelector pE))
+      (hasRetainedEndpointLinearGrowth_const_mul (b / 4)
+        (hasRetainedEndpointLinearGrowth_reflectedPoleJLogSelector pO))
+
+private theorem hasRetainedEndpointLinearGrowth_reflectedOddRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenReflectedOddRepresenter pE pO a b) := by
+  simpa only [factorTwoIntrinsicElevenReflectedOddRepresenter] using
+    hasRetainedEndpointLinearGrowth_sub
+      (hasRetainedEndpointLinearGrowth_const_mul (-(a / 4))
+        (hasRetainedEndpointLinearGrowth_reflectedPoleKLogSelector pO))
+      (hasRetainedEndpointLinearGrowth_const_mul (b / 4)
+        (hasRetainedEndpointLinearGrowth_reflectedPoleJLogSelector pE))
+
+private theorem hasRetainedEndpointLinearGrowth_primeEvenRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenPrimeEvenRepresenter pE pO a b) := by
+  have hτ12 := factorTwoPrimeShift_div_endpointA_mem_one_two
+  have hτ : factorTwoPrimeShift / yoshidaEndpointA ∈ Icc (0 : ℝ) 2 :=
+    ⟨by linarith [hτ12.1], hτ12.2⟩
+  have hK := hasRetainedEndpointLinearGrowth_fixedLagK
+    (factorTwoPrimeShift / yoshidaEndpointA) hτ pE
+  have hJ := hasRetainedEndpointLinearGrowth_fixedLagJ
+    (factorTwoPrimeShift / yoshidaEndpointA) hτ pO
+  change HasRetainedEndpointLinearGrowth (fun x ↦
+    -(Real.log 3 / (2 * Real.sqrt 3)) *
+      (a * factorTwoFixedLagK
+          (factorTwoPrimeShift / yoshidaEndpointA)
+          (centeredPolynomialLift pE) x +
+        b * factorTwoFixedLagJ
+          (factorTwoPrimeShift / yoshidaEndpointA)
+          (centeredPolynomialLift pO) x))
+  exact hasRetainedEndpointLinearGrowth_const_mul _
+    (hasRetainedEndpointLinearGrowth_add
+      (hasRetainedEndpointLinearGrowth_const_mul a hK)
+      (hasRetainedEndpointLinearGrowth_const_mul b hJ))
+
+private theorem hasRetainedEndpointLinearGrowth_primeOddRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenPrimeOddRepresenter pE pO a b) := by
+  have hτ12 := factorTwoPrimeShift_div_endpointA_mem_one_two
+  have hτ : factorTwoPrimeShift / yoshidaEndpointA ∈ Icc (0 : ℝ) 2 :=
+    ⟨by linarith [hτ12.1], hτ12.2⟩
+  have hK := hasRetainedEndpointLinearGrowth_fixedLagK
+    (factorTwoPrimeShift / yoshidaEndpointA) hτ pO
+  have hJ := hasRetainedEndpointLinearGrowth_fixedLagJ
+    (factorTwoPrimeShift / yoshidaEndpointA) hτ pE
+  change HasRetainedEndpointLinearGrowth (fun x ↦
+    -(Real.log 3 / (2 * Real.sqrt 3)) *
+      (a * factorTwoFixedLagK
+          (factorTwoPrimeShift / yoshidaEndpointA)
+          (centeredPolynomialLift pO) x -
+        b * factorTwoFixedLagJ
+          (factorTwoPrimeShift / yoshidaEndpointA)
+          (centeredPolynomialLift pE) x))
+  exact hasRetainedEndpointLinearGrowth_const_mul _
+    (hasRetainedEndpointLinearGrowth_sub
+      (hasRetainedEndpointLinearGrowth_const_mul a hK)
+      (hasRetainedEndpointLinearGrowth_const_mul b hJ))
+
+private theorem hasRetainedEndpointLinearGrowth_potential_centeredPolynomialLift
+    (p : ℝ[X]) :
+    HasRetainedEndpointLinearGrowth (fun x ↦
+      yoshidaEndpointPotential x * centeredPolynomialLift p x) := by
+  obtain ⟨M, hM, hp⟩ := exists_polynomial_eval_abs_bound p
+  apply hasRetainedEndpointLinearGrowth_potential_mul_of_abs_bound
+    (centeredPolynomialLift p) M hM
+  intro x hx
+  unfold centeredPolynomialLift
+  exact hp _ ⟨by linarith [hx.1], by linarith [hx.2]⟩
+
+private theorem hasRetainedEndpointLinearGrowth_completeEvenRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenEvenMixedRepresenter pE pO a b) := by
+  have hClean := hasRetainedEndpointLinearGrowth_cleanSurvivor pE
+  have hAnalytic := hasRetainedEndpointLinearGrowth_analyticEvenRepresenter
+    pE pO a b
+  have hForward := hasRetainedEndpointLinearGrowth_forwardEvenRepresenter
+    pE pO a b
+  have hReflected := hasRetainedEndpointLinearGrowth_reflectedEvenRepresenter
+    pE pO a b
+  have hPrime := hasRetainedEndpointLinearGrowth_primeEvenRepresenter
+    pE pO a b
+  simpa only [factorTwoIntrinsicElevenEvenMixedRepresenter] using
+    hasRetainedEndpointLinearGrowth_add
+      (hasRetainedEndpointLinearGrowth_add
+        (hasRetainedEndpointLinearGrowth_add
+          (hasRetainedEndpointLinearGrowth_add hClean hAnalytic) hForward)
+        hReflected)
+      hPrime
+
+private theorem hasRetainedEndpointLinearGrowth_completeOddRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenOddMixedRepresenter pE pO a b) := by
+  have hClean := hasRetainedEndpointLinearGrowth_cleanSurvivor pO
+  have hAnalytic := hasRetainedEndpointLinearGrowth_analyticOddRepresenter
+    pE pO a b
+  have hForward := hasRetainedEndpointLinearGrowth_forwardOddRepresenter
+    pE pO a b
+  have hReflected := hasRetainedEndpointLinearGrowth_reflectedOddRepresenter
+    pE pO a b
+  have hPrime := hasRetainedEndpointLinearGrowth_primeOddRepresenter
+    pE pO a b
+  simpa only [factorTwoIntrinsicElevenOddMixedRepresenter] using
+    hasRetainedEndpointLinearGrowth_add
+      (hasRetainedEndpointLinearGrowth_add
+        (hasRetainedEndpointLinearGrowth_add
+          (hasRetainedEndpointLinearGrowth_add hClean hAnalytic) hForward)
+        hReflected)
+      hPrime
+
+private theorem hasRetainedEndpointLinearGrowth_potentialPoleEvenRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenPotentialPoleEvenRepresenter pE pO a b) := by
+  simpa only [factorTwoIntrinsicElevenPotentialPoleEvenRepresenter] using
+    hasRetainedEndpointLinearGrowth_add
+      (hasRetainedEndpointLinearGrowth_potential_centeredPolynomialLift pE)
+      (hasRetainedEndpointLinearGrowth_reflectedEvenRepresenter pE pO a b)
+
+private theorem hasRetainedEndpointLinearGrowth_potentialPoleOddRepresenter
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenPotentialPoleOddRepresenter pE pO a b) := by
+  simpa only [factorTwoIntrinsicElevenPotentialPoleOddRepresenter] using
+    hasRetainedEndpointLinearGrowth_add
+      (hasRetainedEndpointLinearGrowth_potential_centeredPolynomialLift pO)
+      (hasRetainedEndpointLinearGrowth_reflectedOddRepresenter pE pO a b)
+
+private theorem hasRetainedEndpointLinearGrowth_retainedEvenRepresenterAt
+    (gamma : ℝ) (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+        gamma pE pO a b) := by
+  simpa only [factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt] using
+    hasRetainedEndpointLinearGrowth_sub
+      (hasRetainedEndpointLinearGrowth_completeEvenRepresenter pE pO a b)
+      (hasRetainedEndpointLinearGrowth_const_mul gamma
+        (hasRetainedEndpointLinearGrowth_potentialPoleEvenRepresenter
+          pE pO a b))
+
+private theorem hasRetainedEndpointLinearGrowth_retainedOddRepresenterAt
+    (gamma : ℝ) (pE pO : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+        gamma pE pO a b) := by
+  simpa only [factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt] using
+    hasRetainedEndpointLinearGrowth_sub
+      (hasRetainedEndpointLinearGrowth_completeOddRepresenter pE pO a b)
+      (hasRetainedEndpointLinearGrowth_const_mul gamma
+        (hasRetainedEndpointLinearGrowth_potentialPoleOddRepresenter
+          pE pO a b))
+
+private theorem hasRetainedEndpointLinearGrowth_centeredPolynomialLift
+    (p : ℝ[X]) :
+    HasRetainedEndpointLinearGrowth (centeredPolynomialLift p) := by
+  obtain ⟨M, hM, hp⟩ := exists_polynomial_eval_abs_bound p
+  apply hasRetainedEndpointLinearGrowth_of_abs_bound
+    (centeredPolynomialLift p) M hM
+  intro x hx
+  unfold centeredPolynomialLift
+  exact hp _ ⟨by linarith [hx.1], by linarith [hx.2]⟩
+
+private theorem hasRetainedEndpointLinearGrowth_evenSelectorResidual
+    (gamma : ℝ) (pE pO q : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenSelectorResidual
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+          gamma pE pO a b) q) := by
+  unfold factorTwoIntrinsicElevenSelectorResidual
+  exact hasRetainedEndpointLinearGrowth_sub
+    (hasRetainedEndpointLinearGrowth_retainedEvenRepresenterAt
+      gamma pE pO a b)
+    (hasRetainedEndpointLinearGrowth_centeredPolynomialLift q)
+
+private theorem hasRetainedEndpointLinearGrowth_oddSelectorResidual
+    (gamma : ℝ) (pE pO q : ℝ[X]) (a b : ℝ) :
+    HasRetainedEndpointLinearGrowth
+      (factorTwoIntrinsicElevenSelectorResidual
+        (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+          gamma pE pO a b) q) := by
+  unfold factorTwoIntrinsicElevenSelectorResidual
+  exact hasRetainedEndpointLinearGrowth_sub
+    (hasRetainedEndpointLinearGrowth_retainedOddRepresenterAt
+      gamma pE pO a b)
+    (hasRetainedEndpointLinearGrowth_centeredPolynomialLift q)
+
 /-- Continuity of a residual profile automatically supplies the retained
 even primal `L²` hypothesis. -/
 theorem sqrt_retainedEvenWeight_mul_memLp_two
@@ -196,6 +952,125 @@ theorem sqrt_retainedOddWeight_mul_memLp_two
     (show x ∈ Icc (-1 : ℝ) 1 from ⟨hx.1.le, hx.2⟩)
   rw [Real.norm_eq_abs, sq_abs, mul_pow,
     Real.sq_sqrt hweightPos.le]
+
+/-- Every retained even selector residual has the weighted dual `L²`
+regularity required by the cutoff-eleven Schur handoff.  The result is uniform
+in the retained pole coefficient and in the selector polynomial. -/
+theorem factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+    (gamma : ℝ) (pE pO q : ℝ[X]) (a b : ℝ) :
+    MemLp (fun x ↦
+      factorTwoIntrinsicElevenSelectorResidual
+          (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            gamma pE pO a b) q x /
+        Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let G : ℝ → ℝ := factorTwoIntrinsicElevenSelectorResidual
+    (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+      gamma pE pO a b) q
+  obtain ⟨C, hC, hGrowth⟩ :=
+    hasRetainedEndpointLinearGrowth_evenSelectorResidual
+      gamma pE pO q a b
+  have hF : IntervalIntegrable
+      (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+        gamma pE pO a b) volume (-1) 1 := by
+    simpa only [mul_one] using
+      (intervalIntegrable_retainedEvenRepresenterAt_mul
+        gamma pE pO (fun _ : ℝ ↦ (1 : ℝ)) continuous_const a b)
+  have hq : IntervalIntegrable (centeredPolynomialLift q)
+      volume (-1) 1 :=
+    (continuous_centeredPolynomialLift q).intervalIntegrable (-1) 1
+  have hG : AEStronglyMeasurable G
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [G, factorTwoIntrinsicElevenSelectorResidual] using
+      (hF.sub hq).aestronglyMeasurable
+  have hbound : ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |G x| ≤ (10 * C) * factorTwoIntrinsicElevenRetainedEvenWeight x := by
+    intro x hx
+    have hV := yoshidaEndpointPotential_nonneg_on_Icc
+      (show x ∈ Icc (-1 : ℝ) 1 from ⟨hx.1.le, hx.2⟩)
+    have hcompare : 1 + yoshidaEndpointPotential x ≤
+        10 * factorTwoIntrinsicElevenRetainedEvenWeight x := by
+      unfold factorTwoIntrinsicElevenRetainedEvenWeight
+      nlinarith
+    calc
+      |G x| ≤ C * (1 + yoshidaEndpointPotential x) := by
+        simpa only [G] using hGrowth x hx
+      _ ≤ C * (10 * factorTwoIntrinsicElevenRetainedEvenWeight x) :=
+        mul_le_mul_of_nonneg_left hcompare hC.le
+      _ = (10 * C) * factorTwoIntrinsicElevenRetainedEvenWeight x := by ring
+  have hsqrt : MemLp
+      (fun x : ℝ ↦ Real.sqrt
+        (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [mul_one] using
+      (sqrt_retainedEvenWeight_mul_memLp_two
+        (fun _ : ℝ ↦ (1 : ℝ)) continuous_const)
+  simpa only [G] using
+    div_sqrt_memLp_two_of_abs_le_const_mul_weight
+      factorTwoIntrinsicElevenRetainedEvenWeight G
+      measurable_retainedEvenWeight hG (10 * C)
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc
+        ⟨hx.1.le, hx.2⟩)
+      hbound hsqrt
+
+/-- Every retained odd selector residual has the weighted dual `L²`
+regularity required by the cutoff-eleven Schur handoff. -/
+theorem factorTwoIntrinsicElevenRetainedOddSelectorResidual_div_sqrt_memLp_two
+    (gamma : ℝ) (pE pO q : ℝ[X]) (a b : ℝ) :
+    MemLp (fun x ↦
+      factorTwoIntrinsicElevenSelectorResidual
+          (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+            gamma pE pO a b) q x /
+        Real.sqrt (factorTwoIntrinsicElevenRetainedOddWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let G : ℝ → ℝ := factorTwoIntrinsicElevenSelectorResidual
+    (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+      gamma pE pO a b) q
+  obtain ⟨C, hC, hGrowth⟩ :=
+    hasRetainedEndpointLinearGrowth_oddSelectorResidual
+      gamma pE pO q a b
+  have hF : IntervalIntegrable
+      (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+        gamma pE pO a b) volume (-1) 1 := by
+    simpa only [mul_one] using
+      (intervalIntegrable_retainedOddRepresenterAt_mul
+        gamma pE pO (fun _ : ℝ ↦ (1 : ℝ)) continuous_const a b)
+  have hq : IntervalIntegrable (centeredPolynomialLift q)
+      volume (-1) 1 :=
+    (continuous_centeredPolynomialLift q).intervalIntegrable (-1) 1
+  have hG : AEStronglyMeasurable G
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [G, factorTwoIntrinsicElevenSelectorResidual] using
+      (hF.sub hq).aestronglyMeasurable
+  have hbound : ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |G x| ≤ (32 * C) * factorTwoIntrinsicElevenRetainedOddWeight x := by
+    intro x hx
+    have hV := yoshidaEndpointPotential_nonneg_on_Icc
+      (show x ∈ Icc (-1 : ℝ) 1 from ⟨hx.1.le, hx.2⟩)
+    have hcompare : 1 + yoshidaEndpointPotential x ≤
+        32 * factorTwoIntrinsicElevenRetainedOddWeight x := by
+      unfold factorTwoIntrinsicElevenRetainedOddWeight
+      nlinarith
+    calc
+      |G x| ≤ C * (1 + yoshidaEndpointPotential x) := by
+        simpa only [G] using hGrowth x hx
+      _ ≤ C * (32 * factorTwoIntrinsicElevenRetainedOddWeight x) :=
+        mul_le_mul_of_nonneg_left hcompare hC.le
+      _ = (32 * C) * factorTwoIntrinsicElevenRetainedOddWeight x := by ring
+  have hsqrt : MemLp
+      (fun x : ℝ ↦ Real.sqrt
+        (factorTwoIntrinsicElevenRetainedOddWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [mul_one] using
+      (sqrt_retainedOddWeight_mul_memLp_two
+        (fun _ : ℝ ↦ (1 : ℝ)) continuous_const)
+  simpa only [G] using
+    div_sqrt_memLp_two_of_abs_le_const_mul_weight
+      factorTwoIntrinsicElevenRetainedOddWeight G
+      measurable_retainedOddWeight hG (32 * C)
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedOddWeight_pos_on_Icc
+        ⟨hx.1.le, hx.2⟩)
+      hbound hsqrt
 
 /-- The two retained multiplication integrals are exactly the algebraic
 reserve carried by the gap-eleven tail theorem. -/
@@ -362,18 +1237,6 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_retainedSe
     (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
     (qE qO : ℝ[X]) (hqE : qE.natDegree < 11)
     (hqO : qO.natDegree < 11)
-    (hdualE : MemLp (fun x ↦
-        factorTwoIntrinsicElevenSelectorResidual
-            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenter
-              pE pO a b) qE x /
-          Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
-      (volume.restrict (Ioc (-1 : ℝ) 1)))
-    (hdualO : MemLp (fun x ↦
-        factorTwoIntrinsicElevenSelectorResidual
-            (factorTwoIntrinsicElevenRetainedOddMixedRepresenter
-              pE pO a b) qO x /
-          Real.sqrt (factorTwoIntrinsicElevenRetainedOddWeight x)) 2
-      (volume.restrict (Ioc (-1 : ℝ) 1)))
     (hfiniteSelector :
       factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
           (factorTwoIntrinsicElevenRetainedEvenMixedRepresenter pE pO a b)
@@ -420,7 +1283,17 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_retainedSe
   have hpairing := factorTwoIntrinsicElevenMixedPairing_sq_le_retained
     (factorTwoIntrinsicElevenRetainedEvenMixedRepresenter pE pO a b)
     (factorTwoIntrinsicElevenRetainedOddMixedRepresenter pE pO a b)
-    eR oR heRc hoRc heGap hoGap qE qO hqE hqO hdualE hdualO
+    eR oR heRc hoRc heGap hoGap qE qO hqE hqO
+    (by
+      simpa only [factorTwoIntrinsicElevenRetainedEvenMixedRepresenter,
+        factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt] using
+        (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+          (1 / 64 : ℝ) pE pO qE a b))
+    (by
+      simpa only [factorTwoIntrinsicElevenRetainedOddMixedRepresenter,
+        factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt] using
+        (factorTwoIntrinsicElevenRetainedOddSelectorResidual_div_sqrt_memLp_two
+          (1 / 64 : ℝ) pE pO qO a b))
   have hreserve0 :=
     factorTwoIntrinsicElevenRetainedWeightedReserve_nonneg eR oR
   have hremaining :
@@ -457,18 +1330,6 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_asymmetric
     (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
     (qE qO : ℝ[X]) (hqE : qE.natDegree < 11)
     (hqO : qO.natDegree < 11)
-    (hdualE : MemLp (fun x ↦
-        factorTwoIntrinsicElevenSelectorResidual
-            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
-              (1 / 256 : ℝ) pE pO a b) qE x /
-          Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
-      (volume.restrict (Ioc (-1 : ℝ) 1)))
-    (hdualO : MemLp (fun x ↦
-        factorTwoIntrinsicElevenSelectorResidual
-            (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
-              (1 / 256 : ℝ) pE pO a b) qO x /
-          Real.sqrt (factorTwoIntrinsicElevenRetainedOddWeight x)) 2
-      (volume.restrict (Ioc (-1 : ℝ) 1)))
     (hfiniteSelector :
       factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
           (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
@@ -523,7 +1384,11 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_asymmetric
       (1 / 256 : ℝ) pE pO a b)
     (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
       (1 / 256 : ℝ) pE pO a b)
-    eR oR heRc hoRc heGap hoGap qE qO hqE hqO hdualE hdualO
+    eR oR heRc hoRc heGap hoGap qE qO hqE hqO
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      (1 / 256 : ℝ) pE pO qE a b)
+    (factorTwoIntrinsicElevenRetainedOddSelectorResidual_div_sqrt_memLp_two
+      (1 / 256 : ℝ) pE pO qO a b)
   have hreserve0 :=
     factorTwoIntrinsicElevenRetainedWeightedReserve_nonneg eR oR
   have hremaining :
@@ -563,18 +1428,6 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_retunedAsy
     (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
     (qE qO : ℝ[X]) (hqE : qE.natDegree < 11)
     (hqO : qO.natDegree < 11)
-    (hdualE : MemLp (fun x ↦
-        factorTwoIntrinsicElevenSelectorResidual
-            (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
-              (1 / 512 : ℝ) pE pO a b) qE x /
-          Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
-      (volume.restrict (Ioc (-1 : ℝ) 1)))
-    (hdualO : MemLp (fun x ↦
-        factorTwoIntrinsicElevenSelectorResidual
-            (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
-              (1 / 512 : ℝ) pE pO a b) qO x /
-          Real.sqrt (factorTwoIntrinsicElevenRetainedOddWeight x)) 2
-      (volume.restrict (Ioc (-1 : ℝ) 1)))
     (hfiniteSelector :
       factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
           (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
@@ -629,7 +1482,11 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_retunedAsy
       (1 / 512 : ℝ) pE pO a b)
     (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
       (1 / 512 : ℝ) pE pO a b)
-    eR oR heRc hoRc heGap hoGap qE qO hqE hqO hdualE hdualO
+    eR oR heRc hoRc heGap hoGap qE qO hqE hqO
+    (factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      (1 / 512 : ℝ) pE pO qE a b)
+    (factorTwoIntrinsicElevenRetainedOddSelectorResidual_div_sqrt_memLp_two
+      (1 / 512 : ℝ) pE pO qO a b)
   have hreserve0 :=
     factorTwoIntrinsicElevenRetainedWeightedReserve_nonneg eR oR
   have hremaining :
