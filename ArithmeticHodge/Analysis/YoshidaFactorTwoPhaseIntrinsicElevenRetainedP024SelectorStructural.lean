@@ -332,6 +332,69 @@ private theorem retainedEvenSymmetricResidual_eq_endpoint_half_sub
   rw [hsub]
   ring
 
+/-- The normalized residual of the symmetric half-difference selector lies in
+the same weighted `L²` space as the two endpoint residuals. -/
+theorem retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+    (gamma : ℝ) (p qPlus qMinus : ℝ[X]) :
+    MemLp (fun x ↦
+      factorTwoIntrinsicElevenSelectorResidual
+          (retainedEvenSymmetricRepresenterAt gamma p)
+          (retainedP024SymmetricSelector qPlus qMinus) x /
+        Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hPlus :=
+    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qPlus 1 0
+  have hMinus :=
+    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      gamma p 0 qMinus (-1) 0
+  have hcomb := (hPlus.sub hMinus).const_mul (1 / 2 : ℝ)
+  apply (memLp_congr_ae (μ := volume.restrict (Ioc (-1 : ℝ) 1)) ?_).mpr hcomb
+  filter_upwards [] with x
+  rw [retainedEvenSymmetricResidual_eq_endpoint_half_sub
+    gamma p qPlus qMinus x]
+  dsimp only [Pi.sub_apply]
+  ring
+
+/-- Three symmetric endpoint half-difference rows supply the six integrable
+entries needed for their retained even selector Gram. -/
+theorem retainedEvenSymmetricThreeSelectorGramIntegrable
+    (gamma : ℝ)
+    (p0 p2 p4 qP0 qP2 qP4 qM0 qM2 qM4 : ℝ[X]) :
+    ThreeSelectorGramIntegrable
+      factorTwoIntrinsicElevenRetainedEvenWeight
+      (retainedEvenSymmetricRepresenterAt gamma p0)
+      (retainedEvenSymmetricRepresenterAt gamma p2)
+      (retainedEvenSymmetricRepresenterAt gamma p4)
+      (retainedP024SymmetricSelector qP0 qM0)
+      (retainedP024SymmetricSelector qP2 qM2)
+      (retainedP024SymmetricSelector qP4 qM4) := by
+  have h0 := retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+    gamma p0 qP0 qM0
+  have h2 := retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+    gamma p2 qP2 qM2
+  have h4 := retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+    gamma p4 qP4 qM4
+  refine ⟨
+    intervalIntegrable_selectorCross_of_memLp _ _ _ _ _
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+      h0 h0,
+    intervalIntegrable_selectorCross_of_memLp _ _ _ _ _
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+      h0 h2,
+    intervalIntegrable_selectorCross_of_memLp _ _ _ _ _
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+      h0 h4,
+    intervalIntegrable_selectorCross_of_memLp _ _ _ _ _
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+      h2 h2,
+    intervalIntegrable_selectorCross_of_memLp _ _ _ _ _
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+      h2 h4,
+    intervalIntegrable_selectorCross_of_memLp _ _ _ _ _
+      (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+      h4 h4⟩
+
 /-- Exact Hilbert-space chord identity for the retained even selector cost.
 It is an algebraic polarization identity after the two endpoint residuals
 have been placed in the same fixed weighted `L²` space. -/
