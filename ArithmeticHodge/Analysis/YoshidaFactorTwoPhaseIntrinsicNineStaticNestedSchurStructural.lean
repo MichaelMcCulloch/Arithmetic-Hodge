@@ -575,7 +575,7 @@ private theorem factorTwoEndpointPhaseDiagonal_intrinsicSixOdd_eq
   rw [hzero, hcross] at h
   simpa [factorTwoIntrinsicSixStaticEven] using h
 
-private theorem factorTwoEndpointPhaseDiagonal_intrinsicNineEven_eq
+theorem factorTwoEndpointPhaseDiagonal_intrinsicNineEven_eq
     (sigma c0 c2 c4 c6 c8 : ℝ) :
     factorTwoEndpointPhaseDiagonal
         (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8) sigma =
@@ -681,7 +681,7 @@ private theorem factorTwoEndpointPhaseDiagonal_intrinsicNineEven_eq
   repeat rw [factorTwoIntrinsicNinePhasePair_smul_smul]
   ring
 
-private theorem factorTwoEndpointPhaseDiagonal_intrinsicNineOdd_eq
+theorem factorTwoEndpointPhaseDiagonal_intrinsicNineOdd_eq
     (sigma c1 c3 c5 c7 : ℝ) :
     factorTwoEndpointPhaseDiagonal
         (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) (-sigma) =

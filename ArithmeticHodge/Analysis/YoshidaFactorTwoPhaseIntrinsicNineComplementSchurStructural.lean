@@ -1,5 +1,7 @@
 import ArithmeticHodge.Analysis.TwoByTwoSchur
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicHigherResidualEightNineQuantitative
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseHigherLegendreStructuralPositive
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP678CombinedResidualSchurStructural
 
 set_option autoImplicit false
@@ -12,7 +14,9 @@ noncomputable section
 
 open TwoByTwoSchur
 open YoshidaFactorTwoPhaseFullProfile
+open YoshidaFactorTwoPhaseHigherLegendreStructuralPositive
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
+open YoshidaFactorTwoPhaseIntrinsicHigherResidualEightNineQuantitative
 open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
 open YoshidaFactorTwoPhaseIntrinsicNineUnbalancedStaticDiskStructural
 open YoshidaFactorTwoPhaseIntrinsicResidual
@@ -89,6 +93,47 @@ theorem factorTwoIntrinsicNineResidualReserve_nonneg
       (mul_nonneg (by norm_num) (factorTwoIntrinsicEnergy_nonneg eR))
       (mul_nonneg (by norm_num) (factorTwoIntrinsicEnergy_nonneg oR)))
     (mul_nonneg (by norm_num) (factorTwoIntrinsicPotentialEnergy_nonneg oR))
+
+/-- A cutoff-nine residual pair retains the complete quantitative reserve.
+The even hypothesis is restricted to the cutoff-eight input required by the
+underlying structural tail theorem; no finite-mode estimate is introduced. -/
+theorem factorTwoIntrinsicNineResidualReserve_le_phase
+    (eR oR : ℝ → ℝ) (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heLocal : LocallyLipschitzOn (Icc (-1) 1) eR)
+    (hoLocal : LocallyLipschitzOn (Icc (-1) 1) oR)
+    (heRe : Function.Even eR) (hoRo : Function.Odd oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 9)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 9)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    factorTwoIntrinsicNineResidualReserve eR oR ≤
+      factorTwoEndpointChannelPhase eR oR a b := by
+  have heGap8 : centeredLegendreMomentsVanishBelow eR 8 := by
+    intro n hn
+    exact heGap n (by omega)
+  have he0 := centeredEvenP0Coefficient_eq_zero_of_momentsVanishBelow
+    eR (by norm_num) heGap
+  simpa only [factorTwoIntrinsicNineResidualReserve] using
+    factorTwoEndpointChannelPhase_quantitative_of_eight_nine_residual
+      eR oR heRc hoRc heRe hoRo he0 heLocal hoLocal
+      heGap8 hoGap a b hab
+
+/-- After the sharp `P6/P7/P8` allocation spends `14/15` of the residual
+reserve, the tail complement still contains the `1/15` required by the
+scaled-range completion. -/
+theorem factorTwoIntrinsicNineResidualReserve_le_fifteen_mul_balancedTail
+    (eR oR : ℝ → ℝ) (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heLocal : LocallyLipschitzOn (Icc (-1) 1) eR)
+    (hoLocal : LocallyLipschitzOn (Icc (-1) 1) oR)
+    (heRe : Function.Even eR) (hoRo : Function.Odd oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 9)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 9)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    factorTwoIntrinsicNineResidualReserve eR oR ≤
+      15 * (factorTwoEndpointChannelPhase eR oR a b -
+        (14 / 15 : ℝ) * factorTwoIntrinsicNineResidualReserve eR oR) := by
+  have hreserve := factorTwoIntrinsicNineResidualReserve_le_phase
+    eR oR heRc hoRc heLocal hoLocal heRe hoRo heGap hoGap a b hab
+  nlinarith
 
 /-- Exact two-family presentation of the cutoff-nine mixed term. -/
 theorem factorTwoEndpointLowTailMixed_intrinsicNine_eq_P678_add_remaining
