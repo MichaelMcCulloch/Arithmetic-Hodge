@@ -45,9 +45,11 @@ def factorTwoP678ResidualCombinedForwardMixed
       eR oR a b +
     factorTwoP8ResidualCombinedForwardMixed eR oR f a b
 
-/-- The four structural residual cells close inside the combined retained
-`P6/P7/P8` phase reserve. -/
-theorem factorTwoP678ResidualCombinedForwardMixed_sq_le_reserve_mul
+/-- The four structural residual cells consume at most `7/8` of the product
+of the retained `P6/P7/P8` reserve and the quantitative residual reserve.
+Keeping this factor visible leaves a genuine product budget for the other
+nonpolynomial low--residual survivors. -/
+theorem factorTwoP678ResidualCombinedForwardMixed_sq_le_seven_eighths_mul_reserve_mul
     (eR oR : ℝ → ℝ)
     (heRc : Continuous eR) (hoRc : Continuous oR)
     (heRe : Function.Even eR) (hoRo : Function.Odd oR)
@@ -55,14 +57,14 @@ theorem factorTwoP678ResidualCombinedForwardMixed_sq_le_reserve_mul
     (hoLow : centeredLegendreMomentsVanishBelow oR 9)
     (c d f a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
     factorTwoP678ResidualCombinedForwardMixed eR oR c d f a b ^ 2 ≤
-      (((1 / 100 : ℝ) *
+      (7 / 8 : ℝ) * ((((1 / 100 : ℝ) *
           (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
             factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) +
         ((33 / 100 : ℝ) *
           factorTwoIntrinsicEnergy factorTwoCenteredP8 * f ^ 2)) *
       ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
         (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR +
-        (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy oR) := by
+        (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy oR)) := by
   let XP67 : ℝ := (1 / 100 : ℝ) *
     (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
       factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)
@@ -127,13 +129,14 @@ theorem factorTwoP678ResidualCombinedForwardMixed_sq_le_reserve_mul
 
   have hschur :
       (∑ i : Fin 4, cells i) ^ 2 ≤
-        (XP67 + X8) * (yE + yO + yPot) := by
-    apply finset_schur_of_normalized_sq_bounds
-      (Finset.univ : Finset (Fin 4)) weights cells masses
+        (7 / 8 : ℝ) * ((XP67 + X8) * (yE + yO + yPot)) := by
+    apply finset_schur_of_normalized_sq_bounds_at_budget
+      (Finset.univ : Finset (Fin 4)) weights cells masses (7 / 8 : ℝ)
       ((XP67 + X8) * (yE + yO + yPot))
     · intro i _hi
       fin_cases i <;> norm_num [weights]
     · norm_num [weights, Fin.sum_univ_succ]
+    · norm_num
     · intro i _hi
       fin_cases i
       · simpa [masses] using mul_nonneg hXP67 (add_nonneg hyE hyO)
@@ -171,16 +174,64 @@ theorem factorTwoP678ResidualCombinedForwardMixed_sq_le_reserve_mul
     _ = (∑ i : Fin 4, cells i) ^ 2 := by
       simp [cells, Fin.sum_univ_succ]
       ring
-    _ ≤ (XP67 + X8) * (yE + yO + yPot) := hschur
-    _ = (((1 / 100 : ℝ) *
+    _ ≤ (7 / 8 : ℝ) * ((XP67 + X8) * (yE + yO + yPot)) := hschur
+    _ = (7 / 8 : ℝ) * ((((1 / 100 : ℝ) *
           (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
             factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) +
         ((33 / 100 : ℝ) *
           factorTwoIntrinsicEnergy factorTwoCenteredP8 * f ^ 2)) *
         ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
           (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR +
-          (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy oR) := by
+          (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy oR)) := by
       rfl
+
+/-- Rounded version of the sharp `7/8` estimate, retained as the public
+compatibility theorem used by the existing cutoff-nine assembly. -/
+theorem factorTwoP678ResidualCombinedForwardMixed_sq_le_reserve_mul
+    (eR oR : ℝ → ℝ)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heRe : Function.Even eR) (hoRo : Function.Odd oR)
+    (heLow : centeredLegendreMomentsVanishBelow eR 9)
+    (hoLow : centeredLegendreMomentsVanishBelow oR 9)
+    (c d f a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    factorTwoP678ResidualCombinedForwardMixed eR oR c d f a b ^ 2 ≤
+      (((1 / 100 : ℝ) *
+          (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+            factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) +
+        ((33 / 100 : ℝ) *
+          factorTwoIntrinsicEnergy factorTwoCenteredP8 * f ^ 2)) *
+      ((1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+        (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR +
+        (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy oR) := by
+  have hsharp :=
+    factorTwoP678ResidualCombinedForwardMixed_sq_le_seven_eighths_mul_reserve_mul
+      eR oR heRc hoRc heRe hoRo heLow hoLow c d f a b hab
+  have hX : 0 ≤
+      ((1 / 100 : ℝ) *
+          (factorTwoIntrinsicEnergy factorTwoCenteredP6 * c ^ 2 +
+            factorTwoIntrinsicEnergy factorTwoCenteredP7 * d ^ 2)) +
+        ((33 / 100 : ℝ) *
+          factorTwoIntrinsicEnergy factorTwoCenteredP8 * f ^ 2) := by
+    exact add_nonneg
+      (mul_nonneg (by norm_num) (add_nonneg
+        (mul_nonneg
+          (factorTwoIntrinsicEnergy_nonneg factorTwoCenteredP6) (sq_nonneg c))
+        (mul_nonneg
+          (factorTwoIntrinsicEnergy_nonneg factorTwoCenteredP7) (sq_nonneg d))))
+      (mul_nonneg
+        (mul_nonneg (by norm_num)
+          (factorTwoIntrinsicEnergy_nonneg factorTwoCenteredP8)) (sq_nonneg f))
+  have hY : 0 ≤
+      (1 / 250 : ℝ) * factorTwoIntrinsicEnergy eR +
+        (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy oR +
+        (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy oR := by
+    exact add_nonneg
+      (add_nonneg
+        (mul_nonneg (by norm_num) (factorTwoIntrinsicEnergy_nonneg eR))
+        (mul_nonneg (by norm_num) (factorTwoIntrinsicEnergy_nonneg oR)))
+      (mul_nonneg (by norm_num)
+        (factorTwoIntrinsicPotentialEnergy_nonneg oR))
+  nlinarith [mul_nonneg hX hY]
 
 end
 

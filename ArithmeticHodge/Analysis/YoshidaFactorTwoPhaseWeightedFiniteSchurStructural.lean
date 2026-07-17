@@ -59,6 +59,48 @@ theorem finset_schur_of_normalized_sq_bounds
     subst s
     simpa using haggregate
 
+/-- The same finite Schur estimate with the actual total weight retained.
+This is the form to use when the normalized cell weights sum strictly below
+one and the unused fraction is needed by a second coupled family. -/
+theorem finset_schur_of_normalized_sq_bounds_at_budget
+    {ι : Type*} [DecidableEq ι]
+    (s : Finset ι) (c z X : ι → ℝ) (C A : ℝ)
+    (hc : ∀ i ∈ s, 0 < c i)
+    (hbudget : (∑ i ∈ s, c i) ≤ C)
+    (hC : 0 ≤ C)
+    (hX : ∀ i ∈ s, 0 ≤ X i)
+    (hz : ∀ i ∈ s, z i ^ 2 ≤ c i * X i)
+    (haggregate : (∑ i ∈ s, X i) ≤ A) :
+    (∑ i ∈ s, z i) ^ 2 ≤ C * A := by
+  by_cases hs : s.Nonempty
+  · have hsumC : 0 < ∑ i ∈ s, c i := Finset.sum_pos hc hs
+    have htitu := Finset.sq_sum_div_le_sum_sq_div s z hc
+    have hweighted :
+        (∑ i ∈ s, z i) ^ 2 ≤
+          (∑ i ∈ s, c i) * (∑ i ∈ s, z i ^ 2 / c i) := by
+      have := (div_le_iff₀ hsumC).1 htitu
+      simpa only [mul_comm] using this
+    have hrows :
+        (∑ i ∈ s, z i ^ 2 / c i) ≤ ∑ i ∈ s, X i := by
+      apply Finset.sum_le_sum
+      intro i hi
+      apply (div_le_iff₀ (hc i hi)).2
+      simpa only [mul_comm] using hz i hi
+    have hsumX : 0 ≤ ∑ i ∈ s, X i :=
+      Finset.sum_nonneg fun i hi ↦ hX i hi
+    calc
+      (∑ i ∈ s, z i) ^ 2 ≤
+          (∑ i ∈ s, c i) * (∑ i ∈ s, z i ^ 2 / c i) := hweighted
+      _ ≤ (∑ i ∈ s, c i) * (∑ i ∈ s, X i) :=
+        mul_le_mul_of_nonneg_left hrows hsumC.le
+      _ ≤ C * (∑ i ∈ s, X i) :=
+        mul_le_mul_of_nonneg_right hbudget hsumX
+      _ ≤ C * A := mul_le_mul_of_nonneg_left haggregate hC
+  · have hs0 : s = ∅ := Finset.not_nonempty_iff_eq_empty.mp hs
+    subst s
+    have hA : 0 ≤ A := by simpa using haggregate
+    simpa using mul_nonneg hC hA
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseWeightedFiniteSchurStructural
