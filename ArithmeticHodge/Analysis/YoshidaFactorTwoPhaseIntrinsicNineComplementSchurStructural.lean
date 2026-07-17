@@ -264,6 +264,90 @@ theorem factorTwoEndpointLowTailMixed_intrinsicNine_sq_le_of_balanced_complement
       c0 c2 c4 c6 c8 c1 c3 c5 c7 a b]
   simpa only [low, tail, Z, S] using hdet
 
+/-- Direct balanced-complement handoff.  Unlike
+`factorTwoEndpointLowTailMixed_intrinsicNine_sq_le_of_balanced_complement`,
+this version does not first demand the stronger full low and residual
+reserves.  Its hypotheses are exactly the two diagonal complements spent by
+the sharp `7 / 8 = (15 / 16) * (14 / 15)` P678 allocation. -/
+theorem factorTwoEndpointLowTailMixed_intrinsicNine_sq_le_of_direct_balanced_complement
+    (eR oR : ℝ → ℝ) (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heLocal : LocallyLipschitzOn (Icc (-1) 1) eR)
+    (hoLocal : LocallyLipschitzOn (Icc (-1) 1) oR)
+    (heRe : Function.Even eR) (hoRo : Function.Odd oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 9)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 9)
+    (c0 c2 c4 c6 c8 c1 c3 c5 c7 a b : ℝ)
+    (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (hlowBalanced :
+      0 ≤ factorTwoEndpointChannelPhase
+          (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+          (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) a b -
+        (15 / 16 : ℝ) *
+          factorTwoIntrinsicNineP678LowReserve c6 c7 c8)
+    (htailBalanced :
+      0 ≤ factorTwoEndpointChannelPhase eR oR a b -
+        (14 / 15 : ℝ) *
+          factorTwoIntrinsicNineResidualReserve eR oR)
+    (hremaining :
+      factorTwoIntrinsicNineRemainingMixed eR oR
+            c0 c2 c4 c6 c8 c1 c3 c5 c7 a b ^ 2 ≤
+        (factorTwoEndpointChannelPhase
+              (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+              (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) a b -
+            (15 / 16 : ℝ) *
+              factorTwoIntrinsicNineP678LowReserve c6 c7 c8) *
+          (factorTwoEndpointChannelPhase eR oR a b -
+            (14 / 15 : ℝ) *
+              factorTwoIntrinsicNineResidualReserve eR oR)) :
+    factorTwoEndpointLowTailMixed
+          (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8) eR
+          (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) oR a b ^ 2 ≤
+      factorTwoEndpointChannelPhase
+          (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+          (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) a b *
+        factorTwoEndpointChannelPhase eR oR a b := by
+  let low := factorTwoEndpointChannelPhase
+    (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+    (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) a b
+  let tail := factorTwoEndpointChannelPhase eR oR a b
+  let X := factorTwoIntrinsicNineP678LowReserve c6 c7 c8
+  let Y := factorTwoIntrinsicNineResidualReserve eR oR
+  let X' := (15 / 16 : ℝ) * X
+  let Y' := (14 / 15 : ℝ) * Y
+  let Z := factorTwoP678ResidualCombinedForwardMixed
+    eR oR c6 c7 c8 a b
+  let S := factorTwoIntrinsicNineRemainingMixed eR oR
+    c0 c2 c4 c6 c8 c1 c3 c5 c7 a b
+  have hX : 0 ≤ X := by
+    simpa only [X] using
+      factorTwoIntrinsicNineP678LowReserve_nonneg c6 c7 c8
+  have hY : 0 ≤ Y := by
+    simpa only [Y] using
+      factorTwoIntrinsicNineResidualReserve_nonneg eR oR
+  have hX' : 0 ≤ X' := mul_nonneg (by norm_num) hX
+  have hY' : 0 ≤ Y' := mul_nonneg (by norm_num) hY
+  have hlow' : 0 ≤ low - X' := by
+    simpa only [low, X', X] using hlowBalanced
+  have htail' : 0 ≤ tail - Y' := by
+    simpa only [tail, Y', Y] using htailBalanced
+  have hZ : Z ^ 2 ≤ X' * Y' := by
+    have hsharp : Z ^ 2 ≤ (7 / 8 : ℝ) * (X * Y) := by
+      simpa only [Z, X, Y, factorTwoIntrinsicNineP678LowReserve,
+        factorTwoIntrinsicNineResidualReserve] using
+        factorTwoP678ResidualCombinedForwardMixed_sq_le_seven_eighths_mul_reserve_mul
+          eR oR heRc hoRc heRe hoRo heGap hoGap c6 c7 c8 a b hab
+    calc
+      Z ^ 2 ≤ (7 / 8 : ℝ) * (X * Y) := hsharp
+      _ = X' * Y' := by simp only [X', Y']; ring
+  have hdet : (Z + S) ^ 2 ≤ low * tail :=
+    determinant_bound_add_complements low tail X' Y' Z S
+      hX' hY' hlow' htail' hZ
+      (by simpa only [low, tail, X', Y', X, Y, S] using hremaining)
+  rw [factorTwoEndpointLowTailMixed_intrinsicNine_eq_P678_add_remaining
+    eR oR heRc hoRc heLocal hoLocal hoRo heGap hoGap
+      c0 c2 c4 c6 c8 c1 c3 c5 c7 a b]
+  simpa only [low, tail, Z, S] using hdet
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineComplementSchurStructural

@@ -146,6 +146,61 @@ theorem factorTwoEndpointLowTailMixed_intrinsicNine_sq_le_of_balanced_full_penci
       eR oR heRc hoRc heLocal hoLocal hoRo heGap hoGap
         c0 c2 c4 c6 c8 c1 c3 c5 c7 a b hpencil
 
+/-- Sharp outer handoff using only the balanced diagonal complements actually
+spent by the `P6/P7/P8` determinant.  This is the endpoint consumed by the
+fraction-free `9 + 1` scaled-range completion: evaluating its full pencil at
+zero in either coordinate supplies these two nonnegativity hypotheses. -/
+theorem factorTwoEndpointLowTailMixed_intrinsicNine_sq_le_of_direct_balanced_full_pencil
+    (eR oR : ℝ → ℝ) (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heLocal : LocallyLipschitzOn (Icc (-1) 1) eR)
+    (hoLocal : LocallyLipschitzOn (Icc (-1) 1) oR)
+    (heRe : Function.Even eR) (hoRo : Function.Odd oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 9)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 9)
+    (c0 c2 c4 c6 c8 c1 c3 c5 c7 a b : ℝ)
+    (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (hlowBalanced :
+      0 ≤ factorTwoEndpointChannelPhase
+          (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+          (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) a b -
+        (15 / 16 : ℝ) *
+          factorTwoIntrinsicNineP678LowReserve c6 c7 c8)
+    (htailBalanced :
+      0 ≤ factorTwoEndpointChannelPhase eR oR a b -
+        (14 / 15 : ℝ) *
+          factorTwoIntrinsicNineResidualReserve eR oR)
+    (hpencil : ∀ c d : ℝ,
+      0 ≤
+        factorTwoEndpointChannelPhase
+            (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+            (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) a b * c ^ 2 +
+          2 * factorTwoEndpointLowTailMixed
+              (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8) eR
+              (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) oR a b * c * d +
+          factorTwoEndpointChannelPhase eR oR a b * d ^ 2 -
+        ((15 / 16 : ℝ) *
+              factorTwoIntrinsicNineP678LowReserve c6 c7 c8 * c ^ 2 +
+          2 * factorTwoP678ResidualCombinedForwardMixed
+              eR oR c6 c7 c8 a b * c * d +
+          (14 / 15 : ℝ) *
+              factorTwoIntrinsicNineResidualReserve eR oR * d ^ 2)) :
+    factorTwoEndpointLowTailMixed
+          (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8) eR
+          (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) oR a b ^ 2 ≤
+      factorTwoEndpointChannelPhase
+          (factorTwoIntrinsicNineEvenProfile c0 c2 c4 c6 c8)
+          (factorTwoIntrinsicNineOddProfile c1 c3 c5 c7) a b *
+        factorTwoEndpointChannelPhase eR oR a b := by
+  apply
+    factorTwoEndpointLowTailMixed_intrinsicNine_sq_le_of_direct_balanced_complement
+      eR oR heRc hoRc heLocal hoLocal heRe hoRo heGap hoGap
+        c0 c2 c4 c6 c8 c1 c3 c5 c7 a b hab
+        hlowBalanced htailBalanced
+  exact
+    factorTwoIntrinsicNineRemainingMixed_sq_le_balanced_complement_of_full_pencil
+      eR oR heRc hoRc heLocal hoLocal hoRo heGap hoGap
+        c0 c2 c4 c6 c8 c1 c3 c5 c7 a b hpencil
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineBalancedPencilStructural
