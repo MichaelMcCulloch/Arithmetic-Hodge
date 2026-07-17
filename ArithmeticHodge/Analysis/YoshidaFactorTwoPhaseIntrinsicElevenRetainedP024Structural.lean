@@ -6,6 +6,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4CleanCrossStr
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4CorrelationStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFourC2Structural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusPositiveStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseStructuralLowData
 
@@ -36,17 +37,20 @@ open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicEvenCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicLow
+open YoshidaFactorTwoPhaseIntrinsicLowStaticMinusRationalSchur
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicRetainedSingularGapStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4CleanCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4CleanDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
+open YoshidaFactorTwoPhaseIntrinsicSixP4MinusEndpointStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4PlusEndpointExactSchur
 open YoshidaFactorTwoPhaseIntrinsicSixP4Schur
 open YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveP4PivotSecondSharpStructural
 open YoshidaFactorTwoPhaseIntrinsicSixProjectiveRawFourC2Structural
+open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticMinusPositiveStructural
 open YoshidaFactorTwoPhaseIntrinsicSixUnbalancedStaticPlusMinorStructural
 open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
@@ -983,6 +987,205 @@ theorem factorTwoEndpointChannelPhase_sub_oneDiv2048_halfSingular_pos_plus
   unfold symmetricQuadratic
   norm_num
   ring
+
+/-! ## Retuned negative endpoint -/
+
+/-- Rational lower-comparison gates at the negative endpoint after retaining
+`1 / 2048` of the half-singular Gram.  The only non-rational entries are the
+two aligned `P₄` cross coordinates, controlled together by their structural
+sum/difference bounds. -/
+private theorem retainedP024MinusLower_gates :
+    let q00 := intrinsicStaticMinusEvenLower00 - (1 / 2048 : ℝ) * 3
+    let q02 := intrinsicStaticMinusEvenLower02 -
+      (1 / 2048 : ℝ) * (1 / 2)
+    let q04 := factorTwoIntrinsicFourP45Cross04 (-1) -
+      (1 / 2048 : ℝ) * (3 / 20)
+    let q22 := intrinsicStaticMinusEvenLower22 -
+      (1 / 2048 : ℝ) * (61 / 50)
+    let q24 := factorTwoIntrinsicFourP45Cross24 (-1) -
+      (1 / 2048 : ℝ) * (19 / 105)
+    let q44 := factorTwoIntrinsicP4MinusDiagonalLower -
+      (1 / 2048 : ℝ) * (8997 / 11340)
+    0 < q00 ∧ 0 < leadingMinorTwo q00 q02 q22 ∧
+      0 < symmetricDeterminant q00 q02 q04 q22 q24 q44 := by
+  dsimp only
+  let q00 := intrinsicStaticMinusEvenLower00 - (1 / 2048 : ℝ) * 3
+  let q02 := intrinsicStaticMinusEvenLower02 -
+    (1 / 2048 : ℝ) * (1 / 2)
+  let q04 := factorTwoIntrinsicFourP45Cross04 (-1) -
+    (1 / 2048 : ℝ) * (3 / 20)
+  let q22 := intrinsicStaticMinusEvenLower22 -
+    (1 / 2048 : ℝ) * (61 / 50)
+  let q24 := factorTwoIntrinsicFourP45Cross24 (-1) -
+    (1 / 2048 : ℝ) * (19 / 105)
+  let q44 := factorTwoIntrinsicP4MinusDiagonalLower -
+    (1 / 2048 : ℝ) * (8997 / 11340)
+  let A := intrinsicStaticMinusEvenLower00 +
+      2 * intrinsicStaticMinusEvenLower02 +
+      intrinsicStaticMinusEvenLower22 -
+    (1 / 2048 : ℝ) * (261 / 50)
+  let X := intrinsicStaticMinusEvenLower00 -
+      intrinsicStaticMinusEvenLower22 -
+    (1 / 2048 : ℝ) * (89 / 50)
+  let C := intrinsicStaticMinusEvenLower00 -
+      2 * intrinsicStaticMinusEvenLower02 +
+      intrinsicStaticMinusEvenLower22 -
+    (1 / 2048 : ℝ) * (161 / 50)
+  let S := factorTwoIntrinsicP4MinusCrossSum -
+    (1 / 2048 : ℝ) * (139 / 420)
+  let D := factorTwoIntrinsicP4MinusCrossDifference -
+    (1 / 2048 : ℝ) * (13 / 420)
+  let F := factorTwoIntrinsicP4MinusDiagonalLower -
+    (1 / 2048 : ℝ) * (8997 / 11340)
+  let sl : ℝ := 2927 / 10000 - (1 / 2048 : ℝ) * (139 / 420)
+  let s : ℝ := 2931 / 10000 - (1 / 2048 : ℝ) * (139 / 420)
+  let dl : ℝ := 662 / 10000 - (1 / 2048 : ℝ) * (13 / 420)
+  let d : ℝ := 666 / 10000 - (1 / 2048 : ℝ) * (13 / 420)
+  let p : ℝ := A * C - X ^ 2
+  let q : ℝ := A * F - s ^ 2
+  let r : ℝ := A * d + X * s
+  rcases factorTwoIntrinsicP4MinusCross_refined_bounds with
+    ⟨hSL0, hSU0, hDL0, hDU0⟩
+  have hSL : sl < S := by
+    dsimp only [sl, S]
+    linarith
+  have hS : S < s := by
+    dsimp only [s, S]
+    linarith
+  have hDL : dl < D := by
+    dsimp only [dl, D]
+    linarith
+  have hD : D < d := by
+    dsimp only [d, D]
+    linarith
+  have hA0 : 0 < A := by
+    norm_num [A, intrinsicStaticMinusEvenLower00,
+      intrinsicStaticMinusEvenLower02, intrinsicStaticMinusEvenLower22]
+  have hX0 : 0 < X := by
+    norm_num [X, intrinsicStaticMinusEvenLower00,
+      intrinsicStaticMinusEvenLower22]
+  have hC0 : 0 < C := by
+    norm_num [C, intrinsicStaticMinusEvenLower00,
+      intrinsicStaticMinusEvenLower02, intrinsicStaticMinusEvenLower22]
+  have hS0 : 0 < S := by
+    have : 0 < sl := by norm_num [sl]
+    exact this.trans hSL
+  have hD0 : 0 < D := by
+    have : 0 < dl := by norm_num [dl]
+    exact this.trans hDL
+  have hF0 : 0 < F := by
+    norm_num [F, factorTwoIntrinsicP4MinusDiagonalLower]
+  have hp0 : 0 < p := by
+    norm_num [p, A, X, C, intrinsicStaticMinusEvenLower00,
+      intrinsicStaticMinusEvenLower02, intrinsicStaticMinusEvenLower22]
+  have hq0 : 0 < q := by
+    norm_num [q, A, F, s, intrinsicStaticMinusEvenLower00,
+      intrinsicStaticMinusEvenLower02, intrinsicStaticMinusEvenLower22,
+      factorTwoIntrinsicP4MinusDiagonalLower]
+  have hr0 : 0 < r := by
+    norm_num [r, A, X, d, s, intrinsicStaticMinusEvenLower00,
+      intrinsicStaticMinusEvenLower02, intrinsicStaticMinusEvenLower22]
+  have hrat : r ^ 2 < p * q := by
+    norm_num [r, p, q, A, X, C, F, d, s,
+      intrinsicStaticMinusEvenLower00, intrinsicStaticMinusEvenLower02,
+      intrinsicStaticMinusEvenLower22,
+      factorTwoIntrinsicP4MinusDiagonalLower]
+  have hSsq : S ^ 2 < s ^ 2 := by
+    have hs0 : 0 < s := by norm_num [s]
+    nlinarith only [hS, hS0, hs0]
+  have hSecond : q < A * F - S ^ 2 := by
+    dsimp only [q]
+    nlinarith only [hSsq]
+  have hAD : A * D < A * d := mul_lt_mul_of_pos_left hD hA0
+  have hXS : X * S < X * s := mul_lt_mul_of_pos_left hS hX0
+  have hCross : A * D + X * S < r := by
+    dsimp only [r]
+    linarith only [hAD, hXS]
+  have hCross0 : 0 < A * D + X * S := by positivity
+  have hCrossSq : (A * D + X * S) ^ 2 < r ^ 2 := by
+    nlinarith only [hCross, hCross0, hr0]
+  have hProduct : p * q < p * (A * F - S ^ 2) :=
+    mul_lt_mul_of_pos_left hSecond hp0
+  have hGap :
+      0 < (A * C - X ^ 2) * (A * F - S ^ 2) -
+        (A * D + X * S) ^ 2 := by
+    dsimp only [p] at hProduct hrat
+    nlinarith only [hProduct, hCrossSq, hrat]
+  have hAligned : 0 < retainedP024AlignedDeterminant A X C S D F := by
+    have hid := retainedP024AlignedDeterminant_strongPivot_identity A X C S D F
+    have hmul : 0 < 4 * A * retainedP024AlignedDeterminant A X C S D F := by
+      rw [hid]
+      exact hGap
+    exact pos_of_mul_pos_right hmul (by positivity : 0 ≤ 4 * A)
+  have hAeq : A = q00 + 2 * q02 + q22 := by
+    dsimp only [A, q00, q02, q22]
+    ring
+  have hXeq : X = q00 - q22 := by
+    dsimp only [X, q00, q22]
+    ring
+  have hCeq : C = q00 - 2 * q02 + q22 := by
+    dsimp only [C, q00, q02, q22]
+    ring
+  have hSeq : S = q04 + q24 := by
+    dsimp only [S, q04, q24]
+    unfold factorTwoIntrinsicP4MinusCrossSum
+    ring
+  have hDeq : D = q24 - q04 := by
+    dsimp only [D, q04, q24]
+    unfold factorTwoIntrinsicP4MinusCrossDifference
+    ring
+  have hFeq : F = q44 := by rfl
+  have hq00 : 0 < q00 := by
+    norm_num [q00, intrinsicStaticMinusEvenLower00]
+  have hminor : 0 < leadingMinorTwo q00 q02 q22 := by
+    norm_num [leadingMinorTwo, q00, q02, q22,
+      intrinsicStaticMinusEvenLower00, intrinsicStaticMinusEvenLower02,
+      intrinsicStaticMinusEvenLower22]
+  have hdetEq :
+      retainedP024AlignedDeterminant A X C S D F =
+        symmetricDeterminant q00 q02 q04 q22 q24 q44 := by
+    rw [hAeq, hXeq, hCeq, hSeq, hDeq, hFeq]
+    exact retainedP024AlignedDeterminant_eq_symmetricDeterminant
+      q00 q02 q04 q22 q24 q44
+  exact ⟨hq00, hminor, hdetEq ▸ hAligned⟩
+
+/-- The negative endpoint is strictly coercive on `P₀/P₂/P₄` after
+the retuned `1 / 2048` half-singular retention. -/
+theorem factorTwoEndpointChannelPhase_sub_oneDiv2048_halfSingular_pos_minus
+    (c0 c2 c4 : ℝ) (hne : c0 ≠ 0 ∨ c2 ≠ 0 ∨ c4 ≠ 0) :
+    0 < factorTwoEndpointChannelPhase
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+          (0 : ℝ → ℝ) (-1) 0 -
+        (1 / 2048 : ℝ) * ((1 / 2 : ℝ) *
+          factorTwoPhaseSingularWeightedEnergy
+            (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+            (0 : ℝ → ℝ) (-1) 0) := by
+  rw [factorTwoEndpointChannelPhase_intrinsicEvenP024_eq_quadratic,
+    half_singularWeightedEnergy_intrinsicEvenP024]
+  have hgates := retainedP024MinusLower_gates
+  have hlower := symmetricQuadratic_pos
+    (intrinsicStaticMinusEvenLower00 - (1 / 2048 : ℝ) * 3)
+    (intrinsicStaticMinusEvenLower02 - (1 / 2048 : ℝ) * (1 / 2))
+    (factorTwoIntrinsicFourP45Cross04 (-1) -
+      (1 / 2048 : ℝ) * (3 / 20))
+    (intrinsicStaticMinusEvenLower22 - (1 / 2048 : ℝ) * (61 / 50))
+    (factorTwoIntrinsicFourP45Cross24 (-1) -
+      (1 / 2048 : ℝ) * (19 / 105))
+    (factorTwoIntrinsicP4MinusDiagonalLower -
+      (1 / 2048 : ℝ) * (8997 / 11340))
+    hgates.1 hgates.2.1 hgates.2.2 c0 c2 c4 hne
+  have hlower' :
+      0 < factorTwoIntrinsicP024MinusLowerQuadratic c0 c2 c4 -
+        (1 / 2048 : ℝ) *
+          symmetricQuadratic 3 (1 / 2) (3 / 20) (61 / 50)
+            (19 / 105) (8997 / 11340) c0 c2 c4 := by
+    convert hlower using 1
+    unfold factorTwoIntrinsicP024MinusLowerQuadratic symmetricQuadratic
+    norm_num
+    ring
+  have hcompare :=
+    factorTwoIntrinsicP024MinusLowerQuadratic_le_exact c0 c2 c4
+  nlinarith
 
 set_option maxHeartbeats 200000
 
