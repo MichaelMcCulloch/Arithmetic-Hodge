@@ -54,6 +54,21 @@ private theorem projectedOddRemainderLoss_add_reserve_le
   norm_num [harmonic, Finset.sum_range_succ] at heven ⊢
   linarith
 
+/-- At the genuine ninth even moment gap, the raw logarithmic form pays the
+complete projected loss without spending any endpoint potential.  A full
+`1 / 100` ordinary-energy reserve remains. -/
+private theorem projectedEvenRemainderLoss_add_nine_reserve_le
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    factorTwoIntrinsicProjectedEvenRemainderLoss a b +
+        Real.log 2 / 2 + (1 / 100 : ℝ) ≤
+      (harmonic 9 : ℝ) := by
+  have heven := projectedEvenRemainderLoss_lt_4926971_div_2000000 a b hab
+  have hlog : Real.log 2 < (7 / 10 : ℝ) :=
+    log_two_lt_one_thousand_seven_hundred_thirty_three_div_two_thousand_five_hundred.trans
+      (by norm_num)
+  norm_num [harmonic, Finset.sum_range_succ] at heven ⊢
+  linarith
+
 /-- The cutoff-eight/cutoff-nine phase retains explicit even and odd `L²`
 reserves and the full unused odd endpoint-potential half. -/
 theorem factorTwoEndpointChannelPhase_quantitative_of_eight_nine_residual
@@ -77,6 +92,42 @@ theorem factorTwoEndpointChannelPhase_quantitative_of_eight_nine_residual
   have hprotected := raw_add_half_potential_sub_half_logMass_le_protected
     e o hec hoc helocal holocal a b hab
   have heBudget := projectedEvenRemainderLoss_add_reserve_le a b hab
+  have hoBudget := projectedOddRemainderLoss_add_reserve_le a b hab
+  have hremainder := neg_factorTwoIntrinsicSignedRemainder_le_projected_energy
+    e o hec hoc he ho he0 a b hab
+  have heEnergy := factorTwoIntrinsicEnergy_nonneg e
+  have hoEnergy := factorTwoIntrinsicEnergy_nonneg o
+  have heBudgetScaled := mul_le_mul_of_nonneg_right heBudget heEnergy
+  have hoBudgetScaled := mul_le_mul_of_nonneg_right hoBudget hoEnergy
+  rw [factorTwoEndpointChannelPhase_eq_protected_add_signedRemainder
+    e o hec hoc a b]
+  nlinarith
+
+/-- The cutoff-nine/cutoff-nine phase retains both endpoint-potential halves,
+as well as stronger rational ordinary-energy reserves.  Unlike the older
+cutoff-eight estimate, the even endpoint potential is not consumed to repair
+the first harmonic gap. -/
+theorem factorTwoEndpointChannelPhase_quantitative_of_nine_nine_residual
+    (e o : ℝ → ℝ) (hec : Continuous e) (hoc : Continuous o)
+    (he : Function.Even e) (ho : Function.Odd o)
+    (he0 : centeredEvenP0Coefficient e = 0)
+    (helocal : LocallyLipschitzOn (Icc (-1) 1) e)
+    (holocal : LocallyLipschitzOn (Icc (-1) 1) o)
+    (heLow : centeredLegendreMomentsVanishBelow e 9)
+    (hoLow : centeredLegendreMomentsVanishBelow o 9)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    (1 / 100 : ℝ) * factorTwoIntrinsicEnergy e +
+        (1 / 2500 : ℝ) * factorTwoIntrinsicEnergy o +
+        (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy e +
+        (1 / 2 : ℝ) * factorTwoIntrinsicPotentialEnergy o ≤
+      factorTwoEndpointChannelPhase e o a b := by
+  have heRaw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    e hec helocal 9 heLow
+  have hoRaw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    o hoc holocal 9 hoLow
+  have hprotected := raw_add_half_potential_sub_half_logMass_le_protected
+    e o hec hoc helocal holocal a b hab
+  have heBudget := projectedEvenRemainderLoss_add_nine_reserve_le a b hab
   have hoBudget := projectedOddRemainderLoss_add_reserve_le a b hab
   have hremainder := neg_factorTwoIntrinsicSignedRemainder_le_projected_energy
     e o hec hoc he ho he0 a b hab
