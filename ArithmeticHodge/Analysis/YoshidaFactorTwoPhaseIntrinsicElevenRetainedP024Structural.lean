@@ -1187,6 +1187,114 @@ theorem factorTwoEndpointChannelPhase_sub_oneDiv2048_halfSingular_pos_minus
     factorTwoIntrinsicP024MinusLowerQuadratic_le_exact c0 c2 c4
   nlinarith
 
+/-! ## Exact affine disk interpolation -/
+
+/-- The alternating phase coordinate vanishes identically on the even
+`P₀/P₂/P₄` core, so the endpoint quadratic formula holds for every `b`. -/
+theorem factorTwoEndpointChannelPhase_intrinsicEvenP024_eq_quadratic_disk
+    (c0 c2 c4 a b : ℝ) :
+    factorTwoEndpointChannelPhase
+        (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+        (0 : ℝ → ℝ) a b =
+      symmetricQuadratic
+        (factorTwoStructuralPhaseLow00 a)
+        (factorTwoStructuralPhaseLow02 a)
+        (factorTwoIntrinsicFourP45Cross04 a)
+        (factorTwoStructuralPhaseLow22 a)
+        (factorTwoIntrinsicFourP45Cross24 a)
+        (factorTwoIntrinsicP4PhaseDiagonal a)
+        c0 c2 c4 := by
+  let w := factorTwoIntrinsicEvenP024Profile c0 c2 c4
+  have hAlt : factorTwoCenteredAlternatingCoupling w (0 : ℝ → ℝ) = 0 := by
+    simpa only [zero_smul, zero_mul] using
+      (factorTwoCenteredAlternatingCoupling_smul_right 0 w w)
+  have hzero :=
+    factorTwoEndpointChannelPhase_intrinsicEvenP024_eq_quadratic
+      c0 c2 c4 a
+  change factorTwoEndpointChannelPhase w (0 : ℝ → ℝ) a b = _
+  change factorTwoEndpointChannelPhase w (0 : ℝ → ℝ) a 0 = _ at hzero
+  unfold factorTwoEndpointChannelPhase at hzero ⊢
+  rw [hAlt] at hzero ⊢
+  simpa only [mul_zero, add_zero] using hzero
+
+/-- Exact structural coercivity of the retuned retained `P₀/P₂/P₄` pencil
+throughout the closed phase disk.  The charged quadratic is the convex
+interpolation of its two signed endpoints; no phase subdivision is used. -/
+theorem factorTwoEndpointChannelPhase_sub_oneDiv2048_halfSingular_pos_p024_disk
+    (c0 c2 c4 a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (hne : c0 ≠ 0 ∨ c2 ≠ 0 ∨ c4 ≠ 0) :
+    0 < factorTwoEndpointChannelPhase
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+          (0 : ℝ → ℝ) a b -
+        (1 / 2048 : ℝ) * ((1 / 2 : ℝ) *
+          factorTwoPhaseSingularWeightedEnergy
+            (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+            (0 : ℝ → ℝ) a b) := by
+  let lambda : ℝ := (1 + a) / 2
+  let mu : ℝ := (1 - a) / 2
+  have haLower : -1 ≤ a := by
+    nlinarith [sq_nonneg b, sq_nonneg (a + 1)]
+  have haUpper : a ≤ 1 := by
+    nlinarith [sq_nonneg b, sq_nonneg (a - 1)]
+  have hlambda : 0 ≤ lambda := by
+    dsimp only [lambda]
+    linarith
+  have hmu : 0 ≤ mu := by
+    dsimp only [mu]
+    linarith
+  have hsum : lambda + mu = 1 := by
+    dsimp only [lambda, mu]
+    ring
+  have hPlus :=
+    factorTwoEndpointChannelPhase_sub_oneDiv2048_halfSingular_pos_plus
+      c0 c2 c4 hne
+  have hMinus :=
+    factorTwoEndpointChannelPhase_sub_oneDiv2048_halfSingular_pos_minus
+      c0 c2 c4 hne
+  have hAffine :
+      factorTwoEndpointChannelPhase
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+          (0 : ℝ → ℝ) a b -
+        (1 / 2048 : ℝ) * ((1 / 2 : ℝ) *
+          factorTwoPhaseSingularWeightedEnergy
+            (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+            (0 : ℝ → ℝ) a b) =
+      lambda *
+        (factorTwoEndpointChannelPhase
+            (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+            (0 : ℝ → ℝ) 1 0 -
+          (1 / 2048 : ℝ) * ((1 / 2 : ℝ) *
+            factorTwoPhaseSingularWeightedEnergy
+              (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+              (0 : ℝ → ℝ) 1 0)) +
+      mu *
+        (factorTwoEndpointChannelPhase
+            (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+            (0 : ℝ → ℝ) (-1) 0 -
+          (1 / 2048 : ℝ) * ((1 / 2 : ℝ) *
+            factorTwoPhaseSingularWeightedEnergy
+              (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+              (0 : ℝ → ℝ) (-1) 0)) := by
+    rw [factorTwoEndpointChannelPhase_intrinsicEvenP024_eq_quadratic_disk,
+      factorTwoEndpointChannelPhase_intrinsicEvenP024_eq_quadratic_disk,
+      factorTwoEndpointChannelPhase_intrinsicEvenP024_eq_quadratic_disk,
+      half_singularWeightedEnergy_intrinsicEvenP024,
+      half_singularWeightedEnergy_intrinsicEvenP024,
+      half_singularWeightedEnergy_intrinsicEvenP024]
+    dsimp only [lambda, mu]
+    unfold symmetricQuadratic factorTwoStructuralPhaseLow00
+      factorTwoStructuralPhaseLow02 factorTwoStructuralPhaseLow22
+      factorTwoIntrinsicFourP45Cross04 factorTwoIntrinsicFourP45Cross24
+      factorTwoIntrinsicP4PhaseDiagonal
+    ring
+  rw [hAffine]
+  rcases hlambda.eq_or_lt with hlambdaZero | hlambdaPos
+  · have hmuOne : mu = 1 := by linarith
+    rw [← hlambdaZero, zero_mul, zero_add, hmuOne, one_mul]
+    exact hMinus
+  · exact add_pos_of_pos_of_nonneg
+      (mul_pos hlambdaPos hPlus) (mul_nonneg hmu hMinus.le)
+
 set_option maxHeartbeats 200000
 
 end
