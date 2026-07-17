@@ -30,6 +30,16 @@ def factorTwoIntrinsicElevenSelectorGram
     Matrix ι ι ℝ := fun i j ↦
   factorTwoIntrinsicElevenSelectorCrossDual W (F i) (F j) (q i) (q j)
 
+/-- Polarized selector pairings are symmetric over the real scalars. -/
+theorem factorTwoIntrinsicElevenSelectorCrossDual_comm
+    (W F G : ℝ → ℝ) (p q : ℝ[X]) :
+    factorTwoIntrinsicElevenSelectorCrossDual W F G p q =
+      factorTwoIntrinsicElevenSelectorCrossDual W G F q p := by
+  unfold factorTwoIntrinsicElevenSelectorCrossDual
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  ring
+
 /-- Linear synthesis of a finite representer family. -/
 def factorTwoIntrinsicElevenSelectorRepresenterSum
     {ι : Type*} [Fintype ι]

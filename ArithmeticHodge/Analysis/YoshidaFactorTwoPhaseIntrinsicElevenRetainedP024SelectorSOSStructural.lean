@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.ThreeByThreePositiveMixedDeterminant
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenSelectorGramStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorStructural
 
 set_option autoImplicit false
@@ -19,6 +20,7 @@ open YoshidaFactorTwoPhaseIntrinsicElevenRetainedConstrainedWeightedDualStructur
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedRepresentersStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedSelectorHomogeneityStructural
+open YoshidaFactorTwoPhaseIntrinsicElevenSelectorGramStructural
 open YoshidaFactorTwoPhaseIntrinsicFourP45MixedExpansion
 open YoshidaFactorTwoPhaseIntrinsicSixP4Schur
 open YoshidaFactorTwoPhaseLowSchur
@@ -696,6 +698,105 @@ def retainedP024SelectorBasePolynomial (i : Fin 3) : ℝ[X] :=
       retainedP024SelectorPlus4] i)
     (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
       retainedP024SelectorMinus4] i)
+
+/-- The endpoint-average normalized residual belongs to the retained weighted
+`L²` space. -/
+theorem retainedP024BaseSelectorResidual_div_sqrt_memLp_two (i : Fin 3) :
+    MemLp (fun x ↦
+      factorTwoIntrinsicElevenSelectorResidual
+          (retainedEvenBaseRepresenterAt
+            (1 / 512 : ℝ) (shiftedLegendreReal (2 * i.1)))
+          (retainedP024SelectorBasePolynomial i) x /
+        Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let qPlus : ℝ[X] :=
+    ![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+      retainedP024SelectorPlus4] i
+  let qMinus : ℝ[X] :=
+    ![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+      retainedP024SelectorMinus4] i
+  let p : ℝ[X] := shiftedLegendreReal (2 * i.1)
+  have hPlus :=
+    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      (1 / 512 : ℝ) p 0 qPlus 1 0
+  have hMinus :=
+    factorTwoIntrinsicElevenRetainedEvenSelectorResidual_div_sqrt_memLp_two
+      (1 / 512 : ℝ) p 0 qMinus (-1) 0
+  have hAverage := (hPlus.add hMinus).const_mul (1 / 2 : ℝ)
+  apply (memLp_congr_ae (μ := volume.restrict (Ioc (-1 : ℝ) 1)) ?_).mpr
+    hAverage
+  filter_upwards [] with x
+  rw [show retainedP024SelectorBasePolynomial i =
+      retainedP024BaseSelector qPlus qMinus by
+        rfl,
+    retainedP024BaseSelectorResidual_eq_endpoint_half_add
+      (1 / 512 : ℝ) p qPlus qMinus x]
+  dsimp only [Pi.add_apply]
+  ring
+
+/-- The base and symmetric residual rows as one six-row family. -/
+def retainedP024SelectorWholeEvenRepresenter :
+    Fin 3 ⊕ Fin 3 → ℝ → ℝ
+  | Sum.inl i => retainedEvenBaseRepresenterAt
+      (1 / 512 : ℝ) (shiftedLegendreReal (2 * i.1))
+  | Sum.inr i => retainedEvenSymmetricRepresenterAt
+      (1 / 512 : ℝ) (shiftedLegendreReal (2 * i.1))
+
+/-- Matching base and symmetric polynomial selectors. -/
+def retainedP024SelectorWholeEvenPolynomial :
+    Fin 3 ⊕ Fin 3 → ℝ[X]
+  | Sum.inl i => retainedP024SelectorBasePolynomial i
+  | Sum.inr i => retainedP024SymmetricSelector
+      (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+        retainedP024SelectorPlus4] i)
+      (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+        retainedP024SelectorMinus4] i)
+
+/-- Exact Gram of the single combined base--symmetric retained-even residual
+square. -/
+def retainedP024SelectorWholeEvenGram :
+    Matrix (Fin 3 ⊕ Fin 3) (Fin 3 ⊕ Fin 3) ℝ :=
+  factorTwoIntrinsicElevenSelectorGram
+    factorTwoIntrinsicElevenRetainedEvenWeight
+    retainedP024SelectorWholeEvenRepresenter
+    retainedP024SelectorWholeEvenPolynomial
+
+/-- The combined six-row Gram is literally one retained-even selector dual,
+not a collection of independently bounded entries. -/
+theorem retainedP024SelectorWholeEvenDual_eq_matrixQuadratic
+    (c : Fin 3 ⊕ Fin 3 → ℝ) :
+    factorTwoIntrinsicElevenSelectorDual
+        factorTwoIntrinsicElevenRetainedEvenWeight
+        (factorTwoIntrinsicElevenSelectorRepresenterSum
+          retainedP024SelectorWholeEvenRepresenter c)
+        (factorTwoIntrinsicElevenSelectorPolynomialSum
+          retainedP024SelectorWholeEvenPolynomial c) =
+      star c ⬝ᵥ (retainedP024SelectorWholeEvenGram *ᵥ c) := by
+  apply factorTwoIntrinsicElevenSelectorDual_sum_eq_matrixQuadratic
+  intro i j
+  apply intervalIntegrable_selectorCross_of_memLp
+    factorTwoIntrinsicElevenRetainedEvenWeight
+    (retainedP024SelectorWholeEvenRepresenter i)
+    (retainedP024SelectorWholeEvenRepresenter j)
+    (retainedP024SelectorWholeEvenPolynomial i)
+    (retainedP024SelectorWholeEvenPolynomial j)
+    (fun x hx ↦ factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc hx)
+  · rcases i with i | i
+    · exact retainedP024BaseSelectorResidual_div_sqrt_memLp_two i
+    · exact retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+        (1 / 512 : ℝ) (shiftedLegendreReal (2 * i.1))
+        (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+          retainedP024SelectorPlus4] i)
+        (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+          retainedP024SelectorMinus4] i)
+  · rcases j with j | j
+    · exact retainedP024BaseSelectorResidual_div_sqrt_memLp_two j
+    · exact retainedEvenSymmetricSelectorResidual_div_sqrt_memLp_two
+        (1 / 512 : ℝ) (shiftedLegendreReal (2 * j.1))
+        (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+          retainedP024SelectorPlus4] j)
+        (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+          retainedP024SelectorMinus4] j)
 
 /-- Oriented weighted Gram from the endpoint-average residual to the
 symmetric half-difference residual.  Unlike the ordinary selector Grams this
