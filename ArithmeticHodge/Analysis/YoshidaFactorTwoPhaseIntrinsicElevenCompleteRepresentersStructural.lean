@@ -454,7 +454,7 @@ private theorem intervalIntegrable_forwardOddRepresenter_mul
   unfold factorTwoIntrinsicElevenForwardOddRepresenter
   ring
 
-private theorem intervalIntegrable_reflectedEvenRepresenter_mul
+theorem intervalIntegrable_reflectedEvenRepresenter_mul
     (pE pO : ℝ[X]) (r : ℝ → ℝ) (hr : Continuous r) (a b : ℝ) :
     IntervalIntegrable (fun x ↦
       factorTwoIntrinsicElevenReflectedEvenRepresenter pE pO a b x * r x)
@@ -466,7 +466,7 @@ private theorem intervalIntegrable_reflectedEvenRepresenter_mul
   unfold factorTwoIntrinsicElevenReflectedEvenRepresenter
   ring
 
-private theorem intervalIntegrable_reflectedOddRepresenter_mul
+theorem intervalIntegrable_reflectedOddRepresenter_mul
     (pE pO : ℝ[X]) (r : ℝ → ℝ) (hr : Continuous r) (a b : ℝ) :
     IntervalIntegrable (fun x ↦
       factorTwoIntrinsicElevenReflectedOddRepresenter pE pO a b x * r x)
@@ -510,6 +510,40 @@ private theorem intervalIntegrable_primeOddRepresenter_mul
     (-primeCoefficient)).congr
   intro x _hx
   unfold factorTwoIntrinsicElevenPrimeOddRepresenter
+  ring
+
+/-- The complete even representer is interval-integrable against every
+continuous residual profile. -/
+theorem intervalIntegrable_completeEvenRepresenter_mul
+    (pE pO : ℝ[X]) (r : ℝ → ℝ) (hr : Continuous r) (a b : ℝ) :
+    IntervalIntegrable (fun x ↦
+      factorTwoIntrinsicElevenEvenMixedRepresenter pE pO a b x * r x)
+      volume (-1) 1 := by
+  have hC := intervalIntegrable_cleanSurvivor_mul pE r hr
+  have hA := intervalIntegrable_analyticEvenRepresenter_mul pE pO r hr a b
+  have hF := intervalIntegrable_forwardEvenRepresenter_mul pE pO r hr a b
+  have hR := intervalIntegrable_reflectedEvenRepresenter_mul pE pO r hr a b
+  have hP := intervalIntegrable_primeEvenRepresenter_mul pE pO r hr a b
+  apply ((((hC.add hA).add hF).add hR).add hP).congr
+  intro x _hx
+  unfold factorTwoIntrinsicElevenEvenMixedRepresenter
+  ring
+
+/-- The complete odd representer is interval-integrable against every
+continuous residual profile. -/
+theorem intervalIntegrable_completeOddRepresenter_mul
+    (pE pO : ℝ[X]) (r : ℝ → ℝ) (hr : Continuous r) (a b : ℝ) :
+    IntervalIntegrable (fun x ↦
+      factorTwoIntrinsicElevenOddMixedRepresenter pE pO a b x * r x)
+      volume (-1) 1 := by
+  have hC := intervalIntegrable_cleanSurvivor_mul pO r hr
+  have hA := intervalIntegrable_analyticOddRepresenter_mul pE pO r hr a b
+  have hF := intervalIntegrable_forwardOddRepresenter_mul pE pO r hr a b
+  have hR := intervalIntegrable_reflectedOddRepresenter_mul pE pO r hr a b
+  have hP := intervalIntegrable_primeOddRepresenter_mul pE pO r hr a b
+  apply ((((hC.add hA).add hF).add hR).add hP).congr
+  intro x _hx
+  unfold factorTwoIntrinsicElevenOddMixedRepresenter
   ring
 
 private theorem intervalIntegrable_correlationBilinear_div_two_sub
