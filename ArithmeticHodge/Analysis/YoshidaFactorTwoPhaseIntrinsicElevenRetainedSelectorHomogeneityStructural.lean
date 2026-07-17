@@ -1078,6 +1078,21 @@ theorem retainedOddMixedRepresenterAt_threeSelectorPolynomial_on_Icc
       c0 c2 c4 a b q0 q2 q4 x hx]
   ring
 
+/-- A pointwise equality of selector representers on the physical interval
+preserves their one-channel weighted dual cost. -/
+theorem factorTwoIntrinsicElevenSelectorDual_congr_on_Icc
+    (W F G : ℝ → ℝ) (q : ℝ[X])
+    (h : ∀ x ∈ Icc (-1 : ℝ) 1, F x = G x) :
+    factorTwoIntrinsicElevenSelectorDual W F q =
+      factorTwoIntrinsicElevenSelectorDual W G q := by
+  unfold factorTwoIntrinsicElevenSelectorDual
+  apply intervalIntegral.integral_congr
+  intro x hx
+  rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+  dsimp only
+  unfold factorTwoIntrinsicElevenSelectorResidual
+  rw [h x hx]
+
 /-- A pointwise equality of both retained rows on the physical interval
 preserves every two-channel selector cost. -/
 theorem factorTwoIntrinsicElevenRetainedConstrainedSelectorDual_congr_on_Icc
