@@ -75,6 +75,25 @@ theorem determinant_bound_add
     1 e₁ o₁ j₁ e₂ o₂ j₂ (by norm_num)
       he₁ ho₁ he₂ ho₂ (by simpa using h₁) (by simpa using h₂)
 
+/-- Complement-preserving determinant addition.  One mixed family may spend
+the named reserves `x` and `y`; a second family may spend exactly the
+remaining diagonal forms.  Adding the two determinant bounds then controls
+their coupled sum without a triangle inequality or square roots. -/
+theorem determinant_bound_add_complements
+    (low tail x y z s : ℝ)
+    (hx : 0 ≤ x) (hy : 0 ≤ y)
+    (hlow : 0 ≤ low - x) (htail : 0 ≤ tail - y)
+    (hz : z ^ 2 ≤ x * y)
+    (hs : s ^ 2 ≤ (low - x) * (tail - y)) :
+    (z + s) ^ 2 ≤ low * tail := by
+  have hz' : (2 * z) ^ 2 ≤ 4 * x * y := by nlinarith
+  have hs' : (2 * s) ^ 2 ≤ 4 * (low - x) * (tail - y) := by
+    nlinarith
+  have hsum := determinant_bound_add
+    x y (2 * z) (low - x) (tail - y) (2 * s)
+    hx hy hlow htail hz' hs'
+  nlinarith
+
 /-- A positive `2 × 2` low block plus a tail stays nonnegative when the two
 low-to-tail functionals satisfy the exact adjugate Schur bound. -/
 theorem quadratic_add_tail_nonneg
