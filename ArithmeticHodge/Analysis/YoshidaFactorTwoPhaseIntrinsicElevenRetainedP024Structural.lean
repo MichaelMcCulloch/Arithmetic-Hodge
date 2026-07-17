@@ -237,6 +237,27 @@ theorem half_singularWeightedEnergy_intrinsicEvenP024_zero
 
 /-! ## Structural coercivity at the first viable retained charge -/
 
+/-- Determinant in the aligned basis
+`(P₀ + P₂, P₂ - P₀, P₄)`.  The signs correspond to the matrix
+`[[A, -X, S], [-X, C, D], [S, D, F]]`. -/
+def retainedP024AlignedDeterminant
+    (A X C S D F : ℝ) : ℝ :=
+  (F * (A * C - X ^ 2) - A * D ^ 2 - C * S ^ 2 -
+    2 * X * S * D) / 4
+
+/-- Strong-pivot Schur identity for the retained aligned determinant.
+
+It exposes the only delicate endpoint comparison as a strict Cauchy gap
+between the weak coordinate and `P₄`, after both have been projected off
+the strong `P₀ + P₂` coordinate. -/
+theorem retainedP024AlignedDeterminant_strongPivot_identity
+    (A X C S D F : ℝ) :
+    4 * A * retainedP024AlignedDeterminant A X C S D F =
+      (A * C - X ^ 2) * (A * F - S ^ 2) -
+        (A * D + X * S) ^ 2 := by
+  unfold retainedP024AlignedDeterminant
+  ring
+
 set_option maxHeartbeats 800000
 
 /-- The phase-zero clean matrix remains positive definite after subtracting
