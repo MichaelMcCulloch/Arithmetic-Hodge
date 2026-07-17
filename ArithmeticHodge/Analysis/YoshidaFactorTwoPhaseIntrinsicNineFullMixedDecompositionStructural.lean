@@ -330,7 +330,7 @@ theorem integral_linear_mul_residualAlternatingCrossSum_eq_zero
     ring,
     intervalIntegral.integral_add hoInt heInt, hoRow', heRow', add_zero]
 
-/-! ## The honest surviving cutoff-nine aggregate -/
+/-! ## The honest surviving low--residual aggregate -/
 
 /-- The five nonpolynomial families which genuinely survive between a
 cutoff-nine low pair and its moment-nine residual pair.  The endpoint
@@ -383,7 +383,7 @@ def factorTwoIntrinsicNineNonpolynomialMixed
           (factorTwoPrimeShift / yoshidaEndpointA))
 
 set_option maxHeartbeats 800000 in
-/-- For transported low polynomials below the moment cutoff, the complete
+/-- For transported low polynomials below an arbitrary moment cutoff, the complete
 endpoint low--residual half-cross is the nonsingular regular half-cross plus
 exactly the five-family nonpolynomial aggregate.  The raw logarithmic and
 both ordinary `L²` rows have vanished structurally. -/
@@ -392,9 +392,10 @@ theorem factorTwoEndpointLowTailMixed_centeredPolynomialLift_eq
     (heRc : Continuous eR) (hoRc : Continuous oR)
     (heLocal : LocallyLipschitzOn (Icc (-1) 1) eR)
     (hoLocal : LocallyLipschitzOn (Icc (-1) 1) oR)
-    (heGap : centeredLegendreMomentsVanishBelow eR 9)
-    (hoGap : centeredLegendreMomentsVanishBelow oR 9)
-    (hpEdeg : pE.natDegree < 9) (hpOdeg : pO.natDegree < 9)
+    {k : ℕ}
+    (heGap : centeredLegendreMomentsVanishBelow eR k)
+    (hoGap : centeredLegendreMomentsVanishBelow oR k)
+    (hpEdeg : pE.natDegree < k) (hpOdeg : pO.natDegree < k)
     (a b : ℝ) :
     factorTwoEndpointLowTailMixed
         (centeredPolynomialLift pE) eR
