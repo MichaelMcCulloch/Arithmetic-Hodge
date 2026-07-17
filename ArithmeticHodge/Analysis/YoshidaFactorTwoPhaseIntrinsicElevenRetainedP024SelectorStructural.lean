@@ -10,6 +10,7 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP
 open ThreeByThreeRankOneSchur
 open ShiftedLegendreLogEnergyOrthogonalProjection
 open ShiftedLegendreOrthogonality
+open YoshidaFactorTwoPhaseIntrinsicElevenConcreteSelectorsStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
@@ -526,6 +527,121 @@ theorem retainedConstrainedSelectorDual_le_boundary_chord
     linarith
   have hscaled := mul_le_mul_of_nonneg_right hb hAlt
   linarith
+
+/-- The phase-boundary cost appearing on the right side of
+`retainedConstrainedSelectorDual_le_boundary_chord`. -/
+def retainedP024BoundaryChordCost
+    (gamma : ℝ) (p qPlus qMinus qAlt : ℝ[X]) (a : ℝ) : ℝ :=
+  retainedP024ChordPlus a *
+      factorTwoIntrinsicElevenSelectorDual
+        factorTwoIntrinsicElevenRetainedEvenWeight
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+          gamma p 0 1 0) qPlus +
+    retainedP024ChordMinus a *
+      factorTwoIntrinsicElevenSelectorDual
+        factorTwoIntrinsicElevenRetainedEvenWeight
+        (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+          gamma p 0 (-1) 0) qMinus -
+    (1 - a ^ 2) *
+      factorTwoIntrinsicElevenSelectorDual
+        factorTwoIntrinsicElevenRetainedEvenWeight
+        (retainedEvenSymmetricRepresenterAt gamma p)
+        (retainedP024SymmetricSelector qPlus qMinus) +
+    (1 - a ^ 2) * factorTwoIntrinsicElevenSelectorDual
+      factorTwoIntrinsicElevenRetainedOddWeight
+      (retainedOddAlternatingRepresenterAt gamma p) qAlt
+
+/-- A single boundary-pencil inequality for three endpoint selector families
+constructs the production selectors at every point of the phase disk.  This
+is the structural replacement for checking phase-dependent pivots pointwise. -/
+theorem exists_sharpRetunedP024Selector_of_boundary_chord
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (qP0 qP2 qP4 qM0 qM2 qM4 qA0 qA2 qA4 : ℝ[X])
+    (hqP0 : qP0.natDegree < 11) (hqP2 : qP2.natDegree < 11)
+    (hqP4 : qP4.natDegree < 11) (hqM0 : qM0.natDegree < 11)
+    (hqM2 : qM2.natDegree < 11) (hqM4 : qM4.natDegree < 11)
+    (hqA0 : qA0.natDegree < 11) (hqA2 : qA2.natDegree < 11)
+    (hqA4 : qA4.natDegree < 11)
+    (hboundary : ∀ c0 c2 c4 : ℝ,
+      retainedP024BoundaryChordCost (1 / 512 : ℝ)
+          (retainedP024Polynomial c0 c2 c4)
+          (threeSelectorPolynomial c0 c2 c4 qP0 qP2 qP4)
+          (threeSelectorPolynomial c0 c2 c4 qM0 qM2 qM4)
+          (threeSelectorPolynomial c0 c2 c4 qA0 qA2 qA4) a ≤
+        symmetricQuadratic
+          (retainedP024SharpLow00 a)
+          (retainedP024SharpLow02 a)
+          (retainedP024SharpLow04 a)
+          (retainedP024SharpLow22 a)
+          (retainedP024SharpLow24 a)
+          (retainedP024SharpLow44 a)
+          c0 c2 c4)
+    (c0 c2 c4 : ℝ) :
+    ∃ qE qO : ℝ[X],
+      qE.natDegree < 11 ∧ qO.natDegree < 11 ∧
+      factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+          (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            (1 / 512 : ℝ) (retainedP024Polynomial c0 c2 c4) 0 a b)
+          (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+            (1 / 512 : ℝ) (retainedP024Polynomial c0 c2 c4) 0 a b)
+          qE qO ≤
+        factorTwoEndpointChannelPhase
+            (centeredPolynomialLift (retainedP024Polynomial c0 c2 c4))
+            (centeredPolynomialLift 0) a b -
+          (1 / 8192 : ℝ) * factorTwoPhaseSingularWeightedEnergy
+            (centeredPolynomialLift (retainedP024Polynomial c0 c2 c4))
+            (centeredPolynomialLift 0) a b := by
+  let qPlus := threeSelectorPolynomial c0 c2 c4 qP0 qP2 qP4
+  let qMinus := threeSelectorPolynomial c0 c2 c4 qM0 qM2 qM4
+  let qAlt := threeSelectorPolynomial c0 c2 c4 qA0 qA2 qA4
+  let qE := retainedP024EvenChordSelector a qPlus qMinus
+  let qO := retainedP024OddChordSelector b qAlt
+  have hqPlus : qPlus.natDegree < 11 :=
+    threeSelectorPolynomial_natDegree_lt
+      c0 c2 c4 qP0 qP2 qP4 hqP0 hqP2 hqP4
+  have hqMinus : qMinus.natDegree < 11 :=
+    threeSelectorPolynomial_natDegree_lt
+      c0 c2 c4 qM0 qM2 qM4 hqM0 hqM2 hqM4
+  have hqAlt : qAlt.natDegree < 11 :=
+    threeSelectorPolynomial_natDegree_lt
+      c0 c2 c4 qA0 qA2 qA4 hqA0 hqA2 hqA4
+  have hqE : qE.natDegree < 11 := by
+    dsimp only [qE, retainedP024EvenChordSelector]
+    exact natDegree_add_lt_eleven _ _
+      (natDegree_smul_lt_eleven _ _ hqPlus)
+      (natDegree_smul_lt_eleven _ _ hqMinus)
+  have hqO : qO.natDegree < 11 := by
+    dsimp only [qO, retainedP024OddChordSelector]
+    exact natDegree_smul_lt_eleven _ _ hqAlt
+  refine ⟨qE, qO, hqE, hqO, ?_⟩
+  have hphase := retainedConstrainedSelectorDual_le_boundary_chord
+    (1 / 512 : ℝ) (retainedP024Polynomial c0 c2 c4)
+      qPlus qMinus qAlt a b hab
+  have hfinite :
+      factorTwoIntrinsicElevenRetainedConstrainedSelectorDual
+          (factorTwoIntrinsicElevenRetainedEvenMixedRepresenterAt
+            (1 / 512 : ℝ) (retainedP024Polynomial c0 c2 c4) 0 a b)
+          (factorTwoIntrinsicElevenRetainedOddMixedRepresenterAt
+            (1 / 512 : ℝ) (retainedP024Polynomial c0 c2 c4) 0 a b)
+          qE qO ≤
+        symmetricQuadratic
+          (retainedP024SharpLow00 a)
+          (retainedP024SharpLow02 a)
+          (retainedP024SharpLow04 a)
+          (retainedP024SharpLow22 a)
+          (retainedP024SharpLow24 a)
+          (retainedP024SharpLow44 a)
+          c0 c2 c4 := by
+    exact hphase.trans (by
+      simpa only [qE, qO, qPlus, qMinus, qAlt,
+        retainedP024BoundaryChordCost] using hboundary c0 c2 c4)
+  have hzero : centeredPolynomialLift (0 : ℝ[X]) = (0 : ℝ → ℝ) := by
+    funext x
+    unfold centeredPolynomialLift
+    simp
+  rw [centeredPolynomialLift_retainedP024Polynomial, hzero,
+    retainedP024SharpLowComplement_eq_symmetricQuadratic]
+  exact hfinite
 
 end
 
