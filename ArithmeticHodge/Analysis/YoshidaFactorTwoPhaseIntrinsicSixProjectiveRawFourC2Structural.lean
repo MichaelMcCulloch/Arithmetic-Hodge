@@ -794,7 +794,9 @@ private theorem centeredPullback_p4 (t : ℝ) :
   unfold centeredPullback factorTwoCenteredP4
   ring
 
-private theorem centeredRawLogEnergy_p4_eq :
+/-- Exact centered raw logarithmic energy of the intrinsic degree-four
+Legendre mode. -/
+theorem centeredRawLogEnergy_factorTwoCenteredP4 :
     centeredRawLogEnergy factorTwoCenteredP4 = (50 / 27 : ℝ) := by
   let p : ℝ[X] := shiftedLegendreReal 4
   let pfun : unitInterval → ℝ := fun t ↦ p.eval (t : ℝ)
@@ -1066,7 +1068,7 @@ private theorem c44_lt : c44 < (8 / 25 : ℝ) := by
   have hhyper := hyperbolicQuadratic_p4_lt
   have hlog := strict_log_two_fine_bounds.1
   unfold c44 yoshidaEndpointOddCleanQuadratic
-  rw [centeredRawLogEnergy_p4_eq,
+  rw [centeredRawLogEnergy_factorTwoCenteredP4,
     integral_endpointPotential_mul_factorTwoCenteredP4_sq,
     integral_factorTwoCenteredP4_sq]
   norm_num at hmass hregScaled hhyper hlog ⊢
@@ -1083,7 +1085,7 @@ private theorem c44_lt_three_hundred_fifteen_thousandths :
   have hhyper := hyperbolicQuadratic_p4_lt_one_div_hundred_million
   have hlog := strict_log_two_fine_bounds.1
   unfold c44 yoshidaEndpointOddCleanQuadratic
-  rw [centeredRawLogEnergy_p4_eq,
+  rw [centeredRawLogEnergy_factorTwoCenteredP4,
     integral_endpointPotential_mul_factorTwoCenteredP4_sq,
     integral_factorTwoCenteredP4_sq]
   norm_num at hmass hregScaled hhyper hlog ⊢
