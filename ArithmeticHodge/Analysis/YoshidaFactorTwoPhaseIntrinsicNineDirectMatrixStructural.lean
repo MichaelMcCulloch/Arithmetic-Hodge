@@ -328,6 +328,23 @@ theorem factorTwoIntrinsicNineDirectLowMatrix_quadratic
     _ = factorTwoIntrinsicNineDirectCoordinateQuadratic a b x :=
       factorTwoIntrinsicNineDirectCoordinateBilinear_self a b x
 
+/-- The semantic quadratic inequality is sufficient for matrix positive
+semidefiniteness.  Thus a structural proof of the displayed cutoff-nine low
+inequality supplies exactly the matrix hypothesis used by scaled range
+completion. -/
+theorem factorTwoIntrinsicNineDirectLowMatrix_posSemidef_of_nonneg
+    (a b : ℝ)
+    (h : ∀ x : Fin 9 → ℝ,
+      0 ≤ factorTwoIntrinsicNineDirectCoordinateQuadratic a b x) :
+    (factorTwoIntrinsicNineDirectLowMatrix a b).PosSemidef := by
+  apply Matrix.PosSemidef.of_dotProduct_mulVec_nonneg
+  · simpa only [Matrix.IsHermitian, conjTranspose, star_trivial] using
+      factorTwoIntrinsicNineDirectLowMatrix_transpose a b
+  · intro x
+    simp only [star_trivial]
+    rw [factorTwoIntrinsicNineDirectLowMatrix_quadratic]
+    exact h x
+
 /-- Final semantic matrix identity in the requested coordinate order. -/
 theorem factorTwoIntrinsicNineDirectLowMatrix_quadratic_eq_phase_sub_reserve
     (a b : ℝ) (x : Fin 9 → ℝ) :
