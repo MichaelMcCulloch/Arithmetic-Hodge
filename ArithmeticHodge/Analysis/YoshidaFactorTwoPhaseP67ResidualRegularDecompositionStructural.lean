@@ -549,6 +549,142 @@ private theorem intervalIntegrable_antisymmetricRegularRow
   dsimp only [D]
   ring
 
+/-- For arbitrary continuous low profiles, moment-gap cancellation of the
+degree-six symmetric model together with the two affine alternating rows
+leaves exactly the analytic remainder and forward-Hankel half-cross. -/
+theorem integral_factorTwoP67ResidualSmoothMixedIntegrand_eq_of_cancellations
+    (eLow oLow eR oR : ℝ → ℝ)
+    (heLowc : Continuous eLow) (hoLowc : Continuous oLow)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    {ke ko : ℕ}
+    (heGap : centeredLegendreMomentsVanishBelow eR ke)
+    (hoGap : centeredLegendreMomentsVanishBelow oR ko)
+    (heCut : 6 < ke) (hoCut : 6 < ko)
+    (hlinearE : (∫ t : ℝ in 0..2,
+      t * factorTwoP67ResidualAlternatingCrossDifference eLow oR t) = 0)
+    (hlinearO : (∫ t : ℝ in 0..2,
+      t * factorTwoP67ResidualAlternatingCrossDifference eR oLow t) = 0)
+    (a b : ℝ) :
+    (∫ t : ℝ in 0..2,
+      factorTwoP67ResidualSmoothMixedIntegrand
+        eLow oLow eR oR a b t) =
+      2 * (factorTwoP67ResidualAnalyticMixed
+          eLow oLow eR oR a b +
+        factorTwoP67ResidualForwardHankelMixed
+          eLow oLow eR oR a b) := by
+  let S : ℝ → ℝ := fun t ↦
+    oddLowPoleFreeKernel t - 1 / (2 * (2 + t))
+  let T : ℝ → ℝ := fun t ↦
+    yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+      1 / (2 * (2 + t))
+  let BE : ℝ → ℝ := factorTwoCenteredCorrelationBilinear eLow eR
+  let BO : ℝ → ℝ := factorTwoCenteredCorrelationBilinear oLow oR
+  let DE : ℝ → ℝ :=
+    factorTwoP67ResidualAlternatingCrossDifference eLow oR
+  let DO : ℝ → ℝ :=
+    factorTwoP67ResidualAlternatingCrossDifference eR oLow
+  have hBE : Continuous BE := by
+    dsimp only [BE]
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation eLow eR heLowc heRc).add
+      (continuous_factorTwoCenteredCrossCorrelation eR eLow heRc heLowc)).div_const 2
+  have hBO : Continuous BO := by
+    dsimp only [BO]
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation oLow oR hoLowc hoRc).add
+      (continuous_factorTwoCenteredCrossCorrelation oR oLow hoRc hoLowc)).div_const 2
+  have hDE : Continuous DE := by
+    dsimp only [DE]
+    unfold factorTwoP67ResidualAlternatingCrossDifference
+    exact (continuous_factorTwoCenteredCrossCorrelation oR eLow hoRc heLowc).sub
+      (continuous_factorTwoCenteredCrossCorrelation eLow oR heLowc hoRc)
+  have hDO : Continuous DO := by
+    dsimp only [DO]
+    unfold factorTwoP67ResidualAlternatingCrossDifference
+    exact (continuous_factorTwoCenteredCrossCorrelation oLow eR hoLowc heRc).sub
+      (continuous_factorTwoCenteredCrossCorrelation eR oLow heRc hoLowc)
+  have hSE := integral_symmetricRegularScalar_mul_correlationBilinear_eq
+    eLow eR heLowc heRc heGap heCut
+  have hSO := integral_symmetricRegularScalar_mul_correlationBilinear_eq
+    oLow oR hoLowc hoRc hoGap hoCut
+  have hAE := integral_antisymmetricRegularScalar_mul_crossDifference_eq
+    eLow oR heLowc hoRc hlinearE
+  have hAO := integral_antisymmetricRegularScalar_mul_crossDifference_eq
+    eR oLow heRc hoLowc hlinearO
+  have hSEInt : IntervalIntegrable (fun t : ℝ ↦ S t * BE t)
+      volume 0 2 := by
+    dsimp only [S, BE]
+    exact intervalIntegrable_symmetricRegularRow eLow eR heLowc heRc
+  have hSOInt : IntervalIntegrable (fun t : ℝ ↦ S t * BO t)
+      volume 0 2 := by
+    dsimp only [S, BO]
+    exact intervalIntegrable_symmetricRegularRow oLow oR hoLowc hoRc
+  have hAEInt : IntervalIntegrable (fun t : ℝ ↦ T t * DE t)
+      volume 0 2 := by
+    dsimp only [T, DE]
+    exact intervalIntegrable_antisymmetricRegularRow eLow oR heLowc hoRc
+  have hAOInt : IntervalIntegrable (fun t : ℝ ↦ T t * DO t)
+      volume 0 2 := by
+    dsimp only [T, DO]
+    exact intervalIntegrable_antisymmetricRegularRow eR oLow heRc hoLowc
+  have hDivBE := intervalIntegrable_div_two_add BE hBE
+  have hDivBO := intervalIntegrable_div_two_add BO hBO
+  have hDivDE := intervalIntegrable_div_two_add DE hDE
+  have hDivDO := intervalIntegrable_div_two_add DO hDO
+  have hSym :
+      (∫ t : ℝ in 0..2,
+        factorTwoP67ResidualSymmetricCrossSum eLow oLow eR oR t / (2 + t)) =
+        (∫ t : ℝ in 0..2, BE t / (2 + t)) +
+          ∫ t : ℝ in 0..2, BO t / (2 + t) := by
+    rw [show (fun t : ℝ ↦
+        factorTwoP67ResidualSymmetricCrossSum eLow oLow eR oR t / (2 + t)) =
+      fun t ↦ BE t / (2 + t) + BO t / (2 + t) by
+        funext t
+        dsimp only [BE, BO]
+        unfold factorTwoP67ResidualSymmetricCrossSum
+        ring,
+      intervalIntegral.integral_add hDivBE hDivBO]
+  have hAlt :
+      (∫ t : ℝ in 0..2,
+        factorTwoP67ResidualAlternatingCrossSum eLow oLow eR oR t / (2 + t)) =
+        (∫ t : ℝ in 0..2, DE t / (2 + t)) +
+          ∫ t : ℝ in 0..2, DO t / (2 + t) := by
+    rw [show (fun t : ℝ ↦
+        factorTwoP67ResidualAlternatingCrossSum eLow oLow eR oR t / (2 + t)) =
+      fun t ↦ DE t / (2 + t) + DO t / (2 + t) by
+        funext t
+        dsimp only [DE, DO]
+        unfold factorTwoP67ResidualAlternatingCrossSum
+        ring,
+      intervalIntegral.integral_add hDivDE hDivDO]
+  rw [show (fun t : ℝ ↦
+      factorTwoP67ResidualSmoothMixedIntegrand eLow oLow eR oR a b t) = fun t ↦
+        (2 * a) * (S t * BE t) + (2 * a) * (S t * BO t) +
+          b * (T t * DE t) + b * (T t * DO t) by
+    funext t
+    dsimp only [S, T, BE, BO, DE, DO]
+    unfold factorTwoP67ResidualSmoothMixedIntegrand
+      factorTwoP67ResidualSymmetricCrossSum
+      factorTwoP67ResidualAlternatingCrossSum
+    ring,
+    intervalIntegral.integral_add
+      (((hSEInt.const_mul (2 * a)).add (hSOInt.const_mul (2 * a))).add
+        (hAEInt.const_mul b)) (hAOInt.const_mul b),
+    intervalIntegral.integral_add
+      ((hSEInt.const_mul (2 * a)).add (hSOInt.const_mul (2 * a)))
+      (hAEInt.const_mul b),
+    intervalIntegral.integral_add
+      (hSEInt.const_mul (2 * a)) (hSOInt.const_mul (2 * a))]
+  repeat rw [intervalIntegral.integral_const_mul]
+  rw [hSE, hSO, hAE, hAO]
+  change _ = 2 *
+    (factorTwoP67ResidualAnalyticMixed eLow oLow eR oR a b +
+      factorTwoP67ResidualForwardHankelMixed eLow oLow eR oR a b)
+  unfold factorTwoP67ResidualAnalyticMixed
+    factorTwoP67ResidualForwardHankelMixed
+  rw [hSym, hAlt]
+  ring
+
 /-- For the canonical `P₆/P₇` low block, the complete smooth mixed
 integral is twice the sum of the analytic half-cross and the forward-Hankel
 half-cross.  Both polynomial models have disappeared exactly. -/
