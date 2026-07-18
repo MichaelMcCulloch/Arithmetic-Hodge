@@ -3,7 +3,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedReci
 
 set_option autoImplicit false
 
-open Real Set
+open Matrix MeasureTheory Real Set
 
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorQuotientStructural
 
@@ -16,6 +16,7 @@ open YoshidaFactorTwoPhaseIntrinsicElevenRetainedConstrainedWeightedDualStructur
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorPoleRemainderStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorSOSStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedSelectorHomogeneityStructural
+open YoshidaFactorTwoPhaseIntrinsicElevenSelectorGramStructural
 
 noncomputable section
 
@@ -143,6 +144,99 @@ theorem retainedP024SelectorAlternatingResidual_mul_div_weight_eq
     (retainedP024SelectorAlternatingRemainder j x) hne
   simpa [retainedP024SelectorAlternatingShiftedRemainder,
     retainedP024RetainedOddWeight_eq_affine] using h
+
+/-! ## Integrated extracted Grams -/
+
+/-- The exact affine-weight quotient expansion of one combined retained-even
+Gram entry. -/
+def retainedP024SelectorWholeEvenQuotientExpansion
+    (i j : Fin 3 ⊕ Fin 3) (x : ℝ) : ℝ :=
+  retainedP024PoleSlope * yoshidaEndpointPotential x *
+      retainedP024SelectorWholeEvenPoleRow i x *
+      retainedP024SelectorWholeEvenPoleRow j x +
+    retainedP024SelectorWholeEvenPoleRow i x *
+      retainedP024SelectorWholeEvenRemainder j x +
+    retainedP024SelectorWholeEvenPoleRow j x *
+      retainedP024SelectorWholeEvenRemainder i x -
+    retainedP024EvenMass *
+      retainedP024SelectorWholeEvenPoleRow i x *
+      retainedP024SelectorWholeEvenPoleRow j x +
+    retainedP024SelectorWholeEvenShiftedRemainder i x *
+        retainedP024SelectorWholeEvenShiftedRemainder j x /
+      factorTwoIntrinsicElevenRetainedEvenWeight x
+
+/-- The exact affine-weight quotient expansion of one alternating retained-odd
+Gram entry. -/
+def retainedP024SelectorAlternatingQuotientExpansion
+    (i j : Fin 3) (x : ℝ) : ℝ :=
+  retainedP024PoleSlope * yoshidaEndpointPotential x *
+      retainedP024SelectorAlternatingPoleRow i x *
+      retainedP024SelectorAlternatingPoleRow j x +
+    retainedP024SelectorAlternatingPoleRow i x *
+      retainedP024SelectorAlternatingRemainder j x +
+    retainedP024SelectorAlternatingPoleRow j x *
+      retainedP024SelectorAlternatingRemainder i x -
+    retainedP024OddMass *
+      retainedP024SelectorAlternatingPoleRow i x *
+      retainedP024SelectorAlternatingPoleRow j x +
+    retainedP024SelectorAlternatingShiftedRemainder i x *
+        retainedP024SelectorAlternatingShiftedRemainder j x /
+      factorTwoIntrinsicElevenRetainedOddWeight x
+
+/-- Entrywise integral of the exact retained-even quotient expansion. -/
+def retainedP024SelectorWholeEvenExtractedGram :
+    Matrix (Fin 3 ⊕ Fin 3) (Fin 3 ⊕ Fin 3) ℝ := fun i j ↦
+  ∫ x : ℝ in -1..1,
+    retainedP024SelectorWholeEvenQuotientExpansion i j x
+
+/-- Entrywise integral of the exact alternating quotient expansion. -/
+def retainedP024SelectorAlternatingExtractedGram :
+    Matrix (Fin 3) (Fin 3) ℝ := fun i j ↦
+  ∫ x : ℝ in -1..1,
+    retainedP024SelectorAlternatingQuotientExpansion i j x
+
+/-- The complete six-row retained-even Gram is exactly its endpoint-pole
+quotient expansion.  The two endpoints are removed only almost everywhere. -/
+theorem retainedP024SelectorWholeEvenGram_eq_extracted :
+    retainedP024SelectorWholeEvenGram =
+      retainedP024SelectorWholeEvenExtractedGram := by
+  ext i j
+  unfold retainedP024SelectorWholeEvenGram
+    factorTwoIntrinsicElevenSelectorGram
+    factorTwoIntrinsicElevenSelectorCrossDual
+    retainedP024SelectorWholeEvenExtractedGram
+  apply intervalIntegral.integral_congr_ae
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (1 : ℝ)] with x hx1
+  intro hx
+  rw [uIoc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+  have hxIoo : x ∈ Ioo (-1 : ℝ) 1 :=
+    ⟨hx.1, lt_of_le_of_ne hx.2 hx1⟩
+  simpa [retainedP024SelectorWholeEvenQuotientExpansion] using
+    retainedP024SelectorWholeEvenResidual_mul_div_weight_eq i j hxIoo
+
+/-- The fixed alternating selector Gram is exactly its endpoint-pole quotient
+expansion, again modulo only the measure-zero endpoints. -/
+theorem retainedP024SelectorAlternatingGram_eq_extracted :
+    retainedP024SelectorAlternatingGram =
+      retainedP024SelectorAlternatingExtractedGram := by
+  ext i j
+  unfold retainedP024SelectorAlternatingGram
+    retainedP024AlternatingSelectorGram
+  rw [retainedP024ThreeSelectorGramMatrix_apply]
+  unfold factorTwoIntrinsicElevenSelectorCrossDual
+    retainedP024SelectorAlternatingExtractedGram
+  apply intervalIntegral.integral_congr_ae
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (1 : ℝ)] with x hx1
+  intro hx
+  rw [uIoc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+  have hxIoo : x ∈ Ioo (-1 : ℝ) 1 :=
+    ⟨hx.1, lt_of_le_of_ne hx.2 hx1⟩
+  have hpoint :=
+    retainedP024SelectorAlternatingResidual_mul_div_weight_eq i j hxIoo
+  fin_cases i <;> fin_cases j <;>
+    simpa [retainedP024EvenMode,
+      retainedP024SelectorAlternatingPolynomial,
+      retainedP024SelectorAlternatingQuotientExpansion] using hpoint
 
 end
 
