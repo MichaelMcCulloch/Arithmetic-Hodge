@@ -1,3 +1,4 @@
+import ArithmeticHodge.Analysis.AffineWeightQuotient
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenTailRepresenter
 
 set_option autoImplicit false
@@ -6,6 +7,7 @@ open MeasureTheory Real Set
 
 namespace ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedDualIdentity
 
+open AffineWeightQuotient
 open YoshidaEndpointEvenConstantCross
 open YoshidaEndpointEvenMeanZeroPositive
 open YoshidaEndpointEvenStructuralReduction
@@ -75,14 +77,6 @@ theorem fixedProjectedTailRepresenter_linear (c b x : ℝ) :
     fixedProjectionPolynomial
   ring
 
-private theorem sq_div_add_decomposition
-    (V d p h : ℝ) (hne : d + V ≠ 0) :
-    (V * p + h) ^ 2 / (d + V) =
-      V * p ^ 2 + 2 * p * h - d * p ^ 2 +
-        (h - d * p) ^ 2 / (d + V) := by
-  field_simp [hne]
-  ring
-
 theorem yoshidaEndpointEvenTailWeight_pos_on_Icc
     {x : ℝ} (hx : x ∈ Icc (-1) 1) :
     0 < yoshidaEndpointEvenTailWeight x := by
@@ -108,12 +102,12 @@ theorem fixedProjectedTailRepresenter_sq_div_weight
     have hpos := yoshidaEndpointEvenTailWeight_pos_on_Icc hx
     unfold yoshidaEndpointEvenTailWeight at hpos
     exact ne_of_gt hpos
-  have h := sq_div_add_decomposition
-    (yoshidaEndpointPotential x) (41 / 60 : ℝ)
+  have h := sq_div_affine_weight_decomposition
+    (yoshidaEndpointPotential x) (41 / 60 : ℝ) 1
       (fixedEvenLowProfile c b x)
-      (fixedProjectedBoundedRemainder c b x) hne
+      (fixedProjectedBoundedRemainder c b x) (by simpa using hne)
   unfold yoshidaEndpointEvenTailWeight fixedProjectedShiftedRemainder
-  exact h
+  simpa only [one_mul] using h
 
 end
 

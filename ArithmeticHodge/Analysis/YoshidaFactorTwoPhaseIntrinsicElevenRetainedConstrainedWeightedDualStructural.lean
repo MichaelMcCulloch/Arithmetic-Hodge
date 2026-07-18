@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedRepresentersStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedSingularSchurStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoReflectedPoleEntropyStructural
 
 set_option autoImplicit false
 
@@ -32,6 +33,7 @@ open YoshidaFactorTwoPhaseIntrinsicElevenRetainedSingularSchurStructural
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseSingularWeightedCauchyStructural
+open YoshidaFactorTwoReflectedPoleEntropyStructural
 open YoshidaFactorTwoReflectedPolePolynomialReductionStructural
 open YoshidaRegularKernelBound
 
@@ -161,19 +163,6 @@ theorem div_sqrt_memLp_two_of_abs_le_const_mul_weight
           congrArg (fun t : ℝ ↦ C * t) (Real.sq_sqrt hWx.le).symm
         _ = C * Real.sqrt (W x) * Real.sqrt (W x) := by ring
 
-private theorem reflectedEndpointLogs_sum
-    {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
-    -Real.log ((x + 1) / 2) + -Real.log ((1 - x) / 2) =
-      2 * (yoshidaEndpointPotential x + Real.log 2) := by
-  have hplus : x + 1 ≠ 0 := by linarith [hx.1]
-  have hminus : 1 - x ≠ 0 := by linarith [hx.2]
-  rw [Real.log_div hplus (by norm_num),
-    Real.log_div hminus (by norm_num)]
-  unfold yoshidaEndpointPotential
-  rw [show 1 - x ^ 2 = (x + 1) * (1 - x) by ring,
-    Real.log_mul hplus hminus]
-  ring
-
 private theorem reflectedEndpointLogPlus_nonneg
     {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
     0 ≤ -Real.log ((x + 1) / 2) := by
@@ -188,7 +177,7 @@ private theorem reflectedEndpointLogs_sum_le
     {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 1) :
     -Real.log ((x + 1) / 2) + -Real.log ((1 - x) / 2) ≤
       2 * (1 + yoshidaEndpointPotential x) := by
-  rw [reflectedEndpointLogs_sum hx]
+  rw [reflectedEndpointLogs_sum_eq_potential hx]
   linarith [Real.log_two_lt_d9]
 
 private theorem exists_polynomial_eval_abs_bound (p : ℝ[X]) :
