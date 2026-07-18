@@ -422,6 +422,44 @@ theorem retainedP024SelectorAlternatingGram_eq_nonquotient_add_remainder :
       (intervalIntegrable_retainedP024SelectorAlternatingShiftedRemainderCross i j)]
   rfl
 
+/-- Signed affine lift of an alternating `3 x 3` Gram.  Its upper block is
+subtracted from the constant coefficient of the phase pencil, while its lower
+block is added to the quadratic coefficient. -/
+def retainedP024AlternatingSignedLift
+    (G : Matrix (Fin 3) (Fin 3) ℝ) :
+    Matrix (Fin 3 ⊕ Fin 3) (Fin 3 ⊕ Fin 3) ℝ :=
+  Matrix.fromBlocks (-G) 0 0 G
+
+theorem retainedP024SelectorAlternatingSignedLiftGram_eq_parts :
+    retainedP024SelectorAlternatingSignedLiftGram =
+      retainedP024AlternatingSignedLift
+          retainedP024SelectorAlternatingNonquotientGram +
+        retainedP024AlternatingSignedLift
+          retainedP024SelectorAlternatingShiftedRemainderGram := by
+  unfold retainedP024SelectorAlternatingSignedLiftGram
+  rw [retainedP024SelectorAlternatingGram_eq_nonquotient_add_remainder]
+  unfold retainedP024AlternatingSignedLift
+  ext i j
+  rcases i with i | i <;> rcases j with j | j
+  all_goals simp <;> module
+
+/-- Fully separated structural identity for the fixed asymmetric SOS Gram.
+The last term is favorable on the lower affine block and therefore remains an
+explicit positive Gram rather than being discarded through a scalar bound. -/
+theorem retainedP024SelectorAsymmetricSOSGram_eq_nonquotient_remainders :
+    retainedP024SelectorAsymmetricSOSGram =
+      retainedP024SharpLowSOSGram -
+          retainedP024SelectorWholeEvenNonquotientGram -
+        retainedP024SelectorWholeEvenShiftedRemainderGram +
+        retainedP024AlternatingSignedLift
+          retainedP024SelectorAlternatingNonquotientGram +
+        retainedP024AlternatingSignedLift
+          retainedP024SelectorAlternatingShiftedRemainderGram := by
+  rw [retainedP024SelectorAsymmetricSOSGram_eq_structural,
+    retainedP024SelectorWholeEvenGram_eq_nonquotient_add_remainder,
+    retainedP024SelectorAlternatingSignedLiftGram_eq_parts]
+  module
+
 theorem retainedP024SelectorWholeEvenShiftedRemainderGram_posSemidef :
     retainedP024SelectorWholeEvenShiftedRemainderGram.PosSemidef := by
   have hHermitian :
