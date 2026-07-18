@@ -170,6 +170,53 @@ def retainedP024SelectorReciprocalAffineCore (a : ℝ) :
       affineLiftMatrix (n := Fin 3) a +
     (1 - a ^ 2) • retainedP024SelectorSOSReserve
 
+/-- The inward curvature of the compressed reciprocal pencil.  This is the
+coefficient of `1 - a^2` after subtracting the endpoint chord; it is one
+fixed `3 x 3` matrix, not a phase sample. -/
+def retainedP024SelectorReciprocalAffineCurvature :
+    Matrix (Fin 3) (Fin 3) ℝ :=
+  retainedP024SelectorReciprocalAffineCore 0 -
+    (1 / 2 : ℝ) •
+      (retainedP024SelectorReciprocalAffineCore (-1) +
+        retainedP024SelectorReciprocalAffineCore 1)
+
+/-- Exact endpoint--curvature interpolation of the reciprocal affine core.
+The phase dependence is a matrix quadratic, so this identity reduces its
+positivity on `[-1,1]` to two endpoints and one fixed inward curvature. -/
+theorem retainedP024SelectorReciprocalAffineCore_eq_endpointChord
+    (a : ℝ) :
+    retainedP024SelectorReciprocalAffineCore a =
+      ((1 - a) / 2) • retainedP024SelectorReciprocalAffineCore (-1) +
+        ((1 + a) / 2) • retainedP024SelectorReciprocalAffineCore 1 +
+        (1 - a ^ 2) •
+          retainedP024SelectorReciprocalAffineCurvature := by
+  unfold retainedP024SelectorReciprocalAffineCurvature
+    retainedP024SelectorReciprocalAffineCore
+  ext i j
+  simp [Matrix.mul_apply, affineLiftMatrix, Fintype.sum_sum_type]
+  ring
+
+/-- A structural three-matrix certificate for the full phase interval. -/
+theorem retainedP024SelectorReciprocalAffineCore_posSemidef_of_endpoints_curvature
+    (a : ℝ) (ha : a ^ 2 ≤ 1)
+    (hMinus :
+      (retainedP024SelectorReciprocalAffineCore (-1)).PosSemidef)
+    (hPlus :
+      (retainedP024SelectorReciprocalAffineCore 1).PosSemidef)
+    (hCurvature :
+      retainedP024SelectorReciprocalAffineCurvature.PosSemidef) :
+    (retainedP024SelectorReciprocalAffineCore a).PosSemidef := by
+  have haLower : -1 ≤ a := by
+    nlinarith [sq_nonneg (a + 1)]
+  have haUpper : a ≤ 1 := by
+    nlinarith [sq_nonneg (a - 1)]
+  have hMinusWeight : 0 ≤ (1 - a) / 2 := by linarith
+  have hPlusWeight : 0 ≤ (1 + a) / 2 := by linarith
+  have hCurvatureWeight : 0 ≤ 1 - a ^ 2 := sub_nonneg.mpr ha
+  rw [retainedP024SelectorReciprocalAffineCore_eq_endpointChord]
+  exact ((hMinus.smul hMinusWeight).add (hPlus.smul hPlusWeight)).add
+    (hCurvature.smul hCurvatureWeight)
+
 /-- The shifted SOS Gram is the inverse-weight-free Loewner core plus the
 positive even upper-certificate gap. -/
 theorem retainedP024SelectorReciprocalShiftedSOSGram_eq_core_add_evenGap :
