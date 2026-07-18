@@ -8,7 +8,9 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP
 
 open ThreeByThreePositiveMixedDeterminant
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open YoshidaEndpointEvenStructuralReduction
 open YoshidaFactorTwoPhaseFullProfile
+open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorSOSStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorStructural
@@ -194,6 +196,40 @@ theorem exists_sharpRetunedP024Selector_of_tilted
     retainedP024SelectorAlt2_natDegree_lt
     retainedP024SelectorAlt4_natDegree_lt
     hboundary c0 c2 c4
+
+/-- The three fixed tilted gates feed the sharp selector directly into the
+production low--tail estimate on the `P₀/P₂/P₄` slice.  Thus no selector
+existence hypothesis remains between the fixed matrix certificate and the
+mixed Cauchy inequality used by the cutoff-eleven argument. -/
+theorem factorTwoEndpointLowTailMixed_retainedP024_sq_le_of_tilted
+    (c0 c2 c4 : ℝ) (eR oR : ℝ → ℝ)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (heR : Function.Even eR) (hoR : Function.Odd oR)
+    (heR0 : centeredEvenP0Coefficient eR = 0)
+    (heRlocal : LocallyLipschitzOn (Set.Icc (-1) 1) eR)
+    (hoRlocal : LocallyLipschitzOn (Set.Icc (-1) 1) oR)
+    (heGap : centeredLegendreMomentsVanishBelow eR 11)
+    (hoGap : centeredLegendreMomentsVanishBelow oR 11)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
+    (hCore : retainedP024SelectorTiltedCore.PosSemidef)
+    (hConstant : retainedP024SelectorTiltedConstantReserve.PosSemidef)
+    (hQuadratic : retainedP024SelectorTiltedQuadraticReserve.PosSemidef) :
+    factorTwoEndpointLowTailMixed
+          (centeredPolynomialLift (retainedP024Polynomial c0 c2 c4)) eR
+          (centeredPolynomialLift (0 : ℝ[X])) oR a b ^ 2 ≤
+      factorTwoEndpointChannelPhase
+          (centeredPolynomialLift (retainedP024Polynomial c0 c2 c4))
+          (centeredPolynomialLift (0 : ℝ[X])) a b *
+        factorTwoEndpointChannelPhase eR oR a b := by
+  obtain ⟨qE, qO, hqE, hqO, hselector⟩ :=
+    exists_sharpRetunedP024Selector_of_tilted
+      a b hab hCore hConstant hQuadratic c0 c2 c4
+  exact
+    factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_sharpRetunedAsymmetricRetainedSelector
+      (retainedP024Polynomial c0 c2 c4) 0 eR oR
+      heRc hoRc heR hoR heR0 heRlocal hoRlocal heGap hoGap
+      (retainedP024Polynomial_natDegree_lt c0 c2 c4) (by simp)
+      a b hab qE qO hqE hqO hselector
 
 end
 
