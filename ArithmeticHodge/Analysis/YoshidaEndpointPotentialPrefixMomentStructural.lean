@@ -25,6 +25,113 @@ on the entire closed interval without endpoint cutoffs.
 def endpointPotentialPrefixMoment (n : ℕ) (u : ℝ) : ℝ :=
   ∫ x : ℝ in -1..u, yoshidaEndpointPotential x * x ^ n
 
+/-- Every prefix moment is interval-integrable up to any cutoff in the
+closed endpoint interval. -/
+theorem intervalIntegrable_endpointPotentialPrefixMoment
+    (n : ℕ) {u : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) :
+    IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * x ^ n)
+      volume (-1) u := by
+  have hfull := intervalIntegrable_endpointPotential_mul
+    (fun x : ℝ ↦ x ^ n) (continuous_id.pow n)
+  apply hfull.mono_set
+  rw [uIcc_of_le hu.1,
+    uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
+  exact Icc_subset_Icc le_rfl hu.2
+
+/-- The degree-zero prefix moment, in its endpoint-continuous closed form. -/
+theorem endpointPotentialPrefixMoment_zero
+    {u : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) :
+    endpointPotentialPrefixMoment 0 u =
+      u + 1 - Real.log 2 +
+        (Real.negMulLog (1 + u) - Real.negMulLog (1 - u)) / 2 := by
+  let F : ℝ → ℝ := fun x ↦
+    x + (Real.negMulLog (1 + x) - Real.negMulLog (1 - x)) / 2
+  have hFcont : Continuous F := by
+    dsimp only [F]
+    fun_prop
+  have hderiv (x : ℝ) (hx : x ∈ Ioo (-1 : ℝ) u) :
+      HasDerivAt F (yoshidaEndpointPotential x) x := by
+    have hxlt : x < 1 := hx.2.trans_le hu.2
+    have hminus : 1 - x ≠ 0 := by linarith
+    have hplus : 1 + x ≠ 0 := by linarith [hx.1]
+    have hinnerPlus : HasDerivAt (fun y : ℝ ↦ 1 + y) 1 x := by
+      convert (hasDerivAt_const x (1 : ℝ)).add (hasDerivAt_id x) using 1;
+        simp
+    have hinnerMinus : HasDerivAt (fun y : ℝ ↦ 1 - y) (-1) x := by
+      convert (hasDerivAt_const x (1 : ℝ)).sub (hasDerivAt_id x) using 1;
+        simp
+    have hNplus := (Real.hasDerivAt_negMulLog hplus).comp x hinnerPlus
+    have hNminus := (Real.hasDerivAt_negMulLog hminus).comp x hinnerMinus
+    have h := (hasDerivAt_id x).add ((hNplus.sub hNminus).div_const 2)
+    convert h using 1
+    unfold yoshidaEndpointPotential
+    rw [show 1 - x ^ 2 = (1 - x) * (1 + x) by ring,
+      Real.log_mul hminus hplus]
+    ring
+  have hf : IntervalIntegrable yoshidaEndpointPotential volume (-1) u := by
+    apply (intervalIntegrable_endpointPotentialPrefixMoment 0 hu).congr
+    intro x _hx
+    simp
+  have hFTC :
+      (∫ x : ℝ in -1..u, yoshidaEndpointPotential x) =
+        F u - F (-1) := by
+    exact intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le
+      hu.1 hFcont.continuousOn hderiv hf
+  have htwo : Real.negMulLog (2 : ℝ) = -2 * Real.log 2 := by
+    rw [Real.negMulLog_def]
+  unfold endpointPotentialPrefixMoment
+  simp only [pow_zero, mul_one]
+  rw [hFTC]
+  dsimp only [F]
+  rw [show (1 : ℝ) + -1 = 0 by norm_num,
+    show (1 : ℝ) - -1 = 2 by norm_num,
+    Real.negMulLog_zero, htwo]
+  ring
+
+/-- The degree-one prefix moment, in its endpoint-continuous closed form. -/
+theorem endpointPotentialPrefixMoment_one
+    {u : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) :
+    endpointPotentialPrefixMoment 1 u =
+      -(Real.negMulLog (1 - u ^ 2) + (1 - u ^ 2)) / 4 := by
+  let F : ℝ → ℝ := fun x ↦
+    -(Real.negMulLog (1 - x ^ 2) + (1 - x ^ 2)) / 4
+  let f : ℝ → ℝ := fun x ↦ yoshidaEndpointPotential x * x
+  have hFcont : Continuous F := by
+    dsimp only [F]
+    fun_prop
+  have hderiv (x : ℝ) (hx : x ∈ Ioo (-1 : ℝ) u) :
+      HasDerivAt F (f x) x := by
+    have hxInside : x ∈ Ioo (-1 : ℝ) 1 :=
+      ⟨hx.1, hx.2.trans_le hu.2⟩
+    have hy : 1 - x ^ 2 ≠ 0 := by
+      have habs : |x| < 1 := (abs_lt).2 hxInside
+      nlinarith [(sq_lt_one_iff_abs_lt_one x).2 habs]
+    have hinner : HasDerivAt (fun y : ℝ ↦ 1 - y ^ 2) (-2 * x) x := by
+      convert (hasDerivAt_const x (1 : ℝ)).sub ((hasDerivAt_id x).pow 2) using 1
+      all_goals simp
+    have hnegMulLog := (Real.hasDerivAt_negMulLog hy).comp x hinner
+    have h := ((hnegMulLog.add hinner).div_const 4).neg
+    convert h using 1
+    · funext y
+      dsimp only [F, Function.comp_apply, Pi.add_apply, Pi.neg_apply]
+      ring
+    · dsimp only [f, yoshidaEndpointPotential]
+      ring
+  have hf : IntervalIntegrable f volume (-1) u := by
+    simpa only [f, pow_one] using
+      intervalIntegrable_endpointPotentialPrefixMoment 1 hu
+  have hFTC :
+      (∫ x : ℝ in -1..u, f x) = F u - F (-1) := by
+    exact intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le
+      hu.1 hFcont.continuousOn hderiv hf
+  unfold endpointPotentialPrefixMoment
+  simp only [pow_one]
+  rw [hFTC]
+  dsimp only [F, f]
+  simp only [neg_one_sq, sub_self, Real.negMulLog_zero, add_zero,
+    neg_zero, zero_div, sub_zero]
+
 /-- Exact all-degree recurrence for truncated endpoint-potential moments. -/
 theorem endpointPotentialPrefixMoment_recurrence
     (n : ℕ) {u : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) :
@@ -74,10 +181,7 @@ theorem endpointPotentialPrefixMoment_recurrence
   have hmoment (k : ℕ) : IntervalIntegrable
       (fun x : ℝ ↦ yoshidaEndpointPotential x * x ^ k)
       volume (-1) u := by
-    exact (intervalIntegrable_endpointPotential_mul
-      (fun x : ℝ ↦ x ^ k) (continuous_id.pow k)).mono_set
-        (uIcc_subset_uIcc_left (by
-          simpa [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] using hu))
+    exact intervalIntegrable_endpointPotentialPrefixMoment k hu
   have hf : IntervalIntegrable f volume (-1) u := by
     have h :=
       ((hmoment (n + 2)).const_mul (n + 3 : ℝ)).sub
