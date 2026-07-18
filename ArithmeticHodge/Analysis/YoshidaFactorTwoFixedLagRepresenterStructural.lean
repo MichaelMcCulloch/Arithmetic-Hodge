@@ -42,6 +42,53 @@ def factorTwoFixedLagJ (τ : ℝ) (p : ℝ → ℝ) (x : ℝ) : ℝ :=
   factorTwoFixedLagRightRepresenter τ p x -
     factorTwoFixedLagLeftRepresenter τ p x
 
+/-! ## Reflection and parity -/
+
+/-- Reflection exchanges the right and left fixed-lag translates of an even
+profile. -/
+theorem factorTwoFixedLagRightRepresenter_neg_of_even
+    {τ : ℝ} {p : ℝ → ℝ} (hp : Function.Even p) (x : ℝ) :
+    factorTwoFixedLagRightRepresenter τ p (-x) =
+      factorTwoFixedLagLeftRepresenter τ p x := by
+  have hreflect :
+      x ∈ Icc (-1 + τ) 1 ↔ -x ∈ Icc (-1 : ℝ) (1 - τ) := by
+    constructor <;> intro hx <;> constructor <;> linarith [hx.1, hx.2]
+  unfold factorTwoFixedLagRightRepresenter factorTwoFixedLagLeftRepresenter
+  by_cases hx : x ∈ Icc (-1 + τ) 1
+  · rw [Set.indicator_of_mem hx,
+      Set.indicator_of_mem (hreflect.mp hx),
+      show τ + -x = -(x - τ) by ring, hp]
+  · have hneg : -x ∉ Icc (-1 : ℝ) (1 - τ) := by
+      rwa [← hreflect]
+    rw [Set.indicator_of_notMem hx, Set.indicator_of_notMem hneg]
+
+/-- The reverse reflection identity for an even fixed-lag profile. -/
+theorem factorTwoFixedLagLeftRepresenter_neg_of_even
+    {τ : ℝ} {p : ℝ → ℝ} (hp : Function.Even p) (x : ℝ) :
+    factorTwoFixedLagLeftRepresenter τ p (-x) =
+      factorTwoFixedLagRightRepresenter τ p x := by
+  have hreflect :
+      x ∈ Icc (-1 : ℝ) (1 - τ) ↔ -x ∈ Icc (-1 + τ) 1 := by
+    constructor <;> intro hx <;> constructor <;> linarith [hx.1, hx.2]
+  unfold factorTwoFixedLagLeftRepresenter factorTwoFixedLagRightRepresenter
+  by_cases hx : x ∈ Icc (-1 : ℝ) (1 - τ)
+  · rw [Set.indicator_of_mem hx,
+      Set.indicator_of_mem (hreflect.mp hx),
+      show -x - τ = -(τ + x) by ring, hp]
+  · have hneg : -x ∉ Icc (-1 + τ) 1 := by
+      rwa [← hreflect]
+    rw [Set.indicator_of_notMem hx, Set.indicator_of_notMem hneg]
+
+/-- The alternating fixed-lag representer of every even profile is odd. -/
+theorem odd_factorTwoFixedLagJ_of_even
+    {τ : ℝ} {p : ℝ → ℝ} (hp : Function.Even p) :
+    Function.Odd (factorTwoFixedLagJ τ p) := by
+  intro x
+  unfold factorTwoFixedLagJ
+  rw [factorTwoFixedLagRightRepresenter_neg_of_even hp,
+    factorTwoFixedLagLeftRepresenter_neg_of_even hp]
+  ring
+
 /-! ## Ordered pairing identities -/
 
 /-- The ordered correlation at a fixed lag is represented in its second
