@@ -883,7 +883,7 @@ def factorTwoP7PhaseDiagonal (a : ℝ) : ℝ :=
   yoshidaEndpointOddCleanQuadratic factorTwoCenteredP7 +
     a * factorTwoCenteredSymmetricPerturbation factorTwoCenteredP7
 
-private theorem phase_P6_zero_eq_diagonal (a b : ℝ) :
+theorem phase_P6_zero_eq_diagonal (a b : ℝ) :
     factorTwoEndpointChannelPhase factorTwoCenteredP6 0 a b =
       factorTwoP6PhaseDiagonal a := by
   unfold factorTwoEndpointChannelPhase factorTwoEndpointChannelCleanSum
@@ -959,7 +959,7 @@ private theorem projected_self_phase_variable_le_702_div_1000
   dsimp only [d, alpha] at hscaled ⊢
   nlinarith
 
-private theorem P6_projected_loss_budget
+theorem P6_projected_loss_budget
     (a : ℝ) (ha : a ^ 2 ≤ 1) :
     factorTwoIntrinsicProjectedEvenRemainderLoss a 0 +
         Real.log 2 / 2 + (1 / 20 : ℝ) ≤
