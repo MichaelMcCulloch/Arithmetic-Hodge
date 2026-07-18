@@ -9,7 +9,11 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineDirectP6Exa
 
 noncomputable section
 
+open ShiftedLegendreCenteredLowModes
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open YoshidaEndpointEvenConstantCross
+open YoshidaEndpointEvenTailRepresenter
+open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointPotentialBound
 open YoshidaFactorTwoPhaseIntrinsicElevenCompleteRepresentersStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenConcreteSelectorsStructural
@@ -113,6 +117,32 @@ theorem factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder_inl
     retainedP024SelectorWholeEvenRemainder
     retainedP024SelectorWholeEvenPolynomial
     retainedP024SelectorBaseRemainder
+  ring
+
+/-- After selector cancellation the base row is completely free of the
+endpoint potential; parity also removes the `sinh` moment, leaving only the
+regular kernel and the even `cosh` rank. -/
+theorem factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder_inl_eq_regular
+    (i : Fin 3) (x : ℝ) :
+    factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+        (Sum.inl i : Fin 3 ⊕ Fin 3) x =
+      -yoshidaEndpointA *
+          yoshidaEndpointEvenRegularRepresenter
+            (centeredPolynomialLift (retainedP024EvenMode i)) x +
+        2 * yoshidaEndpointA *
+          yoshidaEndpointCoshMoment
+              (centeredPolynomialLift (retainedP024EvenMode i)) *
+            Real.cosh (yoshidaEndpointA * x / 2) := by
+  have hEven : Function.Even
+      (centeredPolynomialLift (retainedP024EvenMode i)) := by
+    intro z
+    simpa only [retainedP024EvenMode, centeredPolynomialLift,
+      ← eval_centeredShiftedLegendreReal] using
+        (even_eval_centeredShiftedLegendreReal i.1 z)
+  have hSinh := yoshidaEndpointSinhMoment_eq_zero_of_even _ hEven
+  rw [factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder_inl]
+  unfold factorTwoIntrinsicElevenCleanSurvivorRepresenter
+  rw [hSinh]
   ring
 
 theorem factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder_inr

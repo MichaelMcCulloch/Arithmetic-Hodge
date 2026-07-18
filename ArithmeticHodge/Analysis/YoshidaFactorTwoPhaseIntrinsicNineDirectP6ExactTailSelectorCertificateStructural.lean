@@ -19,12 +19,17 @@ open ShiftedLegendreLogEnergyOrthogonalProjection
 open ThreeByThreePositiveMixedDeterminant
 open ThreeByThreeRankOneSchur
 open UnitIntervalLogEnergyAffine
+open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointOddResidualRegularity
 open YoshidaFactorTwoPhaseFullProfile
+open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
+open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorPoleRemainderStructural
+open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorQuotientStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailResidualStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailSelectorGramStructural
+open YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailSelectorQuotientStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailSelectorReciprocalLoewnerStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6BorderDecompositionStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6BorderStructural
@@ -130,6 +135,160 @@ def factorTwoIntrinsicNineDirectP6ExactSelectorPlus (i : Fin 3) : ℝ[X] :=
 def factorTwoIntrinsicNineDirectP6ExactSelectorMinus (i : Fin 3) : ℝ[X] :=
   factorTwoIntrinsicNineDirectP6ExactSelectorPolynomial
     factorTwoIntrinsicNineDirectP6ExactSelectorMinusCoefficients i
+
+/-- The only polynomial correction in a cancellation-preserving positive
+endpoint row: the genuine rank-`P6` term minus the new degree-four selector. -/
+theorem factorTwoIntrinsicNineDirectP6ExactSelectorPlusCorrectionPolynomial_eq
+    (i : Fin 3) :
+    factorTwoIntrinsicNineDirectP6RankPolynomial 1
+          (factorTwoIntrinsicNineDirectP024Embed (Pi.single i 1)) -
+        factorTwoIntrinsicNineDirectP6ExactSelectorPlus i =
+      ![(poleFreeCoeff6 yoshidaEndpointA * (16 / 231 : ℝ)) •
+            shiftedLegendreReal 6 -
+          ((582 / 1000 : ℝ) • shiftedLegendreReal 0 +
+            (322 / 1000 : ℝ) • shiftedLegendreReal 2 +
+            (410 / 1000 : ℝ) • shiftedLegendreReal 4),
+        -((-2936 / 1000 : ℝ) • shiftedLegendreReal 0 +
+            (672 / 1000 : ℝ) • shiftedLegendreReal 2 +
+            (439 / 1000 : ℝ) • shiftedLegendreReal 4),
+        -((-39110 / 1000 : ℝ) • shiftedLegendreReal 0 +
+            (-17340 / 1000 : ℝ) • shiftedLegendreReal 2 +
+            (132 / 1000 : ℝ) • shiftedLegendreReal 4)] i := by
+  fin_cases i <;>
+    simp [factorTwoIntrinsicNineDirectP6RankPolynomial,
+      factorTwoIntrinsicNineDirectP024Embed,
+      factorTwoIntrinsicNineDirectP6ExactSelectorPlus,
+      factorTwoIntrinsicNineDirectP6ExactSelectorPolynomial,
+      factorTwoIntrinsicNineDirectP6ExactSelectorPlusCoefficients,
+      Fin.sum_univ_succ] <;>
+    module
+
+/-- Negative-endpoint analogue of the explicit rank-minus-selector row. -/
+theorem factorTwoIntrinsicNineDirectP6ExactSelectorMinusCorrectionPolynomial_eq
+    (i : Fin 3) :
+    factorTwoIntrinsicNineDirectP6RankPolynomial (-1)
+          (factorTwoIntrinsicNineDirectP024Embed (Pi.single i 1)) -
+        factorTwoIntrinsicNineDirectP6ExactSelectorMinus i =
+      ![(-poleFreeCoeff6 yoshidaEndpointA * (16 / 231 : ℝ)) •
+            shiftedLegendreReal 6 -
+          ((2477 / 1000 : ℝ) • shiftedLegendreReal 0 +
+            (1279 / 1000 : ℝ) • shiftedLegendreReal 2 +
+            (218 / 1000 : ℝ) • shiftedLegendreReal 4),
+        -((3256 / 1000 : ℝ) • shiftedLegendreReal 0 +
+            (561 / 1000 : ℝ) • shiftedLegendreReal 2 +
+            (530 / 1000 : ℝ) • shiftedLegendreReal 4),
+        -((39180 / 1000 : ℝ) • shiftedLegendreReal 0 +
+            (17879 / 1000 : ℝ) • shiftedLegendreReal 2 +
+            (727 / 1000 : ℝ) • shiftedLegendreReal 4)] i := by
+  fin_cases i <;>
+    simp [factorTwoIntrinsicNineDirectP6RankPolynomial,
+      factorTwoIntrinsicNineDirectP024Embed,
+      factorTwoIntrinsicNineDirectP6ExactSelectorMinus,
+      factorTwoIntrinsicNineDirectP6ExactSelectorPolynomial,
+      factorTwoIntrinsicNineDirectP6ExactSelectorMinusCoefficients,
+      Fin.sum_univ_succ] <;>
+    module
+
+/-- Fully evaluated polynomial portion of the positive endpoint row. -/
+def factorTwoIntrinsicNineDirectP6ExactSelectorPlusCorrectionRow
+    (i : Fin 3) (x : ℝ) : ℝ :=
+  ![poleFreeCoeff6 yoshidaEndpointA * (16 / 231 : ℝ) *
+        factorTwoCenteredP6 x -
+      ((582 / 1000 : ℝ) +
+        (322 / 1000 : ℝ) * ((3 * x ^ 2 - 1) / 2) +
+        (410 / 1000 : ℝ) * ((35 * x ^ 4 - 30 * x ^ 2 + 3) / 8)),
+    -((-2936 / 1000 : ℝ) +
+        (672 / 1000 : ℝ) * ((3 * x ^ 2 - 1) / 2) +
+        (439 / 1000 : ℝ) * ((35 * x ^ 4 - 30 * x ^ 2 + 3) / 8)),
+    -((-39110 / 1000 : ℝ) +
+        (-17340 / 1000 : ℝ) * ((3 * x ^ 2 - 1) / 2) +
+        (132 / 1000 : ℝ) * ((35 * x ^ 4 - 30 * x ^ 2 + 3) / 8))] i
+
+/-- Fully evaluated polynomial portion of the negative endpoint row. -/
+def factorTwoIntrinsicNineDirectP6ExactSelectorMinusCorrectionRow
+    (i : Fin 3) (x : ℝ) : ℝ :=
+  ![-poleFreeCoeff6 yoshidaEndpointA * (16 / 231 : ℝ) *
+        factorTwoCenteredP6 x -
+      ((2477 / 1000 : ℝ) +
+        (1279 / 1000 : ℝ) * ((3 * x ^ 2 - 1) / 2) +
+        (218 / 1000 : ℝ) * ((35 * x ^ 4 - 30 * x ^ 2 + 3) / 8)),
+    -((3256 / 1000 : ℝ) +
+        (561 / 1000 : ℝ) * ((3 * x ^ 2 - 1) / 2) +
+        (530 / 1000 : ℝ) * ((35 * x ^ 4 - 30 * x ^ 2 + 3) / 8)),
+    -((39180 / 1000 : ℝ) +
+        (17879 / 1000 : ℝ) * ((3 * x ^ 2 - 1) / 2) +
+        (727 / 1000 : ℝ) * ((35 * x ^ 4 - 30 * x ^ 2 + 3) / 8))] i
+
+theorem centeredPolynomialLift_exactSelectorPlusCorrection_eq
+    (i : Fin 3) (x : ℝ) :
+    centeredPolynomialLift
+        (factorTwoIntrinsicNineDirectP6RankPolynomial 1
+            (factorTwoIntrinsicNineDirectP024Embed (Pi.single i 1)) -
+          factorTwoIntrinsicNineDirectP6ExactSelectorPlus i) x =
+      factorTwoIntrinsicNineDirectP6ExactSelectorPlusCorrectionRow i x := by
+  rw [factorTwoIntrinsicNineDirectP6ExactSelectorPlusCorrectionPolynomial_eq]
+  fin_cases i <;>
+    norm_num [factorTwoIntrinsicNineDirectP6ExactSelectorPlusCorrectionRow,
+      centeredPolynomialLift, factorTwoCenteredP6, shiftedLegendreReal,
+      Polynomial.shiftedLegendre, Polynomial.eval_finset_sum,
+      Finset.sum_range_succ, Nat.choose] <;>
+    ring
+
+theorem centeredPolynomialLift_exactSelectorMinusCorrection_eq
+    (i : Fin 3) (x : ℝ) :
+    centeredPolynomialLift
+        (factorTwoIntrinsicNineDirectP6RankPolynomial (-1)
+            (factorTwoIntrinsicNineDirectP024Embed (Pi.single i 1)) -
+          factorTwoIntrinsicNineDirectP6ExactSelectorMinus i) x =
+      factorTwoIntrinsicNineDirectP6ExactSelectorMinusCorrectionRow i x := by
+  rw [factorTwoIntrinsicNineDirectP6ExactSelectorMinusCorrectionPolynomial_eq]
+  fin_cases i <;>
+    norm_num [factorTwoIntrinsicNineDirectP6ExactSelectorMinusCorrectionRow,
+      centeredPolynomialLift, factorTwoCenteredP6, shiftedLegendreReal,
+      Polynomial.shiftedLegendre, Polynomial.eval_finset_sum,
+      Finset.sum_range_succ, Nat.choose] <;>
+    ring
+
+/-- Positive endpoint shifted rows in the exact cancellation coordinates used
+by the reciprocal Gram. -/
+theorem factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder_plus_eq
+    (i : Fin 3) (x : ℝ) :
+    factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder 1
+        factorTwoIntrinsicNineDirectP6ExactSelectorPlus i x =
+      factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+          (Sum.inl i : Fin 3 ⊕ Fin 3) x +
+        factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+          (Sum.inr i : Fin 3 ⊕ Fin 3) x -
+        retainedP024EvenMass *
+          ((511 / 252 : ℝ) *
+              centeredPolynomialLift (retainedP024EvenMode i) x -
+            (511 / 504 : ℝ)) +
+        factorTwoIntrinsicNineDirectP6ExactSelectorPlusCorrectionRow i x := by
+  rw [factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder_eq_selectorFree,
+    factorTwoIntrinsicNineDirectP6ExactResidualPoleRow_eq,
+    centeredPolynomialLift_exactSelectorPlusCorrection_eq]
+  unfold retainedP024EvenMode
+  ring
+
+/-- Negative endpoint shifted rows in the same cancellation coordinates. -/
+theorem factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder_minus_eq
+    (i : Fin 3) (x : ℝ) :
+    factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder (-1)
+        factorTwoIntrinsicNineDirectP6ExactSelectorMinus i x =
+      factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+          (Sum.inl i : Fin 3 ⊕ Fin 3) x -
+        factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+          (Sum.inr i : Fin 3 ⊕ Fin 3) x -
+        retainedP024EvenMass *
+          ((511 / 252 : ℝ) *
+              centeredPolynomialLift (retainedP024EvenMode i) x +
+            (511 / 504 : ℝ)) +
+        factorTwoIntrinsicNineDirectP6ExactSelectorMinusCorrectionRow i x := by
+  rw [factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder_eq_selectorFree,
+    factorTwoIntrinsicNineDirectP6ExactResidualPoleRow_eq,
+    centeredPolynomialLift_exactSelectorMinusCorrection_eq]
+  unfold retainedP024EvenMode
+  ring
 
 theorem factorTwoIntrinsicNineDirectP6ExactSelectorPlus_natDegree_lt_six
     (i : Fin 3) :
