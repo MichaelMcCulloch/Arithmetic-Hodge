@@ -61,6 +61,87 @@ def retainedP024SelectorTiltedQuadraticReserve :
     retainedP024SelectorTiltedDiagonalᴴ *
       retainedP024SelectorTiltedCore * retainedP024SelectorTiltedDiagonal
 
+/-- Diagonal contraction relating the two signed endpoint gaps in the
+quadratic tilted reserve. -/
+def retainedP024SelectorEndpointContractionDiagonal :
+    Matrix (Fin 3) (Fin 3) ℝ :=
+  diagonal ![(31 / 131 : ℝ), (27 / 127 : ℝ), (3 / 13 : ℝ)]
+
+/-- Positive Cauchy kernel which transports the endpoint contraction gap to
+the tilted quadratic reserve. -/
+def retainedP024SelectorEndpointCauchyAlpha :
+    Matrix (Fin 3) (Fin 3) ℝ :=
+  ![![(17161 / 16200 : ℝ), (16637 / 15800 : ℝ), (1703 / 1610 : ℝ)],
+    ![(16637 / 15800 : ℝ), (16129 / 15400 : ℝ), (1651 / 1570 : ℝ)],
+    ![(1703 / 1610 : ℝ), (1651 / 1570 : ℝ), (169 / 160 : ℝ)]]
+
+/-- Exact endpoint Loewner gap underlying the quadratic tilted gate. -/
+def retainedP024SelectorEndpointContractionGap :
+    Matrix (Fin 3) (Fin 3) ℝ :=
+  retainedP024SelectorBoundaryGapMatrix 1 -
+    retainedP024SelectorEndpointContractionDiagonal *
+      retainedP024SelectorBoundaryGapMatrix (-1) *
+        retainedP024SelectorEndpointContractionDiagonal
+
+/-- Entrywise Cauchy transport of a fixed three-coordinate matrix. -/
+def retainedP024SelectorEndpointCauchyLift
+    (K : Matrix (Fin 3) (Fin 3) ℝ) : Matrix (Fin 3) (Fin 3) ℝ :=
+  fun i j ↦ retainedP024SelectorEndpointCauchyAlpha i j * K i j
+
+private def retainedP024SelectorEndpointCauchyLDL0 : Fin 3 → ℝ :=
+  ![1, (10287 / 10349 : ℝ), (21060 / 21091 : ℝ)]
+
+private def retainedP024SelectorEndpointCauchyLDL1 : Fin 3 → ℝ :=
+  ![0, 1, (112970 / 458597 : ℝ)]
+
+private def retainedP024SelectorEndpointCauchyLDL2 : Fin 3 → ℝ :=
+  ![0, 0, 1]
+
+/-- Exact rational LDL decomposition of the Cauchy transport. -/
+theorem retainedP024SelectorEndpointCauchyLift_eq_congruences
+    (K : Matrix (Fin 3) (Fin 3) ℝ) :
+    retainedP024SelectorEndpointCauchyLift K =
+      (17161 / 16200 : ℝ) •
+          (diagonal retainedP024SelectorEndpointCauchyLDL0 * K *
+            diagonal retainedP024SelectorEndpointCauchyLDL0) +
+        (16129 / 24027850 : ℝ) •
+          (diagonal retainedP024SelectorEndpointCauchyLDL1 * K *
+            diagonal retainedP024SelectorEndpointCauchyLDL1) +
+        (1521 / 102228276640 : ℝ) •
+          (diagonal retainedP024SelectorEndpointCauchyLDL2 * K *
+            diagonal retainedP024SelectorEndpointCauchyLDL2) := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [retainedP024SelectorEndpointCauchyLift,
+      retainedP024SelectorEndpointCauchyAlpha,
+      retainedP024SelectorEndpointCauchyLDL0,
+      retainedP024SelectorEndpointCauchyLDL1,
+      retainedP024SelectorEndpointCauchyLDL2, Matrix.mul_apply,
+      Fin.sum_univ_succ] <;>
+    ring
+
+/-- The Cauchy transport preserves positive semidefiniteness.  The proof is
+the exact three-term LDL decomposition, so no entrywise positivity test is
+used. -/
+theorem retainedP024SelectorEndpointCauchyLift_posSemidef
+    {K : Matrix (Fin 3) (Fin 3) ℝ} (hK : K.PosSemidef) :
+    (retainedP024SelectorEndpointCauchyLift K).PosSemidef := by
+  have h0 : (diagonal retainedP024SelectorEndpointCauchyLDL0 * K *
+      diagonal retainedP024SelectorEndpointCauchyLDL0).PosSemidef := by
+    simpa using hK.mul_mul_conjTranspose_same
+      (diagonal retainedP024SelectorEndpointCauchyLDL0)
+  have h1 : (diagonal retainedP024SelectorEndpointCauchyLDL1 * K *
+      diagonal retainedP024SelectorEndpointCauchyLDL1).PosSemidef := by
+    simpa using hK.mul_mul_conjTranspose_same
+      (diagonal retainedP024SelectorEndpointCauchyLDL1)
+  have h2 : (diagonal retainedP024SelectorEndpointCauchyLDL2 * K *
+      diagonal retainedP024SelectorEndpointCauchyLDL2).PosSemidef := by
+    simpa using hK.mul_mul_conjTranspose_same
+      (diagonal retainedP024SelectorEndpointCauchyLDL2)
+  rw [retainedP024SelectorEndpointCauchyLift_eq_congruences]
+  exact ((h0.smul (by norm_num)).add (h1.smul (by norm_num))).add
+    (h2.smul (by norm_num))
+
 /-- Phase-dependent congruence factor. -/
 def retainedP024SelectorTiltedFactor (a : ℝ) :
     Matrix (Fin 3) (Fin 3) ℝ :=
@@ -87,6 +168,36 @@ theorem retainedP024SelectorBoundaryGapLinear_eq_tilted :
       retainedP024SelectorTiltedCore, Matrix.mul_apply,
       Fin.sum_univ_succ] <;>
     ring
+
+/-- Exact endpoint-contraction factorization of the quadratic tilted
+reserve.  It isolates the analytic content as the single Loewner comparison
+`D * H(-1) * D ≼ H(1)`; the remaining map is a positive Cauchy transport. -/
+theorem retainedP024SelectorTiltedQuadraticReserve_eq_endpointCauchyLift :
+    retainedP024SelectorTiltedQuadraticReserve =
+      retainedP024SelectorEndpointCauchyLift
+        retainedP024SelectorEndpointContractionGap := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [retainedP024SelectorTiltedQuadraticReserve,
+      retainedP024SelectorTiltedConstantReserve,
+      retainedP024SelectorBoundaryGapQuadratic,
+      retainedP024SelectorBoundaryGapConstant,
+      retainedP024SelectorBoundaryGapLinear,
+      retainedP024SelectorTiltedCore,
+      retainedP024SelectorTiltedDiagonal,
+      retainedP024SelectorEndpointCauchyLift,
+      retainedP024SelectorEndpointCauchyAlpha,
+      retainedP024SelectorEndpointContractionGap,
+      retainedP024SelectorEndpointContractionDiagonal,
+      Matrix.mul_apply, Fin.sum_univ_succ] <;>
+    ring
+
+/-- The endpoint Loewner contraction closes the quadratic tilted gate. -/
+theorem retainedP024SelectorTiltedQuadraticReserve_posSemidef_of_endpointContraction
+    (hEndpoint : retainedP024SelectorEndpointContractionGap.PosSemidef) :
+    retainedP024SelectorTiltedQuadraticReserve.PosSemidef := by
+  rw [retainedP024SelectorTiltedQuadraticReserve_eq_endpointCauchyLift]
+  exact retainedP024SelectorEndpointCauchyLift_posSemidef hEndpoint
 
 /-- Exact structural factorization of the full boundary-gap pencil. -/
 theorem retainedP024SelectorBoundaryGapMatrix_eq_tilted_factorization
@@ -197,10 +308,11 @@ theorem exists_sharpRetunedP024Selector_of_tilted
     retainedP024SelectorAlt4_natDegree_lt
     hboundary c0 c2 c4
 
-/-- The three fixed tilted gates feed the sharp selector directly into the
-production low--tail estimate on the `P₀/P₂/P₄` slice.  Thus no selector
-existence hypothesis remains between the fixed matrix certificate and the
-mixed Cauchy inequality used by the cutoff-eleven argument. -/
+/-- The two remaining tilted gates and the structural endpoint contraction
+feed the sharp selector directly into the production low--tail estimate on
+the `P₀/P₂/P₄` slice.  Thus no selector-existence or opaque quadratic-gate
+hypothesis remains between the fixed matrix certificate and the mixed Cauchy
+inequality used by the cutoff-eleven argument. -/
 theorem factorTwoEndpointLowTailMixed_retainedP024_sq_le_of_tilted
     (c0 c2 c4 : ℝ) (eR oR : ℝ → ℝ)
     (heRc : Continuous eR) (hoRc : Continuous oR)
@@ -213,7 +325,7 @@ theorem factorTwoEndpointLowTailMixed_retainedP024_sq_le_of_tilted
     (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
     (hCore : retainedP024SelectorTiltedCore.PosSemidef)
     (hConstant : retainedP024SelectorTiltedConstantReserve.PosSemidef)
-    (hQuadratic : retainedP024SelectorTiltedQuadraticReserve.PosSemidef) :
+    (hEndpoint : retainedP024SelectorEndpointContractionGap.PosSemidef) :
     factorTwoEndpointLowTailMixed
           (centeredPolynomialLift (retainedP024Polynomial c0 c2 c4)) eR
           (centeredPolynomialLift (0 : ℝ[X])) oR a b ^ 2 ≤
@@ -223,7 +335,10 @@ theorem factorTwoEndpointLowTailMixed_retainedP024_sq_le_of_tilted
         factorTwoEndpointChannelPhase eR oR a b := by
   obtain ⟨qE, qO, hqE, hqO, hselector⟩ :=
     exists_sharpRetunedP024Selector_of_tilted
-      a b hab hCore hConstant hQuadratic c0 c2 c4
+      a b hab hCore hConstant
+        (retainedP024SelectorTiltedQuadraticReserve_posSemidef_of_endpointContraction
+          hEndpoint)
+        c0 c2 c4
   exact
     factorTwoEndpointLowTailMixed_centeredPolynomialLift_sq_le_of_sharpRetunedAsymmetricRetainedSelector
       (retainedP024Polynomial c0 c2 c4) 0 eR oR
