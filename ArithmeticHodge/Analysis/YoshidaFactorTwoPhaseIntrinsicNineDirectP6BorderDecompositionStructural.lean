@@ -13,10 +13,12 @@ open ShiftedLegendreOrthogonality
 open UnitIntervalLogEnergyAffine
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddResidualRegularity
+open YoshidaEndpointHyperbolicBound
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseFullProfile
 open YoshidaFactorTwoPhaseIntrinsicLow
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
+open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicNineComplementSchurStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectMatrixStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6BorderStructural
@@ -30,6 +32,7 @@ open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseP6BoundaryPolynomialStructural
+open YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural
 open YoshidaFactorTwoPhaseP67ResidualRegularDecompositionStructural
 
 noncomputable section
@@ -271,6 +274,53 @@ theorem factorTwoIntrinsicNineDirectP6BorderFunctional_eq_decomposition
           factorTwoCenteredP6 (0 : ℝ → ℝ) a b := by
   rw [factorTwoIntrinsicNineDirectP6BorderFunctional_eq_lowTailMixed,
     factorTwoEndpointLowTailMixed_directP6_eq_decomposition]
+
+/-- The complete smooth part of the direct `P6` border retains exactly one
+degree-six polynomial row, supported on the `P0` coordinate. -/
+theorem integral_factorTwoIntrinsicNineDirectP6SmoothMixed_eq
+    (a b : ℝ) (x : Fin 6 → ℝ) :
+    (∫ t : ℝ in 0..2,
+      factorTwoP67ResidualSmoothMixedIntegrand
+        (factorTwoIntrinsicNineDirectP024Profile x)
+        (factorTwoIntrinsicNineDirectP135Profile x)
+        factorTwoCenteredP6 (0 : ℝ → ℝ) a b t) =
+      2 * (factorTwoP67ResidualAnalyticMixed
+            (factorTwoIntrinsicNineDirectP024Profile x)
+            (factorTwoIntrinsicNineDirectP135Profile x)
+            factorTwoCenteredP6 (0 : ℝ → ℝ) a b +
+          factorTwoP67ResidualForwardHankelMixed
+            (factorTwoIntrinsicNineDirectP024Profile x)
+            (factorTwoIntrinsicNineDirectP135Profile x)
+            factorTwoCenteredP6 (0 : ℝ → ℝ) a b) +
+        2 * a *
+          (poleFreeCoeff6 yoshidaEndpointA * (32 / 3003 : ℝ) * x 0) := by
+  simpa only [factorTwoIntrinsicNineDirectP024Profile,
+    factorTwoIntrinsicNineDirectP135Profile] using
+    integral_factorTwoP67ResidualSmoothMixedIntegrand_directP6_eq
+      (x 0) (x 1) (x 2) (x 3) (x 4) (x 5) a b
+
+/-- Exact cutoff-six border normal form.  The direct matrix row is one
+coupled sum of the analytic remainder, forward Hankel pole, retained `P0`
+rank-one row, and the five-family nonpolynomial aggregate. -/
+theorem factorTwoIntrinsicNineDirectP6BorderFunctional_eq_complete_normalForm
+    (a b : ℝ) (x : Fin 6 → ℝ) :
+    factorTwoIntrinsicNineDirectP6BorderFunctional a b x =
+      factorTwoP67ResidualAnalyticMixed
+          (factorTwoIntrinsicNineDirectP024Profile x)
+          (factorTwoIntrinsicNineDirectP135Profile x)
+          factorTwoCenteredP6 (0 : ℝ → ℝ) a b +
+        factorTwoP67ResidualForwardHankelMixed
+          (factorTwoIntrinsicNineDirectP024Profile x)
+          (factorTwoIntrinsicNineDirectP135Profile x)
+          factorTwoCenteredP6 (0 : ℝ → ℝ) a b +
+        a * poleFreeCoeff6 yoshidaEndpointA * (32 / 3003 : ℝ) * x 0 +
+        factorTwoIntrinsicNineNonpolynomialMixed
+          (factorTwoIntrinsicNineDirectP024Profile x)
+          (factorTwoIntrinsicNineDirectP135Profile x)
+          factorTwoCenteredP6 (0 : ℝ → ℝ) a b := by
+  rw [factorTwoIntrinsicNineDirectP6BorderFunctional_eq_decomposition,
+    integral_factorTwoIntrinsicNineDirectP6SmoothMixed_eq]
+  ring
 
 end
 

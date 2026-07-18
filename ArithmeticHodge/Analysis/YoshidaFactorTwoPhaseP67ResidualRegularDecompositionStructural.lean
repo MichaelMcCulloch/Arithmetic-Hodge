@@ -1,6 +1,7 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualAffineCancellationStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualPolynomialCancellationStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP6BoundaryPolynomialStructural
 
 set_option autoImplicit false
 
@@ -9,19 +10,24 @@ open MeasureTheory Real Set
 namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualRegularDecompositionStructural
 
 open YoshidaEndpointHyperbolicBound
+open YoshidaEndpointOddResidualRegularity
 open YoshidaFactorTwoAdjacentKernel
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointClean
 open YoshidaFactorTwoPhaseEnvelope
 open YoshidaFactorTwoPhaseIntrinsicEvenNegativePerturbationSharp
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
+open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
 open YoshidaFactorTwoPhaseIntrinsicProjectedRemainder
 open YoshidaFactorTwoPhaseIntrinsicRemainderBound
 open YoshidaFactorTwoPhaseOddAffineKernelEstimate
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
+open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseP67ResidualAffineCancellationStructural
 open YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural
 open YoshidaFactorTwoPhaseP67ResidualPolynomialCancellationStructural
+open YoshidaFactorTwoPhaseP6BoundaryPolynomialStructural
+open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseTailCoercivity
 open YoshidaRegularKernelBound
 
@@ -348,6 +354,97 @@ theorem factorTwoIntrinsicRegularPhaseBlock_add_add_eq
       rw [intervalIntegral.integral_add hL hR]
       ring
 
+/-- One symmetric low--residual row is exactly its analytic error, retained
+degree-six polynomial model, and forward pole.  This identity is valid at the
+cutoff boundary, before any moment cancellation is imposed. -/
+theorem integral_symmetricRegularScalar_mul_correlationBilinear_eq_with_model
+    (u r : ℝ → ℝ) (hu : Continuous u) (hr : Continuous r) :
+    (∫ t : ℝ in 0..2,
+      (oddLowPoleFreeKernel t - 1 / (2 * (2 + t))) *
+        factorTwoCenteredCorrelationBilinear u r t) =
+      factorTwoP67ResidualSymmetricAnalyticBorder u r +
+        (∫ t : ℝ in 0..2, poleFreeKernelPolynomial6 t *
+          factorTwoCenteredCorrelationBilinear u r t) -
+        (1 / 2 : ℝ) * (∫ t : ℝ in 0..2,
+          factorTwoCenteredCorrelationBilinear u r t / (2 + t)) := by
+  let B : ℝ → ℝ := factorTwoCenteredCorrelationBilinear u r
+  have hB : Continuous B := by
+    dsimp only [B]
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation u r hu hr).add
+      (continuous_factorTwoCenteredCrossCorrelation r u hr hu)).div_const 2
+  have hErr : IntervalIntegrable
+      (fun t : ℝ ↦
+        (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * B t)
+      volume 0 2 := intervalIntegrable_poleFreeAnalyticRow B hB
+  have hModel : IntervalIntegrable
+      (fun t : ℝ ↦ poleFreeKernelPolynomial6 t * B t)
+      volume 0 2 :=
+    (continuous_poleFreeKernelPolynomial6.mul hB).intervalIntegrable 0 2
+  have hDiv : IntervalIntegrable (fun t : ℝ ↦ B t / (2 + t))
+      volume 0 2 := intervalIntegrable_div_two_add B hB
+  have hPole : IntervalIntegrable
+      (fun t : ℝ ↦ (1 / (2 * (2 + t))) * B t) volume 0 2 := by
+    apply (hDiv.const_mul (1 / 2 : ℝ)).congr
+    intro t ht
+    have ht' : t ∈ Ioc (0 : ℝ) 2 := by
+      simpa [Set.uIoc_of_le (by norm_num : (0 : ℝ) ≤ 2)] using ht
+    have htplus : 2 + t ≠ 0 := by linarith [ht'.1]
+    field_simp [htplus]
+  have hPoleIntegral :
+      (∫ t : ℝ in 0..2, (1 / (2 * (2 + t))) * B t) =
+        (1 / 2 : ℝ) * (∫ t : ℝ in 0..2, B t / (2 + t)) := by
+    calc
+      _ = ∫ t : ℝ in 0..2, (1 / 2 : ℝ) * (B t / (2 + t)) := by
+        apply intervalIntegral.integral_congr
+        intro t ht
+        have ht' : t ∈ Icc (0 : ℝ) 2 := by
+          simpa [Set.uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)] using ht
+        have htplus : 2 + t ≠ 0 := by linarith [ht'.1]
+        field_simp [htplus]
+      _ = _ := by rw [intervalIntegral.integral_const_mul]
+  rw [show (fun t : ℝ ↦
+      (oddLowPoleFreeKernel t - 1 / (2 * (2 + t))) * B t) = fun t ↦
+        (oddLowPoleFreeKernel t - poleFreeKernelPolynomial6 t) * B t +
+          poleFreeKernelPolynomial6 t * B t -
+          (1 / (2 * (2 + t))) * B t by
+    funext t
+    ring,
+    intervalIntegral.integral_sub (hErr.add hModel) hPole,
+    intervalIntegral.integral_add hErr hModel,
+    hPoleIntegral]
+  unfold factorTwoP67ResidualSymmetricAnalyticBorder poleFreeAnalyticError
+  dsimp only [B]
+
+/-- At the exact `P6` cutoff, the retained polynomial model is the single
+`P0` row isolated by the rank-one boundary theorem. -/
+theorem integral_symmetricRegularScalar_mul_P024_P6_eq
+    (c0 c2 c4 : ℝ) :
+    (∫ t : ℝ in 0..2,
+      (oddLowPoleFreeKernel t - 1 / (2 * (2 + t))) *
+        factorTwoCenteredCorrelationBilinear
+          (factorTwoEvenStructuralLowProfile c0 c2 +
+            factorTwoIntrinsicSixEvenTail c4)
+          factorTwoCenteredP6 t) =
+      factorTwoP67ResidualSymmetricAnalyticBorder
+          (factorTwoEvenStructuralLowProfile c0 c2 +
+            factorTwoIntrinsicSixEvenTail c4)
+          factorTwoCenteredP6 +
+        poleFreeCoeff6 yoshidaEndpointA * (32 / 3003 : ℝ) * c0 -
+        (1 / 2 : ℝ) * (∫ t : ℝ in 0..2,
+          factorTwoCenteredCorrelationBilinear
+            (factorTwoEvenStructuralLowProfile c0 c2 +
+              factorTwoIntrinsicSixEvenTail c4)
+            factorTwoCenteredP6 t / (2 + t)) := by
+  have hLow : Continuous
+      (factorTwoEvenStructuralLowProfile c0 c2 +
+        factorTwoIntrinsicSixEvenTail c4) := by
+    exact (continuous_factorTwoEvenStructuralLowProfile c0 c2).add
+      (continuous_const.mul continuous_factorTwoCenteredP4)
+  rw [integral_symmetricRegularScalar_mul_correlationBilinear_eq_with_model
+    _ _ hLow continuous_factorTwoCenteredP6,
+    integral_poleFreeKernelPolynomial6_mul_P024_P6]
+
 /-- One symmetric low--residual row is exactly its analytic error plus the
 degree-six model and forward pole; the model vanishes under the residual
 moment gap. -/
@@ -548,6 +645,216 @@ private theorem intervalIntegrable_antisymmetricRegularRow
   intro t _ht
   dsimp only [D]
   ring
+
+/-- For arbitrary continuous low profiles, the complete smooth mixed integral
+is the analytic and forward-Hankel contribution together with the two exact
+degree-six model rows.  This is the cutoff-boundary form of the regular
+decomposition, before imposing any residual moment-gap cancellation. -/
+theorem integral_factorTwoP67ResidualSmoothMixedIntegrand_eq_of_models
+    (eLow oLow eR oR : ℝ → ℝ)
+    (heLowc : Continuous eLow) (hoLowc : Continuous oLow)
+    (heRc : Continuous eR) (hoRc : Continuous oR)
+    (mE mO : ℝ)
+    (hModelE : (∫ t : ℝ in 0..2,
+      poleFreeKernelPolynomial6 t *
+        factorTwoCenteredCorrelationBilinear eLow eR t) = mE)
+    (hModelO : (∫ t : ℝ in 0..2,
+      poleFreeKernelPolynomial6 t *
+        factorTwoCenteredCorrelationBilinear oLow oR t) = mO)
+    (hlinearE : (∫ t : ℝ in 0..2,
+      t * factorTwoP67ResidualAlternatingCrossDifference eLow oR t) = 0)
+    (hlinearO : (∫ t : ℝ in 0..2,
+      t * factorTwoP67ResidualAlternatingCrossDifference eR oLow t) = 0)
+    (a b : ℝ) :
+    (∫ t : ℝ in 0..2,
+      factorTwoP67ResidualSmoothMixedIntegrand
+        eLow oLow eR oR a b t) =
+      2 * (factorTwoP67ResidualAnalyticMixed
+          eLow oLow eR oR a b +
+        factorTwoP67ResidualForwardHankelMixed
+          eLow oLow eR oR a b) +
+        2 * a * (mE + mO) := by
+  let S : ℝ → ℝ := fun t ↦
+    oddLowPoleFreeKernel t - 1 / (2 * (2 + t))
+  let T : ℝ → ℝ := fun t ↦
+    yoshidaEndpointA * factorTwoCenteredAntisymmetricRegularWeight t -
+      1 / (2 * (2 + t))
+  let BE : ℝ → ℝ := factorTwoCenteredCorrelationBilinear eLow eR
+  let BO : ℝ → ℝ := factorTwoCenteredCorrelationBilinear oLow oR
+  let DE : ℝ → ℝ :=
+    factorTwoP67ResidualAlternatingCrossDifference eLow oR
+  let DO : ℝ → ℝ :=
+    factorTwoP67ResidualAlternatingCrossDifference eR oLow
+  have hBE : Continuous BE := by
+    dsimp only [BE]
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation eLow eR heLowc heRc).add
+      (continuous_factorTwoCenteredCrossCorrelation eR eLow heRc heLowc)).div_const 2
+  have hBO : Continuous BO := by
+    dsimp only [BO]
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation oLow oR hoLowc hoRc).add
+      (continuous_factorTwoCenteredCrossCorrelation oR oLow hoRc hoLowc)).div_const 2
+  have hDE : Continuous DE := by
+    dsimp only [DE]
+    unfold factorTwoP67ResidualAlternatingCrossDifference
+    exact (continuous_factorTwoCenteredCrossCorrelation oR eLow hoRc heLowc).sub
+      (continuous_factorTwoCenteredCrossCorrelation eLow oR heLowc hoRc)
+  have hDO : Continuous DO := by
+    dsimp only [DO]
+    unfold factorTwoP67ResidualAlternatingCrossDifference
+    exact (continuous_factorTwoCenteredCrossCorrelation oLow eR hoLowc heRc).sub
+      (continuous_factorTwoCenteredCrossCorrelation eR oLow heRc hoLowc)
+  have hSE :=
+    integral_symmetricRegularScalar_mul_correlationBilinear_eq_with_model
+      eLow eR heLowc heRc
+  have hSO :=
+    integral_symmetricRegularScalar_mul_correlationBilinear_eq_with_model
+      oLow oR hoLowc hoRc
+  have hAE := integral_antisymmetricRegularScalar_mul_crossDifference_eq
+    eLow oR heLowc hoRc hlinearE
+  have hAO := integral_antisymmetricRegularScalar_mul_crossDifference_eq
+    eR oLow heRc hoLowc hlinearO
+  have hSEInt : IntervalIntegrable (fun t : ℝ ↦ S t * BE t)
+      volume 0 2 := by
+    dsimp only [S, BE]
+    exact intervalIntegrable_symmetricRegularRow eLow eR heLowc heRc
+  have hSOInt : IntervalIntegrable (fun t : ℝ ↦ S t * BO t)
+      volume 0 2 := by
+    dsimp only [S, BO]
+    exact intervalIntegrable_symmetricRegularRow oLow oR hoLowc hoRc
+  have hAEInt : IntervalIntegrable (fun t : ℝ ↦ T t * DE t)
+      volume 0 2 := by
+    dsimp only [T, DE]
+    exact intervalIntegrable_antisymmetricRegularRow eLow oR heLowc hoRc
+  have hAOInt : IntervalIntegrable (fun t : ℝ ↦ T t * DO t)
+      volume 0 2 := by
+    dsimp only [T, DO]
+    exact intervalIntegrable_antisymmetricRegularRow eR oLow heRc hoLowc
+  have hDivBE := intervalIntegrable_div_two_add BE hBE
+  have hDivBO := intervalIntegrable_div_two_add BO hBO
+  have hDivDE := intervalIntegrable_div_two_add DE hDE
+  have hDivDO := intervalIntegrable_div_two_add DO hDO
+  have hSym :
+      (∫ t : ℝ in 0..2,
+        factorTwoP67ResidualSymmetricCrossSum eLow oLow eR oR t / (2 + t)) =
+        (∫ t : ℝ in 0..2, BE t / (2 + t)) +
+          ∫ t : ℝ in 0..2, BO t / (2 + t) := by
+    rw [show (fun t : ℝ ↦
+        factorTwoP67ResidualSymmetricCrossSum eLow oLow eR oR t / (2 + t)) =
+      fun t ↦ BE t / (2 + t) + BO t / (2 + t) by
+        funext t
+        dsimp only [BE, BO]
+        unfold factorTwoP67ResidualSymmetricCrossSum
+        ring,
+      intervalIntegral.integral_add hDivBE hDivBO]
+  have hAlt :
+      (∫ t : ℝ in 0..2,
+        factorTwoP67ResidualAlternatingCrossSum eLow oLow eR oR t / (2 + t)) =
+        (∫ t : ℝ in 0..2, DE t / (2 + t)) +
+          ∫ t : ℝ in 0..2, DO t / (2 + t) := by
+    rw [show (fun t : ℝ ↦
+        factorTwoP67ResidualAlternatingCrossSum eLow oLow eR oR t / (2 + t)) =
+      fun t ↦ DE t / (2 + t) + DO t / (2 + t) by
+        funext t
+        dsimp only [DE, DO]
+        unfold factorTwoP67ResidualAlternatingCrossSum
+        ring,
+      intervalIntegral.integral_add hDivDE hDivDO]
+  rw [show (fun t : ℝ ↦
+      factorTwoP67ResidualSmoothMixedIntegrand eLow oLow eR oR a b t) = fun t ↦
+        (2 * a) * (S t * BE t) + (2 * a) * (S t * BO t) +
+          b * (T t * DE t) + b * (T t * DO t) by
+    funext t
+    dsimp only [S, T, BE, BO, DE, DO]
+    unfold factorTwoP67ResidualSmoothMixedIntegrand
+      factorTwoP67ResidualSymmetricCrossSum
+      factorTwoP67ResidualAlternatingCrossSum
+    ring,
+    intervalIntegral.integral_add
+      (((hSEInt.const_mul (2 * a)).add (hSOInt.const_mul (2 * a))).add
+        (hAEInt.const_mul b)) (hAOInt.const_mul b),
+    intervalIntegral.integral_add
+      ((hSEInt.const_mul (2 * a)).add (hSOInt.const_mul (2 * a)))
+      (hAEInt.const_mul b),
+    intervalIntegral.integral_add
+      (hSEInt.const_mul (2 * a)) (hSOInt.const_mul (2 * a))]
+  repeat rw [intervalIntegral.integral_const_mul]
+  rw [hSE, hSO, hAE, hAO, hModelE, hModelO]
+  change _ = 2 *
+      (factorTwoP67ResidualAnalyticMixed eLow oLow eR oR a b +
+        factorTwoP67ResidualForwardHankelMixed eLow oLow eR oR a b) +
+    2 * a * (mE + mO)
+  unfold factorTwoP67ResidualAnalyticMixed
+    factorTwoP67ResidualForwardHankelMixed
+  rw [hSym, hAlt]
+  ring
+
+/-- At the exact `P0/P2/P4`--`P6` boundary, the degree-six symmetric model
+survives as one positive rank-one row.  The odd low profile contributes no
+polynomial model and its affine alternating row vanishes by parity. -/
+theorem integral_factorTwoP67ResidualSmoothMixedIntegrand_directP6_eq
+    (c0 c2 c4 c1 c3 c5 a b : ℝ) :
+    let eLow := factorTwoEvenStructuralLowProfile c0 c2 +
+      factorTwoIntrinsicSixEvenTail c4
+    let oLow := factorTwoIntrinsicSixOddTail c1 c3 c5
+    (∫ t : ℝ in 0..2,
+      factorTwoP67ResidualSmoothMixedIntegrand
+        eLow oLow factorTwoCenteredP6 (0 : ℝ → ℝ) a b t) =
+      2 * (factorTwoP67ResidualAnalyticMixed
+            eLow oLow factorTwoCenteredP6 (0 : ℝ → ℝ) a b +
+          factorTwoP67ResidualForwardHankelMixed
+            eLow oLow factorTwoCenteredP6 (0 : ℝ → ℝ) a b) +
+        2 * a *
+          (poleFreeCoeff6 yoshidaEndpointA * (32 / 3003 : ℝ) * c0) := by
+  let eLow := factorTwoEvenStructuralLowProfile c0 c2 +
+    factorTwoIntrinsicSixEvenTail c4
+  let oLow := factorTwoIntrinsicSixOddTail c1 c3 c5
+  have heLowc : Continuous eLow := by
+    dsimp only [eLow]
+    exact (continuous_factorTwoEvenStructuralLowProfile c0 c2).add
+      (continuous_const.mul continuous_factorTwoCenteredP4)
+  have hoLowc : Continuous oLow := by
+    dsimp only [oLow]
+    unfold factorTwoIntrinsicSixOddTail
+    exact (continuous_factorTwoOddStructuralLowProfile c1 c3).add
+      (continuous_const.mul continuous_factorTwoCenteredP5)
+  have hoLowOdd : Function.Odd oLow := by
+    intro x
+    dsimp only [oLow]
+    unfold factorTwoIntrinsicSixOddTail
+    simp only [Pi.add_apply]
+    rw [odd_factorTwoOddStructuralLowProfile c1 c3,
+      odd_factorTwoCenteredP5]
+    ring
+  have hModelE : (∫ t : ℝ in 0..2,
+      poleFreeKernelPolynomial6 t *
+        factorTwoCenteredCorrelationBilinear eLow factorTwoCenteredP6 t) =
+      poleFreeCoeff6 yoshidaEndpointA * (32 / 3003 : ℝ) * c0 := by
+    simpa only [eLow] using
+      integral_poleFreeKernelPolynomial6_mul_P024_P6 c0 c2 c4
+  have hModelO : (∫ t : ℝ in 0..2,
+      poleFreeKernelPolynomial6 t *
+        factorTwoCenteredCorrelationBilinear oLow (0 : ℝ → ℝ) t) = 0 := by
+    simp [factorTwoCenteredCorrelationBilinear,
+      factorTwoCenteredCrossCorrelation]
+  have hlinearE : (∫ t : ℝ in 0..2,
+      t * factorTwoP67ResidualAlternatingCrossDifference
+        eLow (0 : ℝ → ℝ) t) = 0 := by
+    simp [factorTwoP67ResidualAlternatingCrossDifference,
+      factorTwoCenteredCrossCorrelation]
+  have hlinearO : (∫ t : ℝ in 0..2,
+      t * factorTwoP67ResidualAlternatingCrossDifference
+        factorTwoCenteredP6 oLow t) = 0 := by
+    simpa [factorTwoP67ResidualAlternatingCrossDifference] using
+      integral_linear_mul_P6_oddResidual_crossDifference_eq_zero
+        oLow hoLowc hoLowOdd 1
+  have h := integral_factorTwoP67ResidualSmoothMixedIntegrand_eq_of_models
+    eLow oLow factorTwoCenteredP6 (0 : ℝ → ℝ)
+    heLowc hoLowc continuous_factorTwoCenteredP6 continuous_zero
+    (poleFreeCoeff6 yoshidaEndpointA * (32 / 3003 : ℝ) * c0) 0
+    hModelE hModelO hlinearE hlinearO a b
+  simpa only [eLow, oLow, add_zero] using h
 
 /-- For arbitrary continuous low profiles, moment-gap cancellation of the
 degree-six symmetric model together with the two affine alternating rows
