@@ -202,11 +202,11 @@ theorem factorTwoIntrinsicElevenWeightedReserve_le_phase
   exact factorTwoEndpointChannelPhase_gap_eleven_reserve
     e o hec hoc he ho he0 helocal holocal heLow hoLow a b hab
 
-/-- Exact subtraction of one degree-`< 11` selector. -/
+/-- Exact subtraction of one degree-below-`k` selector. -/
 theorem intervalIntegral_representer_mul_tail_eq_selectorResidual
     (F r : ℝ → ℝ) (hr : Continuous r)
-    (hlow : centeredLegendreMomentsVanishBelow r 11)
-    (p : ℝ[X]) (hp : p.natDegree < 11)
+    {k : ℕ} (hlow : centeredLegendreMomentsVanishBelow r k)
+    (p : ℝ[X]) (hp : p.natDegree < k)
     (hresidualTail : IntervalIntegrable
       (fun x : ℝ ↦
         factorTwoIntrinsicElevenSelectorResidual F p x * r x)
@@ -261,8 +261,8 @@ theorem sq_intervalIntegral_mul_le_weighted
 /-- One-channel constrained weighted Cauchy after exact moment subtraction. -/
 theorem sq_representerPairing_le_selectorDual_mul_reserve
     (W F r : ℝ → ℝ) (hr : Continuous r)
-    (hlow : centeredLegendreMomentsVanishBelow r 11)
-    (p : ℝ[X]) (hp : p.natDegree < 11)
+    {k : ℕ} (hlow : centeredLegendreMomentsVanishBelow r k)
+    (p : ℝ[X]) (hp : p.natDegree < k)
     (hW : ∀ x ∈ Icc (-1 : ℝ) 1, 0 < W x)
     (hdual : MemLp (fun x ↦
         factorTwoIntrinsicElevenSelectorResidual F p x /
