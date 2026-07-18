@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaEndpointPotentialBound
 import ArithmeticHodge.Analysis.YoshidaFactorTwoReflectedPolePolynomialReductionStructural
+import Mathlib.Analysis.SpecialFunctions.BinaryEntropy
 import Mathlib.Analysis.SpecialFunctions.Log.NegMulLog
 
 set_option autoImplicit false
@@ -47,6 +48,38 @@ theorem reflectedEndpointSignedEntropy_odd :
 @[simp] theorem reflectedEndpointSignedEntropy_one :
     reflectedEndpointSignedEntropy 1 = 0 := by
   simp [reflectedEndpointSignedEntropy]
+
+/-- The signed endpoint entropy is dominated by the ordinary binary entropy
+of the right endpoint coordinate. -/
+theorem abs_reflectedEndpointSignedEntropy_le_binEntropy
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    |reflectedEndpointSignedEntropy x| ≤
+      Real.binEntropy ((x + 1) / 2) := by
+  have hp0 : 0 ≤ (x + 1) / 2 := by linarith [hx.1]
+  have hp1 : (x + 1) / 2 ≤ 1 := by linarith [hx.2]
+  have hq0 : 0 ≤ (1 - x) / 2 := by linarith [hx.2]
+  have hq1 : (1 - x) / 2 ≤ 1 := by linarith [hx.1]
+  have hplus := Real.negMulLog_nonneg hp0 hp1
+  have hminus := Real.negMulLog_nonneg hq0 hq1
+  unfold reflectedEndpointSignedEntropy
+  calc
+    |Real.negMulLog ((x + 1) / 2) -
+        Real.negMulLog ((1 - x) / 2)| ≤
+      |Real.negMulLog ((x + 1) / 2)| +
+        |Real.negMulLog ((1 - x) / 2)| := abs_sub _ _
+    _ = Real.binEntropy ((x + 1) / 2) := by
+      rw [abs_of_nonneg hplus, abs_of_nonneg hminus,
+        Real.binEntropy_eq_negMulLog_add_negMulLog_one_sub]
+      congr 2
+      ring
+
+/-- Uniform entropy bound used by every reflected-pole remainder on the
+centered interval. -/
+theorem abs_reflectedEndpointSignedEntropy_le_log_two
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    |reflectedEndpointSignedEntropy x| ≤ Real.log 2 :=
+  (abs_reflectedEndpointSignedEntropy_le_binEntropy hx).trans
+    Real.binEntropy_le_log_two
 
 /-- The sum of the two endpoint logarithms is exactly twice the shifted
 endpoint potential. -/
