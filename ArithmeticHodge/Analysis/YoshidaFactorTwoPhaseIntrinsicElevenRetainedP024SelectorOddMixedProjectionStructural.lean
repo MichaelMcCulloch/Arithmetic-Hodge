@@ -20,6 +20,8 @@ open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorOddProjectionStruct
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorPoleRemainderStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorQuotientStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorRemainderGramStructural
+open YoshidaFactorTwoPhaseIntrinsicElevenRetainedSelectorHomogeneityStructural
+open YoshidaFactorTwoPhaseIntrinsicElevenSelectorGramStructural
 
 noncomputable section
 
@@ -180,6 +182,44 @@ def retainedP024OddMixedProjectionLowerGram
   retainedP024OddMixedProjectionCrossGram ν * Cᴴ +
     C * (retainedP024OddMixedProjectionCrossGram ν)ᴴ -
     C * retainedP024OddMixedProjectionModeGram ν * Cᴴ
+
+theorem retainedP024OddMixedProjectionCrossGram_apply
+    {κ : Type*} [Fintype κ] (ν : κ → ℕ)
+    (i : Fin 3) (k : κ ⊕ Fin 3) :
+    retainedP024OddMixedProjectionCrossGram ν i k =
+      ∫ x : ℝ in -1..1,
+        retainedP024SelectorAlternatingShiftedRemainder i x *
+          retainedP024OddMixedProjectionRow ν k x := by
+  unfold retainedP024OddMixedProjectionCrossGram finiteWeightedCrossGram
+    retainedP024OddMixedProjectionWeightedRow
+    factorTwoIntrinsicElevenSelectorCrossDual
+  apply intervalIntegral.integral_congr
+  intro x hx
+  rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+  have hW := factorTwoIntrinsicElevenRetainedOddWeight_pos_on_Icc hx
+  simp only [factorTwoIntrinsicElevenSelectorResidual,
+    centeredPolynomialLift, Polynomial.eval_zero, sub_zero]
+  field_simp [hW.ne']
+
+theorem retainedP024OddMixedProjectionModeGram_apply
+    {κ : Type*} [Fintype κ] (ν : κ → ℕ)
+    (k l : κ ⊕ Fin 3) :
+    retainedP024OddMixedProjectionModeGram ν k l =
+      ∫ x : ℝ in -1..1,
+        factorTwoIntrinsicElevenRetainedOddWeight x *
+          retainedP024OddMixedProjectionRow ν k x *
+          retainedP024OddMixedProjectionRow ν l x := by
+  unfold retainedP024OddMixedProjectionModeGram finiteWeightedGram
+    factorTwoIntrinsicElevenSelectorGram
+    retainedP024OddMixedProjectionWeightedRow
+    factorTwoIntrinsicElevenSelectorCrossDual
+  apply intervalIntegral.integral_congr
+  intro x hx
+  rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+  have hW := factorTwoIntrinsicElevenRetainedOddWeight_pos_on_Icc hx
+  simp only [factorTwoIntrinsicElevenSelectorResidual,
+    centeredPolynomialLift, Polynomial.eval_zero, sub_zero]
+  field_simp [hW.ne']
 
 theorem retainedP024OddMixedProjectionWeightedRow_div_sqrt_memLp_two
     {κ : Type*} (ν : κ → ℕ) (k : κ ⊕ Fin 3) :
