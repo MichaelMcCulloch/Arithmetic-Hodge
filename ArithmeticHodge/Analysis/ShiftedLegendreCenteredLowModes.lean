@@ -60,6 +60,32 @@ theorem eval_centeredShiftedLegendreReal (n : ℕ) (x : ℝ) :
   congr 1
   ring
 
+/-- Centered reflection acts on degree `n` by the exact Legendre parity
+sign. -/
+theorem eval_centeredShiftedLegendreReal_neg (n : ℕ) (x : ℝ) :
+    (centeredShiftedLegendreReal n).eval (-x) =
+      (-1 : ℝ) ^ n * (centeredShiftedLegendreReal n).eval x := by
+  rw [eval_centeredShiftedLegendreReal,
+    eval_centeredShiftedLegendreReal]
+  simp only [shiftedLegendreReal, Polynomial.eval_map]
+  change Polynomial.aeval ((-x + 1) / 2)
+      (Polynomial.shiftedLegendre n) =
+    (-1 : ℝ) ^ n *
+      Polynomial.aeval ((x + 1) / 2) (Polynomial.shiftedLegendre n)
+  convert Polynomial.shiftedLegendre_eval_symm n ((-x + 1) / 2) using 1;
+    ring
+
+/-- Every centered shifted-Legendre mode of even degree is an even
+function. -/
+theorem even_eval_centeredShiftedLegendreReal (n : ℕ) :
+    Function.Even (fun x : ℝ ↦
+      (centeredShiftedLegendreReal (2 * n)).eval x) := by
+  intro x
+  change (centeredShiftedLegendreReal (2 * n)).eval (-x) =
+    (centeredShiftedLegendreReal (2 * n)).eval x
+  rw [eval_centeredShiftedLegendreReal_neg]
+  simp
+
 @[simp]
 theorem eval_centeredShiftedLegendreReal_zero (x : ℝ) :
     (centeredShiftedLegendreReal 0).eval x = 1 := by
