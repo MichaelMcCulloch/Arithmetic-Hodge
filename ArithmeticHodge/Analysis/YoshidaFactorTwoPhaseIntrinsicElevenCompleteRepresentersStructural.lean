@@ -697,9 +697,10 @@ forward `FE/FO` pairing after moment-gap cancellation. -/
 theorem factorTwoP67ResidualForwardHankelMixed_eq_intrinsicElevenPairing
     (pE pO : ℝ[X]) (e o : ℝ → ℝ)
     (he : Continuous e) (ho : Continuous o)
-    (heGap : centeredLegendreMomentsVanishBelow e 11)
-    (hoGap : centeredLegendreMomentsVanishBelow o 11)
-    (hpEdeg : pE.natDegree < 11) (hpOdeg : pO.natDegree < 11)
+    {k : ℕ}
+    (heGap : centeredLegendreMomentsVanishBelow e k)
+    (hoGap : centeredLegendreMomentsVanishBelow o k)
+    (hpEdeg : pE.natDegree < k) (hpOdeg : pO.natDegree < k)
     (a b : ℝ) :
     factorTwoP67ResidualForwardHankelMixed
         (centeredPolynomialLift pE) (centeredPolynomialLift pO)
@@ -757,9 +758,10 @@ theorem factorTwoIntrinsicNineNonpolynomialMixed_zero_eq_cleanPairing
     (he : Continuous e) (ho : Continuous o)
     (heLocal : LocallyLipschitzOn (Icc (-1) 1) e)
     (hoLocal : LocallyLipschitzOn (Icc (-1) 1) o)
-    (heGap : centeredLegendreMomentsVanishBelow e 11)
-    (hoGap : centeredLegendreMomentsVanishBelow o 11)
-    (hpEdeg : pE.natDegree < 11) (hpOdeg : pO.natDegree < 11) :
+    {k : ℕ}
+    (heGap : centeredLegendreMomentsVanishBelow e k)
+    (hoGap : centeredLegendreMomentsVanishBelow o k)
+    (hpEdeg : pE.natDegree < k) (hpOdeg : pO.natDegree < k) :
     factorTwoIntrinsicNineNonpolynomialMixed
         (centeredPolynomialLift pE) (centeredPolynomialLift pO)
         e o 0 0 =
@@ -798,9 +800,10 @@ reflected `FE/FO` pairing. -/
 theorem factorTwoIntrinsicElevenReflectedMixed_eq_pairing
     (pE pO : ℝ[X]) (e o : ℝ → ℝ)
     (he : Continuous e) (ho : Continuous o)
-    (heGap : centeredLegendreMomentsVanishBelow e 11)
-    (hoGap : centeredLegendreMomentsVanishBelow o 11)
-    (hpEdeg : pE.natDegree < 11) (hpOdeg : pO.natDegree < 11)
+    {k : ℕ}
+    (heGap : centeredLegendreMomentsVanishBelow e k)
+    (hoGap : centeredLegendreMomentsVanishBelow o k)
+    (hpEdeg : pE.natDegree < k) (hpOdeg : pO.natDegree < k)
     (a b : ℝ) :
     factorTwoIntrinsicElevenReflectedMixed
         (centeredPolynomialLift pE) (centeredPolynomialLift pO)
@@ -1058,6 +1061,97 @@ theorem factorTwoIntrinsicElevenPrimeMixed_eq_pairing
       (hOK.const_mul (-primeCoefficient * a))
       (hOJ.const_mul (primeCoefficient * b))]
   repeat rw [intervalIntegral.integral_const_mul]
+  ring
+
+/-- Expanding the assembled pair of complete representers gives the five
+component pairings exactly.  This algebraic assembly only needs continuity;
+moment gaps enter later when the individual components are identified with
+the corresponding low--tail rows. -/
+theorem factorTwoIntrinsicElevenMixedPairing_complete_eq_components
+    (pE pO : ℝ[X]) (e o : ℝ → ℝ)
+    (he : Continuous e) (ho : Continuous o) (a b : ℝ) :
+    factorTwoIntrinsicElevenMixedPairing
+        (factorTwoIntrinsicElevenEvenMixedRepresenter pE pO a b)
+        (factorTwoIntrinsicElevenOddMixedRepresenter pE pO a b)
+        e o =
+      factorTwoIntrinsicElevenMixedPairing
+          (factorTwoIntrinsicElevenCleanSurvivorRepresenter pE)
+          (factorTwoIntrinsicElevenCleanSurvivorRepresenter pO) e o +
+        factorTwoIntrinsicElevenMixedPairing
+          (factorTwoIntrinsicElevenAnalyticEvenRepresenter pE pO a b)
+          (factorTwoIntrinsicElevenAnalyticOddRepresenter pE pO a b) e o +
+        factorTwoIntrinsicElevenMixedPairing
+          (factorTwoIntrinsicElevenForwardEvenRepresenter pE pO a b)
+          (factorTwoIntrinsicElevenForwardOddRepresenter pE pO a b) e o +
+        factorTwoIntrinsicElevenMixedPairing
+          (factorTwoIntrinsicElevenReflectedEvenRepresenter pE pO a b)
+          (factorTwoIntrinsicElevenReflectedOddRepresenter pE pO a b) e o +
+        factorTwoIntrinsicElevenMixedPairing
+          (factorTwoIntrinsicElevenPrimeEvenRepresenter pE pO a b)
+          (factorTwoIntrinsicElevenPrimeOddRepresenter pE pO a b) e o := by
+  have hCE := intervalIntegrable_cleanSurvivor_mul pE e he
+  have hCO := intervalIntegrable_cleanSurvivor_mul pO o ho
+  have hAE := intervalIntegrable_analyticEvenRepresenter_mul
+    pE pO e he a b
+  have hAO := intervalIntegrable_analyticOddRepresenter_mul
+    pE pO o ho a b
+  have hFE := intervalIntegrable_forwardEvenRepresenter_mul
+    pE pO e he a b
+  have hFO := intervalIntegrable_forwardOddRepresenter_mul
+    pE pO o ho a b
+  have hRE := intervalIntegrable_reflectedEvenRepresenter_mul
+    pE pO e he a b
+  have hRO := intervalIntegrable_reflectedOddRepresenter_mul
+    pE pO o ho a b
+  have hPrE := intervalIntegrable_primeEvenRepresenter_mul
+    pE pO e he a b
+  have hPrO := intervalIntegrable_primeOddRepresenter_mul
+    pE pO o ho a b
+  have hECA := hCE.add hAE
+  have hECAF := hECA.add hFE
+  have hECAFR := hECAF.add hRE
+  have hOCA := hCO.add hAO
+  have hOCAF := hOCA.add hFO
+  have hOCAFR := hOCAF.add hRO
+  unfold factorTwoIntrinsicElevenMixedPairing
+    factorTwoIntrinsicElevenEvenMixedRepresenter
+    factorTwoIntrinsicElevenOddMixedRepresenter
+  rw [show (fun x : ℝ ↦
+      (factorTwoIntrinsicElevenCleanSurvivorRepresenter pE x +
+          factorTwoIntrinsicElevenAnalyticEvenRepresenter pE pO a b x +
+          factorTwoIntrinsicElevenForwardEvenRepresenter pE pO a b x +
+          factorTwoIntrinsicElevenReflectedEvenRepresenter pE pO a b x +
+          factorTwoIntrinsicElevenPrimeEvenRepresenter pE pO a b x) * e x) =
+    fun x ↦
+      (((factorTwoIntrinsicElevenCleanSurvivorRepresenter pE x * e x +
+          factorTwoIntrinsicElevenAnalyticEvenRepresenter pE pO a b x * e x) +
+        factorTwoIntrinsicElevenForwardEvenRepresenter pE pO a b x * e x) +
+        factorTwoIntrinsicElevenReflectedEvenRepresenter pE pO a b x * e x) +
+        factorTwoIntrinsicElevenPrimeEvenRepresenter pE pO a b x * e x by
+    funext x
+    ring,
+    intervalIntegral.integral_add hECAFR hPrE,
+    intervalIntegral.integral_add hECAF hRE,
+    intervalIntegral.integral_add hECA hFE,
+    intervalIntegral.integral_add hCE hAE,
+    show (fun x : ℝ ↦
+      (factorTwoIntrinsicElevenCleanSurvivorRepresenter pO x +
+          factorTwoIntrinsicElevenAnalyticOddRepresenter pE pO a b x +
+          factorTwoIntrinsicElevenForwardOddRepresenter pE pO a b x +
+          factorTwoIntrinsicElevenReflectedOddRepresenter pE pO a b x +
+          factorTwoIntrinsicElevenPrimeOddRepresenter pE pO a b x) * o x) =
+    fun x ↦
+      (((factorTwoIntrinsicElevenCleanSurvivorRepresenter pO x * o x +
+          factorTwoIntrinsicElevenAnalyticOddRepresenter pE pO a b x * o x) +
+        factorTwoIntrinsicElevenForwardOddRepresenter pE pO a b x * o x) +
+        factorTwoIntrinsicElevenReflectedOddRepresenter pE pO a b x * o x) +
+        factorTwoIntrinsicElevenPrimeOddRepresenter pE pO a b x * o x by
+    funext x
+    ring,
+    intervalIntegral.integral_add hOCAFR hPrO,
+    intervalIntegral.integral_add hOCAF hRO,
+    intervalIntegral.integral_add hOCA hFO,
+    intervalIntegral.integral_add hCO hAO]
   ring
 
 /-- The complete cutoff-eleven low--tail half-cross is exactly the pairing

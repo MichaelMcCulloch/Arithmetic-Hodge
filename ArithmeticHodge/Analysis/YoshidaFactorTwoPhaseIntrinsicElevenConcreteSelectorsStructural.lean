@@ -119,8 +119,8 @@ theorem factorTwoCenteredCleanPolarization_centeredPolynomialLift_tail_eq
     (p : ℝ[X]) (r : ℝ → ℝ)
     (hr : Continuous r)
     (hlocal : LocallyLipschitzOn (Icc (-1) 1) r)
-    (hlow : centeredLegendreMomentsVanishBelow r 11)
-    (hp : p.natDegree < 11) :
+    {k : ℕ} (hlow : centeredLegendreMomentsVanishBelow r k)
+    (hp : p.natDegree < k) :
     factorTwoCenteredCleanPolarization (centeredPolynomialLift p) r =
       ∫ x : ℝ in -1..1,
         factorTwoIntrinsicElevenCleanSurvivorRepresenter p x * r x := by
@@ -251,9 +251,10 @@ theorem factorTwoIntrinsicElevenCleanMixedPairing_eq
     (he : Continuous e) (ho : Continuous o)
     (heLocal : LocallyLipschitzOn (Icc (-1) 1) e)
     (hoLocal : LocallyLipschitzOn (Icc (-1) 1) o)
-    (heLow : centeredLegendreMomentsVanishBelow e 11)
-    (hoLow : centeredLegendreMomentsVanishBelow o 11)
-    (hpE : pE.natDegree < 11) (hpO : pO.natDegree < 11) :
+    {ke ko : ℕ}
+    (heLow : centeredLegendreMomentsVanishBelow e ke)
+    (hoLow : centeredLegendreMomentsVanishBelow o ko)
+    (hpE : pE.natDegree < ke) (hpO : pO.natDegree < ko) :
     factorTwoIntrinsicElevenMixedPairing
         (factorTwoIntrinsicElevenCleanSurvivorRepresenter pE)
         (factorTwoIntrinsicElevenCleanSurvivorRepresenter pO) e o =
