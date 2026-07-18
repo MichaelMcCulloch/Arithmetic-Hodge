@@ -201,6 +201,188 @@ private theorem factorTwoIntrinsicElevenCleanSurvivorRepresenter_zero
     yoshidaEndpointCoshMoment yoshidaEndpointSinhMoment
   simp [centeredPolynomialLift]
 
+private def HasP024IocAbsBound (f : ℝ → ℝ) : Prop :=
+  ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1, |f x| ≤ B
+
+private theorem hasP024IocAbsBound_add
+    {f g : ℝ → ℝ} (hf : HasP024IocAbsBound f)
+    (hg : HasP024IocAbsBound g) :
+    HasP024IocAbsBound (fun x ↦ f x + g x) := by
+  obtain ⟨B, hB, hf⟩ := hf
+  obtain ⟨C, hC, hg⟩ := hg
+  refine ⟨B + C, add_pos hB hC, ?_⟩
+  intro x hx
+  exact (abs_add_le _ _).trans (add_le_add (hf x hx) (hg x hx))
+
+private theorem hasP024IocAbsBound_sub
+    {f g : ℝ → ℝ} (hf : HasP024IocAbsBound f)
+    (hg : HasP024IocAbsBound g) :
+    HasP024IocAbsBound (fun x ↦ f x - g x) := by
+  obtain ⟨B, hB, hf⟩ := hf
+  obtain ⟨C, hC, hg⟩ := hg
+  refine ⟨B + C, add_pos hB hC, ?_⟩
+  intro x hx
+  exact (abs_sub _ _).trans (add_le_add (hf x hx) (hg x hx))
+
+private theorem hasP024IocAbsBound_const_mul
+    (c : ℝ) {f : ℝ → ℝ} (hf : HasP024IocAbsBound f) :
+    HasP024IocAbsBound (fun x ↦ c * f x) := by
+  obtain ⟨B, hB, hf⟩ := hf
+  refine ⟨|c| * B + 1, by positivity, ?_⟩
+  intro x hx
+  rw [abs_mul]
+  exact (mul_le_mul_of_nonneg_left (hf x hx) (abs_nonneg c)).trans
+    (le_add_of_nonneg_right (by norm_num))
+
+private theorem hasP024IocAbsBound_of_continuous
+    (f : ℝ → ℝ) (hf : Continuous f) : HasP024IocAbsBound f := by
+  obtain ⟨B, hB, hbound⟩ := exists_abs_bound_of_continuousOn_Icc f hf.continuousOn
+  exact ⟨B, hB, fun x hx ↦ hbound x ⟨hx.1.le, hx.2⟩⟩
+
+/-- The endpoint-potential pole has been removed exactly from each base
+selector row, leaving a uniformly bounded remainder. -/
+theorem exists_retainedP024SelectorBaseRemainder_abs_bound (i : Fin 3) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |retainedP024SelectorBaseRemainder i x| ≤ B := by
+  have hclean : HasP024IocAbsBound (fun x ↦
+      factorTwoIntrinsicElevenCleanSurvivorRepresenter
+          (retainedP024EvenMode i) x -
+        yoshidaEndpointPotential x *
+          centeredPolynomialLift (retainedP024EvenMode i) x) :=
+    exists_cleanSurvivor_sub_potential_abs_bound (retainedP024EvenMode i)
+  have hpoly : HasP024IocAbsBound
+      (centeredPolynomialLift (retainedP024SelectorBasePolynomial i)) :=
+    exists_centeredPolynomialLift_abs_bound _
+  simpa only [retainedP024SelectorBaseRemainder] using
+    hasP024IocAbsBound_sub hclean hpoly
+
+/-- Every symmetric retained P024 remainder is uniformly bounded after its
+constant endpoint trace has been extracted. -/
+theorem exists_retainedP024SelectorSymmetricRemainder_abs_bound (i : Fin 3) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |retainedP024SelectorSymmetricRemainder i x| ≤ B := by
+  have hA : HasP024IocAbsBound
+      (factorTwoIntrinsicElevenAnalyticEvenRepresenter
+        (retainedP024EvenMode i) 0 1 0) :=
+    exists_analyticEvenRepresenter_abs_bound _ _ _ _
+  have hF : HasP024IocAbsBound
+      (factorTwoIntrinsicElevenForwardEvenRepresenter
+        (retainedP024EvenMode i) 0 1 0) :=
+    exists_forwardEvenRepresenter_abs_bound _ _ _ _
+  have hP : HasP024IocAbsBound
+      (factorTwoIntrinsicElevenPrimeEvenRepresenter
+        (retainedP024EvenMode i) 0 1 0) :=
+    exists_primeEvenRepresenter_abs_bound _ _ _ _
+  have hpoly : HasP024IocAbsBound (centeredPolynomialLift
+      (retainedP024SymmetricSelector
+        (![retainedP024SelectorPlus0, retainedP024SelectorPlus2,
+          retainedP024SelectorPlus4] i)
+        (![retainedP024SelectorMinus0, retainedP024SelectorMinus2,
+          retainedP024SelectorMinus4] i))) :=
+    exists_centeredPolynomialLift_abs_bound _
+  have htrace : HasP024IocAbsBound
+      (retainedP024KPotentialTraceRemainder i) :=
+    hasP024IocAbsBound_of_continuous _
+      (continuous_retainedP024KPotentialTraceRemainder i)
+  have hentropy : HasP024IocAbsBound
+      (reflectedPoleKEntropyRemainder (retainedP024EvenMode i)) :=
+    hasP024IocAbsBound_of_continuous _
+      (continuous_reflectedPoleKEntropyRemainder _)
+  have hsum := hasP024IocAbsBound_add
+    (hasP024IocAbsBound_add hA hF) hP
+  have hcontinuous := hasP024IocAbsBound_const_mul (511 / 2048 : ℝ)
+    (hasP024IocAbsBound_add htrace hentropy)
+  simpa only [retainedP024SelectorSymmetricRemainder] using
+    hasP024IocAbsBound_sub
+      (hasP024IocAbsBound_sub hsum hpoly) hcontinuous
+
+/-- Every alternating retained P024 remainder is uniformly bounded after
+its linear endpoint trace has been extracted. -/
+theorem exists_retainedP024SelectorAlternatingRemainder_abs_bound (i : Fin 3) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |retainedP024SelectorAlternatingRemainder i x| ≤ B := by
+  have hA : HasP024IocAbsBound
+      (factorTwoIntrinsicElevenAnalyticOddRepresenter
+        (retainedP024EvenMode i) 0 0 1) :=
+    exists_analyticOddRepresenter_abs_bound _ _ _ _
+  have hF : HasP024IocAbsBound
+      (factorTwoIntrinsicElevenForwardOddRepresenter
+        (retainedP024EvenMode i) 0 0 1) :=
+    exists_forwardOddRepresenter_abs_bound _ _ _ _
+  have hP : HasP024IocAbsBound
+      (factorTwoIntrinsicElevenPrimeOddRepresenter
+        (retainedP024EvenMode i) 0 0 1) :=
+    exists_primeOddRepresenter_abs_bound _ _ _ _
+  have hpoly : HasP024IocAbsBound
+      (centeredPolynomialLift (retainedP024SelectorAlternatingPolynomial i)) :=
+    exists_centeredPolynomialLift_abs_bound _
+  have htrace : HasP024IocAbsBound
+      (retainedP024JPotentialTraceRemainder i) :=
+    hasP024IocAbsBound_of_continuous _
+      (continuous_retainedP024JPotentialTraceRemainder i)
+  have hentropy : HasP024IocAbsBound
+      (reflectedPoleJEntropyRemainder (retainedP024EvenMode i)) :=
+    hasP024IocAbsBound_of_continuous _
+      (continuous_reflectedPoleJEntropyRemainder _)
+  have hsum := hasP024IocAbsBound_add
+    (hasP024IocAbsBound_add hA hF) hP
+  have hcontinuous := hasP024IocAbsBound_const_mul (511 / 2048 : ℝ)
+    (hasP024IocAbsBound_add htrace hentropy)
+  simpa only [retainedP024SelectorAlternatingRemainder] using
+    hasP024IocAbsBound_sub
+      (hasP024IocAbsBound_sub hsum hpoly) hcontinuous
+
+/-- Every combined even remainder row is uniformly bounded. -/
+theorem exists_retainedP024SelectorWholeEvenRemainder_abs_bound
+    (k : Fin 3 ⊕ Fin 3) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |retainedP024SelectorWholeEvenRemainder k x| ≤ B := by
+  rcases k with i | i
+  · simpa only [retainedP024SelectorWholeEvenRemainder] using
+      exists_retainedP024SelectorBaseRemainder_abs_bound i
+  · simpa only [retainedP024SelectorWholeEvenRemainder] using
+      exists_retainedP024SelectorSymmetricRemainder_abs_bound i
+
+/-- Subtracting any fixed multiple of the even pole row preserves uniform
+boundedness of the extracted remainder. -/
+theorem exists_retainedP024SelectorWholeEvenRemainder_sub_pole_abs_bound
+    (c : ℝ) (k : Fin 3 ⊕ Fin 3) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |retainedP024SelectorWholeEvenRemainder k x -
+        c * retainedP024SelectorWholeEvenPoleRow k x| ≤ B := by
+  have hrem : HasP024IocAbsBound
+      (retainedP024SelectorWholeEvenRemainder k) :=
+    exists_retainedP024SelectorWholeEvenRemainder_abs_bound k
+  have hpole : HasP024IocAbsBound
+      (retainedP024SelectorWholeEvenPoleRow k) := by
+    apply hasP024IocAbsBound_of_continuous
+    rcases k with i | i
+    · simp only [retainedP024SelectorWholeEvenPoleRow]
+      unfold retainedP024EvenMode centeredPolynomialLift
+      fun_prop
+    · simp only [retainedP024SelectorWholeEvenPoleRow]
+      fun_prop
+  exact hasP024IocAbsBound_sub hrem
+    (hasP024IocAbsBound_const_mul c hpole)
+
+/-- Subtracting any fixed multiple of the alternating pole row preserves
+uniform boundedness of the extracted remainder. -/
+theorem exists_retainedP024SelectorAlternatingRemainder_sub_pole_abs_bound
+    (c : ℝ) (i : Fin 3) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |retainedP024SelectorAlternatingRemainder i x -
+        c * retainedP024SelectorAlternatingPoleRow i x| ≤ B := by
+  have hrem : HasP024IocAbsBound
+      (retainedP024SelectorAlternatingRemainder i) :=
+    exists_retainedP024SelectorAlternatingRemainder_abs_bound i
+  have hpole : HasP024IocAbsBound
+      (retainedP024SelectorAlternatingPoleRow i) :=
+    hasP024IocAbsBound_of_continuous _ (by
+      unfold retainedP024SelectorAlternatingPoleRow
+      fun_prop)
+  exact hasP024IocAbsBound_sub hrem
+    (hasP024IocAbsBound_const_mul c hpole)
+
 /-- Exact endpoint-trace pole extraction for every row of the combined
 retained-even residual Gram.  The identity is stated on the open interval
 because the raw logarithmic selectors use Lean's value `log 0 = 0` at the

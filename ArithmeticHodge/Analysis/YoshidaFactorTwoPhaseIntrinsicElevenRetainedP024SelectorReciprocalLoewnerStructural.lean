@@ -51,6 +51,45 @@ def retainedP024SelectorAlternatingRemainderReciprocalUpperGram :
     (fun x ↦ (41 / 2 : ℝ) * atanhTailWeightReciprocalMajorant x)
     retainedP024SelectorAlternatingShiftedRemainder
 
+/-- The even reciprocal-upper entries are unconditionally integrable: exact
+pole cancellation leaves bounded rows, and the reciprocal majorant is a
+continuous polynomial. -/
+theorem intervalIntegrable_retainedP024SelectorWholeEvenRemainderReciprocalUpper
+    (i j : Fin 3 ⊕ Fin 3) :
+    IntervalIntegrable
+      (fun x ↦
+        ((205 / 39 : ℝ) * atanhTailWeightReciprocalMajorant x) *
+          retainedP024SelectorWholeEvenShiftedRemainder i x *
+          retainedP024SelectorWholeEvenShiftedRemainder j x)
+      volume (-1) 1 := by
+  have hcross :=
+    intervalIntegrable_retainedP024SelectorWholeEvenShiftedRemainder_mul i j
+  have hmult : Continuous
+      (fun x : ℝ ↦ (205 / 39 : ℝ) * atanhTailWeightReciprocalMajorant x) := by
+    unfold atanhTailWeightReciprocalMajorant
+      atanhTailWeightReciprocalMajorantPolynomial
+    fun_prop
+  simpa only [mul_assoc] using hcross.continuousOn_mul hmult.continuousOn
+
+/-- The alternating reciprocal-upper entries are unconditionally integrable
+for the same structural reason. -/
+theorem intervalIntegrable_retainedP024SelectorAlternatingRemainderReciprocalUpper
+    (i j : Fin 3) :
+    IntervalIntegrable
+      (fun x ↦
+        ((41 / 2 : ℝ) * atanhTailWeightReciprocalMajorant x) *
+          retainedP024SelectorAlternatingShiftedRemainder i x *
+          retainedP024SelectorAlternatingShiftedRemainder j x)
+      volume (-1) 1 := by
+  have hcross :=
+    intervalIntegrable_retainedP024SelectorAlternatingShiftedRemainder_mul i j
+  have hmult : Continuous
+      (fun x : ℝ ↦ (41 / 2 : ℝ) * atanhTailWeightReciprocalMajorant x) := by
+    unfold atanhTailWeightReciprocalMajorant
+      atanhTailWeightReciprocalMajorantPolynomial
+    fun_prop
+  simpa only [mul_assoc] using hcross.continuousOn_mul hmult.continuousOn
+
 /-- The original alternating remainder Gram is its generic interval weighted
 Gram. -/
 theorem retainedP024SelectorAlternatingShiftedRemainderGram_eq_intervalWeightedGram :
@@ -62,15 +101,9 @@ theorem retainedP024SelectorAlternatingShiftedRemainderGram_eq_intervalWeightedG
   rw [retainedP024SelectorAlternatingShiftedRemainderGram_apply]
   rfl
 
-/-- The reciprocal-polynomial even Gram is a full Loewner upper certificate
-once its pairwise entries are interval-integrable. -/
-theorem retainedP024SelectorWholeEvenRemainderReciprocalUpperGram_sub_posSemidef
-    (hUpperInt : ∀ i j, IntervalIntegrable
-      (fun x ↦
-        ((205 / 39 : ℝ) * atanhTailWeightReciprocalMajorant x) *
-          retainedP024SelectorWholeEvenShiftedRemainder i x *
-          retainedP024SelectorWholeEvenShiftedRemainder j x)
-      volume (-1) 1) :
+/-- The reciprocal-polynomial even Gram is an unconditional full Loewner
+upper certificate. -/
+theorem retainedP024SelectorWholeEvenRemainderReciprocalUpperGram_sub_posSemidef :
     (retainedP024SelectorWholeEvenRemainderReciprocalUpperGram -
       retainedP024SelectorWholeEvenShiftedRemainderGram).PosSemidef := by
   rw [retainedP024SelectorWholeEvenShiftedRemainderGram_eq_intervalWeightedGram]
@@ -80,19 +113,13 @@ theorem retainedP024SelectorWholeEvenRemainderReciprocalUpperGram_sub_posSemidef
     (fun x ↦ (205 / 39 : ℝ) * atanhTailWeightReciprocalMajorant x)
     retainedP024SelectorWholeEvenShiftedRemainder
     intervalIntegrable_retainedP024SelectorWholeEvenShiftedRemainderCross
-    hUpperInt
+    intervalIntegrable_retainedP024SelectorWholeEvenRemainderReciprocalUpper
     (fun _x hx ↦ inv_retainedEvenWeight_le_reciprocalMajorant hx)
 
 /-- The reciprocal-polynomial alternating Gram is a full Loewner upper
 certificate for the original odd rows, before any projection contraction. -/
 theorem retainedP024SelectorAlternatingRemainderReciprocalUpperGram_sub_posSemidef
-    (hUpperInt : ∀ i j, IntervalIntegrable
-      (fun x ↦
-        ((41 / 2 : ℝ) * atanhTailWeightReciprocalMajorant x) *
-          retainedP024SelectorAlternatingShiftedRemainder i x *
-          retainedP024SelectorAlternatingShiftedRemainder j x)
-      volume (-1) 1) :
-    (retainedP024SelectorAlternatingRemainderReciprocalUpperGram -
+    : (retainedP024SelectorAlternatingRemainderReciprocalUpperGram -
       retainedP024SelectorAlternatingShiftedRemainderGram).PosSemidef := by
   rw [retainedP024SelectorAlternatingShiftedRemainderGram_eq_intervalWeightedGram]
   exact finiteIntervalMultiplierGram_sub_weightedGram_posSemidef_of_inv_le_Ioo
@@ -101,7 +128,7 @@ theorem retainedP024SelectorAlternatingRemainderReciprocalUpperGram_sub_posSemid
     (fun x ↦ (41 / 2 : ℝ) * atanhTailWeightReciprocalMajorant x)
     retainedP024SelectorAlternatingShiftedRemainder
     intervalIntegrable_retainedP024SelectorAlternatingShiftedRemainderCross
-    hUpperInt
+    intervalIntegrable_retainedP024SelectorAlternatingRemainderReciprocalUpper
     (fun _x hx ↦ inv_retainedOddWeight_le_reciprocalMajorant hx)
 
 /-- Inverse-weight-free fixed Gram obtained by replacing both negative
@@ -181,51 +208,26 @@ theorem retainedP024SelectorBoundaryGapMatrix_eq_reciprocalShifted_sos
 /-- Positive definiteness of the inverse-weight-free core transfers to the
 shifted SOS Gram through the full even Loewner gap. -/
 theorem retainedP024SelectorReciprocalShiftedSOSGram_posDef_of_core
-    (hEvenUpperInt : ∀ i j, IntervalIntegrable
-      (fun x ↦
-        ((205 / 39 : ℝ) * atanhTailWeightReciprocalMajorant x) *
-          retainedP024SelectorWholeEvenShiftedRemainder i x *
-          retainedP024SelectorWholeEvenShiftedRemainder j x)
-      volume (-1) 1)
     (hCore : retainedP024SelectorReciprocalLoewnerCore.PosDef) :
     retainedP024SelectorReciprocalShiftedSOSGram.PosDef := by
   rw [retainedP024SelectorReciprocalShiftedSOSGram_eq_core_add_evenGap]
   exact hCore.add_posSemidef
-    (retainedP024SelectorWholeEvenRemainderReciprocalUpperGram_sub_posSemidef
-      hEvenUpperInt)
+    retainedP024SelectorWholeEvenRemainderReciprocalUpperGram_sub_posSemidef
 
 /-- The shifted reserve is positive semidefinite through the full odd
 Loewner gap. -/
 theorem retainedP024SelectorReciprocalShiftedSOSReserve_posSemidef
-    (hOddUpperInt : ∀ i j, IntervalIntegrable
-      (fun x ↦
-        ((41 / 2 : ℝ) * atanhTailWeightReciprocalMajorant x) *
-          retainedP024SelectorAlternatingShiftedRemainder i x *
-          retainedP024SelectorAlternatingShiftedRemainder j x)
-      volume (-1) 1) :
-    retainedP024SelectorReciprocalShiftedSOSReserve.PosSemidef := by
+    : retainedP024SelectorReciprocalShiftedSOSReserve.PosSemidef := by
   unfold retainedP024SelectorReciprocalShiftedSOSReserve
   exact retainedP024SelectorSOSReserve_posSemidef.add
-    (retainedP024SelectorAlternatingRemainderReciprocalUpperGram_sub_posSemidef
-      hOddUpperInt)
+    retainedP024SelectorAlternatingRemainderReciprocalUpperGram_sub_posSemidef
 
-/-- Full-direction P024 selector handoff.  Pairwise reciprocal-upper
-integrability and positivity of one inverse-weight-free fixed core now imply
-the production selector inequality at every point of the closed phase disk. -/
+/-- Full-direction P024 selector handoff.  Positivity of one
+inverse-weight-free fixed core implies the production selector inequality at
+every point of the closed phase disk; reciprocal-upper integrability is now
+discharged unconditionally. -/
 theorem exists_sharpRetunedP024Selector_of_reciprocalLoewner
     (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1)
-    (hEvenUpperInt : ∀ i j, IntervalIntegrable
-      (fun x ↦
-        ((205 / 39 : ℝ) * atanhTailWeightReciprocalMajorant x) *
-          retainedP024SelectorWholeEvenShiftedRemainder i x *
-          retainedP024SelectorWholeEvenShiftedRemainder j x)
-      volume (-1) 1)
-    (hOddUpperInt : ∀ i j, IntervalIntegrable
-      (fun x ↦
-        ((41 / 2 : ℝ) * atanhTailWeightReciprocalMajorant x) *
-          retainedP024SelectorAlternatingShiftedRemainder i x *
-          retainedP024SelectorAlternatingShiftedRemainder j x)
-      volume (-1) 1)
     (hCore : retainedP024SelectorReciprocalLoewnerCore.PosDef)
     (c0 c2 c4 : ℝ) :
     ∃ qE qO : ℝ[X],
@@ -261,9 +263,8 @@ theorem exists_sharpRetunedP024Selector_of_reciprocalLoewner
     (retainedP024SelectorBoundaryGapMatrix a)
     retainedP024SelectorReciprocalShiftedSOSGram
     retainedP024SelectorReciprocalShiftedSOSReserve
-    (retainedP024SelectorReciprocalShiftedSOSGram_posDef_of_core
-      hEvenUpperInt hCore)
-    (retainedP024SelectorReciprocalShiftedSOSReserve_posSemidef hOddUpperInt)
+    (retainedP024SelectorReciprocalShiftedSOSGram_posDef_of_core hCore)
+    retainedP024SelectorReciprocalShiftedSOSReserve_posSemidef
     (retainedP024BoundaryGap_eq_matrixQuadratic a)
     (retainedP024SelectorBoundaryGapMatrix_eq_reciprocalShifted_sos a)
     c0 c2 c4

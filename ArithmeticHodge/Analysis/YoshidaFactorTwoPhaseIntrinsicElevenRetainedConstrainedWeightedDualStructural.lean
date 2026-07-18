@@ -344,7 +344,10 @@ private theorem hasRetainedEndpointLinearGrowth_potential_mul_of_abs_bound
       mul_le_mul_of_nonneg_left (hf x hx) hV
     _ ≤ B * (1 + yoshidaEndpointPotential x) := by nlinarith
 
-private theorem exists_abs_bound_of_continuousOn_Icc
+/-- A continuous real row on the compact endpoint interval has a strictly
+positive uniform absolute bound.  The positive slack is convenient when
+combining several representer bounds. -/
+theorem exists_abs_bound_of_continuousOn_Icc
     (f : ℝ → ℝ) (hf : ContinuousOn f (Icc (-1 : ℝ) 1)) :
     ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Icc (-1 : ℝ) 1, |f x| ≤ B := by
   obtain ⟨B, hB⟩ := IsCompact.exists_bound_of_continuousOn
@@ -626,6 +629,241 @@ private theorem exists_fixedLagKJ_abs_bound
   · unfold factorTwoFixedLagJ
     exact (abs_sub _ _).trans
       ((add_le_add hright hleft).trans_eq (by ring))
+
+private def HasRetainedIocAbsBound (f : ℝ → ℝ) : Prop :=
+  ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1, |f x| ≤ B
+
+private theorem hasRetainedIocAbsBound_add
+    {f g : ℝ → ℝ} (hf : HasRetainedIocAbsBound f)
+    (hg : HasRetainedIocAbsBound g) :
+    HasRetainedIocAbsBound (fun x ↦ f x + g x) := by
+  obtain ⟨B, hB, hf⟩ := hf
+  obtain ⟨C, hC, hg⟩ := hg
+  refine ⟨B + C, add_pos hB hC, ?_⟩
+  intro x hx
+  exact (abs_add_le _ _).trans (add_le_add (hf x hx) (hg x hx))
+
+private theorem hasRetainedIocAbsBound_sub
+    {f g : ℝ → ℝ} (hf : HasRetainedIocAbsBound f)
+    (hg : HasRetainedIocAbsBound g) :
+    HasRetainedIocAbsBound (fun x ↦ f x - g x) := by
+  obtain ⟨B, hB, hf⟩ := hf
+  obtain ⟨C, hC, hg⟩ := hg
+  refine ⟨B + C, add_pos hB hC, ?_⟩
+  intro x hx
+  exact (abs_sub _ _).trans (add_le_add (hf x hx) (hg x hx))
+
+private theorem hasRetainedIocAbsBound_const_mul
+    (c : ℝ) {f : ℝ → ℝ} (hf : HasRetainedIocAbsBound f) :
+    HasRetainedIocAbsBound (fun x ↦ c * f x) := by
+  obtain ⟨B, hB, hf⟩ := hf
+  refine ⟨|c| * B + 1, by positivity, ?_⟩
+  intro x hx
+  rw [abs_mul]
+  calc
+    |c| * |f x| ≤ |c| * B :=
+      mul_le_mul_of_nonneg_left (hf x hx) (abs_nonneg c)
+    _ ≤ |c| * B + 1 := by linarith
+
+private theorem hasRetainedIocAbsBound_of_continuousOn_Icc
+    (f : ℝ → ℝ) (hf : ContinuousOn f (Icc (-1 : ℝ) 1)) :
+    HasRetainedIocAbsBound f := by
+  obtain ⟨B, hB, hbound⟩ := exists_abs_bound_of_continuousOn_Icc f hf
+  exact ⟨B, hB, fun x hx ↦ hbound x ⟨hx.1.le, hx.2⟩⟩
+
+private theorem hasRetainedIocAbsBound_centeredPolynomialLift (p : ℝ[X]) :
+    HasRetainedIocAbsBound (centeredPolynomialLift p) :=
+  hasRetainedIocAbsBound_of_continuousOn_Icc _ (by
+    unfold centeredPolynomialLift
+    fun_prop)
+
+private theorem hasRetainedIocAbsBound_regularRepresenter (p : ℝ[X]) :
+    HasRetainedIocAbsBound
+      (yoshidaEndpointEvenRegularRepresenter (centeredPolynomialLift p)) :=
+  exists_regularRepresenter_abs_bound p
+
+private theorem hasRetainedIocAbsBound_continuousLagK
+    (q : ℝ → ℝ) (p : ℝ[X]) (C : ℝ) (hC : 0 < C)
+    (hq : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C) :
+    HasRetainedIocAbsBound
+      (factorTwoContinuousLagK q (centeredPolynomialLift p)) := by
+  obtain ⟨M, hM, hp⟩ := exists_polynomial_eval_abs_bound p
+  refine ⟨4 * C * M, by positivity, ?_⟩
+  intro x hx
+  exact (abs_continuousLagKJ_le q p C M hC.le hM.le hq hp hx).1
+
+private theorem hasRetainedIocAbsBound_continuousLagJ
+    (q : ℝ → ℝ) (p : ℝ[X]) (C : ℝ) (hC : 0 < C)
+    (hq : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ C) :
+    HasRetainedIocAbsBound
+      (factorTwoContinuousLagJ q (centeredPolynomialLift p)) := by
+  obtain ⟨M, hM, hp⟩ := exists_polynomial_eval_abs_bound p
+  refine ⟨4 * C * M, by positivity, ?_⟩
+  intro x hx
+  exact (abs_continuousLagKJ_le q p C M hC.le hM.le hq hp hx).2
+
+private theorem hasRetainedIocAbsBound_fixedLagK
+    (τ : ℝ) (hτ : τ ∈ Icc (0 : ℝ) 2) (p : ℝ[X]) :
+    HasRetainedIocAbsBound
+      (factorTwoFixedLagK τ (centeredPolynomialLift p)) := by
+  obtain ⟨B, hB, hbound⟩ := exists_fixedLagKJ_abs_bound τ hτ p
+  exact ⟨B, hB, fun x hx ↦ (hbound x hx).1⟩
+
+private theorem hasRetainedIocAbsBound_fixedLagJ
+    (τ : ℝ) (hτ : τ ∈ Icc (0 : ℝ) 2) (p : ℝ[X]) :
+    HasRetainedIocAbsBound
+      (factorTwoFixedLagJ τ (centeredPolynomialLift p)) := by
+  obtain ⟨B, hB, hbound⟩ := exists_fixedLagKJ_abs_bound τ hτ p
+  exact ⟨B, hB, fun x hx ↦ (hbound x hx).2⟩
+
+/-! ## Uniform bounds for the nonsingular complete-representer pieces -/
+
+/-- Removing the explicit endpoint-potential row from the clean survivor
+leaves a uniformly bounded regular-plus-rank representer. -/
+theorem exists_cleanSurvivor_sub_potential_abs_bound (p : ℝ[X]) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |factorTwoIntrinsicElevenCleanSurvivorRepresenter p x -
+          yoshidaEndpointPotential x * centeredPolynomialLift p x| ≤ B := by
+  let rankRow : ℝ → ℝ := fun x ↦
+    2 * yoshidaEndpointA *
+      (yoshidaEndpointCoshMoment (centeredPolynomialLift p) *
+          Real.cosh (yoshidaEndpointA * x / 2) -
+        yoshidaEndpointSinhMoment (centeredPolynomialLift p) *
+          Real.sinh (yoshidaEndpointA * x / 2))
+  have hregular := hasRetainedIocAbsBound_const_mul (-yoshidaEndpointA)
+    (hasRetainedIocAbsBound_regularRepresenter p)
+  have hrank : HasRetainedIocAbsBound rankRow :=
+    hasRetainedIocAbsBound_of_continuousOn_Icc rankRow (by
+      dsimp only [rankRow]
+      fun_prop)
+  have hsum := hasRetainedIocAbsBound_add hregular hrank
+  have heq : (fun x ↦
+      factorTwoIntrinsicElevenCleanSurvivorRepresenter p x -
+        yoshidaEndpointPotential x * centeredPolynomialLift p x) =
+      fun x ↦
+        -yoshidaEndpointA *
+            yoshidaEndpointEvenRegularRepresenter
+              (centeredPolynomialLift p) x + rankRow x := by
+    funext x
+    unfold factorTwoIntrinsicElevenCleanSurvivorRepresenter rankRow
+    ring
+  change HasRetainedIocAbsBound (fun x ↦
+    factorTwoIntrinsicElevenCleanSurvivorRepresenter p x -
+      yoshidaEndpointPotential x * centeredPolynomialLift p x)
+  rw [heq]
+  exact hsum
+
+/-- The analytic even complete-representer piece is uniformly bounded on
+the endpoint interval. -/
+theorem exists_analyticEvenRepresenter_abs_bound
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |factorTwoIntrinsicElevenAnalyticEvenRepresenter pE pO a b x| ≤ B := by
+  have hK := hasRetainedIocAbsBound_continuousLagK
+    factorTwoSymmetricAnalyticLag pE (3 / 8000 : ℝ) (by norm_num)
+      (fun _t ht ↦ abs_factorTwoSymmetricAnalyticLag_le ht)
+  have hJ := hasRetainedIocAbsBound_continuousLagJ
+    factorTwoAlternatingAnalyticLag pO (1 / 1000 : ℝ) (by norm_num)
+      (fun _t ht ↦ abs_factorTwoAlternatingAnalyticLag_le ht)
+  simpa only [factorTwoIntrinsicElevenAnalyticEvenRepresenter] using
+    hasRetainedIocAbsBound_add
+      (hasRetainedIocAbsBound_const_mul (a / 2) hK)
+      (hasRetainedIocAbsBound_const_mul (b / 2) hJ)
+
+/-- The analytic odd complete-representer piece is uniformly bounded on
+the endpoint interval. -/
+theorem exists_analyticOddRepresenter_abs_bound
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |factorTwoIntrinsicElevenAnalyticOddRepresenter pE pO a b x| ≤ B := by
+  have hK := hasRetainedIocAbsBound_continuousLagK
+    factorTwoSymmetricAnalyticLag pO (3 / 8000 : ℝ) (by norm_num)
+      (fun _t ht ↦ abs_factorTwoSymmetricAnalyticLag_le ht)
+  have hJ := hasRetainedIocAbsBound_continuousLagJ
+    factorTwoAlternatingAnalyticLag pE (1 / 1000 : ℝ) (by norm_num)
+      (fun _t ht ↦ abs_factorTwoAlternatingAnalyticLag_le ht)
+  simpa only [factorTwoIntrinsicElevenAnalyticOddRepresenter] using
+    hasRetainedIocAbsBound_sub
+      (hasRetainedIocAbsBound_const_mul (a / 2) hK)
+      (hasRetainedIocAbsBound_const_mul (b / 2) hJ)
+
+/-- The forward-log even complete-representer piece is uniformly bounded;
+its logarithm stays away from zero on the compact endpoint interval. -/
+theorem exists_forwardEvenRepresenter_abs_bound
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |factorTwoIntrinsicElevenForwardEvenRepresenter pE pO a b x| ≤ B := by
+  apply hasRetainedIocAbsBound_of_continuousOn_Icc
+  unfold factorTwoIntrinsicElevenForwardEvenRepresenter
+  exact (continuousOn_const.mul (continuousOn_forwardPoleKLogSelector pE)).sub
+    (continuousOn_const.mul (continuousOn_forwardPoleLLogSelector pO))
+
+/-- The forward-log odd complete-representer piece is uniformly bounded. -/
+theorem exists_forwardOddRepresenter_abs_bound
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |factorTwoIntrinsicElevenForwardOddRepresenter pE pO a b x| ≤ B := by
+  apply hasRetainedIocAbsBound_of_continuousOn_Icc
+  unfold factorTwoIntrinsicElevenForwardOddRepresenter
+  exact (continuousOn_const.mul (continuousOn_forwardPoleKLogSelector pO)).add
+    (continuousOn_const.mul (continuousOn_forwardPoleLLogSelector pE))
+
+/-- The retained fixed-prime even representer is uniformly bounded. -/
+theorem exists_primeEvenRepresenter_abs_bound
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |factorTwoIntrinsicElevenPrimeEvenRepresenter pE pO a b x| ≤ B := by
+  have hτ12 := factorTwoPrimeShift_div_endpointA_mem_one_two
+  have hτ : factorTwoPrimeShift / yoshidaEndpointA ∈ Icc (0 : ℝ) 2 :=
+    ⟨by linarith [hτ12.1], hτ12.2⟩
+  have hK := hasRetainedIocAbsBound_fixedLagK
+    (factorTwoPrimeShift / yoshidaEndpointA) hτ pE
+  have hJ := hasRetainedIocAbsBound_fixedLagJ
+    (factorTwoPrimeShift / yoshidaEndpointA) hτ pO
+  change HasRetainedIocAbsBound (fun x ↦
+    -(Real.log 3 / (2 * Real.sqrt 3)) *
+      (a * factorTwoFixedLagK
+          (factorTwoPrimeShift / yoshidaEndpointA)
+          (centeredPolynomialLift pE) x +
+        b * factorTwoFixedLagJ
+          (factorTwoPrimeShift / yoshidaEndpointA)
+          (centeredPolynomialLift pO) x))
+  exact hasRetainedIocAbsBound_const_mul _
+    (hasRetainedIocAbsBound_add
+      (hasRetainedIocAbsBound_const_mul a hK)
+      (hasRetainedIocAbsBound_const_mul b hJ))
+
+/-- The retained fixed-prime odd representer is uniformly bounded. -/
+theorem exists_primeOddRepresenter_abs_bound
+    (pE pO : ℝ[X]) (a b : ℝ) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |factorTwoIntrinsicElevenPrimeOddRepresenter pE pO a b x| ≤ B := by
+  have hτ12 := factorTwoPrimeShift_div_endpointA_mem_one_two
+  have hτ : factorTwoPrimeShift / yoshidaEndpointA ∈ Icc (0 : ℝ) 2 :=
+    ⟨by linarith [hτ12.1], hτ12.2⟩
+  have hK := hasRetainedIocAbsBound_fixedLagK
+    (factorTwoPrimeShift / yoshidaEndpointA) hτ pO
+  have hJ := hasRetainedIocAbsBound_fixedLagJ
+    (factorTwoPrimeShift / yoshidaEndpointA) hτ pE
+  change HasRetainedIocAbsBound (fun x ↦
+    -(Real.log 3 / (2 * Real.sqrt 3)) *
+      (a * factorTwoFixedLagK
+          (factorTwoPrimeShift / yoshidaEndpointA)
+          (centeredPolynomialLift pO) x -
+        b * factorTwoFixedLagJ
+          (factorTwoPrimeShift / yoshidaEndpointA)
+          (centeredPolynomialLift pE) x))
+  exact hasRetainedIocAbsBound_const_mul _
+    (hasRetainedIocAbsBound_sub
+      (hasRetainedIocAbsBound_const_mul a hK)
+      (hasRetainedIocAbsBound_const_mul b hJ))
+
+/-- A transported polynomial row is uniformly bounded on the endpoint
+interval. -/
+theorem exists_centeredPolynomialLift_abs_bound (p : ℝ[X]) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |centeredPolynomialLift p x| ≤ B :=
+  hasRetainedIocAbsBound_centeredPolynomialLift p
 
 private theorem hasRetainedEndpointLinearGrowth_fixedLagK
     (τ : ℝ) (hτ : τ ∈ Icc (0 : ℝ) 2) (p : ℝ[X]) :

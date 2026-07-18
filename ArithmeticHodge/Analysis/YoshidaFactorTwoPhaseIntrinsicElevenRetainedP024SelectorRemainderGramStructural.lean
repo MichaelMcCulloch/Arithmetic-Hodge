@@ -168,6 +168,105 @@ theorem retainedP024SelectorAlternatingShiftedRemainder_div_sqrt_memLp_two
   rw [Real.sq_sqrt hW.le]
   ring
 
+/-- Pole cancellation makes every retained-even shifted row integrable on the
+finite interval.  The weighted `L²` theorem supplies measurability, while the
+exact shifted-row bound supplies the finite-measure domination. -/
+theorem intervalIntegrable_retainedP024SelectorWholeEvenShiftedRemainder
+    (i : Fin 3 ⊕ Fin 3) :
+    IntervalIntegrable
+      (retainedP024SelectorWholeEvenShiftedRemainder i)
+      volume (-1) 1 := by
+  let μ := volume.restrict (Ioc (-1 : ℝ) 1)
+  have hdiv :=
+    (retainedP024SelectorWholeEvenShiftedRemainder_div_sqrt_memLp_two i).1
+  have hWmeas : Measurable factorTwoIntrinsicElevenRetainedEvenWeight := by
+    unfold factorTwoIntrinsicElevenRetainedEvenWeight yoshidaEndpointPotential
+    fun_prop
+  have hsqrtMeas : AEStronglyMeasurable
+      (fun x : ℝ ↦ Real.sqrt (factorTwoIntrinsicElevenRetainedEvenWeight x)) μ :=
+    hWmeas.sqrt.aestronglyMeasurable
+  have hrawMeas : AEStronglyMeasurable
+      (retainedP024SelectorWholeEvenShiftedRemainder i) μ := by
+    apply (hdiv.mul hsqrtMeas).congr
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+    have hW := factorTwoIntrinsicElevenRetainedEvenWeight_pos_on_Icc
+      (show x ∈ Icc (-1 : ℝ) 1 from ⟨hx.1.le, hx.2⟩)
+    exact div_mul_cancel₀ _ (Real.sqrt_ne_zero'.2 hW)
+  obtain ⟨B, _hBpos, hB⟩ :=
+    exists_retainedP024SelectorWholeEvenShiftedRemainder_abs_bound i
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+  refine IntegrableOn.of_bound measure_Ioc_lt_top hrawMeas B ?_
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+  simpa only [Real.norm_eq_abs] using hB x hx
+
+/-- Pole cancellation likewise makes every alternating shifted row
+integrable on the finite interval. -/
+theorem intervalIntegrable_retainedP024SelectorAlternatingShiftedRemainder
+    (i : Fin 3) :
+    IntervalIntegrable
+      (retainedP024SelectorAlternatingShiftedRemainder i)
+      volume (-1) 1 := by
+  let μ := volume.restrict (Ioc (-1 : ℝ) 1)
+  have hdiv :=
+    (retainedP024SelectorAlternatingShiftedRemainder_div_sqrt_memLp_two i).1
+  have hWmeas : Measurable factorTwoIntrinsicElevenRetainedOddWeight := by
+    unfold factorTwoIntrinsicElevenRetainedOddWeight yoshidaEndpointPotential
+    fun_prop
+  have hsqrtMeas : AEStronglyMeasurable
+      (fun x : ℝ ↦ Real.sqrt (factorTwoIntrinsicElevenRetainedOddWeight x)) μ :=
+    hWmeas.sqrt.aestronglyMeasurable
+  have hrawMeas : AEStronglyMeasurable
+      (retainedP024SelectorAlternatingShiftedRemainder i) μ := by
+    apply (hdiv.mul hsqrtMeas).congr
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+    have hW := factorTwoIntrinsicElevenRetainedOddWeight_pos_on_Icc
+      (show x ∈ Icc (-1 : ℝ) 1 from ⟨hx.1.le, hx.2⟩)
+    exact div_mul_cancel₀ _ (Real.sqrt_ne_zero'.2 hW)
+  obtain ⟨B, _hBpos, hB⟩ :=
+    exists_retainedP024SelectorAlternatingShiftedRemainder_abs_bound i
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+  refine IntegrableOn.of_bound measure_Ioc_lt_top hrawMeas B ?_
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+  simpa only [Real.norm_eq_abs] using hB x hx
+
+/-- Products of retained-even shifted rows are integrable before inserting
+any reciprocal multiplier. -/
+theorem intervalIntegrable_retainedP024SelectorWholeEvenShiftedRemainder_mul
+    (i j : Fin 3 ⊕ Fin 3) :
+    IntervalIntegrable (fun x ↦
+      retainedP024SelectorWholeEvenShiftedRemainder i x *
+        retainedP024SelectorWholeEvenShiftedRemainder j x)
+      volume (-1) 1 := by
+  have hi :=
+    intervalIntegrable_retainedP024SelectorWholeEvenShiftedRemainder i
+  have hj :=
+    intervalIntegrable_retainedP024SelectorWholeEvenShiftedRemainder j
+  obtain ⟨B, _hBpos, hB⟩ :=
+    exists_retainedP024SelectorWholeEvenShiftedRemainder_abs_bound j
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)] at hi hj ⊢
+  apply hi.mul_bdd hj.aestronglyMeasurable
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+  simpa only [Real.norm_eq_abs] using hB x hx
+
+/-- Products of alternating shifted rows are integrable before inserting any
+reciprocal multiplier. -/
+theorem intervalIntegrable_retainedP024SelectorAlternatingShiftedRemainder_mul
+    (i j : Fin 3) :
+    IntervalIntegrable (fun x ↦
+      retainedP024SelectorAlternatingShiftedRemainder i x *
+        retainedP024SelectorAlternatingShiftedRemainder j x)
+      volume (-1) 1 := by
+  have hi :=
+    intervalIntegrable_retainedP024SelectorAlternatingShiftedRemainder i
+  have hj :=
+    intervalIntegrable_retainedP024SelectorAlternatingShiftedRemainder j
+  obtain ⟨B, _hBpos, hB⟩ :=
+    exists_retainedP024SelectorAlternatingShiftedRemainder_abs_bound j
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)] at hi hj ⊢
+  apply hi.mul_bdd hj.aestronglyMeasurable
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+  simpa only [Real.norm_eq_abs] using hB x hx
+
 /-- Weighted Gram of all six mass-shifted retained-even remainders. -/
 def retainedP024SelectorWholeEvenShiftedRemainderGram :
     Matrix (Fin 3 ⊕ Fin 3) (Fin 3 ⊕ Fin 3) ℝ :=

@@ -46,6 +46,25 @@ def retainedP024SelectorAlternatingShiftedRemainder
   retainedP024SelectorAlternatingRemainder i x -
     retainedP024OddMass * retainedP024SelectorAlternatingPoleRow i x
 
+/-- The mass-shifted even quotient rows are uniformly bounded after the
+endpoint pole has been extracted exactly. -/
+theorem exists_retainedP024SelectorWholeEvenShiftedRemainder_abs_bound
+    (k : Fin 3 ⊕ Fin 3) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |retainedP024SelectorWholeEvenShiftedRemainder k x| ≤ B := by
+  simpa only [retainedP024SelectorWholeEvenShiftedRemainder] using
+    exists_retainedP024SelectorWholeEvenRemainder_sub_pole_abs_bound
+      retainedP024EvenMass k
+
+/-- The mass-shifted alternating quotient rows are uniformly bounded. -/
+theorem exists_retainedP024SelectorAlternatingShiftedRemainder_abs_bound
+    (i : Fin 3) :
+    ∃ B : ℝ, 0 < B ∧ ∀ x ∈ Ioc (-1 : ℝ) 1,
+      |retainedP024SelectorAlternatingShiftedRemainder i x| ≤ B := by
+  simpa only [retainedP024SelectorAlternatingShiftedRemainder] using
+    exists_retainedP024SelectorAlternatingRemainder_sub_pole_abs_bound
+      retainedP024OddMass i
+
 theorem retainedP024RetainedEvenWeight_eq_affine (x : ℝ) :
     factorTwoIntrinsicElevenRetainedEvenWeight x =
       retainedP024EvenMass +
