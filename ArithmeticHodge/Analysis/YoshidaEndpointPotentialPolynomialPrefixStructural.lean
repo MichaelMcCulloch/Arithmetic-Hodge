@@ -82,6 +82,26 @@ theorem integral_endpointPotential_mul_eval_eq_prefixIntegral
   · intro k hk
     exact (intervalIntegrable_endpointPotentialPrefixMoment k hu).const_mul _
 
+/-- An affine endpoint-potential weight times any polynomial is integrable
+on every endpoint prefix. -/
+theorem intervalIntegrable_affineEndpointPotential_mul_eval
+    (a b : ℝ) (p : ℝ[X]) {u : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) :
+    IntervalIntegrable
+      (fun x : ℝ ↦ (a + b * yoshidaEndpointPotential x) * p.eval x)
+      volume (-1) u := by
+  have hp : IntervalIntegrable (fun x : ℝ ↦ p.eval x) volume (-1) u :=
+    p.continuous.intervalIntegrable (-1) u
+  have hVp : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * p.eval x)
+      volume (-1) u := by
+    simpa only [pow_zero, mul_one] using
+      (intervalIntegrable_endpointPotentialPrefixMoment 0 hu).mul_continuousOn
+        p.continuous.continuousOn
+  have h := (hp.const_mul a).add (hVp.const_mul b)
+  apply h.congr
+  intro x _hx
+  ring
+
 /-- A polynomial against any affine endpoint-potential weight is evaluated
 by the affine coefficient prefix functional. -/
 theorem integral_affineEndpointPotential_mul_eval_eq_prefixIntegral
