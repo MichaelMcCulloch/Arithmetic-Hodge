@@ -94,6 +94,39 @@ theorem determinant_bound_add_complements
     hx hy hlow htail hz' hs'
   nlinarith
 
+/-- Strict complement-preserving determinant addition.  A positive
+semidefinite first determinant allocation plus a strictly positive second
+allocation gives a strict determinant bound for their coupled sum. -/
+theorem determinant_bound_add_complements_lt
+    (low tail x y z s : ℝ)
+    (hx : 0 ≤ x) (hy : 0 ≤ y)
+    (hlow : 0 ≤ low - x) (htail : 0 ≤ tail - y)
+    (hz : z ^ 2 ≤ x * y)
+    (hs : s ^ 2 < (low - x) * (tail - y)) :
+    (z + s) ^ 2 < low * tail := by
+  let u := low - x
+  let v := tail - y
+  have hu : 0 ≤ u := by simpa only [u] using hlow
+  have hv : 0 ≤ v := by simpa only [v] using htail
+  have hs' : s ^ 2 < u * v := by simpa only [u, v] using hs
+  have hsle : s ^ 2 ≤ u * v := hs'.le
+  have hproduct : z ^ 2 * s ^ 2 ≤ (x * y) * (u * v) :=
+    mul_le_mul hz hsle (sq_nonneg s) (mul_nonneg hx hy)
+  have hcrossBase :
+      4 * ((x * y) * (u * v)) ≤ (x * v + y * u) ^ 2 := by
+    nlinarith [sq_nonneg (x * v - y * u)]
+  have hcrossSquare :
+      (2 * z * s) ^ 2 ≤ (x * v + y * u) ^ 2 := by
+    nlinarith
+  have hcrossNonneg : 0 ≤ x * v + y * u := by positivity
+  have hcross : 2 * z * s ≤ x * v + y * u := by
+    by_cases hzs : 0 ≤ 2 * z * s
+    · nlinarith
+    · have : 2 * z * s < 0 := lt_of_not_ge hzs
+      linarith
+  dsimp only [u, v] at hcross hs'
+  nlinarith
+
 /-- A positive `2 × 2` low block plus a tail stays nonnegative when the two
 low-to-tail functionals satisfy the exact adjugate Schur bound. -/
 theorem quadratic_add_tail_nonneg

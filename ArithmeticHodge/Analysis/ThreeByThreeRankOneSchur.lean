@@ -238,6 +238,53 @@ private theorem adjugateVector_quadratic
   unfold symmetricQuadratic symmetricDeterminant adjugateQuadratic
   ring
 
+/-- Converse strict rank-one Schur test.  If a positive `3 x 3` form
+strictly dominates a fixed border functional in every nonzero direction,
+then the inverse-free adjugate gap is strictly positive. -/
+theorem adjugateQuadratic_lt_symmetricDeterminant_mul_of_border_lt
+    (q00 q01 q02 q11 q12 q22 ell0 ell1 ell2 d : ℝ)
+    (h00 : 0 < q00)
+    (hminor : 0 < leadingMinorTwo q00 q01 q11)
+    (hdet : 0 < symmetricDeterminant q00 q01 q02 q11 q12 q22)
+    (hd : 0 < d)
+    (hborder : ∀ x0 x1 x2 : ℝ,
+      x0 ≠ 0 ∨ x1 ≠ 0 ∨ x2 ≠ 0 →
+      (ell0 * x0 + ell1 * x1 + ell2 * x2) ^ 2 <
+        symmetricQuadratic q00 q01 q02 q11 q12 q22 x0 x1 x2 * d) :
+    adjugateQuadratic q00 q01 q02 q11 q12 q22 ell0 ell1 ell2 <
+      symmetricDeterminant q00 q01 q02 q11 q12 q22 * d := by
+  let T := symmetricDeterminant q00 q01 q02 q11 q12 q22
+  let A := adjugateQuadratic
+    q00 q01 q02 q11 q12 q22 ell0 ell1 ell2
+  have hT : 0 < T := by simpa only [T] using hdet
+  have hA : 0 ≤ A := by
+    simpa only [A] using adjugateQuadratic_nonneg
+      q00 q01 q02 q11 q12 q22 h00 hminor hdet ell0 ell1 ell2
+  change A < T * d
+  by_cases hAzero : A = 0
+  · rw [hAzero]
+    exact mul_pos hT hd
+  · have hApos : 0 < A := lt_of_le_of_ne hA (Ne.symm hAzero)
+    let v := adjugateVector
+      q00 q01 q02 q11 q12 q22 ell0 ell1 ell2
+    have hlinear := adjugateVector_linear
+      q00 q01 q02 q11 q12 q22 ell0 ell1 ell2
+    have hquadratic := adjugateVector_quadratic
+      q00 q01 q02 q11 q12 q22 ell0 ell1 ell2
+    have hvne : v 0 ≠ 0 ∨ v 1 ≠ 0 ∨ v 2 ≠ 0 := by
+      by_contra hv
+      push_neg at hv
+      rcases hv with ⟨h0, h1, h2⟩
+      dsimp only [v] at h0 h1 h2
+      rw [h0, h1, h2] at hlinear
+      norm_num at hlinear
+      exact hAzero hlinear.symm
+    have hv := hborder (v 0) (v 1) (v 2) hvne
+    dsimp only [v] at hv
+    rw [hlinear, hquadratic] at hv
+    change A ^ 2 < T * A * d at hv
+    nlinarith
+
 /-- Exact rank-one Schur criterion.  For a positive definite symmetric
 `3 x 3` form `Q` and a row `L`, the form `Q - k L^2` is nonnegative in every
 direction exactly when `k * (L adj(Q) L^T) <= det(Q)`.
