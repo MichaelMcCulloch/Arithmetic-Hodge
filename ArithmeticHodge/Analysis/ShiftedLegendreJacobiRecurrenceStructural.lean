@@ -276,6 +276,21 @@ theorem centeredShiftedLegendreReal_threeTerm (n : ℕ) :
     eval_centeredShiftedLegendreReal] at ⊢
   linear_combination h
 
+/-- The centered recurrence solved for multiplication by `X`; the zero
+mode is included by the vanishing predecessor coefficient. -/
+theorem centeredShiftedLegendreReal_recurrence (n : ℕ) :
+    (((n + 1 : ℕ) : ℝ) • centeredShiftedLegendreReal (n + 1)) =
+      -(((2 * n + 1 : ℕ) : ℝ) •
+          (X * centeredShiftedLegendreReal n)) -
+        ((n : ℝ) • centeredShiftedLegendreReal (n - 1)) := by
+  cases n with
+  | zero => simp
+  | succ n =>
+      simpa only [show n + 1 + 1 = n + 2 by omega,
+        show 2 * (n + 1) + 1 = 2 * n + 3 by omega,
+        show n + 1 - 1 = n by omega] using
+        centeredShiftedLegendreReal_threeTerm n
+
 end
 
 end ArithmeticHodge.Analysis.ShiftedLegendreJacobiRecurrenceStructural
