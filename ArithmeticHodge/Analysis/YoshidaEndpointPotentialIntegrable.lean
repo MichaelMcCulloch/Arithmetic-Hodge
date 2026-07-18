@@ -57,6 +57,23 @@ theorem intervalIntegrable_endpointPotential_mul_sq
   exact hform.congr_ae
     (heq.filter_mono (ae_mono Measure.restrict_le_self))
 
+/-- The logarithmic endpoint potential is integrable against every
+continuous centered profile.  This is the polarization consequence of the
+square-weight theorem. -/
+theorem intervalIntegrable_endpointPotential_mul
+    (u : ℝ → ℝ) (hu : Continuous u) :
+    IntervalIntegrable
+      (fun x ↦ yoshidaEndpointPotential x * u x) volume (-1) 1 := by
+  have hplus := intervalIntegrable_endpointPotential_mul_sq
+    (fun x ↦ u x + 1) (hu.add continuous_const)
+  have huSq := intervalIntegrable_endpointPotential_mul_sq u hu
+  have hone := intervalIntegrable_endpointPotential_mul_sq
+    (fun _ : ℝ ↦ 1) continuous_const
+  have hcomb := ((hplus.sub huSq).sub hone).const_mul (1 / 2 : ℝ)
+  apply hcomb.congr
+  intro x _hx
+  ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaEndpointPotentialIntegrable
