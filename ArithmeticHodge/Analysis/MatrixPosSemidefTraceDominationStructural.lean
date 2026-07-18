@@ -58,6 +58,25 @@ theorem Matrix.PosSemidef.trace_smul_one_sub
     hdiag.mul_mul_conjTranspose_same
       (hG.isHermitian.eigenvectorUnitary : Matrix ι ι ℝ)
 
+/-- Any scalar upper bound on the trace of a real positive-semidefinite matrix
+is automatically a Loewner upper bound for the whole matrix. -/
+theorem Matrix.PosSemidef.scalar_smul_one_sub_of_trace_le
+    {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {G : Matrix ι ι ℝ} (hG : G.PosSemidef) {gamma : ℝ}
+    (htrace : G.trace ≤ gamma) :
+    (gamma • (1 : Matrix ι ι ℝ) - G).PosSemidef := by
+  have hscalar :
+      ((gamma - G.trace) • (1 : Matrix ι ι ℝ)).PosSemidef :=
+    Matrix.PosSemidef.one.smul (sub_nonneg.mpr htrace)
+  have hsum := hscalar.add (Matrix.PosSemidef.trace_smul_one_sub hG)
+  have heq :
+      gamma • (1 : Matrix ι ι ℝ) - G =
+        (gamma - G.trace) • (1 : Matrix ι ι ℝ) +
+          (G.trace • (1 : Matrix ι ι ℝ) - G) := by
+    module
+  rw [heq]
+  exact hsum
+
 end
 
 end ArithmeticHodge.Analysis
