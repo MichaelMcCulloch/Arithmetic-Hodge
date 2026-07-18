@@ -203,7 +203,7 @@ private theorem matrixBilinearValue_scale
     _ = r * s * ∑ i, ∑ j, e i * M i j * o j := by
       rw [Finset.mul_sum]
 
-private theorem factorTwoConcreteLowTransferValue_scale
+theorem factorTwoConcreteLowTransferValue_scale
     (H : Matrix YoshidaEvenIndex YoshidaOddIndex ℝ)
     (e : YoshidaEvenIndex → ℝ) (o : YoshidaOddIndex → ℝ)
     (r s : ℝ) :
@@ -212,7 +212,7 @@ private theorem factorTwoConcreteLowTransferValue_scale
   unfold factorTwoConcreteLowTransferValue
   exact matrixBilinearValue_scale H e o r s
 
-private theorem factorTwoConcreteEvenPencilValue_scale
+theorem factorTwoConcreteEvenPencilValue_scale
     (a r : ℝ) (e : YoshidaEvenIndex → ℝ) :
     factorTwoConcreteEvenPencilValue a (r • e) =
       r ^ 2 * factorTwoConcreteEvenPencilValue a e := by
@@ -221,7 +221,7 @@ private theorem factorTwoConcreteEvenPencilValue_scale
   simp only [smul_eq_mul]
   ring
 
-private theorem factorTwoConcreteOddPencilValue_scale
+theorem factorTwoConcreteOddPencilValue_scale
     (a s : ℝ) (o : YoshidaOddIndex → ℝ) :
     factorTwoConcreteOddPencilValue a (s • o) =
       s ^ 2 * factorTwoConcreteOddPencilValue a o := by
@@ -230,7 +230,7 @@ private theorem factorTwoConcreteOddPencilValue_scale
   simp only [smul_eq_mul]
   ring
 
-private theorem factorTwoConcreteAlternatingValue_scale
+theorem factorTwoConcreteAlternatingValue_scale
     (e : YoshidaEvenIndex → ℝ) (o : YoshidaOddIndex → ℝ)
     (r s : ℝ) :
     factorTwoConcreteAlternatingValue (r • e) (s • o) =
