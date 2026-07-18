@@ -88,6 +88,18 @@ theorem retainedP024PrimeStepPolynomial_sub_lag
       retainedP024PrimeStepDepthPolynomial] <;>
     ring
 
+/-- Boundary-depth form of a retained translated polynomial on the negative
+half-line. -/
+theorem retainedP024PrimeStepPolynomial_add_lag
+    (i : Fin 3) (x : ℝ) :
+    retainedP024PrimeStepPolynomial i (retainedPrimeLag + x) =
+      retainedP024PrimeStepDepthPolynomial i
+        (-x - (retainedPrimeLag - 1)) := by
+  fin_cases i <;>
+    simp [retainedP024PrimeStepPolynomial,
+      retainedP024PrimeStepDepthPolynomial] <;>
+    ring
+
 theorem centeredPolynomialLift_retainedP024EvenMode
     (i : Fin 3) (x : ℝ) :
     centeredPolynomialLift (retainedPrimeEvenMode i) x =
@@ -108,6 +120,22 @@ theorem centeredPolynomialLift_retainedP024EvenMode
     rw [htransport, centeredShiftedLegendreReal_four]
     simp [Polynomial.smul_eq_C_mul]
     ring
+
+/-- Every retained `P₀/P₂/P₄` seed is even, as an instance of the
+all-degree centered Legendre reflection law. -/
+theorem even_centeredPolynomialLift_retainedPrimeEvenMode
+    (i : Fin 3) :
+    Function.Even (centeredPolynomialLift (retainedPrimeEvenMode i)) := by
+  intro x
+  simpa only [retainedPrimeEvenMode, centeredPolynomialLift,
+    ← eval_centeredShiftedLegendreReal] using
+      even_eval_centeredShiftedLegendreReal i.1 x
+
+/-- Every retained alternating prime-step row is odd. -/
+theorem odd_retainedPrimeOddStepRow (i : Fin 3) :
+    Function.Odd (retainedPrimeOddStepRow i) := by
+  exact odd_factorTwoFixedLagJ_of_even
+    (even_centeredPolynomialLift_retainedPrimeEvenMode i)
 
 /-- The dimensionless retained-prime lag is genuinely larger than one, so
 the two translated supports do not touch. -/
@@ -165,6 +193,39 @@ theorem retainedPrimeOddStepRow_eq_depth_indicator_of_nonneg
   by_cases hmem : x ∈ Icc (retainedPrimeLag - 1) 1
   · rw [Set.indicator_of_mem hmem, Set.indicator_of_mem hmem,
       retainedP024PrimeStepPolynomial_sub_lag]
+  · rw [Set.indicator_of_notMem hmem, Set.indicator_of_notMem hmem]
+
+/-- On the negative half-line, a retained alternating prime-step row is the
+positive translated polynomial on its surviving interval and zero outside. -/
+theorem retainedP024OddPrimeStepRow_eq_indicator_of_nonpos
+    (i : Fin 3) {x : ℝ} (hx : x ≤ 0) :
+    retainedPrimeOddStepRow i x =
+      (Icc (-1 : ℝ) (1 - retainedPrimeLag)).indicator
+        (fun z ↦ retainedP024PrimeStepPolynomial i
+          (retainedPrimeLag + z)) x := by
+  have hlag := one_lt_retainedP024PrimeLag
+  have hnotLeft : x ∉ Icc (-1 + retainedPrimeLag) 1 := by
+    intro hmem
+    linarith [hmem.1]
+  unfold retainedPrimeOddStepRow factorTwoFixedLagJ
+    factorTwoFixedLagRightRepresenter factorTwoFixedLagLeftRepresenter
+  rw [Set.indicator_of_notMem hnotLeft, sub_zero]
+  by_cases hmem : x ∈ Icc (-1 : ℝ) (1 - retainedPrimeLag)
+  · rw [Set.indicator_of_mem hmem, Set.indicator_of_mem hmem,
+      centeredPolynomialLift_retainedP024EvenMode]
+  · rw [Set.indicator_of_notMem hmem, Set.indicator_of_notMem hmem]
+
+/-- Boundary-depth form of the negative-half retained step row. -/
+theorem retainedPrimeOddStepRow_eq_depth_indicator_of_nonpos
+    (i : Fin 3) {x : ℝ} (hx : x ≤ 0) :
+    retainedPrimeOddStepRow i x =
+      (Icc (-1 : ℝ) (1 - retainedPrimeLag)).indicator
+        (fun z ↦ retainedP024PrimeStepDepthPolynomial i
+          (-z - (retainedPrimeLag - 1))) x := by
+  rw [retainedP024OddPrimeStepRow_eq_indicator_of_nonpos i hx]
+  by_cases hmem : x ∈ Icc (-1 : ℝ) (1 - retainedPrimeLag)
+  · rw [Set.indicator_of_mem hmem, Set.indicator_of_mem hmem,
+      retainedP024PrimeStepPolynomial_add_lag]
   · rw [Set.indicator_of_notMem hmem, Set.indicator_of_notMem hmem]
 
 end
