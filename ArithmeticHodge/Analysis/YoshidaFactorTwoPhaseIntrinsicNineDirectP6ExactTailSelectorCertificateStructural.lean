@@ -1,5 +1,5 @@
 import ArithmeticHodge.Analysis.ThreeByThreePositiveMixedDeterminant
-import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailSelectorGramStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailSelectorReciprocalLoewnerStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineDirectPSevenEndpointSchurStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseRetainedSingularSchurStructural
@@ -25,6 +25,7 @@ open YoshidaFactorTwoPhaseFullProfile
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailResidualStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailSelectorGramStructural
+open YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailSelectorReciprocalLoewnerStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6BorderDecompositionStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6BorderStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6CompleteRepresenterStructural
@@ -148,6 +149,51 @@ def factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap
       factorTwoIntrinsicNineDirectP024ExactLowMatrix sigma -
     factorTwoIntrinsicNineDirectP6WeightedMass •
       factorTwoIntrinsicNineDirectP6ExactResidualSelectorGram sigma q
+
+/-- Inverse-weight-free upper gap for the exact direct selector rows.  Its
+positive definiteness is a stronger but polynomially accessible certificate. -/
+def factorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorLoewnerGap
+    (sigma : ℝ) (q : Fin 3 → ℝ[X]) : Matrix (Fin 3) (Fin 3) ℝ :=
+  factorTwoIntrinsicNineDirectP6ExactTailComplement sigma •
+      factorTwoIntrinsicNineDirectP024ExactLowMatrix sigma -
+    factorTwoIntrinsicNineDirectP6WeightedMass •
+      factorTwoIntrinsicNineDirectP6ExactResidualReciprocalUpperSelectorGram
+        sigma q
+
+/-- The target `P6` mode has strictly positive retained weighted mass. -/
+theorem factorTwoIntrinsicNineDirectP6WeightedMass_pos :
+    0 < factorTwoIntrinsicNineDirectP6WeightedMass := by
+  rw [factorTwoIntrinsicNineDirectP6WeightedMass_eq]
+  have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds.2
+  norm_num at hlog ⊢
+  nlinarith
+
+/-- The exact gap is the reciprocal-upper gap plus the positive Loewner
+correction which was removed from the selector Gram. -/
+theorem factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap_eq_upper_add
+    (sigma : ℝ) (q : Fin 3 → ℝ[X]) :
+    factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap sigma q =
+      factorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorLoewnerGap sigma q +
+        factorTwoIntrinsicNineDirectP6WeightedMass •
+          (factorTwoIntrinsicNineDirectP6ExactResidualReciprocalUpperSelectorGram
+              sigma q -
+            factorTwoIntrinsicNineDirectP6ExactResidualSelectorGram sigma q) := by
+  unfold factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap
+    factorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorLoewnerGap
+  module
+
+/-- Positive definiteness of the inverse-weight-free upper gap transfers to
+the exact selector gap by Loewner monotonicity. -/
+theorem factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap_posDef_of_upper
+    (sigma : ℝ) (q : Fin 3 → ℝ[X])
+    (hUpper :
+      (factorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorLoewnerGap
+        sigma q).PosDef) :
+    (factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap sigma q).PosDef := by
+  rw [factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap_eq_upper_add]
+  exact hUpper.add_posSemidef
+    ((factorTwoIntrinsicNineDirectP6ExactResidualReciprocalUpperSelectorGram_sub_posSemidef
+      sigma q).smul factorTwoIntrinsicNineDirectP6WeightedMass_pos.le)
 
 /-- Positive definiteness of the exact-tail selector Loewner gap gives the
 strict residual determinant inequality in every nonzero low direction. -/
@@ -334,6 +380,28 @@ def FactorTwoIntrinsicNineDirectP6ExactSelectorMinusCertificate : Prop :=
   (factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap (-1)
     factorTwoIntrinsicNineDirectP6ExactSelectorMinus).PosDef
 
+/-- Inverse-weight-free positive-endpoint certificate. -/
+def FactorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorPlusCertificate : Prop :=
+  (factorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorLoewnerGap 1
+    factorTwoIntrinsicNineDirectP6ExactSelectorPlus).PosDef
+
+/-- Inverse-weight-free negative-endpoint certificate. -/
+def FactorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorMinusCertificate : Prop :=
+  (factorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorLoewnerGap (-1)
+    factorTwoIntrinsicNineDirectP6ExactSelectorMinus).PosDef
+
+theorem factorTwoIntrinsicNineDirectP6ExactSelectorPlusCertificate_of_reciprocalUpper
+    (h : FactorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorPlusCertificate) :
+    FactorTwoIntrinsicNineDirectP6ExactSelectorPlusCertificate := by
+  exact factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap_posDef_of_upper
+    1 factorTwoIntrinsicNineDirectP6ExactSelectorPlus h
+
+theorem factorTwoIntrinsicNineDirectP6ExactSelectorMinusCertificate_of_reciprocalUpper
+    (h : FactorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorMinusCertificate) :
+    FactorTwoIntrinsicNineDirectP6ExactSelectorMinusCertificate := by
+  exact factorTwoIntrinsicNineDirectP6ExactSelectorLoewnerGap_posDef_of_upper
+    (-1) factorTwoIntrinsicNineDirectP6ExactSelectorMinus h
+
 /-- The positive-endpoint selector certificate closes the corresponding
 inverse-free adjugate gap. -/
 theorem factorTwoIntrinsicNineDirectP6PlusAdjugateGap_pos_of_exactSelectorCertificate
@@ -469,6 +537,21 @@ theorem factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven_endpoint_co
     (factorTwoIntrinsicNineDirectP6PlusAdjugateGap_pos_of_exactSelectorCertificate
       hPlus)
     (factorTwoIntrinsicNineDirectP6MinusAdjugateGap_pos_of_exactSelectorCertificate
+      hMinus)
+
+/-- The two inverse-weight-free endpoint certificates therefore close both
+endpoint coefficients of the degree-seven prefix determinant. -/
+theorem factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven_endpoint_coefficients_pos_of_reciprocalUpperCertificates
+    (hPlus :
+      FactorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorPlusCertificate)
+    (hMinus :
+      FactorTwoIntrinsicNineDirectP6ReciprocalUpperSelectorMinusCertificate) :
+    0 < factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven.coeff 0 ∧
+      0 < factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven.coeff 7 :=
+  factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven_endpoint_coefficients_pos_of_exactSelectorCertificates
+    (factorTwoIntrinsicNineDirectP6ExactSelectorPlusCertificate_of_reciprocalUpper
+      hPlus)
+    (factorTwoIntrinsicNineDirectP6ExactSelectorMinusCertificate_of_reciprocalUpper
       hMinus)
 
 end
