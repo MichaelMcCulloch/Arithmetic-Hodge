@@ -129,6 +129,33 @@ theorem factorTwoIntrinsicElevenSelectorDual_sum_eq_matrixQuadratic
     funext x
     simp only [Finset.sum_apply, R]
 
+/-- Every finite weighted selector Gram is positive semidefinite once its
+polarized entries are integrable and the weight is positive on the endpoint
+interval. -/
+theorem factorTwoIntrinsicElevenSelectorGram_posSemidef
+    {ι : Type*} [Fintype ι]
+    (W : ℝ → ℝ) (F : ι → ℝ → ℝ) (q : ι → ℝ[X])
+    (hW : ∀ x ∈ Icc (-1 : ℝ) 1, 0 < W x)
+    (hInt : ∀ i j, IntervalIntegrable
+      (fun x ↦
+        factorTwoIntrinsicElevenSelectorResidual (F i) (q i) x *
+          factorTwoIntrinsicElevenSelectorResidual (F j) (q j) x / W x)
+      volume (-1) 1) :
+    (factorTwoIntrinsicElevenSelectorGram W F q).PosSemidef := by
+  have hHermitian :
+      (factorTwoIntrinsicElevenSelectorGram W F q).IsHermitian := by
+    apply Matrix.IsHermitian.ext
+    intro i j
+    simpa [factorTwoIntrinsicElevenSelectorGram] using
+      (factorTwoIntrinsicElevenSelectorCrossDual_comm
+        W (F i) (F j) (q i) (q j)).symm
+  apply Matrix.PosSemidef.of_dotProduct_mulVec_nonneg hHermitian
+  intro c
+  have hquad := factorTwoIntrinsicElevenSelectorDual_sum_eq_matrixQuadratic
+    W F q hInt c
+  rw [← hquad]
+  exact factorTwoIntrinsicElevenSelectorDual_nonneg _ _ _ hW
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenSelectorGramStructural
