@@ -1,4 +1,4 @@
-import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineDirectProjectiveDeterminantStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineDirectP6BorderStructural
 
 set_option autoImplicit false
 
@@ -7,7 +7,10 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineDirectPSeve
 noncomputable section
 
 open Polynomial
+open YoshidaFactorTwoPhaseIntrinsicNineDirectP6BorderStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectProjectiveDeterminantStructural
+open YoshidaFactorTwoPhaseIntrinsicNineDirectProjectiveStructural
+open YoshidaFactorTwoPhaseIntrinsicNineDirectProjectiveSylvesterStructural
 
 /-!
 # Nested-square certificate for the seventh direct prefix
@@ -86,7 +89,7 @@ def FactorTwoIntrinsicNineDirectPSevenNestedSquareGates : Prop :=
         pSeven.coeff 0 * pSeven.coeff 3 ^ 2 ∧
     0 ≤ pSeven.coeff 5 ∧
     0 ≤ pSeven.coeff 6 ∧
-    0 ≤ pSeven.coeff 7
+    0 < pSeven.coeff 7
 
 /-- The six nested-square gates imply strict positivity of the seventh
 prefix determinant on the complete projective half-line. -/
@@ -113,7 +116,77 @@ theorem factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven_eval_pos
   · exact h.2.2.1
   · exact h.2.2.2.1
   · exact h.2.2.2.2.1
-  · exact h.2.2.2.2.2
+  · exact h.2.2.2.2.2.le
+
+/-! ## Closure of the actual `P6` prefix -/
+
+/-- The nested-square gates extend the strict six-mode projective block by
+the `P6` coordinate at every finite chart parameter. -/
+theorem factorTwoIntrinsicNineDirectProjectivePrefix_seven_posDef
+    (h : FactorTwoIntrinsicNineDirectPSevenNestedSquareGates)
+    (t : ℝ) :
+    (factorTwoIntrinsicNineDirectProjectivePrefix 7 (by omega)
+      t (t ^ 2)).PosDef := by
+  apply posDef_fin_succ_of_leading_posDef_of_det_pos 6
+  · exact factorTwoIntrinsicNineDirectProjectivePrefix_isHermitian
+      7 (by omega) t (t ^ 2)
+  · rw [factorTwoIntrinsicNineDirectProjectivePrefix_succ_leading]
+    exact factorTwoIntrinsicNineDirectProjectivePrefix_six_posDef t
+  · rw [← factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven_eval
+      t (t ^ 2) rfl]
+    exact factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven_eval_pos
+      h (t ^ 2) (sq_nonneg t)
+
+/-- Strictness of the leading coefficient closes the one omitted projective
+endpoint for the `P6` prefix. -/
+theorem factorTwoIntrinsicNineDirectPrefixMinus_seven_posDef
+    (hTop : 0 < pSeven.coeff 7) :
+    (factorTwoIntrinsicNineDirectPrefixMinus 7 (by omega)).PosDef := by
+  apply posDef_fin_succ_of_leading_posDef_of_det_pos 6
+  · exact factorTwoIntrinsicNineDirectPrefixMinus_isHermitian 7 (by omega)
+  · rw [factorTwoIntrinsicNineDirectPrefixMinus_succ_leading]
+    exact factorTwoIntrinsicNineDirectPrefixMinus_six_posDef
+  · rw [← factorTwoIntrinsicNineDirectPrefixDeterminantPolynomial_coeff_top]
+    simpa only [pSeven,
+      factorTwoIntrinsicNineDirectPrefixDeterminantPolynomialSeven] using hTop
+
+/-- Consequently the six nested-square gates and the omitted-endpoint gate
+close the actual direct `P6` prefix on the entire phase circle. -/
+theorem factorTwoIntrinsicNineDirectP6PrefixMatrix_posDef_of_nestedSquareGates
+    (h : FactorTwoIntrinsicNineDirectPSevenNestedSquareGates)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 = 1) :
+    (factorTwoIntrinsicNineDirectP6PrefixMatrix a b).PosDef := by
+  have hTop : 0 < pSeven.coeff 7 := h.2.2.2.2.2
+  by_cases ha : a = -1
+  · have hb : b = 0 := by
+      rw [ha] at hab
+      nlinarith [sq_nonneg b]
+    simpa only [ha, hb, factorTwoIntrinsicNineDirectP6PrefixMatrix,
+      factorTwoIntrinsicNineDirectPrefixMinus] using
+      factorTwoIntrinsicNineDirectPrefixMinus_seven_posDef hTop
+  · let t := b / (1 + a)
+    obtain ⟨haChart, hbChart⟩ := unitCircle_eq_projectiveChart a b hab ha
+    have hmatrix :
+        factorTwoIntrinsicNineDirectProjectivePrefix 7 (by omega)
+            t (t ^ 2) =
+          (1 + t ^ 2) • factorTwoIntrinsicNineDirectP6PrefixMatrix a b := by
+      unfold factorTwoIntrinsicNineDirectProjectivePrefix
+        factorTwoIntrinsicNineDirectP6PrefixMatrix
+      rw [factorTwoIntrinsicNineDirectProjectiveMatrix_eq_phase t (t ^ 2) rfl,
+        ← haChart, ← hbChart]
+      ext i j
+      rfl
+    have hProjective :=
+      factorTwoIntrinsicNineDirectProjectivePrefix_seven_posDef h t
+    apply Matrix.PosDef.of_dotProduct_mulVec_pos
+    · exact factorTwoIntrinsicNineDirectP6PrefixMatrix_isHermitian a b
+    · intro x hx
+      have hq := hProjective.dotProduct_mulVec_pos hx
+      simp only [star_trivial] at hq ⊢
+      rw [hmatrix] at hq
+      simp only [Matrix.smul_mulVec, dotProduct_smul, smul_eq_mul] at hq
+      exact pos_of_mul_pos_left (by simpa only [mul_comm] using hq)
+        (by nlinarith [sq_nonneg t] : 0 ≤ 1 + t ^ 2)
 
 end
 
