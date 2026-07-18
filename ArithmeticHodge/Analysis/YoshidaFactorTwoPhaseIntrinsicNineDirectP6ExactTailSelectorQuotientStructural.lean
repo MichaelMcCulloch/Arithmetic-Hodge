@@ -10,6 +10,9 @@ namespace ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineDirectP6Exa
 noncomputable section
 
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open YoshidaEndpointPotentialBound
+open YoshidaFactorTwoPhaseIntrinsicElevenCompleteRepresentersStructural
+open YoshidaFactorTwoPhaseIntrinsicElevenConcreteSelectorsStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedConstrainedWeightedDualStructural
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024SelectorPoleRemainderStructural
@@ -23,6 +26,7 @@ open YoshidaFactorTwoPhaseIntrinsicNineDirectP6ExactTailSelectorGramStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6RetainedRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicNineDirectP6SelectorGramStructural
 open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
+open YoshidaFactorTwoReflectedPoleEntropyStructural
 
 /-!
 # Exact quotient removal for the direct `P6` selector rows
@@ -65,6 +69,19 @@ def factorTwoIntrinsicNineDirectP6ExactResidualPoleRow
     sigma * retainedP024SelectorWholeEvenPoleRow
       (Sum.inr i : Fin 3 ⊕ Fin 3) x
 
+/-- The direct endpoint pole row has no hidden selector dependence: it is the
+retained `P0/P2/P4` mode plus one constant symmetric trace. -/
+theorem factorTwoIntrinsicNineDirectP6ExactResidualPoleRow_eq
+    (sigma : ℝ) (i : Fin 3) (x : ℝ) :
+    factorTwoIntrinsicNineDirectP6ExactResidualPoleRow sigma i x =
+      (511 / 252 : ℝ) *
+          centeredPolynomialLift
+            (ShiftedLegendreOrthogonality.shiftedLegendreReal (2 * i.1)) x -
+        sigma * (511 / 504 : ℝ) := by
+  unfold factorTwoIntrinsicNineDirectP6ExactResidualPoleRow
+    retainedP024SelectorWholeEvenPoleRow retainedP024EvenMode
+  ring
+
 /-- The bounded shifted remainder after the exact pole row has been removed. -/
 def factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder
     (sigma : ℝ) (q : Fin 3 → ℝ[X]) (i : Fin 3) (x : ℝ) : ℝ :=
@@ -75,6 +92,74 @@ def factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder
     centeredPolynomialLift
       (factorTwoIntrinsicNineDirectP6ExactSelectorCorrectionPolynomial
         sigma q i) x
+
+/-- A retained remainder with its auxiliary high-degree selector put back.
+This is the quantity in which the old `P0/P2/P4` selector disappears from the
+new direct endpoint row. -/
+def factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+    (k : Fin 3 ⊕ Fin 3) (x : ℝ) : ℝ :=
+  retainedP024SelectorWholeEvenRemainder k x +
+    centeredPolynomialLift (retainedP024SelectorWholeEvenPolynomial k) x
+
+theorem factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder_inl
+    (i : Fin 3) (x : ℝ) :
+    factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+        (Sum.inl i : Fin 3 ⊕ Fin 3) x =
+      factorTwoIntrinsicElevenCleanSurvivorRepresenter
+          (retainedP024EvenMode i) x -
+        yoshidaEndpointPotential x *
+          centeredPolynomialLift (retainedP024EvenMode i) x := by
+  unfold factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+    retainedP024SelectorWholeEvenRemainder
+    retainedP024SelectorWholeEvenPolynomial
+    retainedP024SelectorBaseRemainder
+  ring
+
+theorem factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder_inr
+    (i : Fin 3) (x : ℝ) :
+    factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+        (Sum.inr i : Fin 3 ⊕ Fin 3) x =
+      factorTwoIntrinsicElevenAnalyticEvenRepresenter
+          (retainedP024EvenMode i) 0 1 0 x +
+        factorTwoIntrinsicElevenForwardEvenRepresenter
+          (retainedP024EvenMode i) 0 1 0 x +
+        factorTwoIntrinsicElevenPrimeEvenRepresenter
+          (retainedP024EvenMode i) 0 1 0 x -
+        (511 / 2048 : ℝ) *
+          (retainedP024KPotentialTraceRemainder i x +
+            reflectedPoleKEntropyRemainder (retainedP024EvenMode i) x) := by
+  unfold factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+    retainedP024SelectorWholeEvenRemainder
+    retainedP024SelectorWholeEvenPolynomial
+    retainedP024SelectorSymmetricRemainder
+  ring
+
+/-- Cancellation-preserving normal form for the shifted direct row.  The old
+degree-ten retained selector cancels exactly before the reciprocal multiplier
+is estimated; only the chosen direct selector `q` and the genuine rank-`P6`
+correction remain. -/
+theorem factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder_eq_selectorFree
+    (sigma : ℝ) (q : Fin 3 → ℝ[X]) (i : Fin 3) (x : ℝ) :
+    factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder sigma q i x =
+      factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+          (Sum.inl i : Fin 3 ⊕ Fin 3) x +
+        sigma * factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+          (Sum.inr i : Fin 3 ⊕ Fin 3) x -
+        retainedP024EvenMass *
+          factorTwoIntrinsicNineDirectP6ExactResidualPoleRow sigma i x +
+        centeredPolynomialLift
+          (factorTwoIntrinsicNineDirectP6RankPolynomial sigma
+              (factorTwoIntrinsicNineDirectP024Embed (Pi.single i 1)) -
+            q i) x := by
+  unfold factorTwoIntrinsicNineDirectP6ExactResidualShiftedRemainder
+    factorTwoIntrinsicNineDirectP6SelectorFreeRetainedRemainder
+    retainedP024SelectorWholeEvenShiftedRemainder
+    factorTwoIntrinsicNineDirectP6ExactSelectorCorrectionPolynomial
+    factorTwoIntrinsicNineDirectP6ExactResidualPoleRow
+    centeredPolynomialLift
+  simp only [Polynomial.eval_add, Polynomial.eval_sub,
+    Polynomial.eval_smul, smul_eq_mul]
+  ring
 
 /-- The exact direct basis representer is the sum of its retained base row,
 its phase-symmetric row, and its finite-rank polynomial correction. -/
