@@ -116,9 +116,10 @@ two-channel representer pairing. -/
 theorem factorTwoPhasePotentialPoleMixed_centeredPolynomialLift_eq_pairing
     (pE pO : ℝ[X]) (e o : ℝ → ℝ)
     (he : Continuous e) (ho : Continuous o)
-    (heGap : centeredLegendreMomentsVanishBelow e 11)
-    (hoGap : centeredLegendreMomentsVanishBelow o 11)
-    (hpEdeg : pE.natDegree < 11) (hpOdeg : pO.natDegree < 11)
+    {k : ℕ}
+    (heGap : centeredLegendreMomentsVanishBelow e k)
+    (hoGap : centeredLegendreMomentsVanishBelow o k)
+    (hpEdeg : pE.natDegree < k) (hpOdeg : pO.natDegree < k)
     (a b : ℝ) :
     factorTwoPhasePotentialPoleMixed
         (centeredPolynomialLift pE) (centeredPolynomialLift pO)
