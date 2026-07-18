@@ -37,6 +37,7 @@ import ArithmeticHodge.Analysis.PoissonSummation
 import ArithmeticHodge.Analysis.HermitianLowTail
 import ArithmeticHodge.Analysis.HilbertTailSchur
 import ArithmeticHodge.Analysis.FiniteRepeatedRolle
+import ArithmeticHodge.Analysis.FiniteGramProjection
 import ArithmeticHodge.Analysis.HermitianFormCompletion
 import ArithmeticHodge.Analysis.RationalPosDefCertificate
 import ArithmeticHodge.Analysis.RationalInterval
