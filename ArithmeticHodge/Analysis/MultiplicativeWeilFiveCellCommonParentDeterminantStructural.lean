@@ -707,6 +707,37 @@ theorem fiveCell_middleOrthogonalResidual_coordinates
     dsimp only [M, U, V]
     ring
 
+/-- Every real pencil on the two middle-orthogonal residuals is itself an
+actual five-cell production block of a modified real common parent. -/
+theorem exists_realParent_fiveBlock_eq_middleOrthogonalResidualPencil
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (t : ℝ) :
+    ∃ modified : BombieriTest,
+      bombieriConjugateTest modified = modified ∧
+        monotoneQuarterFiveBlock modified k =
+          fiveCellLeftMiddleOrthogonalResidual parent k +
+            (t : ℂ) • fiveCellRightMiddleOrthogonalResidual parent k := by
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest :=
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+      parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let M : ℝ := bombieriRealQuadraticValue m
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  obtain ⟨modified, hmodified, hblock⟩ :=
+    exists_realParent_fiveBlock_eq_threeBlockCombination
+      parent hparent k M (-(U + t * V)) (t * M)
+  refine ⟨modified, hmodified, ?_⟩
+  rw [hblock]
+  change
+    (M : ℂ) • a + ((-(U + t * V) : ℝ) : ℂ) • m +
+        ((t * M : ℝ) : ℂ) • e =
+      ((M : ℂ) • a + ((-U : ℝ) : ℂ) • m) +
+        (t : ℂ) • ((M : ℂ) • e + ((-V : ℝ) : ℂ) • m)
+  module
+
 /-- The one genuinely new common-parent inequality after four-cell closure.
 The remote entry is written in its exact local-minus-prime form. -/
 def FiveCellCommonParentMiddlePivotResidualContraction
