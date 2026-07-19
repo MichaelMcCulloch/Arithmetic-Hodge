@@ -8,6 +8,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4MinusEndpoint
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenCapacityStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointCapacityCauchyStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshRegularStructural
+import Mathlib.Analysis.SpecialFunctions.Integrability.Basic
 
 set_option autoImplicit false
 
@@ -1052,6 +1053,180 @@ theorem fourCellEvenP0246CutoffEightLowSchurReserve_nonnegative
   unfold fourCellEvenP0246CutoffEightLowSchurReserve
   nlinarith only [h, sq_nonneg c2, sq_nonneg c4, sq_nonneg c6]
 
+/-! ## Square-integrability of the exact capacity representer -/
+
+/-- The endpoint logarithm is square-integrable at its singular endpoint.
+The structural input is the standard domination of `log x` by every
+negative fractional power; no endpoint truncation is used. -/
+private theorem intervalIntegrable_log_sq_zero_one :
+    IntervalIntegrable (fun x : ℝ ↦ Real.log x ^ 2) volume 0 1 := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+  have hr : IntegrableOn
+      (fun x : ℝ ↦ 16 * x ^ (-(1 / 2 : ℝ))) (Ioc 0 1) volume := by
+    have h := intervalIntegral.intervalIntegrable_rpow'
+      (a := (0 : ℝ)) (b := 1) (r := -(1 / 2 : ℝ)) (by norm_num)
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)] at h
+    exact h.const_mul 16
+  apply Integrable.mono' hr
+  · exact (Real.measurable_log.pow_const 2).aestronglyMeasurable
+  · filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+    have hx0 : 0 < x := hx.1
+    have hx1 : x ≤ 1 := hx.2
+    let y : ℝ := x ^ (1 / 4 : ℝ)
+    have hy : 0 < y := Real.rpow_pos_of_pos hx0 _
+    have hlog := Real.abs_log_mul_self_rpow_lt x (1 / 4 : ℝ)
+      hx0 hx1 (by norm_num)
+    norm_num at hlog
+    have hprod : |Real.log x| * y < 4 := by
+      dsimp only [y]
+      simpa only [abs_mul,
+        abs_of_pos (Real.rpow_pos_of_pos hx0 _)] using hlog
+    have hp0 : 0 ≤ |Real.log x| * y :=
+      mul_nonneg (abs_nonneg _) hy.le
+    have hmul :
+        0 ≤ (4 - |Real.log x| * y) * (4 + |Real.log x| * y) :=
+      mul_nonneg (sub_nonneg.mpr hprod.le) (add_nonneg (by norm_num) hp0)
+    have hsq : |Real.log x| ^ 2 * y ^ 2 ≤ 16 := by
+      nlinarith only [hmul]
+    have hySq : y ^ 2 = x ^ (1 / 2 : ℝ) := by
+      dsimp only [y]
+      rw [← Real.rpow_natCast, ← Real.rpow_mul hx0.le]
+      norm_num
+    have hneg : x ^ (-(1 / 2 : ℝ)) = (y ^ 2)⁻¹ := by
+      rw [Real.rpow_neg hx0.le, hySq]
+    rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _), ← sq_abs, hneg,
+      ← div_eq_mul_inv]
+    exact (le_div_iff₀ (sq_pos_of_pos hy)).2 hsq
+
+private theorem intervalIntegrable_log_sq_zero_two :
+    IntervalIntegrable (fun x : ℝ ↦ Real.log x ^ 2) volume 0 2 := by
+  apply intervalIntegrable_log_sq_zero_one.trans
+  apply ContinuousOn.intervalIntegrable
+  exact (Real.continuousOn_log.mono (by
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (1 : ℝ) ≤ 2)] at hx
+    simp only [mem_compl_iff, mem_singleton_iff]
+    linarith [hx.1])).pow 2
+
+/-- The full centered endpoint potential belongs to `L²(-1,1)`. -/
+private theorem intervalIntegrable_endpointPotential_sq :
+    IntervalIntegrable (fun x : ℝ ↦ yoshidaEndpointPotential x ^ 2)
+      volume (-1) 1 := by
+  have hlog := intervalIntegrable_log_sq_zero_two
+  have hminus : IntervalIntegrable
+      (fun x : ℝ ↦ Real.log (1 - x) ^ 2) volume (-1) 1 := by
+    convert (hlog.comp_sub_left 1).symm using 1 <;> norm_num
+  have hplus : IntervalIntegrable
+      (fun x : ℝ ↦ Real.log (1 + x) ^ 2) volume (-1) 1 := by
+    convert hlog.comp_add_left 1 using 1 <;> norm_num
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)] at hminus hplus ⊢
+  have hdom : IntegrableOn
+      (fun x : ℝ ↦ (1 / 2 : ℝ) *
+        (Real.log (1 - x) ^ 2 + Real.log (1 + x) ^ 2))
+      (Ioc (-1) 1) volume := (hminus.add hplus).const_mul (1 / 2)
+  apply Integrable.mono' hdom
+  · unfold yoshidaEndpointPotential
+    exact (((Real.measurable_log.comp
+      (measurable_const.sub (measurable_id.pow_const 2))).neg.div_const 2)
+        |>.pow_const 2).aestronglyMeasurable
+  · have hne1 : ∀ᵐ x : ℝ ∂(volume.restrict (Ioc (-1 : ℝ) 1)), x ≠ 1 :=
+      (MeasureTheory.Measure.ae_ne volume (1 : ℝ)).filter_mono
+        (ae_mono Measure.restrict_le_self)
+    filter_upwards [ae_restrict_mem measurableSet_Ioc, hne1] with x hx hx1
+    have hxneg1 : x ≠ -1 := ne_of_gt hx.1
+    have hsub : 1 - x ≠ 0 := sub_ne_zero.mpr (Ne.symm hx1)
+    have hadd : 1 + x ≠ 0 := by
+      intro hzero
+      apply hxneg1
+      linarith
+    unfold yoshidaEndpointPotential
+    rw [show 1 - x ^ 2 = (1 - x) * (1 + x) by ring,
+      Real.log_mul hsub hadd]
+    rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
+    nlinarith only [sq_nonneg (Real.log (1 - x) - Real.log (1 + x))]
+
+private theorem memLp_two_restrict_centered_of_continuous
+    (f : ℝ → ℝ) (hf : Continuous f) :
+    MemLp f 2 (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    hf.aestronglyMeasurable.restrict
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  have hcompact : IntegrableOn (fun x : ℝ ↦ ‖f x‖ ^ 2)
+      (Icc (-1 : ℝ) 1) :=
+    (hf.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  exact hcompact.mono_set Ioc_subset_Icc_self
+
+private theorem memLp_endpointPotential_mul_continuous
+    (p : ℝ → ℝ) (hp : Continuous p) :
+    MemLp (fun x : ℝ ↦ yoshidaEndpointPotential x * p x) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hmeas : AEStronglyMeasurable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * p x)
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    apply Measurable.aestronglyMeasurable
+    unfold yoshidaEndpointPotential
+    exact ((Real.measurable_log.comp
+      (measurable_const.sub (measurable_id.pow_const 2))).neg.div_const 2).mul
+        hp.measurable
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  have hI : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x ^ 2 * p x ^ 2)
+      volume (-1) 1 := by
+    simpa only [mul_comm] using
+      intervalIntegrable_endpointPotential_sq.continuousOn_mul
+        (hp.pow 2).continuousOn
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)] at hI
+  apply hI.congr
+  filter_upwards with x
+  rw [Real.norm_eq_abs, sq_abs]
+  ring
+
+/-- Additivity of the retained capacity polarization in its second
+continuous argument. -/
+theorem fourCellEvenEndpointCapacityPolarization_add_right
+    (u v w : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (hw : Continuous w) :
+    fourCellEvenEndpointCapacityPolarization u (v + w) =
+      fourCellEvenEndpointCapacityPolarization u v +
+        fourCellEvenEndpointCapacityPolarization u w := by
+  have hvI : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * (u x * v x))
+      volume (-1) 1 :=
+    intervalIntegrable_endpointPotential_mul _ (hu.mul hv)
+  have hwI : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * (u x * w x))
+      volume (-1) 1 :=
+    intervalIntegrable_endpointPotential_mul _ (hu.mul hw)
+  have hpotential :
+      (∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * u x * (v + w) x) =
+      (∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * u x * v x) +
+      ∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * u x * w x := by
+    rw [show (fun x : ℝ ↦
+        yoshidaEndpointPotential x * u x * (v + w) x) =
+      fun x ↦ yoshidaEndpointPotential x * (u x * v x) +
+        yoshidaEndpointPotential x * (u x * w x) by
+      funext x
+      simp only [Pi.add_apply]
+      ring,
+      intervalIntegral.integral_add hvI hwI]
+    congr 1 <;> apply intervalIntegral.integral_congr <;>
+      intro x _hx <;> ring
+  have hprime :
+      factorTwoCenteredCorrelationBilinear u (v + w) (8 / 5) =
+        factorTwoCenteredCorrelationBilinear u v (8 / 5) +
+          factorTwoCenteredCorrelationBilinear u w (8 / 5) := by
+    unfold factorTwoCenteredCorrelationBilinear
+    rw [factorTwoCenteredCrossCorrelation_add_right u v w hu hv hw,
+      factorTwoCenteredCrossCorrelation_add_left v w u hv hw hu]
+    ring
+  unfold fourCellEvenEndpointCapacityPolarization
+  rw [hpotential, hprime]
+  ring
+
 /-- Unweighted Riesz-dual route to the cutoff-eight capacity determinant.
 Any square-integrable representer of the capacity row may be altered by the
 annihilated low Legendre span before applying this theorem.  Consequently the
@@ -1117,6 +1292,47 @@ def fourCellEvenP0246CutoffEightCapacityRepresenter
     (Real.sqrt 2 * Real.log 2 / 2) *
       factorTwoFixedLagK (8 / 5)
         (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x
+
+/-- The exact capacity representer is automatically square-integrable.  Its
+only singular factor is the endpoint logarithm; the fixed-lag part is a sum
+of two compactly supported translates of a polynomial. -/
+theorem memLp_fourCellEvenP0246CutoffEightCapacityRepresenter
+    (c0 c2 c4 c6 : ℝ) :
+    MemLp (fourCellEvenP0246CutoffEightCapacityRepresenter c0 c2 c4 c6) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hp : Continuous p := by
+    simpa only [p] using
+      continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hV : MemLp (fun x : ℝ ↦ yoshidaEndpointPotential x * p x) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    memLp_endpointPotential_mul_continuous p hp
+  have hrightBase : MemLp (fun x : ℝ ↦ p ((8 / 5 : ℝ) + x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    memLp_two_restrict_centered_of_continuous _
+      (hp.comp (continuous_const.add continuous_id))
+  have hright : MemLp
+      (factorTwoFixedLagRightRepresenter (8 / 5) p) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [factorTwoFixedLagRightRepresenter] using
+      hrightBase.indicator (measurableSet_Icc :
+        MeasurableSet (Icc (-1 : ℝ) (1 - 8 / 5)))
+  have hleftBase : MemLp (fun x : ℝ ↦ p (x - (8 / 5 : ℝ))) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    memLp_two_restrict_centered_of_continuous _
+      (hp.comp (continuous_id.sub continuous_const))
+  have hleft : MemLp
+      (factorTwoFixedLagLeftRepresenter (8 / 5) p) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [factorTwoFixedLagLeftRepresenter] using
+      hleftBase.indicator (measurableSet_Icc :
+        MeasurableSet (Icc (-1 + 8 / 5 : ℝ) 1))
+  have hK : MemLp (factorTwoFixedLagK (8 / 5) p) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [factorTwoFixedLagK] using hright.add hleft
+  have hcapacity := hV.sub (hK.const_mul (Real.sqrt 2 * Real.log 2 / 2))
+  simpa only [fourCellEvenP0246CutoffEightCapacityRepresenter, p] using
+    hcapacity
 
 theorem intervalIntegrable_fourCellEvenP0246CutoffEightCapacityRepresenter_mul
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r) :
@@ -1223,6 +1439,268 @@ def fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
   fourCellEvenP0246CutoffEightCapacityRepresenter c0 c2 c4 c6 x -
     centeredPolynomialLift q x
 
+/-- Subtracting any polynomial selector preserves square-integrability, so
+the projected Riesz route has no separate domain premise. -/
+theorem memLp_fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+    (c0 c2 c4 c6 : ℝ) (q : ℝ[X]) :
+    MemLp
+      (fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+        c0 c2 c4 c6 q) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hq : Continuous (centeredPolynomialLift q) := by
+    unfold centeredPolynomialLift
+    fun_prop
+  have hqLp := memLp_two_restrict_centered_of_continuous _ hq
+  simpa only [fourCellEvenP0246CutoffEightProjectedCapacityRepresenter] using
+    (memLp_fourCellEvenP0246CutoffEightCapacityRepresenter
+      c0 c2 c4 c6).sub hqLp
+
+/-! ## The canonical degree-below-eight selector -/
+
+/-- The four low Legendre pairings of the capacity row. -/
+def fourCellEvenP0246CutoffEightCapacityRow0
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  fourCellEvenEndpointCapacityPolarization
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) centeredEvenP0
+
+def fourCellEvenP0246CutoffEightCapacityRow2
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  fourCellEvenEndpointCapacityPolarization
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) centeredEvenP2
+
+def fourCellEvenP0246CutoffEightCapacityRow4
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  fourCellEvenEndpointCapacityPolarization
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) factorTwoCenteredP4
+
+def fourCellEvenP0246CutoffEightCapacityRow6
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  fourCellEvenEndpointCapacityPolarization
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) factorTwoCenteredP6
+
+/-- The exact `L²` projection of the capacity representer onto
+`P₀/P₂/P₄/P₆`.  The factors are the reciprocals of the classical
+Legendre squared norms `2/(2n+1)`. -/
+def fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+    (c0 c2 c4 c6 : ℝ) : ℝ[X] :=
+  factorTwoIntrinsicEvenP0246Polynomial
+    (fourCellEvenP0246CutoffEightCapacityRow0 c0 c2 c4 c6 / 2)
+    (5 * fourCellEvenP0246CutoffEightCapacityRow2 c0 c2 c4 c6 / 2)
+    (9 * fourCellEvenP0246CutoffEightCapacityRow4 c0 c2 c4 c6 / 2)
+    (13 * fourCellEvenP0246CutoffEightCapacityRow6 c0 c2 c4 c6 / 2)
+
+theorem natDegree_fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial_lt_eight
+    (c0 c2 c4 c6 : ℝ) :
+    (fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+      c0 c2 c4 c6).natDegree < 8 := by
+  unfold fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+  exact natDegree_factorTwoIntrinsicEvenP0246Polynomial_lt_eight _ _ _ _
+
+theorem centeredPolynomialLift_cutoffEightCanonicalSelector
+    (c0 c2 c4 c6 : ℝ) :
+    centeredPolynomialLift
+        (fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+          c0 c2 c4 c6) =
+      factorTwoIntrinsicEvenP0246Profile
+        (fourCellEvenP0246CutoffEightCapacityRow0 c0 c2 c4 c6 / 2)
+        (5 * fourCellEvenP0246CutoffEightCapacityRow2 c0 c2 c4 c6 / 2)
+        (9 * fourCellEvenP0246CutoffEightCapacityRow4 c0 c2 c4 c6 / 2)
+        (13 * fourCellEvenP0246CutoffEightCapacityRow6 c0 c2 c4 c6 / 2) := by
+  unfold fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+  exact centeredPolynomialLift_intrinsicEvenP0246Polynomial _ _ _ _
+
+/-- Squared norm of the exact four-coordinate projection of the capacity
+representer. -/
+def fourCellEvenP0246CutoffEightCapacityLowProjectionEnergy
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  fourCellEvenP0246CutoffEightCapacityRow0 c0 c2 c4 c6 ^ 2 / 2 +
+    (5 / 2 : ℝ) *
+      fourCellEvenP0246CutoffEightCapacityRow2 c0 c2 c4 c6 ^ 2 +
+    (9 / 2 : ℝ) *
+      fourCellEvenP0246CutoffEightCapacityRow4 c0 c2 c4 c6 ^ 2 +
+    (13 / 2 : ℝ) *
+      fourCellEvenP0246CutoffEightCapacityRow6 c0 c2 c4 c6 ^ 2
+
+theorem integral_cutoffEightCanonicalSelector_sq_eq_lowProjectionEnergy
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+            c0 c2 c4 c6) x ^ 2) =
+      fourCellEvenP0246CutoffEightCapacityLowProjectionEnergy
+        c0 c2 c4 c6 := by
+  rw [centeredPolynomialLift_cutoffEightCanonicalSelector]
+  have hmass := factorTwoIntrinsicEnergy_intrinsicEvenP0246
+    (fourCellEvenP0246CutoffEightCapacityRow0 c0 c2 c4 c6 / 2)
+    (5 * fourCellEvenP0246CutoffEightCapacityRow2 c0 c2 c4 c6 / 2)
+    (9 * fourCellEvenP0246CutoffEightCapacityRow4 c0 c2 c4 c6 / 2)
+    (13 * fourCellEvenP0246CutoffEightCapacityRow6 c0 c2 c4 c6 / 2)
+  change (∫ x : ℝ in -1..1,
+      factorTwoIntrinsicEvenP0246Profile
+        (fourCellEvenP0246CutoffEightCapacityRow0 c0 c2 c4 c6 / 2)
+        (5 * fourCellEvenP0246CutoffEightCapacityRow2 c0 c2 c4 c6 / 2)
+        (9 * fourCellEvenP0246CutoffEightCapacityRow4 c0 c2 c4 c6 / 2)
+        (13 * fourCellEvenP0246CutoffEightCapacityRow6 c0 c2 c4 c6 / 2) x ^ 2) = _
+    at hmass
+  rw [hmass]
+  unfold fourCellEvenP0246CutoffEightCapacityLowProjectionEnergy
+  ring
+
+/-- Pairing the capacity row with its canonical low selector gives exactly
+the selector's squared norm.  Thus this polynomial is the genuine Hilbert
+projection, not merely an annihilating surrogate. -/
+theorem capacityPolarization_cutoffEightCanonicalSelector_eq_lowProjectionEnergy
+    (c0 c2 c4 c6 : ℝ) :
+    fourCellEvenEndpointCapacityPolarization
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)
+        (centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+            c0 c2 c4 c6)) =
+      fourCellEvenP0246CutoffEightCapacityLowProjectionEnergy
+        c0 c2 c4 c6 := by
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  let b0 : ℝ := fourCellEvenP0246CutoffEightCapacityRow0 c0 c2 c4 c6
+  let b2 : ℝ := fourCellEvenP0246CutoffEightCapacityRow2 c0 c2 c4 c6
+  let b4 : ℝ := fourCellEvenP0246CutoffEightCapacityRow4 c0 c2 c4 c6
+  let b6 : ℝ := fourCellEvenP0246CutoffEightCapacityRow6 c0 c2 c4 c6
+  let d0 : ℝ := b0 / 2
+  let d2 : ℝ := 5 * b2 / 2
+  let d4 : ℝ := 9 * b4 / 2
+  let d6 : ℝ := 13 * b6 / 2
+  let s : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile d0 d2 d4 d6
+  have hp : Continuous p := by
+    simpa only [p] using
+      continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hP0 : Continuous centeredEvenP0 := by
+    unfold centeredEvenP0
+    fun_prop
+  have hP2 : Continuous centeredEvenP2 := by
+    unfold centeredEvenP2
+    fun_prop
+  have hP4 : Continuous factorTwoCenteredP4 :=
+    continuous_factorTwoCenteredP4
+  have hP6 : Continuous factorTwoCenteredP6 :=
+    continuous_factorTwoCenteredP6
+  have hs : s =
+      d0 • centeredEvenP0 +
+        (d2 • centeredEvenP2 +
+          (d4 • factorTwoCenteredP4 + d6 • factorTwoCenteredP6)) := by
+    funext x
+    unfold s factorTwoIntrinsicEvenP0246Profile
+      factorTwoIntrinsicEvenP024Profile factorTwoEvenStructuralLowProfile
+      factorTwoIntrinsicSixEvenTail
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    ring
+  have hf0 : Continuous (d0 • centeredEvenP0) := by
+    change Continuous (fun x ↦ d0 * centeredEvenP0 x)
+    exact continuous_const.mul hP0
+  have hf2 : Continuous (d2 • centeredEvenP2) := by
+    change Continuous (fun x ↦ d2 * centeredEvenP2 x)
+    exact continuous_const.mul hP2
+  have hf4 : Continuous (d4 • factorTwoCenteredP4) := by
+    change Continuous (fun x ↦ d4 * factorTwoCenteredP4 x)
+    exact continuous_const.mul hP4
+  have hf6 : Continuous (d6 • factorTwoCenteredP6) := by
+    change Continuous (fun x ↦ d6 * factorTwoCenteredP6 x)
+    exact continuous_const.mul hP6
+  rw [centeredPolynomialLift_cutoffEightCanonicalSelector]
+  change fourCellEvenEndpointCapacityPolarization p s = _
+  rw [hs,
+    fourCellEvenEndpointCapacityPolarization_add_right p
+      (d0 • centeredEvenP0)
+      (d2 • centeredEvenP2 +
+        (d4 • factorTwoCenteredP4 + d6 • factorTwoCenteredP6))
+      hp hf0 (hf2.add (hf4.add hf6)),
+    fourCellEvenEndpointCapacityPolarization_add_right p
+      (d2 • centeredEvenP2)
+      (d4 • factorTwoCenteredP4 + d6 • factorTwoCenteredP6)
+      hp hf2 (hf4.add hf6),
+    fourCellEvenEndpointCapacityPolarization_add_right p
+      (d4 • factorTwoCenteredP4) (d6 • factorTwoCenteredP6)
+      hp hf4 hf6,
+    fourCellEvenEndpointCapacityPolarization_smul_right,
+    fourCellEvenEndpointCapacityPolarization_smul_right,
+    fourCellEvenEndpointCapacityPolarization_smul_right,
+    fourCellEvenEndpointCapacityPolarization_smul_right]
+  dsimp only [d0, d2, d4, d6, b0, b2, b4, b6, p]
+  unfold fourCellEvenP0246CutoffEightCapacityLowProjectionEnergy
+    fourCellEvenP0246CutoffEightCapacityRow0
+    fourCellEvenP0246CutoffEightCapacityRow2
+    fourCellEvenP0246CutoffEightCapacityRow4
+    fourCellEvenP0246CutoffEightCapacityRow6
+  ring
+
+/-- Exact Pythagorean identity for the canonical selector.  The projected
+representer norm is the full norm minus precisely the four low capacity-row
+squares. -/
+theorem integral_cutoffEightCanonicalProjectedRepresenter_sq_eq
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+        c0 c2 c4 c6
+        (fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+          c0 c2 c4 c6) x ^ 2) =
+      (∫ x : ℝ in -1..1,
+        fourCellEvenP0246CutoffEightCapacityRepresenter
+          c0 c2 c4 c6 x ^ 2) -
+        fourCellEvenP0246CutoffEightCapacityLowProjectionEnergy
+          c0 c2 c4 c6 := by
+  let G : ℝ → ℝ :=
+    fourCellEvenP0246CutoffEightCapacityRepresenter c0 c2 c4 c6
+  let q : ℝ[X] :=
+    fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial c0 c2 c4 c6
+  let S : ℝ → ℝ := centeredPolynomialLift q
+  have hScont : Continuous S := by
+    dsimp only [S]
+    unfold centeredPolynomialLift
+    fun_prop
+  have hGsqOn : Integrable (fun x : ℝ ↦ ‖G x‖ ^ 2)
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    (memLp_fourCellEvenP0246CutoffEightCapacityRepresenter
+      c0 c2 c4 c6).integrable_norm_pow (by norm_num)
+  have hGsq : IntervalIntegrable (fun x : ℝ ↦ G x ^ 2)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    apply hGsqOn.congr
+    filter_upwards with x
+    rw [Real.norm_eq_abs, sq_abs]
+  have hGS : IntervalIntegrable (fun x : ℝ ↦ G x * S x)
+      volume (-1) 1 := by
+    simpa only [G, S, q] using
+      intervalIntegrable_fourCellEvenP0246CutoffEightCapacityRepresenter_mul
+        c0 c2 c4 c6
+        (centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+            c0 c2 c4 c6)) hScont
+  have hSsq : IntervalIntegrable (fun x : ℝ ↦ S x ^ 2)
+      volume (-1) 1 := (hScont.pow 2).intervalIntegrable (-1) 1
+  have hpair : (∫ x : ℝ in -1..1, G x * S x) =
+      fourCellEvenP0246CutoffEightCapacityLowProjectionEnergy
+        c0 c2 c4 c6 := by
+    rw [← capacityPolarization_cutoffEightCanonicalSelector_eq_lowProjectionEnergy]
+    symm
+    simpa only [G, S, q] using
+      fourCellEvenEndpointCapacityPolarization_P0246_eq_representerPairing
+        c0 c2 c4 c6
+        (centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightCanonicalSelectorPolynomial
+            c0 c2 c4 c6)) hScont
+  have hSnorm : (∫ x : ℝ in -1..1, S x ^ 2) =
+      fourCellEvenP0246CutoffEightCapacityLowProjectionEnergy
+        c0 c2 c4 c6 := by
+    simpa only [S, q] using
+      integral_cutoffEightCanonicalSelector_sq_eq_lowProjectionEnergy
+        c0 c2 c4 c6
+  change (∫ x : ℝ in -1..1, (G x - S x) ^ 2) = _
+  rw [show (fun x : ℝ ↦ (G x - S x) ^ 2) =
+      fun x ↦ G x ^ 2 - 2 * (G x * S x) + S x ^ 2 by
+    funext x
+    ring,
+    intervalIntegral.integral_add (hGsq.sub (hGS.const_mul 2)) hSsq,
+    intervalIntegral.integral_sub hGsq (hGS.const_mul 2),
+    intervalIntegral.integral_const_mul, hpair, hSnorm]
+  ring
+
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
     (hlow : centeredLegendreMomentsVanishBelow r 8)
@@ -1286,6 +1764,28 @@ theorem cutoffEight_capacitySchur_of_projectedCapacityRepresenterL2
       fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
         c0 c2 c4 c6 r hr hlow q hq
   · exact hdual
+
+/-- Assumption-minimal projected-representer handoff: after the selector has
+degree below eight, only its quantitative squared-norm estimate remains. -/
+theorem cutoffEight_capacitySchur_of_projectedCapacityRepresenterNorm
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8)
+    (q : ℝ[X]) (hq : q.natDegree < 8)
+    (hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+          c0 c2 c4 c6 q x ^ 2) ≤
+        (7461 / 7000 : ℝ) *
+          fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6) :
+    fourCellEvenEndpointCapacityPolarization
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r ^ 2 ≤
+      fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6 *
+        ((7461 / 7000 : ℝ) *
+          (∫ x : ℝ in -1..1, r x ^ 2)) := by
+  exact cutoffEight_capacitySchur_of_projectedCapacityRepresenterL2
+    c0 c2 c4 c6 r hr hlow q hq
+      (memLp_fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+        c0 c2 c4 c6 q) hdual
 
 /-- Exact scalar Schur reduction of the last cutoff-eight capacity border.
 The tail factor `7461 / 7000 = 299 / 280 - 1 / 500` is what remains after
