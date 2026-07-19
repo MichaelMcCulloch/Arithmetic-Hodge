@@ -7334,6 +7334,36 @@ theorem odd_fourCellOddOneThreeFiveLowProfile (c d e : ℝ) :
     centeredP1 centeredP3 factorTwoCenteredP5
   ring
 
+/-- Exact affine-strip transform of the retained odd `P₁/P₃/P₅` pivot.
+The endpoint reflection-odd channel is again a three-mode Legendre profile;
+in particular, no higher mode is created by the strip rescaling. -/
+theorem fourCellOddEndpointStripOdd_oneThreeFiveLowProfile_eq_lowProfile
+    (c d e : ℝ) :
+    fourCellOddEndpointStripOdd
+        (fourCellOddOneThreeFiveLowProfile c d e) =
+      fourCellOddOneThreeFiveLowProfile
+        (c / 5 + 84 * d / 125 + 276 * e / 625)
+        (d / 125 + 84 * e / 625) (e / 3125) := by
+  funext z
+  unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  ring
+
+/-- Polynomial normal form of the reflection-even strip channel of the
+retained `P₁/P₃/P₅` pivot. -/
+theorem fourCellOddEndpointStripEven_oneThreeFiveLowProfile
+    (c d e z : ℝ) :
+    fourCellOddEndpointStripEven
+        (fourCellOddOneThreeFiveLowProfile c d e) z =
+      4 * c / 5 + 2 * d / 25 - 2497 * e / 6250 +
+        (6 * d / 25 + 483 * e / 625) * z ^ 2 +
+          (63 * e / 1250) * z ^ 4 := by
+  unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  ring
+
 theorem contDiff_fourCellOddOneThreeFiveResidual
     (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
     ContDiff ℝ 1 (fourCellOddOneThreeFiveResidual w) := by
