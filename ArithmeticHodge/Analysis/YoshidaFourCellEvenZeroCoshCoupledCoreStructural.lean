@@ -2,8 +2,10 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicHigherResidual
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineP6EvenCleanPolynomialGramStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4MinusEndpointReduction
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenCapacityStructural
+import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointCapacityCauchyStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshRegularStructural
 
 set_option autoImplicit false
@@ -34,18 +36,23 @@ open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
 open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
 open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
+open YoshidaFactorTwoPhaseIntrinsicNineP6EvenCleanPolynomialGramStructural
+open YoshidaFactorTwoPhaseIntrinsicNineP6EvenCorrelationStructural
+open YoshidaFactorTwoPhaseIntrinsicNineP6EvenProfileCorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicRetainedSingularGapStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
 open YoshidaFactorTwoPhaseIntrinsicSixP4MinusEndpointReduction
 open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
+open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseEnvelope
 open YoshidaFactorTwoPhaseSingularWeightedCauchyStructural
 open YoshidaFourCellEvenCapacityStructural
+open YoshidaFourCellEvenEndpointCapacityCauchyStructural
 open YoshidaFourCellEvenPolarSchurStructural
 open YoshidaFourCellEvenZeroCoshRegularStructural
 open YoshidaFourCellEndpointVarianceStructural
@@ -218,6 +225,176 @@ theorem integral_intrinsicEvenP024_add_tail_sq
   have hcross := intervalIntegral_intrinsicEvenP024_mul_tail_eq_zero
     c0 c2 c4 r hr hlow
   simpa only [Pi.add_apply, hcross, mul_zero, zero_add, add_zero] using hsplit
+
+/-- Exact coupled-core polarization across the retained `P₀/P₂/P₄`
+profile and a moment-six tail.  Shifted-Legendre orthogonality removes the
+raw cross; the sole surviving cross is the joint endpoint-capacity form. -/
+theorem fourCellEvenZeroCoshCoupledCore_intrinsicEvenP024_add_tail
+    (c0 c2 c4 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hlow : centeredLegendreMomentsVanishBelow r 6) :
+    fourCellEvenZeroCoshCoupledCore
+        (factorTwoIntrinsicEvenP024Profile c0 c2 c4 + r) =
+      fourCellEvenZeroCoshCoupledCore
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4) +
+        2 * fourCellEvenEndpointCapacityPolarization
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4) r +
+        fourCellEvenZeroCoshCoupledCore r := by
+  have hp := factorTwoIntrinsicEvenP024Profile_continuous c0 c2 c4
+  have hraw := centeredRawLogEnergy_intrinsicEvenP024_add_tail
+    c0 c2 c4 r hr hlocal hlow
+  have hcapacity := fourCellEvenEndpointCapacityQuadratic_add
+    (factorTwoIntrinsicEvenP024Profile c0 c2 c4) r hp hr
+  unfold fourCellEvenZeroCoshCoupledCore
+  unfold fourCellEvenEndpointCapacityQuadratic at hcapacity
+  rw [hraw]
+  linarith
+
+/-! ## The first tail mode diagnoses the surviving polarization -/
+
+/-- Exact endpoint-potential row from `P₀/P₂/P₄` to the first even tail
+mode `P₆`.  The three rational entries are the all-degree Legendre
+potential entries at distance six, four, and two respectively. -/
+theorem integral_endpointPotential_mul_intrinsicEvenP024_mul_P6
+    (c0 c2 c4 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x *
+        factorTwoIntrinsicEvenP024Profile c0 c2 c4 x *
+          factorTwoCenteredP6 x) =
+      (1 / 21 : ℝ) * c0 + (1 / 18 : ℝ) * c2 +
+        (1 / 11 : ℝ) * c4 := by
+  have h0 : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * centeredEvenP0 x *
+        factorTwoCenteredP6 x) volume (-1) 1 :=
+    YoshidaEndpointEvenTailRepresenter.intervalIntegrable_endpointPotential_mul centeredEvenP0
+      factorTwoCenteredP6 (by unfold centeredEvenP0; fun_prop)
+      continuous_factorTwoCenteredP6
+  have h2 : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * centeredEvenP2 x *
+        factorTwoCenteredP6 x) volume (-1) 1 :=
+    YoshidaEndpointEvenTailRepresenter.intervalIntegrable_endpointPotential_mul centeredEvenP2
+      factorTwoCenteredP6 (by unfold centeredEvenP2; fun_prop)
+      continuous_factorTwoCenteredP6
+  have h4 : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * factorTwoCenteredP4 x *
+        factorTwoCenteredP6 x) volume (-1) 1 :=
+    YoshidaEndpointEvenTailRepresenter.intervalIntegrable_endpointPotential_mul factorTwoCenteredP4
+      factorTwoCenteredP6 continuous_factorTwoCenteredP4
+      continuous_factorTwoCenteredP6
+  rw [show (fun x : ℝ ↦ yoshidaEndpointPotential x *
+      factorTwoIntrinsicEvenP024Profile c0 c2 c4 x *
+        factorTwoCenteredP6 x) =
+      fun x ↦ c0 *
+          (yoshidaEndpointPotential x * centeredEvenP0 x *
+            factorTwoCenteredP6 x) +
+        (c2 * (yoshidaEndpointPotential x * centeredEvenP2 x *
+            factorTwoCenteredP6 x) +
+          c4 * (yoshidaEndpointPotential x * factorTwoCenteredP4 x *
+            factorTwoCenteredP6 x)) by
+      funext x
+      unfold factorTwoIntrinsicEvenP024Profile
+        factorTwoEvenStructuralLowProfile factorTwoIntrinsicSixEvenTail
+      simp only [Pi.add_apply]
+      ring,
+    intervalIntegral.integral_add (h0.const_mul c0)
+      ((h2.const_mul c2).add (h4.const_mul c4)),
+    intervalIntegral.integral_add (h2.const_mul c2) (h4.const_mul c4)]
+  repeat rw [intervalIntegral.integral_const_mul]
+  rw [integral_endpointPotential_mul_centeredEvenP0_mul_P6,
+    integral_endpointPotential_mul_centeredEvenP2_mul_P6,
+    integral_endpointPotential_mul_P4_mul_P6]
+  ring
+
+/-- Exact endpoint-capacity polarization from the retained low profile to
+`P₆`.  This is the first concrete row of the one cross term left by the
+canonical cutoff-six decomposition. -/
+theorem fourCellEvenEndpointCapacityPolarization_intrinsicEvenP024_P6
+    (c0 c2 c4 : ℝ) :
+    fourCellEvenEndpointCapacityPolarization
+        (factorTwoIntrinsicEvenP024Profile c0 c2 c4)
+        factorTwoCenteredP6 =
+      c0 * ((1 / 21 : ℝ) +
+          (2856 / 78125 : ℝ) * (Real.sqrt 2 * Real.log 2)) +
+        c2 * ((1 / 18 : ℝ) +
+          (46536 / 1953125 : ℝ) * (Real.sqrt 2 * Real.log 2)) +
+        c4 * ((1 / 11 : ℝ) -
+          (381976 / 48828125 : ℝ) * (Real.sqrt 2 * Real.log 2)) := by
+  have hpotential :=
+    integral_endpointPotential_mul_intrinsicEvenP024_mul_P6 c0 c2 c4
+  have hprime :=
+    factorTwoCenteredCorrelationBilinear_intrinsicEvenP024_p6
+      c0 c2 c4 (8 / 5)
+  norm_num [factorTwoIntrinsicP6Correlation06,
+    factorTwoIntrinsicP6Correlation26,
+    factorTwoIntrinsicP6Correlation46] at hprime
+  unfold fourCellEvenEndpointCapacityPolarization
+  rw [hpotential, hprime]
+  ring
+
+/-- The first nonconstant low-to-tail capacity row is strictly positive. -/
+theorem fourCellEvenEndpointCapacityPolarization_P2_P6_pos :
+    0 < fourCellEvenEndpointCapacityPolarization
+      (factorTwoIntrinsicEvenP024Profile 0 1 0)
+      factorTwoCenteredP6 := by
+  rw [fourCellEvenEndpointCapacityPolarization_intrinsicEvenP024_P6]
+  have hlog : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hsqrt : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  have hbeta : 0 < Real.sqrt 2 * Real.log 2 := mul_pos hsqrt hlog
+  simp only [zero_mul, one_mul, zero_add, add_zero]
+  nlinarith only [hbeta]
+
+/-- Negating the admissible `P₆` tail flips the capacity cross.  Hence the
+surviving low/tail polarization has no structural sign, even before any
+higher tail modes are present. -/
+theorem fourCellEvenEndpointCapacityPolarization_P2_negP6_neg :
+    fourCellEvenEndpointCapacityPolarization
+      (factorTwoIntrinsicEvenP024Profile 0 1 0)
+      ((-1 : ℝ) • factorTwoCenteredP6) < 0 := by
+  rw [fourCellEvenEndpointCapacityPolarization_smul_right]
+  nlinarith only [fourCellEvenEndpointCapacityPolarization_P2_P6_pos]
+
+/-- The retained `3/100` low reserve and `4/5` tail-mass reserve are too
+small to absorb even the single `P₂/P₆` capacity row.  This is an exact
+determinant obstruction to closing the cross by those two coarse reserves
+alone; a sharper quantitative Young allocation is genuinely required. -/
+theorem coarse_P2_P6_reserve_product_lt_capacityPolarization_sq :
+    ((3 / 100 : ℝ) * (2 / 5)) * ((4 / 5 : ℝ) * (2 / 13)) <
+      fourCellEvenEndpointCapacityPolarization
+        (factorTwoIntrinsicEvenP024Profile 0 1 0)
+        factorTwoCenteredP6 ^ 2 := by
+  let B : ℝ := fourCellEvenEndpointCapacityPolarization
+    (factorTwoIntrinsicEvenP024Profile 0 1 0) factorTwoCenteredP6
+  have hB : (1 / 18 : ℝ) < B := by
+    dsimp only [B]
+    rw [fourCellEvenEndpointCapacityPolarization_intrinsicEvenP024_P6]
+    have hlog : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    have hsqrt : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+    have hbeta : 0 < Real.sqrt 2 * Real.log 2 := mul_pos hsqrt hlog
+    simp only [zero_mul, one_mul, zero_add, add_zero]
+    nlinarith only [hbeta]
+  have hrat : ((3 / 100 : ℝ) * (2 / 5)) *
+      ((4 / 5 : ℝ) * (2 / 13)) < (1 / 18 : ℝ) ^ 2 := by
+    norm_num
+  dsimp only [B] at hB ⊢
+  nlinarith only [hB, hrat]
+
+/-- Equivalently, an explicit scalar multiple of `P₆` makes the sum of the
+two coarse diagonal reserves and twice the mixed capacity row negative. -/
+theorem exists_P6_scale_coarse_reserves_do_not_absorb_capacityCross :
+    ∃ c6 : ℝ,
+      (3 / 250 : ℝ) + (8 / 65 : ℝ) * c6 ^ 2 +
+        2 * fourCellEvenEndpointCapacityPolarization
+          (factorTwoIntrinsicEvenP024Profile 0 1 0)
+          factorTwoCenteredP6 * c6 < 0 := by
+  let B : ℝ := fourCellEvenEndpointCapacityPolarization
+    (factorTwoIntrinsicEvenP024Profile 0 1 0) factorTwoCenteredP6
+  have hdet : (3 / 250 : ℝ) * (8 / 65) < B ^ 2 := by
+    have h := coarse_P2_P6_reserve_product_lt_capacityPolarization_sq
+    norm_num at h ⊢
+    simpa only [B] using h
+  refine ⟨-(65 / 8 : ℝ) * B, ?_⟩
+  dsimp only [B] at hdet ⊢
+  nlinarith only [hdet]
 
 private theorem integral_polynomial_ten
     (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ l r : ℝ) :
