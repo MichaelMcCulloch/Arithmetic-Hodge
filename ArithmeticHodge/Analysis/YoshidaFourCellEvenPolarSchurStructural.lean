@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.TwoByTwoSchur
+import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenTailReserve
 import ArithmeticHodge.Analysis.YoshidaEndpointPotentialEvenMomentStructural
 import ArithmeticHodge.Analysis.YoshidaEndpointTriangleFoldLipschitz
@@ -16,12 +17,14 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenPolarSchurStructural
 noncomputable section
 
 open TwoByTwoSchur
+open CenteredEndpointCorrelation
 open UnitIntervalLogEnergyAffine
 open UnitIntervalLogEnergyLipschitz
 open UnitIntervalLogEnergyProjection
 open YoshidaFactorTwoPhaseFullProfile
 open YoshidaConstantBounds
 open YoshidaEndpointEvenLowPotential
+open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointPullbackLipschitz
 open YoshidaEndpointPotentialBound
@@ -40,6 +43,8 @@ open YoshidaFourCellWidthPerturbationStructural
 open YoshidaEndpointPotentialEvenMomentStructural
 open YoshidaEndpointWeightedCauchy
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
+open YoshidaFactorTwoIntegrableLagRepresenterStructural
+open YoshidaRegularKernelBound
 
 /-!
 # Exact polar Schur coordinates for the even four-cell bracket
@@ -689,6 +694,236 @@ theorem fiveThousandThirtyNine_div_fiveThousand_le_fourCellEvenCoshMass :
   rw [hpolyExact] at hle
   nlinarith
 
+private theorem centeredEndpointCorrelation_one (t : ℝ) :
+    centeredEndpointCorrelation (fun _ : ℝ ↦ 1) t = 2 - t := by
+  unfold centeredEndpointCorrelation
+  norm_num
+  ring
+
+/-- The constant regular row mass is the triangular one-variable kernel
+average.  This identity lets kernel envelopes sharpen the constant pivot
+without estimating the two square-completion channels separately. -/
+theorem fourCellPositiveHalfRegularRowMass_one_eq_triangleIntegral :
+    fourCellPositiveHalfRegularRowMass (fun _ : ℝ ↦ 1)
+        fourCellOperatorHalfWidth =
+      ∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * (2 - t) := by
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha3 : fourCellOperatorHalfWidth ≤ Real.log 3 / 2 := by
+    have h := five_mul_log_two_div_four_lt_log_three
+    unfold fourCellOperatorHalfWidth
+    linarith
+  have hcomp :=
+    neg_two_mul_regularCorrelation_eq_positiveHalfCompletion_even
+      (fun _ : ℝ ↦ 1) continuous_const (by intro x; rfl)
+      fourCellOperatorHalfWidth ha0 ha3
+  have hsame :
+      fourCellPositiveHalfRegularSameSignSquare (fun _ : ℝ ↦ 1)
+        fourCellOperatorHalfWidth = 0 := by
+    unfold fourCellPositiveHalfRegularSameSignSquare
+    norm_num
+  have hreflected :
+      fourCellPositiveHalfRegularReflectedSquare (fun _ : ℝ ↦ 1)
+        fourCellOperatorHalfWidth 1 = 0 := by
+    unfold fourCellPositiveHalfRegularReflectedSquare
+    norm_num
+  rw [hsame, hreflected] at hcomp
+  simp only [zero_add] at hcomp
+  rw [show centeredEndpointCorrelation (fun _ : ℝ ↦ 1) =
+      fun t ↦ 2 - t by
+    funext t
+    exact centeredEndpointCorrelation_one t] at hcomp
+  have hapos : 0 < fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  nlinarith
+
+/-- The sixth-order kernel envelope improves the constant regular row from
+the generic `1 / 2` bound to `121 / 250`.  The envelope is used only up to
+lag `8 / 5`, where the four-cell argument is at most `log 2`; the short
+remaining interval uses the universal quarter bound. -/
+theorem fourCellPositiveHalfRegularRowMass_one_le_121_div_250 :
+    fourCellPositiveHalfRegularRowMass (fun _ : ℝ ↦ 1)
+        fourCellOperatorHalfWidth ≤ (121 / 250 : ℝ) := by
+  let a : ℝ := fourCellOperatorHalfWidth
+  let q : ℝ → ℝ := fun t ↦ yoshidaRegularKernel (a * t)
+  let major : ℝ → ℝ := fun t ↦
+    (yoshidaRegularKernelPolynomial6 (a * t) + 1 / 500000) * (2 - t)
+  have ha0 : 0 ≤ a := by
+    dsimp only [a]
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hqMeas : Measurable q := by
+    dsimp only [q]
+    exact measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)
+  have hqBound : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ (1 / 4 : ℝ) := by
+    intro t ht
+    have harg0 : 0 ≤ a * t := mul_nonneg ha0 ht.1
+    have harg4 : a * t ≤ 5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2 ha0
+      dsimp only [a] at hmul ⊢
+      unfold fourCellOperatorHalfWidth at hmul ⊢
+      nlinarith
+    have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 harg4
+    rw [abs_of_nonneg hk0]
+    exact yoshidaRegularKernel_le_quarter harg0
+  have hfull : IntervalIntegrable (fun t ↦ q t * (2 - t)) volume 0 2 :=
+    intervalIntegrable_boundedLag_mul_continuous q (fun t ↦ 2 - t)
+      hqMeas (by fun_prop) (1 / 4) hqBound
+  have hnear : IntervalIntegrable (fun t ↦ q t * (2 - t))
+      volume 0 (8 / 5) := by
+    apply hfull.mono_set
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 8 / 5),
+      uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)]
+    intro t ht
+    constructor <;> linarith [ht.1, ht.2]
+  have hfar : IntervalIntegrable (fun t ↦ q t * (2 - t))
+      volume (8 / 5) 2 := by
+    apply hfull.mono_set
+    rw [uIcc_of_le (by norm_num : (8 / 5 : ℝ) ≤ 2),
+      uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)]
+    intro t ht
+    constructor <;> linarith [ht.1, ht.2]
+  have hmajorInt : IntervalIntegrable major volume 0 (8 / 5) := by
+    apply Continuous.intervalIntegrable
+    dsimp only [major]
+    unfold yoshidaRegularKernelPolynomial6
+    fun_prop
+  have hnearPoint : ∀ t ∈ Icc (0 : ℝ) (8 / 5),
+      q t * (2 - t) ≤ major t := by
+    intro t ht
+    have harg0 : 0 ≤ a * t := mul_nonneg ha0 ht.1
+    have hargLog : a * t ≤ Real.log 2 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2 ha0
+      dsimp only [a] at hmul ⊢
+      unfold fourCellOperatorHalfWidth at hmul ⊢
+      nlinarith
+    have henv := yoshidaRegularKernelPolynomial6_envelope harg0 hargLog
+    have hkernel : q t ≤
+        yoshidaRegularKernelPolynomial6 (a * t) + 1 / 500000 := by
+      dsimp only [q]
+      linarith
+    exact mul_le_mul_of_nonneg_right hkernel (by linarith [ht.2])
+  have hnearBound :
+      (∫ t : ℝ in 0..8 / 5, q t * (2 - t)) ≤
+        ∫ t : ℝ in 0..8 / 5, major t := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      hnear hmajorInt hnearPoint
+  have hfarMajor : IntervalIntegrable (fun t : ℝ ↦
+      (1 / 4 : ℝ) * (2 - t)) volume (8 / 5) 2 := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hfarPoint : ∀ t ∈ Icc (8 / 5 : ℝ) 2,
+      q t * (2 - t) ≤ (1 / 4 : ℝ) * (2 - t) := by
+    intro t ht
+    have hqLe : q t ≤ (1 / 4 : ℝ) := by
+      exact (le_abs_self (q t)).trans (hqBound t ⟨by linarith [ht.1], ht.2⟩)
+    exact mul_le_mul_of_nonneg_right hqLe (by linarith [ht.2])
+  have hfarBound :
+      (∫ t : ℝ in 8 / 5..2, q t * (2 - t)) ≤
+        ∫ t : ℝ in 8 / 5..2, (1 / 4 : ℝ) * (2 - t) := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      hfar hfarMajor hfarPoint
+  let A : ℝ → ℝ := fun t ↦
+    ((1 / 2 : ℝ) + 1 / 250000) * t +
+      (-a / 24 - 1 / 4 - 1 / 500000) * t ^ 2 / 2 +
+      (-a ^ 2 / 16 + a / 48) * t ^ 3 / 3 +
+      (7 * a ^ 3 / 5760 + a ^ 2 / 32) * t ^ 4 / 4 +
+      (5 * a ^ 4 / 768 - 7 * a ^ 3 / 11520) * t ^ 5 / 5 +
+      (-31 * a ^ 5 / 967680 - 5 * a ^ 4 / 1536) * t ^ 6 / 6 +
+      (-61 * a ^ 6 / 92160 + 31 * a ^ 5 / 1935360) * t ^ 7 / 7 +
+      (61 * a ^ 6 / 184320) * t ^ 8 / 8
+  have hAderiv (t : ℝ) : HasDerivAt A (major t) t := by
+    dsimp only [A, major]
+    unfold yoshidaRegularKernelPolynomial6
+    have h0 := (hasDerivAt_const t ((1 / 2 : ℝ) + 1 / 250000)).mul
+      (hasDerivAt_id t)
+    have h1 := ((hasDerivAt_const t
+      (-a / 24 - 1 / 4 - 1 / 500000)).mul
+        ((hasDerivAt_id t).pow 2)).div_const 2
+    have h2 := ((hasDerivAt_const t (-a ^ 2 / 16 + a / 48)).mul
+      ((hasDerivAt_id t).pow 3)).div_const 3
+    have h3 := ((hasDerivAt_const t
+      (7 * a ^ 3 / 5760 + a ^ 2 / 32)).mul
+        ((hasDerivAt_id t).pow 4)).div_const 4
+    have h4 := ((hasDerivAt_const t
+      (5 * a ^ 4 / 768 - 7 * a ^ 3 / 11520)).mul
+        ((hasDerivAt_id t).pow 5)).div_const 5
+    have h5 := ((hasDerivAt_const t
+      (-31 * a ^ 5 / 967680 - 5 * a ^ 4 / 1536)).mul
+        ((hasDerivAt_id t).pow 6)).div_const 6
+    have h6 := ((hasDerivAt_const t
+      (-61 * a ^ 6 / 92160 + 31 * a ^ 5 / 1935360)).mul
+        ((hasDerivAt_id t).pow 7)).div_const 7
+    have h7 := ((hasDerivAt_const t (61 * a ^ 6 / 184320)).mul
+      ((hasDerivAt_id t).pow 8)).div_const 8
+    convert (((((((h0.add h1).add h2).add h3).add h4).add h5).add h6).add h7) using 1
+    simp only [id_eq, Nat.cast_ofNat]
+    ring
+  have hmajorExact :
+      (∫ t : ℝ in 0..8 / 5, major t) =
+        12 / 25 - 28 / 1125 * a - 64 / 1875 * a ^ 2 +
+          56 / 78125 * a ^ 3 + 128 / 28125 * a ^ 4 -
+          43648 / 1550390625 * a ^ 5 -
+          31232 / 41015625 * a ^ 6 + 3 / 781250 := by
+    have hint := intervalIntegral.integral_eq_sub_of_hasDerivAt
+      (fun t _ht ↦ hAderiv t) hmajorInt
+    rw [hint]
+    dsimp only [A]
+    ring
+  have hfarExact :
+      (∫ t : ℝ in 8 / 5..2, (1 / 4 : ℝ) * (2 - t)) = 1 / 50 := by
+    let F : ℝ → ℝ := fun t ↦ (1 / 4 : ℝ) * (2 * t - t ^ 2 / 2)
+    have hF (t : ℝ) : HasDerivAt F ((1 / 4 : ℝ) * (2 - t)) t := by
+      dsimp only [F]
+      convert (hasDerivAt_const t (1 / 4 : ℝ)).mul
+        ((((hasDerivAt_id t).const_mul 2).sub
+          (((hasDerivAt_id t).pow 2).div_const 2))) using 1
+      simp only [id_eq, Nat.cast_ofNat]
+      ring
+    rw [intervalIntegral.integral_eq_sub_of_hasDerivAt
+      (fun t _ht ↦ hF t) hfarMajor]
+    norm_num [F]
+  have haLower : (34655 / 80000 : ℝ) ≤ a := by
+    dsimp only [a]
+    unfold fourCellOperatorHalfWidth
+    nlinarith [strict_log_two_bounds.1]
+  have haUpper : a ≤ (34660 / 80000 : ℝ) := by
+    dsimp only [a]
+    unfold fourCellOperatorHalfWidth
+    nlinarith [strict_log_two_bounds.2]
+  have hlo0 : (0 : ℝ) ≤ 34655 / 80000 := by norm_num
+  have hpowLo2 : (34655 / 80000 : ℝ) ^ 2 ≤ a ^ 2 :=
+    pow_le_pow_left₀ hlo0 haLower 2
+  have hpowLo5 : (34655 / 80000 : ℝ) ^ 5 ≤ a ^ 5 :=
+    pow_le_pow_left₀ hlo0 haLower 5
+  have hpowLo6 : (34655 / 80000 : ℝ) ^ 6 ≤ a ^ 6 :=
+    pow_le_pow_left₀ hlo0 haLower 6
+  have hpowHi3 : a ^ 3 ≤ (34660 / 80000 : ℝ) ^ 3 :=
+    pow_le_pow_left₀ ha0 haUpper 3
+  have hpowHi4 : a ^ 4 ≤ (34660 / 80000 : ℝ) ^ 4 :=
+    pow_le_pow_left₀ ha0 haUpper 4
+  rw [fourCellPositiveHalfRegularRowMass_one_eq_triangleIntegral]
+  change (∫ t : ℝ in 0..2, q t * (2 - t)) ≤ (121 / 250 : ℝ)
+  have hsplit := intervalIntegral.integral_add_adjacent_intervals hnear hfar
+  calc
+    (∫ t : ℝ in 0..2, q t * (2 - t)) =
+        (∫ t : ℝ in 0..8 / 5, q t * (2 - t)) +
+          ∫ t : ℝ in 8 / 5..2, q t * (2 - t) := hsplit.symm
+    _ ≤ (∫ t : ℝ in 0..8 / 5, major t) +
+          ∫ t : ℝ in 8 / 5..2, (1 / 4 : ℝ) * (2 - t) :=
+      add_le_add hnearBound hfarBound
+    _ = 12 / 25 - 28 / 1125 * a - 64 / 1875 * a ^ 2 +
+          56 / 78125 * a ^ 3 + 128 / 28125 * a ^ 4 -
+          43648 / 1550390625 * a ^ 5 -
+          31232 / 41015625 * a ^ 6 + 3 / 781250 + 1 / 50 := by
+      rw [hmajorExact, hfarExact]
+    _ ≤ (121 / 250 : ℝ) := by
+      linarith
+
 /-- The canonical constant profile normalized to have wide cosh moment one. -/
 def fourCellEvenCoshUnit (_x : ℝ) : ℝ :=
   (fourCellEvenCoshMass)⁻¹
@@ -1022,6 +1257,65 @@ theorem three_twentieth_lt_fourCellEvenCompletedParityOperator_one :
   unfold fourCellOperatorHalfWidth at hrowCost hcoshGain hscalar ⊢
   nlinarith
 
+/-- Combining the Taylor cosh reserve with the sharpened triangular kernel
+average raises the normalized constant pivot to `13 / 80`. -/
+theorem thirteen_div_eighty_lt_fourCellEvenCompletedParityOperator_one :
+    (13 / 80 : ℝ) <
+      fourCellEvenCompletedParityOperator (fun _ : ℝ ↦ 1) := by
+  have hpotentialFold := endpointPotential_eq_two_mul_positiveHalf
+    (fun _ : ℝ ↦ 1) continuous_const (Or.inl (by intro x; rfl))
+  have hpotential :
+      2 * (∫ x : ℝ in 0..1, yoshidaEndpointPotential x) =
+        2 - 2 * Real.log 2 := by
+    calc
+      2 * (∫ x : ℝ in 0..1, yoshidaEndpointPotential x) =
+          ∫ x : ℝ in -1..1, yoshidaEndpointPotential x := by
+        symm
+        simpa using hpotentialFold
+      _ = 2 - 2 * Real.log 2 := integral_endpointPotential_one
+  have hrow := fourCellPositiveHalfRegularRowMass_one_le_121_div_250
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hrowCost :
+      2 * fourCellOperatorHalfWidth *
+          fourCellPositiveHalfRegularRowMass (fun _ : ℝ ↦ 1)
+            fourCellOperatorHalfWidth ≤
+        (121 / 125 : ℝ) * fourCellOperatorHalfWidth := by
+    have hscaled := mul_le_mul_of_nonneg_left hrow
+      (mul_nonneg (by norm_num : (0 : ℝ) ≤ 2) ha0)
+    nlinarith
+  have hmass :=
+    fiveThousandThirtyNine_div_fiveThousand_le_fourCellEvenCoshMass
+  have hmass0 : 0 ≤ fourCellEvenCoshMass :=
+    fourCellEvenCoshMass_pos.le
+  have hmassSq :
+      (5039 / 5000 : ℝ) ^ 2 ≤ fourCellEvenCoshMass ^ 2 := by
+    nlinarith [mul_nonneg
+      (sub_nonneg.mpr hmass)
+      (add_nonneg hmass0 (by norm_num : (0 : ℝ) ≤ 5039 / 5000))]
+  have haLower :
+      (34655 / 80000 : ℝ) < fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    nlinarith [strict_log_two_bounds.1]
+  have hcoshGain :
+      8 * (34655 / 80000 : ℝ) * (5039 / 5000 : ℝ) ^ 2 ≤
+        8 * fourCellOperatorHalfWidth * fourCellEvenCoshMass ^ 2 := by
+    calc
+      8 * (34655 / 80000 : ℝ) * (5039 / 5000 : ℝ) ^ 2 ≤
+          8 * fourCellOperatorHalfWidth * (5039 / 5000 : ℝ) ^ 2 := by
+        nlinarith
+      _ ≤ 8 * fourCellOperatorHalfWidth * fourCellEvenCoshMass ^ 2 :=
+        mul_le_mul_of_nonneg_left hmassSq
+          (mul_nonneg (by norm_num) ha0)
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  have hbeta := sqrt_two_mul_log_two_lt_981_div_1000
+  have hlogLower := strict_log_two_bounds.1
+  have hlogUpper := strict_log_two_bounds.2
+  rw [fourCellEvenCompletedParityOperator_one_eq, hpotential]
+  unfold fourCellOperatorHalfWidth at hrowCost hcoshGain hscalar ⊢
+  nlinarith
+
 /-- The positive constant pivot is homogeneous with a uniform quadratic
 margin.  The proof keeps the exact regular row and scales its structural row
 bound, rather than appealing to an unproved quadratic-form interface. -/
@@ -1103,6 +1397,19 @@ theorem three_twentieth_lt_fourCell_evenBracket_one :
       (contDiff_const.contDiffOn.locallyLipschitzOn
         (convex_Icc (-1 : ℝ) 1)) (by intro x; rfl)]
   exact three_twentieth_lt_fourCellEvenCompletedParityOperator_one
+
+/-- Complete-bracket form of the final sharpened normalized constant pivot. -/
+theorem thirteen_div_eighty_lt_fourCell_evenBracket_one :
+    (13 / 80 : ℝ) <
+      centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth
+          (fun _ : ℝ ↦ 1) -
+        Real.sqrt 2 * Real.log 2 *
+          fourCellEndpointPairing (fun _ : ℝ ↦ 1) := by
+  rw [fourCellBracket_eq_evenCompletedParityOperator
+    (fun _ : ℝ ↦ 1) continuous_const
+      (contDiff_const.contDiffOn.locallyLipschitzOn
+        (convex_Icc (-1 : ℝ) 1)) (by intro x; rfl)]
+  exact thirteen_div_eighty_lt_fourCellEvenCompletedParityOperator_one
 
 /-- Every canonical cosh-low component therefore has a nonnegative exact
 four-cell diagonal. -/
