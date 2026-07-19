@@ -3223,6 +3223,68 @@ private theorem sqrt_two_mul_log_two_bounds :
       _ < (70711 / 50000 : ℝ) * (6932 / 10000) :=
         mul_lt_mul_of_pos_left hl.2 (by norm_num)
 
+private theorem fourCellEndpointHalfMass_eq_upperStripMass
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    fourCellEndpointHalfMass w =
+      ∫ x : ℝ in 3 / 5..1, w x ^ 2 := by
+  have hleft := intervalIntegral.integral_comp_add_mul
+    (a := (0 : ℝ)) (b := 2 / 5) (c := (1 : ℝ))
+    (fun x : ℝ ↦ w x ^ 2) (by norm_num) (3 / 5)
+  have hright := intervalIntegral.integral_comp_sub_left
+    (a := (0 : ℝ)) (b := 2 / 5) (fun x : ℝ ↦ w x ^ 2) 1
+  norm_num at hleft hright
+  have hleftInt : IntervalIntegrable
+      (fun t : ℝ ↦ w (3 / 5 + t) ^ 2) volume 0 (2 / 5) := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hrightInt : IntervalIntegrable
+      (fun t : ℝ ↦ w (1 - t) ^ 2) volume 0 (2 / 5) := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  unfold fourCellEndpointHalfMass
+  rw [intervalIntegral.integral_add hleftInt hrightInt, hleft, hright]
+  ring
+
+private theorem fourCellOddEndpointStripEvenMass_nonneg
+    (w : ℝ → ℝ) :
+    0 ≤ fourCellOddEndpointStripEvenMass w := by
+  unfold fourCellOddEndpointStripEvenMass
+  exact mul_nonneg (by norm_num)
+    (intervalIntegral.integral_nonneg (by norm_num)
+      (fun z _hz ↦ sq_nonneg _))
+
+private theorem fourCellOddEndpointStripOddMass_nonneg
+    (w : ℝ → ℝ) :
+    0 ≤ fourCellOddEndpointStripOddMass w := by
+  unfold fourCellOddEndpointStripOddMass
+  exact mul_nonneg (by norm_num)
+    (intervalIntegral.integral_nonneg (by norm_num)
+      (fun z _hz ↦ sq_nonneg _))
+
+/-- The exact strip-prime diagonal dominates `49/50` of the physical
+endpoint mass.  Both parity coefficients are kept; the rational constant is
+only a common lower bound. -/
+theorem forty_nine_fiftieths_upperStripMass_le_primeDiagonal
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (49 / 50 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) ≤
+      Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          fourCellOddEndpointStripOddMass w := by
+  have hpLower : (49 / 50 : ℝ) ≤ Real.sqrt 2 * Real.log 2 := by
+    linarith [sqrt_two_mul_log_two_bounds.1]
+  have hpUpper :
+      Real.sqrt 2 * Real.log 2 ≤ (51 / 50 : ℝ) := by
+    linarith [sqrt_two_mul_log_two_bounds.2]
+  have heven := fourCellOddEndpointStripEvenMass_nonneg w
+  have hodd := fourCellOddEndpointStripOddMass_nonneg w
+  have hevenMul := mul_le_mul_of_nonneg_right hpLower heven
+  have hoddMul := mul_le_mul_of_nonneg_right
+    (by linarith : (49 / 50 : ℝ) ≤
+      2 - Real.sqrt 2 * Real.log 2) hodd
+  have hsplit := fourCellEndpointHalfMass_eq_evenMass_add_oddMass w hw
+  rw [fourCellEndpointHalfMass_eq_upperStripMass w hw] at hsplit
+  linarith
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
