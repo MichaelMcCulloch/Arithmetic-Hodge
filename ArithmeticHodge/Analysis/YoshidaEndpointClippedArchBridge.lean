@@ -1192,6 +1192,23 @@ theorem clippedArchEnergy_eq_clippedArchCorrelation_of_endpoints_zero
       (integrable_weighted_normSq_criticalSample_of_endpoints_zero
         ha f hneg hpos)
 
+/-- Zero endpoint traces make the singular defect and regular-kernel pieces
+of the arbitrary-halfwidth physical correlation separately integrable. -/
+theorem clippedArchCorrelation_terms_intervalIntegrable_of_endpoints_zero
+    {a : ℝ} (ha : 0 < a) (f : YoshidaClippedSmooth a)
+    (hf_real : ∀ x ∈ Icc (-a) a, f x = ((f x).re : ℂ))
+    (hneg : f (-a) = 0) (hpos : f a = 0) :
+    (let g : ℝ → ℝ := fun x ↦ (f x).re
+    let C := realEndpointCorrelation a g
+    IntervalIntegrable (fun u ↦ (C 0 - C u) / u) volume 0 (2 * a) ∧
+      IntervalIntegrable (fun u ↦ yoshidaRegularKernel u * C u)
+        volume 0 (2 * a)) := by
+  dsimp only
+  exact intervalIntegrable_physical_defect_and_regular ha f
+    (continuous_clipped_of_endpoints_zero ha f hneg hpos) hf_real
+    (integrable_weighted_normSq_criticalSample_of_endpoints_zero
+      ha f hneg hpos)
+
 /-- Generic clipped archimedean bridge for a real periodic profile whose two
 endpoint traces vanish. -/
 theorem clippedArchEnergy_eq_endpointClippedArchCorrelation_of_endpoints_zero
