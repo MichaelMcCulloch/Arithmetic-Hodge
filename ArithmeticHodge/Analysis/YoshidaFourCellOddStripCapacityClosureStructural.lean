@@ -8,6 +8,7 @@ import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedRemainderEnvelopeKer
 import ArithmeticHodge.Analysis.UnitIntervalLogEnergyLipschitz
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 
 set_option autoImplicit false
 
@@ -46,6 +47,7 @@ open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
@@ -7516,6 +7518,80 @@ theorem fourCellOddEndpointStripEven_oneThreeFiveLowProfile
   unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
     fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
     centeredP1 centeredP3 factorTwoCenteredP5
+  ring
+
+private theorem factorTwoCenteredCorrelationBilinear_add_left_oneThreeFive
+    (u v w : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (hw : Continuous w) (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear (u + v) w t =
+      factorTwoCenteredCorrelationBilinear u w t +
+        factorTwoCenteredCorrelationBilinear v w t := by
+  unfold factorTwoCenteredCorrelationBilinear
+  rw [factorTwoCenteredCrossCorrelation_add_left u v w hu hv hw t,
+    factorTwoCenteredCrossCorrelation_add_right w u v hw hu hv t]
+  ring
+
+/-- Exact six-entry endpoint-correlation polynomial of the retained
+`P₁/P₃/P₅` pivot. -/
+theorem centeredEndpointCorrelation_oneThreeFiveLowProfile
+    (c d e t : ℝ) :
+    centeredEndpointCorrelation
+        (fourCellOddOneThreeFiveLowProfile c d e) t =
+      c ^ 2 * oddStructuralCorrelation11 t +
+        2 * c * d * oddStructuralCorrelation13 t +
+        d ^ 2 * oddStructuralCorrelation33 t +
+        2 * c * e * oddP5Correlation15 t +
+        2 * d * e * oddP5Correlation35 t +
+        e ^ 2 * oddP5Correlation55 t := by
+  let q : ℝ → ℝ := factorTwoOddStructuralLowProfile c d
+  let v : ℝ → ℝ := fun x ↦ e * factorTwoCenteredP5 x
+  have hq : Continuous q := by
+    simpa only [q] using continuous_factorTwoOddStructuralLowProfile c d
+  have hv : Continuous v := by
+    dsimp only [v]
+    exact continuous_const.mul continuous_factorTwoCenteredP5
+  have hprofile : fourCellOddOneThreeFiveLowProfile c d e = q + v := by
+    funext x
+    dsimp only [q, v]
+    unfold fourCellOddOneThreeFiveLowProfile
+    simp only [Pi.add_apply]
+  have hcross : factorTwoCenteredCorrelationBilinear q v t =
+      c * e * oddP5Correlation15 t +
+        d * e * oddP5Correlation35 t := by
+    rw [show q = c • centeredP1 + d • centeredP3 by
+      funext x
+      dsimp only [q]
+      unfold factorTwoOddStructuralLowProfile
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul],
+      show v = e • factorTwoCenteredP5 by
+        funext x
+        simp only [v, Pi.smul_apply, smul_eq_mul],
+      factorTwoCenteredCorrelationBilinear_add_left_oneThreeFive
+        (c • centeredP1) (d • centeredP3) (e • factorTwoCenteredP5)
+        ((by unfold centeredP1; fun_prop : Continuous centeredP1).const_smul c)
+        ((by unfold centeredP3; fun_prop : Continuous centeredP3).const_smul d)
+        (continuous_factorTwoCenteredP5.const_smul e),
+      factorTwoCenteredCorrelationBilinear_smul_smul,
+      factorTwoCenteredCorrelationBilinear_smul_smul,
+      factorTwoCenteredCorrelationBilinear_p1_p5,
+      factorTwoCenteredCorrelationBilinear_p3_p5]
+  have hself : centeredEndpointCorrelation v t =
+      e ^ 2 * oddP5Correlation55 t := by
+    rw [← factorTwoCenteredCorrelationBilinear_self,
+      show v = e • factorTwoCenteredP5 by
+        funext x
+        simp only [v, Pi.smul_apply, smul_eq_mul],
+      factorTwoCenteredCorrelationBilinear_smul_smul,
+      factorTwoCenteredCorrelationBilinear_self,
+      centeredEndpointCorrelation_p5]
+    ring
+  rw [hprofile, centeredEndpointCorrelation_add q v hq hv t,
+    show centeredEndpointCorrelation q t =
+        c ^ 2 * oddStructuralCorrelation11 t +
+          2 * c * d * oddStructuralCorrelation13 t +
+            d ^ 2 * oddStructuralCorrelation33 t by
+      simpa only [q] using centeredEndpointCorrelation_oddStructuralLow c d t,
+    hcross, hself]
   ring
 
 /-- Positive-half potential cross of `P₁` and `P₅`. -/
