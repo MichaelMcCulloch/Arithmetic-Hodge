@@ -64,6 +64,24 @@ def linearFejerThreeBoundaryMask
   diagonalBoundaryMask etas x y +
     symmetricLinearLagBoundaryMask bombieriFejerThreeLagWeight etas x y
 
+/-- The residual coefficients at the two nonseparated positive lags. -/
+def bombieriFejerThreeResidualNearLagWeight (k : ℕ) : ℝ :=
+  if k = 1 then 2 / 3 else if k = 2 then 4 / 3 else 0
+
+/-- The residual coefficients at the genuinely separated positive lags. -/
+def bombieriFejerThreeResidualFarLagWeight (k : ℕ) : ℝ :=
+  if 3 ≤ k then 2 else 0
+
+def residualNearBoundaryMask
+    (etas : List (ℝ → ℝ)) (x y : ℝ) : ℝ :=
+  symmetricLinearLagBoundaryMask
+    bombieriFejerThreeResidualNearLagWeight etas x y
+
+def residualFarBoundaryMask
+    (etas : List (ℝ → ℝ)) (x y : ℝ) : ℝ :=
+  symmetricLinearLagBoundaryMask
+    bombieriFejerThreeResidualFarLagWeight etas x y
+
 private theorem headBoundaryMask_two
     (eta : ℝ → ℝ) (k : ℕ) (tail : List (ℝ → ℝ)) (x y : ℝ) :
     headSymmetricLagBoundaryMask (fun _n ↦ 2) eta k tail x y =
@@ -117,6 +135,62 @@ private theorem boundaryMask_add
       simp only [symmetricLinearLagBoundaryMask]
       rw [headBoundaryMask_add, ih]
       ring
+
+private theorem headBoundaryMask_congr_of_one_le
+    (u v : ℕ → ℝ) (huv : ∀ k, 1 ≤ k → u k = v k)
+    (eta : ℝ → ℝ) (k : ℕ) (hk : 1 ≤ k)
+    (tail : List (ℝ → ℝ)) (x y : ℝ) :
+    headSymmetricLagBoundaryMask u eta k tail x y =
+      headSymmetricLagBoundaryMask v eta k tail x y := by
+  induction tail generalizing k with
+  | nil => rfl
+  | cons theta tail ih =>
+      simp only [headSymmetricLagBoundaryMask]
+      rw [huv k hk, ih (k + 1) (by omega)]
+
+private theorem boundaryMask_congr_of_positive_lags
+    (u v : ℕ → ℝ) (huv : ∀ k, 1 ≤ k → u k = v k)
+    (etas : List (ℝ → ℝ)) (x y : ℝ) :
+    symmetricLinearLagBoundaryMask u etas x y =
+      symmetricLinearLagBoundaryMask v etas x y := by
+  induction etas with
+  | nil => rfl
+  | cons eta tail ih =>
+      simp only [symmetricLinearLagBoundaryMask]
+      rw [headBoundaryMask_congr_of_one_le u v huv eta 1 (by omega), ih]
+
+theorem bombieriFejerThreeResidualLagWeight_eq_near_add_far
+    (k : ℕ) (hk : 1 ≤ k) :
+    bombieriFejerThreeResidualLagWeight k =
+      bombieriFejerThreeResidualNearLagWeight k +
+        bombieriFejerThreeResidualFarLagWeight k := by
+  unfold bombieriFejerThreeResidualLagWeight
+    bombieriFejerThreeResidualNearLagWeight
+  by_cases hk1 : k = 1
+  · simp [hk1, bombieriFejerThreeResidualFarLagWeight]
+  by_cases hk2 : k = 2
+  · simp [hk2, bombieriFejerThreeResidualFarLagWeight]
+  have hk3 : 3 ≤ k := by omega
+  simp [hk1, hk2, hk3, bombieriFejerThreeResidualFarLagWeight]
+
+/-- The residual partition boundary splits exactly into the two near lags and
+all genuinely support-separated lags. -/
+theorem residualBoundary_eq_near_add_far
+    (etas : List (ℝ → ℝ)) (x y : ℝ) :
+    symmetricLinearLagBoundaryMask
+        bombieriFejerThreeResidualLagWeight etas x y =
+      residualNearBoundaryMask etas x y +
+        residualFarBoundaryMask etas x y := by
+  unfold residualNearBoundaryMask residualFarBoundaryMask
+  calc
+    symmetricLinearLagBoundaryMask
+        bombieriFejerThreeResidualLagWeight etas x y =
+      symmetricLinearLagBoundaryMask
+        (fun k ↦ bombieriFejerThreeResidualNearLagWeight k +
+          bombieriFejerThreeResidualFarLagWeight k) etas x y := by
+            apply boundaryMask_congr_of_positive_lags
+            exact bombieriFejerThreeResidualLagWeight_eq_near_add_far
+    _ = _ := boundaryMask_add _ _ _ _ _
 
 /-- Before using partition unity, the reserve and residual first-slot
 boundaries add to the derivative of the complete rank-one parent mask. -/
@@ -191,6 +265,23 @@ theorem parent_mul_residualBoundary_eq_neg_fejerBoundary
         -linearFejerThreeBoundaryMask etas x y by linarith]
     push_cast
     ring
+
+/-- After removing the two nonseparated lags, the genuinely far partition
+boundary is the negative reserve boundary minus the near residual boundary.
+This is the exact defect seen by the separated Chebyshev representation. -/
+theorem parent_mul_farBoundary_eq_neg_fejer_sub_near
+    (parent : BombieriTest) (etas : List (ℝ → ℝ))
+    (hsmooth : ∀ eta ∈ etas, ContDiff ℝ ∞ eta)
+    (hsum : ∀ z ∈ tsupport parent, weightValueSum etas z = 1)
+    (x y : ℝ) :
+    parent (x * y) * residualFarBoundaryMask etas x y =
+      -parent (x * y) * linearFejerThreeBoundaryMask etas x y -
+        parent (x * y) * residualNearBoundaryMask etas x y := by
+  have hres := parent_mul_residualBoundary_eq_neg_fejerBoundary
+    parent etas hsmooth hsum x y
+  rw [residualBoundary_eq_near_add_far] at hres
+  push_cast at hres ⊢
+  linear_combination hres
 
 end
 
