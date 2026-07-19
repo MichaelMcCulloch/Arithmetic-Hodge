@@ -1,5 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenPolarSchurStructural
-import ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityClosureStructural
+import ArithmeticHodge.Analysis.YoshidaFourCellRegularKernelLowerStructural
 
 set_option autoImplicit false
 
@@ -16,9 +16,9 @@ open YoshidaFactorTwoEndpointClean
 open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFactorTwoPhaseSymmetricCoercivity
 open YoshidaFourCellEvenPolarSchurStructural
-open YoshidaFourCellOddStripCapacityClosureStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
+open YoshidaFourCellRegularKernelLowerStructural
 open YoshidaRegularKernelBound
 
 /-!
