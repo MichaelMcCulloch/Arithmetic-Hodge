@@ -7896,6 +7896,105 @@ theorem factorTwoIntrinsicEnergy_oneThreeFiveLowProfile
     integral_factorTwoCenteredP5_sq]
   ring
 
+/-- Exact centered raw-log energy of the retained `P₁/P₃/P₅` pivot. -/
+theorem centeredRawLogEnergy_oneThreeFiveLowProfile
+    (c d e : ℝ) :
+    centeredRawLogEnergy (fourCellOddOneThreeFiveLowProfile c d e) =
+      (8 / 3 : ℝ) * c ^ 2 + (44 / 21 : ℝ) * d ^ 2 +
+        (274 / 165 : ℝ) * e ^ 2 := by
+  let p : ℝ → ℝ := fourCellOddOneThreeFiveLowProfile c d e
+  have h11 : IntervalIntegrable (fun x : ℝ ↦ centeredP1 x ^ 2)
+      volume (-1) 1 := (by unfold centeredP1; fun_prop : Continuous fun x : ℝ ↦
+        centeredP1 x ^ 2).intervalIntegrable _ _
+  have h13 : IntervalIntegrable
+      (fun x : ℝ ↦ centeredP1 x * centeredP3 x) volume (-1) 1 :=
+    (by unfold centeredP1 centeredP3; fun_prop : Continuous fun x : ℝ ↦
+      centeredP1 x * centeredP3 x).intervalIntegrable _ _
+  have h33 : IntervalIntegrable (fun x : ℝ ↦ centeredP3 x ^ 2)
+      volume (-1) 1 := (by unfold centeredP3; fun_prop : Continuous fun x : ℝ ↦
+        centeredP3 x ^ 2).intervalIntegrable _ _
+  have h51 : IntervalIntegrable
+      (fun x : ℝ ↦ factorTwoCenteredP5 x * centeredP1 x)
+      volume (-1) 1 := (continuous_factorTwoCenteredP5.mul
+        (by unfold centeredP1; fun_prop)).intervalIntegrable _ _
+  have h53 : IntervalIntegrable
+      (fun x : ℝ ↦ factorTwoCenteredP5 x * centeredP3 x)
+      volume (-1) 1 := (continuous_factorTwoCenteredP5.mul
+        (by unfold centeredP3; fun_prop)).intervalIntegrable _ _
+  have h55 : IntervalIntegrable
+      (fun x : ℝ ↦ factorTwoCenteredP5 x ^ 2) volume (-1) 1 :=
+    (continuous_factorTwoCenteredP5.pow 2).intervalIntegrable _ _
+  have hone : (∫ x : ℝ in -1..1, p x * centeredP1 x) =
+      (2 / 3 : ℝ) * c := by
+    rw [show (fun x : ℝ ↦ p x * centeredP1 x) = fun x ↦
+        c * centeredP1 x ^ 2 +
+          d * (centeredP1 x * centeredP3 x) +
+            e * (factorTwoCenteredP5 x * centeredP1 x) by
+      funext x
+      dsimp only [p]
+      unfold fourCellOddOneThreeFiveLowProfile
+        factorTwoOddStructuralLowProfile
+      ring,
+      intervalIntegral.integral_add
+        ((h11.const_mul c).add (h13.const_mul d)) (h51.const_mul e),
+      intervalIntegral.integral_add (h11.const_mul c) (h13.const_mul d)]
+    repeat rw [intervalIntegral.integral_const_mul]
+    rw [integral_centeredP1_sq, integral_centeredP1_mul_p3,
+      integral_factorTwoCenteredP5_mul_centeredP1]
+    ring
+  have hthree : (∫ x : ℝ in -1..1, p x * centeredP3 x) =
+      (2 / 7 : ℝ) * d := by
+    rw [show (fun x : ℝ ↦ p x * centeredP3 x) = fun x ↦
+        c * (centeredP1 x * centeredP3 x) +
+          d * centeredP3 x ^ 2 +
+            e * (factorTwoCenteredP5 x * centeredP3 x) by
+      funext x
+      dsimp only [p]
+      unfold fourCellOddOneThreeFiveLowProfile
+        factorTwoOddStructuralLowProfile
+      ring,
+      intervalIntegral.integral_add
+        ((h13.const_mul c).add (h33.const_mul d)) (h53.const_mul e),
+      intervalIntegral.integral_add (h13.const_mul c) (h33.const_mul d)]
+    repeat rw [intervalIntegral.integral_const_mul]
+    rw [integral_centeredP1_mul_p3, integral_centeredP3_sq,
+      integral_factorTwoCenteredP5_mul_centeredP3]
+    ring
+  have hfive : (∫ x : ℝ in -1..1, p x * factorTwoCenteredP5 x) =
+      (2 / 11 : ℝ) * e := by
+    rw [show (fun x : ℝ ↦ p x * factorTwoCenteredP5 x) = fun x ↦
+        c * (factorTwoCenteredP5 x * centeredP1 x) +
+          d * (factorTwoCenteredP5 x * centeredP3 x) +
+            e * factorTwoCenteredP5 x ^ 2 by
+      funext x
+      dsimp only [p]
+      unfold fourCellOddOneThreeFiveLowProfile
+        factorTwoOddStructuralLowProfile
+      ring,
+      intervalIntegral.integral_add
+        ((h51.const_mul c).add (h53.const_mul d)) (h55.const_mul e),
+      intervalIntegral.integral_add (h51.const_mul c) (h53.const_mul d)]
+    repeat rw [intervalIntegral.integral_const_mul]
+    rw [integral_factorTwoCenteredP5_mul_centeredP1,
+      integral_factorTwoCenteredP5_mul_centeredP3,
+      integral_factorTwoCenteredP5_sq]
+    ring
+  have hraw := centeredRawLogBilinear_oneThreeFiveLowProfile_eq_moments
+    p (by dsimp only [p]; exact
+      (contDiff_fourCellOddOneThreeFiveLowProfile c d e).continuous) c d e
+  have hself : centeredRawLogBilinear p p = centeredRawLogEnergy p := by
+    unfold centeredRawLogBilinear centeredRawLogEnergy
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    apply intervalIntegral.integral_congr
+    intro y _hy
+    ring
+  rw [hself, hone, hthree, hfive] at hraw
+  simpa only [p] using (by nlinarith [hraw] :
+    centeredRawLogEnergy p =
+      (8 / 3 : ℝ) * c ^ 2 + (44 / 21 : ℝ) * d ^ 2 +
+        (274 / 165 : ℝ) * e ^ 2)
+
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
 theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
