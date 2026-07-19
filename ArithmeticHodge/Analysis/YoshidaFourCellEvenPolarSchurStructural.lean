@@ -193,6 +193,138 @@ theorem fourCellPositiveCoshMoment_residual_eq_zero
   rw [hpMoment]
   ring
 
+/-! ## Endpoint-preserving cosh coordinates -/
+
+/-- The lowest even polynomial direction in the actual four-cell production
+domain.  Unlike the constant pivot, it vanishes at both endpoint traces. -/
+def fourCellEvenEndpointCoshSeed (x : ℝ) : ℝ := 1 - x ^ 2
+
+theorem fourCellEvenEndpointCoshSeed_continuous :
+    Continuous fourCellEvenEndpointCoshSeed := by
+  unfold fourCellEvenEndpointCoshSeed
+  fun_prop
+
+theorem fourCellEvenEndpointCoshSeed_even :
+    Function.Even fourCellEvenEndpointCoshSeed := by
+  intro x
+  unfold fourCellEvenEndpointCoshSeed
+  ring
+
+@[simp] theorem fourCellEvenEndpointCoshSeed_neg_one :
+    fourCellEvenEndpointCoshSeed (-1) = 0 := by
+  norm_num [fourCellEvenEndpointCoshSeed]
+
+@[simp] theorem fourCellEvenEndpointCoshSeed_one :
+    fourCellEvenEndpointCoshSeed 1 = 0 := by
+  norm_num [fourCellEvenEndpointCoshSeed]
+
+/-- The endpoint-zero seed has strictly positive wide-cosh coordinate. -/
+theorem fourCellPositiveCoshMoment_endpointCoshSeed_pos :
+    0 < fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+      (fourCellOperatorHalfWidth / 2) := by
+  unfold fourCellPositiveCoshMoment
+  apply intervalIntegral.integral_pos (by norm_num)
+  · exact ((Real.continuous_cosh.comp
+      (continuous_const.mul continuous_id)).mul
+        fourCellEvenEndpointCoshSeed_continuous).continuousOn
+  · intro x hx
+    have hsq : x ^ 2 ≤ 1 := by
+      nlinarith [hx.1, hx.2, sq_nonneg x]
+    exact mul_nonneg (Real.cosh_pos _).le (sub_nonneg.mpr hsq)
+  · refine ⟨1 / 2, by norm_num, ?_⟩
+    unfold fourCellEvenEndpointCoshSeed
+    have hcosh : 0 < Real.cosh
+        (fourCellOperatorHalfWidth / 2 * (1 / 2 : ℝ)) :=
+      Real.cosh_pos _
+    nlinarith
+
+/-- Normalize the endpoint-zero seed by its exact wide-cosh coordinate. -/
+def fourCellEvenEndpointCoshUnit (x : ℝ) : ℝ :=
+  (fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+      (fourCellOperatorHalfWidth / 2))⁻¹ *
+    fourCellEvenEndpointCoshSeed x
+
+theorem fourCellEvenEndpointCoshUnit_continuous :
+    Continuous fourCellEvenEndpointCoshUnit := by
+  unfold fourCellEvenEndpointCoshUnit
+  exact continuous_const.mul fourCellEvenEndpointCoshSeed_continuous
+
+theorem fourCellEvenEndpointCoshUnit_even :
+    Function.Even fourCellEvenEndpointCoshUnit := by
+  intro x
+  unfold fourCellEvenEndpointCoshUnit
+  rw [fourCellEvenEndpointCoshSeed_even]
+
+@[simp] theorem fourCellEvenEndpointCoshUnit_neg_one :
+    fourCellEvenEndpointCoshUnit (-1) = 0 := by
+  simp [fourCellEvenEndpointCoshUnit]
+
+@[simp] theorem fourCellEvenEndpointCoshUnit_one :
+    fourCellEvenEndpointCoshUnit 1 = 0 := by
+  simp [fourCellEvenEndpointCoshUnit]
+
+theorem fourCellPositiveCoshMoment_endpointCoshUnit :
+    fourCellPositiveCoshMoment fourCellEvenEndpointCoshUnit
+        (fourCellOperatorHalfWidth / 2) = 1 := by
+  let M : ℝ := fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+    (fourCellOperatorHalfWidth / 2)
+  have hM : M ≠ 0 := by
+    exact fourCellPositiveCoshMoment_endpointCoshSeed_pos.ne'
+  unfold fourCellPositiveCoshMoment fourCellEvenEndpointCoshUnit
+  rw [show (fun x : ℝ ↦
+      Real.cosh (fourCellOperatorHalfWidth / 2 * x) *
+        ((fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+            (fourCellOperatorHalfWidth / 2))⁻¹ *
+          fourCellEvenEndpointCoshSeed x)) =
+      fun x ↦ M⁻¹ *
+        (Real.cosh (fourCellOperatorHalfWidth / 2 * x) *
+          fourCellEvenEndpointCoshSeed x) by
+    funext x
+    dsimp only [M]
+    ring]
+  rw [intervalIntegral.integral_const_mul]
+  change M⁻¹ * M = 1
+  exact inv_mul_cancel₀ hM
+
+/-- For an actual production profile, projection onto the endpoint-zero
+cosh direction leaves both endpoint traces zero. -/
+theorem fourCellEvenEndpointCoshResidual_endpoints_zero
+    (w : ℝ → ℝ) (hw : w (-1) = 0 ∧ w 1 = 0) :
+    fourCellEvenCoshResidual w fourCellEvenEndpointCoshUnit (-1) = 0 ∧
+      fourCellEvenCoshResidual w fourCellEvenEndpointCoshUnit 1 = 0 := by
+  constructor
+  · unfold fourCellEvenCoshResidual fourCellEvenCoshLow
+    rw [hw.1, fourCellEvenEndpointCoshUnit_neg_one]
+    ring
+  · unfold fourCellEvenCoshResidual fourCellEvenCoshLow
+    rw [hw.2, fourCellEvenEndpointCoshUnit_one]
+    ring
+
+/-- The endpoint-adapted projection simultaneously preserves every geometric
+constraint available on an even production profile and kills the positive
+wide-cosh rank exactly. -/
+theorem fourCellEvenEndpointCoshResidual_constraints
+    (w : ℝ → ℝ) (hw : Continuous w) (hweven : Function.Even w)
+    (hend : w (-1) = 0 ∧ w 1 = 0) :
+    Continuous (fourCellEvenCoshResidual w fourCellEvenEndpointCoshUnit) ∧
+      Function.Even
+        (fourCellEvenCoshResidual w fourCellEvenEndpointCoshUnit) ∧
+      (fourCellEvenCoshResidual w fourCellEvenEndpointCoshUnit (-1) = 0 ∧
+        fourCellEvenCoshResidual w fourCellEvenEndpointCoshUnit 1 = 0) ∧
+      fourCellPositiveCoshMoment
+          (fourCellEvenCoshResidual w fourCellEvenEndpointCoshUnit)
+          (fourCellOperatorHalfWidth / 2) = 0 := by
+  exact ⟨
+    fourCellEvenCoshResidual_continuous w fourCellEvenEndpointCoshUnit hw
+      fourCellEvenEndpointCoshUnit_continuous,
+    fourCellEvenCoshResidual_even w fourCellEvenEndpointCoshUnit hweven
+      fourCellEvenEndpointCoshUnit_even,
+    fourCellEvenEndpointCoshResidual_endpoints_zero w hend,
+    fourCellPositiveCoshMoment_residual_eq_zero
+      w fourCellEvenEndpointCoshUnit hw
+      fourCellEvenEndpointCoshUnit_continuous
+      fourCellPositiveCoshMoment_endpointCoshUnit⟩
+
 /-! ## The zero-cosh hyperplane is quantitatively close to mean zero -/
 
 /-- On the unit interval, `cosh z - 1` is bounded by `z²` throughout the
