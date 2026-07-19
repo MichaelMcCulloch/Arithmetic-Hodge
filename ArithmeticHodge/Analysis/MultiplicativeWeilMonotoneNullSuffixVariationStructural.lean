@@ -1,0 +1,641 @@
+import ArithmeticHodge.Analysis.MultiplicativeWeilRealMonotonePropagationReserveStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilApproximateIdentity
+import ArithmeticHodge.Analysis.MultiplicativeWeilSmallSupportPositivity
+
+set_option autoImplicit false
+
+open Complex Filter Real Set Topology
+
+namespace ArithmeticHodge.Analysis.MultiplicativeWeilMonotoneNullSuffixVariationStructural
+
+noncomputable section
+
+open MultiplicativeWeil
+open MultiplicativeWeilMonotoneQuarterPartitionStructural
+open MultiplicativeWeilQuarterLogLatticePartitionStructural
+open MultiplicativeWeilRealCutPhaseReductionStructural
+open MultiplicativeWeilRealMonotonePropagationCriterionStructural
+open MultiplicativeWeilRealMonotonePropagationReserveStructural
+
+/-!
+# Null-suffix variations at a monotone boundary
+
+At one monotone boundary write the outer cutoff as `H + S`, where `H` is the
+ratio-two head cell and `S` is the next cutoff.  If `Q(S) = 0`, positivity of
+the entire real pencil `H + a S` would force the head--suffix cross to vanish;
+this is the exact null-cone consequence of the quadratic discriminant.
+
+The actual parent variations which keep `S` fixed do not contain that pencil.
+Multiplication by the next monotone step is injective strictly to the right of
+its left endpoint.  Consequently a suffix-preserving variation must vanish
+there, so its head variation is confined to the flat-zero side of the cut.
+Unless `S` itself is zero, no such variation can generate a nonzero scalar
+multiple of the suffix.  Thus the null case does not close merely by varying
+the parent while holding its suffix fixed.
+-/
+
+/-! ## Scalar null-cone algebra -/
+
+/-- A nonnegative real quadratic pencil satisfies its discriminant bound once
+the quadratic coefficient is known nonnegative. -/
+private theorem real_quadratic_pencil_discriminant
+    {A B X : ℝ} (hB : 0 ≤ B)
+    (hall : ∀ a : ℝ, 0 ≤ A + a ^ 2 * B + 2 * a * X) :
+    X ^ 2 ≤ A * B := by
+  rcases hB.eq_or_lt with rfl | hBpos
+  · have hzero : X = 0 := by
+      by_contra hX
+      have h := hall (-(A + 1) / (2 * X))
+      have heq :
+          A + (-(A + 1) / (2 * X)) ^ 2 * 0 +
+              2 * (-(A + 1) / (2 * X)) * X = -1 := by
+        field_simp [hX]
+        ring
+      rw [heq] at h
+      linarith
+    simp [hzero]
+  · have h := hall (-X / B)
+    have hBne : B ≠ 0 := hBpos.ne'
+    have heq :
+        A + (-X / B) ^ 2 * B + 2 * (-X / B) * X =
+          (A * B - X ^ 2) / B := by
+      field_simp [hBne]
+      ring
+    rw [heq] at h
+    rcases (div_nonneg_iff.mp h) with hpos | hneg
+    · exact sub_nonneg.mp hpos.1
+    · exact (not_le_of_gt hBpos hneg.2).elim
+
+/-- On a null direction, nonnegativity of the whole real scalar pencil forces
+the real cross to vanish. -/
+theorem bombieriTwoBlockGlobalCrossSymbol_re_eq_zero_of_null_pencil
+    (f g : BombieriTest)
+    (hnull : bombieriRealQuadraticValue g = 0)
+    (hall : ∀ a : ℝ,
+      0 ≤ bombieriRealQuadraticValue (f + (a : ℂ) • g)) :
+    (bombieriTwoBlockGlobalCrossSymbol f g).re = 0 := by
+  let A : ℝ := bombieriRealQuadraticValue f
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol f g).re
+  have hpencil : ∀ a : ℝ, 0 ≤ A + a ^ 2 * 0 + 2 * a * X := by
+    intro a
+    have h := hall a
+    unfold bombieriRealQuadraticValue at hnull h
+    rw [bombieriFunctional_twoBlock_re] at h
+    dsimp only [A, X]
+    simpa only [bombieriRealQuadraticValue, Complex.normSq_apply,
+      pow_two, mul_assoc, Complex.ofReal_re,
+      Complex.ofReal_im, zero_pow, zero_mul, add_zero, Complex.mul_re,
+      mul_zero, sub_zero, hnull] using h
+  have hdet := real_quadratic_pencil_discriminant (A := A) (B := 0)
+    (X := X) le_rfl hpencil
+  have hX : X = 0 := by nlinarith [sq_nonneg X]
+  exact hX
+
+/-- Therefore the null-suffix boundary would close immediately if the actual
+head could be tested against every real multiple of the suffix. -/
+theorem bombieriRealQuadraticValue_monotoneQuarterCutoff_nonnegative_of_null_pencil
+    (parent : BombieriTest) (k : ℤ)
+    (hnull : monotoneQuarterSuffixQuadraticValue parent k = 0)
+    (hall : ∀ a : ℝ,
+      0 ≤ bombieriRealQuadraticValue
+        (monotoneQuarterCell parent k +
+          (a : ℂ) • monotoneQuarterCutoff parent (k + 1))) :
+    0 ≤ bombieriRealQuadraticValue (monotoneQuarterCutoff parent k) := by
+  have hcross : monotoneQuarterHeadSuffixCrossValue parent k = 0 := by
+    exact bombieriTwoBlockGlobalCrossSymbol_re_eq_zero_of_null_pencil
+      (monotoneQuarterCell parent k)
+      (monotoneQuarterCutoff parent (k + 1)) hnull hall
+  rw [bombieriRealQuadraticValue_monotoneQuarterCutoff_eq_head_suffix_cross,
+    hnull, hcross]
+  simpa using monotoneQuarterHeadQuadraticValue_nonnegative parent k
+
+/-! ## The genuine fixed-suffix parent line -/
+
+/-- A parent variation preserves the next suffix exactly when it lies in the
+kernel of the next cutoff multiplier. -/
+def MonotoneQuarterSuffixPreservingVariation
+    (variation : BombieriTest) (k : ℤ) : Prop :=
+  monotoneQuarterCutoff variation (k + 1) = 0
+
+/-- Real affine parent line generated by one variation. -/
+def monotoneQuarterParentVariationLine
+    (parent variation : BombieriTest) (a : ℝ) : BombieriTest :=
+  parent + (a : ℂ) • variation
+
+theorem monotoneQuarterCutoff_add
+    (f g : BombieriTest) (k : ℤ) :
+    monotoneQuarterCutoff (f + g) k =
+      monotoneQuarterCutoff f k + monotoneQuarterCutoff g k := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotoneQuarterCutoff_apply, TestFunction.coe_add, Pi.add_apply]
+  ring
+
+theorem monotoneQuarterCutoff_smul
+    (c : ℂ) (f : BombieriTest) (k : ℤ) :
+    monotoneQuarterCutoff (c • f) k =
+      c • monotoneQuarterCutoff f k := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotoneQuarterCutoff_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul]
+  ring
+
+theorem monotoneQuarterCell_add
+    (f g : BombieriTest) (k : ℤ) :
+    monotoneQuarterCell (f + g) k =
+      monotoneQuarterCell f k + monotoneQuarterCell g k := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotoneQuarterCell_apply, TestFunction.coe_add, Pi.add_apply]
+  ring
+
+theorem monotoneQuarterCell_smul
+    (c : ℂ) (f : BombieriTest) (k : ℤ) :
+    monotoneQuarterCell (c • f) k =
+      c • monotoneQuarterCell f k := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotoneQuarterCell_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul]
+  ring
+
+/-- A suffix-preserving variation really keeps the whole next cutoff fixed
+along every real scalar in the parent line. -/
+theorem monotoneQuarterCutoff_parentVariationLine_next_eq
+    (parent variation : BombieriTest) (k : ℤ)
+    (hvariation : MonotoneQuarterSuffixPreservingVariation variation k)
+    (a : ℝ) :
+    monotoneQuarterCutoff
+        (monotoneQuarterParentVariationLine parent variation a) (k + 1) =
+      monotoneQuarterCutoff parent (k + 1) := by
+  unfold monotoneQuarterParentVariationLine
+  rw [monotoneQuarterCutoff_add, monotoneQuarterCutoff_smul,
+    hvariation]
+  simp
+
+/-- The head changes linearly along the genuine fixed-suffix parent line. -/
+theorem monotoneQuarterCell_parentVariationLine_eq
+    (parent variation : BombieriTest) (k : ℤ) (a : ℝ) :
+    monotoneQuarterCell
+        (monotoneQuarterParentVariationLine parent variation a) k =
+      monotoneQuarterCell parent k +
+        (a : ℂ) • monotoneQuarterCell variation k := by
+  unfold monotoneQuarterParentVariationLine
+  rw [monotoneQuarterCell_add, monotoneQuarterCell_smul]
+
+/-- Exact quadratic polynomial along a parent variation after any monotone
+cutoff. -/
+theorem bombieriRealQuadraticValue_cutoff_parentVariationLine_eq
+    (parent variation : BombieriTest) (j : ℤ) (a : ℝ) :
+    bombieriRealQuadraticValue
+        (monotoneQuarterCutoff
+          (monotoneQuarterParentVariationLine parent variation a) j) =
+      bombieriRealQuadraticValue (monotoneQuarterCutoff parent j) +
+        a ^ 2 * bombieriRealQuadraticValue
+          (monotoneQuarterCutoff variation j) +
+        2 * a * (bombieriTwoBlockGlobalCrossSymbol
+          (monotoneQuarterCutoff parent j)
+          (monotoneQuarterCutoff variation j)).re := by
+  unfold monotoneQuarterParentVariationLine bombieriRealQuadraticValue
+  rw [monotoneQuarterCutoff_add, monotoneQuarterCutoff_smul,
+    bombieriFunctional_twoBlock_re]
+  simp only [Complex.normSq_apply, Complex.ofReal_re, Complex.ofReal_im,
+    zero_mul, add_zero, Complex.mul_re, mul_zero, sub_zero, pow_two,
+    mul_assoc]
+
+/-- With a suffix-preserving variation, its outer cutoff contribution is just
+its boundary head cell. -/
+theorem monotoneQuarterCutoff_eq_cell_of_suffixPreserving
+    (variation : BombieriTest) (k : ℤ)
+    (hvariation : MonotoneQuarterSuffixPreservingVariation variation k) :
+    monotoneQuarterCutoff variation k = monotoneQuarterCell variation k := by
+  rw [monotoneQuarterCell_eq_cutoff_sub, hvariation, sub_zero]
+
+/-- The strongest unconditional discriminant supplied by varying the parent
+is a head--head bound.  Every member of this head line remains one ratio-two
+cell, so its quadratic is nonnegative. -/
+theorem monotoneQuarterCell_variation_discriminant
+    (parent variation : BombieriTest) (k : ℤ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+        (monotoneQuarterCell parent k)
+        (monotoneQuarterCell variation k)).re ^ 2 ≤
+      bombieriRealQuadraticValue (monotoneQuarterCell parent k) *
+        bombieriRealQuadraticValue (monotoneQuarterCell variation k) := by
+  let H := monotoneQuarterCell parent k
+  let R := monotoneQuarterCell variation k
+  let A : ℝ := bombieriRealQuadraticValue H
+  let B : ℝ := bombieriRealQuadraticValue R
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol H R).re
+  have hB : 0 ≤ B := by
+    exact bombieriFunctional_quadratic_re_nonneg_of_ratioTwoCell R
+      (monotoneQuarterCell_ratioTwo variation k)
+  have hpencil : ∀ a : ℝ, 0 ≤ A + a ^ 2 * B + 2 * a * X := by
+    intro a
+    have hcell := bombieriFunctional_quadratic_re_nonneg_of_ratioTwoCell
+      (monotoneQuarterCell
+        (monotoneQuarterParentVariationLine parent variation a) k)
+      (monotoneQuarterCell_ratioTwo
+        (monotoneQuarterParentVariationLine parent variation a) k)
+    rw [monotoneQuarterCell_parentVariationLine_eq] at hcell
+    rw [bombieriFunctional_twoBlock_re] at hcell
+    dsimp only [A, B, X, H, R]
+    simpa only [bombieriRealQuadraticValue, Complex.normSq_apply,
+      pow_two, mul_assoc, Complex.ofReal_re,
+      Complex.ofReal_im, zero_pow, zero_mul, add_zero, Complex.mul_re,
+      mul_zero, sub_zero] using hcell
+  exact real_quadratic_pencil_discriminant hB hpencil
+
+/-! ## The null boundary is a closure of the strict boundary -/
+
+/-- At a fixed cut, the null-suffix case follows from the corresponding
+strict-suffix statement as soon as one genuine parent variation has strictly
+positive suffix energy.  This is a local closure lemma, not a new propagation
+hypothesis: its `hstrict` input is only the nearby one-parameter family shown
+explicitly here. -/
+theorem bombieriRealQuadraticValue_cutoff_nonnegative_of_null_of_strict_nearby
+    (parent variation : BombieriTest) (k : ℤ)
+    (hnull : bombieriRealQuadraticValue
+      (monotoneQuarterCutoff parent (k + 1)) = 0)
+    (hvariationPos : 0 < bombieriRealQuadraticValue
+      (monotoneQuarterCutoff variation (k + 1)))
+    (hstrict : ∀ a : ℝ,
+      0 < bombieriRealQuadraticValue
+          (monotoneQuarterCutoff
+            (monotoneQuarterParentVariationLine parent variation a)
+            (k + 1)) →
+        0 ≤ bombieriRealQuadraticValue
+          (monotoneQuarterCutoff
+            (monotoneQuarterParentVariationLine parent variation a) k)) :
+    0 ≤ bombieriRealQuadraticValue (monotoneQuarterCutoff parent k) := by
+  by_contra houter
+  have houterNeg : bombieriRealQuadraticValue
+      (monotoneQuarterCutoff parent k) < 0 := lt_of_not_ge houter
+  let A : ℝ := bombieriRealQuadraticValue
+    (monotoneQuarterCutoff parent k)
+  let B : ℝ := bombieriRealQuadraticValue
+    (monotoneQuarterCutoff variation k)
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol
+    (monotoneQuarterCutoff parent k)
+    (monotoneQuarterCutoff variation k)).re
+  let outerPolynomial : ℝ → ℝ := fun a ↦ A + a ^ 2 * B + 2 * a * X
+  have houterPolynomial_zero : outerPolynomial 0 < 0 := by
+    simpa [outerPolynomial, A] using houterNeg
+  have houterContinuous : Continuous outerPolynomial := by
+    dsimp only [outerPolynomial]
+    fun_prop
+  have heventually : ∀ᶠ a in 𝓝 (0 : ℝ), outerPolynomial a < 0 :=
+    houterContinuous.continuousAt.eventually_lt_const
+      houterPolynomial_zero
+  obtain ⟨epsilon, hepsilon, hball⟩ :=
+    (Metric.mem_nhds_iff.mp heventually)
+  let a : ℝ := epsilon / 2
+  have ha : 0 < a := div_pos hepsilon (by norm_num)
+  have haBall : a ∈ Metric.ball (0 : ℝ) epsilon := by
+    rw [Metric.mem_ball, Real.dist_eq, sub_zero, abs_of_pos ha]
+    dsimp only [a]
+    linarith
+  have hnegaBall : -a ∈ Metric.ball (0 : ℝ) epsilon := by
+    rw [Metric.mem_ball, Real.dist_eq, sub_zero, abs_neg, abs_of_pos ha]
+    dsimp only [a]
+    linarith
+  have houterPlus : outerPolynomial a < 0 := hball haBall
+  have houterMinus : outerPolynomial (-a) < 0 := hball hnegaBall
+  let T : ℝ := bombieriRealQuadraticValue
+    (monotoneQuarterCutoff parent (k + 1))
+  let R : ℝ := bombieriRealQuadraticValue
+    (monotoneQuarterCutoff variation (k + 1))
+  let Y : ℝ := (bombieriTwoBlockGlobalCrossSymbol
+    (monotoneQuarterCutoff parent (k + 1))
+    (monotoneQuarterCutoff variation (k + 1))).re
+  let innerPolynomial : ℝ → ℝ := fun b ↦ T + b ^ 2 * R + 2 * b * Y
+  have hinnerSum :
+      innerPolynomial a + innerPolynomial (-a) = 2 * a ^ 2 * R := by
+    dsimp only [innerPolynomial, T]
+    rw [hnull]
+    ring
+  have hinnerSumPos : 0 < innerPolynomial a + innerPolynomial (-a) := by
+    rw [hinnerSum]
+    dsimp only [R]
+    positivity
+  have houterValue (b : ℝ) :
+      bombieriRealQuadraticValue
+          (monotoneQuarterCutoff
+            (monotoneQuarterParentVariationLine parent variation b) k) =
+        outerPolynomial b := by
+    exact bombieriRealQuadraticValue_cutoff_parentVariationLine_eq
+      parent variation k b
+  have hinnerValue (b : ℝ) :
+      bombieriRealQuadraticValue
+          (monotoneQuarterCutoff
+            (monotoneQuarterParentVariationLine parent variation b)
+            (k + 1)) = innerPolynomial b := by
+    exact bombieriRealQuadraticValue_cutoff_parentVariationLine_eq
+      parent variation (k + 1) b
+  by_cases hplus : 0 < innerPolynomial a
+  · have hnonneg := hstrict a (hinnerValue a ▸ hplus)
+    rw [houterValue a] at hnonneg
+    exact (not_lt_of_ge hnonneg) houterPlus
+  · have hminus : 0 < innerPolynomial (-a) := by
+      have hplusNonpos : innerPolynomial a ≤ 0 := le_of_not_gt hplus
+      linarith
+    have hnonneg := hstrict (-a) (hinnerValue (-a) ▸ hminus)
+    rw [houterValue (-a)] at hnonneg
+    exact (not_lt_of_ge hnonneg) houterMinus
+
+/-- Every monotone boundary has an independently realizable suffix direction
+with strictly positive Bombieri energy.  A sufficiently narrow nonzero bump is
+dilated so that its support begins at the flat-one threshold of the next
+cutoff; the unconditional small-support theorem gives strict positivity. -/
+theorem exists_monotoneQuarterCutoff_strictPos (k : ℤ) :
+    ∃ variation : BombieriTest,
+      0 < bombieriRealQuadraticValue
+        (monotoneQuarterCutoff variation (k + 1)) := by
+  obtain ⟨R₀, hR₀one, _hR₀two, hstrict⟩ :=
+    exists_support_ratio_bombieriQuadratic_strictPos
+  let s : ℝ := Real.sqrt R₀
+  have hR₀pos : 0 < R₀ := zero_lt_one.trans hR₀one
+  have hspos : 0 < s := Real.sqrt_pos.2 hR₀pos
+  have hsSq : s ^ 2 = R₀ := by
+    dsimp only [s]
+    exact Real.sq_sqrt hR₀pos.le
+  have hsone : 1 < s := by nlinarith
+  let l : ℝ := 1 / s
+  let r : ℝ := s
+  have hlpos : 0 < l := one_div_pos.mpr hspos
+  have hlone : l < 1 := by
+    dsimp only [l]
+    simpa only [one_div] using inv_lt_one_of_one_lt₀ hsone
+  have honer : 1 < r := by simpa only [r] using hsone
+  have hlr : l ≤ r := hlone.le.trans honer.le
+  have hratio : r / l = R₀ := by
+    dsimp only [l, r]
+    field_simp [hspos.ne']
+    simpa only [pow_two] using hsSq
+  have hU : Set.Ioo l r ∈ 𝓝 (1 : ℝ) := Ioo_mem_nhds hlone honer
+  have hUpos : Set.Ioo l r ⊆ Set.Ioi (0 : ℝ) := by
+    intro x hx
+    exact hlpos.trans hx.1
+  obtain ⟨eta, hetaOne, hetaSupport, _hetaRange⟩ :=
+    exists_bombieri_bump (Set.Ioo l r) hU hUpos
+  have hetaNe : eta ≠ 0 := by
+    intro hetaZero
+    rw [hetaZero] at hetaOne
+    norm_num at hetaOne
+  have hetaSupportClosed : tsupport (eta : ℝ → ℂ) ⊆ Set.Icc l r :=
+    hetaSupport.trans Ioo_subset_Icc_self
+  have hetaPos : 0 < bombieriRealQuadraticValue eta := by
+    unfold bombieriRealQuadraticValue
+    exact (hstrict eta hlpos hlr hetaSupportClosed hratio.le hetaNe).2
+  let L : ℝ := quarterLogLatticePoint (k + 2)
+  have hLpos : 0 < L := quarterLogLatticePoint_pos (k + 2)
+  let lambda : ℝ := l / L
+  have hlambda : 0 < lambda := div_pos hlpos hLpos
+  let variation : BombieriTest := normalizedDilation lambda hlambda eta
+  have hvariationSupport : tsupport (variation : ℝ → ℂ) ⊆
+      Set.Icc (l / lambda) (r / lambda) := by
+    exact normalizedDilation_tsupport_subset_Icc
+      lambda hlambda eta hetaSupportClosed
+  have hlower : l / lambda = L := by
+    dsimp only [lambda]
+    field_simp [hlpos.ne', hLpos.ne']
+  have hcut : monotoneQuarterCutoff variation (k + 1) = variation := by
+    apply monotoneQuarterCutoff_eq_parent_of_lattice_le_tsupport
+    intro x hx
+    have hxLower := (hvariationSupport hx).1
+    rw [hlower] at hxLower
+    have hindex : k + 1 + 1 = k + 2 := by ring
+    simpa only [hindex, L] using hxLower
+  refine ⟨variation, ?_⟩
+  rw [hcut]
+  dsimp only [variation]
+  unfold bombieriRealQuadraticValue at hetaPos ⊢
+  rw [bombieriFunctional_quadratic_normalizedDilation]
+  exact hetaPos
+
+/-- Consequently the null boundary is not a separate topological obstruction:
+if the strict-suffix implication is known for every nearby parent direction at
+this fixed cut, then the null conclusion follows using the positive direction
+constructed above. -/
+theorem bombieriRealQuadraticValue_cutoff_nonnegative_of_null_of_strict_variations
+    (parent : BombieriTest) (k : ℤ)
+    (hnull : bombieriRealQuadraticValue
+      (monotoneQuarterCutoff parent (k + 1)) = 0)
+    (hstrict : ∀ (variation : BombieriTest) (a : ℝ),
+      0 < bombieriRealQuadraticValue
+          (monotoneQuarterCutoff
+            (monotoneQuarterParentVariationLine parent variation a)
+            (k + 1)) →
+        0 ≤ bombieriRealQuadraticValue
+          (monotoneQuarterCutoff
+            (monotoneQuarterParentVariationLine parent variation a) k)) :
+    0 ≤ bombieriRealQuadraticValue (monotoneQuarterCutoff parent k) := by
+  obtain ⟨variation, hvariationPos⟩ :=
+    exists_monotoneQuarterCutoff_strictPos k
+  exact bombieriRealQuadraticValue_cutoff_nonnegative_of_null_of_strict_nearby
+    parent variation k hnull hvariationPos (hstrict variation)
+
+/-- Full local boundary reduction: it is enough to prove propagation on the
+open region where the inner suffix energy is strictly positive.  A positive
+inner value uses the original parent (`a = 0`); a zero inner value is supplied
+by the preceding positive-direction perturbation and closure argument. -/
+theorem bombieriRealQuadraticValue_cutoff_nonnegative_of_strict_variations
+    (parent : BombieriTest) (k : ℤ)
+    (hinner : 0 ≤ bombieriRealQuadraticValue
+      (monotoneQuarterCutoff parent (k + 1)))
+    (hstrict : ∀ (variation : BombieriTest) (a : ℝ),
+      0 < bombieriRealQuadraticValue
+          (monotoneQuarterCutoff
+            (monotoneQuarterParentVariationLine parent variation a)
+            (k + 1)) →
+        0 ≤ bombieriRealQuadraticValue
+          (monotoneQuarterCutoff
+            (monotoneQuarterParentVariationLine parent variation a) k)) :
+    0 ≤ bombieriRealQuadraticValue (monotoneQuarterCutoff parent k) := by
+  rcases hinner.eq_or_lt with hnull | hpositive
+  · exact
+      bombieriRealQuadraticValue_cutoff_nonnegative_of_null_of_strict_variations
+        parent k hnull.symm hstrict
+  · have h := hstrict (0 : BombieriTest) 0 (by
+      simpa [monotoneQuarterParentVariationLine] using hpositive)
+    simpa [monotoneQuarterParentVariationLine] using h
+
+/-! ## Exact geometry of suffix-preserving variations -/
+
+/-- The monotone step is strictly positive immediately to the right of its
+left lattice endpoint. -/
+theorem monotoneQuarterStep_pos_of_lattice_lt
+    (j : ℤ) {x : ℝ} (hx : quarterLogLatticePoint j < x) :
+    0 < monotoneQuarterStep j x := by
+  unfold monotoneQuarterStep
+  apply Real.smoothTransition.pos_of_pos
+  exact div_pos (sub_pos.mpr hx) (quarterLogLatticePoint_gap_pos j)
+
+/-- Exact pointwise classification of the kernel of a monotone cutoff: a
+variation preserves the suffix iff it vanishes strictly to the right of the
+next boundary. -/
+theorem suffixPreservingVariation_iff_vanishes_right
+    (variation : BombieriTest) (k : ℤ) :
+    MonotoneQuarterSuffixPreservingVariation variation k ↔
+      ∀ x : ℝ, quarterLogLatticePoint (k + 1) < x → variation x = 0 := by
+  constructor
+  · intro hvariation x hx
+    have hpoint := congrArg
+      (fun f : BombieriTest ↦ f x) hvariation
+    simp only [monotoneQuarterCutoff_apply, TestFunction.coe_zero,
+      Pi.zero_apply] at hpoint
+    exact (mul_eq_zero.mp hpoint).resolve_left
+      (Complex.ofReal_ne_zero.mpr
+        (monotoneQuarterStep_pos_of_lattice_lt (k + 1) hx).ne')
+  · intro hright
+    apply TestFunction.ext
+    intro x
+    simp only [monotoneQuarterCutoff_apply, TestFunction.coe_zero,
+      Pi.zero_apply]
+    by_cases hx : x ≤ quarterLogLatticePoint (k + 1)
+    · rw [monotoneQuarterStep_eq_zero_of_le (k + 1) hx]
+      simp
+    · rw [hright x (lt_of_not_ge hx)]
+      simp
+
+/-- More generally, the next cutoff of a variation is a prescribed scalar
+multiple of the original suffix exactly when the two parents have that scalar
+relation strictly to the right of the boundary.  Values on the flat-zero side
+remain completely free. -/
+theorem cutoff_eq_smul_suffix_iff_eq_right
+    (parent variation : BombieriTest) (k : ℤ) (c : ℂ) :
+    monotoneQuarterCutoff variation (k + 1) =
+        c • monotoneQuarterCutoff parent (k + 1) ↔
+      ∀ x : ℝ, quarterLogLatticePoint (k + 1) < x →
+        variation x = c * parent x := by
+  constructor
+  · intro hcut x hx
+    have hpoint := congrArg (fun f : BombieriTest ↦ f x) hcut
+    simp only [monotoneQuarterCutoff_apply, TestFunction.coe_smul,
+      Pi.smul_apply, smul_eq_mul] at hpoint
+    have hstep : (monotoneQuarterStep (k + 1) x : ℂ) ≠ 0 :=
+      Complex.ofReal_ne_zero.mpr
+        (monotoneQuarterStep_pos_of_lattice_lt (k + 1) hx).ne'
+    apply mul_left_cancel₀ hstep
+    calc
+      (monotoneQuarterStep (k + 1) x : ℂ) * variation x =
+          c * ((monotoneQuarterStep (k + 1) x : ℂ) * parent x) := hpoint
+      _ = (monotoneQuarterStep (k + 1) x : ℂ) * (c * parent x) := by
+        ring
+  · intro hright
+    apply TestFunction.ext
+    intro x
+    simp only [monotoneQuarterCutoff_apply, TestFunction.coe_smul,
+      Pi.smul_apply, smul_eq_mul]
+    by_cases hx : x ≤ quarterLogLatticePoint (k + 1)
+    · rw [monotoneQuarterStep_eq_zero_of_le (k + 1) hx]
+      norm_num
+    · rw [hright x (lt_of_not_ge hx)]
+      ring
+
+/-- If a variation merely scales the same suffix, the affine parent line
+scales that suffix by `1 + a*c`; it does not create an independent suffix
+direction. -/
+theorem monotoneQuarterCutoff_parentVariationLine_eq_smul_next
+    (parent variation : BombieriTest) (k : ℤ) (c : ℂ)
+    (hscale : monotoneQuarterCutoff variation (k + 1) =
+      c • monotoneQuarterCutoff parent (k + 1))
+    (a : ℝ) :
+    monotoneQuarterCutoff
+        (monotoneQuarterParentVariationLine parent variation a) (k + 1) =
+      (1 + (a : ℂ) * c) • monotoneQuarterCutoff parent (k + 1) := by
+  unfold monotoneQuarterParentVariationLine
+  rw [monotoneQuarterCutoff_add, monotoneQuarterCutoff_smul, hscale]
+  apply TestFunction.ext
+  intro x
+  simp only [TestFunction.coe_add, Pi.add_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul]
+  ring
+
+/-- Exact energy along a suffix-scaling variation. -/
+theorem bombieriRealQuadraticValue_parentVariationLine_next_of_scaling
+    (parent variation : BombieriTest) (k : ℤ) (c : ℂ)
+    (hscale : monotoneQuarterCutoff variation (k + 1) =
+      c • monotoneQuarterCutoff parent (k + 1))
+    (a : ℝ) :
+    bombieriRealQuadraticValue
+        (monotoneQuarterCutoff
+          (monotoneQuarterParentVariationLine parent variation a) (k + 1)) =
+      Complex.normSq (1 + (a : ℂ) * c) *
+        bombieriRealQuadraticValue
+          (monotoneQuarterCutoff parent (k + 1)) := by
+  rw [monotoneQuarterCutoff_parentVariationLine_eq_smul_next
+    parent variation k c hscale a]
+  unfold bombieriRealQuadraticValue
+  rw [bombieriFunctional_quadratic_smul]
+  simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    zero_mul, sub_zero]
+
+/-- In particular, scaling a null suffix keeps it exactly on the null cone;
+such controlled variations cannot supply the positive direction needed by the
+strict-nearby closure lemma. -/
+theorem bombieriRealQuadraticValue_parentVariationLine_next_eq_zero_of_null_scaling
+    (parent variation : BombieriTest) (k : ℤ) (c : ℂ)
+    (hnull : bombieriRealQuadraticValue
+      (monotoneQuarterCutoff parent (k + 1)) = 0)
+    (hscale : monotoneQuarterCutoff variation (k + 1) =
+      c • monotoneQuarterCutoff parent (k + 1))
+    (a : ℝ) :
+    bombieriRealQuadraticValue
+        (monotoneQuarterCutoff
+          (monotoneQuarterParentVariationLine parent variation a) (k + 1)) =
+      0 := by
+  rw [bombieriRealQuadraticValue_parentVariationLine_next_of_scaling
+    parent variation k c hscale a, hnull, mul_zero]
+
+/-- Hence every allowed fixed-suffix variation changes the boundary head only
+on the flat-zero side of the suffix multiplier. -/
+theorem monotoneQuarterCell_suffixPreserving_eq_zero_right
+    (variation : BombieriTest) (k : ℤ)
+    (hvariation : MonotoneQuarterSuffixPreservingVariation variation k)
+    {x : ℝ} (hx : quarterLogLatticePoint (k + 1) < x) :
+    monotoneQuarterCell variation k x = 0 := by
+  rw [monotoneQuarterCell_apply,
+    (suffixPreservingVariation_iff_vanishes_right variation k).1
+      hvariation x hx, mul_zero]
+
+/-- No nonzero scalar suffix direction is present in the fixed-suffix
+variation space.  If a permitted head variation equals `c S` with `c ≠ 0`,
+then the suffix `S` was the zero test already. -/
+theorem suffix_eq_zero_of_suffixPreserving_head_eq_smul_suffix
+    (parent variation : BombieriTest) (k : ℤ) (c : ℂ)
+    (hvariation : MonotoneQuarterSuffixPreservingVariation variation k)
+    (hc : c ≠ 0)
+    (heq : monotoneQuarterCell variation k =
+      c • monotoneQuarterCutoff parent (k + 1)) :
+    monotoneQuarterCutoff parent (k + 1) = 0 := by
+  apply TestFunction.ext
+  intro x
+  by_cases hx : x ≤ quarterLogLatticePoint (k + 1)
+  · rw [monotoneQuarterCutoff_apply,
+      monotoneQuarterStep_eq_zero_of_le (k + 1) hx]
+    simp
+  · have hhead := monotoneQuarterCell_suffixPreserving_eq_zero_right
+      variation k hvariation (lt_of_not_ge hx)
+    have hpoint := congrArg (fun f : BombieriTest ↦ f x) heq
+    simp only [TestFunction.coe_smul, Pi.smul_apply, smul_eq_mul] at hpoint
+    rw [hhead] at hpoint
+    exact (mul_eq_zero.mp hpoint.symm).resolve_left hc
+
+/-- In particular, a nonzero null suffix cannot be reached as the missing
+scalar direction by any parent perturbation which keeps that suffix fixed. -/
+theorem no_suffix_direction_from_suffixPreservingVariation
+    (parent variation : BombieriTest) (k : ℤ) (c : ℂ)
+    (hsuffix : monotoneQuarterCutoff parent (k + 1) ≠ 0)
+    (hvariation : MonotoneQuarterSuffixPreservingVariation variation k)
+    (hc : c ≠ 0) :
+    monotoneQuarterCell variation k ≠
+      c • monotoneQuarterCutoff parent (k + 1) := by
+  intro heq
+  exact hsuffix
+    (suffix_eq_zero_of_suffixPreserving_head_eq_smul_suffix
+      parent variation k c hvariation hc heq)
+
+end
+
+end ArithmeticHodge.Analysis.MultiplicativeWeilMonotoneNullSuffixVariationStructural
