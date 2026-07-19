@@ -40,6 +40,8 @@ open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
+open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoEndpointClean
 open YoshidaEndpointOddOneThreeRawPolarization
 open YoshidaEndpointOddResidualRegularity
 open YoshidaRegularKernelBound
@@ -2096,6 +2098,211 @@ def fourCellOddStripReducedRemainder (w : ℝ → ℝ) : ℝ :=
       (∫ t : ℝ in 0..2,
         yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
           centeredEndpointCorrelation w t)
+
+/-- Polarized physical mass of the reflection-even endpoint-strip channel. -/
+def fourCellOddEndpointStripEvenMassBilinear
+    (u v : ℝ → ℝ) : ℝ :=
+  (1 / 5 : ℝ) * ∫ z : ℝ in -1..1,
+    fourCellOddEndpointStripEven u z *
+      fourCellOddEndpointStripEven v z
+
+/-- Polarized physical mass of the reflection-odd endpoint-strip channel. -/
+def fourCellOddEndpointStripOddMassBilinear
+    (u v : ℝ → ℝ) : ℝ :=
+  (1 / 5 : ℝ) * ∫ z : ℝ in -1..1,
+    fourCellOddEndpointStripOdd u z *
+      fourCellOddEndpointStripOdd v z
+
+/-- Exact symmetric bilinear form of the nonsingular reduced remainder.  In
+particular, the wide regular row is retained as one symmetric correlation
+instead of being bounded mode by mode. -/
+def fourCellOddStripReducedBilinear (u v : ℝ → ℝ) : ℝ :=
+  Real.sqrt 2 * Real.log 2 *
+      fourCellOddEndpointStripEvenMassBilinear u v +
+    (2 - Real.sqrt 2 * Real.log 2) *
+      fourCellOddEndpointStripOddMassBilinear u v +
+    (93 / 50 : ℝ) *
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * u x * v x) -
+    (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+      (∫ x : ℝ in 0..1, u x * v x) -
+    2 * fourCellOperatorHalfWidth *
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear u v t)
+
+private theorem fourCellOddEndpointStripEvenMass_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddEndpointStripEvenMass (u + v) =
+      fourCellOddEndpointStripEvenMass u +
+        2 * fourCellOddEndpointStripEvenMassBilinear u v +
+          fourCellOddEndpointStripEvenMass v := by
+  let U : ℝ → ℝ := fourCellOddEndpointStripEven u
+  let V : ℝ → ℝ := fourCellOddEndpointStripEven v
+  have hU : Continuous U := by
+    simpa only [U] using continuous_fourCellOddEndpointStripEven u hu
+  have hV : Continuous V := by
+    simpa only [V] using continuous_fourCellOddEndpointStripEven v hv
+  have hUU : IntervalIntegrable (fun z : ℝ ↦ U z ^ 2)
+      volume (-1) 1 := (hU.pow 2).intervalIntegrable _ _
+  have hUV : IntervalIntegrable (fun z : ℝ ↦ U z * V z)
+      volume (-1) 1 := (hU.mul hV).intervalIntegrable _ _
+  have hVV : IntervalIntegrable (fun z : ℝ ↦ V z ^ 2)
+      volume (-1) 1 := (hV.pow 2).intervalIntegrable _ _
+  unfold fourCellOddEndpointStripEvenMass
+    fourCellOddEndpointStripEvenMassBilinear
+  rw [show (fun z : ℝ ↦ fourCellOddEndpointStripEven (u + v) z ^ 2) =
+      fun z ↦ U z ^ 2 +
+        (2 * (U z * V z) + V z ^ 2) by
+    funext z
+    dsimp only [U, V]
+    unfold fourCellOddEndpointStripEven
+      fourCellOddEndpointStripPullback
+    simp only [Pi.add_apply]
+    ring,
+    intervalIntegral.integral_add hUU ((hUV.const_mul 2).add hVV),
+    intervalIntegral.integral_add (hUV.const_mul 2) hVV,
+    intervalIntegral.integral_const_mul]
+  ring
+
+private theorem fourCellOddEndpointStripOddMass_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddEndpointStripOddMass (u + v) =
+      fourCellOddEndpointStripOddMass u +
+        2 * fourCellOddEndpointStripOddMassBilinear u v +
+          fourCellOddEndpointStripOddMass v := by
+  let U : ℝ → ℝ := fourCellOddEndpointStripOdd u
+  let V : ℝ → ℝ := fourCellOddEndpointStripOdd v
+  have hU : Continuous U := by
+    simpa only [U] using continuous_fourCellOddEndpointStripOdd u hu
+  have hV : Continuous V := by
+    simpa only [V] using continuous_fourCellOddEndpointStripOdd v hv
+  have hUU : IntervalIntegrable (fun z : ℝ ↦ U z ^ 2)
+      volume (-1) 1 := (hU.pow 2).intervalIntegrable _ _
+  have hUV : IntervalIntegrable (fun z : ℝ ↦ U z * V z)
+      volume (-1) 1 := (hU.mul hV).intervalIntegrable _ _
+  have hVV : IntervalIntegrable (fun z : ℝ ↦ V z ^ 2)
+      volume (-1) 1 := (hV.pow 2).intervalIntegrable _ _
+  unfold fourCellOddEndpointStripOddMass
+    fourCellOddEndpointStripOddMassBilinear
+  rw [show (fun z : ℝ ↦ fourCellOddEndpointStripOdd (u + v) z ^ 2) =
+      fun z ↦ U z ^ 2 +
+        (2 * (U z * V z) + V z ^ 2) by
+    funext z
+    dsimp only [U, V]
+    unfold fourCellOddEndpointStripOdd
+      fourCellOddEndpointStripPullback
+    simp only [Pi.add_apply]
+    ring,
+    intervalIntegral.integral_add hUU ((hUV.const_mul 2).add hVV),
+    intervalIntegral.integral_add (hUV.const_mul 2) hVV,
+    intervalIntegral.integral_const_mul]
+  ring
+
+private theorem integral_zero_one_endpointPotential_add_sq
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * (u x + v x) ^ 2) =
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * u x ^ 2) +
+        2 * (∫ x : ℝ in 0..1,
+          yoshidaEndpointPotential x * u x * v x) +
+        ∫ x : ℝ in 0..1, yoshidaEndpointPotential x * v x ^ 2 := by
+  have hsub : uIcc (0 : ℝ) 1 ⊆ uIcc (-1 : ℝ) 1 := by
+    intro x hx
+    norm_num at hx ⊢
+    constructor <;> linarith
+  have hUU : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * u x ^ 2)
+      volume 0 1 :=
+    (intervalIntegrable_endpointPotential_mul_sq u hu).mono_set hsub
+  have hUV : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * u x * v x)
+      volume 0 1 := by
+    simpa only [mul_assoc] using
+      (intervalIntegrable_endpointPotential_mul (fun x ↦ u x * v x)
+        (hu.mul hv)).mono_set hsub
+  have hVV : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * v x ^ 2)
+      volume 0 1 :=
+    (intervalIntegrable_endpointPotential_mul_sq v hv).mono_set hsub
+  rw [show (fun x : ℝ ↦
+      yoshidaEndpointPotential x * (u x + v x) ^ 2) =
+      fun x ↦ yoshidaEndpointPotential x * u x ^ 2 +
+        (2 * (yoshidaEndpointPotential x * u x * v x) +
+          yoshidaEndpointPotential x * v x ^ 2) by
+    funext x
+    ring,
+    intervalIntegral.integral_add hUU ((hUV.const_mul 2).add hVV),
+    intervalIntegral.integral_add (hUV.const_mul 2) hVV,
+    intervalIntegral.integral_const_mul]
+  ring
+
+private theorem integral_zero_one_add_sq
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    (∫ x : ℝ in 0..1, (u x + v x) ^ 2) =
+      (∫ x : ℝ in 0..1, u x ^ 2) +
+        2 * (∫ x : ℝ in 0..1, u x * v x) +
+          ∫ x : ℝ in 0..1, v x ^ 2 := by
+  have hUU : IntervalIntegrable (fun x : ℝ ↦ u x ^ 2)
+      volume 0 1 := (hu.pow 2).intervalIntegrable _ _
+  have hUV : IntervalIntegrable (fun x : ℝ ↦ u x * v x)
+      volume 0 1 := (hu.mul hv).intervalIntegrable _ _
+  have hVV : IntervalIntegrable (fun x : ℝ ↦ v x ^ 2)
+      volume 0 1 := (hv.pow 2).intervalIntegrable _ _
+  rw [show (fun x : ℝ ↦ (u x + v x) ^ 2) =
+      fun x ↦ u x ^ 2 + (2 * (u x * v x) + v x ^ 2) by
+    funext x
+    ring,
+    intervalIntegral.integral_add hUU ((hUV.const_mul 2).add hVV),
+    intervalIntegral.integral_add (hUV.const_mul 2) hVV,
+    intervalIntegral.integral_const_mul]
+  ring
+
+/-- Genuine quadratic polarization of the reduced remainder. -/
+theorem fourCellOddStripReducedRemainder_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddStripReducedRemainder (u + v) =
+      fourCellOddStripReducedRemainder u +
+        2 * fourCellOddStripReducedBilinear u v +
+          fourCellOddStripReducedRemainder v := by
+  have hCu : Continuous (centeredEndpointCorrelation u) :=
+    continuous_centeredEndpointCorrelation_of_continuous u hu
+  have hCv : Continuous (centeredEndpointCorrelation v) :=
+    continuous_centeredEndpointCorrelation_of_continuous v hv
+  have hB : Continuous (factorTwoCenteredCorrelationBilinear u v) := by
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation u v hu hv).add
+      (continuous_factorTwoCenteredCrossCorrelation v u hv hu)).div_const 2
+  have hIu := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (centeredEndpointCorrelation u) hCu
+  have hIv := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (centeredEndpointCorrelation v) hCv
+  have hIb := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (factorTwoCenteredCorrelationBilinear u v) hB
+  unfold fourCellOddStripReducedRemainder
+    fourCellOddStripReducedBilinear
+  rw [fourCellOddEndpointStripEvenMass_add u v hu hv,
+    fourCellOddEndpointStripOddMass_add u v hu hv]
+  simp only [Pi.add_apply]
+  rw [
+    integral_zero_one_endpointPotential_add_sq u v hu hv,
+    integral_zero_one_add_sq u v hu hv]
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation (u + v) t) =
+      fun t ↦
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation u t +
+        (2 * (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear u v t) +
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation v t) by
+    funext t
+    rw [centeredEndpointCorrelation_add u v hu hv t]
+    ring,
+    intervalIntegral.integral_add hIu ((hIb.const_mul 2).add hIv),
+    intervalIntegral.integral_add (hIb.const_mul 2) hIv,
+    intervalIntegral.integral_const_mul]
+  ring
 
 private theorem centeredRawLogEnergy_nonneg (u : ℝ → ℝ) :
     0 ≤ centeredRawLogEnergy u := by
