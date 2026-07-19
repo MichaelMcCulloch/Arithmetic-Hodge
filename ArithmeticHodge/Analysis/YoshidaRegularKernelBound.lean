@@ -107,14 +107,14 @@ private theorem exp_half_eq_exp_two_mul_exp_neg_three_half (t : ℝ) :
   ring
 
 private theorem lowerCurvature_nonneg
-    {t : ℝ} (ht2 : t ≤ Real.log 2) :
+    {t : ℝ} (ht3 : t ≤ Real.log 3) :
     0 ≤ lowerCurvature t := by
-  have hlog : Real.exp (2 * t) ≤ 4 := by
-    rw [← Real.exp_log (by norm_num : (0 : ℝ) < 4)]
+  have hlog : Real.exp (2 * t) ≤ 9 := by
+    rw [← Real.exp_log (by norm_num : (0 : ℝ) < 9)]
     apply Real.exp_le_exp.mpr
-    rw [show Real.log 4 = 2 * Real.log 2 by
-      rw [show (4 : ℝ) = 2 * 2 by norm_num,
-        Real.log_mul (by norm_num : (2 : ℝ) ≠ 0) (by norm_num : (2 : ℝ) ≠ 0)]
+    rw [show Real.log 9 = 2 * Real.log 3 by
+      rw [show (9 : ℝ) = 3 * 3 by norm_num,
+        Real.log_mul (by norm_num : (3 : ℝ) ≠ 0) (by norm_num : (3 : ℝ) ≠ 0)]
       ring]
     linarith
   have hfactor := Real.exp_pos (-3 * t / 2)
@@ -126,14 +126,14 @@ private theorem lowerCurvature_nonneg
   linarith
 
 private theorem lowerAux_nonneg
-    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ Real.log 2) :
+    {t : ℝ} (ht0 : 0 ≤ t) (ht3 : t ≤ Real.log 3) :
     0 ≤ lowerAux t := by
   have hslope : 0 ≤ lowerSlope t := by
     apply value_nonneg_of_hasDerivAt_nonneg lowerSlope_hasDerivAt
     · norm_num [lowerSlope]
     · exact ht0
     · intro x _ hxt
-      exact lowerCurvature_nonneg (hxt.trans ht2)
+      exact lowerCurvature_nonneg (hxt.trans ht3)
   apply value_nonneg_of_hasDerivAt_nonneg lowerAux_hasDerivAt
   · norm_num [lowerAux]
   · exact ht0
@@ -142,7 +142,7 @@ private theorem lowerAux_nonneg
     · norm_num [lowerSlope]
     · exact hx0
     · intro y _ hyx
-      exact lowerCurvature_nonneg ((hyx.trans hxt).trans ht2)
+      exact lowerCurvature_nonneg ((hyx.trans hxt).trans ht3)
 
 private theorem upperCurvature_nonneg {t : ℝ} (ht0 : 0 ≤ t) :
     0 ≤ upperCurvature t := by
@@ -178,9 +178,9 @@ private theorem sinh_eq_exp_difference (t : ℝ) :
   all_goals ring_nf
 
 private theorem sinh_le_mul_exp_half
-    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ Real.log 2) :
+    {t : ℝ} (ht0 : 0 ≤ t) (ht3 : t ≤ Real.log 3) :
     Real.sinh t ≤ t * Real.exp (t / 2) := by
-  have haux := lowerAux_nonneg ht0 ht2
+  have haux := lowerAux_nonneg ht0 ht3
   have hexp := Real.exp_pos (t / 2)
   rw [sinh_eq_exp_difference]
   unfold lowerAux at haux
@@ -194,18 +194,45 @@ private theorem two_mul_exp_half_le_two_add_mul_sinh {t : ℝ} (ht0 : 0 ≤ t) :
   unfold upperAux at haux
   nlinarith
 
-theorem yoshidaRegularKernel_nonneg
-    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ Real.log 2) :
+theorem yoshidaRegularKernel_nonneg_of_le_log_three
+    {t : ℝ} (ht0 : 0 ≤ t) (ht3 : t ≤ Real.log 3) :
     0 ≤ yoshidaRegularKernel t := by
   by_cases ht : t = 0
   · simp [yoshidaRegularKernel, ht]
   · have htpos : 0 < t := lt_of_le_of_ne ht0 (Ne.symm ht)
     have hsinh : 0 < Real.sinh t := Real.sinh_pos_iff.mpr htpos
-    have hmain := sinh_le_mul_exp_half ht0 ht2
+    have hmain := sinh_le_mul_exp_half ht0 ht3
     rw [yoshidaRegularKernel, if_neg ht]
     rw [sub_nonneg, div_le_div_iff₀ (by positivity : 0 < 2 * t)
       (by positivity : 0 < 2 * Real.sinh t)]
     nlinarith
+
+/-- The regular Yoshida kernel is nonnegative on the original factor-two
+range.  The stronger `log 3` theorem above is needed by the wider four-cell
+parity fold. -/
+theorem yoshidaRegularKernel_nonneg
+    {t : ℝ} (ht0 : 0 ≤ t) (ht2 : t ≤ Real.log 2) :
+    0 ≤ yoshidaRegularKernel t := by
+  apply yoshidaRegularKernel_nonneg_of_le_log_three ht0
+  exact ht2.trans (Real.strictMonoOn_log (by norm_num) (by norm_num) (by norm_num)).le
+
+/-- The diameter of the normalized four-cell half-interval remains inside the
+full nonnegative range of the regular kernel. -/
+theorem five_mul_log_two_div_four_lt_log_three :
+    5 * Real.log 2 / 4 < Real.log 3 := by
+  have hpow : (2 : ℝ) ^ 5 < (3 : ℝ) ^ 4 := by norm_num
+  have hlog := Real.strictMonoOn_log (by norm_num) (by norm_num) hpow
+  rw [Real.log_pow, Real.log_pow] at hlog
+  norm_num at hlog
+  linarith
+
+/-- Kernel positivity on every distance occurring after folding the four-cell
+profile to `[0,1]`; the largest argument is `2 * (5 * log 2 / 8)`. -/
+theorem yoshidaRegularKernel_nonneg_fourCellRange
+    {t : ℝ} (ht0 : 0 ≤ t) (ht : t ≤ 5 * Real.log 2 / 4) :
+    0 ≤ yoshidaRegularKernel t := by
+  exact yoshidaRegularKernel_nonneg_of_le_log_three ht0
+    (ht.trans five_mul_log_two_div_four_lt_log_three.le)
 
 theorem yoshidaRegularKernel_le_quarter {t : ℝ} (ht0 : 0 ≤ t) :
     yoshidaRegularKernel t ≤ 1 / 4 := by
