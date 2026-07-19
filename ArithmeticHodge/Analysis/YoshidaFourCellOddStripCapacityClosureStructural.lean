@@ -1,6 +1,9 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityAssemblyStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellOddPolarPotentialStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicRankResidualBound
+import ArithmeticHodge.Analysis.YoshidaEndpointPotentialOddCoercivity
+import ArithmeticHodge.Analysis.YoshidaEndpointPullbackLipschitz
+import ArithmeticHodge.Analysis.UnitIntervalLogEnergyLipschitz
 
 set_option autoImplicit false
 
@@ -11,9 +14,12 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityClosureStructu
 noncomputable section
 
 open YoshidaEndpointPotentialBound
+open CenteredEndpointCorrelation
 open YoshidaConstantBounds
 open YoshidaEndpointPotentialIntegrable
 open YoshidaEndpointWeightedCauchy
+open YoshidaEndpointPotentialOddCoercivity
+open YoshidaEndpointPullbackLipschitz
 open YoshidaFourCellOddPolarPotentialStructural
 open YoshidaFourCellOddStripCapacityAssemblyStructural
 open YoshidaFourCellOddEndpointStripCoercivityStructural
@@ -22,6 +28,10 @@ open YoshidaFourCellRegularParityFoldStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaFactorTwoPhaseIntrinsicRankResidualBound
+open YoshidaRegularKernelBound
+open UnitIntervalLogEnergyAffine
+open UnitIntervalLogEnergyLipschitz
+open UnitIntervalLogEnergyProjection
 
 /-!
 # Sharp rank control for the odd four-cell strip operator
@@ -76,6 +86,204 @@ def fourCellOddStripBlendedAllocation (w : ℝ → ℝ) : ℝ :=
   (3 / 200 : ℝ) * (∫ x : ℝ in 0..1, w x ^ 2) +
     (7 / 50 : ℝ) *
       (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2)
+
+/-- The exact raw/prime part of the odd strip base.  This is the global
+positive-half raw form with only the adverse endpoint-strip prime channel
+replaced by its sharp local gap. -/
+def fourCellOddStripRetainedPrimeRawCapacity (w : ℝ → ℝ) : ℝ :=
+  (1 / 2 : ℝ) * fourCellOddEndpointStripEvenRawEnergy w +
+    Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+    (2 - Real.sqrt 2 * Real.log 2) *
+      fourCellOddEndpointStripOddMass w +
+    (1 / 2 : ℝ) *
+      (fourCellPositiveHalfRawSameSignEnergy w -
+        fourCellOddEndpointStripRawEnergy w) +
+    (1 / 2 : ℝ) * fourCellPositiveHalfRawReflectedEnergy w (-1)
+
+/-- The standard sharp odd raw/potential reserve, written entirely on the
+positive half interval.  Its coefficient `14 / 5` is the half-interval form
+of the structural `7 / 5` centered coercivity theorem. -/
+def fourCellOddHalfCoreReserve (w : ℝ → ℝ) : ℝ :=
+  (1 / 2 : ℝ) *
+      (fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1)) +
+    2 * (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) -
+    (14 / 5 : ℝ) * (∫ x : ℝ in 0..1, w x ^ 2)
+
+/-- The known centered odd coercivity supplies a nonnegative core reserve
+without a cutoff or a finite-dimensional computation. -/
+theorem fourCellOddHalfCoreReserve_nonneg
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    0 ≤ fourCellOddHalfCoreReserve w := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback w (t : ℝ)
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hLip⟩ := exists_lipschitzWith_centeredPullback w hlocal
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    fun_prop
+  have hfmem : MemLp f 2 :=
+    hfcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f
+      (by simpa only [f] using hLip)
+  have hcoercive :=
+    seven_fifths_mul_integral_sq_le_logEnergy_div_four_add_endpointPotential
+      w hw.continuous (by simpa only [f] using hfmem)
+        (by simpa only [f] using henergy) hodd
+        (intervalIntegrable_endpointPotential_mul_sq w hw.continuous)
+  have hraw := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    w hlocal hodd
+  have hpotential := endpointPotential_eq_two_mul_positiveHalf
+    w hw.continuous (Or.inr hodd)
+  have hmass := integral_sq_eq_two_mul_positiveHalf
+    w hw.continuous (Or.inr hodd)
+  rw [hraw, hpotential, hmass] at hcoercive
+  unfold fourCellOddHalfCoreReserve
+  linarith
+
+/-- The residual after extracting the known sharp odd core.  It contains
+exactly the endpoint-strip prime modification, the wider scalar shift, the
+retained regular completion, and the diagonal allocation used by the odd
+rank Schur estimate.  No sign is asserted: these terms have to remain
+coupled. -/
+def fourCellOddStripCoreDefect (w : ℝ → ℝ) : ℝ :=
+  fourCellOddStripRetainedPrimeRawCapacity w -
+    (1 / 2 : ℝ) *
+      (fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1)) +
+    ((14 / 5 : ℝ) -
+        2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi) - 3 / 200) *
+      (∫ x : ℝ in 0..1, w x ^ 2) -
+    (7 / 50 : ℝ) *
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) +
+    fourCellOperatorHalfWidth *
+      (fourCellPositiveHalfRegularSameSignSquare w
+          fourCellOperatorHalfWidth +
+        fourCellPositiveHalfRegularReflectedSquare w
+          fourCellOperatorHalfWidth (-1)) -
+    2 * fourCellOperatorHalfWidth *
+      fourCellPositiveHalfRegularRowMass w fourCellOperatorHalfWidth
+
+/-- Correlation normal form of the same coupled defect.  It keeps the exact
+wide regular kernel as one signed autocorrelation row, which is the useful
+form for a direct comparison with the raw logarithmic reserve. -/
+def fourCellOddStripCorrelationCoreDefect (w : ℝ → ℝ) : ℝ :=
+  fourCellOddStripRetainedPrimeRawCapacity w -
+    (1 / 2 : ℝ) *
+      (fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1)) +
+    ((14 / 5 : ℝ) -
+        2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi) - 3 / 200) *
+      (∫ x : ℝ in 0..1, w x ^ 2) -
+    (7 / 50 : ℝ) *
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) -
+    2 * fourCellOperatorHalfWidth *
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t)
+
+/-- Local normal form of the four-cell defect.  The global raw form cancels
+exactly: only the removed strip-odd raw energy and its two retained prime
+masses remain, together with the width scalar, allocation, and exact regular
+correlation. -/
+def fourCellOddStripLocalWidthDefect (w : ℝ → ℝ) : ℝ :=
+  -(1 / 2 : ℝ) * fourCellOddEndpointStripOddRawEnergy w +
+    Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+    (2 - Real.sqrt 2 * Real.log 2) *
+      fourCellOddEndpointStripOddMass w +
+    ((14 / 5 : ℝ) -
+        2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi) - 3 / 200) *
+      (∫ x : ℝ in 0..1, w x ^ 2) -
+    (7 / 50 : ℝ) *
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) -
+    2 * fourCellOperatorHalfWidth *
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t)
+
+/-- The endpoint-strip parity split cancels every nonlocal raw term outside
+the strip from the core defect. -/
+theorem fourCellOddStripCorrelationCoreDefect_eq_localWidthDefect
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    fourCellOddStripCorrelationCoreDefect w =
+      fourCellOddStripLocalWidthDefect w := by
+  have hstrip := fourCellOddEndpointStrip_rawEnergy_eq_even_add_odd w hw
+  unfold fourCellOddStripCorrelationCoreDefect
+    fourCellOddStripLocalWidthDefect
+    fourCellOddStripRetainedPrimeRawCapacity
+  rw [hstrip]
+  ring
+
+/-- Exact conversion from the completed regular squares/row to the signed
+autocorrelation row, valid on the odd form domain. -/
+theorem fourCellOddStripCoreDefect_eq_correlation
+    (w : ℝ → ℝ) (hw : Continuous w) (hodd : Function.Odd w) :
+    fourCellOddStripCoreDefect w =
+      fourCellOddStripCorrelationCoreDefect w := by
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha3 : fourCellOperatorHalfWidth ≤ Real.log 3 / 2 := by
+    have h := five_mul_log_two_div_four_lt_log_three
+    unfold fourCellOperatorHalfWidth
+    linarith
+  have hregular :=
+    neg_two_mul_regularCorrelation_eq_positiveHalfCompletion_odd
+      w hw hodd fourCellOperatorHalfWidth ha0 ha3
+  unfold fourCellOddStripCoreDefect
+    fourCellOddStripCorrelationCoreDefect
+  linarith
+
+/-- Exact decomposition of the outstanding base inequality into the known
+nonnegative odd core and one genuinely coupled four-cell defect. -/
+theorem fourCellOddStripCapacityBase_sub_blended_eq_core_add_defect
+    (w : ℝ → ℝ) :
+    fourCellOddStripCapacityBase w -
+        fourCellOddStripBlendedAllocation w =
+      fourCellOddHalfCoreReserve w + fourCellOddStripCoreDefect w := by
+  unfold fourCellOddStripCapacityBase
+    fourCellOddStripBlendedAllocation fourCellOddHalfCoreReserve
+    fourCellOddStripCoreDefect fourCellOddStripRetainedPrimeRawCapacity
+  ring
+
+/-- On odd profiles the outstanding base difference is the nonnegative
+centered core plus the exact prime/width autocorrelation defect. -/
+theorem fourCellOddStripCapacityBase_sub_blended_eq_core_add_correlationDefect
+    (w : ℝ → ℝ) (hw : Continuous w) (hodd : Function.Odd w) :
+    fourCellOddStripCapacityBase w -
+        fourCellOddStripBlendedAllocation w =
+      fourCellOddHalfCoreReserve w +
+        fourCellOddStripCorrelationCoreDefect w := by
+  rw [fourCellOddStripCapacityBase_sub_blended_eq_core_add_defect,
+    fourCellOddStripCoreDefect_eq_correlation w hw hodd]
+
+/-- Fully reduced structural form of the remaining odd base inequality. -/
+theorem fourCellOddStripCapacityBase_sub_blended_eq_core_add_localWidthDefect
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    fourCellOddStripCapacityBase w -
+        fourCellOddStripBlendedAllocation w =
+      fourCellOddHalfCoreReserve w +
+        fourCellOddStripLocalWidthDefect w := by
+  rw [fourCellOddStripCapacityBase_sub_blended_eq_core_add_correlationDefect
+      w hw.continuous hodd,
+    fourCellOddStripCorrelationCoreDefect_eq_localWidthDefect w hw]
+
+/-- The exact remaining odd base theorem is a coupled defect absorption:
+the sharp centered reserve must dominate the negative part of the four-cell
+width/prime defect. -/
+theorem fourCellOddStripCapacityBase_ge_blended_of_core_defect
+    (w : ℝ → ℝ)
+    (hdefect : -fourCellOddStripCoreDefect w ≤
+      fourCellOddHalfCoreReserve w) :
+    fourCellOddStripBlendedAllocation w ≤
+      fourCellOddStripCapacityBase w := by
+  rw [← sub_nonneg]
+  rw [fourCellOddStripCapacityBase_sub_blended_eq_core_add_defect]
+  linarith
 
 /-- Pointwise multiplication weight behind the blended allocation. -/
 def fourCellOddStripSchurWeight (x : ℝ) : ℝ :=
