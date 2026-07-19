@@ -14,11 +14,15 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityClosureStructu
 noncomputable section
 
 open YoshidaEndpointPotentialBound
+open CenteredOddOneThreeEnergy
 open CenteredEndpointCorrelation
 open YoshidaConstantBounds
 open YoshidaEndpointPotentialIntegrable
 open YoshidaEndpointWeightedCauchy
 open YoshidaEndpointPotentialOddCoercivity
+open YoshidaEndpointOcticOddCoercivity
+open YoshidaEndpointOcticPotential
+open YoshidaEndpointOcticTwoModeSchurData
 open YoshidaEndpointPullbackLipschitz
 open YoshidaFourCellOddPolarPotentialStructural
 open YoshidaFourCellOddStripCapacityAssemblyStructural
@@ -139,6 +143,138 @@ theorem fourCellOddHalfCoreReserve_nonneg
   have hmass := integral_sq_eq_two_mul_positiveHalf
     w hw.continuous (Or.inr hodd)
   rw [hraw, hpotential, hmass] at hcoercive
+  unfold fourCellOddHalfCoreReserve
+  linarith
+
+/-- Quantitative form of the centered odd core estimate.  Unlike the bare
+`7 / 5` coercivity theorem, it retains the exact positive `P₁/P₃` Schur
+quadratic after the whole infinite odd tail has been absorbed by its uniform
+`53 / 60` reserve. -/
+theorem oddOneThreeSchurQuadratic_le_centeredCore
+    (w : ℝ → ℝ) (hwcont : Continuous w)
+    (hf : MemLp (fun t : unitInterval ↦ centeredPullback w (t : ℝ)) 2)
+    (henergy : Integrable (unitIntervalRawLogEnergyIntegrand
+      (fun t : unitInterval ↦ centeredPullback w (t : ℝ))))
+    (hwodd : Function.Odd w)
+    (hpotential : IntervalIntegrable
+      (fun x ↦ yoshidaEndpointPotential x * w x ^ 2) volume (-1) 1) :
+    schurS11 * centeredOddP1Coefficient w ^ 2 +
+        2 * schurS13 * centeredOddP1Coefficient w *
+          centeredOddP3Coefficient w +
+        schurS33 * centeredOddP3Coefficient w ^ 2 ≤
+      centeredRawLogEnergy w / 4 +
+        (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2) -
+        (7 / 5 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let a := centeredOddP1Coefficient w
+  let b := centeredOddP3Coefficient w
+  let v := centeredOddOneThreeResidual w
+  let r := centeredOddCombinedOcticResidual w
+  have hlog := centered_odd_one_three_tail_energy_le
+    w hwcont hf henergy hwodd
+  have hmass0 := integral_centeredOddOneThreeResidual_sq w hwcont
+  have hmass :
+      (∫ x : ℝ in -1..1, w x ^ 2) =
+        (2 / 3 : ℝ) * a ^ 2 + (2 / 7 : ℝ) * b ^ 2 +
+          ∫ x : ℝ in -1..1, v x ^ 2 := by
+    dsimp only [a, b, v]
+    linarith
+  have hpot := integral_octic_mul_sq_decomposition w hwcont
+  have hgram := integral_combinedOcticResidual_sq w
+  have htail := octic_residual_tail_nonneg w
+  have hcompletion := tailReserve_completion w hwcont
+  have hQ11 : rawLowQ11 =
+      (1 - 7 / 5 : ℝ) * (2 / 3 : ℝ) + 13771 / 41580 := by
+    norm_num [rawLowQ11]
+  have hQ33 : rawLowQ33 =
+      (11 / 6 - 7 / 5 : ℝ) * (2 / 7 : ℝ) + 23161 / 180180 := by
+    norm_num [rawLowQ33]
+  have hQ13 : rawLowQ13 = (8 / 65 : ℝ) := by
+    rfl
+  have hδ : tailReserve = 137 / 60 - 7 / 5 := by
+    norm_num [tailReserve]
+  have hSchurEq :
+      schurS11 * a ^ 2 + 2 * schurS13 * a * b + schurS33 * b ^ 2 =
+        rawLowQ11 * a ^ 2 + 2 * rawLowQ13 * a * b +
+          rawLowQ33 * b ^ 2 -
+        (residualGramC11 * a ^ 2 +
+          2 * residualGramC13 * a * b + residualGramC33 * b ^ 2) /
+            tailReserve := by
+    unfold schurS11 schurS13 schurS33
+    ring
+  have hsecond :
+      schurS11 * a ^ 2 + 2 * schurS13 * a * b + schurS33 * b ^ 2 ≤
+        rawLowQ11 * a ^ 2 + 2 * rawLowQ13 * a * b +
+          rawLowQ33 * b ^ 2 +
+        tailReserve * (∫ x : ℝ in -1..1, v x ^ 2) +
+        2 * (∫ x : ℝ in -1..1, v x * r x) +
+        ∫ x : ℝ in -1..1, yoshidaEndpointOctic x * v x ^ 2 := by
+    rw [hSchurEq]
+    dsimp only [a, b, v, r] at hgram hcompletion htail ⊢
+    rw [hgram] at hcompletion
+    norm_num [tailReserve] at hcompletion ⊢
+    linarith
+  have hfirst :
+      rawLowQ11 * a ^ 2 + 2 * rawLowQ13 * a * b +
+          rawLowQ33 * b ^ 2 +
+          tailReserve * (∫ x : ℝ in -1..1, v x ^ 2) +
+          2 * (∫ x : ℝ in -1..1, v x * r x) +
+          ∫ x : ℝ in -1..1, yoshidaEndpointOctic x * v x ^ 2 ≤
+        centeredRawLogEnergy w / 4 +
+          (∫ x : ℝ in -1..1, yoshidaEndpointOctic x * w x ^ 2) -
+          (7 / 5 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+    dsimp only [a, b, v, r] at hlog hmass hpot ⊢
+    rw [hQ11, hQ13, hQ33, hδ]
+    linarith
+  have hocticInt : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointOctic x * w x ^ 2) volume (-1) 1 := by
+    apply Continuous.intervalIntegrable
+    unfold yoshidaEndpointOctic
+    fun_prop
+  have hmono :
+      (∫ x : ℝ in -1..1, yoshidaEndpointOctic x * w x ^ 2) ≤
+        ∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2 := by
+    apply intervalIntegral.integral_mono_on_of_le_Ioo
+      (by norm_num : (-1 : ℝ) ≤ 1) hocticInt hpotential
+    intro x hx
+    apply mul_le_mul_of_nonneg_right _ (sq_nonneg _)
+    apply octic_le_endpointPotential
+    rw [abs_lt]
+    exact hx
+  linarith [hsecond.trans hfirst]
+
+/-- Positive-half form of the retained low-mode Schur reserve.  This is the
+quantitative reserve available for absorbing the coupled four-cell local
+width defect. -/
+theorem oddOneThreeSchurQuadratic_le_fourCellOddHalfCoreReserve
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    schurS11 * centeredOddP1Coefficient w ^ 2 +
+        2 * schurS13 * centeredOddP1Coefficient w *
+          centeredOddP3Coefficient w +
+        schurS33 * centeredOddP3Coefficient w ^ 2 ≤
+      fourCellOddHalfCoreReserve w := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback w (t : ℝ)
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hLip⟩ := exists_lipschitzWith_centeredPullback w hlocal
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    fun_prop
+  have hfmem : MemLp f 2 :=
+    hfcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f
+      (by simpa only [f] using hLip)
+  have hcenter := oddOneThreeSchurQuadratic_le_centeredCore
+    w hw.continuous (by simpa only [f] using hfmem)
+      (by simpa only [f] using henergy) hodd
+      (intervalIntegrable_endpointPotential_mul_sq w hw.continuous)
+  have hraw := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    w hlocal hodd
+  have hpotential := endpointPotential_eq_two_mul_positiveHalf
+    w hw.continuous (Or.inr hodd)
+  have hmass := integral_sq_eq_two_mul_positiveHalf
+    w hw.continuous (Or.inr hodd)
+  rw [hraw, hpotential, hmass] at hcenter
   unfold fourCellOddHalfCoreReserve
   linarith
 
