@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilQuarterLogLatticeAggregationStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilQuarterLogLatticeFejerAssemblyStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilFejerLinearResidualStructural
 
 set_option autoImplicit false
 
@@ -15,6 +16,40 @@ open MultiplicativeWeilFejerLocalizationStructural
 open MultiplicativeWeilQuarterLogLatticePartitionStructural
 open MultiplicativeWeilQuarterLogLatticeAggregationStructural
 open MultiplicativeWeilQuarterLogLatticeFejerAssemblyStructural
+open MultiplicativeWeilFejerLinearResidualStructural
+
+/-- The two padding implementations used by the cyclic assembly and the
+linear-lag expansion are definitionally the same family. -/
+theorem paddedIntegerBlock_eq_bombieriFrontPadTwo_integerBlock
+    (A : ℤ → BombieriTest) (lo : ℤ) (n : ℕ) :
+    paddedIntegerBlock A lo n =
+      bombieriFrontPadTwo (integerBlock A lo n) := by
+  rfl
+
+/-- The residual of a padded consecutive block is exactly the weighted sum
+of its ordinary positive linear lags. -/
+theorem bombieriCyclicFejerThreeResidual_paddedIntegerBlock_eq_linear_lags
+    (A : ℤ → BombieriTest) (lo : ℤ) (n : ℕ) :
+    bombieriCyclicFejerThreeResidual (finRotate (n + 2))
+        (paddedIntegerBlock A lo n) =
+      bombieriWeightedLinearLagCross bombieriFejerThreeResidualLagWeight
+        (List.ofFn (integerBlock A lo n)) := by
+  rw [paddedIntegerBlock_eq_bombieriFrontPadTwo_integerBlock]
+  exact
+    bombieriCyclicFejerThreeResidual_frontPadTwo_eq_linear_lags
+      (integerBlock A lo n)
+
+/-- Exact positive-reserve plus linear-lag-residual decomposition for a
+padded consecutive block. -/
+theorem bombieriQuadraticRealValue_paddedIntegerBlock_sum_eq_fejer_add_linear_lags
+    (A : ℤ → BombieriTest) (lo : ℤ) (n : ℕ) :
+    bombieriQuadraticRealValue (∑ i, paddedIntegerBlock A lo n i) =
+      bombieriCyclicFejerThree (finRotate (n + 2))
+          (paddedIntegerBlock A lo n) +
+        bombieriWeightedLinearLagCross bombieriFejerThreeResidualLagWeight
+          (List.ofFn (integerBlock A lo n)) := by
+  rw [bombieriQuadraticRealValue_sum_eq_fejer_add_residual,
+    bombieriCyclicFejerThreeResidual_paddedIntegerBlock_eq_linear_lags]
 
 /-- Every Bombieri test admits a finite cyclic presentation whose sum is the
 test and whose order-three cyclic windows are all ratio-two cells. -/
@@ -33,7 +68,12 @@ theorem exists_paddedQuarterLogLattice_fejer_decomposition
         BombieriRatioTwoCell
           (b i + b (finRotate (n + 2) i) +
             b (finRotate (n + 2) (finRotate (n + 2) i)))) ∧
-      0 ≤ bombieriCyclicFejerThree (finRotate (n + 2)) b := by
+      0 ≤ bombieriCyclicFejerThree (finRotate (n + 2)) b ∧
+      bombieriQuadraticRealValue g =
+        bombieriCyclicFejerThree (finRotate (n + 2)) b +
+          bombieriWeightedLinearLagCross
+            bombieriFejerThreeResidualLagWeight
+            (List.ofFn (integerBlock A lo n)) := by
   obtain ⟨lo, hi, seed, hlohi, hsum, hseed⟩ :=
     exists_consecutive_quarterLogLattice_decomposition g
   let span : ℕ := (hi + 1 - lo).toNat
@@ -134,8 +174,18 @@ theorem exists_paddedQuarterLogLattice_fejer_decomposition
     simpa only [b] using
       bombieriCyclicFejerThree_paddedQuarterLogLattice_nonnegative
         A lo n hn hAleft hAright hAsupport
+  have hexact :
+      bombieriQuadraticRealValue g =
+        bombieriCyclicFejerThree (finRotate (n + 2)) b +
+          bombieriWeightedLinearLagCross
+            bombieriFejerThreeResidualLagWeight
+            (List.ofFn (integerBlock A lo n)) := by
+    rw [← hbsum]
+    simpa only [b] using
+      bombieriQuadraticRealValue_paddedIntegerBlock_sum_eq_fejer_add_linear_lags
+        A lo n
   exact ⟨A, lo, n, b, hn, rfl, hAleft, hAright, hAsupport,
-    hbsum, hwindows, hfejer⟩
+    hbsum, hwindows, hfejer, hexact⟩
 
 end
 
