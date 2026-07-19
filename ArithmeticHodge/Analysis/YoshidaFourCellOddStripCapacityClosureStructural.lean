@@ -3585,6 +3585,243 @@ theorem four_mul_positiveHalfMass_le_coupledRawEnergy
     w hw.continuous (Or.inr hodd)
   linarith
 
+private theorem integral_lowerRescale_sq (w : ℝ → ℝ) :
+    (∫ x : ℝ in 0..1, w ((3 / 5 : ℝ) * x) ^ 2) =
+      (5 / 3 : ℝ) * ∫ x : ℝ in 0..3 / 5, w x ^ 2 := by
+  have hscale := intervalIntegral.integral_comp_mul_left
+    (a := (0 : ℝ)) (b := 1) (c := (3 / 5 : ℝ))
+    (fun x : ℝ ↦ w x ^ 2) (by norm_num)
+  norm_num at hscale ⊢
+  exact hscale
+
+private theorem lowerRescale_sameSignEnergy (w : ℝ → ℝ) :
+    fourCellPositiveHalfRawSameSignEnergy
+        (fun x : ℝ ↦ w ((3 / 5 : ℝ) * x)) =
+      (5 / 3 : ℝ) *
+        (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+          (w x - w y) ^ 2 / |x - y|) := by
+  unfold fourCellPositiveHalfRawSameSignEnergy
+  calc
+    (∫ x : ℝ in 0..1, ∫ y : ℝ in 0..1,
+        (w ((3 / 5 : ℝ) * x) - w ((3 / 5 : ℝ) * y)) ^ 2 /
+          |x - y|) =
+      ∫ x : ℝ in 0..1, ∫ y : ℝ in 0..1,
+        (3 / 5 : ℝ) *
+          ((w ((3 / 5 : ℝ) * x) - w ((3 / 5 : ℝ) * y)) ^ 2 /
+            |(3 / 5 : ℝ) * x - (3 / 5 : ℝ) * y|) := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      apply intervalIntegral.integral_congr
+      intro y _hy
+      change
+        (w ((3 / 5 : ℝ) * x) - w ((3 / 5 : ℝ) * y)) ^ 2 /
+            |x - y| =
+          (3 / 5 : ℝ) *
+            ((w ((3 / 5 : ℝ) * x) - w ((3 / 5 : ℝ) * y)) ^ 2 /
+              |(3 / 5 : ℝ) * x - (3 / 5 : ℝ) * y|)
+      rw [show (3 / 5 : ℝ) * x - (3 / 5 : ℝ) * y =
+          (3 / 5 : ℝ) * (x - y) by ring, abs_mul]
+      norm_num
+      ring
+    _ = ∫ x : ℝ in 0..1, ∫ y : ℝ in 0..3 / 5,
+        (w ((3 / 5 : ℝ) * x) - w y) ^ 2 /
+          |(3 / 5 : ℝ) * x - y| := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      change
+        (∫ y : ℝ in 0..1, (3 / 5 : ℝ) *
+          ((w ((3 / 5 : ℝ) * x) - w ((3 / 5 : ℝ) * y)) ^ 2 /
+            |(3 / 5 : ℝ) * x - (3 / 5 : ℝ) * y|)) =
+        ∫ y : ℝ in 0..3 / 5,
+          (w ((3 / 5 : ℝ) * x) - w y) ^ 2 /
+            |(3 / 5 : ℝ) * x - y|
+      rw [intervalIntegral.integral_const_mul]
+      have hscale := intervalIntegral.integral_comp_mul_left
+        (a := (0 : ℝ)) (b := 1) (c := (3 / 5 : ℝ))
+        (fun y : ℝ ↦
+          (w ((3 / 5 : ℝ) * x) - w y) ^ 2 /
+            |(3 / 5 : ℝ) * x - y|) (by norm_num)
+      norm_num at hscale ⊢
+      rw [hscale]
+      ring
+    _ = (5 / 3 : ℝ) *
+        (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+          (w x - w y) ^ 2 / |x - y|) := by
+      have hscale := intervalIntegral.integral_comp_mul_left
+        (a := (0 : ℝ)) (b := 1) (c := (3 / 5 : ℝ))
+        (fun x : ℝ ↦ ∫ y : ℝ in 0..3 / 5,
+          (w x - w y) ^ 2 / |x - y|) (by norm_num)
+      norm_num at hscale ⊢
+      exact hscale
+
+private theorem lowerRescale_reflectedEnergy (w : ℝ → ℝ) :
+    fourCellPositiveHalfRawReflectedEnergy
+        (fun x : ℝ ↦ w ((3 / 5 : ℝ) * x)) (-1) =
+      (5 / 3 : ℝ) *
+        (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+          (w x + w y) ^ 2 / (x + y)) := by
+  unfold fourCellPositiveHalfRawReflectedEnergy
+  norm_num
+  calc
+    (∫ x : ℝ in 0..1, ∫ y : ℝ in 0..1,
+        (w ((3 / 5 : ℝ) * x) + w ((3 / 5 : ℝ) * y)) ^ 2 /
+          (x + y)) =
+      ∫ x : ℝ in 0..1, ∫ y : ℝ in 0..1,
+        (3 / 5 : ℝ) *
+          ((w ((3 / 5 : ℝ) * x) + w ((3 / 5 : ℝ) * y)) ^ 2 /
+            ((3 / 5 : ℝ) * x + (3 / 5 : ℝ) * y)) := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      apply intervalIntegral.integral_congr
+      intro y _hy
+      change
+        (w ((3 / 5 : ℝ) * x) + w ((3 / 5 : ℝ) * y)) ^ 2 /
+            (x + y) =
+          (3 / 5 : ℝ) *
+            ((w ((3 / 5 : ℝ) * x) + w ((3 / 5 : ℝ) * y)) ^ 2 /
+              ((3 / 5 : ℝ) * x + (3 / 5 : ℝ) * y))
+      rw [show (3 / 5 : ℝ) * x + (3 / 5 : ℝ) * y =
+          (3 / 5 : ℝ) * (x + y) by ring]
+      simp only [div_eq_mul_inv, mul_inv_rev]
+      norm_num
+      ring
+    _ = ∫ x : ℝ in 0..1, ∫ y : ℝ in 0..3 / 5,
+        (w ((3 / 5 : ℝ) * x) + w y) ^ 2 /
+          ((3 / 5 : ℝ) * x + y) := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      change
+        (∫ y : ℝ in 0..1, (3 / 5 : ℝ) *
+          ((w ((3 / 5 : ℝ) * x) + w ((3 / 5 : ℝ) * y)) ^ 2 /
+            ((3 / 5 : ℝ) * x + (3 / 5 : ℝ) * y))) =
+        ∫ y : ℝ in 0..3 / 5,
+          (w ((3 / 5 : ℝ) * x) + w y) ^ 2 /
+            ((3 / 5 : ℝ) * x + y)
+      rw [intervalIntegral.integral_const_mul]
+      have hscale := intervalIntegral.integral_comp_mul_left
+        (a := (0 : ℝ)) (b := 1) (c := (3 / 5 : ℝ))
+        (fun y : ℝ ↦
+          (w ((3 / 5 : ℝ) * x) + w y) ^ 2 /
+            ((3 / 5 : ℝ) * x + y)) (by norm_num)
+      norm_num at hscale ⊢
+      rw [hscale]
+      ring
+    _ = (5 / 3 : ℝ) *
+        (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+          (w x + w y) ^ 2 / (x + y)) := by
+      have hscale := intervalIntegral.integral_comp_mul_left
+        (a := (0 : ℝ)) (b := 1) (c := (3 / 5 : ℝ))
+        (fun x : ℝ ↦ ∫ y : ℝ in 0..3 / 5,
+          (w x + w y) ^ 2 / (x + y)) (by norm_num)
+      norm_num at hscale ⊢
+      exact hscale
+
+/-- Sharp scale-invariant raw gap on the lower positive-half square. -/
+theorem four_mul_lowerIntervalMass_le_lowerNestedCoupledRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    4 * (∫ x : ℝ in 0..3 / 5, w x ^ 2) ≤
+      (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+        (w x - w y) ^ 2 / |x - y|) +
+      ∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+        (w x + w y) ^ 2 / (x + y) := by
+  let r : ℝ → ℝ := fun x ↦ w ((3 / 5 : ℝ) * x)
+  have hr : ContDiff ℝ 1 r := by
+    dsimp only [r]
+    fun_prop
+  have hrodd : Function.Odd r := by
+    intro x
+    dsimp only [r]
+    rw [show (3 / 5 : ℝ) * -x = -((3 / 5 : ℝ) * x) by ring, hodd]
+  have hgap := four_mul_positiveHalfMass_le_coupledRawEnergy r hr hrodd
+  rw [show (∫ x : ℝ in 0..1, r x ^ 2) =
+        (5 / 3 : ℝ) * ∫ x : ℝ in 0..3 / 5, w x ^ 2 by
+      simpa only [r] using integral_lowerRescale_sq w,
+    show fourCellPositiveHalfRawSameSignEnergy r =
+        (5 / 3 : ℝ) *
+          (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+            (w x - w y) ^ 2 / |x - y|) by
+      simpa only [r] using lowerRescale_sameSignEnergy w,
+    show fourCellPositiveHalfRawReflectedEnergy r (-1) =
+        (5 / 3 : ℝ) *
+          (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+            (w x + w y) ^ 2 / (x + y)) by
+      simpa only [r] using lowerRescale_reflectedEnergy w] at hgap
+  linarith
+
+/-- Set-integral form of the sharp lower-square raw gap, ready for the exact
+`[0,3/5] ∪ [3/5,1]` partition of the retained reserve. -/
+theorem four_mul_lowerIntervalMass_le_lowerSquare_coupledRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    4 * (∫ x : ℝ in 0..3 / 5, w x ^ 2) ≤
+      ∫ p : ℝ × ℝ in Ico (0 : ℝ) (3 / 5) ×ˢ Ico (0 : ℝ) (3 / 5),
+        fourCellOddCoupledRawPair w p
+          ∂((volume : Measure ℝ).prod volume) := by
+  let A : Set ℝ := Icc (0 : ℝ) (3 / 5)
+  let S : ℝ × ℝ → ℝ := fun p ↦ centeredLogDifferenceKernel w p.1 p.2
+  let J : ℝ × ℝ → ℝ := fun p ↦
+    (w p.1 + w p.2) ^ 2 / (p.1 + p.2)
+  let K : ℝ × ℝ → ℝ := fourCellOddCoupledRawPair w
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hC⟩ := hlocal.exists_lipschitzOnWith_of_compact isCompact_Icc
+  have hAsub : A ⊆ Icc (-1 : ℝ) 1 := by
+    intro x hx
+    exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  have hsame : IntegrableOn S (A ×ˢ A)
+      ((volume : Measure ℝ).prod volume) := by
+    exact (integrableOn_centeredLogDifferenceKernel_prod_of_lipschitzOnWith
+      w hC).mono_set (Set.prod_mono hAsub hAsub)
+  have hJsub : A ⊆ Icc (0 : ℝ) 1 := by
+    intro x hx
+    exact ⟨hx.1, hx.2.trans (by norm_num)⟩
+  have hJ : IntegrableOn J (A ×ˢ A)
+      ((volume : Measure ℝ).prod volume) := by
+    exact (integrableOn_reflectedRawKernel_of_lipschitzOnWith_odd
+      w hw.continuous hC hodd).mono_set (Set.prod_mono hJsub hJsub)
+  have hK : IntegrableOn K (A ×ˢ A)
+      ((volume : Measure ℝ).prod volume) := by
+    apply hsame.add hJ |>.congr
+    filter_upwards [ae_restrict_mem
+      (measurableSet_Icc.prod measurableSet_Icc)] with p hp
+    dsimp only [K, S, J, A, fourCellOddCoupledRawPair]
+    rfl
+  have hSbridge := intervalIntegral_integral_eq_setIntegral_square
+    S 0 (3 / 5) (by norm_num) hsame
+  have hJbridge := intervalIntegral_integral_eq_setIntegral_square
+    J 0 (3 / 5) (by norm_num) hJ
+  have hgap := four_mul_lowerIntervalMass_le_lowerNestedCoupledRaw
+    w hw hodd
+  change 4 * (∫ x : ℝ in 0..3 / 5, w x ^ 2) ≤
+    (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5, S (x, y)) +
+      ∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5, J (x, y) at hgap
+  rw [hSbridge, hJbridge] at hgap
+  have hsum :
+      (∫ p : ℝ × ℝ in A ×ˢ A, S p
+          ∂((volume : Measure ℝ).prod volume)) +
+        (∫ p : ℝ × ℝ in A ×ˢ A, J p
+          ∂((volume : Measure ℝ).prod volume)) =
+      ∫ p : ℝ × ℝ in A ×ˢ A, K p
+        ∂((volume : Measure ℝ).prod volume) := by
+    calc
+      _ = ∫ p : ℝ × ℝ in A ×ˢ A, S p + J p
+          ∂((volume : Measure ℝ).prod volume) :=
+        (MeasureTheory.integral_add hsame hJ).symm
+      _ = _ := by
+        apply setIntegral_congr_fun (measurableSet_Icc.prod measurableSet_Icc)
+        intro p _hp
+        dsimp only [K, S, J, fourCellOddCoupledRawPair]
+        rfl
+  have hsum' := hsum
+  dsimp only [A] at hsum'
+  have hgapK := hgap.trans_eq hsum'
+  have hsets :
+      Ico (0 : ℝ) (3 / 5) ×ˢ Ico (0 : ℝ) (3 / 5) =ᵐ[
+        (volume : Measure ℝ).prod volume]
+      A ×ˢ A := by
+    exact Measure.set_prod_ae_eq Ico_ae_eq_Icc Ico_ae_eq_Icc
+  have hsetIntegral := setIntegral_congr_set (f := K) hsets
+  simpa only [A, K] using hgapK.trans_eq hsetIntegral.symm
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
