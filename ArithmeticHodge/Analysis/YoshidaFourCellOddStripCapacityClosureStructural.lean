@@ -3506,6 +3506,22 @@ private theorem fourCellScalar_add_regularCharge_lt_163_div_50 :
     nlinarith
   nlinarith [hscalar, hwidth]
 
+/-- Quantitative form of the same scalar estimate.  Keeping the rational
+gap instead of rounding all the way to `163/50` leaves `13/20000` of the
+complete positive-half mass available to the tail Schur norm. -/
+private theorem fourCellScalar_add_regularCharge_le_65187_div_20000 :
+    2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi) +
+        (3 / 200 : ℝ) + fourCellOperatorHalfWidth / 5 ≤
+      65187 / 20000 := by
+  have hscalar := fourCellScalar_lt_31577_div_20000.le
+  have hlog := strict_log_two_bounds.2
+  have hwidth : fourCellOperatorHalfWidth / 5 ≤
+      (1733 / 20000 : ℝ) := by
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  nlinarith
+
 /-- Structural localization of the remaining universal defect.  The entire
 endpoint strip is now paid; without using any further raw square, a possible
 negative part is confined to the physical lower interval `[0,3/5]`. -/
@@ -4922,6 +4938,76 @@ theorem lowerP1RefinedMargin_le_core_add_localWidthDefect
   dsimp only [L, U, H, A, C, E] at hendpoint hhalfSplit hbudget ⊢
   linarith
 
+/-- Nondegenerate refinement of the `P₁` margin.  The quantitative scalar
+gap retains `13/20000` of the complete positive-half mass, so the resulting
+tail norm still sees profiles supported entirely in the endpoint strip. -/
+theorem lowerP1RefinedGlobalMargin_le_core_add_localWidthDefect
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (61 / 150 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) +
+        (13 / 20000 : ℝ) * (∫ x : ℝ in 0..1, w x ^ 2) -
+        (625 / 27 : ℝ) * (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2 +
+          fourCellOddCrossP1Square w ≤
+      fourCellOddHalfCoreReserve w +
+        fourCellOddStripLocalWidthDefect w := by
+  let L : ℝ := ∫ x : ℝ in 0..3 / 5, w x ^ 2
+  let U : ℝ := ∫ x : ℝ in 3 / 5..1, w x ^ 2
+  let H : ℝ := ∫ x : ℝ in 0..1, w x ^ 2
+  let A : ℝ := ∫ x : ℝ in 0..3 / 5, x * w x
+  let C : ℝ :=
+    2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200
+  let E : ℝ :=
+    fourCellOddRawStripCancellationReserve w +
+      Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+      (2 - Real.sqrt 2 * Real.log 2) *
+        fourCellOddEndpointStripOddMass w +
+      (93 / 50 : ℝ) *
+        (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) -
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            centeredEndpointCorrelation w t)
+  have hendpoint :
+      (11 / 3 : ℝ) * L - (625 / 27 : ℝ) * A ^ 2 +
+          fourCellOddCrossP1Square w + (163 / 50 : ℝ) * U -
+          fourCellOperatorHalfWidth / 10 *
+            (∫ x : ℝ in -1..1, w x ^ 2) ≤ E := by
+    simpa only [L, U, A, E] using
+      lowerP1Surplus_add_endpointScalar_add_crossP1Square_sub_regular_le
+        w hw hodd
+  have hcentered : (∫ x : ℝ in -1..1, w x ^ 2) = 2 * H := by
+    simpa only [H] using integral_sq_eq_two_mul_positiveHalf
+      w hw.continuous (Or.inr hodd)
+  have hlowerInt : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume 0 (3 / 5) := (hw.continuous.pow 2).intervalIntegrable _ _
+  have hupperInt : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume (3 / 5) 1 := (hw.continuous.pow 2).intervalIntegrable _ _
+  have hhalfSplit : L + U = H := by
+    simpa only [L, U, H] using
+      intervalIntegral.integral_add_adjacent_intervals hlowerInt hupperInt
+  have hhalfNonneg : 0 ≤ H := by
+    dsimp only [H]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg _)
+  have hcoefficient : C + fourCellOperatorHalfWidth / 5 ≤
+      (65187 / 20000 : ℝ) := by
+    simpa only [C] using
+      fourCellScalar_add_regularCharge_le_65187_div_20000
+  have hbudget :
+      C * H + fourCellOperatorHalfWidth / 5 * H ≤
+        (65187 / 20000 : ℝ) * H := by
+    calc
+      C * H + fourCellOperatorHalfWidth / 5 * H =
+          (C + fourCellOperatorHalfWidth / 5) * H := by ring
+      _ ≤ (65187 / 20000 : ℝ) * H :=
+        mul_le_mul_of_nonneg_right hcoefficient hhalfNonneg
+  have hcharge (a m : ℝ) : a / 10 * (2 * m) = a / 5 * m := by ring
+  rw [hcentered, hcharge] at hendpoint
+  rw [fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced]
+  unfold fourCellOddStripReducedRemainder
+  dsimp only [L, U, H, A, C, E] at hendpoint hhalfSplit hbudget ⊢
+  linarith
+
 private theorem lowerP1Moment_sq_le_nine_one_twenty_fifths_lowerMass
     (w : ℝ → ℝ) (hw : Continuous w) :
     (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2 ≤
@@ -4945,6 +5031,24 @@ theorem twenty_seven_two_fiftieths_lowerMass_le_core_add_localWidthDefect_of_P1
       fourCellOddHalfCoreReserve w +
         fourCellOddStripLocalWidthDefect w := by
   have hrefined := lowerP1RefinedMargin_le_core_add_localWidthDefect
+    w hw hodd
+  have hcross := nineteen_mul_lowerP1Moment_sq_le_crossP1Square
+    w hw hodd hone
+  have hmoment := lowerP1Moment_sq_le_nine_one_twenty_fifths_lowerMass
+    w hw.continuous
+  nlinarith
+
+/-- The nondegenerate `P₁`-orthogonal tail margin.  In addition to the sharp
+`27/250` lower-strip reserve it retains `13/20000` of the complete
+positive-half mass, which is the coercive weight needed by the Riesz row. -/
+theorem lowerTailMargin_add_globalMass_le_core_add_localWidthDefect_of_P1
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
+    (hone : centeredOddP1Coefficient w = 0) :
+    (27 / 250 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) +
+        (13 / 20000 : ℝ) * (∫ x : ℝ in 0..1, w x ^ 2) ≤
+      fourCellOddHalfCoreReserve w +
+        fourCellOddStripLocalWidthDefect w := by
+  have hrefined := lowerP1RefinedGlobalMargin_le_core_add_localWidthDefect
     w hw hodd
   have hcross := nineteen_mul_lowerP1Moment_sq_le_crossP1Square
     w hw hodd hone
@@ -5473,10 +5577,30 @@ theorem fourCellOddP7TailWeight_nonneg
   exact mul_nonneg (by norm_num) (intervalIntegral.integral_nonneg
     (by norm_num) (fun x _hx ↦ sq_nonneg (v x)))
 
-/-- The sole infinite-dimensional Schur obligation after retaining
-`P₁/P₃/P₅`.  Endpoint zero appears as the exact affine trace condition on
-the `P₇+` residual.  The square inequality is precisely the weighted Riesz
-dual-norm bound; no finite sampling or numerical enclosure is hidden here. -/
+/-- The lower-only candidate weight vanishes on every tail supported in the
+endpoint strip.  Hence it cannot serve as a dual norm unless the exact mixed
+row annihilates that entire infinite-dimensional subspace. -/
+theorem fourCellOddP7TailWeight_eq_zero_of_zero_on_lower
+    (v : ℝ → ℝ)
+    (hzero : ∀ x ∈ Icc (0 : ℝ) (3 / 5), v x = 0) :
+    fourCellOddP7TailWeight v = 0 := by
+  unfold fourCellOddP7TailWeight
+  have hint : (∫ x : ℝ in 0..3 / 5, v x ^ 2) = 0 := by
+    calc
+      (∫ x : ℝ in 0..3 / 5, v x ^ 2) =
+          ∫ _x : ℝ in 0..3 / 5, 0 := by
+        apply intervalIntegral.integral_congr
+        intro x hx
+        have hx' : x ∈ Icc (0 : ℝ) (3 / 5) := by
+          simpa only [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 3 / 5)] using hx
+        change v x ^ 2 = 0
+        rw [hzero x hx']
+        norm_num
+      _ = 0 := by simp
+  rw [hint, mul_zero]
+
+/-- The formally too-strong lower-only dual claim.  It is retained solely
+to state its exact degeneracy consequence below. -/
 def fourCellOddOneThreeFiveEndpointWeightedDualBound : Prop :=
   ∀ (c d e : ℝ) (v : ℝ → ℝ),
     ContDiff ℝ 1 v → Function.Odd v →
@@ -5489,6 +5613,57 @@ def fourCellOddOneThreeFiveEndpointWeightedDualBound : Prop :=
       fourCellOddCoreLocalQuadratic
           (fourCellOddOneThreeFiveLowProfile c d e) *
         fourCellOddP7TailWeight v
+
+/-- A lower-only dual claim forces the mixed row to vanish whenever the
+lower weight vanishes.  This is the structural obstruction that necessitates
+retaining a positive amount of the complete-half raw reserve. -/
+theorem fourCellOddCoreLocalBilinear_eq_zero_of_lowerOnlyDual
+    (hdual : fourCellOddOneThreeFiveEndpointWeightedDualBound)
+    (c d e : ℝ) (v : ℝ → ℝ)
+    (hv : ContDiff ℝ 1 v) (hvodd : Function.Odd v)
+    (hvone : centeredOddP1Coefficient v = 0)
+    (hvthree : centeredOddP3Coefficient v = 0)
+    (hvfive : centeredOddP5Coefficient v = 0)
+    (hendpoint : v 1 = -(c + d + e))
+    (hweight : fourCellOddP7TailWeight v = 0) :
+    fourCellOddCoreLocalBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) v = 0 := by
+  have h := hdual c d e v hv hvodd hvone hvthree hvfive hendpoint
+  rw [hweight, mul_zero] at h
+  nlinarith [sq_nonneg (fourCellOddCoreLocalBilinear
+    (fourCellOddOneThreeFiveLowProfile c d e) v)]
+
+/-- Nondegenerate Riesz weight: the sharp lower reserve plus the rational
+global gap left by the exact scalar budget. -/
+def fourCellOddP7GlobalTailWeight (v : ℝ → ℝ) : ℝ :=
+  fourCellOddP7TailWeight v +
+    (13 / 20000 : ℝ) * ∫ x : ℝ in 0..1, v x ^ 2
+
+theorem fourCellOddP7GlobalTailWeight_nonneg (v : ℝ → ℝ) :
+    0 ≤ fourCellOddP7GlobalTailWeight v := by
+  unfold fourCellOddP7GlobalTailWeight
+  have hhalf : 0 ≤ (∫ x : ℝ in 0..1, v x ^ 2) :=
+    intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg (v x))
+  exact add_nonneg (fourCellOddP7TailWeight_nonneg v)
+    (mul_nonneg (by norm_num) hhalf)
+
+/-- The genuine infinite-dimensional Schur obligation after retaining
+`P₁/P₃/P₅`.  Endpoint zero is the exact affine trace condition on the
+`P₇+` residual.  The square inequality is a nondegenerate weighted Riesz
+dual-norm bound and contains no sampling or numerical enclosure. -/
+def fourCellOddOneThreeFiveEndpointGlobalWeightedDualBound : Prop :=
+  ∀ (c d e : ℝ) (v : ℝ → ℝ),
+    ContDiff ℝ 1 v → Function.Odd v →
+    centeredOddP1Coefficient v = 0 →
+    centeredOddP3Coefficient v = 0 →
+    centeredOddP5Coefficient v = 0 →
+    v 1 = -(c + d + e) →
+    fourCellOddCoreLocalBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) v ^ 2 ≤
+      fourCellOddCoreLocalQuadratic
+          (fourCellOddOneThreeFiveLowProfile c d e) *
+        fourCellOddP7GlobalTailWeight v
 
 private theorem add_two_mul_add_nonneg_of_sq_le_mul
     (a b m : ℝ) (ha : 0 ≤ a) (hm : 0 ≤ m)
@@ -5505,13 +5680,13 @@ private theorem add_two_mul_add_nonneg_of_sq_le_mul
 
 /-- Exact endpoint-zero closure after the `P₁/P₃/P₅` split.  The finite
 block is stated independently, and the only tail premise is the weighted
-Riesz bound above.  The already proved `27/250` structural tail margin then
-performs the Schur completion with no spectral exhaustion. -/
+Riesz bound above.  The nondegenerate structural tail margin then performs
+the Schur completion with no spectral exhaustion. -/
 theorem fourCellOddCoreLocalQuadratic_nonneg_of_endpointZero_threeMode_dual
     (hfinite : ∀ c d e : ℝ,
       0 ≤ fourCellOddCoreLocalQuadratic
         (fourCellOddOneThreeFiveLowProfile c d e))
-    (hdual : fourCellOddOneThreeFiveEndpointWeightedDualBound)
+    (hdual : fourCellOddOneThreeFiveEndpointGlobalWeightedDualBound)
     (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
     (hendpoint : w (-1) = 0 ∧ w 1 = 0) :
     0 ≤ fourCellOddCoreLocalQuadratic w := by
@@ -5543,23 +5718,24 @@ theorem fourCellOddCoreLocalQuadratic_nonneg_of_endpointZero_threeMode_dual
   have hlow : 0 ≤ fourCellOddCoreLocalQuadratic p := by
     rw [hp]
     exact hfinite c d e
-  have hmargin : fourCellOddP7TailWeight v ≤
+  have hmargin : fourCellOddP7GlobalTailWeight v ≤
       fourCellOddCoreLocalQuadratic v := by
     have htail :=
-      twenty_seven_two_fiftieths_lowerMass_le_core_add_localWidthDefect_of_P1
+      lowerTailMargin_add_globalMass_le_core_add_localWidthDefect_of_P1
         v hv hvodd hvone
-    simpa only [fourCellOddP7TailWeight, fourCellOddCoreLocalQuadratic]
+    simpa only [fourCellOddP7GlobalTailWeight, fourCellOddP7TailWeight,
+      fourCellOddCoreLocalQuadratic]
       using htail
-  have hmargin0 : 0 ≤ fourCellOddP7TailWeight v :=
-    fourCellOddP7TailWeight_nonneg v
+  have hmargin0 : 0 ≤ fourCellOddP7GlobalTailWeight v :=
+    fourCellOddP7GlobalTailWeight_nonneg v
   have hschur : fourCellOddCoreLocalBilinear p v ^ 2 ≤
-      fourCellOddCoreLocalQuadratic p * fourCellOddP7TailWeight v := by
+      fourCellOddCoreLocalQuadratic p * fourCellOddP7GlobalTailWeight v := by
     rw [hp]
     exact hdual c d e v hv hvodd hvone hvthree hvfive hvendpoint
   have hcompleted : 0 ≤
       fourCellOddCoreLocalQuadratic p +
         2 * fourCellOddCoreLocalBilinear p v +
-          fourCellOddP7TailWeight v :=
+          fourCellOddP7GlobalTailWeight v :=
     add_two_mul_add_nonneg_of_sq_le_mul _ _ _ hlow hmargin0 hschur
   have hdecomp := fourCellOddCoreLocal_oneThreeFive_decomposition w hw.continuous
   linarith
