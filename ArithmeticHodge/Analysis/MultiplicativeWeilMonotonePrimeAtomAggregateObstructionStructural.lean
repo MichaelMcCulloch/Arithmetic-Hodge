@@ -1755,6 +1755,142 @@ theorem monotonePrimeAtomCompleteSliceGram_posSemidefinite
   exact bombieriFunctional_quadratic_re_nonneg_of_ratioTwoCell _
     (monotonePrimeAtomCompleteSliceCombination_ratioTwo parent k S c)
 
+/-- Complete head coordinate of one transplanted slice. -/
+def monotonePrimeAtomCompleteHeadSliceCoordinate
+    (parent : BombieriTest) (k : ℤ) (j : ℕ) : ℝ :=
+  (bombieriTwoBlockGlobalCrossSymbol
+    (monotoneQuarterCell parent k)
+    (monotonePrimeAtomTransplantedSlice parent k j)).re
+
+/-- The complete head--aggregate cross is the same Mangoldt weight vector
+paired with the complete head-coordinate vector. -/
+theorem monotonePrimeAtomAggregateCross_re_eq_completeHeadSliceCoordinates
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    (monotonePrimeAtomAggregateCross parent k S).re =
+      ∑ j ∈ S, bombieriLogPrimeAtomWeight j *
+        monotonePrimeAtomCompleteHeadSliceCoordinate parent k j := by
+  unfold monotonePrimeAtomAggregateCross
+  rw [monotonePrimeAtomAggregateSlice_eq_sum]
+  simpa only [monotonePrimeAtomCompleteHeadSliceCoordinate] using
+    completeCross_finset_sum_right_re
+      (monotoneQuarterCell parent k) S bombieriLogPrimeAtomWeight
+      (monotonePrimeAtomTransplantedSlice parent k)
+
+/-- Atom-level defect between the complete head cross and the physical
+zero-lag head coordinate. -/
+def monotonePrimeAtomHeadCoordinateDefect
+    (parent : BombieriTest) (k : ℤ) (j : ℕ) : ℝ :=
+  monotonePrimeAtomCompleteHeadSliceCoordinate parent k j -
+    monotonePrimeAtomPhysicalHeadSliceCoordinate parent k j
+
+/-- The aggregate translated-kernel remainder is exactly the Mangoldt
+weight vector paired with the atom-level head-coordinate defect. -/
+theorem monotonePrimeAtomAggregateRemainder_eq_headCoordinateDefects
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    monotonePrimeAtomAggregateRemainder parent k S =
+      ∑ j ∈ S, bombieriLogPrimeAtomWeight j *
+        monotonePrimeAtomHeadCoordinateDefect parent k j := by
+  unfold monotonePrimeAtomAggregateRemainder
+    monotonePrimeAtomHeadCoordinateDefect
+  rw [monotonePrimeAtomAggregateCross_re_eq_completeHeadSliceCoordinates,
+    monotonePrimeAtom_finset_sum_eq_physicalHeadSliceCoordinates]
+  rw [← Finset.sum_sub_distrib]
+  apply Finset.sum_congr rfl
+  intro j _hj
+  ring
+
+/-- The head adjoined to an arbitrary real complete-slice combination. -/
+def monotonePrimeAtomCompleteHeadSliceCombination
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (a : ℝ) (c : ℕ → ℝ) : BombieriTest :=
+  ((a : ℝ) : ℂ) • monotoneQuarterCell parent k +
+    monotonePrimeAtomCompleteSliceCombination parent k S c
+
+/-- The complete augmented head/slice family occupies the same ratio-two
+plateau for every real coefficient vector. -/
+theorem monotonePrimeAtomCompleteHeadSliceCombination_ratioTwo
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (a : ℝ) (c : ℕ → ℝ) :
+    BombieriRatioTwoCell
+      (monotonePrimeAtomCompleteHeadSliceCombination parent k S a c) := by
+  refine ⟨quarterLogLatticePoint (k - 1),
+    quarterLogLatticePoint (k + 3),
+    quarterLogLatticePoint_pos (k - 1),
+    quarterLogLatticePoint_mono (by omega), ?_, ?_⟩
+  · unfold monotonePrimeAtomCompleteHeadSliceCombination
+    apply (tsupport_add _ _).trans
+    apply Set.union_subset
+    · exact (tsupport_smul_subset_right
+        (fun _x : ℝ ↦ ((a : ℝ) : ℂ))
+        (monotoneQuarterCell parent k : ℝ → ℂ)).trans
+        ((monotoneQuarterCell_tsupport_subset parent k).trans
+          (Set.Icc_subset_Icc
+            (quarterLogLatticePoint_mono (by omega))
+            (quarterLogLatticePoint_mono (by omega))))
+    · exact completeSliceCombination_tsupport_subset parent k S c
+  · rw [show k + 3 = (k - 1) + 4 by omega,
+      quarterLogLatticePoint_add_four]
+    exact le_of_eq
+      (mul_div_cancel_right₀ 2
+        (quarterLogLatticePoint_pos (k - 1)).ne')
+
+/-- Exact quadratic coordinates of the unconditionally positive complete
+augmented block `[H qᵀ; q Q]`. -/
+theorem monotonePrimeAtomCompleteHeadSliceCombination_quadratic
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (a : ℝ) (c : ℕ → ℝ) :
+    bombieriRealQuadraticValue
+        (monotonePrimeAtomCompleteHeadSliceCombination parent k S a c) =
+      a ^ 2 * bombieriRealQuadraticValue (monotoneQuarterCell parent k) +
+        2 * a * (∑ j ∈ S, c j *
+          monotonePrimeAtomCompleteHeadSliceCoordinate parent k j) +
+        ∑ i ∈ S, ∑ j ∈ S,
+          c i * c j * monotonePrimeAtomCompleteSliceGram parent k i j := by
+  let V : BombieriTest :=
+    monotonePrimeAtomCompleteSliceCombination parent k S c
+  have hquad := aggregateQuadratic_real_linearCombination
+    (monotoneQuarterCell parent k) V a 1
+  have hcross :
+      (bombieriTwoBlockGlobalCrossSymbol
+        (monotoneQuarterCell parent k) V).re =
+        ∑ j ∈ S, c j *
+          monotonePrimeAtomCompleteHeadSliceCoordinate parent k j := by
+    dsimp only [V, monotonePrimeAtomCompleteSliceCombination]
+    simpa only [monotonePrimeAtomCompleteHeadSliceCoordinate] using
+      completeCross_finset_sum_right_re
+        (monotoneQuarterCell parent k) S c
+        (monotonePrimeAtomTransplantedSlice parent k)
+  have hreserve :
+      bombieriRealQuadraticValue V =
+        ∑ i ∈ S, ∑ j ∈ S,
+          c i * c j * monotonePrimeAtomCompleteSliceGram parent k i j := by
+    exact (monotonePrimeAtomCompleteSliceGram_quadratic_eq_reserve
+      parent k S c).symm
+  change bombieriRealQuadraticValue
+      (((a : ℝ) : ℂ) • monotoneQuarterCell parent k + V) = _
+  rw [hreserve, hcross] at hquad
+  have hone : (((1 : ℝ) : ℂ) • V) = V := by norm_num
+  rw [hone] at hquad
+  rw [hquad]
+  ring
+
+/-- Therefore the full complete augmented head/slice Gram is positive
+semidefinite for every finite atom set. -/
+theorem monotonePrimeAtomCompleteAugmentedGram_posSemidefinite
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (a : ℝ) (c : ℕ → ℝ) :
+    0 ≤
+      a ^ 2 * bombieriRealQuadraticValue (monotoneQuarterCell parent k) +
+        2 * a * (∑ j ∈ S, c j *
+          monotonePrimeAtomCompleteHeadSliceCoordinate parent k j) +
+        ∑ i ∈ S, ∑ j ∈ S,
+          c i * c j * monotonePrimeAtomCompleteSliceGram parent k i j := by
+  rw [← monotonePrimeAtomCompleteHeadSliceCombination_quadratic]
+  unfold bombieriRealQuadraticValue
+  exact bombieriFunctional_quadratic_re_nonneg_of_ratioTwoCell _
+    (monotonePrimeAtomCompleteHeadSliceCombination_ratioTwo
+      parent k S a c)
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
