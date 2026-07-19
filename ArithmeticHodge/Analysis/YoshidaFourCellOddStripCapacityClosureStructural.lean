@@ -8033,6 +8033,38 @@ theorem fourCellOddEndpointStripOddMass_oneThreeFiveLowProfile
   rw [factorTwoIntrinsicEnergy_oneThreeFiveLowProfile]
   ring
 
+/-- Exact `L²` mass matrix of the reflection-even affine strip channel on
+the retained `P₁/P₃/P₅` pivot. -/
+theorem fourCellOddEndpointStripEvenMass_oneThreeFiveLowProfile
+    (c d e : ℝ) :
+    fourCellOddEndpointStripEvenMass
+        (fourCellOddOneThreeFiveLowProfile c d e) =
+      (32 / 125 : ℝ) * c ^ 2 +
+        2 * (32 / 625 : ℝ) * c * d -
+        2 * (3296 / 78125 : ℝ) * c * e +
+        (192 / 15625 : ℝ) * d ^ 2 -
+        2 * (576 / 390625 : ℝ) * d * e +
+        (1495776 / 48828125 : ℝ) * e ^ 2 := by
+  unfold fourCellOddEndpointStripEvenMass
+  simp_rw [fourCellOddEndpointStripEven_oneThreeFiveLowProfile]
+  let A : ℝ := 4 * c / 5 + 2 * d / 25 - 2497 * e / 6250
+  let B : ℝ := 6 * d / 25 + 483 * e / 625
+  let C : ℝ := 63 * e / 1250
+  change (1 / 5 : ℝ) * (∫ z : ℝ in -1..1,
+    (A + B * z ^ 2 + C * z ^ 4) ^ 2) = _
+  rw [show (fun z : ℝ ↦ (A + B * z ^ 2 + C * z ^ 4) ^ 2) =
+      fun z ↦
+        A ^ 2 * z ^ 0 + 0 * z ^ 1 + (2 * A * B) * z ^ 2 +
+          0 * z ^ 3 + (B ^ 2 + 2 * A * C) * z ^ 4 +
+            0 * z ^ 5 + (2 * B * C) * z ^ 6 +
+              0 * z ^ 7 + C ^ 2 * z ^ 8 + 0 * z ^ 9 by
+    funext z
+    ring,
+    integral_polynomial_nine]
+  dsimp only [A, B, C]
+  norm_num
+  ring
+
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
 theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
