@@ -3246,6 +3246,38 @@ def fourCellOddRetainedPrimePotentialBilinear
     (93 / 50 : ℝ) *
       (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * u x * v x)
 
+/-- All positive singular, prime, and endpoint-potential forms retained as
+one quadratic object. -/
+def fourCellOddRetainedEndpointQuadratic (w : ℝ → ℝ) : ℝ :=
+  fourCellOddRawStripCancellationReserve w +
+    fourCellOddRetainedPrimePotentialQuadratic w
+
+/-- The complete bilinear form associated with the retained positive
+endpoint quadratic. -/
+def fourCellOddRetainedEndpointBilinear (u v : ℝ → ℝ) : ℝ :=
+  fourCellOddRawStripCancellationPolarization u v +
+    fourCellOddRetainedPrimePotentialBilinear u v
+
+/-- The remaining signed scalar-mass and wide-regular quadratic rows. -/
+def fourCellOddSignedMassRegularQuadratic (w : ℝ → ℝ) : ℝ :=
+  (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+    (∫ x : ℝ in 0..1, w x ^ 2) +
+  2 * fourCellOperatorHalfWidth *
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation w t)
+
+/-- Bilinear form of the signed scalar-mass and wide-regular rows. -/
+def fourCellOddSignedMassRegularBilinear (u v : ℝ → ℝ) : ℝ :=
+  (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+    (∫ x : ℝ in 0..1, u x * v x) +
+  2 * fourCellOperatorHalfWidth *
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        factorTwoCenteredCorrelationBilinear u v t)
+
 theorem fourCellOddStripReducedBilinear_eq_retained_sub_signed
     (u v : ℝ → ℝ) :
     fourCellOddStripReducedBilinear u v =
@@ -3939,6 +3971,77 @@ theorem fourCellOddRetainedPrimePotentialBilinear_sq_le_mul
   dsimp only [tv] at hnonneg
   rw [fourCellOddRetainedPrimePotentialBilinear_const_mul_right,
     fourCellOddRetainedPrimePotentialQuadratic_const_mul] at hnonneg
+  convert hnonneg using 1
+  all_goals ring
+
+private theorem fourCellOddRetainedEndpointQuadratic_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddRetainedEndpointQuadratic (u + v) =
+      fourCellOddRetainedEndpointQuadratic u +
+        2 * fourCellOddRetainedEndpointBilinear u v +
+          fourCellOddRetainedEndpointQuadratic v := by
+  unfold fourCellOddRetainedEndpointQuadratic
+    fourCellOddRetainedEndpointBilinear
+  rw [fourCellOddRawStripCancellationReserve_add,
+    fourCellOddRetainedPrimePotentialQuadratic_add u v hu hv]
+  ring
+
+private theorem fourCellOddRetainedEndpointQuadratic_const_mul
+    (v : ℝ → ℝ) (hv : ContDiff ℝ 1 v) (hvodd : Function.Odd v)
+    (a : ℝ) :
+    fourCellOddRetainedEndpointQuadratic (fun x ↦ a * v x) =
+      a ^ 2 * fourCellOddRetainedEndpointQuadratic v := by
+  unfold fourCellOddRetainedEndpointQuadratic
+  rw [fourCellOddRawStripCancellationReserve_const_mul v hv hvodd,
+    fourCellOddRetainedPrimePotentialQuadratic_const_mul]
+  ring
+
+private theorem fourCellOddRetainedEndpointBilinear_const_mul_right
+    (u v : ℝ → ℝ) (hu : ContDiff ℝ 1 u) (hv : ContDiff ℝ 1 v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) (a : ℝ) :
+    fourCellOddRetainedEndpointBilinear u (fun x ↦ a * v x) =
+      a * fourCellOddRetainedEndpointBilinear u v := by
+  unfold fourCellOddRetainedEndpointBilinear
+  rw [fourCellOddRawStripCancellationPolarization_const_mul_right
+      u v hu hv huodd hvodd,
+    fourCellOddRetainedPrimePotentialBilinear_const_mul_right]
+  ring
+
+theorem fourCellOddRetainedEndpointQuadratic_nonneg
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    0 ≤ fourCellOddRetainedEndpointQuadratic w := by
+  unfold fourCellOddRetainedEndpointQuadratic
+  exact add_nonneg (fourCellOddRawStripCancellationReserve_nonneg w hw)
+    (fourCellOddRetainedPrimePotentialQuadratic_nonneg w)
+
+/-- One exact Cauchy--Schwarz inequality for the complete retained endpoint
+form.  Raw same/reflected/strip energy and both prime channels and the full
+endpoint potential remain coupled; only the signed scalar/regular rows lie
+outside this square completion. -/
+theorem fourCellOddRetainedEndpointBilinear_sq_le_mul
+    (u v : ℝ → ℝ) (hu : ContDiff ℝ 1 u) (hv : ContDiff ℝ 1 v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) :
+    fourCellOddRetainedEndpointBilinear u v ^ 2 ≤
+      fourCellOddRetainedEndpointQuadratic u *
+        fourCellOddRetainedEndpointQuadratic v := by
+  apply sq_le_mul_of_forall_quadratic_nonneg
+    (fourCellOddRetainedEndpointQuadratic u)
+    (fourCellOddRetainedEndpointBilinear u v)
+    (fourCellOddRetainedEndpointQuadratic v)
+    (fourCellOddRetainedEndpointQuadratic_nonneg v hv)
+  intro t
+  let tv : ℝ → ℝ := fun x ↦ t * v x
+  have htv : ContDiff ℝ 1 tv := by
+    dsimp only [tv]
+    fun_prop
+  have hnonneg := fourCellOddRetainedEndpointQuadratic_nonneg
+    (u + tv) (hu.add htv)
+  rw [fourCellOddRetainedEndpointQuadratic_add u tv hu.continuous
+      htv.continuous] at hnonneg
+  dsimp only [tv] at hnonneg
+  rw [fourCellOddRetainedEndpointBilinear_const_mul_right
+      u v hu hv huodd hvodd,
+    fourCellOddRetainedEndpointQuadratic_const_mul v hv hvodd] at hnonneg
   convert hnonneg using 1
   all_goals ring
 
@@ -6823,6 +6926,33 @@ def fourCellOddCoreLocalQuadratic (w : ℝ → ℝ) : ℝ :=
 def fourCellOddCoreLocalBilinear (u v : ℝ → ℝ) : ℝ :=
   fourCellOddRawStripCancellationPolarization u v +
     fourCellOddStripReducedBilinear u v
+
+/-- Exact diagonal split into the complete retained positive endpoint form
+and the only remaining signed scalar-mass/regular form. -/
+theorem fourCellOddCoreLocalQuadratic_eq_retained_sub_signed
+    (w : ℝ → ℝ) :
+    fourCellOddCoreLocalQuadratic w =
+      fourCellOddRetainedEndpointQuadratic w -
+        fourCellOddSignedMassRegularQuadratic w := by
+  unfold fourCellOddCoreLocalQuadratic
+  rw [fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced,
+    fourCellOddStripReducedRemainder_eq_retained_sub_signed]
+  unfold fourCellOddRetainedEndpointQuadratic
+    fourCellOddSignedMassRegularQuadratic
+  ring
+
+/-- Exact bilinear counterpart of the retained-minus-signed diagonal split.
+-/
+theorem fourCellOddCoreLocalBilinear_eq_retained_sub_signed
+    (u v : ℝ → ℝ) :
+    fourCellOddCoreLocalBilinear u v =
+      fourCellOddRetainedEndpointBilinear u v -
+        fourCellOddSignedMassRegularBilinear u v := by
+  unfold fourCellOddCoreLocalBilinear
+  rw [fourCellOddStripReducedBilinear_eq_retained_sub_signed]
+  unfold fourCellOddRetainedEndpointBilinear
+    fourCellOddSignedMassRegularBilinear
+  ring
 
 /-- Exact form-level normal form of the `P₁/P₃/P₅`--tail mixed row.  The
 global singular raw form has disappeared; the remaining terms are the
