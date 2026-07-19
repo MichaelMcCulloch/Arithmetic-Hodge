@@ -7995,6 +7995,23 @@ theorem centeredRawLogEnergy_oneThreeFiveLowProfile
       (8 / 3 : ℝ) * c ^ 2 + (44 / 21 : ℝ) * d ^ 2 +
         (274 / 165 : ℝ) * e ^ 2)
 
+/-- Exact adverse raw quadratic created by the affine endpoint strip on the
+retained `P₁/P₃/P₅` pivot. -/
+theorem fourCellOddEndpointStripOddRawEnergy_oneThreeFiveLowProfile
+    (c d e : ℝ) :
+    fourCellOddEndpointStripOddRawEnergy
+        (fourCellOddOneThreeFiveLowProfile c d e) =
+      (8 / 375 : ℝ) * c ^ 2 +
+        2 * (224 / 3125 : ℝ) * c * d +
+        2 * (736 / 15625 : ℝ) * c * e +
+        (79036 / 328125 : ℝ) * d ^ 2 +
+        2 * (496 / 3125 : ℝ) * d * e +
+        (898920274 / 8056640625 : ℝ) * e ^ 2 := by
+  unfold fourCellOddEndpointStripOddRawEnergy
+  rw [fourCellOddEndpointStripOdd_oneThreeFiveLowProfile_eq_lowProfile,
+    centeredRawLogEnergy_oneThreeFiveLowProfile]
+  ring
+
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
 theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
