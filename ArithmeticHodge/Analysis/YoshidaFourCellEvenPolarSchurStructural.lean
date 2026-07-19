@@ -1467,6 +1467,30 @@ theorem thirteen_div_eighty_lt_fourCell_evenBracket_one :
         (convex_Icc (-1 : ℝ) 1)) (by intro x; rfl)]
   exact thirteen_div_eighty_lt_fourCellEvenCompletedParityOperator_one
 
+/-- The canonical constant cosh-low line retains the full homogeneous
+`13 / 80` pivot, expressed in its actual wide-cosh coordinate. -/
+theorem thirteen_div_eighty_mul_coshCoordinate_sq_le_fourCell_evenBracket_coshLow
+    (w : ℝ → ℝ) :
+    let c : ℝ :=
+      fourCellPositiveCoshMoment w (fourCellOperatorHalfWidth / 2) *
+        (fourCellEvenCoshMass)⁻¹
+    (13 / 80 : ℝ) * c ^ 2 ≤
+      centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth
+          (fourCellEvenCoshLow w fourCellEvenCoshUnit) -
+        Real.sqrt 2 * Real.log 2 *
+          fourCellEndpointPairing
+            (fourCellEvenCoshLow w fourCellEvenCoshUnit) := by
+  dsimp only
+  let c : ℝ :=
+    fourCellPositiveCoshMoment w (fourCellOperatorHalfWidth / 2) *
+      (fourCellEvenCoshMass)⁻¹
+  have hlow : fourCellEvenCoshLow w fourCellEvenCoshUnit =
+      (fun _ : ℝ ↦ c) := by
+    funext x
+    simp only [fourCellEvenCoshLow, fourCellEvenCoshUnit, c]
+  rw [hlow]
+  exact thirteen_div_eighty_mul_sq_le_fourCell_evenBracket_const c
+
 /-- Every canonical cosh-low component therefore has a nonnegative exact
 four-cell diagonal. -/
 theorem fourCell_evenBracket_coshLow_nonnegative (w : ℝ → ℝ) :
@@ -1483,8 +1507,8 @@ theorem fourCell_evenBracket_coshLow_nonnegative (w : ℝ → ℝ) :
     funext x
     simp only [fourCellEvenCoshLow, fourCellEvenCoshUnit, c]
   rw [hlow]
-  exact (mul_nonneg (by norm_num : (0 : ℝ) ≤ 1 / 20) (sq_nonneg c)).trans
-    (one_twentieth_mul_sq_le_fourCell_evenBracket_const c)
+  exact (mul_nonneg (by norm_num : (0 : ℝ) ≤ 13 / 80) (sq_nonneg c)).trans
+    (thirteen_div_eighty_mul_sq_le_fourCell_evenBracket_const c)
 
 /-- The polar-free tail and one exact scalar determinant are sufficient for
 the complete even bracket.  This is the codimension-one Schur target left by
