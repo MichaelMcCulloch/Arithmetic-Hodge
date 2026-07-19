@@ -1182,6 +1182,38 @@ private theorem memLp_endpointPotential_mul_continuous
   rw [Real.norm_eq_abs, sq_abs]
   ring
 
+private theorem memLp_fixedLagK_intrinsicEvenP0246
+    (c0 c2 c4 c6 : ℝ) :
+    MemLp
+      (factorTwoFixedLagK (8 / 5)
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hp : Continuous p := by
+    simpa only [p] using
+      continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hrightBase : MemLp (fun x : ℝ ↦ p ((8 / 5 : ℝ) + x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    memLp_two_restrict_centered_of_continuous _
+      (hp.comp (continuous_const.add continuous_id))
+  have hright : MemLp
+      (factorTwoFixedLagRightRepresenter (8 / 5) p) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [factorTwoFixedLagRightRepresenter] using
+      hrightBase.indicator (measurableSet_Icc :
+        MeasurableSet (Icc (-1 : ℝ) (1 - 8 / 5)))
+  have hleftBase : MemLp (fun x : ℝ ↦ p (x - (8 / 5 : ℝ))) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    memLp_two_restrict_centered_of_continuous _
+      (hp.comp (continuous_id.sub continuous_const))
+  have hleft : MemLp
+      (factorTwoFixedLagLeftRepresenter (8 / 5) p) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [factorTwoFixedLagLeftRepresenter] using
+      hleftBase.indicator (measurableSet_Icc :
+        MeasurableSet (Icc (-1 + 8 / 5 : ℝ) 1))
+  simpa only [factorTwoFixedLagK, p] using hright.add hleft
+
 /-- Additivity of the retained capacity polarization in its second
 continuous argument. -/
 theorem fourCellEvenEndpointCapacityPolarization_add_right
@@ -1699,6 +1731,344 @@ theorem integral_cutoffEightCanonicalProjectedRepresenter_sq_eq
     intervalIntegral.integral_add (hGsq.sub (hGS.const_mul 2)) hSsq,
     intervalIntegral.integral_sub hGsq (hGS.const_mul 2),
     intervalIntegral.integral_const_mul, hpair, hSnorm]
+  ring
+
+/-! ## Exact fixed-lag projected tail -/
+
+private def cutoffEightFixedLagRightP0 (x : ℝ) : ℝ :=
+  centeredEvenP0 (x - 8 / 5)
+
+private def cutoffEightFixedLagRightP2 (x : ℝ) : ℝ :=
+  centeredEvenP2 (x - 8 / 5)
+
+private def cutoffEightFixedLagRightP4 (x : ℝ) : ℝ :=
+  factorTwoCenteredP4 (x - 8 / 5)
+
+private def cutoffEightFixedLagRightP6 (x : ℝ) : ℝ :=
+  factorTwoCenteredP6 (x - 8 / 5)
+
+private theorem two_mul_integral_fixedLagRightP0_P0 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP0 x) =
+      4 / 5 := by
+  unfold cutoffEightFixedLagRightP0 centeredEvenP0
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP0_P2 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP2 x) =
+      48 / 125 := by
+  unfold cutoffEightFixedLagRightP0 cutoffEightFixedLagRightP2
+    centeredEvenP0 centeredEvenP2
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP0_P4 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP4 x) =
+      -144 / 3125 := by
+  unfold cutoffEightFixedLagRightP0 cutoffEightFixedLagRightP4
+    centeredEvenP0 factorTwoCenteredP4
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP0_P6 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP6 x) =
+      -5712 / 78125 := by
+  unfold cutoffEightFixedLagRightP0 cutoffEightFixedLagRightP6 centeredEvenP0
+  simp only [factorTwoCenteredP6_eq]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP2_P2 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP2 x) =
+      3844 / 15625 := by
+  unfold cutoffEightFixedLagRightP2 centeredEvenP2
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP2_P4 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP4 x) =
+      1008 / 15625 := by
+  unfold cutoffEightFixedLagRightP2 cutoffEightFixedLagRightP4
+    centeredEvenP2 factorTwoCenteredP4
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP2_P6 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP6 x) =
+      -28176 / 1953125 := by
+  unfold cutoffEightFixedLagRightP2 cutoffEightFixedLagRightP6 centeredEvenP2
+  simp only [factorTwoCenteredP6_eq]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP4_P4 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP4 x * cutoffEightFixedLagRightP4 x) =
+      97444 / 703125 := by
+  unfold cutoffEightFixedLagRightP4 factorTwoCenteredP4
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP4_P6 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP4 x * cutoffEightFixedLagRightP6 x) =
+      626544 / 9765625 := by
+  unfold cutoffEightFixedLagRightP4 cutoffEightFixedLagRightP6
+    factorTwoCenteredP4
+  simp only [factorTwoCenteredP6_eq]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+private theorem two_mul_integral_fixedLagRightP6_P6 :
+    2 * (∫ x : ℝ in 3 / 5..1,
+      cutoffEightFixedLagRightP6 x * cutoffEightFixedLagRightP6 x) =
+      1342897924 / 15869140625 := by
+  unfold cutoffEightFixedLagRightP6
+  simp only [factorTwoCenteredP6_eq]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
+  norm_num
+
+/-- Full squared norm of the symmetric fixed-lag representer before removing
+its four low Legendre coordinates. -/
+def fourCellEvenP0246CutoffEightFixedLagFullGram
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  (4 / 5 : ℝ) * c0 ^ 2 +
+    2 * (48 / 125 : ℝ) * c0 * c2 -
+    2 * (144 / 3125 : ℝ) * c0 * c4 -
+    2 * (5712 / 78125 : ℝ) * c0 * c6 +
+    (3844 / 15625 : ℝ) * c2 ^ 2 +
+    2 * (1008 / 15625 : ℝ) * c2 * c4 -
+    2 * (28176 / 1953125 : ℝ) * c2 * c6 +
+    (97444 / 703125 : ℝ) * c4 ^ 2 +
+    2 * (626544 / 9765625 : ℝ) * c4 * c6 +
+    (1342897924 / 15869140625 : ℝ) * c6 ^ 2
+
+set_option maxHeartbeats 800000 in
+theorem integral_fixedLagK_intrinsicEvenP0246_sq_eq_fullGram
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      factorTwoFixedLagK (8 / 5)
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x ^ 2) =
+      fourCellEvenP0246CutoffEightFixedLagFullGram c0 c2 c4 c6 := by
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  let K : ℝ → ℝ := factorTwoFixedLagK (8 / 5) p
+  have hp : Continuous p := by
+    simpa only [p] using
+      continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hpEven : Function.Even p := by
+    simpa only [p] using
+      even_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hKsqOn : Integrable (fun x : ℝ ↦ ‖K x‖ ^ 2)
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [K, p] using
+      (memLp_fixedLagK_intrinsicEvenP0246 c0 c2 c4 c6).integrable_norm_pow
+        (by norm_num)
+  have hKsq : IntervalIntegrable (fun x : ℝ ↦ K x ^ 2)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    apply hKsqOn.congr
+    filter_upwards with x
+    rw [Real.norm_eq_abs, sq_abs]
+  have hKEven : Function.Even K := by
+    intro x
+    unfold K factorTwoFixedLagK
+    rw [factorTwoFixedLagRightRepresenter_neg_of_even hpEven,
+      factorTwoFixedLagLeftRepresenter_neg_of_even hpEven]
+    ring
+  have hDensityEven : Function.Even (fun x : ℝ ↦ K x ^ 2) := by
+    intro x
+    change K (-x) ^ 2 = K x ^ 2
+    rw [hKEven x]
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even
+    (fun x : ℝ ↦ K x ^ 2) hKsq hDensityEven
+  have hzero : (∫ x : ℝ in 0..3 / 5, K x ^ 2) = 0 := by
+    apply intervalIntegral.integral_zero_ae
+    filter_upwards [MeasureTheory.Measure.ae_ne volume (3 / 5 : ℝ)] with x hxne hx
+    rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 3 / 5)] at hx
+    have hxlt : x < 3 / 5 := lt_of_le_of_ne hx.2 hxne
+    have hright : x ∉ Icc (-1 : ℝ) (1 - 8 / 5) := by
+      intro h
+      linarith [hx.1, h.2]
+    have hleft : x ∉ Icc (-1 + 8 / 5 : ℝ) 1 := by
+      intro h
+      linarith [hxlt, h.1]
+    unfold K factorTwoFixedLagK factorTwoFixedLagRightRepresenter
+      factorTwoFixedLagLeftRepresenter
+    rw [Set.indicator_of_notMem hright, Set.indicator_of_notMem hleft]
+    norm_num
+  have hright :
+      (∫ x : ℝ in 3 / 5..1, K x ^ 2) =
+        ∫ x : ℝ in 3 / 5..1, p (x - 8 / 5) ^ 2 := by
+    apply intervalIntegral.integral_congr
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    have hrightNot : x ∉ Icc (-1 : ℝ) (1 - 8 / 5) := by
+      intro h
+      linarith [hx.1, h.2]
+    have hleftMem : x ∈ Icc (-1 + 8 / 5 : ℝ) 1 := by
+      constructor <;> linarith [hx.1, hx.2]
+    change K x ^ 2 = p (x - 8 / 5) ^ 2
+    unfold K factorTwoFixedLagK factorTwoFixedLagRightRepresenter
+      factorTwoFixedLagLeftRepresenter
+    rw [Set.indicator_of_notMem hrightNot,
+      Set.indicator_of_mem hleftMem, zero_add]
+  have hzeroI : IntervalIntegrable (fun x : ℝ ↦ K x ^ 2)
+      volume 0 (3 / 5) := hKsq.mono_set (by
+    intro x hx
+    norm_num at hx ⊢
+    constructor <;> linarith [hx.1, hx.2])
+  have hrightI : IntervalIntegrable (fun x : ℝ ↦ K x ^ 2)
+      volume (3 / 5) 1 := hKsq.mono_set (by
+    intro x hx
+    norm_num at hx ⊢
+    constructor <;> linarith [hx.1, hx.2])
+  have hsplit := intervalIntegral.integral_add_adjacent_intervals
+    hzeroI hrightI
+  rw [hzero, zero_add, hright] at hsplit
+  rw [← hsplit] at hfold
+  change (∫ x : ℝ in -1..1, K x ^ 2) = _
+  rw [hfold]
+  rw [show (fun x : ℝ ↦ p (x - 8 / 5) ^ 2) = fun x ↦
+      c0 ^ 2 *
+          (cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP0 x) +
+        (2 * c0 * c2) *
+          (cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP2 x) +
+        (2 * c0 * c4) *
+          (cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP4 x) +
+        (2 * c0 * c6) *
+          (cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP6 x) +
+        c2 ^ 2 *
+          (cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP2 x) +
+        (2 * c2 * c4) *
+          (cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP4 x) +
+        (2 * c2 * c6) *
+          (cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP6 x) +
+        c4 ^ 2 *
+          (cutoffEightFixedLagRightP4 x * cutoffEightFixedLagRightP4 x) +
+        (2 * c4 * c6) *
+          (cutoffEightFixedLagRightP4 x * cutoffEightFixedLagRightP6 x) +
+        c6 ^ 2 *
+          (cutoffEightFixedLagRightP6 x * cutoffEightFixedLagRightP6 x) by
+    funext x
+    unfold p factorTwoIntrinsicEvenP0246Profile
+      factorTwoIntrinsicEvenP024Profile factorTwoEvenStructuralLowProfile
+      factorTwoIntrinsicSixEvenTail cutoffEightFixedLagRightP0
+      cutoffEightFixedLagRightP2 cutoffEightFixedLagRightP4
+      cutoffEightFixedLagRightP6
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    ring]
+  repeat rw [intervalIntegral.integral_add]
+  all_goals try
+    apply Continuous.intervalIntegrable
+    simp only [cutoffEightFixedLagRightP0, cutoffEightFixedLagRightP2,
+      cutoffEightFixedLagRightP4, cutoffEightFixedLagRightP6,
+      centeredEvenP0, centeredEvenP2, factorTwoCenteredP4,
+      factorTwoCenteredP6_eq]
+    fun_prop
+  repeat rw [intervalIntegral.integral_const_mul]
+  have h00 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP0 x) =
+        2 / 5 := by
+    linarith [two_mul_integral_fixedLagRightP0_P0]
+  have h02 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP2 x) =
+        24 / 125 := by
+    linarith [two_mul_integral_fixedLagRightP0_P2]
+  have h04 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP4 x) =
+        -72 / 3125 := by
+    linarith [two_mul_integral_fixedLagRightP0_P4]
+  have h06 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP0 x * cutoffEightFixedLagRightP6 x) =
+        -2856 / 78125 := by
+    linarith [two_mul_integral_fixedLagRightP0_P6]
+  have h22 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP2 x) =
+        1922 / 15625 := by
+    linarith [two_mul_integral_fixedLagRightP2_P2]
+  have h24 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP4 x) =
+        504 / 15625 := by
+    linarith [two_mul_integral_fixedLagRightP2_P4]
+  have h26 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP2 x * cutoffEightFixedLagRightP6 x) =
+        -14088 / 1953125 := by
+    linarith [two_mul_integral_fixedLagRightP2_P6]
+  have h44 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP4 x * cutoffEightFixedLagRightP4 x) =
+        48722 / 703125 := by
+    linarith [two_mul_integral_fixedLagRightP4_P4]
+  have h46 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP4 x * cutoffEightFixedLagRightP6 x) =
+        313272 / 9765625 := by
+    linarith [two_mul_integral_fixedLagRightP4_P6]
+  have h66 :
+      (∫ x : ℝ in 3 / 5..1,
+        cutoffEightFixedLagRightP6 x * cutoffEightFixedLagRightP6 x) =
+        671448962 / 15869140625 := by
+    linarith [two_mul_integral_fixedLagRightP6_P6]
+  rw [h00, h02, h04, h06, h22, h24, h26, h44, h46, h66]
+  unfold fourCellEvenP0246CutoffEightFixedLagFullGram
   ring
 
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
