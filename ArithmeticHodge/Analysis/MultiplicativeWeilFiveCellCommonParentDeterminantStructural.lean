@@ -4216,6 +4216,23 @@ theorem fiveCellThreeBlockCombinationParent_middle_apply_of_beta_zero
   push_cast
   ring
 
+/-- A remote endpoint Schur bound, even together with both adjacent Schur
+bounds and a positive middle pivot, does not imply the residual contraction.
+Indeed the saturated adjacent family `A = M = E = 1`, `U = V = -1` has all
+three pairwise minors nonnegative whenever `X² ≤ 1`, but strictly reverses
+the middle-pivot residual inequality unless `X = 1`. -/
+theorem saturatedAdjacentSchur_pairwiseBounds_strictlyReverse_middlePivotResidual
+    (X : ℝ) (hXpair : X ^ 2 ≤ 1) (hXne : X ≠ 1) :
+    ((-1 : ℝ) ^ 2 ≤ 1 * 1) ∧
+      ((-1 : ℝ) ^ 2 ≤ 1 * 1) ∧
+      X ^ 2 ≤ 1 * 1 ∧
+      (1 * 1 - (-1 : ℝ) ^ 2) * (1 * 1 - (-1 : ℝ) ^ 2) <
+        (1 * X - (-1 : ℝ) * (-1 : ℝ)) ^ 2 := by
+  refine ⟨by norm_num, by norm_num, ?_, ?_⟩
+  · simpa using hXpair
+  · norm_num
+    exact sq_pos_of_ne_zero (sub_ne_zero.mpr hXne)
+
 /-- Exact scalar form of the new common-parent obstruction.  Once the two
 adjacent minors are nonnegative and the middle diagonal is positive, a
 minimal negative configuration must strictly reverse the residual
