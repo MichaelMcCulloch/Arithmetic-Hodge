@@ -561,8 +561,9 @@ theorem fourCellEndpointPairing_le_raw_add_mass_of_coshMoment_zero
   norm_num at hpair
   nlinarith
 
-/-- The actual dyadic coefficient is below one, so the complete prime loss
-obeys the same raw-plus-mass budget. -/
+/-- Retaining the strict `981/1000` dyadic coefficient leaves a positive
+`919/400000` fraction of the raw energy after paying the complete prime
+loss. -/
 theorem sqrtTwoLogTwo_mul_fourCellEndpointPairing_le_raw_add_mass_of_coshMoment_zero
     (w : ℝ → ℝ) (hw : Continuous w)
     (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
@@ -570,13 +571,16 @@ theorem sqrtTwoLogTwo_mul_fourCellEndpointPairing_le_raw_add_mass_of_coshMoment_
     (hzero : fourCellPositiveCoshMoment w
       (fourCellOperatorHalfWidth / 2) = 0) :
     Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w ≤
-      (101 / 400 : ℝ) * centeredRawLogEnergy w +
-        (101 / 10000 : ℝ) *
+      (99081 / 400000 : ℝ) * centeredRawLogEnergy w +
+        (99081 / 10000000 : ℝ) *
           (∫ x : ℝ in -1..1, w x ^ 2) := by
   let P : ℝ := fourCellEndpointPairing w
   let R : ℝ :=
     (101 / 400 : ℝ) * centeredRawLogEnergy w +
       (101 / 10000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2)
+  let S : ℝ :=
+    (99081 / 400000 : ℝ) * centeredRawLogEnergy w +
+      (99081 / 10000000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2)
   have hpair : P ≤ R := by
     simpa only [P, R] using
       fourCellEndpointPairing_le_raw_add_mass_of_coshMoment_zero
@@ -595,22 +599,30 @@ theorem sqrtTwoLogTwo_mul_fourCellEndpointPairing_le_raw_add_mass_of_coshMoment_
     dsimp only [R]
     positivity
   have hbeta0 : 0 ≤ Real.sqrt 2 * Real.log 2 := by positivity
-  have hbeta1 : Real.sqrt 2 * Real.log 2 ≤ 1 :=
-    (sqrt_two_mul_log_two_lt_981_div_1000.trans (by norm_num)).le
+  have hbeta : Real.sqrt 2 * Real.log 2 ≤ (981 / 1000 : ℝ) :=
+    sqrt_two_mul_log_two_lt_981_div_1000.le
+  have hscaledR : (981 / 1000 : ℝ) * R = S := by
+    dsimp only [R, S]
+    ring
+  have hS : 0 ≤ S := by
+    dsimp only [S]
+    positivity
   by_cases hP : 0 ≤ P
   · calc
       Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w =
           (Real.sqrt 2 * Real.log 2) * P := by rfl
-      _ ≤ 1 * P := mul_le_mul_of_nonneg_right hbeta1 hP
-      _ = P := one_mul P
-      _ ≤ R := hpair
+      _ ≤ (981 / 1000 : ℝ) * P :=
+        mul_le_mul_of_nonneg_right hbeta hP
+      _ ≤ (981 / 1000 : ℝ) * R :=
+        mul_le_mul_of_nonneg_left hpair (by norm_num)
+      _ = S := hscaledR
       _ = _ := by rfl
   · have hPnonpos : P ≤ 0 := le_of_not_ge hP
     calc
       Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w =
           (Real.sqrt 2 * Real.log 2) * P := by rfl
       _ ≤ 0 := mul_nonpos_of_nonneg_of_nonpos hbeta0 hPnonpos
-      _ ≤ R := hR
+      _ ≤ S := hS
       _ = _ := by rfl
 
 /-- The canonical constant direction has a uniform positive margin in the
