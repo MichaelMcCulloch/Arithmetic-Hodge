@@ -90,6 +90,82 @@ private theorem physicalNormSq_integrable (g : BombieriTest) :
       (f := fun x : ℝ ↦ ‖g x‖)
   exact hcont.integrable_of_hasCompactSupport hcompact
 
+private theorem normSq_integral_mul_star_le_physical
+    {α : Type*} [MeasurableSpace α] (μ : Measure α)
+    (F G : α → ℂ)
+    (hFmeas : AEStronglyMeasurable F μ)
+    (hGmeas : AEStronglyMeasurable G μ)
+    (hFsq : Integrable (fun x ↦ ‖F x‖ ^ 2) μ)
+    (hGsq : Integrable (fun x ↦ ‖G x‖ ^ 2) μ) :
+    Complex.normSq (∫ x, F x * starRingEnd ℂ (G x) ∂μ) ≤
+      (∫ x, ‖F x‖ ^ 2 ∂μ) * ∫ x, ‖G x‖ ^ 2 ∂μ := by
+  have hFLp : MemLp F 2 μ :=
+    (memLp_two_iff_integrable_sq_norm hFmeas).2 hFsq
+  have hGLp : MemLp G 2 μ :=
+    (memLp_two_iff_integrable_sq_norm hGmeas).2 hGsq
+  have hholder := integral_mul_norm_le_Lp_mul_Lq
+    (p := 2) (q := 2) (f := F) (g := G) (μ := μ)
+    Real.HolderConjugate.two_two (by simpa using hFLp) (by simpa using hGLp)
+  let A : ℝ := ∫ x, ‖F x‖ ^ 2 ∂μ
+  let B : ℝ := ∫ x, ‖G x‖ ^ 2 ∂μ
+  have hA0 : 0 ≤ A := integral_nonneg fun _ ↦ sq_nonneg _
+  have hB0 : 0 ≤ B := integral_nonneg fun _ ↦ sq_nonneg _
+  have hholder' :
+      (∫ x, ‖F x‖ * ‖G x‖ ∂μ) ≤ Real.sqrt A * Real.sqrt B := by
+    rw [Real.sqrt_eq_rpow, Real.sqrt_eq_rpow]
+    simpa only [A, B, Real.rpow_two] using hholder
+  have hnorm :
+      ‖∫ x, F x * starRingEnd ℂ (G x) ∂μ‖ ≤
+        ∫ x, ‖F x‖ * ‖G x‖ ∂μ := by
+    calc
+      ‖∫ x, F x * starRingEnd ℂ (G x) ∂μ‖ ≤
+          ∫ x, ‖F x * starRingEnd ℂ (G x)‖ ∂μ :=
+        norm_integral_le_integral_norm _
+      _ = ∫ x, ‖F x‖ * ‖G x‖ ∂μ := by
+        apply integral_congr_ae
+        filter_upwards [] with x
+        rw [norm_mul, Complex.norm_conj]
+  have hbound := hnorm.trans hholder'
+  rw [Complex.normSq_eq_norm_sq]
+  calc
+    ‖∫ x, F x * starRingEnd ℂ (G x) ∂μ‖ ^ 2 ≤
+        (Real.sqrt A * Real.sqrt B) ^ 2 :=
+      (sq_le_sq₀ (norm_nonneg _) (by positivity)).2 hbound
+    _ = A * B := by
+      rw [mul_pow, Real.sq_sqrt hA0, Real.sq_sqrt hB0]
+    _ = _ := rfl
+
+/-- At multiplicative lag one, directed correlation is exactly the physical
+`L²(0,∞)` inner product.  Its sharp Cauchy bound therefore has coefficient
+one in the critical logarithmic energies, with no support-length or lattice
+loss. -/
+theorem normSq_bombieriDirectedCorrelation_one_le_criticalLogEnergy_mul
+    (f g : BombieriTest) :
+    Complex.normSq (bombieriDirectedCorrelation f g 1) ≤
+      bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g := by
+  let μ : Measure ℝ := volume.restrict (Ioi (0 : ℝ))
+  have hfMeas : AEStronglyMeasurable f μ :=
+    f.contDiff.continuous.aestronglyMeasurable.restrict
+  have hgMeas : AEStronglyMeasurable g μ :=
+    g.contDiff.continuous.aestronglyMeasurable.restrict
+  have hfSq : Integrable (fun x : ℝ ↦ ‖f x‖ ^ 2) μ :=
+    (physicalNormSq_integrable f).integrableOn
+  have hgSq : Integrable (fun x : ℝ ↦ ‖g x‖ ^ 2) μ :=
+    (physicalNormSq_integrable g).integrableOn
+  have h := normSq_integral_mul_star_le_physical
+    μ f g hfMeas hgMeas hfSq hgSq
+  unfold bombieriDirectedCorrelation
+  simp only [one_mul]
+  change Complex.normSq
+      (∫ x : ℝ, f x * starRingEnd ℂ (g x) ∂μ) ≤ _
+  change Complex.normSq
+      (∫ x : ℝ, f x * starRingEnd ℂ (g x) ∂μ) ≤
+    (∫ x : ℝ, ‖f x‖ ^ 2 ∂μ) *
+      ∫ x : ℝ, ‖g x‖ ^ 2 ∂μ at h
+  rw [← bombieriCriticalLogEnergy_eq_integral_Ioi_norm_sq f,
+    ← bombieriCriticalLogEnergy_eq_integral_Ioi_norm_sq g] at h
+  exact h
+
 private theorem integral_Ioi_norm_sq_two_mul
     (g : BombieriTest) :
     (∫ x : ℝ in Set.Ioi 0, ‖g (2 * x)‖ ^ 2) =
