@@ -7863,6 +7863,63 @@ theorem fourCellOddRawStripCancellationPolarization_oneThreeFive_tail_eq
   rw [← hfoldAdd, ← hfoldP, ← hfoldR, henergy]
   ring
 
+/-- The adverse endpoint-strip raw row of the retained `P₁/P₃/P₅`
+pivot is an explicit three-moment functional of the strip-odd tail. -/
+theorem fourCellOddEndpointStripOddRawPolarization_oneThreeFive_eq_moments
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (c d e : ℝ) :
+    fourCellOddEndpointStripOddRawPolarization
+        (fourCellOddOneThreeFiveLowProfile c d e) r =
+      (1 / 5 : ℝ) *
+        (4 * (c / 5 + 84 * d / 125 + 276 * e / 625) *
+            (∫ z : ℝ in -1..1,
+              fourCellOddEndpointStripOdd r z * centeredP1 z) +
+          (22 / 3 : ℝ) * (d / 125 + 84 * e / 625) *
+            (∫ z : ℝ in -1..1,
+              fourCellOddEndpointStripOdd r z * centeredP3 z) +
+          (137 / 15 : ℝ) * (e / 3125) *
+            (∫ z : ℝ in -1..1,
+              fourCellOddEndpointStripOdd r z *
+                factorTwoCenteredP5 z)) := by
+  have hp := contDiff_fourCellOddOneThreeFiveLowProfile c d e
+  have hrStrip : Continuous (fourCellOddEndpointStripOdd r) :=
+    (contDiff_fourCellOddEndpointStripOdd_local r hr).continuous
+  rw [fourCellOddEndpointStripOddRawPolarization_eq_bilinear
+      _ _ hp hr,
+    fourCellOddEndpointStripOdd_oneThreeFiveLowProfile_eq_lowProfile,
+    centeredRawLogBilinear_oneThreeFiveLowProfile_eq_moments
+      (fourCellOddEndpointStripOdd r) hrStrip]
+
+/-- Exact nonsingular normal form of the retained endpoint mixed row.  The
+global raw cross has vanished by `P₁/P₃/P₅` orthogonality, and the only
+raw term left is the displayed three-moment endpoint-strip functional. -/
+theorem fourCellOddRetainedEndpointBilinear_oneThreeFive_tail_eq_moments
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (c d e : ℝ) :
+    fourCellOddRetainedEndpointBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) r =
+      -(1 / 10 : ℝ) *
+          (4 * (c / 5 + 84 * d / 125 + 276 * e / 625) *
+              (∫ z : ℝ in -1..1,
+                fourCellOddEndpointStripOdd r z * centeredP1 z) +
+            (22 / 3 : ℝ) * (d / 125 + 84 * e / 625) *
+              (∫ z : ℝ in -1..1,
+                fourCellOddEndpointStripOdd r z * centeredP3 z) +
+            (137 / 15 : ℝ) * (e / 3125) *
+              (∫ z : ℝ in -1..1,
+                fourCellOddEndpointStripOdd r z *
+                  factorTwoCenteredP5 z)) +
+        fourCellOddRetainedPrimePotentialBilinear
+          (fourCellOddOneThreeFiveLowProfile c d e) r := by
+  unfold fourCellOddRetainedEndpointBilinear
+  rw [fourCellOddRawStripCancellationPolarization_oneThreeFive_tail_eq
+      r hr hodd hone hthree hfive c d e,
+    fourCellOddEndpointStripOddRawPolarization_oneThreeFive_eq_moments
+      r hr c d e]
+  ring
+
 theorem fourCellOddOneThreeFiveLowProfile_one (c d e : ℝ) :
     fourCellOddOneThreeFiveLowProfile c d e 1 = c + d + e := by
   unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
