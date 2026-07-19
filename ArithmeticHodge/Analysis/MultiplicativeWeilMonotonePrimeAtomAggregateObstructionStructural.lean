@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilFourCellEnergyAbsorptionStructural
 
 set_option autoImplicit false
 
@@ -10,6 +11,8 @@ namespace ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateO
 noncomputable section
 
 open MultiplicativeWeil
+open MultiplicativeWeilFourCellEnergyAbsorptionStructural
+open MultiplicativeWeilMonotoneCellEnergyFrameStructural
 open MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
 open MultiplicativeWeilMonotonePrimeAtomAbsorptionStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateStructural
@@ -748,6 +751,35 @@ theorem monotonePrimeAtom_finset_sum_eq_aggregate_zeroLagOverlap
       parent k j hjpos]
     simp only [Complex.reCLM_apply, Complex.mul_re, Complex.ofReal_re,
       Complex.ofReal_im, zero_mul, sub_zero]
+
+/-- Consequently the entire selected prime row costs only one head critical
+energy and one aggregate-slice critical energy, independent of the number of
+atoms in `S`.  The remaining all-length problem in this coordinate is a norm
+transfer estimate for the single aggregate slice. -/
+theorem monotonePrimeAtom_finset_sum_sq_le_criticalLogEnergy
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    (∑ j ∈ S, monotonePrimeAtomValue parent k j) ^ 2 ≤
+      bombieriCriticalLogEnergy
+          (monotonePrimeAtomAggregateSlice parent k S) *
+        bombieriCriticalLogEnergy (monotoneQuarterCell parent k) := by
+  rw [monotonePrimeAtom_finset_sum_eq_aggregate_zeroLagOverlap]
+  have hre :
+      (bombieriDirectedCorrelation
+          (monotonePrimeAtomAggregateSlice parent k S)
+          (monotoneQuarterCell parent k) 1).re ^ 2 ≤
+        Complex.normSq
+          (bombieriDirectedCorrelation
+            (monotonePrimeAtomAggregateSlice parent k S)
+            (monotoneQuarterCell parent k) 1) := by
+    simp only [Complex.normSq_apply]
+    nlinarith [sq_nonneg
+      (bombieriDirectedCorrelation
+        (monotonePrimeAtomAggregateSlice parent k S)
+        (monotoneQuarterCell parent k) 1).im]
+  exact hre.trans
+    (normSq_bombieriDirectedCorrelation_one_le_criticalLogEnergy_mul
+      (monotonePrimeAtomAggregateSlice parent k S)
+      (monotoneQuarterCell parent k))
 
 end
 
