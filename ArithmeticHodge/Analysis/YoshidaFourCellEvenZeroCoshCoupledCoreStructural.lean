@@ -4077,6 +4077,281 @@ theorem cutoffEight_capacitySchur_of_splitGramBound
     (integral_projectedCapacityRepresenter_split_sq_le_grams
       c0 c2 c4 c6).trans hgram
 
+/-! ## Rational SOS certificate for the remaining finite Gram -/
+
+/-- A fixed rational core strictly inside the cutoff-eight capacity gap.
+Its proof is an exact Schur/SOS factorization, independent of numerical
+eigenspectrum calculations. -/
+private theorem cutoffEightCapacityRationalCore_nonnegative
+    (c0 c2 c4 c6 : ℝ) :
+    0 ≤ (99 / 50 : ℝ) * c0 ^ 2 +
+      2 * (17 / 200 : ℝ) * c0 * c2 +
+      2 * (587 / 10000 : ℝ) * c0 * c4 +
+      2 * (63 / 5000 : ℝ) * c0 * c6 +
+      symmetricQuadratic
+        (169 / 2000) (1293 / 10000) (47 / 100000)
+        (567 / 2500) (-63 / 5000) (181 / 2500)
+        c2 c4 c6 := by
+  let a : ℝ := 169 / 2000
+  let b : ℝ := 1293 / 10000
+  let c : ℝ := 47 / 100000
+  let d : ℝ := 567 / 2500
+  let e : ℝ := -63 / 5000
+  let f : ℝ := 181 / 2500
+  let x : ℝ := 17 / 200
+  let y : ℝ := 587 / 10000
+  let z : ℝ := 63 / 5000
+  let D : ℝ := 99 / 50
+  have hminor : 0 < leadingMinorTwo a b d := by
+    norm_num [a, b, d, leadingMinorTwo]
+  have hdet : 0 < symmetricDeterminant a b c d e f := by
+    norm_num [a, b, c, d, e, f, symmetricDeterminant]
+  have hAdj :
+      (1 / D) * adjugateQuadratic a b c d e f x y z ≤
+        symmetricDeterminant a b c d e f := by
+    norm_num [a, b, c, d, e, f, x, y, z, D,
+      adjugateQuadratic, symmetricDeterminant]
+  have hschur := (rankOne_sub_nonneg_iff a b c d e f
+    (by norm_num [a]) hminor hdet (1 / D) x y z).2 hAdj c2 c4 c6
+  let Q : ℝ := symmetricQuadratic a b c d e f c2 c4 c6
+  let L : ℝ := x * c2 + y * c4 + z * c6
+  have hschur' : 0 ≤ Q - (1 / D) * L ^ 2 := by
+    simpa only [Q, L] using hschur
+  have hDpos : 0 < D := by norm_num [D]
+  have hscaled := mul_nonneg hDpos.le hschur'
+  have hscaled' : 0 ≤ D * Q - L ^ 2 := by
+    rw [mul_sub] at hscaled
+    rw [show D * ((1 / D) * L ^ 2) = L ^ 2 by
+      have hDne : D ≠ 0 := hDpos.ne'
+      field_simp] at hscaled
+    exact hscaled
+  have hsquare := sq_nonneg (D * c0 + L)
+  have hform : 0 ≤
+      D * c0 ^ 2 + 2 * x * c0 * c2 + 2 * y * c0 * c4 +
+        2 * z * c0 * c6 + Q := by
+    have hscaledForm : 0 ≤ D *
+        (D * c0 ^ 2 + 2 * x * c0 * c2 + 2 * y * c0 * c4 +
+          2 * z * c0 * c6 + Q) := by
+      nlinarith only [hscaled', hsquare]
+    have hscaledForm' : 0 ≤
+        (D * c0 ^ 2 + 2 * x * c0 * c2 + 2 * y * c0 * c4 +
+          2 * z * c0 * c6 + Q) * D := by
+      simpa only [mul_comm] using hscaledForm
+    exact nonneg_of_mul_nonneg_left hscaledForm' hDpos
+  simpa only [a, b, c, d, e, f, x, y, z, D, Q] using hform
+
+private theorem two_mul_mul_ge_neg_sum_sq_of_abs_lt_cutoffEight
+    {a b x y : ℝ} (h : |a| < b) :
+    -b * (x ^ 2 + y ^ 2) ≤ 2 * a * x * y := by
+  have hb : 0 < b := (abs_nonneg a).trans_lt h
+  rcases abs_lt.mp h with ⟨haL, haU⟩
+  by_cases hxy : 0 ≤ x * y
+  · have hmul := mul_le_mul_of_nonneg_right haL.le hxy
+    nlinarith [sq_nonneg (x - y)]
+  · have hxy' : x * y ≤ 0 := le_of_not_ge hxy
+    have hmul := mul_le_mul_of_nonpos_right haU.le hxy'
+    nlinarith [sq_nonneg (x + y)]
+
+set_option maxHeartbeats 1600000 in
+/-- Exact structural closure of the cutoff-eight finite capacity gap.  A
+rational positive-definite core is certified by Schur factorization; the
+rigorous `log 2`, `sqrt 2 * log 2`, and `pi` enclosures leave a diagonally
+absorbed perturbation around that core. -/
+theorem cutoffEight_splitGrams_le_lowSchurReserve
+    (c0 c2 c4 c6 : ℝ) :
+    2 * fourCellEvenP0246CutoffEightProjectedPotentialGram
+        c0 c2 c4 c6 +
+      Real.log 2 ^ 2 *
+        fourCellEvenP0246CutoffEightProjectedFixedLagGram
+          c0 c2 c4 c6 ≤
+      (7461 / 7000 : ℝ) *
+        fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6 := by
+  let beta : ℝ := Real.sqrt 2 * Real.log 2
+  let D : ℝ :=
+    (7461 / 7000 : ℝ) *
+        (2 - 2 * Real.log 2 - (2 / 5 : ℝ) * beta -
+          (33 / 20 : ℝ) * 2 + 5) -
+      2 * (48877 / 29400 - Real.pi ^ 2 / 6) -
+      Real.log 2 ^ 2 * (409292364 / 6103515625)
+  let x : ℝ :=
+    (7461 / 7000 : ℝ) * (1 / 3 - (24 / 125 : ℝ) * beta) -
+      2 * (1 / 54) -
+      Real.log 2 ^ 2 * (10364852784 / 152587890625)
+  let y : ℝ :=
+    (7461 / 7000 : ℝ) * (1 / 10 + (72 / 3125 : ℝ) * beta) -
+      2 * (17 / 792) -
+      Real.log 2 ^ 2 * (230583359856 / 3814697265625)
+  let z : ℝ :=
+    (7461 / 7000 : ℝ) * (1 / 21 + (2856 / 78125 : ℝ) * beta) -
+      2 * (469 / 15444) -
+      Real.log 2 ^ 2 * (3096631893936 / 95367431640625)
+  let a : ℝ :=
+    (7461 / 7000 : ℝ) *
+        (3 / 5 + (41 / 75 - (2 / 5 : ℝ) * Real.log 2) -
+          (962 / 15625 : ℝ) * beta - 33 / 50 -
+          (1 / 500 : ℝ) * (2 / 5)) -
+      2 * (1383379 / 3969000 - Real.pi ^ 2 / 30) -
+      Real.log 2 ^ 2 * (269782035804 / 3814697265625)
+  let b : ℝ :=
+    (7461 / 7000 : ℝ) * (1 / 7 + (4072 / 78125 : ℝ) * beta) -
+      2 * (1 / 44) -
+      Real.log 2 ^ 2 * (6330010863536 / 95367431640625)
+  let c : ℝ :=
+    (7461 / 7000 : ℝ) * (1 / 18 + (46536 / 1953125 : ℝ) * beta) -
+      2 * (37 / 1144) -
+      Real.log 2 ^ 2 * (94043534060016 / 2384185791015625)
+  let d : ℝ :=
+    (7461 / 7000 : ℝ) *
+        (25 / 54 + (1739 / 5670 - (2 / 9 : ℝ) * Real.log 2) +
+          (164582 / 3515625 : ℝ) * beta - 11 / 30 -
+          (1 / 500 : ℝ) * (2 / 9)) -
+      2 * (45245671 / 216112050 - Real.pi ^ 2 / 54) -
+      Real.log 2 ^ 2 * (495807790725572 / 7152557373046875)
+  let e : ℝ :=
+    (7461 / 7000 : ℝ) * (1 / 11 - (381976 / 48828125 : ℝ) * beta) -
+      2 * (1 / 26) -
+      Real.log 2 ^ 2 * (3027599173655344 / 59604644775390625)
+  let f : ℝ :=
+    (7461 / 7000 : ℝ) *
+        (49 / 130 + (249251 / 1171170 - (2 / 13 : ℝ) * Real.log 2) -
+          (456595778 / 15869140625 : ℝ) * beta - 33 / 130 -
+          (1 / 500 : ℝ) * (2 / 13)) -
+      2 * (4861797662 / 26377676325 - Real.pi ^ 2 / 78) -
+      Real.log 2 ^ 2 * (1039233584463721932 / 19371509552001953125)
+  have hl := strict_log_two_fine_bounds
+  have hbeta := sqrtTwo_mul_logTwo_P0246_bounds
+  have hl0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlSq :
+      (4804 / 10000 : ℝ) < Real.log 2 ^ 2 ∧
+        Real.log 2 ^ 2 < (4805 / 10000 : ℝ) := by
+    constructor
+    · have hp : 0 <
+          (Real.log 2 - (69314718055 / 100000000000 : ℝ)) *
+            (Real.log 2 + (69314718055 / 100000000000 : ℝ)) :=
+        mul_pos (sub_pos.mpr hl.1) (by nlinarith)
+      nlinarith
+    · have hp : 0 <
+          ((69314718057 / 100000000000 : ℝ) - Real.log 2) *
+            ((69314718057 / 100000000000 : ℝ) + Real.log 2) :=
+        mul_pos (sub_pos.mpr hl.2) (by nlinarith)
+      nlinarith
+  have hpi :
+      (31415 / 10000 : ℝ) < Real.pi ∧
+        Real.pi < (31416 / 10000 : ℝ) := by
+    constructor
+    · have hp := Real.pi_gt_d20
+      norm_num at hp ⊢
+      linarith
+    · have hp := Real.pi_lt_d20
+      norm_num at hp ⊢
+      linarith
+  have hpiSq :
+      (9869 / 1000 : ℝ) < Real.pi ^ 2 ∧
+        Real.pi ^ 2 < (987 / 100 : ℝ) := by
+    constructor
+    · have hp : 0 <
+          (Real.pi - (31415 / 10000 : ℝ)) *
+            (Real.pi + (31415 / 10000 : ℝ)) :=
+        mul_pos (sub_pos.mpr hpi.1) (by nlinarith [Real.pi_pos])
+      nlinarith
+    · have hp : 0 <
+          ((31416 / 10000 : ℝ) - Real.pi) *
+            ((31416 / 10000 : ℝ) + Real.pi) :=
+        mul_pos (sub_pos.mpr hpi.2) (by nlinarith [Real.pi_pos])
+      nlinarith
+  have hD : (99 / 50 + 1 / 2000 : ℝ) < D := by
+    dsimp only [D, beta]
+    nlinarith [hlSq.1, hlSq.2, hpiSq.1, hpiSq.2,
+      hbeta.1, hbeta.2]
+  have ha : (169 / 2000 + 1 / 4000 : ℝ) < a := by
+    dsimp only [a, beta]
+    nlinarith [hlSq.1, hlSq.2, hpiSq.1, hpiSq.2,
+      hbeta.1, hbeta.2]
+  have hd : (567 / 2500 + 1 / 4000 : ℝ) < d := by
+    dsimp only [d, beta]
+    nlinarith [hlSq.1, hlSq.2, hpiSq.1, hpiSq.2,
+      hbeta.1, hbeta.2]
+  have hf : (181 / 2500 + 1 / 10000 : ℝ) < f := by
+    dsimp only [f, beta]
+    nlinarith [hlSq.1, hlSq.2, hpiSq.1, hpiSq.2,
+      hbeta.1, hbeta.2]
+  have hx : |x - (17 / 200 : ℝ)| < 4 / 100000 := by
+    rw [abs_lt]
+    constructor <;> dsimp only [x, beta] <;>
+      nlinarith [hlSq.1, hlSq.2, hbeta.1, hbeta.2]
+  have hy : |y - (587 / 10000 : ℝ)| < 2 / 100000 := by
+    rw [abs_lt]
+    constructor <;> dsimp only [y, beta] <;>
+      nlinarith [hlSq.1, hlSq.2, hbeta.1, hbeta.2]
+  have hz : |z - (63 / 5000 : ℝ)| < 2 / 100000 := by
+    rw [abs_lt]
+    constructor <;> dsimp only [z, beta] <;>
+      nlinarith [hlSq.1, hlSq.2, hbeta.1, hbeta.2]
+  have hb : |b - (1293 / 10000 : ℝ)| < 1 / 10000 := by
+    rw [abs_lt]
+    constructor <;> dsimp only [b, beta] <;>
+      nlinarith [hlSq.1, hlSq.2, hbeta.1, hbeta.2]
+  have hc : |c - (47 / 100000 : ℝ)| < 1 / 100000 := by
+    rw [abs_lt]
+    constructor <;> dsimp only [c, beta] <;>
+      nlinarith [hlSq.1, hlSq.2, hbeta.1, hbeta.2]
+  have he : |e - (-63 / 5000 : ℝ)| < 1 / 100000 := by
+    rw [abs_lt]
+    constructor <;> dsimp only [e, beta] <;>
+      nlinarith [hlSq.1, hlSq.2, hbeta.1, hbeta.2]
+  have hbase := cutoffEightCapacityRationalCore_nonnegative c0 c2 c4 c6
+  have hxerr := two_mul_mul_ge_neg_sum_sq_of_abs_lt_cutoffEight
+    (x := c0) (y := c2) hx
+  have hyerr := two_mul_mul_ge_neg_sum_sq_of_abs_lt_cutoffEight
+    (x := c0) (y := c4) hy
+  have hzerr := two_mul_mul_ge_neg_sum_sq_of_abs_lt_cutoffEight
+    (x := c0) (y := c6) hz
+  have hberr := two_mul_mul_ge_neg_sum_sq_of_abs_lt_cutoffEight
+    (x := c2) (y := c4) hb
+  have hcerr := two_mul_mul_ge_neg_sum_sq_of_abs_lt_cutoffEight
+    (x := c2) (y := c6) hc
+  have heerr := two_mul_mul_ge_neg_sum_sq_of_abs_lt_cutoffEight
+    (x := c4) (y := c6) he
+  have hDsq := mul_le_mul_of_nonneg_right hD.le (sq_nonneg c0)
+  have hasq := mul_le_mul_of_nonneg_right ha.le (sq_nonneg c2)
+  have hdsq := mul_le_mul_of_nonneg_right hd.le (sq_nonneg c4)
+  have hfsq := mul_le_mul_of_nonneg_right hf.le (sq_nonneg c6)
+  have hgap : 0 ≤
+      D * c0 ^ 2 + 2 * x * c0 * c2 + 2 * y * c0 * c4 +
+        2 * z * c0 * c6 + symmetricQuadratic a b c d e f c2 c4 c6 := by
+    unfold symmetricQuadratic at hbase ⊢
+    nlinarith only [hbase, hxerr, hyerr, hzerr, hberr, hcerr, heerr,
+      hDsq, hasq, hdsq, hfsq, sq_nonneg c0, sq_nonneg c2,
+      sq_nonneg c4, sq_nonneg c6]
+  have hcore :=
+    fourCellEvenZeroCoshCoupledCore_intrinsicEvenP0246Profile_eq_gram
+      c0 c2 c4 c6
+  have hmass := factorTwoIntrinsicEnergy_intrinsicEvenP0246 c0 c2 c4 c6
+  change (∫ t : ℝ in -1..1,
+      factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 t ^ 2) = _ at hmass
+  unfold fourCellEvenP0246CutoffEightLowSchurReserve
+  rw [hcore, hmass]
+  unfold
+    factorTwoP6EvenRawLogGram factorTwoP6EvenPotentialGram
+    fourCellEvenP0246CutoffEightProjectedPotentialGram
+    fourCellEvenP0246CutoffEightProjectedFixedLagGram
+  dsimp only [D, x, y, z, a, b, c, d, e, f, beta] at hgap
+  unfold symmetricQuadratic at hgap
+  nlinarith only [hgap]
+
+/-- Assumption-free cutoff-eight capacity Schur theorem. -/
+theorem cutoffEight_capacitySchur
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    fourCellEvenEndpointCapacityPolarization
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r ^ 2 ≤
+      fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6 *
+        ((7461 / 7000 : ℝ) *
+          (∫ x : ℝ in -1..1, r x ^ 2)) := by
+  exact cutoffEight_capacitySchur_of_splitGramBound
+    c0 c2 c4 c6 r hr hlow
+      (cutoffEight_splitGrams_le_lowSchurReserve c0 c2 c4 c6)
+
 /-- Exact scalar Schur reduction of the last cutoff-eight capacity border.
 The tail factor `7461 / 7000 = 299 / 280 - 1 / 500` is what remains after
 reserving one five-hundredth of total nonconstant mass for the constant
@@ -4828,6 +5103,37 @@ theorem thirtyThree_div_twenty_mass_le_canonicalCoupledCore_cutoffEight_of_capac
   rw [hsum] at hfull
   rw [← hmassSum]
   simpa only [p] using hfull
+
+/-- Universal cutoff-eight closure of the even zero-cosh coupled core. -/
+theorem thirtyThree_div_twenty_mass_le_canonicalCoupledCore_cutoffEight
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore w := by
+  apply
+    thirtyThree_div_twenty_mass_le_canonicalCoupledCore_cutoffEight_of_capacitySchur
+      w hw hlocal heven hzero
+  let c0 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 0
+  let c2 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 2
+  let c4 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 4
+  let c6 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 6
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 8
+  have hpEq : centeredLegendreLowProjection w hw 8 =
+      factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 := by
+    simpa only [c0, c2, c4, c6] using
+      centeredLegendreLowProjection_eight_eq_intrinsicEvenP0246Profile
+        w hw heven
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 8
+  have hlow : centeredLegendreMomentsVanishBelow r 8 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 8
+  rw [hpEq]
+  simpa only [c0, c2, c4, c6, r] using
+    cutoffEight_capacitySchur c0 c2 c4 c6 r hr hlow
 
 /-- Canonical arbitrary-profile form of the diagonal closure.  On the
 zero-wide-cosh hyperplane the cutoff-six low block and its infinite tail,
