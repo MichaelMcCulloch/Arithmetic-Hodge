@@ -15,7 +15,9 @@ open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointParityPencil
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaEndpointPotentialBound
+open YoshidaEndpointPotentialIntegrable
 open YoshidaFourCellEvenCoshMixedStructural
+open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaRegularKernelBound
 
@@ -116,6 +118,128 @@ theorem fourCellEvenZeroCoshConstantRow_eq_representer
   rw [hregular, hprime]
   unfold fourCellEvenConstantRegularRepresenter
   dsimp only [q]
+  ring
+
+/-- Subtract an arbitrary multiple of the wide-cosh annihilator from the
+constant-row density.  The parameter will be chosen only when estimating the
+weighted dual norm. -/
+def fourCellEvenConstantRowCoshShiftedDensity (τ x : ℝ) : ℝ :=
+  yoshidaEndpointPotential x -
+    (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) -
+    fourCellOperatorHalfWidth *
+      fourCellEvenConstantRegularRepresenter x -
+    τ * Real.cosh ((fourCellOperatorHalfWidth / 2) * x)
+
+private theorem integral_full_cosh_mul_eq_zero_of_even
+    (v : ℝ → ℝ) (hv : Continuous v) (heven : Function.Even v)
+    (hzero : fourCellPositiveCoshMoment v
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    (∫ x : ℝ in -1..1,
+      Real.cosh ((fourCellOperatorHalfWidth / 2) * x) * v x) = 0 := by
+  let f : ℝ → ℝ := fun x ↦
+    Real.cosh ((fourCellOperatorHalfWidth / 2) * x) * v x
+  have hf : Continuous f := by
+    dsimp only [f]
+    fun_prop
+  have hfeven : Function.Even f := by
+    intro x
+    dsimp only [f]
+    rw [show (fourCellOperatorHalfWidth / 2) * -x =
+        -((fourCellOperatorHalfWidth / 2) * x) by ring,
+      Real.cosh_neg, heven x]
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even
+    f (hf.intervalIntegrable _ _) hfeven
+  have hhalf : (∫ x : ℝ in 0..1, f x) = 0 := by
+    simpa only [f, fourCellPositiveCoshMoment] using hzero
+  rw [hfold, hhalf]
+  ring
+
+/-- On the zero-cosh even hyperplane, every cosh-shifted density represents
+the same exact constant row.  This is the cancellation-preserving starting
+point for the remaining weighted Schur estimate. -/
+theorem fourCellEvenZeroCoshConstantRow_eq_coshShiftedRepresenter
+    (v : ℝ → ℝ) (hv : Continuous v) (heven : Function.Even v)
+    (hzero : fourCellPositiveCoshMoment v
+      (fourCellOperatorHalfWidth / 2) = 0) (τ : ℝ) :
+    fourCellEvenZeroCoshConstantRow v =
+      (∫ x : ℝ in -1..1,
+        fourCellEvenConstantRowCoshShiftedDensity τ x * v x) -
+      Real.sqrt 2 * Real.log 2 *
+        (∫ x : ℝ in 3 / 5..1, v x) := by
+  let q : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+  let S : ℝ := Real.log (2 * fourCellOperatorHalfWidth) +
+    Real.eulerMascheroniConstant + Real.log Real.pi
+  let a : ℝ := fourCellOperatorHalfWidth
+  let lambda : ℝ := fourCellOperatorHalfWidth / 2
+  have hq : Measurable q := by
+    dsimp only [q]
+    exact measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)
+  have hqbound : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ 1 / 4 := by
+    intro t ht
+    exact fourCellRegularLag_abs_le_quarter t ht
+  have hright :=
+    intervalIntegrable_mul_factorTwoContinuousLagRightRepresenter_of_bounded
+      q (fun _ : ℝ ↦ 1) v hq continuous_const hv (1 / 4) hqbound
+  have hleft :=
+    intervalIntegrable_mul_factorTwoContinuousLagLeftRepresenter_of_bounded
+      q v (fun _ : ℝ ↦ 1) hq hv continuous_const (1 / 4) hqbound
+  have hK : IntervalIntegrable
+      (fun x : ℝ ↦ v x * fourCellEvenConstantRegularRepresenter x)
+      volume (-1) 1 := by
+    apply (hright.add hleft).congr
+    intro x _hx
+    unfold fourCellEvenConstantRegularRepresenter
+      factorTwoContinuousLagK
+    dsimp only [q]
+    ring
+  have hV : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * v x)
+      volume (-1) 1 :=
+    intervalIntegrable_endpointPotential_mul v hv
+  have hS : IntervalIntegrable (fun x : ℝ ↦ S * v x)
+      volume (-1) 1 := (hv.intervalIntegrable _ _).const_mul S
+  have haK : IntervalIntegrable
+      (fun x : ℝ ↦ a *
+        (v x * fourCellEvenConstantRegularRepresenter x))
+      volume (-1) 1 := hK.const_mul a
+  have hcosh : IntervalIntegrable
+      (fun x : ℝ ↦ τ * (Real.cosh (lambda * x) * v x))
+      volume (-1) 1 := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hcombine :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenConstantRowCoshShiftedDensity τ x * v x) =
+        (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * v x) -
+          S * (∫ x : ℝ in -1..1, v x) -
+          a * (∫ x : ℝ in -1..1,
+            v x * fourCellEvenConstantRegularRepresenter x) -
+          τ * (∫ x : ℝ in -1..1,
+            Real.cosh (lambda * x) * v x) := by
+    rw [show (fun x : ℝ ↦
+        fourCellEvenConstantRowCoshShiftedDensity τ x * v x) =
+      fun x ↦ yoshidaEndpointPotential x * v x - S * v x -
+        a * (v x * fourCellEvenConstantRegularRepresenter x) -
+        τ * (Real.cosh (lambda * x) * v x) by
+      funext x
+      unfold fourCellEvenConstantRowCoshShiftedDensity
+      dsimp only [S, a, lambda]
+      ring,
+      intervalIntegral.integral_sub ((hV.sub hS).sub haK) hcosh,
+      intervalIntegral.integral_sub (hV.sub hS) haK,
+      intervalIntegral.integral_sub hV hS,
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_const_mul]
+  have hcoshZero := integral_full_cosh_mul_eq_zero_of_even
+    v hv heven hzero
+  have hrow := fourCellEvenZeroCoshConstantRow_eq_representer
+    v hv heven
+  dsimp only [S, a, lambda] at hcombine hcoshZero
+  rw [hrow, hcombine, hcoshZero]
   ring
 
 end
