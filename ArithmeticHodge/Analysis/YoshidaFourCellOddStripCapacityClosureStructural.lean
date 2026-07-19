@@ -3034,6 +3034,32 @@ theorem six_fifths_upperStripMass_le_rawStripCancellationReserve
   unfold fourCellOddRawStripCancellationReserve
   linarith
 
+/-- Weighted quantitative endpoint-strip consequence of the raw ground state.
+Unlike the preceding coarse estimate, this retains the exact `1/x` gain near
+the inner edge of the strip. -/
+theorem six_fifths_upperStripWeightedMass_le_rawStripCancellationReserve
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) ≤
+      fourCellOddRawStripCancellationReserve w := by
+  let I : ℝ := ∫ p : ℝ × ℝ in
+    Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
+      fourCellOddCoupledRawPair w p
+        ∂((volume : Measure ℝ).prod volume)
+  have hmass :
+      (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) ≤ I := by
+    simpa only [I] using
+      six_fifths_upperStripWeightedMass_le_cross_coupledRaw w hw
+  have hcross : 2 * I ≤
+      fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1) -
+          fourCellOddEndpointStripRawEnergy w := by
+    simpa only [I] using
+      two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw w hw hodd
+  have hparity := fourCellOddEndpointStrip_rawEnergy_eq_even_add_odd w hw
+  have heven := fourCellOddEndpointStripEvenRawEnergy_nonneg w
+  unfold fourCellOddRawStripCancellationReserve
+  linarith
+
 /-- Coupling the preceding raw reserve to the centered regular-row estimate
 leaves an explicit upper-strip payment and charges only `a/10` of the
 centered mass. -/
@@ -3053,6 +3079,38 @@ theorem upperStripMass_sub_regularCharge_le_rawReserve_sub_regular
   let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
   have hraw := six_fifths_upperStripMass_le_rawStripCancellationReserve
     w hw hodd
+  have hR : |R| ≤ (1 / 20 : ℝ) * M := by
+    simpa only [R, M] using
+      abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+        w hw.continuous hodd
+  have ha0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hRle : R ≤ |R| := le_abs_self R
+  have hmul := mul_le_mul_of_nonneg_left (hRle.trans hR) ha0
+  dsimp only [R, M] at hmul ⊢
+  linarith
+
+/-- Weighted form of the coupled raw/regular reserve.  The only global charge
+is the centered regular-row mass; the raw payment keeps its sharp `1/x`
+endpoint density. -/
+theorem upperStripWeightedMass_sub_regularCharge_le_rawReserve_sub_regular
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) -
+        (fourCellOperatorHalfWidth / 10) *
+          (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellOddRawStripCancellationReserve w -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation w t) := by
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation w t
+  let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  have hraw :=
+    six_fifths_upperStripWeightedMass_le_rawStripCancellationReserve
+      w hw hodd
   have hR : |R| ≤ (1 / 20 : ℝ) * M := by
     simpa only [R, M] using
       abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
