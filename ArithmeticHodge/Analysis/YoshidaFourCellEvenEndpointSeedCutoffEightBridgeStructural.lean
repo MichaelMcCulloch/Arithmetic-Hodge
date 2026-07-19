@@ -4,6 +4,7 @@ import ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshCoupledCoreStructural
 set_option autoImplicit false
 
 open MeasureTheory Polynomial Real Set
+open scoped Interval
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
 
@@ -112,6 +113,128 @@ private theorem fourCellRegularLag_abs_le_quarter
   have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 harg4
   rw [abs_of_nonneg hk0]
   exact yoshidaRegularKernel_le_quarter harg0
+
+private theorem abs_fourCellEvenEndpointCoshSeed_le_one
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    |fourCellEvenEndpointCoshSeed x| ≤ 1 := by
+  have hprod : 0 ≤ (x + 1) * (1 - x) :=
+    mul_nonneg (by linarith [hx.1]) (by linarith [hx.2])
+  have hnonneg : 0 ≤ 1 - x ^ 2 := by
+    nlinarith only [hprod]
+  unfold fourCellEvenEndpointCoshSeed
+  rw [abs_of_nonneg hnonneg]
+  nlinarith only [sq_nonneg x]
+
+private theorem norm_fourCellEvenEndpointSeedRegularTailRepresenter_le_one
+    {x : ℝ} (hx : x ∈ Ioc (-1 : ℝ) 1) :
+    ‖fourCellEvenEndpointSeedRegularTailRepresenter x‖ ≤ 1 := by
+  let k : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+  have hrightPoint : ∀ y ∈ Ι x 1,
+      ‖k (y - x) * fourCellEvenEndpointCoshSeed y‖ ≤ (1 / 4 : ℝ) := by
+    intro y hy
+    rw [uIoc_of_le hx.2] at hy
+    have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+      ⟨by linarith [hx.1, hy.1], hy.2⟩
+    have hlag : y - x ∈ Icc (0 : ℝ) 2 :=
+      ⟨by linarith [hy.1], by linarith [hx.1, hy.2]⟩
+    have hk := fourCellRegularLag_abs_le_quarter (y - x) hlag
+    have hs := abs_fourCellEvenEndpointCoshSeed_le_one hyIcc
+    rw [Real.norm_eq_abs, abs_mul]
+    exact (mul_le_mul hk hs (abs_nonneg _) (by norm_num)).trans_eq (by norm_num)
+  have hleftPoint : ∀ y ∈ Ι (-1) x,
+      ‖k (x - y) * fourCellEvenEndpointCoshSeed y‖ ≤ (1 / 4 : ℝ) := by
+    intro y hy
+    rw [uIoc_of_le hx.1.le] at hy
+    have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+      ⟨hy.1.le, by linarith [hy.2, hx.2]⟩
+    have hlag : x - y ∈ Icc (0 : ℝ) 2 :=
+      ⟨by linarith [hy.2], by linarith [hy.1, hx.2]⟩
+    have hk := fourCellRegularLag_abs_le_quarter (x - y) hlag
+    have hs := abs_fourCellEvenEndpointCoshSeed_le_one hyIcc
+    rw [Real.norm_eq_abs, abs_mul]
+    exact (mul_le_mul hk hs (abs_nonneg _) (by norm_num)).trans_eq (by norm_num)
+  have hright := intervalIntegral.norm_integral_le_of_norm_le_const hrightPoint
+  have hleft := intervalIntegral.norm_integral_le_of_norm_le_const hleftPoint
+  have hrightHalf :
+      ‖factorTwoContinuousLagRightRepresenter
+          k fourCellEvenEndpointCoshSeed x‖ ≤ 1 / 2 := by
+    have habs : |1 - x| ≤ 2 := by
+      rw [abs_of_nonneg (by linarith [hx.2])]
+      linarith [hx.1]
+    change ‖∫ y : ℝ in x..1,
+      k (y - x) * fourCellEvenEndpointCoshSeed y‖ ≤ 1 / 2
+    calc
+      _ ≤ (1 / 4 : ℝ) * |1 - x| := hright
+      _ ≤ 1 / 2 := by nlinarith only [habs]
+  have hleftHalf :
+      ‖factorTwoContinuousLagLeftRepresenter
+          k fourCellEvenEndpointCoshSeed x‖ ≤ 1 / 2 := by
+    have habs : |x - (-1)| ≤ 2 := by
+      rw [abs_of_nonneg (by linarith [hx.1])]
+      linarith [hx.2]
+    change ‖∫ y : ℝ in -1..x,
+      k (x - y) * fourCellEvenEndpointCoshSeed y‖ ≤ 1 / 2
+    calc
+      _ ≤ (1 / 4 : ℝ) * |x - (-1)| := hleft
+      _ ≤ 1 / 2 := by nlinarith only [habs]
+  unfold fourCellEvenEndpointSeedRegularTailRepresenter
+    factorTwoContinuousLagK
+  dsimp only [k] at hrightHalf hleftHalf ⊢
+  exact (norm_add_le _ _).trans (by linarith)
+
+/-- The smooth endpoint-seed lag representer is square-integrable on the
+centered interval. -/
+theorem memLp_fourCellEvenEndpointSeedRegularTailRepresenter :
+    MemLp fourCellEvenEndpointSeedRegularTailRepresenter 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let k : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+  have hk : Measurable k := by
+    dsimp only [k]
+    exact measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)
+  have hkbound : ∀ t ∈ Icc (0 : ℝ) 2, |k t| ≤ 1 / 4 := by
+    intro t ht
+    simpa only [k] using fourCellRegularLag_abs_le_quarter t ht
+  have hright :=
+    intervalIntegrable_mul_factorTwoContinuousLagRightRepresenter_of_bounded
+      k fourCellEvenEndpointCoshSeed (fun _ : ℝ ↦ 1) hk
+        fourCellEvenEndpointCoshSeed_continuous continuous_const
+        (1 / 4) hkbound
+  have hleft :=
+    intervalIntegrable_mul_factorTwoContinuousLagLeftRepresenter_of_bounded
+      k (fun _ : ℝ ↦ 1) fourCellEvenEndpointCoshSeed hk continuous_const
+        fourCellEvenEndpointCoshSeed_continuous (1 / 4) hkbound
+  have hK : IntervalIntegrable fourCellEvenEndpointSeedRegularTailRepresenter
+      volume (-1) 1 := by
+    apply (hright.add hleft).congr
+    intro x _hx
+    unfold fourCellEvenEndpointSeedRegularTailRepresenter
+      factorTwoContinuousLagK
+    dsimp only [k]
+    ring
+  have hmeas : AEStronglyMeasurable
+      fourCellEvenEndpointSeedRegularTailRepresenter
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := hK.1.aestronglyMeasurable
+  apply MemLp.of_bound hmeas 1
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+  exact norm_fourCellEvenEndpointSeedRegularTailRepresenter_le_one hx
+
+/-- Every polynomially projected complete endpoint-seed tail representer is
+square-integrable. -/
+theorem memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter
+    (q : ℝ[X]) :
+    MemLp (fourCellEvenEndpointSeedProjectedTailRowRepresenter q) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hcapacity :=
+    memLp_fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+      (2 / 3) (-2 / 3) 0 0 q
+  have hregular :=
+    memLp_fourCellEvenEndpointSeedRegularTailRepresenter.const_mul
+      fourCellOperatorHalfWidth
+  simpa only [fourCellEvenEndpointSeedProjectedTailRowRepresenter] using
+    hcapacity.sub hregular
 
 private theorem endpointSeedProfile_add_intrinsicEvenP0246
     (c0 c2 c4 c6 : ℝ) :
@@ -359,9 +482,6 @@ theorem fourCellEvenEndpointSeedRow_tail_sq_le_seed_mul_polarFree_of_norm
     (hcore : (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, r x ^ 2) ≤
       fourCellEvenZeroCoshCoupledCore r)
     (q : ℝ[X]) (hq : q.natDegree < 8)
-    (hG : MemLp
-      (fourCellEvenEndpointSeedProjectedTailRowRepresenter q) 2
-      (volume.restrict (Ioc (-1 : ℝ) 1)))
     (hdual :
       (∫ x : ℝ in -1..1,
           fourCellEvenEndpointSeedProjectedTailRowRepresenter q x ^ 2) ≤
@@ -372,7 +492,8 @@ theorem fourCellEvenEndpointSeedRow_tail_sq_le_seed_mul_polarFree_of_norm
         fourCellEvenPolarFreeOperator r := by
   have hrow :=
     fourCellEvenEndpointSeedTailRow_sq_le_mass_of_projectedRepresenterNorm
-      r hr hlow q hq hG
+      r hr hlow q hq
+        (memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter q)
         (fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
           (553 / 20000 : ℝ)) hdual
   have hreserve :=
