@@ -494,11 +494,11 @@ theorem six_fifths_upperStripMass_le_cross_coupledRaw
     (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
     (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) ≤
       ∫ p : ℝ × ℝ in
-        Ioc (3 / 5 : ℝ) 1 ×ˢ Icc (0 : ℝ) (3 / 5),
+        Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
           fourCellOddCoupledRawPair w p
             ∂((volume : Measure ℝ).prod volume) := by
-  let A : Set ℝ := Icc (0 : ℝ) (3 / 5)
-  let B : Set ℝ := Ioc (3 / 5 : ℝ) 1
+  let A : Set ℝ := Ico (0 : ℝ) (3 / 5)
+  let B : Set ℝ := Icc (3 / 5 : ℝ) 1
   let P : Set (ℝ × ℝ) := B ×ˢ A
   let K : ℝ × ℝ → ℝ := fourCellOddCoupledRawPair w
   let L : ℝ × ℝ → ℝ := fun p ↦ 2 * w p.1 ^ 2
@@ -534,13 +534,13 @@ theorem six_fifths_upperStripMass_le_cross_coupledRaw
     hJcont.integrableOn_compact (isCompact_Icc.prod isCompact_Icc)
   have hPsub : P ⊆ Icc (3 / 5 : ℝ) 1 ×ˢ Icc (0 : ℝ) (3 / 5) := by
     intro p hp
-    exact ⟨⟨hp.1.1.le, hp.1.2⟩, hp.2⟩
+    exact ⟨hp.1, ⟨hp.2.1, hp.2.2.le⟩⟩
   have hJ : IntegrableOn J P ((volume : Measure ℝ).prod volume) :=
     hJlarge.mono_set hPsub
   have hK : IntegrableOn K P ((volume : Measure ℝ).prod volume) := by
     apply hsame.add hJ |>.congr
     filter_upwards [ae_restrict_mem
-      (measurableSet_Ioc.prod measurableSet_Icc)] with p hp
+      (measurableSet_Icc.prod measurableSet_Ico)] with p hp
     dsimp only [K, J, P, B, A, fourCellOddCoupledRawPair]
     unfold centeredLogDifferenceKernel
     rfl
@@ -551,7 +551,7 @@ theorem six_fifths_upperStripMass_le_cross_coupledRaw
       (isCompact_Icc.prod isCompact_Icc)
   have hL : IntegrableOn L P ((volume : Measure ℝ).prod volume) :=
     hLlarge.mono_set hPsub
-  have hPmeas : MeasurableSet P := measurableSet_Ioc.prod measurableSet_Icc
+  have hPmeas : MeasurableSet P := measurableSet_Icc.prod measurableSet_Ico
   have hpoint : ∀ p ∈ P, L p ≤ K p := by
     intro p hp
     have hy : 0 ≤ p.2 := hp.2.1
@@ -583,11 +583,308 @@ theorem six_fifths_upperStripMass_le_cross_coupledRaw
       setIntegral_prod_mul
         (μ := (volume : Measure ℝ)) (ν := (volume : Measure ℝ))
         (fun x : ℝ ↦ 2 * w x ^ 2) (fun _x : ℝ ↦ (1 : ℝ))
-        (Ioc (3 / 5 : ℝ) 1) (Icc (0 : ℝ) (3 / 5)),
+        (Icc (3 / 5 : ℝ) 1) (Ico (0 : ℝ) (3 / 5)),
       integral_const_mul, hBmass, setIntegral_const]
     norm_num
     ring
   simpa only [P, K, B, A] using hLvalue.symm.trans_le hmono
+
+private theorem intervalIntegral_integral_eq_setIntegral_square
+    (F : ℝ × ℝ → ℝ) (a b : ℝ) (hab : a ≤ b)
+    (hF : IntegrableOn F (Icc a b ×ˢ Icc a b)
+      ((volume : Measure ℝ).prod volume)) :
+    (∫ x : ℝ in a..b, ∫ y : ℝ in a..b, F (x, y)) =
+      ∫ p : ℝ × ℝ in Icc a b ×ˢ Icc a b, F p := by
+  calc
+    (∫ x : ℝ in a..b, ∫ y : ℝ in a..b, F (x, y)) =
+        ∫ x : ℝ in Icc a b, ∫ y : ℝ in Icc a b, F (x, y) := by
+      rw [intervalIntegral.integral_of_le hab,
+        ← integral_Icc_eq_integral_Ioc]
+      apply setIntegral_congr_fun measurableSet_Icc
+      intro x _hx
+      change (∫ y : ℝ in a..b, F (x, y)) =
+        ∫ y : ℝ in Icc a b, F (x, y)
+      rw [intervalIntegral.integral_of_le hab,
+        ← integral_Icc_eq_integral_Ioc]
+    _ = ∫ p : ℝ × ℝ in Icc a b ×ˢ Icc a b, F p := by
+      exact (setIntegral_prod F hF).symm
+
+private theorem integrableOn_reflectedRawKernel_of_lipschitzOnWith_odd
+    {C : NNReal} (w : ℝ → ℝ) (hw : Continuous w)
+    (hC : LipschitzOnWith C w (Icc (-1 : ℝ) 1))
+    (hodd : Function.Odd w) :
+    IntegrableOn
+      (fun p : ℝ × ℝ ↦ (w p.1 + w p.2) ^ 2 / (p.1 + p.2))
+      (Icc (0 : ℝ) 1 ×ˢ Icc (0 : ℝ) 1)
+      ((volume : Measure ℝ).prod volume) := by
+  let P : Set (ℝ × ℝ) := Icc (0 : ℝ) 1 ×ˢ Icc (0 : ℝ) 1
+  let J : ℝ × ℝ → ℝ := fun p ↦
+    (w p.1 + w p.2) ^ 2 / (p.1 + p.2)
+  let D : ℝ × ℝ → ℝ := fun p ↦
+    (C : ℝ) ^ 2 * (p.1 + p.2)
+  have hw0 : w 0 = 0 := by
+    have h := hodd 0
+    norm_num at h ⊢
+    linarith
+  have hD : IntegrableOn D P ((volume : Measure ℝ).prod volume) := by
+    exact (by fun_prop : Continuous D).continuousOn.integrableOn_compact
+      (isCompact_Icc.prod isCompact_Icc)
+  have hJmeas : AEStronglyMeasurable J
+      (((volume : Measure ℝ).prod volume).restrict P) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [J]
+    exact (((hw.measurable.comp measurable_fst).add
+      (hw.measurable.comp measurable_snd)).pow_const 2).div
+        (measurable_fst.add measurable_snd)
+  have hdom : ∀ᵐ p ∂(((volume : Measure ℝ).prod volume).restrict P),
+      ‖J p‖ ≤ D p := by
+    filter_upwards [ae_restrict_mem
+      (measurableSet_Icc.prod measurableSet_Icc)] with p hp
+    have hxmem : p.1 ∈ Icc (-1 : ℝ) 1 := ⟨by linarith [hp.1.1], hp.1.2⟩
+    have hymem : p.2 ∈ Icc (-1 : ℝ) 1 := ⟨by linarith [hp.2.1], hp.2.2⟩
+    have hzero : (0 : ℝ) ∈ Icc (-1 : ℝ) 1 := by norm_num
+    have hxbound : |w p.1| ≤ (C : ℝ) * p.1 := by
+      have h := hC.dist_le_mul p.1 hxmem 0 hzero
+      rw [Real.dist_eq, Real.dist_eq, hw0, sub_zero, sub_zero,
+        abs_of_nonneg hp.1.1] at h
+      exact h
+    have hybound : |w p.2| ≤ (C : ℝ) * p.2 := by
+      have h := hC.dist_le_mul p.2 hymem 0 hzero
+      rw [Real.dist_eq, Real.dist_eq, hw0, sub_zero, sub_zero,
+        abs_of_nonneg hp.2.1] at h
+      exact h
+    have hsum0 : 0 ≤ p.1 + p.2 := add_nonneg hp.1.1 hp.2.1
+    have habs : |w p.1 + w p.2| ≤ (C : ℝ) * (p.1 + p.2) := by
+      calc
+        |w p.1 + w p.2| ≤ |w p.1| + |w p.2| := abs_add_le _ _
+        _ ≤ (C : ℝ) * p.1 + (C : ℝ) * p.2 := add_le_add hxbound hybound
+        _ = (C : ℝ) * (p.1 + p.2) := by ring
+    dsimp only [J, D]
+    rw [Real.norm_eq_abs, abs_of_nonneg (div_nonneg (sq_nonneg _) hsum0)]
+    by_cases hsum : p.1 + p.2 = 0
+    · have hx0 : p.1 = 0 := by linarith [hp.1.1, hp.2.1]
+      have hy0 : p.2 = 0 := by linarith [hp.1.1, hp.2.1]
+      simp [hx0, hy0, hw0]
+    · have hsumPos : 0 < p.1 + p.2 := lt_of_le_of_ne hsum0 (Ne.symm hsum)
+      rw [div_le_iff₀ hsumPos]
+      have hright0 : 0 ≤ (C : ℝ) * (p.1 + p.2) :=
+        mul_nonneg C.property hsum0
+      have hsq := (sq_le_sq₀ (abs_nonneg (w p.1 + w p.2)) hright0).2 habs
+      rw [sq_abs, mul_pow] at hsq
+      nlinarith
+  exact hD.mono' hJmeas hdom
+
+/-- After the endpoint-strip same-sign square is removed, the complete raw
+form still contains both orientations of the lower/upper cross rectangle.
+The reflected square is essential here and is kept inside the coupled
+kernel throughout the proof. -/
+theorem two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    2 * (∫ p : ℝ × ℝ in
+        Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
+          fourCellOddCoupledRawPair w p
+            ∂((volume : Measure ℝ).prod volume)) ≤
+      fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1) -
+          fourCellOddEndpointStripRawEnergy w := by
+  let A : Set ℝ := Ico (0 : ℝ) (3 / 5)
+  let B : Set ℝ := Icc (3 / 5 : ℝ) 1
+  let U : Set ℝ := Icc (0 : ℝ) 1
+  let P : Set (ℝ × ℝ) := B ×ˢ A
+  let Pswap : Set (ℝ × ℝ) := A ×ˢ B
+  let S : ℝ × ℝ → ℝ := fun p ↦
+    centeredLogDifferenceKernel w p.1 p.2
+  let J : ℝ × ℝ → ℝ := fun p ↦
+    (w p.1 + w p.2) ^ 2 / (p.1 + p.2)
+  let K : ℝ × ℝ → ℝ := fun p ↦ S p + J p
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hC⟩ := hlocal.exists_lipschitzOnWith_of_compact isCompact_Icc
+  have hfull :=
+    integrableOn_centeredLogDifferenceKernel_prod_of_lipschitzOnWith w hC
+  have hUsub : U ⊆ Icc (-1 : ℝ) 1 := by
+    intro x hx
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hS : IntegrableOn S (U ×ˢ U)
+      ((volume : Measure ℝ).prod volume) := by
+    simpa only [S] using hfull.mono_set (Set.prod_mono hUsub hUsub)
+  have hJ : IntegrableOn J (U ×ˢ U)
+      ((volume : Measure ℝ).prod volume) := by
+    simpa only [J, U] using
+      integrableOn_reflectedRawKernel_of_lipschitzOnWith_odd
+        w hw.continuous hC hodd
+  have hK : IntegrableOn K (U ×ˢ U)
+      ((volume : Measure ℝ).prod volume) := by
+    exact hS.add hJ
+  have hAsub : A ⊆ U := by
+    intro x hx
+    exact ⟨hx.1, hx.2.le.trans (by norm_num)⟩
+  have hBsub : B ⊆ U := by
+    intro x hx
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hAA := hK.mono_set (Set.prod_mono hAsub hAsub)
+  have hAB := hK.mono_set (Set.prod_mono hAsub hBsub)
+  have hBA := hK.mono_set (Set.prod_mono hBsub hAsub)
+  have hBB := hK.mono_set (Set.prod_mono hBsub hBsub)
+  have hSBB := hS.mono_set (Set.prod_mono hBsub hBsub)
+  have hJBB := hJ.mono_set (Set.prod_mono hBsub hBsub)
+  have hAmeas : MeasurableSet A := measurableSet_Ico
+  have hBmeas : MeasurableSet B := measurableSet_Icc
+  have hUmeas : MeasurableSet U := measurableSet_Icc
+  have hABdisjoint : Disjoint A B := by
+    rw [Set.disjoint_left]
+    intro x hxA hxB
+    exact (not_lt_of_ge hxB.1) hxA.2
+  have hU : U = A ∪ B := by
+    ext x
+    simp only [U, A, B, mem_Icc, mem_Ico, mem_union]
+    constructor
+    · intro hx
+      by_cases hxs : x < 3 / 5
+      · exact Or.inl ⟨hx.1, hxs⟩
+      · exact Or.inr ⟨le_of_not_gt hxs, hx.2⟩
+    · rintro (hx | hx)
+      · exact ⟨hx.1, hx.2.le.trans (by norm_num)⟩
+      · exact ⟨by linarith [hx.1], hx.2⟩
+  have houter :
+      (∫ p : ℝ × ℝ in U ×ˢ U, K p
+        ∂((volume : Measure ℝ).prod volume)) =
+      (∫ p : ℝ × ℝ in A ×ˢ U, K p
+        ∂((volume : Measure ℝ).prod volume)) +
+      ∫ p : ℝ × ℝ in B ×ˢ U, K p
+        ∂((volume : Measure ℝ).prod volume) := by
+    rw [show U ×ˢ U = (A ×ˢ U) ∪ (B ×ˢ U) by
+      rw [hU, union_prod]]
+    exact setIntegral_union (hABdisjoint.set_prod_left U U)
+      (hBmeas.prod hUmeas)
+      (hK.mono_set (Set.prod_mono hAsub (Subset.rfl)))
+      (hK.mono_set (Set.prod_mono hBsub (Subset.rfl)))
+  have hleft :
+      (∫ p : ℝ × ℝ in A ×ˢ U, K p
+        ∂((volume : Measure ℝ).prod volume)) =
+      (∫ p : ℝ × ℝ in A ×ˢ A, K p
+        ∂((volume : Measure ℝ).prod volume)) +
+      ∫ p : ℝ × ℝ in A ×ˢ B, K p
+        ∂((volume : Measure ℝ).prod volume) := by
+    rw [show A ×ˢ U = (A ×ˢ A) ∪ (A ×ˢ B) by
+      rw [hU, prod_union]]
+    exact setIntegral_union (hABdisjoint.set_prod_right A A)
+      (hAmeas.prod hBmeas) hAA hAB
+  have hright :
+      (∫ p : ℝ × ℝ in B ×ˢ U, K p
+        ∂((volume : Measure ℝ).prod volume)) =
+      (∫ p : ℝ × ℝ in B ×ˢ A, K p
+        ∂((volume : Measure ℝ).prod volume)) +
+      ∫ p : ℝ × ℝ in B ×ˢ B, K p
+        ∂((volume : Measure ℝ).prod volume) := by
+    rw [show B ×ˢ U = (B ×ˢ A) ∪ (B ×ˢ B) by
+      rw [hU, prod_union]]
+    exact setIntegral_union (hABdisjoint.set_prod_right B B)
+      (hBmeas.prod hBmeas) hBA hBB
+  have hKswap (p : ℝ × ℝ) : K p.swap = K p := by
+    rcases p with ⟨x, y⟩
+    dsimp only [K, S, J]
+    simp only [Prod.swap_prod_mk]
+    unfold centeredLogDifferenceKernel
+    rw [show y - x = -(x - y) by ring, abs_neg]
+    ring
+  have hcrossSwap :
+      (∫ p : ℝ × ℝ in A ×ˢ B, K p
+        ∂((volume : Measure ℝ).prod volume)) =
+      ∫ p : ℝ × ℝ in B ×ˢ A, K p
+        ∂((volume : Measure ℝ).prod volume) := by
+    have hswap := MeasureTheory.setIntegral_prod_swap
+      (μ := (volume : Measure ℝ)) (ν := (volume : Measure ℝ)) B A K
+    calc
+      (∫ p : ℝ × ℝ in A ×ˢ B, K p
+          ∂((volume : Measure ℝ).prod volume)) =
+          ∫ p : ℝ × ℝ in A ×ˢ B, K p.swap
+            ∂((volume : Measure ℝ).prod volume) := by
+        apply setIntegral_congr_fun (hAmeas.prod hBmeas)
+        intro p _hp
+        exact (hKswap p).symm
+      _ = ∫ p : ℝ × ℝ in B ×ˢ A, K p
+          ∂((volume : Measure ℝ).prod volume) := hswap
+  have hKBBsplit :
+      (∫ p : ℝ × ℝ in B ×ˢ B, K p
+        ∂((volume : Measure ℝ).prod volume)) =
+      (∫ p : ℝ × ℝ in B ×ˢ B, S p
+        ∂((volume : Measure ℝ).prod volume)) +
+      ∫ p : ℝ × ℝ in B ×ˢ B, J p
+        ∂((volume : Measure ℝ).prod volume) := by
+    change (∫ p : ℝ × ℝ in B ×ˢ B, S p + J p
+        ∂((volume : Measure ℝ).prod volume)) = _
+    exact MeasureTheory.integral_add hSBB hJBB
+  have hKnonneg : ∀ p ∈ A ×ˢ A, 0 ≤ K p := by
+    intro p hp
+    dsimp only [K, S, J]
+    unfold centeredLogDifferenceKernel
+    exact add_nonneg (div_nonneg (sq_nonneg _) (abs_nonneg _))
+      (div_nonneg (sq_nonneg _) (add_nonneg hp.1.1 hp.2.1))
+  have hJnonneg : ∀ p ∈ B ×ˢ B, 0 ≤ J p := by
+    intro p hp
+    dsimp only [J]
+    exact div_nonneg (sq_nonneg _) (add_nonneg
+      (by linarith [hp.1.1]) (by linarith [hp.2.1]))
+  have hAA0 : 0 ≤
+      ∫ p : ℝ × ℝ in A ×ˢ A, K p
+        ∂((volume : Measure ℝ).prod volume) := by
+    apply integral_nonneg_of_ae
+    filter_upwards [ae_restrict_mem (hAmeas.prod hAmeas)] with p hp
+    exact hKnonneg p hp
+  have hJBB0 : 0 ≤
+      ∫ p : ℝ × ℝ in B ×ˢ B, J p
+        ∂((volume : Measure ℝ).prod volume) := by
+    apply integral_nonneg_of_ae
+    filter_upwards [ae_restrict_mem (hBmeas.prod hBmeas)] with p hp
+    exact hJnonneg p hp
+  have hset :
+      2 * (∫ p : ℝ × ℝ in P, K p
+        ∂((volume : Measure ℝ).prod volume)) ≤
+      (∫ p : ℝ × ℝ in U ×ˢ U, K p
+        ∂((volume : Measure ℝ).prod volume)) -
+      ∫ p : ℝ × ℝ in B ×ˢ B, S p
+        ∂((volume : Measure ℝ).prod volume) := by
+    dsimp only [P, Pswap] at hcrossSwap ⊢
+    rw [houter, hleft, hright, hcrossSwap, hKBBsplit]
+    linarith
+  have hSfull := intervalIntegral_integral_eq_setIntegral_square
+    S 0 1 (by norm_num) hS
+  have hJfull := intervalIntegral_integral_eq_setIntegral_square
+    J 0 1 (by norm_num) hJ
+  have hKfull :
+      (∫ p : ℝ × ℝ in U ×ˢ U, K p
+        ∂((volume : Measure ℝ).prod volume)) =
+      fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1) := by
+    rw [show (∫ p : ℝ × ℝ in U ×ˢ U, K p
+        ∂((volume : Measure ℝ).prod volume)) =
+      (∫ p : ℝ × ℝ in U ×ˢ U, S p
+        ∂((volume : Measure ℝ).prod volume)) +
+      ∫ p : ℝ × ℝ in U ×ˢ U, J p
+        ∂((volume : Measure ℝ).prod volume) by
+      change (∫ p : ℝ × ℝ in U ×ˢ U, S p + J p
+          ∂((volume : Measure ℝ).prod volume)) = _
+      exact MeasureTheory.integral_add hS hJ]
+    unfold fourCellPositiveHalfRawSameSignEnergy
+      fourCellPositiveHalfRawReflectedEnergy
+    simp only [neg_mul, one_mul, sub_neg_eq_add]
+    dsimp only [U, S, J] at hSfull hJfull ⊢
+    unfold centeredLogDifferenceKernel at hSfull ⊢
+    exact congrArg₂ (fun a b : ℝ ↦ a + b) hSfull.symm hJfull.symm
+  have hSBBbridge := intervalIntegral_integral_eq_setIntegral_square
+    S (3 / 5) 1 (by norm_num) hSBB
+  have hSBBvalue :
+      (∫ p : ℝ × ℝ in B ×ˢ B, S p
+        ∂((volume : Measure ℝ).prod volume)) =
+      fourCellOddEndpointStripRawEnergy w := by
+    rw [fourCellOddEndpointStripRawEnergy_eq_physicalSquare]
+    dsimp only [B, S] at hSBBbridge ⊢
+    unfold centeredLogDifferenceKernel at hSBBbridge
+    exact hSBBbridge.symm
+  rw [hKfull, hSBBvalue] at hset
+  simpa only [P, K, B, A, fourCellOddCoupledRawPair, S, J,
+    centeredLogDifferenceKernel] using hset
 
 /-! ## A signed regular-kernel reserve on the wider four-cell range -/
 
@@ -2512,6 +2809,30 @@ theorem fourCellOddRawStripCancellationReserve_nonneg
   have hparity := fourCellOddEndpointStrip_rawEnergy_eq_even_add_odd w hw
   have heven := fourCellOddEndpointStripEvenRawEnergy_nonneg w
   have hreflected := fourCellPositiveHalfRawReflectedEnergy_nonneg w
+  unfold fourCellOddRawStripCancellationReserve
+  linarith
+
+/-- Quantitative endpoint-strip consequence of the raw ground state.  The
+retained raw reserve pays `6/5` of the upper-strip mass before any potential,
+regular-kernel, or finite-dimensional estimate is used. -/
+theorem six_fifths_upperStripMass_le_rawStripCancellationReserve
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) ≤
+      fourCellOddRawStripCancellationReserve w := by
+  let I : ℝ := ∫ p : ℝ × ℝ in
+    Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
+      fourCellOddCoupledRawPair w p
+        ∂((volume : Measure ℝ).prod volume)
+  have hmass : (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) ≤ I := by
+    simpa only [I] using six_fifths_upperStripMass_le_cross_coupledRaw w hw
+  have hcross : 2 * I ≤
+      fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1) -
+          fourCellOddEndpointStripRawEnergy w := by
+    simpa only [I] using
+      two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw w hw hodd
+  have hparity := fourCellOddEndpointStrip_rawEnergy_eq_even_add_odd w hw
+  have heven := fourCellOddEndpointStripEvenRawEnergy_nonneg w
   unfold fourCellOddRawStripCancellationReserve
   linarith
 
