@@ -76,6 +76,36 @@ theorem coerciveBilinearCorrectedGram_posSemidef_iff_energy
     rw [coerciveBilinearCorrectedGram_quadratic]
     exact sub_nonneg.mpr (henergy c)
 
+/-- For a symmetric coercive tail form, the corrected Gram is positive
+semidefinite if and only if the original coupled finite--tail quadratic is
+nonnegative for every finite vector and every completed tail vector.  The
+reverse implication tests the full quadratic at the negative aggregate Riesz
+representative, so no density or matrix inverse is involved. -/
+theorem coerciveBilinearCorrectedGram_posSemidef_iff_full_nonneg
+    {ι : Type*} [Fintype ι]
+    (A : Matrix ι ι ℝ) (B : K →L[ℝ] K →L[ℝ] ℝ)
+    (hB : IsCoercive B) (ell : ι → StrongDual ℝ K)
+    (hA : A.IsHermitian) (hBsymm : ∀ x y, B x y = B y x) :
+    Matrix.PosSemidef (coerciveBilinearCorrectedGram A B hB ell) ↔
+      ∀ (c : ι → ℝ) (x : K),
+        0 ≤ c ⬝ᵥ (A *ᵥ c) + 2 * ∑ i, c i * ell i x + B x x := by
+  constructor
+  · intro hG c x
+    exact coerciveBilinear_full_nonneg_of_correctedGram_posSemidef
+      A B hB hBsymm ell hG c x
+  · intro hfull
+    apply Matrix.PosSemidef.of_dotProduct_mulVec_nonneg
+      (coerciveBilinearCorrectedGram_isHermitian A B hB ell hA hBsymm)
+    intro c
+    simp only [star_trivial]
+    let r : K := ∑ i, c i • coerciveRieszCorrection hB (ell i)
+    have h := hfull c (-r)
+    rw [coerciveBilinear_complete_square A B hB hBsymm ell c (-r)] at h
+    have hcancel : -r + ∑ i, c i • coerciveRieszCorrection hB (ell i) = 0 := by
+      simp only [r, neg_add_cancel]
+    rw [hcancel] at h
+    simpa using h
+
 omit [CompleteSpace K] in
 private theorem coerciveBilinear_diagonal_nonneg
     (B : K →L[ℝ] K →L[ℝ] ℝ) (hB : IsCoercive B) (x : K) :
