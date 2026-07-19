@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilGlobalCrossSesquilinearStructural
 
 set_option autoImplicit false
 
@@ -307,6 +308,57 @@ private theorem bombieriRealQuadraticValue_add_real_smul
     Complex.ofReal_im, mul_zero, add_zero, Complex.mul_re,
     zero_mul, sub_zero, pow_two, mul_assoc] using h
 
+private theorem bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re
+    (f g : BombieriTest) (a b : ℝ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      ((a : ℂ) • f) ((b : ℂ) • g)).re =
+      a * b * (bombieriTwoBlockGlobalCrossSymbol f g).re := by
+  rw [bombieriTwoBlockGlobalCrossSymbol_smul_left,
+    bombieriTwoBlockGlobalCrossSymbol_smul_right]
+  rw [show starRingEnd ℂ (a : ℂ) = (a : ℂ) by
+    rw [starRingEnd_apply, Complex.star_def, Complex.conj_ofReal]]
+  simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    zero_mul, sub_zero]
+  ring
+
+private theorem bombieriTwoBlockGlobalCrossSymbol_real_linearCombination_re
+    (f g h i : BombieriTest) (a b c d : ℝ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      ((a : ℂ) • f + (b : ℂ) • g)
+      ((c : ℂ) • h + (d : ℂ) • i)).re =
+      a * c * (bombieriTwoBlockGlobalCrossSymbol f h).re +
+        a * d * (bombieriTwoBlockGlobalCrossSymbol f i).re +
+        b * c * (bombieriTwoBlockGlobalCrossSymbol g h).re +
+        b * d * (bombieriTwoBlockGlobalCrossSymbol g i).re := by
+  rw [bombieriTwoBlockGlobalCrossSymbol_add_left,
+    bombieriTwoBlockGlobalCrossSymbol_add_right,
+    bombieriTwoBlockGlobalCrossSymbol_add_right]
+  simp only [Complex.add_re]
+  rw [bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re,
+    bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re,
+    bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re,
+    bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re]
+  ring
+
+private theorem bombieriRealQuadraticValue_real_linearCombination
+    (f g : BombieriTest) (a b : ℝ) :
+    bombieriRealQuadraticValue ((a : ℂ) • f + (b : ℂ) • g) =
+      a ^ 2 * bombieriRealQuadraticValue f +
+        b ^ 2 * bombieriRealQuadraticValue g +
+        2 * a * b * (bombieriTwoBlockGlobalCrossSymbol f g).re := by
+  have hswap := congrArg Complex.re
+    (_root_.ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriTwoBlockGlobalCrossSymbol_conj_swap
+      f g)
+  simp only [Complex.star_def, Complex.conj_re] at hswap
+  unfold bombieriRealQuadraticValue
+  rw [← bombieriTwoBlockGlobalCrossSymbol_self]
+  rw [bombieriTwoBlockGlobalCrossSymbol_real_linearCombination_re]
+  rw [bombieriTwoBlockGlobalCrossSymbol_self,
+    bombieriTwoBlockGlobalCrossSymbol_self]
+  simp only [pow_two]
+  rw [hswap]
+  ring
+
 /-- Universal production four-cell positivity supplies both adjacent
 principal minors of the genuine five-cell common-parent matrix. -/
 theorem fiveCell_adjacentPrincipalMinors_of_fourCellProduction
@@ -396,6 +448,113 @@ theorem threeBlockDeterminant_nonnegative_of_middlePivotResidual
     rw [fiveCellMiddlePivotResidualDeterminant_eq_mul_threeBlockDeterminant]
       at hscaled
     exact (mul_nonneg_iff_of_pos_left hMpos).mp hscaled
+
+/-- The left middle-orthogonal residual of the actual five-cell common-parent
+triple. -/
+def fiveCellLeftMiddleOrthogonalResidual
+    (parent : BombieriTest) (k : ℤ) : BombieriTest :=
+  let a := monotoneQuarterCell parent k
+  let m :=
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+      parent k
+  let M := bombieriRealQuadraticValue m
+  let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  (M : ℂ) • a + ((-U : ℝ) : ℂ) • m
+
+/-- The right middle-orthogonal residual of the actual five-cell common-parent
+triple. -/
+def fiveCellRightMiddleOrthogonalResidual
+    (parent : BombieriTest) (k : ℤ) : BombieriTest :=
+  let m :=
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+      parent k
+  let e := monotoneQuarterCell parent (k + 4)
+  let M := bombieriRealQuadraticValue m
+  let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  (M : ℂ) • e + ((-V : ℝ) : ℂ) • m
+
+/-- Exact coordinates of the two middle-orthogonal residual tests.  Their
+diagonals are the adjacent Schur complements, while their real cross is the
+new five-cell middle-pivot numerator. -/
+theorem fiveCell_middleOrthogonalResidual_coordinates
+    (parent : BombieriTest) (k : ℤ) :
+    let a := monotoneQuarterCell parent k
+    let m :=
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k
+    let e := monotoneQuarterCell parent (k + 4)
+    let A := bombieriRealQuadraticValue a
+    let M := bombieriRealQuadraticValue m
+    let E := bombieriRealQuadraticValue e
+    let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X :=
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellRemoteEndpointBalance
+        parent k
+    bombieriRealQuadraticValue
+        (fiveCellLeftMiddleOrthogonalResidual parent k) =
+          M * (A * M - U ^ 2) ∧
+      bombieriRealQuadraticValue
+        (fiveCellRightMiddleOrthogonalResidual parent k) =
+          M * (M * E - V ^ 2) ∧
+      (bombieriTwoBlockGlobalCrossSymbol
+        (fiveCellLeftMiddleOrthogonalResidual parent k)
+        (fiveCellRightMiddleOrthogonalResidual parent k)).re =
+          M * (M * X - U * V) := by
+  dsimp only
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest :=
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+      parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ :=
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellRemoteEndpointBalance
+      parent k
+  have hleft :=
+    bombieriRealQuadraticValue_real_linearCombination a m M (-U)
+  have hright :=
+    bombieriRealQuadraticValue_real_linearCombination e m M (-V)
+  have hcross :=
+    bombieriTwoBlockGlobalCrossSymbol_real_linearCombination_re
+      a m e m M (-U) M (-V)
+  have hem : (bombieriTwoBlockGlobalCrossSymbol e m).re = V := by
+    have hswap := congrArg Complex.re
+      (_root_.ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriTwoBlockGlobalCrossSymbol_conj_swap
+        m e)
+    simpa only [Complex.star_def, Complex.conj_re, V] using hswap
+  have hmm : (bombieriTwoBlockGlobalCrossSymbol m m).re = M := by
+    rw [bombieriTwoBlockGlobalCrossSymbol_self]
+    rfl
+  have hae : (bombieriTwoBlockGlobalCrossSymbol a e).re = X := by
+    dsimp only [a, e, X]
+    exact
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCell_remoteEndpointGlobalCross_re_eq_balance
+        parent k
+  change
+    bombieriRealQuadraticValue ((M : ℂ) • a + ((-U : ℝ) : ℂ) • m) =
+        M * (A * M - U ^ 2) ∧
+      bombieriRealQuadraticValue ((M : ℂ) • e + ((-V : ℝ) : ℂ) • m) =
+        M * (M * E - V ^ 2) ∧
+      (bombieriTwoBlockGlobalCrossSymbol
+        ((M : ℂ) • a + ((-U : ℝ) : ℂ) • m)
+        ((M : ℂ) • e + ((-V : ℝ) : ℂ) • m)).re =
+          M * (M * X - U * V)
+  constructor
+  · rw [hleft]
+    dsimp only [A, M, U]
+    ring
+  constructor
+  · rw [hright, hem]
+    dsimp only [M, E, V]
+    ring
+  · rw [hcross, hae, hmm]
+    dsimp only [M, U, V]
+    ring
 
 /-- The one genuinely new common-parent inequality after four-cell closure.
 The remote entry is written in its exact local-minus-prime form. -/
