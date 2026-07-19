@@ -189,7 +189,7 @@ boundary term and parent-derivative term used by the corrected-potential
 pairing. -/
 theorem star_bombieriDirectedCorrelation_hasDerivAt_coherentWeights
     (f h g : BombieriTest) (eta theta : ℝ → ℝ)
-    (heta : ContDiff ℝ ∞ eta) (_htheta : ContDiff ℝ ∞ theta)
+    (heta : ContDiff ℝ ∞ eta)
     (hf : ∀ z : ℝ, f z = (eta z : ℂ) * g z)
     (hh : ∀ z : ℝ, h z = (theta z : ℂ) * g z)
     (x : ℝ) :
