@@ -279,13 +279,14 @@ private theorem fourCellScalar_lt_31577_div_20000 :
     strict_log_log_two_bounds.2, strict_euler_gamma_bounds.2,
     strict_log_pi_bounds.2]
 
-/-- Exact zero-cosh normal form for the polar-free operator. -/
-theorem fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular
+/-- The polar-free even operator is the coupled singular/endpoint/prime core
+minus exactly the scalar-mass and smooth regular rows.  The identity itself
+does not require the wide-cosh coordinate to vanish: the positive polar rank
+cancels on both sides before any estimate is made. -/
+theorem fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular_of_even
     (w : ℝ → ℝ) (hw : Continuous w)
     (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
-    (heven : Function.Even w)
-    (hzero : fourCellPositiveCoshMoment w
-      (fourCellOperatorHalfWidth / 2) = 0) :
+    (heven : Function.Even w) :
     fourCellEvenPolarFreeOperator w =
       fourCellEvenZeroCoshCoupledCore w -
         (Real.log (2 * fourCellOperatorHalfWidth) +
@@ -297,14 +298,46 @@ theorem fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular
               centeredEndpointCorrelation w t) := by
   have hbracket := fourCell_evenBracket_eq_polarFree_add_coshRank
     w hw hlocal heven
-  rw [hzero] at hbracket
-  norm_num at hbracket
-  rw [← hbracket]
-  unfold centeredClippedPhysicalQuadratic
-    fourCellEvenZeroCoshCoupledCore
-  rw [physicalPolarProduct_eq_positiveCoshSquare_of_even
-    w hw heven fourCellOperatorHalfWidth, hzero]
-  ring
+  have hphysical :
+      centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth w -
+          Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w =
+        fourCellEvenZeroCoshCoupledCore w -
+          (Real.log (2 * fourCellOperatorHalfWidth) +
+              Real.eulerMascheroniConstant + Real.log Real.pi) *
+            (∫ x : ℝ in -1..1, w x ^ 2) -
+          2 * fourCellOperatorHalfWidth *
+            (∫ t : ℝ in 0..2,
+              yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+                centeredEndpointCorrelation w t) +
+          8 * fourCellOperatorHalfWidth *
+            fourCellPositiveCoshMoment w
+              (fourCellOperatorHalfWidth / 2) ^ 2 := by
+    unfold centeredClippedPhysicalQuadratic
+      fourCellEvenZeroCoshCoupledCore
+    rw [physicalPolarProduct_eq_positiveCoshSquare_of_even
+      w hw heven fourCellOperatorHalfWidth]
+    ring
+  linear_combination hphysical - hbracket
+
+/-- Exact zero-cosh specialization of the unconditional even normal form. -/
+theorem fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (_hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    fourCellEvenPolarFreeOperator w =
+      fourCellEvenZeroCoshCoupledCore w -
+        (Real.log (2 * fourCellOperatorHalfWidth) +
+            Real.eulerMascheroniConstant + Real.log Real.pi) *
+          (∫ x : ℝ in -1..1, w x ^ 2) -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation w t) := by
+  exact
+    fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular_of_even
+      w hw hlocal heven
 
 /-- A single structural lower bound of `33 / 20` for the coupled core closes
 the complete zero-cosh polar-free tail.  The rational target retains a strict
