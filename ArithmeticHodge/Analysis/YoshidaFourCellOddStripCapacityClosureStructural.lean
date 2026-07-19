@@ -10003,6 +10003,211 @@ theorem fourCellOddOneThreeFivePerturbed_entry_bounds :
   · nlinarith
   constructor <;> nlinarith
 
+def fourCellOddOneThreeFivePerturbedMinor13 : ℝ :=
+  fourCellOddOneThreeFivePerturbed11 *
+      fourCellOddOneThreeFivePerturbed33 -
+    fourCellOddOneThreeFivePerturbed13 ^ 2
+
+def fourCellOddOneThreeFivePerturbedDeterminant : ℝ :=
+  fourCellOddOneThreeFivePerturbed11 *
+      fourCellOddOneThreeFivePerturbed33 *
+        fourCellOddOneThreeFivePerturbed55 +
+    2 * fourCellOddOneThreeFivePerturbed13 *
+      fourCellOddOneThreeFivePerturbed15 *
+        fourCellOddOneThreeFivePerturbed35 -
+    fourCellOddOneThreeFivePerturbed11 *
+      fourCellOddOneThreeFivePerturbed35 ^ 2 -
+    fourCellOddOneThreeFivePerturbed33 *
+      fourCellOddOneThreeFivePerturbed15 ^ 2 -
+    fourCellOddOneThreeFivePerturbed55 *
+      fourCellOddOneThreeFivePerturbed13 ^ 2
+
+/-- The actual wide-perturbed block retains a strictly positive determinant.
+The lower bound keeps the favorable `2 B E F` interaction, so the small
+`P₃/P₅` row is never charged independently against both diagonals. -/
+theorem fourCellOddOneThreeFivePerturbed_principal_data :
+    0 < fourCellOddOneThreeFivePerturbed11 ∧
+      0 < fourCellOddOneThreeFivePerturbedMinor13 ∧
+        (1 / 50000 : ℝ) <
+          fourCellOddOneThreeFivePerturbedDeterminant := by
+  let A : ℝ := fourCellOddOneThreeFivePerturbed11
+  let B : ℝ := fourCellOddOneThreeFivePerturbed13
+  let D : ℝ := fourCellOddOneThreeFivePerturbed33
+  let E : ℝ := fourCellOddOneThreeFivePerturbed15
+  let F : ℝ := fourCellOddOneThreeFivePerturbed35
+  let G : ℝ := fourCellOddOneThreeFivePerturbed55
+  rcases fourCellOddOneThreeFivePerturbed_entry_bounds with
+    ⟨hAlo, hAhi, hBlo, hBhi, hDlo, hDhi,
+      hElo, hEhi, hFlo, hFhi, hGlo, hGhi⟩
+  change (247368 / 1000000 : ℝ) < A at hAlo
+  change A < (248102 / 1000000 : ℝ) at hAhi
+  change (218706 / 1000000 : ℝ) < B at hBlo
+  change B < (218873 / 1000000 : ℝ) at hBhi
+  change (204916 / 1000000 : ℝ) < D at hDlo
+  change D < (205195 / 1000000 : ℝ) at hDhi
+  change (134917 / 10000000 : ℝ) < E at hElo
+  change E < (135673 / 10000000 : ℝ) at hEhi
+  change (629208 / 10000000 : ℝ) < F at hFlo
+  change F < (630033 / 10000000 : ℝ) at hFhi
+  change (2449825 / 10000000 : ℝ) < G at hGlo
+  change G < (245159 / 1000000 : ℝ) at hGhi
+  have hA0 : 0 ≤ A := by linarith
+  have hB0 : 0 ≤ B := by linarith
+  have hD0 : 0 ≤ D := by linarith
+  have hE0 : 0 ≤ E := by linarith
+  have hF0 : 0 ≤ F := by linarith
+  have hG0 : 0 ≤ G := by linarith
+  have hBsq : B ^ 2 ≤ (218873 / 1000000 : ℝ) ^ 2 := by
+    nlinarith [mul_nonneg hB0 (sub_nonneg.mpr hBhi.le)]
+  have hEsq : E ^ 2 ≤ (135673 / 10000000 : ℝ) ^ 2 := by
+    nlinarith [mul_nonneg hE0 (sub_nonneg.mpr hEhi.le)]
+  have hFsq : F ^ 2 ≤ (630033 / 10000000 : ℝ) ^ 2 := by
+    nlinarith [mul_nonneg hF0 (sub_nonneg.mpr hFhi.le)]
+  have hADlo :
+      (247368 / 1000000 : ℝ) * (204916 / 1000000) ≤ A * D := by
+    calc
+      (247368 / 1000000 : ℝ) * (204916 / 1000000) ≤
+          A * (204916 / 1000000) :=
+        mul_le_mul_of_nonneg_right hAlo.le (by norm_num)
+      _ ≤ A * D := mul_le_mul_of_nonneg_left hDlo.le hA0
+  have hADGlo :
+      (247368 / 1000000 : ℝ) * (204916 / 1000000) *
+          (2449825 / 10000000) ≤ A * D * G := by
+    calc
+      (247368 / 1000000 : ℝ) * (204916 / 1000000) *
+          (2449825 / 10000000) ≤
+          (A * D) * (2449825 / 10000000) :=
+        mul_le_mul_of_nonneg_right hADlo (by norm_num)
+      _ ≤ A * D * G :=
+        mul_le_mul_of_nonneg_left hGlo.le (mul_nonneg hA0 hD0)
+  have hBElo :
+      (218706 / 1000000 : ℝ) * (134917 / 10000000) ≤ B * E := by
+    calc
+      (218706 / 1000000 : ℝ) * (134917 / 10000000) ≤
+          B * (134917 / 10000000) :=
+        mul_le_mul_of_nonneg_right hBlo.le (by norm_num)
+      _ ≤ B * E := mul_le_mul_of_nonneg_left hElo.le hB0
+  have hBEFlo :
+      (218706 / 1000000 : ℝ) * (134917 / 10000000) *
+          (629208 / 10000000) ≤ B * E * F := by
+    calc
+      (218706 / 1000000 : ℝ) * (134917 / 10000000) *
+          (629208 / 10000000) ≤
+          (B * E) * (629208 / 10000000) :=
+        mul_le_mul_of_nonneg_right hBElo (by norm_num)
+      _ ≤ B * E * F :=
+        mul_le_mul_of_nonneg_left hFlo.le (mul_nonneg hB0 hE0)
+  have hAFsq : A * F ^ 2 ≤
+      (248102 / 1000000 : ℝ) * (630033 / 10000000) ^ 2 := by
+    calc
+      A * F ^ 2 ≤ (248102 / 1000000 : ℝ) * F ^ 2 :=
+        mul_le_mul_of_nonneg_right hAhi.le (sq_nonneg F)
+      _ ≤ (248102 / 1000000 : ℝ) * (630033 / 10000000) ^ 2 :=
+        mul_le_mul_of_nonneg_left hFsq (by norm_num)
+  have hDEsq : D * E ^ 2 ≤
+      (205195 / 1000000 : ℝ) * (135673 / 10000000) ^ 2 := by
+    calc
+      D * E ^ 2 ≤ (205195 / 1000000 : ℝ) * E ^ 2 :=
+        mul_le_mul_of_nonneg_right hDhi.le (sq_nonneg E)
+      _ ≤ (205195 / 1000000 : ℝ) * (135673 / 10000000) ^ 2 :=
+        mul_le_mul_of_nonneg_left hEsq (by norm_num)
+  have hGBsq : G * B ^ 2 ≤
+      (245159 / 1000000 : ℝ) * (218873 / 1000000) ^ 2 := by
+    calc
+      G * B ^ 2 ≤ (245159 / 1000000 : ℝ) * B ^ 2 :=
+        mul_le_mul_of_nonneg_right hGhi.le (sq_nonneg B)
+      _ ≤ (245159 / 1000000 : ℝ) * (218873 / 1000000) ^ 2 :=
+        mul_le_mul_of_nonneg_left hBsq (by norm_num)
+  change 0 < A ∧ 0 < A * D - B ^ 2 ∧
+    (1 / 50000 : ℝ) <
+      A * D * G + 2 * B * E * F - A * F ^ 2 - D * E ^ 2 - G * B ^ 2
+  constructor
+  · exact hAlo.trans' (by norm_num)
+  constructor
+  · nlinarith [hADlo, hBsq]
+  · nlinarith [hADGlo, hBEFlo, hAFsq, hDEsq, hGBsq]
+
+/-- Structural positivity of the actual finite block.  This is an explicit
+`LDLᵀ` certificate driven by the perturbed determinant, rather than a
+finite grid or sign-octant enumeration. -/
+theorem fourCellOddOneThreeFivePerturbedQuadratic_nonneg
+    (c d e : ℝ) :
+    0 ≤ fourCellOddOneThreeFivePerturbedQuadratic c d e := by
+  let A : ℝ := fourCellOddOneThreeFivePerturbed11
+  let B : ℝ := fourCellOddOneThreeFivePerturbed13
+  let D : ℝ := fourCellOddOneThreeFivePerturbed33
+  let E : ℝ := fourCellOddOneThreeFivePerturbed15
+  let F : ℝ := fourCellOddOneThreeFivePerturbed35
+  let G : ℝ := fourCellOddOneThreeFivePerturbed55
+  let Δ : ℝ := A * D - B ^ 2
+  let det : ℝ :=
+    A * D * G + 2 * B * E * F - A * F ^ 2 - D * E ^ 2 - G * B ^ 2
+  rcases fourCellOddOneThreeFivePerturbed_principal_data with
+    ⟨hA, hΔ, hdet⟩
+  change 0 < A at hA
+  change 0 < Δ at hΔ
+  change (1 / 50000 : ℝ) < det at hdet
+  change 0 ≤
+    A * c ^ 2 + 2 * B * c * d + D * d ^ 2 +
+      2 * E * c * e + 2 * F * d * e + G * e ^ 2
+  let Q : ℝ :=
+    A * c ^ 2 + 2 * B * c * d + D * d ^ 2 +
+      2 * E * c * e + 2 * F * d * e + G * e ^ 2
+  have hid : A * Δ * Q =
+      Δ * (A * c + B * d + E * e) ^ 2 +
+        (Δ * d + (A * F - B * E) * e) ^ 2 +
+          A * det * e ^ 2 := by
+    dsimp only [Q, Δ, det]
+    ring
+  have hrhs : 0 ≤
+      Δ * (A * c + B * d + E * e) ^ 2 +
+        (Δ * d + (A * F - B * E) * e) ^ 2 +
+          A * det * e ^ 2 := by
+    have hdet0 : 0 ≤ det := by linarith
+    positivity
+  have hprod : 0 ≤ A * Δ * Q := by
+    rw [hid]
+    exact hrhs
+  have hcoef : 0 < A * Δ := mul_pos hA hΔ
+  have hQ : 0 ≤ Q := by
+    by_contra hneg
+    have hQneg : Q < 0 := lt_of_not_ge hneg
+    have hmulNeg : A * Δ * Q < 0 :=
+      mul_neg_of_pos_of_neg hcoef hQneg
+    linarith
+  exact hQ
+
+theorem fourCellOddOneThreeFiveCombined_sub_regular_eq_perturbed
+    (c d e : ℝ) :
+    fourCellOddOneThreeFiveCombinedQuadratic c d e -
+        2 * fourCellOperatorHalfWidth *
+          fourCellOddOneThreeFiveRegularQuadratic c d e =
+      fourCellOddOneThreeFivePerturbedQuadratic c d e := by
+  rw [fourCellOddOneThreeFiveRegularQuadratic_expansion,
+    fourCellOddLowRegularQuadratic_expansion]
+  unfold fourCellOddOneThreeFiveCombinedQuadratic
+    fourCellOddOneThreeFivePerturbedQuadratic
+    fourCellOddOneThreeFivePerturbed11
+    fourCellOddOneThreeFivePerturbed13
+    fourCellOddOneThreeFivePerturbed33
+    fourCellOddOneThreeFivePerturbed15
+    fourCellOddOneThreeFivePerturbed35
+    fourCellOddOneThreeFivePerturbed55
+    fourCellOddOneThreeFiveRegular11
+    fourCellOddOneThreeFiveRegular13
+    fourCellOddOneThreeFiveRegular33
+  ring
+
+/-- Closure of the exact finite `P₁/P₃/P₅` diagonal after the wide
+regular perturbation. -/
+theorem fourCellOddOneThreeFiveCombined_sub_regular_nonneg
+    (c d e : ℝ) :
+    0 ≤ fourCellOddOneThreeFiveCombinedQuadratic c d e -
+      2 * fourCellOperatorHalfWidth *
+        fourCellOddOneThreeFiveRegularQuadratic c d e := by
+  rw [fourCellOddOneThreeFiveCombined_sub_regular_eq_perturbed]
+  exact fourCellOddOneThreeFivePerturbedQuadratic_nonneg c d e
+
 /-- Exact P135 diagonal of the complete core-plus-local target.  This is
 the finite `3 × 3` block minus one fully expanded wide regular form. -/
 theorem fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_eq
@@ -10026,6 +10231,17 @@ theorem fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_eq
     fourCellOddLowCombined33
     fourCellOddOneThreeFiveRegularQuadratic
   ring
+
+/-- The complete finite `P₁/P₃/P₅` core-plus-local diagonal is
+nonnegative after the actual full-width regular perturbation. -/
+theorem fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_nonneg
+    (c d e : ℝ) :
+    0 ≤ fourCellOddHalfCoreReserve
+        (fourCellOddOneThreeFiveLowProfile c d e) +
+      fourCellOddStripLocalWidthDefect
+        (fourCellOddOneThreeFiveLowProfile c d e) := by
+  rw [fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_eq]
+  exact fourCellOddOneThreeFiveCombined_sub_regular_nonneg c d e
 
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
