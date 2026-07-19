@@ -1181,6 +1181,27 @@ theorem monotonePrimeAtomAggregateHeadWindowEnergy_eq_vonMangoldtDilates
   rw [monotonePrimeAtomAggregateSlice_apply_of_mem_headWindow
     parent k S hx]
 
+/-- Even after recording the smaller head-window energy, the known separate
+estimates do not imply coefficient-one absorption.  In this model the window
+mass is only `1 / 36000000` of the full aggregate critical energy, local
+Cauchy is sharp, both `1 / 12000` coercivities are sharp, and the desired
+reserve product still fails.  Thus the missing input must couple the window
+operator to the two complete reserves (or control the exact remainder); a
+mere comparison with the full aggregate energy cannot close the route. -/
+theorem aggregate_headWindow_knownData_allow_coefficientOne_failure :
+    ∃ H T C P R EH EA W : ℝ,
+      0 ≤ H ∧ 0 ≤ T ∧ 0 ≤ EH ∧ 0 ≤ EA ∧ 0 ≤ W ∧
+      C = P + R ∧
+      C ^ 2 ≤ H * T ∧
+      P ^ 2 ≤ W * EH ∧
+      W ≤ EA ∧
+      (1 / 12000 : ℝ) * EH ≤ H ∧
+      (1 / 12000 : ℝ) * EA ≤ T ∧
+      R * (2 * P + R) < 0 ∧
+      H * T < P ^ 2 := by
+  refine ⟨1, 1, 0, 2, -2, 12000, 12000, 1 / 3000, ?_⟩
+  norm_num
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
