@@ -5,6 +5,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilFourCellEnergyAbsorptionStruct
 set_option autoImplicit false
 
 open Complex MeasureTheory Real Set TopologicalSpace
+open scoped Pointwise
 
 namespace ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
 
@@ -1429,6 +1430,83 @@ theorem monotonePrimeAtomLocalDilationGram_self
     starRingEnd_apply, Complex.star_def]
   simp only [Complex.mul_re, Complex.conj_re, Complex.conj_im]
   ring
+
+/-- Primitive overlap after extracting a common positive integer scale `d`
+from two dilation indices. -/
+def monotonePrimeAtomPrimitiveDilationOverlap
+    (parent : BombieriTest) (k : ℤ) (d a b : ℕ) : ℝ :=
+  ∫ y : ℝ in Set.Icc
+      ((d : ℝ) * quarterLogLatticePoint k)
+      ((d : ℝ) * quarterLogLatticePoint (k + 2)),
+    (starRingEnd ℂ (parent ((a : ℝ) * y)) *
+      parent ((b : ℝ) * y)).re
+
+/-- Exact gcd normalization of every positive-index Gram entry.  Its
+off-diagonal direction is the reduced rational pair
+`(m / gcd m n, n / gcd m n)`; the common scale contributes only the Jacobian
+`1 / gcd m n` and the corresponding dilation of the head window. -/
+theorem monotonePrimeAtomLocalDilationGram_eq_gcdPrimitiveOverlap
+    (parent : BombieriTest) (k : ℤ) (m n : ℕ)
+    (hm : 0 < m) :
+    monotonePrimeAtomLocalDilationGram parent k m n =
+      (((Nat.gcd m n : ℕ) : ℝ)⁻¹) *
+        monotonePrimeAtomPrimitiveDilationOverlap parent k
+          (Nat.gcd m n) (m / Nat.gcd m n) (n / Nat.gcd m n) := by
+  let d : ℕ := Nat.gcd m n
+  let a : ℕ := m / d
+  let b : ℕ := n / d
+  let I : Set ℝ := Set.Icc (quarterLogLatticePoint k)
+    (quarterLogLatticePoint (k + 2))
+  let F : ℝ → ℝ := fun y ↦
+    (starRingEnd ℂ (parent ((a : ℝ) * y)) *
+      parent ((b : ℝ) * y)).re
+  have hdNat : 0 < d := by
+    exact Nat.gcd_pos_of_pos_left n hm
+  have hd : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hdNat
+  have hdmNat : a * d = m := by
+    exact Nat.div_mul_cancel (Nat.gcd_dvd_left m n)
+  have hdnNat : b * d = n := by
+    exact Nat.div_mul_cancel (Nat.gcd_dvd_right m n)
+  have hdm : (a : ℝ) * (d : ℝ) = (m : ℝ) := by
+    exact_mod_cast hdmNat
+  have hdn : (b : ℝ) * (d : ℝ) = (n : ℝ) := by
+    exact_mod_cast hdnNat
+  have hscale := Measure.setIntegral_comp_smul_of_pos
+    volume F I hd
+  have hscale' :
+      (∫ x : ℝ in I, F ((d : ℝ) * x)) =
+        ((d : ℝ)⁻¹) *
+          ∫ y : ℝ in Set.Icc
+            ((d : ℝ) * quarterLogLatticePoint k)
+            ((d : ℝ) * quarterLogLatticePoint (k + 2)), F y := by
+    dsimp only [I] at hscale
+    rw [LinearOrderedField.smul_Icc hd] at hscale
+    simpa only [smul_eq_mul, Module.finrank_self, pow_one] using hscale
+  change
+    (∫ x : ℝ in I,
+      (starRingEnd ℂ (parent ((m : ℝ) * x)) *
+        parent ((n : ℝ) * x)).re) = _
+  calc
+    (∫ x : ℝ in I,
+      (starRingEnd ℂ (parent ((m : ℝ) * x)) *
+        parent ((n : ℝ) * x)).re) =
+        ∫ x : ℝ in I, F ((d : ℝ) * x) := by
+      apply setIntegral_congr_fun measurableSet_Icc
+      intro x _hx
+      dsimp only [F]
+      rw [← mul_assoc, hdm, ← mul_assoc, hdn]
+    _ = ((d : ℝ)⁻¹) *
+        ∫ y : ℝ in Set.Icc
+          ((d : ℝ) * quarterLogLatticePoint k)
+          ((d : ℝ) * quarterLogLatticePoint (k + 2)), F y := hscale'
+    _ = _ := rfl
+
+/-- The two dilation indices left after gcd normalization are coprime. -/
+theorem monotonePrimeAtom_gcdReducedDilation_coprime
+    (m n : ℕ) (hm : 0 < m) :
+    Nat.Coprime (m / Nat.gcd m n) (n / Nat.gcd m n) := by
+  exact Nat.coprime_div_gcd_div_gcd
+    (Nat.gcd_pos_of_pos_left n hm)
 
 end
 
