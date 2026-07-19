@@ -13,6 +13,8 @@ open MultiplicativeWeil
 open MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
+open MultiplicativeWeilMonotoneRatioTwoBlockPropagationStructural
+open MultiplicativeWeilQuarterLogLatticePartitionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 
 /-!
@@ -199,6 +201,102 @@ theorem monotoneQuarterCutoff_nonnegative_of_primeAtom_aggregateThreeWayResidual
   rw [hexpand]
   simpa only [H, I, D, aggregateOuterValue,
     monotonePrimeAtomHeadSuffixGlobalCross] using houter
+
+/-! ## Why the suffix--aggregate pencil is not ratio two -/
+
+/-- Above the aggregate plateau, adding any scalar multiple of the aggregate
+slice leaves the entire original inner-suffix tail unchanged. -/
+theorem innerSuffix_add_smul_aggregateSlice_apply_of_upper
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) (c : ℂ)
+    {x : ℝ} (hx : quarterLogLatticePoint (k + 3) ≤ x) :
+    (monotoneQuarterCutoff parent (k + 1) +
+        c • monotonePrimeAtomAggregateSlice parent k S) x =
+      parent x := by
+  have hinner : monotoneQuarterStep (k + 1) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    exact (quarterLogLatticePoint_mono (by omega)).trans hx
+  have hlower : monotoneQuarterStep (k - 1) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    rw [show k - 1 + 1 = k by ring]
+    exact (quarterLogLatticePoint_mono (by omega)).trans hx
+  have hupper : monotoneQuarterStep (k + 2) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    simpa only [show k + 2 + 1 = k + 3 by ring] using hx
+  simp only [TestFunction.coe_add, Pi.add_apply,
+    TestFunction.coe_smul, Pi.smul_apply, smul_eq_mul,
+    monotoneQuarterCutoff_apply, monotonePrimeAtomAggregateSlice,
+    monotoneRatioTwoBlock_apply, monotoneRatioTwoBlockMultiplier]
+  rw [hinner, show k - 1 + 3 = k + 2 by ring, hlower, hupper]
+  norm_num
+
+/-- In particular, a nonzero parent tail above the plateau prevents the
+suffix--aggregate pencil from being the canonical ratio-two block of any
+modified parent. -/
+theorem innerSuffix_add_smul_aggregateSlice_ne_ratioTwoBlock_of_upper
+    (parent modified : BombieriTest) (k : ℤ) (S : Finset ℕ) (c : ℂ)
+    {x : ℝ} (hx : quarterLogLatticePoint (k + 3) ≤ x)
+    (hparent : parent x ≠ 0) :
+    monotoneRatioTwoBlock modified (k - 1) ≠
+      monotoneQuarterCutoff parent (k + 1) +
+        c • monotonePrimeAtomAggregateSlice parent k S := by
+  have hlower : monotoneQuarterStep (k - 1) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    rw [show k - 1 + 1 = k by ring]
+    exact (quarterLogLatticePoint_mono (by omega)).trans hx
+  have hupper : monotoneQuarterStep (k + 2) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    simpa only [show k + 2 + 1 = k + 3 by ring] using hx
+  intro heq
+  have hpoint :
+      monotoneRatioTwoBlock modified (k - 1) x =
+        (monotoneQuarterCutoff parent (k + 1) +
+          c • monotonePrimeAtomAggregateSlice parent k S) x :=
+    congrArg (fun f : BombieriTest ↦ f x) heq
+  rw [innerSuffix_add_smul_aggregateSlice_apply_of_upper
+      parent k S c hx] at hpoint
+  simp only [monotoneRatioTwoBlock_apply,
+    monotoneRatioTwoBlockMultiplier,
+    show k - 1 + 3 = k + 2 by ring, hlower, hupper,
+    sub_self, Complex.ofReal_zero, zero_mul] at hpoint
+  exact hparent hpoint.symm
+
+private theorem not_ratioTwo_of_nonzero_at_factor_gt_two
+    (f : BombieriTest) {x y : ℝ}
+    (hxy : 2 * x < y)
+    (hfx : f x ≠ 0) (hfy : f y ≠ 0) :
+    ¬ BombieriRatioTwoCell f := by
+  rintro ⟨a, b, ha, _hab, hsupport, hratio⟩
+  have hxSupport : x ∈ tsupport f :=
+    subset_tsupport f (Function.mem_support.mpr hfx)
+  have hySupport : y ∈ tsupport f :=
+    subset_tsupport f (Function.mem_support.mpr hfy)
+  have hax : a ≤ x := (hsupport hxSupport).1
+  have hyb : y ≤ b := (hsupport hySupport).2
+  have hba : b ≤ 2 * a := by
+    exact (div_le_iff₀ ha).mp hratio
+  linarith
+
+/-- More generally, whenever the pencil genuinely retains a lower aggregate
+value and a suffix-tail value separated by a factor greater than two, it is
+not any ratio-two Bombieri test. -/
+theorem innerSuffix_add_smul_aggregateSlice_not_ratioTwo_of_separated_tail
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) (c : ℂ)
+    {x y : ℝ}
+    (hxy : 2 * x < y)
+    (hy : quarterLogLatticePoint (k + 3) ≤ y)
+    (hleft :
+      (monotoneQuarterCutoff parent (k + 1) +
+        c • monotonePrimeAtomAggregateSlice parent k S) x ≠ 0)
+    (htail : parent y ≠ 0) :
+    ¬ BombieriRatioTwoCell
+      (monotoneQuarterCutoff parent (k + 1) +
+        c • monotonePrimeAtomAggregateSlice parent k S) := by
+  apply not_ratioTwo_of_nonzero_at_factor_gt_two
+    (f := monotoneQuarterCutoff parent (k + 1) +
+      c • monotonePrimeAtomAggregateSlice parent k S)
+    hxy hleft
+  simpa only [innerSuffix_add_smul_aggregateSlice_apply_of_upper
+    parent k S c hy] using htail
 
 end
 
