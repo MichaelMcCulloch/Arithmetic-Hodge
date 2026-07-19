@@ -6377,6 +6377,27 @@ def fourCellOddCoreLocalBilinear (u v : ℝ → ℝ) : ℝ :=
   fourCellOddRawStripCancellationPolarization u v +
     fourCellOddStripReducedBilinear u v
 
+/-- Exact form-level normal form of the `P₁/P₃/P₅`--tail mixed row.  The
+global singular raw form has disappeared; the remaining terms are the
+adverse endpoint-strip raw polarization and the uncollapsed prime,
+potential, mass, and regular bilinear forms. -/
+theorem fourCellOddCoreLocalBilinear_oneThreeFive_tail_eq_endpointForms
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (c d e : ℝ) :
+    fourCellOddCoreLocalBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) r =
+      -(1 / 2 : ℝ) *
+          fourCellOddEndpointStripOddRawPolarization
+            (fourCellOddOneThreeFiveLowProfile c d e) r +
+        fourCellOddStripReducedBilinear
+          (fourCellOddOneThreeFiveLowProfile c d e) r := by
+  unfold fourCellOddCoreLocalBilinear
+  rw [fourCellOddRawStripCancellationPolarization_oneThreeFive_tail_eq
+    r hr hodd hone hthree hfive c d e]
+
 theorem fourCellOddCoreLocalQuadratic_add
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
     fourCellOddCoreLocalQuadratic (u + v) =
