@@ -15,6 +15,7 @@ open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointPotentialBound
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseIntrinsicNineP6EvenProfileCorrelationStructural
+open YoshidaFactorTwoPhaseIntrinsicNineP6EvenCleanPolynomialGramStructural
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
 open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
@@ -82,6 +83,38 @@ private theorem endpointSeedProfile_add_intrinsicEvenP0246
     factorTwoEvenStructuralLowProfile
     factorTwoIntrinsicSixEvenTail centeredEvenP0 centeredEvenP2
   simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  ring
+
+/-- The exact four-coordinate coupled-core row of the endpoint seed on the
+finite cutoff-eight block. -/
+def fourCellEvenEndpointSeedP0246CoreRow
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  ((10 / 9 : ℝ) - (4 / 3) * Real.log 2 -
+      (52 / 375) * Real.sqrt 2 * Real.log 2) * c0 +
+    (-(122 / 225 : ℝ) + (4 / 15) * Real.log 2 -
+      (4076 / 46875) * Real.sqrt 2 * Real.log 2) * c2 +
+    (-(1 / 35 : ℝ) -
+      (4544 / 234375) * Real.sqrt 2 * Real.log 2) * c4 +
+    (-(1 / 189 : ℝ) +
+      (16576 / 1953125) * Real.sqrt 2 * Real.log 2) * c6
+
+/-- Exact evaluation of the finite endpoint-seed coupled-core row.  This
+turns the outer low block into one explicit four-vector; no interval or
+analytic estimate enters the identity. -/
+theorem fourCellEvenZeroCoshCoupledCorePolarization_endpointSeed_P0246_eq
+    (c0 c2 c4 c6 : ℝ) :
+    fourCellEvenZeroCoshCoupledCorePolarization
+        fourCellEvenEndpointCoshSeed
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) =
+      fourCellEvenEndpointSeedP0246CoreRow c0 c2 c4 c6 := by
+  rw [fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile]
+  unfold fourCellEvenZeroCoshCoupledCorePolarization
+  rw [endpointSeedProfile_add_intrinsicEvenP0246,
+    fourCellEvenZeroCoshCoupledCore_intrinsicEvenP0246Profile_eq_gram,
+    fourCellEvenZeroCoshCoupledCore_intrinsicEvenP0246Profile_eq_gram,
+    fourCellEvenZeroCoshCoupledCore_intrinsicEvenP0246Profile_eq_gram]
+  unfold fourCellEvenEndpointSeedP0246CoreRow
+    factorTwoP6EvenRawLogGram factorTwoP6EvenPotentialGram
   ring
 
 /-- Against a genuine `P8+` tail, the endpoint seed has no raw-log mixed
@@ -233,6 +266,28 @@ theorem fourCellEvenEndpointSeedRow_P0246_add_tail_eq
   rw [fourCellEvenZeroCoshCoupledCorePolarization_endpointSeed_P0246_add_tail
     c0 c2 c4 c6 r hr hlocal hlow] at hrow
   simpa only [p] using hrow
+
+/-- Coordinate form of the complete fixed endpoint-seed row.  The entire
+finite contribution is the explicit four-vector above. -/
+theorem fourCellEvenEndpointSeedRow_P0246_add_tail_eq_explicit
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hre : Function.Even r)
+    (hzero : fourCellPositiveCoshMoment
+      (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 + r)
+        (fourCellOperatorHalfWidth / 2) = 0)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    fourCellEvenEndpointSeedRow
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 + r) =
+      fourCellEvenEndpointSeedP0246CoreRow c0 c2 c4 c6 +
+        fourCellEvenEndpointCapacityPolarization
+          fourCellEvenEndpointCoshSeed r -
+        fourCellEvenSignedMassRegularPolarization
+          fourCellEvenEndpointCoshSeed
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 + r) := by
+  rw [fourCellEvenEndpointSeedRow_P0246_add_tail_eq
+    c0 c2 c4 c6 r hr hlocal hre hzero hlow,
+    fourCellEvenZeroCoshCoupledCorePolarization_endpointSeed_P0246_eq]
 
 end
 
