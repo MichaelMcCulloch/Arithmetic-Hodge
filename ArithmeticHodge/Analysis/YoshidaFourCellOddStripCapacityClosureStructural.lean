@@ -2975,6 +2975,199 @@ private theorem centeredRawLogEnergy_add_eq_add_add_two_bilinear
   rw [hbridgeFG, hbridgeF, hbridgeG] at hunitExpand
   linarith
 
+private theorem centeredRawLogBilinear_const_mul_right_local
+    (u v : ℝ → ℝ) (a : ℝ) :
+    centeredRawLogBilinear u (fun x ↦ a * v x) =
+      a * centeredRawLogBilinear u v := by
+  unfold centeredRawLogBilinear
+  rw [show (fun x : ℝ ↦ ∫ y : ℝ in -1..1,
+      ((u x - u y) * (a * v x - a * v y)) / |x - y|) =
+      fun x ↦ a * ∫ y : ℝ in -1..1,
+        ((u x - u y) * (v x - v y)) / |x - y| by
+    funext x
+    rw [← intervalIntegral.integral_const_mul]
+    apply intervalIntegral.integral_congr
+    intro y _hy
+    ring,
+    intervalIntegral.integral_const_mul]
+
+private theorem contDiff_fourCellOddEndpointStripOdd_local
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    ContDiff ℝ 1 (fourCellOddEndpointStripOdd w) := by
+  unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+  fun_prop
+
+private theorem fourCellOddEndpointStripOdd_add_local
+    (u v : ℝ → ℝ) :
+    fourCellOddEndpointStripOdd (u + v) =
+      fourCellOddEndpointStripOdd u +
+        fourCellOddEndpointStripOdd v := by
+  funext z
+  unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+  simp only [Pi.add_apply]
+  ring
+
+private theorem fourCellOddEndpointStripOdd_const_mul_local
+    (v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddEndpointStripOdd (fun x ↦ a * v x) =
+      fun z ↦ a * fourCellOddEndpointStripOdd v z := by
+  funext z
+  unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+  ring
+
+/-- The retained strip raw polarization is exactly the raw-log bilinear
+form of the reflection-odd strip pullbacks, including its affine `1/5`
+Jacobian. -/
+theorem fourCellOddEndpointStripOddRawPolarization_eq_bilinear
+    (u v : ℝ → ℝ) (hu : ContDiff ℝ 1 u) (hv : ContDiff ℝ 1 v) :
+    fourCellOddEndpointStripOddRawPolarization u v =
+      (1 / 5 : ℝ) * centeredRawLogBilinear
+        (fourCellOddEndpointStripOdd u)
+        (fourCellOddEndpointStripOdd v) := by
+  let U : ℝ → ℝ := fourCellOddEndpointStripOdd u
+  let V : ℝ → ℝ := fourCellOddEndpointStripOdd v
+  have hU : ContDiff ℝ 1 U := by
+    simpa only [U] using contDiff_fourCellOddEndpointStripOdd_local u hu
+  have hV : ContDiff ℝ 1 V := by
+    simpa only [V] using contDiff_fourCellOddEndpointStripOdd_local v hv
+  have henergy := centeredRawLogEnergy_add_eq_add_add_two_bilinear
+    U V
+    (hU.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1))
+    (hV.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1))
+  have hadd := fourCellOddEndpointStripOdd_add_local u v
+  unfold fourCellOddEndpointStripOddRawPolarization
+    fourCellOddEndpointStripOddRawEnergy
+  rw [hadd, henergy]
+  dsimp only [U, V] at henergy ⊢
+  ring
+
+private theorem fourCellOddEndpointStripOddRawPolarization_const_mul_right
+    (u v : ℝ → ℝ) (hu : ContDiff ℝ 1 u) (hv : ContDiff ℝ 1 v)
+    (a : ℝ) :
+    fourCellOddEndpointStripOddRawPolarization u (fun x ↦ a * v x) =
+      a * fourCellOddEndpointStripOddRawPolarization u v := by
+  have hav : ContDiff ℝ 1 (fun x ↦ a * v x) := contDiff_const.mul hv
+  rw [fourCellOddEndpointStripOddRawPolarization_eq_bilinear u _ hu hav,
+    fourCellOddEndpointStripOddRawPolarization_eq_bilinear u v hu hv,
+    fourCellOddEndpointStripOdd_const_mul_local,
+    centeredRawLogBilinear_const_mul_right_local]
+  ring
+
+/-- For odd profiles the raw-strip polarization is the centered raw
+bilinear form minus the retained adverse strip polarization. -/
+theorem fourCellOddRawStripCancellationPolarization_eq_centered_sub_strip
+    (u v : ℝ → ℝ) (hu : ContDiff ℝ 1 u) (hv : ContDiff ℝ 1 v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) :
+    fourCellOddRawStripCancellationPolarization u v =
+      (1 / 4 : ℝ) * centeredRawLogBilinear u v -
+        (1 / 2 : ℝ) *
+          fourCellOddEndpointStripOddRawPolarization u v := by
+  have huLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) u :=
+    hu.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hvLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v :=
+    hv.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have henergy := centeredRawLogEnergy_add_eq_add_add_two_bilinear
+    u v huLocal hvLocal
+  have hfoldU := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    u huLocal huodd
+  have hfoldV := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    v hvLocal hvodd
+  have hfoldAdd := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    (u + v) (huLocal.add hvLocal) (huodd.add hvodd)
+  unfold fourCellOddRawStripCancellationPolarization
+    fourCellOddRawStripCancellationReserve
+    fourCellOddEndpointStripOddRawPolarization
+  rw [← hfoldAdd, ← hfoldU, ← hfoldV, henergy]
+  ring
+
+private theorem fourCellOddRawStripCancellationPolarization_const_mul_right
+    (u v : ℝ → ℝ) (hu : ContDiff ℝ 1 u) (hv : ContDiff ℝ 1 v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) (a : ℝ) :
+    fourCellOddRawStripCancellationPolarization u (fun x ↦ a * v x) =
+      a * fourCellOddRawStripCancellationPolarization u v := by
+  have hav : ContDiff ℝ 1 (fun x ↦ a * v x) := contDiff_const.mul hv
+  have havodd : Function.Odd (fun x ↦ a * v x) := by
+    intro x
+    change a * v (-x) = -(a * v x)
+    rw [hvodd]
+    ring
+  rw [fourCellOddRawStripCancellationPolarization_eq_centered_sub_strip
+      u _ hu hav huodd havodd,
+    fourCellOddRawStripCancellationPolarization_eq_centered_sub_strip
+      u v hu hv huodd hvodd,
+    centeredRawLogBilinear_const_mul_right_local,
+    fourCellOddEndpointStripOddRawPolarization_const_mul_right
+      u v hu hv]
+  ring
+
+private theorem fourCellOddEndpointStripOddRawEnergy_const_mul
+    (v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddEndpointStripOddRawEnergy (fun x ↦ a * v x) =
+      a ^ 2 * fourCellOddEndpointStripOddRawEnergy v := by
+  unfold fourCellOddEndpointStripOddRawEnergy
+  rw [fourCellOddEndpointStripOdd_const_mul_local,
+    centeredRawLogEnergy_const_mul]
+  ring
+
+private theorem fourCellOddRawStripCancellationReserve_const_mul
+    (v : ℝ → ℝ) (hv : ContDiff ℝ 1 v) (hvodd : Function.Odd v)
+    (a : ℝ) :
+    fourCellOddRawStripCancellationReserve (fun x ↦ a * v x) =
+      a ^ 2 * fourCellOddRawStripCancellationReserve v := by
+  have hav : ContDiff ℝ 1 (fun x ↦ a * v x) := contDiff_const.mul hv
+  have havodd : Function.Odd (fun x ↦ a * v x) := by
+    intro x
+    change a * v (-x) = -(a * v x)
+    rw [hvodd]
+    ring
+  have hvLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v :=
+    hv.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have havLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1)
+      (fun x ↦ a * v x) :=
+    hav.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hfoldV := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    v hvLocal hvodd
+  have hfoldAV := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    (fun x ↦ a * v x) havLocal havodd
+  unfold fourCellOddRawStripCancellationReserve
+  rw [← hfoldAV, ← hfoldV,
+    fourCellOddEndpointStripOddRawEnergy_const_mul,
+    centeredRawLogEnergy_const_mul]
+  ring
+
+private theorem sq_le_mul_of_forall_quadratic_nonneg
+    (a b c : ℝ) (hc : 0 ≤ c)
+    (hquad : ∀ t : ℝ, 0 ≤ a + 2 * b * t + c * t ^ 2) :
+    b ^ 2 ≤ a * c := by
+  by_cases hc0 : c = 0
+  · subst c
+    have hb : b = 0 := by
+      by_contra hb0
+      let t : ℝ := -(a + 1) / (2 * b)
+      have hq := hquad t
+      have ht : 2 * b * t = -(a + 1) := by
+        dsimp only [t]
+        field_simp [hb0]
+      simp only [zero_mul] at hq
+      rw [ht] at hq
+      linarith
+    rw [hb]
+    norm_num
+  · have hcpos : 0 < c := lt_of_le_of_ne hc (Ne.symm hc0)
+    have hq := hquad (-b / c)
+    have heq :
+        a + 2 * b * (-b / c) + c * (-b / c) ^ 2 =
+          (a * c - b ^ 2) / c := by
+      field_simp [ne_of_gt hcpos]
+      ring
+    rw [heq] at hq
+    have hmul := mul_nonneg hq hc
+    have hcancel : ((a * c - b ^ 2) / c) * c =
+        a * c - b ^ 2 := by
+      field_simp [ne_of_gt hcpos]
+    rw [hcancel] at hmul
+    linarith
+
 /-- The canonical intrinsic low part of an arbitrary profile. -/
 def fourCellOddOneThreeLowPart (w : ℝ → ℝ) : ℝ → ℝ :=
   factorTwoOddStructuralLowProfile
@@ -3243,6 +3436,33 @@ theorem fourCellOddRawStripCancellationReserve_nonneg
   have hreflected := fourCellPositiveHalfRawReflectedEnergy_nonneg w
   unfold fourCellOddRawStripCancellationReserve
   linarith
+
+/-- Cauchy--Schwarz for the full retained raw-strip reserve, obtained from
+its structural nonnegativity and exact quadratic homogeneity.  This keeps
+the singular raw/reflected/strip form intact rather than replacing it by a
+scalar tail weight. -/
+theorem fourCellOddRawStripCancellationPolarization_sq_le_mul
+    (u v : ℝ → ℝ) (hu : ContDiff ℝ 1 u) (hv : ContDiff ℝ 1 v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) :
+    fourCellOddRawStripCancellationPolarization u v ^ 2 ≤
+      fourCellOddRawStripCancellationReserve u *
+        fourCellOddRawStripCancellationReserve v := by
+  apply sq_le_mul_of_forall_quadratic_nonneg
+    (fourCellOddRawStripCancellationReserve u)
+    (fourCellOddRawStripCancellationPolarization u v)
+    (fourCellOddRawStripCancellationReserve v)
+    (fourCellOddRawStripCancellationReserve_nonneg v hv)
+  intro t
+  have htv : ContDiff ℝ 1 (fun x ↦ t * v x) := contDiff_const.mul hv
+  have hnonneg := fourCellOddRawStripCancellationReserve_nonneg
+    (u + fun x ↦ t * v x) (hu.add htv)
+  rw [fourCellOddRawStripCancellationReserve_add,
+    fourCellOddRawStripCancellationPolarization_const_mul_right
+      u v hu hv huodd hvodd t,
+    fourCellOddRawStripCancellationReserve_const_mul v hv hvodd t]
+    at hnonneg
+  convert hnonneg using 1
+  all_goals ring
 
 /-- Quantitative endpoint-strip consequence of the raw ground state.  The
 retained raw reserve pays `6/5` of the upper-strip mass before any potential,
