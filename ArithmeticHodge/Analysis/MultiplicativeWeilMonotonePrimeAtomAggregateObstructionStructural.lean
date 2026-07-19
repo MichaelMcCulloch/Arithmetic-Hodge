@@ -437,6 +437,85 @@ theorem monotonePrimeAtom_aggregateOrthogonalResidual_coordinates
     dsimp only [T, C, K, D]
     ring
 
+/-- With a positive aggregate pivot, the missing suffix--aggregate minor is
+exactly nonnegativity of the concrete inner aggregate-orthogonal residual.
+No support theorem or positivity input is used in this equivalence. -/
+theorem monotonePrimeAtom_innerAggregateMinor_iff_residual_nonnegative
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S) :
+    monotonePrimeAtomInnerSuffixAggregateCross parent k S ^ 2 ≤
+        bombieriRealQuadraticValue
+            (monotoneQuarterCutoff parent (k + 1)) *
+          monotonePrimeAtomAggregateReserve parent k S ↔
+      0 ≤ bombieriRealQuadraticValue
+        (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) := by
+  have hcoordinates :=
+    monotonePrimeAtom_aggregateOrthogonalResidual_coordinates parent k S
+  dsimp only at hcoordinates
+  rw [hcoordinates.2.1]
+  constructor
+  · intro hminor
+    exact mul_nonneg hT.le (sub_nonneg.mpr hminor)
+  · intro hresidual
+    have hgap :
+        0 ≤ bombieriRealQuadraticValue
+              (monotoneQuarterCutoff parent (k + 1)) *
+              monotonePrimeAtomAggregateReserve parent k S -
+            monotonePrimeAtomInnerSuffixAggregateCross parent k S ^ 2 :=
+      (mul_nonneg_iff_of_pos_left hT).mp hresidual
+    linarith
+
+/-- Expanding the residual quadratic identifies the exact analytic theorem
+needed for the suffix--aggregate determinant: the complete symmetric
+Mangoldt form of the actual inner residual must be dominated by its
+archimedean form.  This is equivalent to the minor, rather than merely a
+sufficient estimate. -/
+theorem monotonePrimeAtom_innerAggregateMinor_iff_residualPrime_le_archimedean
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S) :
+    monotonePrimeAtomInnerSuffixAggregateCross parent k S ^ 2 ≤
+        bombieriRealQuadraticValue
+            (monotoneQuarterCutoff parent (k + 1)) *
+          monotonePrimeAtomAggregateReserve parent k S ↔
+      bombieriRealLogPrimeAtomCross
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) ≤
+        bombieriRealLogArchimedeanCross
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) := by
+  rw [monotonePrimeAtom_innerAggregateMinor_iff_residual_nonnegative
+    parent k S hT]
+  unfold bombieriRealQuadraticValue
+  rw [bombieriFunctional_quadratic_re_eq_completeRealLogKernel]
+  unfold bombieriCompleteRealLogKernelCross
+  exact sub_nonneg
+
+/-- The same criterion with the arithmetic side displayed as the complete
+all-lag Mangoldt series.  In particular, no finite selected-atom row remains
+after aggregate orthogonalization. -/
+theorem monotonePrimeAtom_innerAggregateMinor_iff_fullResidualPrimeRow_le_archimedean
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S) :
+    monotonePrimeAtomInnerSuffixAggregateCross parent k S ^ 2 ≤
+        bombieriRealQuadraticValue
+            (monotoneQuarterCutoff parent (k + 1)) *
+          monotonePrimeAtomAggregateReserve parent k S ↔
+      (∑' n : ℕ, bombieriLogPrimeAtomWeight n *
+        (bombieriRealLogCorrelation
+            (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+            (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+            (-Real.log (((n + 1 : ℕ) : ℝ))) +
+          bombieriRealLogCorrelation
+            (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+            (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+            (Real.log (((n + 1 : ℕ) : ℝ))))) ≤
+        bombieriRealLogArchimedeanCross
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) := by
+  rw [monotonePrimeAtom_innerAggregateMinor_iff_residualPrime_le_archimedean
+    parent k S hT]
+  rfl
+
 /-- With a positive aggregate pivot, the scalar three-way contraction is
 exactly real Cauchy--Schwarz for the two concrete aggregate-orthogonal
 residual tests. -/
@@ -569,6 +648,50 @@ theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_apply_of_upper
     monotoneRatioTwoBlock_apply, monotoneRatioTwoBlockMultiplier]
   rw [hinner, show k - 1 + 3 = k + 2 by ring, hlower, hupper]
   norm_num
+
+/-- For a nonzero pivot, the inner residual is the positive-pivot scaling of
+the actual suffix--aggregate Schur pencil.  Thus proving its nonnegativity is
+precisely a production pencil problem, not a new abstract scalar form. -/
+theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_eq_smul_pencil
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : monotonePrimeAtomAggregateReserve parent k S ≠ 0) :
+    monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S =
+      ((monotonePrimeAtomAggregateReserve parent k S : ℝ) : ℂ) •
+        (monotoneQuarterCutoff parent (k + 1) +
+          (((-monotonePrimeAtomInnerSuffixAggregateCross parent k S /
+              monotonePrimeAtomAggregateReserve parent k S : ℝ) : ℂ) •
+            monotonePrimeAtomAggregateSlice parent k S)) := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotonePrimeAtomInnerAggregateOrthogonalResidual,
+    TestFunction.coe_add, Pi.add_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul]
+  rw [mul_add, ← mul_assoc]
+  congr 2
+  push_cast
+  field_simp [hT]
+
+/-- The production residual generally lies outside the ratio-two cone.  If
+it has one nonzero lower value and the parent has a surviving tail value more
+than a factor two away, the residual cannot be a ratio-two Bombieri test.
+The upper value is forced by the exact tail formula, so this obstruction is
+support-theoretic rather than a failure of scalar normalization. -/
+theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_not_ratioTwo_of_separated_tail
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : monotonePrimeAtomAggregateReserve parent k S ≠ 0)
+    {x y : ℝ} (hxy : 2 * x < y)
+    (hy : quarterLogLatticePoint (k + 3) ≤ y)
+    (hleft :
+      monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S x ≠ 0)
+    (htail : parent y ≠ 0) :
+    ¬ BombieriRatioTwoCell
+      (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) := by
+  apply not_ratioTwo_of_nonzero_at_factor_gt_two
+    (f := monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+    hxy hleft
+  rw [monotonePrimeAtomInnerAggregateOrthogonalResidual_apply_of_upper
+    parent k S hy]
+  exact mul_ne_zero (Complex.ofReal_ne_zero.mpr hT) htail
 
 /-! ## The surviving Mangoldt row after residualization -/
 
