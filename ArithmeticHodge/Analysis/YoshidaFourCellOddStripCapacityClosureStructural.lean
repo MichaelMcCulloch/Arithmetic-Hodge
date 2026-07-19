@@ -47,6 +47,7 @@ open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationCrossStructural
 open YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
@@ -7593,6 +7594,73 @@ theorem centeredEndpointCorrelation_oneThreeFiveLowProfile
       simpa only [q] using centeredEndpointCorrelation_oddStructuralLow c d t,
     hcross, hself]
   ring
+
+/-- Wide four-cell regular entry coupling `P₁` to `P₅`. -/
+def fourCellOddOneThreeFiveRegular15 : ℝ :=
+  ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddP5Correlation15 t
+
+/-- Wide four-cell regular entry coupling `P₃` to `P₅`. -/
+def fourCellOddOneThreeFiveRegular35 : ℝ :=
+  ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddP5Correlation35 t
+
+/-- Wide four-cell regular diagonal of `P₅`. -/
+def fourCellOddOneThreeFiveRegular55 : ℝ :=
+  ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddP5Correlation55 t
+
+/-- The mean-zero wide-kernel fluctuation and exact correlation `L¹` mass
+give a cutoff-free rational bound for the `P₁`--`P₅` regular entry. -/
+theorem abs_fourCellOddOneThreeFiveRegular15_lt :
+    |fourCellOddOneThreeFiveRegular15| < (1 / 250 : ℝ) := by
+  have hbound := abs_fourCellRegularBilinear_le_one_twentieth_integral_abs
+    centeredP1 factorTwoCenteredP5
+    (by unfold centeredP1; fun_prop) continuous_factorTwoCenteredP5
+    (by intro x; unfold centeredP1; ring) odd_factorTwoCenteredP5
+  have hcorr : factorTwoCenteredCorrelationBilinear
+      centeredP1 factorTwoCenteredP5 = oddP5Correlation15 := by
+    funext t
+    exact factorTwoCenteredCorrelationBilinear_p1_p5 t
+  rw [hcorr] at hbound
+  have hmass := integral_abs_oddP5Correlation15_lt
+  dsimp only [fourCellOddOneThreeFiveRegular15]
+  nlinarith
+
+/-- The analogous structural `P₃`--`P₅` wide regular bound. -/
+theorem abs_fourCellOddOneThreeFiveRegular35_lt :
+    |fourCellOddOneThreeFiveRegular35| < (11 / 2500 : ℝ) := by
+  have hbound := abs_fourCellRegularBilinear_le_one_twentieth_integral_abs
+    centeredP3 factorTwoCenteredP5
+    (by unfold centeredP3; fun_prop) continuous_factorTwoCenteredP5
+    (by intro x; unfold centeredP3; ring) odd_factorTwoCenteredP5
+  have hcorr : factorTwoCenteredCorrelationBilinear
+      centeredP3 factorTwoCenteredP5 = oddP5Correlation35 := by
+    funext t
+    exact factorTwoCenteredCorrelationBilinear_p3_p5 t
+  rw [hcorr] at hbound
+  have hmass := integral_abs_oddP5Correlation35_lt
+  dsimp only [fourCellOddOneThreeFiveRegular35]
+  nlinarith
+
+/-- The `P₅` wide regular diagonal costs at most `1/20` of its exact
+centered mass. -/
+theorem abs_fourCellOddOneThreeFiveRegular55_le :
+    |fourCellOddOneThreeFiveRegular55| ≤ (1 / 110 : ℝ) := by
+  have hbound := abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+    factorTwoCenteredP5 continuous_factorTwoCenteredP5
+      odd_factorTwoCenteredP5
+  rw [show centeredEndpointCorrelation factorTwoCenteredP5 =
+      oddP5Correlation55 by
+    funext t
+    exact centeredEndpointCorrelation_p5 t,
+    integral_factorTwoCenteredP5_sq] at hbound
+  dsimp only [fourCellOddOneThreeFiveRegular55]
+  norm_num at hbound ⊢
+  exact hbound
 
 /-- Positive-half potential cross of `P₁` and `P₅`. -/
 theorem integral_zero_one_endpointPotential_mul_centeredP1_mul_P5 :
