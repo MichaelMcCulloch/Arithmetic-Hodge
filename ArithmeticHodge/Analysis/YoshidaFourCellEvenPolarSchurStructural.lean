@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.TwoByTwoSchur
+import ArithmeticHodge.Analysis.YoshidaEndpointEvenTailReserve
 import ArithmeticHodge.Analysis.YoshidaEndpointPotentialEvenMomentStructural
 import ArithmeticHodge.Analysis.YoshidaEndpointTriangleFoldLipschitz
 import ArithmeticHodge.Analysis.YoshidaEndpointWeightedCauchy
@@ -16,10 +17,13 @@ noncomputable section
 
 open TwoByTwoSchur
 open UnitIntervalLogEnergyAffine
+open UnitIntervalLogEnergyLipschitz
+open UnitIntervalLogEnergyProjection
 open YoshidaFactorTwoPhaseFullProfile
 open YoshidaConstantBounds
 open YoshidaEndpointEvenLowPotential
 open YoshidaEndpointEvenStructuralReduction
+open YoshidaEndpointPullbackLipschitz
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointTriangleFoldLipschitz
 open YoshidaFourCellEvenCapacityClosureStructural
@@ -501,6 +505,73 @@ theorem centeredEvenP0Coefficient_sq_le_one_div_fourThousand_mass_of_coshMoment_
   rw [hcoeff, hmassFold]
   convert hhalf using 1
   ring
+
+/-- Removing the tiny constant coordinate forced by the zero-cosh condition
+exposes the exact `P₂` gap.  Thus the full singular energy retains almost the
+sharp `3/2` mass coefficient, without a finite cutoff. -/
+theorem fiveNineNineSeven_div_fourThousand_mass_le_raw_div_four_of_coshMoment_zero
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    (5997 / 4000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      centeredRawLogEnergy w / 4 := by
+  let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  let c : ℝ := centeredEvenP0Coefficient w
+  let b : ℝ := centeredEvenP2Coefficient w
+  let r : ℝ → ℝ := centeredEvenZeroTwoResidual w
+  let R : ℝ := ∫ x : ℝ in -1..1, r x ^ 2
+  have hM : 0 ≤ M := by
+    dsimp only [M]
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro x _hx
+    exact sq_nonneg _
+  have hR : 0 ≤ R := by
+    dsimp only [R]
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro x _hx
+    exact sq_nonneg _
+  have hc : c ^ 2 ≤ (1 / 4000 : ℝ) * M := by
+    simpa only [c, M] using
+      centeredEvenP0Coefficient_sq_le_one_div_fourThousand_mass_of_coshMoment_zero
+        w hw heven hzero
+  have hmassDecomp : M = 2 * c ^ 2 + (2 / 5 : ℝ) * b ^ 2 + R := by
+    have hmass := integral_centeredEvenZeroTwoResidual_sq w hw
+    dsimp only [M, c, b, r, R]
+    linarith
+  obtain ⟨C, hLip⟩ :=
+    exists_lipschitzWith_centeredPullback w hlocal
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback w (t : ℝ)
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    fun_prop
+  have hfmem : MemLp f 2 :=
+    hfcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f
+      (by simpa only [f] using hLip)
+  have hspectral :
+      (3 / 5 : ℝ) * b ^ 2 + (25 / 12 : ℝ) * R ≤
+        centeredRawLogEnergy w / 4 := by
+    simpa only [b, R, r, f] using
+      centered_even_zero_two_tail_energy_le
+        w hw (by simpa only [f] using hfmem)
+          (by simpa only [f] using henergy) heven
+  have hnonconstant :
+      (1999 / 2000 : ℝ) * M ≤ (2 / 5 : ℝ) * b ^ 2 + R := by
+    nlinarith
+  have hgap :
+      (3 / 2 : ℝ) * ((2 / 5 : ℝ) * b ^ 2 + R) ≤
+        (3 / 5 : ℝ) * b ^ 2 + (25 / 12 : ℝ) * R := by
+    nlinarith
+  calc
+    (5997 / 4000 : ℝ) * M =
+        (3 / 2 : ℝ) * ((1999 / 2000 : ℝ) * M) := by ring
+    _ ≤ (3 / 2 : ℝ) * ((2 / 5 : ℝ) * b ^ 2 + R) :=
+      mul_le_mul_of_nonneg_left hnonconstant (by norm_num)
+    _ ≤ (3 / 5 : ℝ) * b ^ 2 + (25 / 12 : ℝ) * R := hgap
+    _ ≤ centeredRawLogEnergy w / 4 := hspectral
 
 /-! ## Canonical normalized constant direction -/
 
