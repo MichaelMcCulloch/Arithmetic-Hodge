@@ -1,6 +1,7 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilFourCellEnergyAbsorptionStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilSeparatedCellCrossStructural
 
 set_option autoImplicit false
 
@@ -21,10 +22,12 @@ open MultiplicativeWeilMonotonePrimeAtomAggregateStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilMonotoneRatioTwoBlockPropagationStructural
 open MultiplicativeWeilQuarterLogLatticePartitionStructural
+open MultiplicativeWeilDirectedCorrelationPhysicalStructural
 open MultiplicativeWeilRealCutPhaseReductionStructural
 open MultiplicativeWeilRealLogKernelStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 open MultiplicativeWeilRealMonotonePropagationLogDefectStructural
+open MultiplicativeWeilSeparatedCellCrossStructural
 
 /-!
 # The missing cross in aggregate prime Schur absorption
@@ -3032,6 +3035,299 @@ theorem adjacentTriplePSD_and_all_overlapData_allow_negative_remoteCorner :
     rw [remoteCornerFourCoordinateQuadratic_rightTriple]
     nlinarith [sq_nonneg b, sq_nonneg c, sq_nonneg d]
   · norm_num [remoteCornerFourCoordinateQuadratic]
+
+/-! ## The all-support remote row as a separated physical operator -/
+
+private theorem tsupport_finset_sum_subset_Icc_for_remoteRow
+    {ι : Type*} [DecidableEq ι]
+    (s : Finset ι) (f : ι → BombieriTest) (a b : ℝ)
+    (hf : ∀ i ∈ s, tsupport (f i) ⊆ Set.Icc a b) :
+    tsupport (((∑ i ∈ s, f i) : BombieriTest) : ℝ → ℂ) ⊆
+      Set.Icc a b := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | @insert i s hi ih =>
+      rw [Finset.sum_insert hi]
+      exact (tsupport_add (f i : ℝ → ℂ)
+          (∑ j ∈ s, f j : BombieriTest)).trans
+        (union_subset (hf i (by simp))
+          (ih (fun j hj ↦ hf j (by simp [hj]))))
+
+/-- The exact support interval of the prefix occurring in the adjacent-block
+remote row.  Unlike the ratio-two support lemma, its upper endpoint grows
+with the entire prefix length. -/
+theorem monotoneQuarterFiniteBlock_remotePrefix_tsupport_subset
+    (parent : BombieriTest) (lo : ℤ) (start n : ℕ) :
+    tsupport (monotoneQuarterFiniteBlock parent lo start n) ⊆
+      Set.Icc
+        (quarterLogLatticePoint (lo + (start : ℤ)))
+        (quarterLogLatticePoint
+          (lo + (start : ℤ) + (n : ℤ) + 1)) := by
+  unfold monotoneQuarterFiniteBlock
+  apply tsupport_finset_sum_subset_Icc_for_remoteRow
+  intro i hi
+  have hin : i < n := Finset.mem_range.mp hi
+  have hcell := monotoneQuarterCell_tsupport_subset parent
+    (lo + ((start + i : ℕ) : ℤ))
+  apply hcell.trans
+  apply Set.Icc_subset_Icc
+  · apply quarterLogLatticePoint_mono
+    push_cast
+    omega
+  · apply quarterLogLatticePoint_mono
+    push_cast
+    omega
+
+/-- The complete remote prefix--endpoint row has an exact nonlocal physical
+representation: a Chebyshev-discrepancy pairing minus the nonsingular
+archimedean kernel.  This uses the full prefix at once, not a local-window
+expansion.  The adjacent one-quarter support gap discharges strict
+separation uniformly for every prefix length. -/
+theorem remotePrefixEndpointGlobalCross_eq_chebyshevError_sub_archimedeanKernel
+    (parent : BombieriTest) (lo : ℤ) (start n : ℕ) :
+    let base : ℤ := lo + (start : ℤ)
+    let front := monotoneQuarterFiniteBlock parent lo start n
+    let endpoint := monotoneQuarterCell parent (base + (n : ℤ) + 2)
+    bombieriTwoBlockGlobalCrossSymbol endpoint front =
+      separatedChebyshevErrorPairing endpoint front 1 -
+        separatedArchimedeanKernel endpoint front 1 := by
+  dsimp only
+  let base : ℤ := lo + (start : ℤ)
+  let front : BombieriTest :=
+    monotoneQuarterFiniteBlock parent lo start n
+  let endpoint : BombieriTest :=
+    monotoneQuarterCell parent (base + (n : ℤ) + 2)
+  have hfront : tsupport front ⊆
+      Set.Icc (quarterLogLatticePoint base)
+        (quarterLogLatticePoint (base + (n : ℤ) + 1)) := by
+    simpa only [front, base, add_assoc] using
+      monotoneQuarterFiniteBlock_remotePrefix_tsupport_subset
+        parent lo start n
+  have hendpoint : tsupport endpoint ⊆
+      Set.Icc (quarterLogLatticePoint (base + (n : ℤ) + 2))
+        (quarterLogLatticePoint (base + (n : ℤ) + 4)) := by
+    simpa only [endpoint, add_assoc] using
+      monotoneQuarterCell_tsupport_subset parent (base + (n : ℤ) + 2)
+  have hsep :
+      quarterLogLatticePoint (base + (n : ℤ) + 1) /
+          quarterLogLatticePoint (base + (n : ℤ) + 2) < 1 := by
+    apply (div_lt_one
+      (quarterLogLatticePoint_pos (base + (n : ℤ) + 2))).2
+    exact quarterLogLatticePoint_strictMono (by omega)
+  have hrepresentation :=
+    sqrt_mul_globalCross_eq_chebyshevError_sub_archimedeanKernel
+      endpoint front (by norm_num : (0 : ℝ) < 1)
+      (quarterLogLatticePoint_pos (base + (n : ℤ) + 2))
+      (quarterLogLatticePoint_pos base)
+      (quarterLogLatticePoint_pos (base + (n : ℤ) + 1))
+      hendpoint hfront hsep
+  simpa only [Real.sqrt_one, Complex.ofReal_one, one_mul,
+    normalizedDilation_one, endpoint, front] using hrepresentation
+
+private theorem bombieriCriticalLogEnergy_normalizedDilation_for_remoteRow
+    (lambda : ℝ) (hlambda : 0 < lambda) (g : BombieriTest) :
+    bombieriCriticalLogEnergy (normalizedDilation lambda hlambda g) =
+      bombieriCriticalLogEnergy g := by
+  unfold bombieriCriticalLogEnergy
+  simp_rw [normalizedDilation_logarithmicPullbackSchwartz_critical]
+  simpa only [sub_eq_add_neg] using
+    MeasureTheory.integral_add_right_eq_self
+      (fun u : ℝ ↦ ‖g.logarithmicPullbackSchwartz (1 / 2) u‖ ^ 2)
+      (-Real.log lambda)
+
+/-- Multiplicative correlation is a genuine Hilbert operator between the
+critical physical energies.  At lag `x`, its squared norm pays the exact
+Jacobian `x⁻¹`; this is the diagonal reserve needed to control an entire
+separated correlation row rather than individual local windows. -/
+theorem normSq_bombieriDirectedCorrelation_le_inv_mul_criticalLogEnergy
+    (f g : BombieriTest) {x : ℝ} (hx : 0 < x) :
+    Complex.normSq (bombieriDirectedCorrelation f g x) ≤
+      x⁻¹ * bombieriCriticalLogEnergy f *
+        bombieriCriticalLogEnergy g := by
+  have hcorrelation :
+      bombieriDirectedCorrelation
+          (normalizedDilation x hx f) g 1 =
+        ((Real.sqrt x : ℝ) : ℂ) *
+          bombieriDirectedCorrelation f g x := by
+    unfold bombieriDirectedCorrelation
+    calc
+      (∫ y : ℝ in Set.Ioi 0,
+          normalizedDilation x hx f (1 * y) *
+            starRingEnd ℂ (g y)) =
+          ∫ y : ℝ in Set.Ioi 0,
+            ((Real.sqrt x : ℝ) : ℂ) *
+              (f (x * y) * starRingEnd ℂ (g y)) := by
+        apply setIntegral_congr_fun measurableSet_Ioi
+        intro y _hy
+        change normalizedDilation x hx f (1 * y) *
+            starRingEnd ℂ (g y) =
+          ((Real.sqrt x : ℝ) : ℂ) *
+            (f (x * y) * starRingEnd ℂ (g y))
+        rw [one_mul, normalizedDilation_apply]
+        ring
+      _ = ((Real.sqrt x : ℝ) : ℂ) *
+          ∫ y : ℝ in Set.Ioi 0,
+            f (x * y) * starRingEnd ℂ (g y) := by
+        exact MeasureTheory.integral_const_mul _ _
+  have hlagOne :=
+    normSq_bombieriDirectedCorrelation_one_le_criticalLogEnergy_mul
+      (normalizedDilation x hx f) g
+  rw [hcorrelation, Complex.normSq_mul, Complex.normSq_ofReal,
+    bombieriCriticalLogEnergy_normalizedDilation_for_remoteRow] at hlagOne
+  have hsqrt : Real.sqrt x * Real.sqrt x = x := by
+    nlinarith [Real.sq_sqrt hx.le]
+  rw [hsqrt] at hlagOne
+  rw [show x⁻¹ * bombieriCriticalLogEnergy f *
+      bombieriCriticalLogEnergy g =
+        (bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g) / x by
+    field_simp [hx.ne']]
+  apply (le_div_iff₀ hx).2
+  simpa only [mul_comm] using hlagOne
+
+/-- Integrating the preceding pointwise Hilbert bound over the exact support
+quotient gives a finite all-row reserve.  The coefficient depends only on
+the two physical support intervals; the diagonal terms are the actual full
+critical energies of `f` and `g`. -/
+theorem separatedCorrelationNormMass_le_supportGeometryEnergy
+    (f g : BombieriTest) {af bf ag bg : ℝ}
+    (haf : 0 < af) (hafbf : af ≤ bf)
+    (hag : 0 < ag) (hagbg : ag ≤ bg) (hbg : 0 < bg)
+    (hfsupport : tsupport f ⊆ Set.Icc af bf)
+    (hgsupport : tsupport g ⊆ Set.Icc ag bg) :
+    separatedCorrelationNormMass f g ≤
+      (bf / ag - af / bg) *
+        Real.sqrt ((af / bg)⁻¹ *
+          bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g) := by
+  let L : ℝ := af / bg
+  let U : ℝ := bf / ag
+  let E : ℝ := (af / bg)⁻¹ *
+    bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g
+  have hbf : 0 < bf := haf.trans_le hafbf
+  have hL : 0 < L := by
+    dsimp only [L]
+    exact div_pos haf hbg
+  have hU : 0 < U := by
+    dsimp only [U]
+    exact div_pos hbf hag
+  have hLU : L ≤ U := by
+    dsimp only [L, U]
+    apply (div_le_div_iff₀ hbg hag).2
+    calc
+      af * ag ≤ bf * ag := mul_le_mul_of_nonneg_right hafbf hag.le
+      _ ≤ bf * bg := mul_le_mul_of_nonneg_left hagbg hbf.le
+  have hEf : 0 ≤ bombieriCriticalLogEnergy f :=
+    bombieriCriticalLogEnergy_nonnegative f
+  have hEg : 0 ≤ bombieriCriticalLogEnergy g :=
+    bombieriCriticalLogEnergy_nonnegative g
+  have hE : 0 ≤ E := by
+    dsimp only [E]
+    exact mul_nonneg
+      (mul_nonneg (inv_nonneg.mpr (div_nonneg haf.le hbg.le)) hEf) hEg
+  have hKpos : Set.Icc L U ⊆ Set.Ioi (0 : ℝ) := by
+    intro x hx
+    exact hL.trans_le hx.1
+  have hcorrInt : IntegrableOn
+      (fun x : ℝ ↦
+        ‖starRingEnd ℂ (bombieriDirectedCorrelation f g x)‖)
+      (Set.Ioi 0) :=
+    (star_bombieriDirectedCorrelation_integrableOn_Ioi
+      f g haf hag hbg hfsupport hgsupport).norm
+  have hrestrict : separatedCorrelationNormMass f g =
+      ∫ x : ℝ in Set.Icc L U,
+        ‖starRingEnd ℂ (bombieriDirectedCorrelation f g x)‖ := by
+    unfold separatedCorrelationNormMass
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero measurableSet_Ioi
+    · exact hKpos
+    · intro x hx
+      rw [star_bombieriDirectedCorrelation_eq_zero_outside_supportQuotient
+        f g haf hag hbg hfsupport hgsupport hx.2, norm_zero]
+  have hpoint (x : ℝ) (hx : x ∈ Set.Icc L U) :
+      ‖starRingEnd ℂ (bombieriDirectedCorrelation f g x)‖ ≤
+        Real.sqrt E := by
+    have hxpos : 0 < x := hL.trans_le hx.1
+    have hcorr :=
+      normSq_bombieriDirectedCorrelation_le_inv_mul_criticalLogEnergy
+        f g hxpos
+    have hinv : x⁻¹ ≤ L⁻¹ :=
+      (inv_le_inv₀ hxpos hL).2 hx.1
+    have henergy :
+        x⁻¹ * bombieriCriticalLogEnergy f *
+            bombieriCriticalLogEnergy g ≤ E := by
+      dsimp only [E, L]
+      exact mul_le_mul_of_nonneg_right
+        (mul_le_mul_of_nonneg_right hinv hEf) hEg
+    have hsq :
+        Complex.normSq (bombieriDirectedCorrelation f g x) ≤ E :=
+      hcorr.trans henergy
+    rw [starRingEnd_apply, Complex.star_def, Complex.norm_conj]
+    apply (sq_le_sq₀ (norm_nonneg _) (Real.sqrt_nonneg E)).mp
+    rw [← Complex.normSq_eq_norm_sq, Real.sq_sqrt hE]
+    exact hsq
+  have hleftInt : IntegrableOn
+      (fun x : ℝ ↦
+        ‖starRingEnd ℂ (bombieriDirectedCorrelation f g x)‖)
+      (Set.Icc L U) := hcorrInt.mono_set hKpos
+  have hrightInt : IntegrableOn (fun _x : ℝ ↦ Real.sqrt E)
+      (Set.Icc L U) := integrableOn_const measure_Icc_lt_top.ne
+  rw [hrestrict]
+  calc
+    (∫ x : ℝ in Set.Icc L U,
+        ‖starRingEnd ℂ (bombieriDirectedCorrelation f g x)‖) ≤
+        ∫ _x : ℝ in Set.Icc L U, Real.sqrt E := by
+      apply integral_mono_ae hleftInt hrightInt
+      filter_upwards [ae_restrict_mem measurableSet_Icc] with x hx
+      exact hpoint x hx
+    _ = (U - L) * Real.sqrt E := by
+      rw [setIntegral_const, Real.volume_real_Icc_of_le hLU]
+      simp only [smul_eq_mul]
+    _ = (bf / ag - af / bg) *
+        Real.sqrt ((af / bg)⁻¹ *
+          bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g) := by
+      rfl
+
+/-- The nonsingular part of every strictly separated complete cross has a
+true diagonal Hilbert reserve.  Combining the exact kernel denominator with
+the all-row correlation estimate bounds it solely by the two full critical
+energies and explicit support geometry. -/
+theorem norm_separatedArchimedeanKernel_one_le_supportGeometryEnergy
+    (f g : BombieriTest) {af bf ag bg : ℝ}
+    (haf : 0 < af) (hafbf : af ≤ bf)
+    (hag : 0 < ag) (hagbg : ag ≤ bg) (hbg : 0 < bg)
+    (hfsupport : tsupport f ⊆ Set.Icc af bf)
+    (hgsupport : tsupport g ⊆ Set.Icc ag bg)
+    (hsep : bg / af < 1) :
+    ‖separatedArchimedeanKernel f g 1‖ ≤
+      (af / bg * ((af / bg) ^ 2 - 1))⁻¹ *
+        ((bf / ag - af / bg) *
+          Real.sqrt ((af / bg)⁻¹ *
+            bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g)) := by
+  have hkernel := norm_separatedArchimedeanKernel_le
+    f g (by norm_num : (0 : ℝ) < 1) haf hag hbg
+      hfsupport hgsupport hsep
+  have hmass := separatedCorrelationNormMass_le_supportGeometryEnergy
+    f g haf hafbf hag hagbg hbg hfsupport hgsupport
+  have hbgaf : bg < af := by
+    simpa using (div_lt_iff₀ haf).mp hsep
+  have hratio : 1 < af / bg := by
+    exact (lt_div_iff₀ hbg).2 (by simpa using hbgaf)
+  have hden : 0 < af / bg * ((af / bg) ^ 2 - 1) := by
+    exact mul_pos (zero_lt_one.trans hratio)
+      (by nlinarith [sq_nonneg (af / bg - 1)])
+  have hcoefficient :
+      0 ≤ (af / bg * ((af / bg) ^ 2 - 1))⁻¹ :=
+    (inv_pos.mpr hden).le
+  calc
+    ‖separatedArchimedeanKernel f g 1‖ ≤
+        (af / bg * ((af / bg) ^ 2 - 1))⁻¹ *
+          separatedCorrelationNormMass f g := by
+      simpa only [one_mul] using hkernel
+    _ ≤ (af / bg * ((af / bg) ^ 2 - 1))⁻¹ *
+        ((bf / ag - af / bg) *
+          Real.sqrt ((af / bg)⁻¹ *
+            bombieriCriticalLogEnergy f *
+              bombieriCriticalLogEnergy g)) :=
+      mul_le_mul_of_nonneg_left hmass hcoefficient
 
 end
 
