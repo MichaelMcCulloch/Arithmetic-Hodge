@@ -465,6 +465,48 @@ theorem canonicalCoshSchur_of_constantRow
   dsimp only [v] at hrow ⊢
   nlinarith [sq_nonneg c]
 
+/-- The sharpened homogeneous constant pivot replaces the transcendental
+constant diagonal by the rational reserve `13 / 80`.  Consequently one
+fixed row inequality already contains both zero-cosh tail nonnegativity and
+the canonical low--tail determinant. -/
+theorem fourCell_evenBracket_nonnegative_of_rationalConstantRow
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hweven : Function.Even w)
+    (hrow : fourCellEvenZeroCoshConstantRow
+          (fourCellEvenCoshResidual w fourCellEvenCoshUnit) ^ 2 ≤
+      (13 / 80 : ℝ) *
+        fourCellEvenPolarFreeOperator
+          (fourCellEvenCoshResidual w fourCellEvenCoshUnit)) :
+    0 ≤ centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth w -
+      Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w := by
+  let v : ℝ → ℝ := fourCellEvenCoshResidual w fourCellEvenCoshUnit
+  have hrow' : fourCellEvenZeroCoshConstantRow v ^ 2 ≤
+      (13 / 80 : ℝ) * fourCellEvenPolarFreeOperator v := by
+    simpa only [v] using hrow
+  have htail : 0 ≤ fourCellEvenPolarFreeOperator v := by
+    have hsquare : 0 ≤ fourCellEvenZeroCoshConstantRow v ^ 2 := sq_nonneg _
+    have hscaled : 0 ≤
+        (13 / 80 : ℝ) * fourCellEvenPolarFreeOperator v := by
+      exact hsquare.trans hrow'
+    nlinarith
+  have hpivot : (13 / 80 : ℝ) ≤
+      centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth
+          (fun _ : ℝ ↦ 1) -
+        Real.sqrt 2 * Real.log 2 *
+          fourCellEndpointPairing (fun _ : ℝ ↦ 1) :=
+    thirteen_div_eighty_lt_fourCell_evenBracket_one.le
+  have hscaled := mul_le_mul_of_nonneg_right hpivot htail
+  have hrowExact : fourCellEvenZeroCoshConstantRow v ^ 2 ≤
+      (centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth
+            (fun _ : ℝ ↦ 1) -
+          Real.sqrt 2 * Real.log 2 *
+            fourCellEndpointPairing (fun _ : ℝ ↦ 1)) *
+        fourCellEvenPolarFreeOperator v := by
+    exact hrow'.trans hscaled
+  have hdet := canonicalCoshSchur_of_constantRow
+    w hw.continuous hweven (by simpa only [v] using hrowExact)
+  exact fourCell_evenBracket_nonnegative_of_canonicalCoshSchur
+    w hw hweven (by simpa only [v] using htail) hdet
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenCoshMixedStructural
