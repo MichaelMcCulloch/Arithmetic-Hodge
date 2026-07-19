@@ -17,6 +17,7 @@ noncomputable section
 open MultiplicativeWeil
 open MultiplicativeWeilFourCellEnergyAbsorptionStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
+open MultiplicativeWeilMinimalBlockEndpointEliminationStructural
 open MultiplicativeWeilMonotoneCellEnergyFrameStructural
 open MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
 open MultiplicativeWeilMonotoneNullSuffixVariationStructural
@@ -4130,6 +4131,42 @@ theorem supportMinimalNegativeMonotoneBlock_length_five_middle_ne_zero
   rw [monotoneQuarterFiveBlock_eq_endpoint_middle_endpoint,
     hmiddle, add_zero] at hnegative
   exact (not_lt_of_ge hpair) hnegative
+
+/-- Combining the common-parent exclusion of the zero-middle branch with
+the adjacent four-cell principal minors leaves one—and only one—length-five
+obstruction.  Every support-minimal negative five-cell block must strictly
+reverse the nondegenerate middle-pivot contraction coupling the remote
+endpoint balance `X` to the two adjacent rows `U` and `V`.
+
+Thus proving this single actual common-parent residual inequality would rule
+out minimal negative blocks of length five once production four-cell
+positivity is available. -/
+theorem supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotResidual_reversal
+    (hfour : RealFourCellProductionNonnegative)
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) (hlen : len = 5) :
+    let k := monotoneQuarterFiniteBlockBase lo start
+    let a := monotoneQuarterCell parent k
+    let m := fiveCellMiddleThree parent k
+    let e := monotoneQuarterCell parent (k + 4)
+    let A := bombieriRealQuadraticValue a
+    let M := bombieriRealQuadraticValue m
+    let E := bombieriRealQuadraticValue e
+    let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X := fiveCellRemoteEndpointBalance parent k
+    (A * M - U ^ 2) * (M * E - V ^ 2) <
+      (M * X - U * V) ^ 2 := by
+  have hmiddle : fiveCellMiddleThree parent
+      (monotoneQuarterFiniteBlockBase lo start) ≠ 0 := by
+    simpa only [monotoneQuarterFiniteBlockBase] using
+      supportMinimalNegativeMonotoneBlock_length_five_middle_ne_zero
+        hparent hmin hlen
+  exact
+    supportMinimalNegativeMonotoneBlock_length_five_middlePivotResidual_reversed
+      hfour hparent hmin hlen hmiddle
 
 end
 
