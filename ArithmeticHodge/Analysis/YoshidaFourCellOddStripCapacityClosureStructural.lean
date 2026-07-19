@@ -7653,6 +7653,67 @@ theorem fourCellOddCoreLocalBilinear_eq_retained_sub_signed
     fourCellOddSignedMassRegularBilinear
   ring
 
+/-- Complete Schur absorption of the signed low--tail row.  Exact mass
+orthogonality removes the scalar row; the centered regular fluctuation and
+the retained `1/50` tail margin leave the finite cost `a² ‖p‖₂²`. -/
+theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_lowEnergy_mul_core
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (c d e : ℝ) :
+    fourCellOddSignedMassRegularBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) r ^ 2 ≤
+      fourCellOperatorHalfWidth ^ 2 *
+        ((2 / 3 : ℝ) * c ^ 2 + (2 / 7 : ℝ) * d ^ 2 +
+          (2 / 11 : ℝ) * e ^ 2) *
+        fourCellOddCoreLocalQuadratic r := by
+  let E : ℝ := (2 / 3 : ℝ) * c ^ 2 + (2 / 7 : ℝ) * d ^ 2 +
+    (2 / 11 : ℝ) * e ^ 2
+  have hsigned :=
+    fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
+      r hr.continuous hodd hone hthree hfive c d e
+  rw [factorTwoIntrinsicEnergy_oneThreeFiveLowProfile] at hsigned
+  change fourCellOddSignedMassRegularBilinear
+      (fourCellOddOneThreeFiveLowProfile c d e) r ^ 2 ≤
+    (fourCellOperatorHalfWidth / 10) ^ 2 * E *
+      factorTwoIntrinsicEnergy r at hsigned
+  have htail :=
+    one_fiftieth_positiveHalfMass_le_core_add_localWidthDefect_of_P1
+      r hr hodd hone
+  change (1 / 50 : ℝ) * (∫ x : ℝ in 0..1, r x ^ 2) ≤
+    fourCellOddCoreLocalQuadratic r at htail
+  have hmass := integral_sq_eq_two_mul_positiveHalf
+    r hr.continuous (Or.inr hodd)
+  have henergy : factorTwoIntrinsicEnergy r =
+      2 * ∫ x : ℝ in 0..1, r x ^ 2 := by
+    unfold factorTwoIntrinsicEnergy
+    exact hmass
+  have henergyLe : factorTwoIntrinsicEnergy r ≤
+      100 * fourCellOddCoreLocalQuadratic r := by
+    rw [henergy]
+    linarith
+  have hE0 : 0 ≤ E := by
+    dsimp only [E]
+    positivity
+  have hcoefficient0 :
+      0 ≤ (fourCellOperatorHalfWidth / 10) ^ 2 * E :=
+    mul_nonneg (sq_nonneg _) hE0
+  have hmul := mul_le_mul_of_nonneg_left henergyLe hcoefficient0
+  calc
+    fourCellOddSignedMassRegularBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) r ^ 2 ≤
+      (fourCellOperatorHalfWidth / 10) ^ 2 * E *
+        factorTwoIntrinsicEnergy r := hsigned
+    _ ≤ (fourCellOperatorHalfWidth / 10) ^ 2 * E *
+        (100 * fourCellOddCoreLocalQuadratic r) := hmul
+    _ = fourCellOperatorHalfWidth ^ 2 * E *
+        fourCellOddCoreLocalQuadratic r := by ring
+    _ = fourCellOperatorHalfWidth ^ 2 *
+        ((2 / 3 : ℝ) * c ^ 2 + (2 / 7 : ℝ) * d ^ 2 +
+          (2 / 11 : ℝ) * e ^ 2) *
+        fourCellOddCoreLocalQuadratic r := by rfl
+
 /-- Exact form-level normal form of the `P₁/P₃/P₅`--tail mixed row.  The
 global singular raw form has disappeared; the remaining terms are the
 adverse endpoint-strip raw polarization and the uncollapsed prime,
