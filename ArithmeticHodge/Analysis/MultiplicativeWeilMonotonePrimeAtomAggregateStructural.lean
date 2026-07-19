@@ -277,6 +277,83 @@ theorem two_mul_monotonePrimeAtom_sum_le_aggregateReserve
 
 /-! ## A coherent one-step propagation target -/
 
+/-- Sharp determinant-scale aggregate absorption.  The arithmetic mean bound
+below is not needed: the actual inner suffix diagonal can balance the
+aggregate slice through a two-by-two Schur condition. -/
+theorem monotoneQuarterCutoff_nonnegative_of_primeAtom_aggregateSchur
+    (parent : BombieriTest) (k : ℤ) (Sₚ : Finset ℕ)
+    (hout : ∀ j ∉ Sₚ, monotonePrimeAtomValue parent k j = 0)
+    (hmean :
+      0 ≤ bombieriRealQuadraticValue (monotoneQuarterCell parent k) +
+        bombieriRealQuadraticValue
+            (monotoneQuarterCutoff parent (k + 1)) +
+          2 * (monotoneQuarterHeadSuffixRealArchimedeanCross parent k +
+            monotonePrimeAtomAggregateRemainder parent k Sₚ))
+    (hschur :
+      4 * bombieriRealQuadraticValue (monotoneQuarterCell parent k) *
+          monotonePrimeAtomAggregateReserve parent k Sₚ ≤
+        (bombieriRealQuadraticValue (monotoneQuarterCell parent k) +
+          bombieriRealQuadraticValue
+              (monotoneQuarterCutoff parent (k + 1)) +
+            2 * (monotoneQuarterHeadSuffixRealArchimedeanCross parent k +
+              monotonePrimeAtomAggregateRemainder parent k Sₚ)) ^ 2) :
+    0 ≤ bombieriRealQuadraticValue (monotoneQuarterCutoff parent k) := by
+  let H : ℝ := bombieriRealQuadraticValue (monotoneQuarterCell parent k)
+  let I : ℝ := bombieriRealQuadraticValue
+    (monotoneQuarterCutoff parent (k + 1))
+  let T : ℝ := monotonePrimeAtomAggregateReserve parent k Sₚ
+  let C : ℝ := (monotonePrimeAtomAggregateCross parent k Sₚ).re
+  let A : ℝ := monotoneQuarterHeadSuffixRealArchimedeanCross parent k
+  let R : ℝ := monotonePrimeAtomAggregateRemainder parent k Sₚ
+  let B : ℝ := H + I + 2 * (A + R)
+  have hH : 0 ≤ H := by
+    dsimp only [H, bombieriRealQuadraticValue]
+    exact bombieriFunctional_quadratic_re_nonneg_of_ratioTwoCell _
+      (monotoneQuarterCell_ratioTwo parent k)
+  have hT : 0 ≤ T := by
+    dsimp only [T, monotonePrimeAtomAggregateReserve,
+      bombieriRealQuadraticValue]
+    exact bombieriFunctional_quadratic_re_nonneg_of_ratioTwoCell _
+      (monotoneRatioTwoBlock_ratioTwo _ (k - 1))
+  have hC : C ^ 2 ≤ H * T := by
+    have hdet := monotonePrimeAtom_aggregateCross_determinant parent k Sₚ
+    have hre : (monotonePrimeAtomAggregateCross parent k Sₚ).re ^ 2 ≤
+        Complex.normSq (monotonePrimeAtomAggregateCross parent k Sₚ) := by
+      simp only [Complex.normSq_apply]
+      nlinarith [sq_nonneg (monotonePrimeAtomAggregateCross parent k Sₚ).im]
+    exact hre.trans (by simpa only [H, T, C] using hdet)
+  have hB : 0 ≤ B := by
+    simpa only [B, H, I, A, R] using hmean
+  have hscale : 4 * H * T ≤ B ^ 2 := by
+    simpa only [B, H, I, T, A, R] using hschur
+  have hsq : (2 * C) ^ 2 ≤ B ^ 2 := by
+    calc
+      (2 * C) ^ 2 = 4 * C ^ 2 := by ring
+      _ ≤ 4 * (H * T) := mul_le_mul_of_nonneg_left hC (by norm_num)
+      _ = 4 * H * T := by ring
+      _ ≤ B ^ 2 := hscale
+  have habs : |2 * C| ≤ B := by
+    apply (sq_le_sq₀ (abs_nonneg _) hB).mp
+    rw [sq_abs]
+    exact hsq
+  have hcross : 2 * C ≤ B := (le_abs_self _).trans habs
+  have hprime :=
+    monotoneQuarterHeadSuffixRealPrimeCross_eq_finset parent k Sₚ hout
+  have hCeq : C =
+      monotoneQuarterHeadSuffixRealPrimeCross parent k + R := by
+    dsimp only [C, R, monotonePrimeAtomAggregateRemainder]
+    rw [hprime]
+    ring
+  unfold bombieriRealQuadraticValue
+  apply (monotoneQuarterCutoff_nonnegative_iff_logDefect_lowerBound
+    parent k).2
+  rw [monotoneQuarterRealLogStepDefect_eq_archimedean_sub_mangoldt]
+  change -(H + I) ≤ 2 * A -
+    2 * monotoneQuarterHeadSuffixRealPrimeCross parent k
+  dsimp only [B] at hcross
+  rw [hCeq] at hcross
+  linarith
+
 /-- If the one aggregate slice, its exact translated-kernel remainder, and
 the archimedean cross fit inside the actual suffix diagonal, then the outer
 cutoff is nonnegative.  Unlike atomwise absorption, this hypothesis contains
@@ -333,6 +410,40 @@ theorem bombieriRealMonotoneCutPropagation_of_primeAggregateAbsorption
     haggregate parent hparent k hinner
   exact monotoneQuarterCutoff_nonnegative_of_primeAtom_aggregateReserve
     parent k S hout hbudget
+
+/-- Sharper uniform aggregate-Schur property, retaining the actual suffix
+diagonal instead of replacing it by an arithmetic-mean slice budget. -/
+def BombieriRealMonotonePrimeAggregateSchurAbsorption : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        0 ≤ bombieriRealQuadraticValue
+            (monotoneQuarterCutoff parent (k + 1)) →
+          ∃ Sₚ : Finset ℕ,
+            (∀ j ∉ Sₚ, monotonePrimeAtomValue parent k j = 0) ∧
+            0 ≤ bombieriRealQuadraticValue (monotoneQuarterCell parent k) +
+                bombieriRealQuadraticValue
+                    (monotoneQuarterCutoff parent (k + 1)) +
+                  2 * (monotoneQuarterHeadSuffixRealArchimedeanCross parent k +
+                    monotonePrimeAtomAggregateRemainder parent k Sₚ) ∧
+            4 * bombieriRealQuadraticValue (monotoneQuarterCell parent k) *
+                monotonePrimeAtomAggregateReserve parent k Sₚ ≤
+              (bombieriRealQuadraticValue (monotoneQuarterCell parent k) +
+                bombieriRealQuadraticValue
+                    (monotoneQuarterCutoff parent (k + 1)) +
+                  2 * (monotoneQuarterHeadSuffixRealArchimedeanCross parent k +
+                    monotonePrimeAtomAggregateRemainder parent k Sₚ)) ^ 2
+
+/-- The determinant-scale aggregate condition also supplies the exact
+monotone-cut propagation rule. -/
+theorem bombieriRealMonotoneCutPropagation_of_primeAggregateSchurAbsorption
+    (haggregate : BombieriRealMonotonePrimeAggregateSchurAbsorption) :
+    BombieriRealMonotoneCutPropagation := by
+  intro parent hparent k hinner
+  obtain ⟨Sₚ, hout, hmean, hschur⟩ :=
+    haggregate parent hparent k hinner
+  exact monotoneQuarterCutoff_nonnegative_of_primeAtom_aggregateSchur
+    parent k Sₚ hout hmean hschur
 
 end
 
