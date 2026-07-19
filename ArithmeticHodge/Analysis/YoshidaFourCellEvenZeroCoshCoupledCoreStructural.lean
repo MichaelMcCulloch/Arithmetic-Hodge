@@ -2775,6 +2775,147 @@ theorem hasSum_cutoffEightPotentialTail_P4_P6 :
       ring_nf)
   · norm_num
 
+private theorem hasSum_even_reciprocalSquares :
+    HasSum (fun r : ℕ ↦ 1 / (2 * (r : ℝ)) ^ 2)
+      (Real.pi ^ 2 / 24) := by
+  have h := HasSum.mul_left (1 / 4 : ℝ) hasSum_zeta_two
+  convert h using 1
+  · funext r
+    rw [mul_pow]
+    ring
+  · ring
+
+private theorem hasSum_odd_reciprocalSquares :
+    HasSum (fun r : ℕ ↦ 1 / (2 * (r : ℝ) + 1) ^ 2)
+      (Real.pi ^ 2 / 8) := by
+  let f : ℕ → ℝ := fun n ↦ 1 / (n : ℝ) ^ 2
+  have hz : Summable f := by
+    simpa only [f] using hasSum_zeta_two.summable
+  have he : Summable (fun r : ℕ ↦ f (2 * r)) :=
+    hz.comp_injective (by
+      intro a b h
+      exact Nat.mul_left_cancel (by norm_num) h)
+  have ho : Summable (fun r : ℕ ↦ f (2 * r + 1)) :=
+    hz.comp_injective (by
+      intro a b h
+      exact Nat.mul_left_cancel (by norm_num) (Nat.add_right_cancel h))
+  have hsplit := tsum_even_add_odd he ho
+  have hEvenTsum : (∑' r : ℕ, f (2 * r)) = Real.pi ^ 2 / 24 := by
+    simpa only [f, Nat.cast_mul, Nat.cast_ofNat] using
+      hasSum_even_reciprocalSquares.tsum_eq
+  have hZetaTsum : (∑' n : ℕ, f n) = Real.pi ^ 2 / 6 := by
+    simpa only [f] using hasSum_zeta_two.tsum_eq
+  have hOddTsum : (∑' r : ℕ, f (2 * r + 1)) = Real.pi ^ 2 / 8 := by
+    rw [hEvenTsum, hZetaTsum] at hsplit
+    linarith
+  simpa only [f, Nat.cast_add, Nat.cast_mul, Nat.cast_one,
+    Nat.cast_ofNat] using (ho.hasSum_iff).2 hOddTsum
+
+private theorem endpointPotentialDiagonalPartialFraction
+    (n m : ℝ) (hm : 2 * m + 1 ≠ 0)
+    (hlo : n - m ≠ 0) (hhi : n + m + 1 ≠ 0) :
+    2 * (2 * n + 1) /
+        ((n - m) * (n + m + 1) * (n - m) * (n + m + 1)) =
+      (2 / (2 * m + 1)) *
+        (1 / (n - m) ^ 2 - 1 / (n + m + 1) ^ 2) := by
+  field_simp [hm, hlo, hhi]
+  ring
+
+theorem hasSum_cutoffEightPotentialTail_P0_P0 :
+    HasSum (cutoffEightPotentialTailSummand 0 0)
+      (48877 / 29400 - Real.pi ^ 2 / 6 : ℝ) := by
+  have he := (hasSum_nat_add_iff' 4).2 hasSum_even_reciprocalSquares
+  have ho := (hasSum_nat_add_iff' 4).2 hasSum_odd_reciprocalSquares
+  have h := HasSum.mul_left (2 : ℝ) (he.sub ho)
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h8 : 2 * (r : ℝ) + 8 ≠ 0 := by linarith
+    have h9 : 2 * (r : ℝ) + 9 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    push_cast
+    (field_simp [h8, h9] ; ring_nf)
+  · norm_num [Finset.sum_range_succ]
+    ring
+
+theorem hasSum_cutoffEightPotentialTail_P2_P2 :
+    HasSum (cutoffEightPotentialTailSummand 2 2)
+      (1383379 / 3969000 - Real.pi ^ 2 / 30 : ℝ) := by
+  have he := (hasSum_nat_add_iff' 3).2 hasSum_even_reciprocalSquares
+  have ho := (hasSum_nat_add_iff' 5).2 hasSum_odd_reciprocalSquares
+  have h := HasSum.mul_left (2 / 5 : ℝ) (he.sub ho)
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h6 : 2 * (r : ℝ) + 6 ≠ 0 := by linarith
+    have h11 : 2 * (r : ℝ) + 11 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    rw [endpointPotentialDiagonalPartialFraction]
+    · push_cast
+      norm_num
+      congr 1
+      · congr 1
+        ring
+      · congr 1
+        ring
+    · norm_num
+    · linarith
+    · linarith
+  · norm_num [Finset.sum_range_succ]
+    ring
+
+theorem hasSum_cutoffEightPotentialTail_P4_P4 :
+    HasSum (cutoffEightPotentialTailSummand 4 4)
+      (45245671 / 216112050 - Real.pi ^ 2 / 54 : ℝ) := by
+  have he := (hasSum_nat_add_iff' 2).2 hasSum_even_reciprocalSquares
+  have ho := (hasSum_nat_add_iff' 6).2 hasSum_odd_reciprocalSquares
+  have h := HasSum.mul_left (2 / 9 : ℝ) (he.sub ho)
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h4 : 2 * (r : ℝ) + 4 ≠ 0 := by linarith
+    have h13 : 2 * (r : ℝ) + 13 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    rw [endpointPotentialDiagonalPartialFraction]
+    · push_cast
+      norm_num
+      congr 1
+      · congr 1
+        ring
+      · congr 1
+        ring
+    · norm_num
+    · linarith
+    · linarith
+  · norm_num [Finset.sum_range_succ]
+    ring
+
+theorem hasSum_cutoffEightPotentialTail_P6_P6 :
+    HasSum (cutoffEightPotentialTailSummand 6 6)
+      (4861797662 / 26377676325 - Real.pi ^ 2 / 78 : ℝ) := by
+  have he := (hasSum_nat_add_iff' 1).2 hasSum_even_reciprocalSquares
+  have ho := (hasSum_nat_add_iff' 7).2 hasSum_odd_reciprocalSquares
+  have h := HasSum.mul_left (2 / 13 : ℝ) (he.sub ho)
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h2 : 2 * (r : ℝ) + 2 ≠ 0 := by linarith
+    have h15 : 2 * (r : ℝ) + 15 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    rw [endpointPotentialDiagonalPartialFraction]
+    · push_cast
+      norm_num
+      congr 1
+      · congr 1
+        ring
+      · congr 1
+        ring
+    · norm_num
+    · linarith
+    · linarith
+  · norm_num [Finset.sum_range_succ]
+    ring
+
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
     (hlow : centeredLegendreMomentsVanishBelow r 8)
