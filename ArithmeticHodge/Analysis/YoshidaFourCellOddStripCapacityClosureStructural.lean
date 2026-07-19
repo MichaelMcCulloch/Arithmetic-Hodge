@@ -8124,6 +8124,68 @@ theorem fourCellOddHalfCoreReserve_oneThreeFiveLowProfile
     factorTwoIntrinsicEnergy_oneThreeFiveLowProfile]
   ring
 
+/-- Polarized `(1,5)` entry of the exact local algebraic P135 block. -/
+def fourCellOddOneThreeFiveLocalAlgebraic15 : ℝ :=
+  -(1 / 2 : ℝ) * (736 / 15625) +
+    Real.sqrt 2 * Real.log 2 * (-3296 / 78125) +
+    (2 - Real.sqrt 2 * Real.log 2) * (184 / 15625) -
+    (7 / 50 : ℝ) * (1 / 28)
+
+/-- Polarized `(3,5)` entry of the exact local algebraic P135 block. -/
+def fourCellOddOneThreeFiveLocalAlgebraic35 : ℝ :=
+  -(1 / 2 : ℝ) * (496 / 3125) +
+    Real.sqrt 2 * Real.log 2 * (-576 / 390625) +
+    (2 - Real.sqrt 2 * Real.log 2) * (3096 / 78125) -
+    (7 / 50 : ℝ) * (1 / 18)
+
+/-- `(5,5)` entry of the exact local algebraic P135 block. -/
+def fourCellOddOneThreeFiveLocalAlgebraic55 : ℝ :=
+  -(1 / 2 : ℝ) * (898920274 / 8056640625) +
+    Real.sqrt 2 * Real.log 2 * (1495776 / 48828125) +
+    (2 - Real.sqrt 2 * Real.log 2) * (14520002 / 537109375) +
+    ((14 / 5 : ℝ) -
+      2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) - 3 / 200) *
+      (1 / 11) -
+    (7 / 50 : ℝ) *
+      (19157 / 152460 - (1 / 11 : ℝ) * Real.log 2)
+
+/-- Exact algebraic part of the local defect on `span(P₁,P₃,P₅)`. -/
+def fourCellOddOneThreeFiveLocalAlgebraicQuadratic
+    (c d e : ℝ) : ℝ :=
+  fourCellOddLowLocalAlgebraicQuadratic c d +
+    2 * fourCellOddOneThreeFiveLocalAlgebraic15 * c * e +
+    2 * fourCellOddOneThreeFiveLocalAlgebraic35 * d * e +
+    fourCellOddOneThreeFiveLocalAlgebraic55 * e ^ 2
+
+/-- Exact P135 local-width normal form.  All strip, scalar, and potential
+terms are explicit; the wide regular-kernel quadratic remains intact as the
+single nonsingular form that must be certified in the finite block. -/
+theorem fourCellOddStripLocalWidthDefect_oneThreeFiveLowProfile_eq
+    (c d e : ℝ) :
+    fourCellOddStripLocalWidthDefect
+        (fourCellOddOneThreeFiveLowProfile c d e) =
+      fourCellOddOneThreeFiveLocalAlgebraicQuadratic c d e -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation
+                (fourCellOddOneThreeFiveLowProfile c d e) t) := by
+  unfold fourCellOddStripLocalWidthDefect
+    fourCellOddOneThreeFiveLocalAlgebraicQuadratic
+    fourCellOddOneThreeFiveLocalAlgebraic15
+    fourCellOddOneThreeFiveLocalAlgebraic35
+    fourCellOddOneThreeFiveLocalAlgebraic55
+    fourCellOddLowLocalAlgebraicQuadratic
+    fourCellOddLowLocalAlgebraic11 fourCellOddLowLocalAlgebraic13
+    fourCellOddLowLocalAlgebraic33
+  rw [fourCellOddEndpointStripOddRawEnergy_oneThreeFiveLowProfile,
+    fourCellOddEndpointStripEvenMass_oneThreeFiveLowProfile,
+    fourCellOddEndpointStripOddMass_oneThreeFiveLowProfile,
+    integral_zero_one_oneThreeFiveLowProfile_sq,
+    integral_zero_one_endpointPotential_oneThreeFiveLowProfile]
+  ring
+
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
 theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
