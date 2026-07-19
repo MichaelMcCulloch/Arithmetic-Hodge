@@ -3,7 +3,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilMonotoneCutoffEnergyMonotonici
 
 set_option autoImplicit false
 
-open Complex Real
+open Complex MeasureTheory Real Set TopologicalSpace
 
 namespace ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
 
@@ -667,6 +667,87 @@ theorem monotonePrimeAtomAggregateResidualPrimeCross_eq_survivingRow
     parent k S hout]
   unfold monotonePrimeAtomAggregateRemainder
   ring
+
+/-! ## A different all-length coordinate: the zero-lag aggregate overlap -/
+
+private theorem aggregateDirectedCorrelation_integrableOn
+    (f g : BombieriTest) (x : ℝ) :
+    IntegrableOn
+      (fun y : ℝ ↦ f (x * y) * starRingEnd ℂ (g y))
+      (Set.Ioi 0) := by
+  have hcont : Continuous
+      (fun y : ℝ ↦ f (x * y) * starRingEnd ℂ (g y)) := by
+    fun_prop
+  have hgcompact : HasCompactSupport
+      (fun y : ℝ ↦ starRingEnd ℂ (g y)) := by
+    exact g.hasCompactSupport.comp_left (by simp)
+  have hcompact : HasCompactSupport
+      (fun y : ℝ ↦ f (x * y) * starRingEnd ℂ (g y)) := by
+    simpa only [Pi.mul_apply] using
+      hgcompact.mul_left (f := fun y : ℝ ↦ f (x * y))
+  exact (hcont.integrable_of_hasCompactSupport hcompact).integrableOn
+
+private theorem aggregateDirectedCorrelation_add_left
+    (f g h : BombieriTest) (x : ℝ) :
+    bombieriDirectedCorrelation (f + g) h x =
+      bombieriDirectedCorrelation f h x +
+        bombieriDirectedCorrelation g h x := by
+  unfold bombieriDirectedCorrelation
+  rw [← integral_add
+    (aggregateDirectedCorrelation_integrableOn f h x)
+    (aggregateDirectedCorrelation_integrableOn g h x)]
+  apply setIntegral_congr_fun measurableSet_Ioi
+  intro y _hy
+  simp only [TestFunction.coe_add, Pi.add_apply]
+  ring
+
+private theorem aggregateDirectedCorrelation_finset_sum_left
+    {J : Type*} [DecidableEq J] (S : Finset J)
+    (f : J → BombieriTest) (g : BombieriTest) (x : ℝ) :
+    bombieriDirectedCorrelation (∑ j ∈ S, f j) g x =
+      ∑ j ∈ S, bombieriDirectedCorrelation (f j) g x := by
+  induction S using Finset.induction_on with
+  | empty => simp [bombieriDirectedCorrelation]
+  | @insert j S hj ih =>
+      rw [Finset.sum_insert hj, Finset.sum_insert hj,
+        aggregateDirectedCorrelation_add_left, ih]
+
+/-- The selected finite Mangoldt row has a representation that does not use
+the complete global Bombieri cross at all: it is exactly one zero-lag
+physical overlap between the coherently aggregated transplanted slice and
+the head.  Thus aggregation removes the translated-kernel remainder at the
+level of this coordinate, rather than asking a later Schur complement to
+cancel it. -/
+theorem monotonePrimeAtom_finset_sum_eq_aggregate_zeroLagOverlap
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    ∑ j ∈ S, monotonePrimeAtomValue parent k j =
+      (bombieriDirectedCorrelation
+        (monotonePrimeAtomAggregateSlice parent k S)
+        (monotoneQuarterCell parent k) 1).re := by
+  rw [monotonePrimeAtomAggregateSlice_eq_sum,
+    aggregateDirectedCorrelation_finset_sum_left]
+  change
+    ∑ j ∈ S, monotonePrimeAtomValue parent k j =
+      Complex.reCLM
+        (∑ j ∈ S,
+          bombieriDirectedCorrelation
+            (((bombieriLogPrimeAtomWeight j : ℝ) : ℂ) •
+              monotonePrimeAtomTransplantedSlice parent k j)
+            (monotoneQuarterCell parent k) 1)
+  rw [map_sum Complex.reCLM]
+  apply Finset.sum_congr rfl
+  intro j _hj
+  rw [bombieriDirectedCorrelation_smul_left]
+  rcases Nat.eq_zero_or_pos j with rfl | hjpos
+  · unfold monotonePrimeAtomValue bombieriLogPrimeAtomCrossSummand
+      bombieriLogPrimeAtomWeight
+    simp only [Nat.zero_add, ArithmeticFunction.vonMangoldt_apply_one,
+      zero_mul, Complex.ofReal_zero, Complex.zero_re,
+      Complex.reCLM_apply]
+  · rw [monotonePrimeAtomValue_eq_weight_mul_transplantedOverlap
+      parent k j hjpos]
+    simp only [Complex.reCLM_apply, Complex.mul_re, Complex.ofReal_re,
+      Complex.ofReal_im, zero_mul, sub_zero]
 
 end
 
