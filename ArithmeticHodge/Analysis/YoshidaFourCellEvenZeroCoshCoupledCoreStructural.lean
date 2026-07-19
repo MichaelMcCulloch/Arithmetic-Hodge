@@ -3270,6 +3270,231 @@ theorem repr_cutoffEightPotentialLegendreResidualL2_eq_zero_of_odd
   · rfl
   · exact repr_cutoffEightPotentialLegendreSourceL2_eq_zero_of_odd hm hn
 
+/-- Any closed sum of the explicit tail summands is exactly twice the
+Hilbert pairing of the corresponding cutoff-eight residual sources. -/
+theorem inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+    {m k : ℕ} (hmEven : Even m) (hkEven : Even k)
+    (hmLt : m < 8) (hkLt : k < 8) (S : ℝ)
+    (hseries : HasSum (cutoffEightPotentialTailSummand m k) S) :
+    inner ℝ (cutoffEightPotentialLegendreResidualL2 m)
+        (cutoffEightPotentialLegendreResidualL2 k) = S / 2 := by
+  let a : ℕ → ℝ := fun n ↦
+    shiftedLegendreHilbertBasis.repr
+        (cutoffEightPotentialLegendreResidualL2 m) n *
+      shiftedLegendreHilbertBasis.repr
+        (cutoffEightPotentialLegendreResidualL2 k) n
+  have hshift : HasSum (fun r : ℕ ↦ a (2 * (r + 4))) (S / 2) := by
+    have hscaled := HasSum.mul_left (1 / 2 : ℝ) hseries
+    convert hscaled using 1
+    · funext r
+      have hmHigh : m < 2 * r + 8 := by omega
+      have hkHigh : k < 2 * r + 8 := by omega
+      have hmSumEven : Even (m + (2 * r + 8)) := by
+        rcases hmEven with ⟨u, hu⟩
+        use u + r + 4
+        omega
+      have hkSumEven : Even (k + (2 * r + 8)) := by
+        rcases hkEven with ⟨u, hu⟩
+        use u + r + 4
+        omega
+      have hprod := two_mul_repr_cutoffEightPotentialLegendreSourceL2
+        hmHigh hkHigh hmSumEven hkSumEven
+      have hindex : 2 * (r + 4) = 2 * r + 8 := by omega
+      dsimp only [a]
+      rw [hindex, repr_cutoffEightPotentialLegendreResidualL2,
+        if_neg (by omega : ¬2 * r + 8 < 8),
+        repr_cutoffEightPotentialLegendreResidualL2,
+        if_neg (by omega : ¬2 * r + 8 < 8)]
+      nlinarith only [hprod]
+    · ring
+  have hprefix :
+      (∑ j ∈ Finset.range 4, a (2 * j)) = 0 := by
+    apply Finset.sum_eq_zero
+    intro j hj
+    have hjlt : 2 * j < 8 := by
+      have := Finset.mem_range.mp hj
+      omega
+    dsimp only [a]
+    rw [repr_cutoffEightPotentialLegendreResidualL2,
+      if_pos hjlt, zero_mul]
+  have heven : HasSum (fun j : ℕ ↦ a (2 * j)) (S / 2) := by
+    apply (hasSum_nat_add_iff' 4).1
+    rw [hprefix, sub_zero]
+    exact hshift
+  have hodd : HasSum (fun j : ℕ ↦ a (2 * j + 1)) 0 := by
+    convert (hasSum_zero : HasSum (fun _ : ℕ ↦ (0 : ℝ)) 0) using 1
+    funext j
+    dsimp only [a]
+    rw [repr_cutoffEightPotentialLegendreResidualL2_eq_zero_of_odd
+      hmEven (by use j), zero_mul]
+  have hall : HasSum a (S / 2) := by
+    simpa only [add_zero] using heven.even_add_odd hodd
+  have hb := shiftedLegendreHilbertBasis.hasSum_inner_mul_inner
+    (cutoffEightPotentialLegendreResidualL2 m)
+    (cutoffEightPotentialLegendreResidualL2 k)
+  have hb' : HasSum a
+      (inner ℝ (cutoffEightPotentialLegendreResidualL2 m)
+        (cutoffEightPotentialLegendreResidualL2 k)) := by
+    convert hb using 1
+    funext n
+    dsimp only [a]
+    rw [shiftedLegendreHilbertBasis.repr_apply_apply,
+      shiftedLegendreHilbertBasis.repr_apply_apply,
+      real_inner_comm (cutoffEightPotentialLegendreResidualL2 m)]
+  exact hb'.unique hall
+
+/-- Degree-below-eight polynomial selector of one endpoint-potential source. -/
+def cutoffEightPotentialLegendreSelectorPolynomial (m : ℕ) : ℝ[X] :=
+  shiftedLegendrePartialProjectionPolynomial
+    (cutoffEightPotentialLegendreSourceL2 m) 8
+
+/-- Pointwise centered endpoint-potential source after removing its first
+eight Hilbert coordinates. -/
+def cutoffEightProjectedPotentialLegendreSource (m : ℕ) (x : ℝ) : ℝ :=
+  cutoffEightPotentialLegendreSource m x -
+    centeredPolynomialLift
+      (cutoffEightPotentialLegendreSelectorPolynomial m) x
+
+private theorem memLp_centeredPullback_centeredPolynomialLift
+    (q : ℝ[X]) :
+    MemLp (fun t : unitInterval ↦
+      centeredPullback (centeredPolynomialLift q) (t : ℝ)) 2 := by
+  have hcont : Continuous (centeredPolynomialLift q) := by
+    unfold centeredPolynomialLift
+    fun_prop
+  exact centeredPullback_memLp_two_of_memLp_restrict
+    (centeredPolynomialLift q) hcont.measurable
+    (memLp_two_restrict_centered_of_continuous _ hcont)
+
+private theorem toLp_centeredPullback_centeredPolynomialLift
+    (q : ℝ[X]) :
+    (memLp_centeredPullback_centeredPolynomialLift q).toLp
+        (fun t : unitInterval ↦
+          centeredPullback (centeredPolynomialLift q) (t : ℝ)) =
+      polynomialToL2 q := by
+  change _ = ContinuousMap.toLp 2 (volume : Measure unitInterval) ℝ
+    (polynomialToContinuous q)
+  apply Lp.ext
+  filter_upwards [
+      (memLp_centeredPullback_centeredPolynomialLift q).coeFn_toLp,
+      ContinuousMap.coeFn_toLp
+        (p := (2 : ENNReal)) (μ := (volume : Measure unitInterval))
+        (𝕜 := ℝ) (polynomialToContinuous q)] with t hleft hright
+  rw [hleft, hright]
+  unfold centeredPullback centeredPolynomialLift
+  change q.eval ((2 * (t : ℝ) - 1 + 1) / 2) = q.eval (t : ℝ)
+  congr 1
+  ring
+
+private theorem memLp_cutoffEightProjectedPotentialLegendreSource_restrict
+    (m : ℕ) :
+    MemLp (cutoffEightProjectedPotentialLegendreSource m) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hpoly : Continuous (centeredPolynomialLift
+      (cutoffEightPotentialLegendreSelectorPolynomial m)) := by
+    unfold centeredPolynomialLift
+    fun_prop
+  simpa only [cutoffEightProjectedPotentialLegendreSource,
+    Pi.sub_apply] using
+    (memLp_cutoffEightPotentialLegendreSource_restrict m).sub
+      (memLp_two_restrict_centered_of_continuous _ hpoly)
+
+private theorem measurable_cutoffEightProjectedPotentialLegendreSource
+    (m : ℕ) :
+    Measurable (cutoffEightProjectedPotentialLegendreSource m) := by
+  unfold cutoffEightProjectedPotentialLegendreSource
+  apply Measurable.sub (measurable_cutoffEightPotentialLegendreSource m)
+  unfold centeredPolynomialLift
+  fun_prop
+
+private theorem memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource
+    (m : ℕ) :
+    MemLp (fun t : unitInterval ↦ centeredPullback
+      (cutoffEightProjectedPotentialLegendreSource m) (t : ℝ)) 2 :=
+  centeredPullback_memLp_two_of_memLp_restrict
+    (cutoffEightProjectedPotentialLegendreSource m)
+    (measurable_cutoffEightProjectedPotentialLegendreSource m)
+    (memLp_cutoffEightProjectedPotentialLegendreSource_restrict m)
+
+private theorem toLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource
+    (m : ℕ) :
+    (memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource m).toLp
+        (fun t : unitInterval ↦ centeredPullback
+          (cutoffEightProjectedPotentialLegendreSource m) (t : ℝ)) =
+      cutoffEightPotentialLegendreResidualL2 m := by
+  let q := cutoffEightPotentialLegendreSelectorPolynomial m
+  have hsource :=
+    memLp_centeredPullback_cutoffEightPotentialLegendreSource m
+  have hpoly := memLp_centeredPullback_centeredPolynomialLift q
+  have hsub := MemLp.toLp_sub hsource hpoly
+  change _ = cutoffEightPotentialLegendreSourceL2 m -
+    shiftedLegendrePartialProjection
+      (cutoffEightPotentialLegendreSourceL2 m) 8
+  change _ = (hsource.toLp
+      (fun t : unitInterval ↦ centeredPullback
+        (cutoffEightPotentialLegendreSource m) (t : ℝ))) -
+    shiftedLegendrePartialProjection
+      (cutoffEightPotentialLegendreSourceL2 m) 8
+  rw [← polynomialToL2_shiftedLegendrePartialProjectionPolynomial]
+  change _ = hsource.toLp
+      (fun t : unitInterval ↦ centeredPullback
+        (cutoffEightPotentialLegendreSource m) (t : ℝ)) - polynomialToL2 q
+  rw [← toLp_centeredPullback_centeredPolynomialLift q, ← hsub]
+  apply MemLp.toLp_congr
+  filter_upwards [] with t
+  unfold cutoffEightProjectedPotentialLegendreSource centeredPullback q
+  rfl
+
+/-- The pointwise projected-source pairing is exactly any closed sum of the
+corresponding explicit cutoff-eight Parseval series. -/
+theorem integral_cutoffEightProjectedPotentialLegendreSource_mul_eq_of_hasSum
+    {m k : ℕ} (hmEven : Even m) (hkEven : Even k)
+    (hmLt : m < 8) (hkLt : k < 8) (S : ℝ)
+    (hseries : HasSum (cutoffEightPotentialTailSummand m k) S) :
+    (∫ x : ℝ in -1..1,
+      cutoffEightProjectedPotentialLegendreSource m x *
+        cutoffEightProjectedPotentialLegendreSource k x) = S := by
+  let hmLp :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource m
+  let hkLp :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource k
+  have hinner :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      hmEven hkEven hmLt hkLt S hseries
+  have hbridge :
+      inner ℝ (cutoffEightPotentialLegendreResidualL2 m)
+          (cutoffEightPotentialLegendreResidualL2 k) =
+        (1 / 2 : ℝ) * (∫ x : ℝ in -1..1,
+          cutoffEightProjectedPotentialLegendreSource m x *
+            cutoffEightProjectedPotentialLegendreSource k x) := by
+    calc
+      _ = inner ℝ
+          (hmLp.toLp (fun t : unitInterval ↦ centeredPullback
+            (cutoffEightProjectedPotentialLegendreSource m) (t : ℝ)))
+          (hkLp.toLp (fun t : unitInterval ↦ centeredPullback
+            (cutoffEightProjectedPotentialLegendreSource k) (t : ℝ))) := by
+        rw [toLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource,
+          toLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource]
+      _ = ∫ t : unitInterval,
+          centeredPullback (cutoffEightProjectedPotentialLegendreSource m)
+              (t : ℝ) *
+            centeredPullback (cutoffEightProjectedPotentialLegendreSource k)
+              (t : ℝ) := inner_toLp_eq_integral_mul _ _ hmLp hkLp
+      _ = ∫ t : ℝ in 0..1,
+          centeredPullback (cutoffEightProjectedPotentialLegendreSource m) t *
+            centeredPullback
+              (cutoffEightProjectedPotentialLegendreSource k) t := by
+        exact integral_unitInterval_eq_intervalIntegral (fun t ↦
+          centeredPullback (cutoffEightProjectedPotentialLegendreSource m) t *
+            centeredPullback
+              (cutoffEightProjectedPotentialLegendreSource k) t)
+      _ = _ := by
+        simpa only [centeredPullback] using
+          integral_comp_two_mul_sub_one (fun x ↦
+            cutoffEightProjectedPotentialLegendreSource m x *
+              cutoffEightProjectedPotentialLegendreSource k x)
+  linarith
+
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
     (hlow : centeredLegendreMomentsVanishBelow r 8)
