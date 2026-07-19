@@ -4057,6 +4057,80 @@ theorem fiveCell_remoteEndpointLocalCritical_determinant_of_middle_zero
           (monotoneQuarterCell parent (k + 4))
           (monotoneQuarterCell parent (k + 4))).re := hproduct
 
+/-- In the complementary nonzero-middle branch, the middle-pivot residual
+contraction is not merely sufficient: it is exactly the sign of the full
+three-block common-parent determinant. -/
+theorem fiveCellCommonParentThreeBlockDeterminant_nonnegative_iff_middlePivotResidual_of_ne_zero
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent) (k : ℤ)
+    (hmiddle : fiveCellMiddleThree parent k ≠ 0) :
+    0 ≤ fiveCellCommonParentThreeBlockDeterminant parent k ↔
+      FiveCellCommonParentMiddlePivotResidualContraction parent k := by
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := fiveCellMiddleThree parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := fiveCellRemoteEndpointBalance parent k
+  have hMpos : 0 < M := by
+    dsimp only [M, m]
+    exact fiveCellMiddleThree_quadratic_pos_of_ne_zero
+      parent hparent k hmiddle
+  have hX : (bombieriTwoBlockGlobalCrossSymbol a e).re = X := by
+    dsimp only [a, e, X]
+    exact fiveCell_remoteEndpointGlobalCross_re_eq_balance parent k
+  have hpivot :=
+    fiveCellMiddlePivotResidualDeterminant_eq_mul_threeBlockDeterminant
+      A M E U V X
+  unfold fiveCellMiddlePivotResidualDeterminant at hpivot
+  unfold fiveCellCommonParentThreeBlockDeterminant
+  change
+    0 ≤ fiveCellThreeBlockDeterminant
+        A M E U V (bombieriTwoBlockGlobalCrossSymbol a e).re ↔
+      (M * X - U * V) ^ 2 ≤
+        (A * M - U ^ 2) * (M * E - V ^ 2)
+  rw [hX]
+  constructor <;> intro h
+  · have hscaled :
+        0 ≤ M * fiveCellThreeBlockDeterminant A M E U V X :=
+      mul_nonneg hMpos.le h
+    rw [← hpivot] at hscaled
+    linarith
+  · have hresidual :
+        0 ≤ (A * M - U ^ 2) * (M * E - V ^ 2) -
+          (M * X - U * V) ^ 2 := by
+      linarith
+    rw [hpivot] at hresidual
+    exact (mul_nonneg_iff_of_pos_left hMpos).mp hresidual
+
+/-- Equivalently, after the nonzero middle pivot the entire five-cell
+determinant problem is ordinary real Cauchy--Schwarz for the two concrete
+middle-orthogonal residual tests. -/
+theorem fiveCellCommonParentThreeBlockDeterminant_nonnegative_iff_residualCross_of_ne_zero
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent) (k : ℤ)
+    (hmiddle : fiveCellMiddleThree parent k ≠ 0) :
+    0 ≤ fiveCellCommonParentThreeBlockDeterminant parent k ↔
+      (bombieriTwoBlockGlobalCrossSymbol
+        (fiveCellLeftMiddleOrthogonalResidual parent k)
+        (fiveCellRightMiddleOrthogonalResidual parent k)).re ^ 2 ≤
+        bombieriRealQuadraticValue
+            (fiveCellLeftMiddleOrthogonalResidual parent k) *
+          bombieriRealQuadraticValue
+            (fiveCellRightMiddleOrthogonalResidual parent k) := by
+  have hMpos :
+      0 < bombieriRealQuadraticValue (fiveCellMiddleThree parent k) :=
+    fiveCellMiddleThree_quadratic_pos_of_ne_zero
+      parent hparent k hmiddle
+  exact
+    (fiveCellCommonParentThreeBlockDeterminant_nonnegative_iff_middlePivotResidual_of_ne_zero
+      parent hparent k hmiddle).trans
+      (fiveCellCommonParentMiddlePivotResidualContraction_iff_residualCross
+        parent k hMpos)
+
 /-- Exact scalar form of the new common-parent obstruction.  Once the two
 adjacent minors are nonnegative and the middle diagonal is positive, a
 minimal negative configuration must strictly reverse the residual
