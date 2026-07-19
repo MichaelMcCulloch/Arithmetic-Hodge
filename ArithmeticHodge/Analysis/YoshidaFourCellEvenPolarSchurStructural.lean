@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.TwoByTwoSchur
 import ArithmeticHodge.Analysis.YoshidaEndpointPotentialEvenMomentStructural
+import ArithmeticHodge.Analysis.YoshidaEndpointTriangleFoldLipschitz
 import ArithmeticHodge.Analysis.YoshidaEndpointWeightedCauchy
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseFullProfile
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenCapacityClosureStructural
@@ -14,11 +15,13 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenPolarSchurStructural
 noncomputable section
 
 open TwoByTwoSchur
+open UnitIntervalLogEnergyAffine
 open YoshidaFactorTwoPhaseFullProfile
 open YoshidaConstantBounds
 open YoshidaEndpointEvenLowPotential
 open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointPotentialBound
+open YoshidaEndpointTriangleFoldLipschitz
 open YoshidaFourCellEvenCapacityClosureStructural
 open YoshidaFourCellCompletedParityOperatorStructural
 open YoshidaFourCellEndpointHalfFoldStructural
@@ -524,6 +527,91 @@ private theorem sqrt_two_mul_log_two_lt_981_div_1000 :
     _ < (70711 / 50000 : ℝ) * (6932 / 10000 : ℝ) :=
       mul_lt_mul_of_pos_left hl (by norm_num)
     _ < (981 / 1000 : ℝ) := by norm_num
+
+/-- On the zero-cosh hyperplane, the adverse endpoint translation consumes
+only a controlled fraction of the raw logarithmic energy.  The small scalar
+remainder is the quantitative cost of replacing exact mean zero by the
+wide-cosh orthogonality condition. -/
+theorem fourCellEndpointPairing_le_raw_add_mass_of_coshMoment_zero
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    fourCellEndpointPairing w ≤
+      (101 / 400 : ℝ) * centeredRawLogEnergy w +
+        (101 / 10000 : ℝ) *
+          (∫ x : ℝ in -1..1, w x ^ 2) := by
+  obtain ⟨C, hC⟩ :=
+    hlocal.exists_lipschitzOnWith_of_compact isCompact_Icc
+  have henergy :=
+    integrableOn_centeredLogDifferenceKernel_prod_of_lipschitzOnWith w hC
+  have hpair := fourCellEndpointPairing_le_rawLogEnergy_add_mean
+    w hw henergy (ε := (1 / 100 : ℝ)) (by norm_num)
+  have hcoeff :=
+    centeredEvenP0Coefficient_sq_le_one_div_fourThousand_mass_of_coshMoment_zero
+      w hw heven hzero
+  have hmean :
+      (∫ x : ℝ in -1..1, w x) ^ 2 ≤
+        (1 / 1000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+    unfold centeredEvenP0Coefficient at hcoeff
+    nlinarith
+  have hmeanScaled := mul_le_mul_of_nonneg_left hmean
+    (by norm_num : (0 : ℝ) ≤ 101 / 10)
+  norm_num at hpair
+  nlinarith
+
+/-- The actual dyadic coefficient is below one, so the complete prime loss
+obeys the same raw-plus-mass budget. -/
+theorem sqrtTwoLogTwo_mul_fourCellEndpointPairing_le_raw_add_mass_of_coshMoment_zero
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w ≤
+      (101 / 400 : ℝ) * centeredRawLogEnergy w +
+        (101 / 10000 : ℝ) *
+          (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let P : ℝ := fourCellEndpointPairing w
+  let R : ℝ :=
+    (101 / 400 : ℝ) * centeredRawLogEnergy w +
+      (101 / 10000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2)
+  have hpair : P ≤ R := by
+    simpa only [P, R] using
+      fourCellEndpointPairing_le_raw_add_mass_of_coshMoment_zero
+        w hw hlocal heven hzero
+  have hraw : 0 ≤ centeredRawLogEnergy w := by
+    unfold centeredRawLogEnergy
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro x _hx
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro y _hy
+    positivity
+  have hmass : 0 ≤ ∫ x : ℝ in -1..1, w x ^ 2 := by
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hR : 0 ≤ R := by
+    dsimp only [R]
+    positivity
+  have hbeta0 : 0 ≤ Real.sqrt 2 * Real.log 2 := by positivity
+  have hbeta1 : Real.sqrt 2 * Real.log 2 ≤ 1 :=
+    (sqrt_two_mul_log_two_lt_981_div_1000.trans (by norm_num)).le
+  by_cases hP : 0 ≤ P
+  · calc
+      Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w =
+          (Real.sqrt 2 * Real.log 2) * P := by rfl
+      _ ≤ 1 * P := mul_le_mul_of_nonneg_right hbeta1 hP
+      _ = P := one_mul P
+      _ ≤ R := hpair
+      _ = _ := by rfl
+  · have hPnonpos : P ≤ 0 := le_of_not_ge hP
+    calc
+      Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w =
+          (Real.sqrt 2 * Real.log 2) * P := by rfl
+      _ ≤ 0 := mul_nonpos_of_nonneg_of_nonpos hbeta0 hPnonpos
+      _ ≤ R := hR
+      _ = _ := by rfl
 
 /-- The canonical constant direction has a uniform positive margin in the
 complete four-cell bracket.  This is the positive pivot for the exact
