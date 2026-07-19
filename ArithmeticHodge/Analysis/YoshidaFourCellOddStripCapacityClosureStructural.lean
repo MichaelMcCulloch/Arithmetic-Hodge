@@ -443,6 +443,42 @@ theorem two_mul_oddGroundState_le_coupledRawKernel
     exact div_nonneg (by positivity) (mul_nonneg hsub hsum)
   nlinarith [mul_nonneg hcoefficient (sq_nonneg (u - v))]
 
+/-- Coordinate-free form of the same ground-state bound.  It applies
+directly to two profile values and therefore does not divide by the value of
+the smaller spatial coordinate. -/
+theorem two_mul_sq_div_le_coupledRawKernel
+    {x y a b : ℝ} (hy : 0 ≤ y) (hxy : y < x) :
+    2 * a ^ 2 / x ≤
+      (a - b) ^ 2 / (x - y) + (a + b) ^ 2 / (x + y) := by
+  have hx : 0 < x := hy.trans_lt hxy
+  have hsub : x - y ≠ 0 := ne_of_gt (sub_pos.mpr hxy)
+  have hsum : x + y ≠ 0 := by positivity
+  have hxne : x ≠ 0 := hx.ne'
+  rw [show
+      (a - b) ^ 2 / (x - y) + (a + b) ^ 2 / (x + y) =
+        2 * a ^ 2 / x +
+          2 * (y * a - x * b) ^ 2 /
+            (x * (x - y) * (x + y)) by
+    field_simp [hxne, hsub, hsum]
+    ring]
+  have hden : 0 ≤ x * (x - y) * (x + y) :=
+    mul_nonneg
+      (mul_nonneg hx.le (sub_pos.mpr hxy).le)
+      (add_pos_of_pos_of_nonneg hx hy).le
+  exact le_add_of_nonneg_right (div_nonneg (by positivity) hden)
+
+/-- On the production positive half, each ordered same/reflected raw pair
+already pays twice the mass of its larger-coordinate value. -/
+theorem two_mul_sq_le_coupledRawKernel
+    {x y a b : ℝ} (hy : 0 ≤ y) (hxy : y < x) (hx1 : x ≤ 1) :
+    2 * a ^ 2 ≤
+      (a - b) ^ 2 / (x - y) + (a + b) ^ 2 / (x + y) := by
+  have hx : 0 < x := hy.trans_lt hxy
+  have hmass : 2 * a ^ 2 ≤ 2 * a ^ 2 / x := by
+    rw [le_div_iff₀ hx]
+    nlinarith [sq_nonneg a]
+  exact hmass.trans (two_mul_sq_div_le_coupledRawKernel hy hxy)
+
 /-! ## A signed regular-kernel reserve on the wider four-cell range -/
 
 private def fourCellRegularLowerPolynomial (r : ℝ) : ℝ :=
