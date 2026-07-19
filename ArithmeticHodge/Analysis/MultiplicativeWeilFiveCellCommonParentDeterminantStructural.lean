@@ -267,6 +267,157 @@ theorem exists_realParent_fourBlock_eq_middle_add_smul_rightEndpoint
         exact fourBlock_rightCutoff_eq_rightEndpoint parent k]
     module
 
+private theorem monotoneQuarterFiveBlock_add
+    (f g : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiveBlock (f + g) k =
+      monotoneQuarterFiveBlock f k + monotoneQuarterFiveBlock g k := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotoneQuarterFiveBlock_apply, TestFunction.coe_add,
+    Pi.add_apply]
+  ring
+
+private theorem monotoneQuarterFiveBlock_smul
+    (c : ℂ) (f : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiveBlock (c • f) k =
+      c • monotoneQuarterFiveBlock f k := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotoneQuarterFiveBlock_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul]
+  ring
+
+private theorem fiveCell_fiveBlock_eq_threeBlocks
+    (parent : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiveBlock parent k =
+      (monotoneQuarterCell parent k +
+        _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+          parent k) +
+        monotoneQuarterCell parent (k + 4) := by
+  classical
+  simp [monotoneQuarterFiveBlock, monotoneQuarterFiniteBlock,
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree,
+    Finset.sum_range_succ]
+  module
+
+private theorem fiveBlock_parent_sub_nextCutoff_eq_leftEndpoint
+    (parent : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiveBlock
+        (parent - monotoneQuarterCutoff parent (k + 1)) k =
+      monotoneQuarterCell parent k := by
+  apply TestFunction.ext
+  intro x
+  rw [monotoneQuarterFiveBlock_apply, monotoneQuarterCell_apply]
+  simp only [TestFunction.coe_sub, Pi.sub_apply,
+    monotoneQuarterCutoff_apply]
+  have hk1 := monotoneQuarterStep_mul_later
+    (k := k) (j := k + 1) (by omega) x
+  have h15 := monotoneQuarterStep_mul_later
+    (k := k + 1) (j := k + 5) (by omega) x
+  have hmask :
+      (monotoneQuarterStep k x - monotoneQuarterStep (k + 5) x) *
+          (1 - monotoneQuarterStep (k + 1) x) =
+        monotoneQuarterWeight k x := by
+    unfold monotoneQuarterWeight
+    nlinarith [hk1, h15]
+  change
+    (↑(monotoneQuarterStep k x - monotoneQuarterStep (k + 5) x) : ℂ) *
+        (parent x - ↑(monotoneQuarterStep (k + 1) x) * parent x) =
+      (monotoneQuarterWeight k x : ℂ) * parent x
+  calc
+    (↑(monotoneQuarterStep k x - monotoneQuarterStep (k + 5) x) : ℂ) *
+          (parent x - ↑(monotoneQuarterStep (k + 1) x) * parent x) =
+        (↑((monotoneQuarterStep k x - monotoneQuarterStep (k + 5) x) *
+          (1 - monotoneQuarterStep (k + 1) x)) : ℂ) * parent x := by
+      push_cast
+      ring
+    _ = (monotoneQuarterWeight k x : ℂ) * parent x := by rw [hmask]
+
+private theorem fiveBlock_rightCutoff_eq_rightEndpoint
+    (parent : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiveBlock
+        (monotoneQuarterCutoff parent (k + 4)) k =
+      monotoneQuarterCell parent (k + 4) := by
+  apply TestFunction.ext
+  intro x
+  rw [monotoneQuarterFiveBlock_apply, monotoneQuarterCell_apply]
+  simp only [monotoneQuarterCutoff_apply]
+  have h04 := monotoneQuarterStep_mul_later
+    (k := k) (j := k + 4) (by omega) x
+  have h45 := monotoneQuarterStep_mul_later
+    (k := k + 4) (j := k + 5) (by omega) x
+  have hmask :
+      (monotoneQuarterStep k x - monotoneQuarterStep (k + 5) x) *
+          monotoneQuarterStep (k + 4) x =
+        monotoneQuarterWeight (k + 4) x := by
+    unfold monotoneQuarterWeight
+    rw [show k + 4 + 1 = k + 5 by ring]
+    nlinarith [h04, h45]
+  change
+    (↑(monotoneQuarterStep k x - monotoneQuarterStep (k + 5) x) : ℂ) *
+        (↑(monotoneQuarterStep (k + 4) x) * parent x) =
+      (monotoneQuarterWeight (k + 4) x : ℂ) * parent x
+  calc
+    (↑(monotoneQuarterStep k x - monotoneQuarterStep (k + 5) x) : ℂ) *
+          (↑(monotoneQuarterStep (k + 4) x) * parent x) =
+        (↑((monotoneQuarterStep k x - monotoneQuarterStep (k + 5) x) *
+          monotoneQuarterStep (k + 4) x) : ℂ) * parent x := by
+      push_cast
+      ring
+    _ = (monotoneQuarterWeight (k + 4) x : ℂ) * parent x := by
+      rw [hmask]
+
+/-- Every real scalar combination of the left endpoint, middle three cells,
+and right endpoint is an honest five-cell production block of a modified
+real common parent. -/
+theorem exists_realParent_fiveBlock_eq_threeBlockCombination
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (alpha beta gamma : ℝ) :
+    ∃ modified : BombieriTest,
+      bombieriConjugateTest modified = modified ∧
+        monotoneQuarterFiveBlock modified k =
+          (alpha : ℂ) • monotoneQuarterCell parent k +
+            (beta : ℂ) •
+              _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+                parent k +
+            (gamma : ℂ) • monotoneQuarterCell parent (k + 4) := by
+  let leftParent : BombieriTest :=
+    parent - monotoneQuarterCutoff parent (k + 1)
+  let rightParent : BombieriTest :=
+    monotoneQuarterCutoff parent (k + 4)
+  let modified : BombieriTest :=
+    (beta : ℂ) • parent +
+      ((alpha - beta : ℝ) : ℂ) • leftParent +
+      ((gamma - beta : ℝ) : ℂ) • rightParent
+  have hleft : bombieriConjugateTest leftParent = leftParent := by
+    dsimp only [leftParent]
+    exact conjugate_fixed_sub hparent
+      (conjugate_fixed_monotoneQuarterCutoff hparent (k + 1))
+  have hright : bombieriConjugateTest rightParent = rightParent := by
+    dsimp only [rightParent]
+    exact conjugate_fixed_monotoneQuarterCutoff hparent (k + 4)
+  refine ⟨modified, ?_, ?_⟩
+  · dsimp only [modified]
+    rw [bombieriConjugateTest_add, bombieriConjugateTest_add,
+      conjugate_fixed_real_smul hparent beta,
+      conjugate_fixed_real_smul hleft (alpha - beta),
+      conjugate_fixed_real_smul hright (gamma - beta)]
+  · dsimp only [modified]
+    rw [monotoneQuarterFiveBlock_add,
+      monotoneQuarterFiveBlock_add,
+      monotoneQuarterFiveBlock_smul,
+      monotoneQuarterFiveBlock_smul,
+      monotoneQuarterFiveBlock_smul,
+      fiveCell_fiveBlock_eq_threeBlocks,
+      show monotoneQuarterFiveBlock leftParent k =
+          monotoneQuarterCell parent k by
+        exact fiveBlock_parent_sub_nextCutoff_eq_leftEndpoint parent k,
+      show monotoneQuarterFiveBlock rightParent k =
+          monotoneQuarterCell parent (k + 4) by
+        exact fiveBlock_rightCutoff_eq_rightEndpoint parent k]
+    module
+
 private theorem real_two_by_two_determinant_of_all_nonnegative
     {A B U : ℝ} (hB : 0 ≤ B)
     (hall : ∀ t : ℝ, 0 ≤ A + t ^ 2 * B + 2 * t * U) :
