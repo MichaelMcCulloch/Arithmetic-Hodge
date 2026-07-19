@@ -11300,6 +11300,22 @@ theorem not_fourCellOddOneThreeFiveEndpointGlobalWeightedDualBound :
       _ = (1 / 400 : ℝ) := by ring
   nlinarith
 
+/-- Correct form-level Schur obligation.  Unlike the disproved scalar
+surrogate, the right-hand side retains the complete singular raw-strip,
+prime, potential, scalar, and regular tail quadratic. -/
+def fourCellOddOneThreeFiveEndpointFormDualBound : Prop :=
+  ∀ (c d e : ℝ) (v : ℝ → ℝ),
+    ContDiff ℝ 1 v → Function.Odd v →
+    centeredOddP1Coefficient v = 0 →
+    centeredOddP3Coefficient v = 0 →
+    centeredOddP5Coefficient v = 0 →
+    v 1 = -(c + d + e) →
+    fourCellOddCoreLocalBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) v ^ 2 ≤
+      fourCellOddCoreLocalQuadratic
+          (fourCellOddOneThreeFiveLowProfile c d e) *
+        fourCellOddCoreLocalQuadratic v
+
 private theorem add_two_mul_add_nonneg_of_sq_le_mul
     (a b m : ℝ) (ha : 0 ≤ a) (hm : 0 ≤ m)
     (hschur : b ^ 2 ≤ a * m) :
@@ -11372,6 +11388,66 @@ theorem fourCellOddCoreLocalQuadratic_nonneg_of_endpointZero_threeMode_dual
         2 * fourCellOddCoreLocalBilinear p v +
           fourCellOddP7GlobalTailWeight v :=
     add_two_mul_add_nonneg_of_sq_le_mul _ _ _ hlow hmargin0 hschur
+  have hdecomp := fourCellOddCoreLocal_oneThreeFive_decomposition w hw.continuous
+  linarith
+
+/-- Universal endpoint-zero odd closure is now reduced to exactly one
+infinite-dimensional form inequality.  The finite `P₁/P₃/P₅` block and
+the complete `P₇+` diagonal are already discharged. -/
+theorem fourCellOddCoreLocalQuadratic_nonneg_of_endpointZero_threeMode_formDual
+    (hdual : fourCellOddOneThreeFiveEndpointFormDualBound)
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
+    (hendpoint : w (-1) = 0 ∧ w 1 = 0) :
+    0 ≤ fourCellOddCoreLocalQuadratic w := by
+  let c := centeredOddP1Coefficient w
+  let d := centeredOddP3Coefficient w
+  let e := fourCellOddP5TailCoefficient w
+  let p := fourCellOddOneThreeFiveLowPart w
+  let v := fourCellOddOneThreeFiveResidual w
+  have hv : ContDiff ℝ 1 v := by
+    dsimp only [v]
+    exact contDiff_fourCellOddOneThreeFiveResidual w hw
+  have hvodd : Function.Odd v := by
+    dsimp only [v]
+    exact odd_fourCellOddOneThreeFiveResidual w hodd
+  have hvone : centeredOddP1Coefficient v = 0 := by
+    dsimp only [v]
+    exact centeredOddP1Coefficient_oneThreeFiveResidual_eq_zero w hw.continuous
+  have hvthree : centeredOddP3Coefficient v = 0 := by
+    dsimp only [v]
+    exact centeredOddP3Coefficient_oneThreeFiveResidual_eq_zero w hw.continuous
+  have hvfive : centeredOddP5Coefficient v = 0 := by
+    dsimp only [v]
+    exact centeredOddP5Coefficient_oneThreeFiveResidual_eq_zero w hw.continuous
+  have hvendpoint : v 1 = -(c + d + e) := by
+    dsimp only [v, c, d, e]
+    exact fourCellOddOneThreeFiveResidual_one_of_endpoint_zero w hendpoint.2
+  have hp : p = fourCellOddOneThreeFiveLowProfile c d e := by
+    rfl
+  have hlow : 0 ≤ fourCellOddCoreLocalQuadratic p := by
+    rw [hp]
+    simpa only [fourCellOddCoreLocalQuadratic] using
+      fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_nonneg
+        c d e
+  have htailMargin :=
+    one_fiftieth_positiveHalfMass_le_core_add_localWidthDefect_of_P1
+      v hv hvodd hvone
+  have hhalf : 0 ≤ ∫ x : ℝ in 0..1, v x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg (v x))
+  have htail : 0 ≤ fourCellOddCoreLocalQuadratic v := by
+    change (1 / 50 : ℝ) * (∫ x : ℝ in 0..1, v x ^ 2) ≤
+      fourCellOddCoreLocalQuadratic v at htailMargin
+    nlinarith
+  have hschur : fourCellOddCoreLocalBilinear p v ^ 2 ≤
+      fourCellOddCoreLocalQuadratic p * fourCellOddCoreLocalQuadratic v := by
+    rw [hp]
+    exact hdual c d e v hv hvodd hvone hvthree hvfive hvendpoint
+  have hcompleted : 0 ≤
+      fourCellOddCoreLocalQuadratic p +
+        2 * fourCellOddCoreLocalBilinear p v +
+          fourCellOddCoreLocalQuadratic v :=
+    add_two_mul_add_nonneg_of_sq_le_mul _ _ _ hlow htail hschur
   have hdecomp := fourCellOddCoreLocal_oneThreeFive_decomposition w hw.continuous
   linarith
 
