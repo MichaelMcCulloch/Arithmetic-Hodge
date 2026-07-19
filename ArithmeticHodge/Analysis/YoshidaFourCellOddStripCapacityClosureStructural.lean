@@ -42,6 +42,7 @@ open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
+open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointClean
 open YoshidaEndpointOddOneThreeRawPolarization
@@ -1128,6 +1129,87 @@ private theorem intervalIntegrable_fourCellRegularKernel_mul_continuous
   constructor
   · exact Integrable.mono' hg hfmeas hfg
   · simp
+
+/-- The wide regular row is a small mean-zero perturbation on every odd
+profile: subtracting the exact constant `1/5` leaves a kernel of size at
+most `1/20`, while the absolute autocorrelation has its sharp unit energy
+budget. -/
+theorem abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+    (w : ℝ → ℝ) (hw : Continuous w) (hodd : Function.Odd w) :
+    |(∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t)| ≤
+      (1 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let C : ℝ → ℝ := centeredEndpointCorrelation w
+  let δ : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) - 1 / 5
+  have hC : Continuous C :=
+    continuous_centeredEndpointCorrelation_of_continuous w hw
+  have hCint : IntervalIntegrable C volume 0 2 := hC.intervalIntegrable _ _
+  have hKC := intervalIntegrable_fourCellRegularKernel_mul_continuous C hC
+  have hconst : IntervalIntegrable (fun t : ℝ ↦ (1 / 5 : ℝ) * C t)
+      volume 0 2 := hCint.const_mul (1 / 5)
+  have hδC : IntervalIntegrable (fun t : ℝ ↦ δ t * C t)
+      volume 0 2 := by
+    apply hKC.sub hconst |>.congr
+    intro t _ht
+    dsimp only [δ]
+    ring
+  have hmean : (∫ t : ℝ in 0..2, C t) = 0 := by
+    simpa only [C] using
+      integral_centeredEndpointCorrelation_eq_zero_of_odd w hw hodd
+  have hrewrite :
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t) =
+      ∫ t : ℝ in 0..2, δ t * C t := by
+    rw [show (fun t : ℝ ↦
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t) =
+      fun t ↦ δ t * C t + (1 / 5 : ℝ) * C t by
+      funext t
+      dsimp only [δ]
+      ring,
+      intervalIntegral.integral_add hδC hconst,
+      intervalIntegral.integral_const_mul, hmean]
+    ring
+  have hpoint : ∀ t ∈ Icc (0 : ℝ) 2,
+      |δ t * C t| ≤ (1 / 20 : ℝ) * |C t| := by
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+    have harg4 : fourCellOperatorHalfWidth * t ≤ 5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤ fourCellOperatorHalfWidth * 2 := hmul
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hk0 := one_fifth_le_yoshidaRegularKernel_fourCellRange harg0 harg4
+    have hk1 := yoshidaRegularKernel_le_quarter harg0
+    have hδ0 : 0 ≤ δ t := by dsimp only [δ]; linarith
+    have hδ1 : δ t ≤ (1 / 20 : ℝ) := by dsimp only [δ]; linarith
+    rw [abs_mul, abs_of_nonneg hδ0]
+    exact mul_le_mul_of_nonneg_right hδ1 (abs_nonneg _)
+  have habsInt : IntervalIntegrable (fun t : ℝ ↦ |δ t * C t|)
+      volume 0 2 := hδC.abs
+  have hmajorInt : IntervalIntegrable (fun t : ℝ ↦
+      (1 / 20 : ℝ) * |C t|) volume 0 2 :=
+    (hC.abs.intervalIntegrable _ _).const_mul (1 / 20)
+  have hmono :
+      (∫ t : ℝ in 0..2, |δ t * C t|) ≤
+      ∫ t : ℝ in 0..2, (1 / 20 : ℝ) * |C t| := by
+    apply intervalIntegral.integral_mono_on (by norm_num) habsInt hmajorInt
+    exact hpoint
+  have hnorm := intervalIntegral.norm_integral_le_integral_norm
+    (by norm_num : (0 : ℝ) ≤ 2) (f := fun t ↦ δ t * C t)
+      (μ := volume)
+  have hcorr := integral_abs_centeredEndpointCorrelation_le_energy w hw
+  rw [intervalIntegral.integral_const_mul] at hmono
+  rw [hrewrite]
+  simp only [Real.norm_eq_abs] at hnorm
+  dsimp only [C] at hcorr ⊢
+  linarith
 
 private theorem oddStructuralCorrelation11_nonpos_tail
     {t : ℝ} (ht : t ∈ Icc (8 / 5 : ℝ) 2) :
