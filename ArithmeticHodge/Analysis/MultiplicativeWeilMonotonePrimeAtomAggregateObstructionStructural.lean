@@ -2,6 +2,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateStru
 import ArithmeticHodge.Analysis.MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilFourCellEnergyAbsorptionStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilSeparatedCellCrossStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
 
 set_option autoImplicit false
 
@@ -17,6 +18,7 @@ open MultiplicativeWeilFourCellEnergyAbsorptionStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
 open MultiplicativeWeilMonotoneCellEnergyFrameStructural
 open MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
+open MultiplicativeWeilMonotoneNullSuffixVariationStructural
 open MultiplicativeWeilMonotonePrimeAtomAbsorptionStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
@@ -30,6 +32,8 @@ open MultiplicativeWeilRealLogKernelStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 open MultiplicativeWeilRealMonotonePropagationLogDefectStructural
 open MultiplicativeWeilSeparatedCellCrossStructural
+open MultiplicativeWeilFourCellMixedSignObstructionStructural
+open MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
 
 /-!
 # The missing cross in aggregate prime Schur absorption
@@ -3524,6 +3528,262 @@ theorem norm_separatedArchimedeanKernel_one_le_supportGeometryEnergy
             bombieriCriticalLogEnergy f *
               bombieriCriticalLogEnergy g)) :=
       mul_le_mul_of_nonneg_left hmass hcoefficient
+
+/-! ## Signed Chebyshev cancellation cannot supply a universal gap -/
+
+/-- The first genuinely remote prefix in the adjacent-block telescope: two
+cells at the lower end and the cell four quarter-steps from the base. -/
+def remoteTwoPrefix (parent : BombieriTest) (k : ℤ) : BombieriTest :=
+  monotoneQuarterFiniteBlock parent k 0 2
+
+/-- The endpoint paired with `remoteTwoPrefix` in the first remote row. -/
+def remoteTwoEndpoint (parent : BombieriTest) (k : ℤ) : BombieriTest :=
+  monotoneQuarterCell parent (k + 4)
+
+/-- A proposed one-sided diagonal gap extracted from the exact signed
+continuous-minus-Mangoldt row. -/
+def RemoteTwoPrefixChebyshevEnergyGap
+    (c : ℝ) (parent : BombieriTest) (k : ℤ) : Prop :=
+  c * (bombieriCriticalLogEnergy (remoteTwoPrefix parent k) +
+      bombieriCriticalLogEnergy (remoteTwoEndpoint parent k)) ≤
+    (separatedChebyshevErrorPairing
+      (remoteTwoEndpoint parent k) (remoteTwoPrefix parent k) 1).re
+
+private theorem separatedChebyshevErrorPairing_one_neg_left
+    (f g : BombieriTest) :
+    separatedChebyshevErrorPairing (-f) g 1 =
+      -separatedChebyshevErrorPairing f g 1 := by
+  rw [separatedChebyshevErrorPairing_one_eq_integral_sub_primeRow,
+    separatedChebyshevErrorPairing_one_eq_integral_sub_primeRow]
+  have hcorr (x : ℝ) :
+      starRingEnd ℂ (bombieriDirectedCorrelation (-f) g x) =
+        -starRingEnd ℂ (bombieriDirectedCorrelation f g x) := by
+    have h := bombieriDirectedCorrelation_smul_left (-1 : ℂ) f g x
+    simpa only [neg_smul, one_smul, neg_mul, one_mul, map_neg] using
+      congrArg (starRingEnd ℂ) h
+  simp_rw [hcorr, mul_neg]
+  rw [MeasureTheory.integral_neg, tsum_neg]
+  ring
+
+private theorem criticalLogEnergy_neg_for_remoteGap (g : BombieriTest) :
+    bombieriCriticalLogEnergy (-g) = bombieriCriticalLogEnergy g := by
+  rw [bombieriCriticalLogEnergy_eq_integral_Ioi_norm_sq,
+    bombieriCriticalLogEnergy_eq_integral_Ioi_norm_sq]
+  apply setIntegral_congr_fun measurableSet_Ioi
+  intro x _hx
+  simp
+
+private theorem monotoneQuarterFiniteBlock_add_for_remoteGap
+    (f g : BombieriTest) (lo : ℤ) (start len : ℕ) :
+    monotoneQuarterFiniteBlock (f + g) lo start len =
+      monotoneQuarterFiniteBlock f lo start len +
+        monotoneQuarterFiniteBlock g lo start len := by
+  classical
+  unfold monotoneQuarterFiniteBlock
+  simp_rw [monotoneQuarterCell_add]
+  exact Finset.sum_add_distrib
+
+private theorem monotoneQuarterFiniteBlock_neg_for_remoteGap
+    (f : BombieriTest) (lo : ℤ) (start len : ℕ) :
+    monotoneQuarterFiniteBlock (-f) lo start len =
+      -monotoneQuarterFiniteBlock f lo start len := by
+  classical
+  unfold monotoneQuarterFiniteBlock
+  simp_rw [show monotoneQuarterCell (-f) =
+      fun j ↦ -monotoneQuarterCell f j by
+    funext j
+    simpa only [neg_smul, one_smul] using
+      monotoneQuarterCell_smul (-1 : ℂ) f j]
+  rw [Finset.sum_neg_distrib]
+
+private theorem remoteTwoPrefix_add
+    (f g : BombieriTest) (k : ℤ) :
+    remoteTwoPrefix (f + g) k =
+      remoteTwoPrefix f k + remoteTwoPrefix g k := by
+  exact monotoneQuarterFiniteBlock_add_for_remoteGap f g k 0 2
+
+private theorem remoteTwoPrefix_neg
+    (f : BombieriTest) (k : ℤ) :
+    remoteTwoPrefix (-f) k = -remoteTwoPrefix f k := by
+  exact monotoneQuarterFiniteBlock_neg_for_remoteGap f k 0 2
+
+private theorem remoteTwoPrefix_eq_cells
+    (parent : BombieriTest) (k : ℤ) :
+    remoteTwoPrefix parent k =
+      monotoneQuarterCell parent k + monotoneQuarterCell parent (k + 1) := by
+  classical
+  unfold remoteTwoPrefix monotoneQuarterFiniteBlock
+  norm_num [Finset.sum_range_succ]
+
+private theorem remoteGapCell_eq_zero_of_tsupport_le
+    (parent : BombieriTest) (j : ℤ)
+    (hupper : ∀ x ∈ tsupport parent, x ≤ quarterLogLatticePoint j) :
+    monotoneQuarterCell parent j = 0 := by
+  apply TestFunction.ext
+  intro x
+  by_cases hx : x ∈ tsupport parent
+  · rw [monotoneQuarterCell_apply,
+      monotoneQuarterWeight_eq_zero_of_le j (hupper x hx)]
+    simp
+  · have hpx : parent x = 0 := by
+      by_contra hp
+      exact hx (subset_tsupport parent (Function.mem_support.mpr hp))
+    change (monotoneQuarterWeight j x : ℂ) * parent x = 0
+    rw [hpx, mul_zero]
+
+private theorem remoteGapCell_eq_zero_of_lattice_le_tsupport
+    (parent : BombieriTest) (j : ℤ)
+    (hlower : ∀ x ∈ tsupport parent,
+      quarterLogLatticePoint (j + 2) ≤ x) :
+    monotoneQuarterCell parent j = 0 := by
+  apply TestFunction.ext
+  intro x
+  by_cases hx : x ∈ tsupport parent
+  · rw [monotoneQuarterCell_apply,
+      monotoneQuarterWeight_eq_zero_of_le_left j (hlower x hx)]
+    simp
+  · have hpx : parent x = 0 := by
+      by_contra hp
+      exact hx (subset_tsupport parent (Function.mem_support.mpr hp))
+    change (monotoneQuarterWeight j x : ℂ) * parent x = 0
+    rw [hpx, mul_zero]
+
+private theorem remoteGapWeight_pos_on_first_interval
+    (j : ℤ) {x : ℝ}
+    (hx : x ∈ Set.Ioo (quarterLogLatticePoint j)
+      (quarterLogLatticePoint (j + 1))) :
+    0 < monotoneQuarterWeight j x := by
+  unfold monotoneQuarterWeight
+  rw [monotoneQuarterStep_eq_zero_of_le (j + 1) hx.2.le]
+  simpa only [sub_zero] using
+    monotoneQuarterStep_pos_of_lattice_lt j hx.1
+
+private theorem remoteGapCell_ne_zero_of_first_interval
+    (parent : BombieriTest) (j : ℤ) (hne : parent ≠ 0)
+    (hsupport : tsupport parent ⊆ Set.Ioo
+      (quarterLogLatticePoint j) (quarterLogLatticePoint (j + 1))) :
+    monotoneQuarterCell parent j ≠ 0 := by
+  intro hzero
+  obtain ⟨x, hx⟩ : ∃ x : ℝ, parent x ≠ 0 := by
+    by_contra h
+    push_neg at h
+    apply hne
+    ext y
+    simpa using h y
+  have hxt : x ∈ tsupport parent :=
+    subset_tsupport parent (Function.mem_support.mpr hx)
+  have hweight := remoteGapWeight_pos_on_first_interval j (hsupport hxt)
+  have happly := congrArg (fun f : BombieriTest ↦ f x) hzero
+  simp only [monotoneQuarterCell_apply, TestFunction.coe_zero,
+    Pi.zero_apply] at happly
+  exact hx (mul_eq_zero.mp happly |>.resolve_left
+    (Complex.ofReal_ne_zero.mpr hweight.ne'))
+
+private theorem conjugate_fixed_add_for_remoteGap
+    {f g : BombieriTest}
+    (hf : bombieriConjugateTest f = f)
+    (hg : bombieriConjugateTest g = g) :
+    bombieriConjugateTest (f + g) = f + g := by
+  rw [bombieriConjugateTest_add, hf, hg]
+
+private theorem conjugate_fixed_sub_for_remoteGap
+    {f g : BombieriTest}
+    (hf : bombieriConjugateTest f = f)
+    (hg : bombieriConjugateTest g = g) :
+    bombieriConjugateTest (f - g) = f - g := by
+  apply TestFunction.ext
+  intro x
+  have hfx := congrArg (fun q : BombieriTest ↦ q x) hf
+  have hgx := congrArg (fun q : BombieriTest ↦ q x) hg
+  simp only [bombieriConjugateTest_apply, TestFunction.coe_sub,
+    Pi.sub_apply, map_sub] at hfx hgx ⊢
+  rw [hfx, hgx]
+
+/-- No positive portion of the diagonal energy can be supplied uniformly by
+the exact signed continuous-minus-Mangoldt row.  The witness consists of two
+nonzero smooth, conjugation-fixed endpoint bumps placed in one common parent.
+Changing only the remote bump's sign preserves both diagonal energies and
+negates the entire Chebyshev-error pairing, before either row is estimated
+separately. -/
+theorem not_universal_real_remoteTwoPrefixChebyshevEnergyGap
+    (c : ℝ) (hc : 0 < c) :
+    ¬ (∀ parent : BombieriTest,
+      bombieriConjugateTest parent = parent → ∀ k : ℤ,
+        RemoteTwoPrefixChebyshevEnergyGap c parent k) := by
+  intro hall
+  let k : ℤ := 0
+  obtain ⟨lower, upper, hlowerNe, hupperNe,
+      hlowerFixed, hupperFixed, hlowerSupport, hupperSupport, _hsep⟩ :=
+    exists_nonzero_endpoint_localized_halfSeparated_pair k
+  let f : BombieriTest := monotoneQuarterCell lower k
+  let g : BombieriTest := monotoneQuarterCell upper (k + 4)
+  have hfNe : f ≠ 0 :=
+    remoteGapCell_ne_zero_of_first_interval lower k hlowerNe hlowerSupport
+  have hgNe : g ≠ 0 :=
+    remoteGapCell_ne_zero_of_first_interval upper (k + 4) hupperNe
+      hupperSupport
+  have hlowerNext : monotoneQuarterCell lower (k + 1) = 0 := by
+    apply remoteGapCell_eq_zero_of_tsupport_le lower (k + 1)
+    intro x hx
+    exact (hlowerSupport hx).2.le
+  have hlowerEndpoint : remoteTwoEndpoint lower k = 0 := by
+    unfold remoteTwoEndpoint
+    apply remoteGapCell_eq_zero_of_tsupport_le lower (k + 4)
+    intro x hx
+    exact (hlowerSupport hx).2.le.trans
+      (quarterLogLatticePoint_mono (by omega))
+  have hupperCellZero (j : ℤ) (hj : j + 2 ≤ k + 4) :
+      monotoneQuarterCell upper j = 0 := by
+    apply remoteGapCell_eq_zero_of_lattice_le_tsupport upper j
+    intro x hx
+    exact (quarterLogLatticePoint_mono hj).trans
+      (hupperSupport hx).1.le
+  have hlowerPrefix : remoteTwoPrefix lower k = f := by
+    rw [remoteTwoPrefix_eq_cells, hlowerNext, add_zero]
+  have hupperPrefix : remoteTwoPrefix upper k = 0 := by
+    rw [remoteTwoPrefix_eq_cells, hupperCellZero k (by omega),
+      hupperCellZero (k + 1) (by omega), add_zero]
+  have hupperEndpoint : remoteTwoEndpoint upper k = g := by
+    rfl
+  have hplusPrefix : remoteTwoPrefix (lower + upper) k = f := by
+    rw [remoteTwoPrefix_add, hlowerPrefix, hupperPrefix, add_zero]
+  have hplusEndpoint : remoteTwoEndpoint (lower + upper) k = g := by
+    unfold remoteTwoEndpoint
+    rw [monotoneQuarterCell_add]
+    change monotoneQuarterCell lower (k + 4) + g = g
+    rw [show monotoneQuarterCell lower (k + 4) = 0 by
+      simpa only [remoteTwoEndpoint] using hlowerEndpoint, zero_add]
+  have hminusPrefix : remoteTwoPrefix (lower - upper) k = f := by
+    rw [sub_eq_add_neg, remoteTwoPrefix_add, remoteTwoPrefix_neg,
+      hlowerPrefix, hupperPrefix, neg_zero, add_zero]
+  have hminusEndpoint : remoteTwoEndpoint (lower - upper) k = -g := by
+    unfold remoteTwoEndpoint
+    have hneg : monotoneQuarterCell (-upper) (k + 4) =
+        -monotoneQuarterCell upper (k + 4) := by
+      simpa only [neg_smul, one_smul] using
+        monotoneQuarterCell_smul (-1 : ℂ) upper (k + 4)
+    rw [sub_eq_add_neg, monotoneQuarterCell_add, hneg]
+    change monotoneQuarterCell lower (k + 4) + -g = -g
+    rw [show monotoneQuarterCell lower (k + 4) = 0 by
+      simpa only [remoteTwoEndpoint] using hlowerEndpoint, zero_add]
+  have hEf : 0 < bombieriCriticalLogEnergy f :=
+    bombieriCriticalLogEnergy_pos_of_ne_zero f hfNe
+  have hEg : 0 < bombieriCriticalLogEnergy g :=
+    bombieriCriticalLogEnergy_pos_of_ne_zero g hgNe
+  have hcost : 0 < c *
+      (bombieriCriticalLogEnergy f + bombieriCriticalLogEnergy g) :=
+    mul_pos hc (add_pos hEf hEg)
+  have hplus := hall (lower + upper)
+    (conjugate_fixed_add_for_remoteGap hlowerFixed hupperFixed) k
+  have hminus := hall (lower - upper)
+    (conjugate_fixed_sub_for_remoteGap hlowerFixed hupperFixed) k
+  unfold RemoteTwoPrefixChebyshevEnergyGap at hplus hminus
+  rw [hplusPrefix, hplusEndpoint] at hplus
+  rw [hminusPrefix, hminusEndpoint,
+    criticalLogEnergy_neg_for_remoteGap,
+    separatedChebyshevErrorPairing_one_neg_left] at hminus
+  simp only [Complex.neg_re] at hminus
+  linarith
 
 end
 
