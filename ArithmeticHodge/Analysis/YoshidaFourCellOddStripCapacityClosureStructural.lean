@@ -7896,6 +7896,24 @@ theorem factorTwoIntrinsicEnergy_oneThreeFiveLowProfile
     integral_factorTwoCenteredP5_sq]
   ring
 
+/-- Exact positive-half mass of the retained odd three-mode pivot. -/
+theorem integral_zero_one_oneThreeFiveLowProfile_sq
+    (c d e : ℝ) :
+    (∫ x : ℝ in 0..1,
+      fourCellOddOneThreeFiveLowProfile c d e x ^ 2) =
+      (1 / 3 : ℝ) * c ^ 2 + (1 / 7 : ℝ) * d ^ 2 +
+        (1 / 11 : ℝ) * e ^ 2 := by
+  let p : ℝ → ℝ := fourCellOddOneThreeFiveLowProfile c d e
+  have hfull := factorTwoIntrinsicEnergy_oneThreeFiveLowProfile c d e
+  have hhalf := integral_sq_eq_two_mul_positiveHalf
+    p (by dsimp only [p]; exact
+      (contDiff_fourCellOddOneThreeFiveLowProfile c d e).continuous)
+    (Or.inr (by simpa only [p] using
+      odd_fourCellOddOneThreeFiveLowProfile c d e))
+  unfold factorTwoIntrinsicEnergy at hfull
+  dsimp only [p] at hhalf
+  linarith
+
 /-- Exact centered raw-log energy of the retained `P₁/P₃/P₅` pivot. -/
 theorem centeredRawLogEnergy_oneThreeFiveLowProfile
     (c d e : ℝ) :
