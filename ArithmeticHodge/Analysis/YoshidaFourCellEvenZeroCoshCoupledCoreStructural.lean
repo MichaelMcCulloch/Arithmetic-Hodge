@@ -18,6 +18,7 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshCoupledCoreStructu
 noncomputable section
 
 open UnitIntervalLogEnergyAffine
+open MultiplicativeWeilFourCellRealRescaleStructural
 open ShiftedLegendreCenteredParity
 open ShiftedLegendreFiniteEnergyGap
 open ShiftedLegendreL2Basis
@@ -41,6 +42,7 @@ open YoshidaFactorTwoPhaseIntrinsicNineP6EvenCorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicNineP6EvenProfileCorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicRetainedSingularGapStructural
+open YoshidaFactorTwoPhaseIntrinsicSixP4CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
 open YoshidaFactorTwoPhaseIntrinsicSixP4MinusEndpointReduction
 open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
@@ -395,6 +397,401 @@ theorem exists_P6_scale_coarse_reserves_do_not_absorb_capacityCross :
   refine ⟨-(65 / 8 : ℝ) * B, ?_⟩
   dsimp only [B] at hdet ⊢
   nlinarith only [hdet]
+
+/-! ## The promoted `P₀/P₂/P₄/P₆` finite block -/
+
+/-- Exact dyadic endpoint Gram on the first four even Legendre modes. -/
+theorem fourCellEndpointPairing_intrinsicEvenP0246Profile
+    (c0 c2 c4 c6 : ℝ) :
+    fourCellEndpointPairing
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) =
+      (2 / 5 : ℝ) * c0 ^ 2 + (48 / 125 : ℝ) * c0 * c2 -
+        (144 / 3125 : ℝ) * c0 * c4 -
+        (5712 / 78125 : ℝ) * c0 * c6 +
+        (962 / 15625 : ℝ) * c2 ^ 2 -
+        (8144 / 78125 : ℝ) * c2 * c4 -
+        (93072 / 1953125 : ℝ) * c2 * c6 -
+        (164582 / 3515625 : ℝ) * c4 ^ 2 +
+        (763952 / 48828125 : ℝ) * c4 * c6 +
+        (456595778 / 15869140625 : ℝ) * c6 ^ 2 := by
+  rw [fourCellEndpointPairing_eq_centeredEndpointCorrelation,
+    centeredEndpointCorrelation_intrinsicEvenP0246]
+  norm_num [evenStructuralCorrelation00, evenStructuralCorrelation02,
+    evenStructuralCorrelation22, factorTwoIntrinsicP4Correlation04,
+    factorTwoIntrinsicP4Correlation24, factorTwoIntrinsicP4Correlation44,
+    factorTwoIntrinsicP6Correlation06, factorTwoIntrinsicP6Correlation26,
+    factorTwoIntrinsicP6Correlation46, factorTwoIntrinsicP6Correlation66]
+  ring
+
+/-- Exact coupled-core Gram after promoting the adverse `P₆` row into the
+finite block.  No low/tail estimate enters this identity. -/
+theorem fourCellEvenZeroCoshCoupledCore_intrinsicEvenP0246Profile_eq_gram
+    (c0 c2 c4 c6 : ℝ) :
+    fourCellEvenZeroCoshCoupledCore
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) =
+      factorTwoP6EvenRawLogGram c0 c2 c4 c6 / 4 +
+        factorTwoP6EvenPotentialGram c0 c2 c4 c6 -
+        Real.sqrt 2 * Real.log 2 *
+          ((2 / 5 : ℝ) * c0 ^ 2 + (48 / 125 : ℝ) * c0 * c2 -
+            (144 / 3125 : ℝ) * c0 * c4 -
+            (5712 / 78125 : ℝ) * c0 * c6 +
+            (962 / 15625 : ℝ) * c2 ^ 2 -
+            (8144 / 78125 : ℝ) * c2 * c4 -
+            (93072 / 1953125 : ℝ) * c2 * c6 -
+            (164582 / 3515625 : ℝ) * c4 ^ 2 +
+            (763952 / 48828125 : ℝ) * c4 * c6 +
+            (456595778 / 15869140625 : ℝ) * c6 ^ 2) := by
+  unfold fourCellEvenZeroCoshCoupledCore
+  rw [centeredRawLogEnergy_intrinsicEvenP0246,
+    integral_endpointPotential_mul_intrinsicEvenP0246_sq,
+    fourCellEndpointPairing_intrinsicEvenP0246Profile]
+
+/-- A rational box Schur certificate for the promoted four-mode block.
+The first six arguments are the `P₂/P₄/P₆` Gram, the next three are
+the constant border, and `D` is the charged constant diagonal. -/
+private theorem p0246_box_schur_nonnegative
+    (a b c d e f x y z D c0 c2 c4 c6 : ℝ)
+    (ha : (137 / 1000 : ℝ) ≤ a ∧ a ≤ 1371 / 10000)
+    (hb : (1939 / 10000 : ℝ) ≤ b ∧ b ≤ 194 / 1000)
+    (hc : (789 / 10000 : ℝ) ≤ c ∧ c ≤ 79 / 1000)
+    (hd : (2881 / 10000 : ℝ) ≤ d ∧ d ≤ 2882 / 10000)
+    (he : (832 / 10000 : ℝ) ≤ e ∧ e ≤ 833 / 10000)
+    (hf : (1964 / 10000 : ℝ) ≤ f ∧ f ≤ 1965 / 10000)
+    (hx : (1451 / 10000 : ℝ) ≤ x ∧ x ≤ 1452 / 10000)
+    (hy : (1225 / 10000 : ℝ) ≤ y ∧ y ≤ 1226 / 10000)
+    (hz : (834 / 10000 : ℝ) ≤ z ∧ z ≤ 835 / 10000)
+    (hD : (1921 / 1000 : ℝ) ≤ D ∧ D ≤ 961 / 500) :
+    0 ≤ D * c0 ^ 2 + 2 * x * c0 * c2 + 2 * y * c0 * c4 +
+      2 * z * c0 * c6 + symmetricQuadratic a b c d e f c2 c4 c6 := by
+  rcases ha with ⟨haL, haU⟩
+  rcases hb with ⟨hbL, hbU⟩
+  rcases hc with ⟨hcL, hcU⟩
+  rcases hd with ⟨hdL, hdU⟩
+  rcases he with ⟨heL, heU⟩
+  rcases hf with ⟨hfL, hfU⟩
+  rcases hx with ⟨hxL, hxU⟩
+  rcases hy with ⟨hyL, hyU⟩
+  rcases hz with ⟨hzL, hzU⟩
+  rcases hD with ⟨hDL, hDU⟩
+  have ha0 : 0 ≤ a := by linarith
+  have hb0 : 0 ≤ b := by linarith
+  have hc0' : 0 ≤ c := by linarith
+  have hd0 : 0 ≤ d := by linarith
+  have he0 : 0 ≤ e := by linarith
+  have hf0 : 0 ≤ f := by linarith
+  have hx0 : 0 ≤ x := by linarith
+  have hy0 : 0 ≤ y := by linarith
+  have hz0 : 0 ≤ z := by linarith
+  have hDpos : 0 < D := by linarith
+  have lower_mul (u v lu lv : ℝ)
+      (hu : lu ≤ u) (hv : lv ≤ v) (hlu : 0 ≤ lu) (hlv : 0 ≤ lv) :
+      lu * lv ≤ u * v := by
+    exact mul_le_mul hu hv hlv (le_trans hlu hu)
+  have upper_mul (u v U V : ℝ)
+      (hu : u ≤ U) (hv : v ≤ V) (hv0 : 0 ≤ v) (hU0 : 0 ≤ U) :
+      u * v ≤ U * V := by
+    exact mul_le_mul hu hv hv0 hU0
+  have habL : (137 / 1000 : ℝ) * (2881 / 10000) ≤ a * d :=
+    lower_mul a d (137 / 1000) (2881 / 10000) haL hdL (by norm_num) (by norm_num)
+  have hbSqU : b ^ 2 ≤ (194 / 1000 : ℝ) ^ 2 := by
+    simpa only [pow_two] using
+      upper_mul b b (194 / 1000) (194 / 1000) hbU hbU hb0 (by norm_num)
+  have hminor : 0 < leadingMinorTwo a b d := by
+    unfold leadingMinorTwo
+    nlinarith only [habL, hbSqU]
+  let T : ℝ := symmetricDeterminant a b c d e f
+  have hadL := habL
+  have hadfL :
+      (137 / 1000 : ℝ) * (2881 / 10000) * (1964 / 10000) ≤
+        a * d * f :=
+    lower_mul (a * d) f
+      ((137 / 1000 : ℝ) * (2881 / 10000)) (1964 / 10000)
+      hadL hfL (by norm_num) (by norm_num)
+  have hbcL : (1939 / 10000 : ℝ) * (789 / 10000) ≤ b * c :=
+    lower_mul b c (1939 / 10000) (789 / 10000)
+      hbL hcL (by norm_num) (by norm_num)
+  have hbceL :
+      (1939 / 10000 : ℝ) * (789 / 10000) * (832 / 10000) ≤
+        b * c * e :=
+    lower_mul (b * c) e
+      ((1939 / 10000 : ℝ) * (789 / 10000)) (832 / 10000)
+      hbcL heL (by norm_num) (by norm_num)
+  have heSqU : e ^ 2 ≤ (833 / 10000 : ℝ) ^ 2 := by
+    simpa only [pow_two] using
+      upper_mul e e (833 / 10000) (833 / 10000) heU heU he0 (by norm_num)
+  have haeSqU : a * e ^ 2 ≤
+      (1371 / 10000 : ℝ) * (833 / 10000) ^ 2 :=
+    upper_mul a (e ^ 2) (1371 / 10000) ((833 / 10000) ^ 2)
+      haU heSqU (sq_nonneg e) (by norm_num)
+  have hcSqU : c ^ 2 ≤ (79 / 1000 : ℝ) ^ 2 := by
+    simpa only [pow_two] using
+      upper_mul c c (79 / 1000) (79 / 1000) hcU hcU hc0' (by norm_num)
+  have hdcSqU : d * c ^ 2 ≤
+      (2882 / 10000 : ℝ) * (79 / 1000) ^ 2 :=
+    upper_mul d (c ^ 2) (2882 / 10000) ((79 / 1000) ^ 2)
+      hdU hcSqU (sq_nonneg c) (by norm_num)
+  have hfbsqU : f * b ^ 2 ≤
+      (1965 / 10000 : ℝ) * (194 / 1000) ^ 2 :=
+    upper_mul f (b ^ 2) (1965 / 10000) ((194 / 1000) ^ 2)
+      hfU hbSqU (sq_nonneg b) (by norm_num)
+  have hTlower : (7 / 50000 : ℝ) < T := by
+    dsimp only [T]
+    unfold symmetricDeterminant
+    nlinarith only [hadfL, hbceL, haeSqU, hdcSqU, hfbsqU]
+  have hdet : 0 < T := by linarith
+  let A : ℝ := adjugateQuadratic a b c d e f x y z
+  have hdfU : d * f ≤ (2882 / 10000 : ℝ) * (1965 / 10000) :=
+    upper_mul d f (2882 / 10000) (1965 / 10000)
+      hdU hfU hf0 (by norm_num)
+  have heSqL : (832 / 10000 : ℝ) ^ 2 ≤ e ^ 2 := by
+    simpa only [pow_two] using
+      lower_mul e e (832 / 10000) (832 / 10000)
+        heL heL (by norm_num) (by norm_num)
+  have hcoef1 : d * f - e ^ 2 ≤ (249 / 5000 : ℝ) := by
+    nlinarith only [hdfU, heSqL]
+  have hxSqU : x ^ 2 ≤ (211 / 10000 : ℝ) := by
+    have h := upper_mul x x (1452 / 10000) (1452 / 10000)
+      hxU hxU hx0 (by norm_num)
+    norm_num at h ⊢
+    nlinarith only [h]
+  have ht1 : (d * f - e ^ 2) * x ^ 2 ≤ (1051 / 1000000 : ℝ) := by
+    have h := upper_mul (d * f - e ^ 2) (x ^ 2)
+      (249 / 5000) (211 / 10000) hcoef1 hxSqU (sq_nonneg x) (by norm_num)
+    nlinarith only [h]
+  have hceU : c * e ≤ (79 / 1000 : ℝ) * (833 / 10000) :=
+    upper_mul c e (79 / 1000) (833 / 10000) hcU heU he0 (by norm_num)
+  have hbfL : (1939 / 10000 : ℝ) * (1964 / 10000) ≤ b * f :=
+    lower_mul b f (1939 / 10000) (1964 / 10000)
+      hbL hfL (by norm_num) (by norm_num)
+  have hcoef2 : c * e - b * f ≤ (-157 / 5000 : ℝ) := by
+    nlinarith only [hceU, hbfL]
+  have hxyL : (1777 / 100000 : ℝ) ≤ x * y := by
+    have h := lower_mul x y (1451 / 10000) (1225 / 10000)
+      hxL hyL (by norm_num) (by norm_num)
+    nlinarith only [h]
+  have hxy0 : 0 ≤ x * y := mul_nonneg hx0 hy0
+  have ht2 : 2 * (c * e - b * f) * x * y ≤ (-111 / 100000 : ℝ) := by
+    have hfirst : (c * e - b * f) * (x * y) ≤
+        (-157 / 5000 : ℝ) * (x * y) :=
+      mul_le_mul_of_nonneg_right hcoef2 hxy0
+    have hsecond : (-157 / 5000 : ℝ) * (x * y) ≤
+        (-157 / 5000 : ℝ) * (1777 / 100000) :=
+      mul_le_mul_of_nonpos_left hxyL (by norm_num)
+    nlinarith only [hfirst, hsecond]
+  have hbeU : b * e ≤ (194 / 1000 : ℝ) * (833 / 10000) :=
+    upper_mul b e (194 / 1000) (833 / 10000) hbU heU he0 (by norm_num)
+  have hcdL : (789 / 10000 : ℝ) * (2881 / 10000) ≤ c * d :=
+    lower_mul c d (789 / 10000) (2881 / 10000)
+      hcL hdL (by norm_num) (by norm_num)
+  have hcoef3 : b * e - c * d ≤ (-13 / 2000 : ℝ) := by
+    nlinarith only [hbeU, hcdL]
+  have hxzL : (121 / 10000 : ℝ) ≤ x * z := by
+    have h := lower_mul x z (1451 / 10000) (834 / 10000)
+      hxL hzL (by norm_num) (by norm_num)
+    nlinarith only [h]
+  have hxz0 : 0 ≤ x * z := mul_nonneg hx0 hz0
+  have ht3 : 2 * (b * e - c * d) * x * z ≤ (-157 / 1000000 : ℝ) := by
+    have hfirst : (b * e - c * d) * (x * z) ≤
+        (-13 / 2000 : ℝ) * (x * z) :=
+      mul_le_mul_of_nonneg_right hcoef3 hxz0
+    have hsecond : (-13 / 2000 : ℝ) * (x * z) ≤
+        (-13 / 2000 : ℝ) * (121 / 10000) :=
+      mul_le_mul_of_nonpos_left hxzL (by norm_num)
+    nlinarith only [hfirst, hsecond]
+  have hafU : a * f ≤ (1371 / 10000 : ℝ) * (1965 / 10000) :=
+    upper_mul a f (1371 / 10000) (1965 / 10000) haU hfU hf0 (by norm_num)
+  have hcSqL : (789 / 10000 : ℝ) ^ 2 ≤ c ^ 2 := by
+    simpa only [pow_two] using
+      lower_mul c c (789 / 10000) (789 / 10000)
+        hcL hcL (by norm_num) (by norm_num)
+  have hcoef4 : a * f - c ^ 2 ≤ (104 / 5000 : ℝ) := by
+    nlinarith only [hafU, hcSqL]
+  have hySqU : y ^ 2 ≤ (151 / 10000 : ℝ) := by
+    have h := upper_mul y y (1226 / 10000) (1226 / 10000)
+      hyU hyU hy0 (by norm_num)
+    norm_num at h ⊢
+    nlinarith only [h]
+  have ht4 : (a * f - c ^ 2) * y ^ 2 ≤ (315 / 1000000 : ℝ) := by
+    have h := upper_mul (a * f - c ^ 2) (y ^ 2)
+      (104 / 5000) (151 / 10000) hcoef4 hySqU (sq_nonneg y) (by norm_num)
+    nlinarith only [h]
+  have hbcU : b * c ≤ (194 / 1000 : ℝ) * (79 / 1000) :=
+    upper_mul b c (194 / 1000) (79 / 1000) hbU hcU hc0' (by norm_num)
+  have haeL : (137 / 1000 : ℝ) * (832 / 10000) ≤ a * e :=
+    lower_mul a e (137 / 1000) (832 / 10000)
+      haL heL (by norm_num) (by norm_num)
+  have hcoef5 : b * c - a * e ≤ (1 / 250 : ℝ) := by
+    nlinarith only [hbcU, haeL]
+  have hyzU : y * z ≤ (1024 / 100000 : ℝ) := by
+    have h := upper_mul y z (1226 / 10000) (835 / 10000)
+      hyU hzU hz0 (by norm_num)
+    nlinarith only [h]
+  have ht5 : 2 * (b * c - a * e) * y * z ≤ (82 / 1000000 : ℝ) := by
+    have h := upper_mul (b * c - a * e) (y * z)
+      (1 / 250) (1024 / 100000) hcoef5 hyzU
+      (mul_nonneg hy0 hz0) (by norm_num)
+    nlinarith only [h]
+  have hadU : a * d ≤ (1371 / 10000 : ℝ) * (2882 / 10000) :=
+    upper_mul a d (1371 / 10000) (2882 / 10000) haU hdU hd0 (by norm_num)
+  have hbSqL : (1939 / 10000 : ℝ) ^ 2 ≤ b ^ 2 := by
+    simpa only [pow_two] using
+      lower_mul b b (1939 / 10000) (1939 / 10000)
+        hbL hbL (by norm_num) (by norm_num)
+  have hcoef6 : a * d - b ^ 2 ≤ (1 / 500 : ℝ) := by
+    nlinarith only [hadU, hbSqL]
+  have hzSqU : z ^ 2 ≤ (7 / 1000 : ℝ) := by
+    have h := upper_mul z z (835 / 10000) (835 / 10000)
+      hzU hzU hz0 (by norm_num)
+    norm_num at h ⊢
+    nlinarith only [h]
+  have ht6 : (a * d - b ^ 2) * z ^ 2 ≤ (14 / 1000000 : ℝ) := by
+    have h := upper_mul (a * d - b ^ 2) (z ^ 2)
+      (1 / 500) (7 / 1000) hcoef6 hzSqU (sq_nonneg z) (by norm_num)
+    nlinarith only [h]
+  have hAupper : A ≤ (195 / 1000000 : ℝ) := by
+    dsimp only [A]
+    unfold adjugateQuadratic
+    nlinarith only [ht1, ht2, ht3, ht4, ht5, ht6]
+  have hDT : (1 / 5000 : ℝ) < D * T := by
+    have hprod := lower_mul D T (1921 / 1000) (7 / 50000)
+      hDL hTlower.le (by norm_num) (by norm_num)
+    nlinarith only [hprod]
+  have hAdj : (1 / D : ℝ) * A ≤ T := by
+    rw [show (1 / D : ℝ) * A = A / D by ring, div_le_iff₀ hDpos]
+    nlinarith only [hAupper, hDT]
+  have hschur := (rankOne_sub_nonneg_iff a b c d e f
+    (by linarith : 0 < a) hminor hdet (1 / D) x y z).2 hAdj c2 c4 c6
+  let Q : ℝ := symmetricQuadratic a b c d e f c2 c4 c6
+  let L : ℝ := x * c2 + y * c4 + z * c6
+  have hschur' : 0 ≤ Q - (1 / D) * L ^ 2 := by
+    simpa only [Q, L] using hschur
+  have hscaled := mul_nonneg hDpos.le hschur'
+  have hscaled' : 0 ≤ D * Q - L ^ 2 := by
+    rw [mul_sub] at hscaled
+    have hDne : D ≠ 0 := hDpos.ne'
+    rw [show D * ((1 / D) * L ^ 2) = L ^ 2 by field_simp] at hscaled
+    exact hscaled
+  have hsquare := sq_nonneg (D * c0 + L)
+  have hscaledForm : 0 ≤ D *
+      (D * c0 ^ 2 + 2 * x * c0 * c2 + 2 * y * c0 * c4 +
+        2 * z * c0 * c6 + Q) := by
+    nlinarith only [hscaled', hsquare]
+  have hscaledForm' : 0 ≤
+      (D * c0 ^ 2 + 2 * x * c0 * c2 + 2 * y * c0 * c4 +
+        2 * z * c0 * c6 + Q) * D := by
+    simpa only [mul_comm] using hscaledForm
+  have hfinal := nonneg_of_mul_nonneg_left hscaledForm' hDpos
+  simpa only [Q] using hfinal
+
+private theorem sqrtTwo_mul_logTwo_P0246_bounds :
+    (9802 / 10000 : ℝ) < Real.sqrt 2 * Real.log 2 ∧
+      Real.sqrt 2 * Real.log 2 < (9803 / 10000 : ℝ) := by
+  have hsSq := Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)
+  have hs0 := Real.sqrt_nonneg 2
+  have hsLower :
+      (1414213562373095 / 1000000000000000 : ℝ) < Real.sqrt 2 := by
+    norm_num
+    nlinarith
+  have hsUpper : Real.sqrt 2 <
+      (1414213562373096 / 1000000000000000 : ℝ) := by
+    norm_num
+    nlinarith
+  have hl := strict_log_two_fine_bounds
+  have hl0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hprodLower :
+      (1414213562373095 / 1000000000000000 : ℝ) *
+          (69314718055 / 100000000000) <
+        Real.sqrt 2 * Real.log 2 := by
+    calc
+      _ < Real.sqrt 2 * (69314718055 / 100000000000 : ℝ) :=
+        mul_lt_mul_of_pos_right hsLower (by norm_num)
+      _ < Real.sqrt 2 * Real.log 2 :=
+        mul_lt_mul_of_pos_left hl.1 (Real.sqrt_pos.2 (by norm_num))
+  have hprodUpper : Real.sqrt 2 * Real.log 2 <
+      (1414213562373096 / 1000000000000000 : ℝ) *
+        (69314718057 / 100000000000) := by
+    calc
+      Real.sqrt 2 * Real.log 2 <
+          (1414213562373096 / 1000000000000000 : ℝ) * Real.log 2 :=
+        mul_lt_mul_of_pos_right hsUpper hl0
+      _ < (1414213562373096 / 1000000000000000 : ℝ) *
+          (69314718057 / 100000000000) :=
+        mul_lt_mul_of_pos_left hl.2 (by norm_num)
+  constructor <;> norm_num at hprodLower hprodUpper ⊢ <;> linarith
+
+set_option maxHeartbeats 800000 in
+/-- The complete promoted `P₀/P₂/P₄/P₆` core retains three percent
+of every nonconstant mass coordinate after paying the `33/20` target.  The
+only defect is a charge of five on the constant coordinate.  This theorem
+absorbs the formerly obstructing `P₂/P₆` row inside one exact finite Schur
+block. -/
+theorem three_div_hundred_nonconstantReserve_P0246_le_core_add_constantDefect
+    (c0 c2 c4 c6 : ℝ) :
+    (33 / 20 : ℝ) *
+        (∫ x : ℝ in -1..1,
+          factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x ^ 2) +
+        (3 / 100 : ℝ) *
+          ((2 / 5 : ℝ) * c2 ^ 2 + (2 / 9 : ℝ) * c4 ^ 2 +
+            (2 / 13 : ℝ) * c6 ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) +
+          5 * c0 ^ 2 := by
+  let beta : ℝ := Real.sqrt 2 * Real.log 2
+  let a : ℝ :=
+    3 / 5 + (41 / 75 - (2 / 5 : ℝ) * Real.log 2) -
+      (962 / 15625 : ℝ) * beta - 33 / 50 -
+        (3 / 100 : ℝ) * (2 / 5)
+  let b : ℝ := 1 / 7 + (4072 / 78125 : ℝ) * beta
+  let c : ℝ := 1 / 18 + (46536 / 1953125 : ℝ) * beta
+  let d : ℝ :=
+    25 / 54 + (1739 / 5670 - (2 / 9 : ℝ) * Real.log 2) +
+      (164582 / 3515625 : ℝ) * beta - 11 / 30 -
+        (3 / 100 : ℝ) * (2 / 9)
+  let e : ℝ := 1 / 11 - (381976 / 48828125 : ℝ) * beta
+  let f : ℝ :=
+    49 / 130 + (249251 / 1171170 - (2 / 13 : ℝ) * Real.log 2) -
+      (456595778 / 15869140625 : ℝ) * beta - 33 / 130 -
+        (3 / 100 : ℝ) * (2 / 13)
+  let x : ℝ := 1 / 3 - (24 / 125 : ℝ) * beta
+  let y : ℝ := 1 / 10 + (72 / 3125 : ℝ) * beta
+  let z : ℝ := 1 / 21 + (2856 / 78125 : ℝ) * beta
+  let D : ℝ :=
+    2 - 2 * Real.log 2 - (2 / 5 : ℝ) * beta - 33 / 10 + 5
+  have hl := strict_log_two_fine_bounds
+  have hbeta := sqrtTwo_mul_logTwo_P0246_bounds
+  have ha : (137 / 1000 : ℝ) ≤ a ∧ a ≤ 1371 / 10000 := by
+    constructor <;> dsimp only [a, beta] <;> nlinarith
+  have hb : (1939 / 10000 : ℝ) ≤ b ∧ b ≤ 194 / 1000 := by
+    constructor <;> dsimp only [b, beta] <;> nlinarith
+  have hc : (789 / 10000 : ℝ) ≤ c ∧ c ≤ 79 / 1000 := by
+    constructor <;> dsimp only [c, beta] <;> nlinarith
+  have hd : (2881 / 10000 : ℝ) ≤ d ∧ d ≤ 2882 / 10000 := by
+    constructor <;> dsimp only [d, beta] <;> nlinarith
+  have he : (832 / 10000 : ℝ) ≤ e ∧ e ≤ 833 / 10000 := by
+    constructor <;> dsimp only [e, beta] <;> nlinarith
+  have hf : (1964 / 10000 : ℝ) ≤ f ∧ f ≤ 1965 / 10000 := by
+    constructor <;> dsimp only [f, beta] <;> nlinarith
+  have hx : (1451 / 10000 : ℝ) ≤ x ∧ x ≤ 1452 / 10000 := by
+    constructor <;> dsimp only [x, beta] <;> nlinarith
+  have hy : (1225 / 10000 : ℝ) ≤ y ∧ y ≤ 1226 / 10000 := by
+    constructor <;> dsimp only [y, beta] <;> nlinarith
+  have hz : (834 / 10000 : ℝ) ≤ z ∧ z ≤ 835 / 10000 := by
+    constructor <;> dsimp only [z, beta] <;> nlinarith
+  have hD : (1921 / 1000 : ℝ) ≤ D ∧ D ≤ 961 / 500 := by
+    constructor <;> dsimp only [D, beta] <;> nlinarith
+  have hbox := p0246_box_schur_nonnegative
+    a b c d e f x y z D c0 c2 c4 c6 ha hb hc hd he hf hx hy hz hD
+  have hcore :=
+    fourCellEvenZeroCoshCoupledCore_intrinsicEvenP0246Profile_eq_gram
+      c0 c2 c4 c6
+  have hmass := factorTwoIntrinsicEnergy_intrinsicEvenP0246 c0 c2 c4 c6
+  change (∫ x : ℝ in -1..1,
+      factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x ^ 2) = _ at hmass
+  rw [hmass, hcore]
+  unfold factorTwoP6EvenRawLogGram factorTwoP6EvenPotentialGram
+  dsimp only [a, b, c, d, e, f, x, y, z, D, beta] at hbox
+  unfold symmetricQuadratic at hbox
+  nlinarith only [hbox]
 
 private theorem integral_polynomial_ten
     (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ l r : ℝ) :
