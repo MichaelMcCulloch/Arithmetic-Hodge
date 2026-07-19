@@ -3984,6 +3984,52 @@ theorem minimalNegativeTerminalRemoteScalarConstraints_endpointAbsorption_revers
       sq_nonneg ((A + B + 2 * X) - C),
       sq_nonneg ((A + B + 2 * X) + C + 2 * (Y + Z))]
 
+/-- The terminal scalar constraints are algebraically consistent.  The
+values `A = C = 1`, `B = 2`, `X = Y = 0`, and `Z = -3` make each piece and
+both adjacent unions nonnegative while the full remote row is negative. -/
+theorem minimalNegativeTerminalRemoteScalarConstraints_realizable :
+    ∃ A B C X Y Z : ℝ,
+      MinimalNegativeTerminalRemoteScalarConstraints A B C X Y Z := by
+  refine ⟨1, 2, 1, 0, 0, -3, ?_⟩
+  constructor <;> norm_num
+
+/-- A stronger constrained model: every quadratic vector supported in
+either proper adjacent three-coordinate interval is nonnegative, yet the
+four-cell all-ones vector is negative and all three internal cuts have the
+strict arithmetic-mean and Schur reversals forced by support minimality.
+
+Thus even upgrading the proper-interval scalar inequalities to positive
+semidefiniteness on every proper contiguous coordinate subspace does not
+produce endpoint absorption.  An additional analytic constraint coupling
+the remote corner to the adjacent blocks is indispensable. -/
+theorem allProperContiguousSubspacesPSD_allow_allInternalCutReversals :
+    ∃ X : ℝ,
+      (∀ a b c : ℝ,
+        0 ≤ remoteCornerFourCoordinateQuadratic X a b c 0) ∧
+      (∀ b c d : ℝ,
+        0 ≤ remoteCornerFourCoordinateQuadratic X 0 b c d) ∧
+      remoteCornerFourCoordinateQuadratic X 1 1 1 1 < 0 ∧
+      X < -(remoteCornerFourCoordinateQuadratic X 1 0 0 0 +
+            remoteCornerFourCoordinateQuadratic X 0 1 1 1) / 2 ∧
+      remoteCornerFourCoordinateQuadratic X 1 0 0 0 *
+          remoteCornerFourCoordinateQuadratic X 0 1 1 1 < X ^ 2 ∧
+      X < -(remoteCornerFourCoordinateQuadratic X 1 1 0 0 +
+            remoteCornerFourCoordinateQuadratic X 0 0 1 1) / 2 ∧
+      remoteCornerFourCoordinateQuadratic X 1 1 0 0 *
+          remoteCornerFourCoordinateQuadratic X 0 0 1 1 < X ^ 2 ∧
+      X < -(remoteCornerFourCoordinateQuadratic X 1 1 1 0 +
+            remoteCornerFourCoordinateQuadratic X 0 0 0 1) / 2 ∧
+      remoteCornerFourCoordinateQuadratic X 1 1 1 0 *
+          remoteCornerFourCoordinateQuadratic X 0 0 0 1 < X ^ 2 := by
+  refine ⟨-3, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro a b c
+    rw [remoteCornerFourCoordinateQuadratic_leftTriple]
+    nlinarith [sq_nonneg a, sq_nonneg b, sq_nonneg c]
+  · intro b c d
+    rw [remoteCornerFourCoordinateQuadratic_rightTriple]
+    nlinarith [sq_nonneg b, sq_nonneg c, sq_nonneg d]
+  all_goals norm_num [remoteCornerFourCoordinateQuadratic]
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
