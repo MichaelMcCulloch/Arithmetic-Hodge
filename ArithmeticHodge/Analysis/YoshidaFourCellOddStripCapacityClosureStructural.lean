@@ -3890,6 +3890,132 @@ theorem lowerMass_add_weightedUpperMass_le_rawStripCancellationReserve
   unfold fourCellOddRawStripCancellationReserve
   linarith
 
+/-- The complete physical raw payment coupled to the centered regular row. -/
+theorem lowerMass_add_weightedUpperMass_sub_regularCharge_le_coupledRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    2 * (∫ x : ℝ in 0..3 / 5, w x ^ 2) +
+        (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) -
+        (fourCellOperatorHalfWidth / 10) *
+          (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellOddRawStripCancellationReserve w -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation w t) := by
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation w t
+  let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  have hraw := lowerMass_add_weightedUpperMass_le_rawStripCancellationReserve
+    w hw hodd
+  have hR : |R| ≤ (1 / 20 : ℝ) * M := by
+    simpa only [R, M] using
+      abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+        w hw.continuous hodd
+  have ha0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hRle : R ≤ |R| := le_abs_self R
+  have hmul := mul_le_mul_of_nonneg_left (hRle.trans hR) ha0
+  dsimp only [R, M] at hmul ⊢
+  linarith
+
+/-- Strong endpoint closure with the sharp lower-square payment retained. -/
+theorem lowerMass_add_endpointScalar_sub_regularCharge_le_coupledReserve
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    2 * (∫ x : ℝ in 0..3 / 5, w x ^ 2) +
+        (163 / 50 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) -
+        (fourCellOperatorHalfWidth / 10) *
+          (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellOddRawStripCancellationReserve w +
+        Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          fourCellOddEndpointStripOddMass w +
+        (93 / 50 : ℝ) *
+          (∫ x : ℝ in 0..1,
+            yoshidaEndpointPotential x * w x ^ 2) -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation w t) := by
+  have hdiagonal := endpointStripScalarMass_le_weightedRaw_prime_potential
+    w hw.continuous
+  have hraw :=
+    lowerMass_add_weightedUpperMass_sub_regularCharge_le_coupledRaw
+      w hw hodd
+  have hprime := forty_nine_fiftieths_upperStripMass_le_primeDiagonal
+    w hw.continuous
+  have hpotential := upperStripPotential_le_positiveHalfPotential
+    w hw.continuous
+  have hpotentialMul := mul_le_mul_of_nonneg_left hpotential
+    (by norm_num : (0 : ℝ) ≤ 93 / 50)
+  linarith
+
+/-- The remaining universal defect is at worst `63/50` of the lower physical
+mass.  This is the exact residual after retaining every raw square and closing
+the endpoint diagonal; no spectral truncation is used. -/
+theorem neg_sixty_three_fiftieths_lowerMass_le_core_add_localWidthDefect
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    -(63 / 50 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) ≤
+      fourCellOddHalfCoreReserve w +
+        fourCellOddStripLocalWidthDefect w := by
+  let L : ℝ := ∫ x : ℝ in 0..3 / 5, w x ^ 2
+  let U : ℝ := ∫ x : ℝ in 3 / 5..1, w x ^ 2
+  let H : ℝ := ∫ x : ℝ in 0..1, w x ^ 2
+  let C : ℝ :=
+    2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200
+  let E : ℝ :=
+    fourCellOddRawStripCancellationReserve w +
+      Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+      (2 - Real.sqrt 2 * Real.log 2) *
+        fourCellOddEndpointStripOddMass w +
+      (93 / 50 : ℝ) *
+        (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) -
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            centeredEndpointCorrelation w t)
+  have hendpoint :
+      2 * L + (163 / 50 : ℝ) * U -
+          fourCellOperatorHalfWidth / 10 *
+            (∫ x : ℝ in -1..1, w x ^ 2) ≤ E := by
+    simpa only [L, U, E] using
+      lowerMass_add_endpointScalar_sub_regularCharge_le_coupledReserve
+        w hw hodd
+  have hcentered : (∫ x : ℝ in -1..1, w x ^ 2) = 2 * H := by
+    simpa only [H] using integral_sq_eq_two_mul_positiveHalf
+      w hw.continuous (Or.inr hodd)
+  have hlowerInt : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume 0 (3 / 5) := (hw.continuous.pow 2).intervalIntegrable _ _
+  have hupperInt : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume (3 / 5) 1 := (hw.continuous.pow 2).intervalIntegrable _ _
+  have hhalfSplit : L + U = H := by
+    simpa only [L, U, H] using
+      intervalIntegral.integral_add_adjacent_intervals hlowerInt hupperInt
+  have hhalfNonneg : 0 ≤ H := by
+    dsimp only [H]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg _)
+  have hcoefficient : C + fourCellOperatorHalfWidth / 5 ≤ 163 / 50 := by
+    simpa only [C] using fourCellScalar_add_regularCharge_lt_163_div_50.le
+  have hcoefficientMul :=
+    mul_le_mul_of_nonneg_right hcoefficient hhalfNonneg
+  have hcharge (a m : ℝ) : a / 10 * (2 * m) = a / 5 * m := by
+    ring
+  rw [hcentered, hcharge] at hendpoint
+  have hbudget :
+      C * H + fourCellOperatorHalfWidth / 5 * H ≤
+        (163 / 50 : ℝ) * H := by
+    calc
+      C * H + fourCellOperatorHalfWidth / 5 * H =
+          (C + fourCellOperatorHalfWidth / 5) * H := by ring
+      _ ≤ (163 / 50 : ℝ) * H := hcoefficientMul
+  rw [fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced]
+  unfold fourCellOddStripReducedRemainder
+  dsimp only [L, U, H, C, E] at hendpoint hhalfSplit hbudget ⊢
+  linarith
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
