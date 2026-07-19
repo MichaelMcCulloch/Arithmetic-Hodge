@@ -10,7 +10,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 
 set_option autoImplicit false
 
-open MeasureTheory Real Set
+open MeasureTheory Polynomial Real Set
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityClosureStructural
 
@@ -49,7 +49,14 @@ open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointClean
 open YoshidaEndpointOddOneThreeRawPolarization
 open YoshidaEndpointOddResidualRegularity
+open YoshidaEndpointEvenTailRepresenter
 open YoshidaRegularKernelBound
+open ShiftedLegendreFiniteEnergyGap
+open ShiftedLegendreLogEigen
+open ShiftedLegendreLogKernel
+open ShiftedLegendreOrthogonality
+open ShiftedLogKernelCrossEnergy
+open UnitIntervalIntegralBridge
 open UnitIntervalLogEnergyAffine
 open UnitIntervalLogEnergyLipschitz
 open UnitIntervalLogEnergyProjection
@@ -5472,6 +5479,200 @@ block and one weighted dual-norm inequality on this infinite tail.
 def centeredOddP5Coefficient (w : ℝ → ℝ) : ℝ :=
   (11 / 2 : ℝ) * ∫ x : ℝ in -1..1,
     w x * factorTwoCenteredP5 x
+
+private theorem shiftedLegendreReal_five_eval (t : ℝ) :
+    (shiftedLegendreReal 5).eval t =
+      1 - 30 * t + 210 * t ^ 2 - 560 * t ^ 3 +
+        630 * t ^ 4 - 252 * t ^ 5 := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose]
+  ring
+
+private theorem centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre
+    (t : ℝ) :
+    centeredPullback factorTwoCenteredP5 t =
+      -(shiftedLegendreReal 5).eval t := by
+  rw [shiftedLegendreReal_five_eval]
+  unfold centeredPullback factorTwoCenteredP5
+  ring
+
+private theorem integral_centeredPullback_mul_shiftedLegendre_five_eq_neg_half
+    (r : ℝ → ℝ) :
+    (∫ t : unitInterval,
+      centeredPullback r (t : ℝ) *
+        (shiftedLegendreReal 5).eval (t : ℝ)) =
+      -(1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+        r x * factorTwoCenteredP5 x := by
+  calc
+    (∫ t : unitInterval,
+        centeredPullback r (t : ℝ) *
+          (shiftedLegendreReal 5).eval (t : ℝ)) =
+        ∫ t : ℝ in 0..1,
+          centeredPullback r t * (shiftedLegendreReal 5).eval t := by
+      change (∫ t : unitInterval,
+        (fun s : ℝ ↦ centeredPullback r s *
+          (shiftedLegendreReal 5).eval s) (t : ℝ)) = _
+      simpa only using integral_unitInterval_eq_intervalIntegral
+        (fun s : ℝ ↦ centeredPullback r s *
+          (shiftedLegendreReal 5).eval s)
+    _ = ∫ t : ℝ in 0..1,
+        -((fun x : ℝ ↦ r x * factorTwoCenteredP5 x) (2 * t - 1)) := by
+      apply intervalIntegral.integral_congr
+      intro t _ht
+      have hpull :=
+        centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre t
+      unfold centeredPullback at hpull ⊢
+      have hp : (shiftedLegendreReal 5).eval t =
+          -factorTwoCenteredP5 (2 * t - 1) := by
+        linarith
+      change r (2 * t - 1) * (shiftedLegendreReal 5).eval t =
+        -(r (2 * t - 1) * factorTwoCenteredP5 (2 * t - 1))
+      rw [hp]
+      ring
+    _ = -(∫ t : ℝ in 0..1,
+        (fun x : ℝ ↦ r x * factorTwoCenteredP5 x) (2 * t - 1)) := by
+      rw [intervalIntegral.integral_neg]
+    _ = -((1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+        r x * factorTwoCenteredP5 x) := by
+      rw [integral_comp_two_mul_sub_one
+        (fun x : ℝ ↦ r x * factorTwoCenteredP5 x)]
+    _ = _ := by ring
+
+/-- Exact all-degree raw-log orthogonality of the centered fifth Legendre
+mode and a continuous residual with vanishing fifth coefficient.  This is
+the missing singular-form identity needed to retain the full raw form in
+the `P₁/P₃/P₅` Schur reduction. -/
+theorem centeredRawLogBilinear_factorTwoCenteredP5_tail_eq_zero
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hfive : centeredOddP5Coefficient r = 0) :
+    centeredRawLogBilinear factorTwoCenteredP5 r = 0 := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback r (t : ℝ)
+  let p : ℝ[X] := shiftedLegendreReal 5
+  let U : unitInterval × unitInterval → ℝ := fun z ↦
+    (f z.1 - f z.2) * unitIntervalRawPolynomialLogKernel p z
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    exact hr.comp (by fun_prop)
+  have hf : Integrable f :=
+    hfcont.integrable_of_hasCompactSupport (HasCompactSupport.of_compactSpace _)
+  have hUInt : Integrable U := by
+    simpa only [U] using
+      integrable_sub_mul_unitIntervalRawPolynomialLogKernel f hf p
+  have hcross :=
+    integral_sub_mul_unitIntervalRawPolynomialLogKernel_eq f hf p
+  have hpull : (∫ t : unitInterval, f t * p.eval (t : ℝ)) = 0 := by
+    rw [show (∫ t : unitInterval, f t * p.eval (t : ℝ)) =
+        -(1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+          r x * factorTwoCenteredP5 x by
+      simpa only [f, p] using
+        integral_centeredPullback_mul_shiftedLegendre_five_eq_neg_half r]
+    unfold centeredOddP5Coefficient at hfive
+    have horth : (∫ x : ℝ in -1..1,
+        r x * factorTwoCenteredP5 x) = 0 := by
+      nlinarith
+    rw [horth]
+    ring
+  have hpair : (∫ t : unitInterval,
+      f t * (shiftedLogKernel p).eval (t : ℝ)) = 0 := by
+    rw [show shiftedLogKernel p =
+        Polynomial.C (2 * (harmonic 5 : ℝ)) * p by
+      dsimp only [p]
+      exact shiftedLogKernel_shiftedLegendreReal 5]
+    simp only [Polynomial.eval_mul, Polynomial.eval_C]
+    rw [show (∫ t : unitInterval,
+        f t * ((2 * (harmonic 5 : ℝ)) * p.eval (t : ℝ))) =
+        (2 * (harmonic 5 : ℝ)) *
+          ∫ t : unitInterval, f t * p.eval (t : ℝ) by
+      rw [← integral_const_mul]
+      apply integral_congr_ae
+      filter_upwards [] with t
+      ring,
+      hpull]
+    ring
+  rw [hpair] at hcross
+  norm_num at hcross
+  have hUzero : (∫ z, U z) = 0 := by
+    simpa only [U] using hcross
+  have hiter : (∫ z, U z) =
+      ∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+        (centeredPullback r s - centeredPullback r t) *
+          ((p.eval s - p.eval t) / |s - t|) := by
+    calc
+      (∫ z, U z) = ∫ s : unitInterval, ∫ t : unitInterval, U (s, t) :=
+        MeasureTheory.integral_prod _ hUInt
+      _ = ∫ s : unitInterval, ∫ t : ℝ in 0..1,
+          (centeredPullback r (s : ℝ) - centeredPullback r t) *
+            ((p.eval (s : ℝ) - p.eval t) / |(s : ℝ) - t|) := by
+        apply integral_congr_ae
+        filter_upwards [] with s
+        rw [← integral_unitInterval_eq_intervalIntegral]
+        apply integral_congr_ae
+        filter_upwards [] with t
+        rfl
+      _ = _ := by
+        rw [← integral_unitInterval_eq_intervalIntegral]
+  rw [hiter] at hUzero
+  have hpoint (s t : ℝ) :
+      (centeredPullback r s - centeredPullback r t) *
+          ((p.eval s - p.eval t) / |s - t|) =
+        -2 * (((factorTwoCenteredP5 (2 * s - 1) -
+            factorTwoCenteredP5 (2 * t - 1)) *
+          (r (2 * s - 1) - r (2 * t - 1))) /
+            |(2 * s - 1) - (2 * t - 1)|) := by
+    have hms :=
+      centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre s
+    have hmt :=
+      centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre t
+    unfold centeredPullback at hms hmt ⊢
+    have hps : p.eval s = -factorTwoCenteredP5 (2 * s - 1) := by
+      dsimp only [p]
+      linarith
+    have hpt : p.eval t = -factorTwoCenteredP5 (2 * t - 1) := by
+      dsimp only [p]
+      linarith
+    rw [hps, hpt,
+      show (2 * s - 1) - (2 * t - 1) = 2 * (s - t) by ring,
+      abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
+    by_cases hst : |s - t| = 0
+    · simp [hst]
+    · field_simp [hst]
+      ring
+  have hscaled :
+      (∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+        (centeredPullback r s - centeredPullback r t) *
+          ((p.eval s - p.eval t) / |s - t|)) =
+        -(1 / 2 : ℝ) *
+          centeredRawLogBilinear factorTwoCenteredP5 r := by
+    let H : ℝ → ℝ → ℝ := fun x y ↦
+      ((factorTwoCenteredP5 x - factorTwoCenteredP5 y) *
+        (r x - r y)) / |x - y|
+    calc
+      _ = ∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+          -2 * H (2 * s - 1) (2 * t - 1) := by
+        apply intervalIntegral.integral_congr
+        intro s _hs
+        apply intervalIntegral.integral_congr
+        intro t _ht
+        exact hpoint s t
+      _ = -2 * (∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+          H (2 * s - 1) (2 * t - 1)) := by
+        rw [show (fun s : ℝ ↦ ∫ t : ℝ in 0..1,
+            -2 * H (2 * s - 1) (2 * t - 1)) =
+            fun s ↦ -2 * ∫ t : ℝ in 0..1,
+              H (2 * s - 1) (2 * t - 1) by
+          funext s
+          rw [intervalIntegral.integral_const_mul],
+          intervalIntegral.integral_const_mul]
+      _ = -2 * ((1 / 4 : ℝ) *
+          ∫ x : ℝ in -1..1, ∫ y : ℝ in -1..1, H x y) := by
+        rw [integral_integral_comp_two_mul_sub_one H]
+      _ = _ := by
+        unfold centeredRawLogBilinear
+        dsimp only [H]
+        ring
+  rw [hscaled] at hUzero
+  linarith
 
 /-- The `P₅` coefficient left after the exact `P₁/P₃` projection. -/
 def fourCellOddP5TailCoefficient (w : ℝ → ℝ) : ℝ :=
