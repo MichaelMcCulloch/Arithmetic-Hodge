@@ -3468,6 +3468,81 @@ theorem endpointStripScalarMass_sub_regularCharge_le_coupledReserve
     (by norm_num : (0 : ℝ) ≤ 93 / 50)
   linarith
 
+private theorem fourCellScalar_add_regularCharge_lt_163_div_50 :
+    2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi) +
+        (3 / 200 : ℝ) + fourCellOperatorHalfWidth / 5 < 163 / 50 := by
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  have hlog := strict_log_two_bounds.2
+  have hwidth : fourCellOperatorHalfWidth / 5 < (1733 / 20000 : ℝ) := by
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  nlinarith [hscalar, hwidth]
+
+/-- Structural localization of the remaining universal defect.  The entire
+endpoint strip is now paid; without using any further raw square, a possible
+negative part is confined to the physical lower interval `[0,3/5]`. -/
+theorem neg_lowerIntervalScalarMass_le_core_add_localWidthDefect
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    -(163 / 50 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) ≤
+      fourCellOddHalfCoreReserve w +
+        fourCellOddStripLocalWidthDefect w := by
+  let L : ℝ := ∫ x : ℝ in 0..3 / 5, w x ^ 2
+  let U : ℝ := ∫ x : ℝ in 3 / 5..1, w x ^ 2
+  let H : ℝ := ∫ x : ℝ in 0..1, w x ^ 2
+  let C : ℝ :=
+    2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200
+  let E : ℝ :=
+    fourCellOddRawStripCancellationReserve w +
+      Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+      (2 - Real.sqrt 2 * Real.log 2) *
+        fourCellOddEndpointStripOddMass w +
+      (93 / 50 : ℝ) *
+        (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) -
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            centeredEndpointCorrelation w t)
+  have hendpoint :
+      (163 / 50 : ℝ) * U - fourCellOperatorHalfWidth / 10 *
+          (∫ x : ℝ in -1..1, w x ^ 2) ≤ E := by
+    simpa only [U, E] using
+      endpointStripScalarMass_sub_regularCharge_le_coupledReserve
+        w hw hodd
+  have hcentered : (∫ x : ℝ in -1..1, w x ^ 2) = 2 * H := by
+    simpa only [H] using integral_sq_eq_two_mul_positiveHalf
+      w hw.continuous (Or.inr hodd)
+  have hlowerInt : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume 0 (3 / 5) := (hw.continuous.pow 2).intervalIntegrable _ _
+  have hupperInt : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume (3 / 5) 1 := (hw.continuous.pow 2).intervalIntegrable _ _
+  have hhalfSplit : L + U = H := by
+    simpa only [L, U, H] using
+      intervalIntegral.integral_add_adjacent_intervals hlowerInt hupperInt
+  have hhalfNonneg : 0 ≤ H := by
+    dsimp only [H]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg _)
+  have hcoefficient : C + fourCellOperatorHalfWidth / 5 ≤ 163 / 50 := by
+    simpa only [C] using fourCellScalar_add_regularCharge_lt_163_div_50.le
+  have hcoefficientMul :=
+    mul_le_mul_of_nonneg_right hcoefficient hhalfNonneg
+  have hcharge (a m : ℝ) : a / 10 * (2 * m) = a / 5 * m := by
+    ring
+  rw [hcentered, hcharge] at hendpoint
+  have hbudget :
+      C * H + fourCellOperatorHalfWidth / 5 * H ≤
+        (163 / 50 : ℝ) * H := by
+    calc
+      C * H + fourCellOperatorHalfWidth / 5 * H =
+          (C + fourCellOperatorHalfWidth / 5) * H := by ring
+      _ ≤ (163 / 50 : ℝ) * H := hcoefficientMul
+  rw [fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced]
+  unfold fourCellOddStripReducedRemainder
+  dsimp only [L, U, H, C, E] at hendpoint hhalfSplit hbudget ⊢
+  linarith
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
