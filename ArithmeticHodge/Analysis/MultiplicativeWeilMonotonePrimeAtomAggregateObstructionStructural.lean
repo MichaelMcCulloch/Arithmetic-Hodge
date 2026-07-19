@@ -943,6 +943,156 @@ theorem aggregate_zeroLag_knownData_allow_remainder_misalignment :
   refine ⟨1, 1, 0, 2, -2, 2, 2, ?_⟩
   norm_num
 
+/-! ## Localizing the physical cost to the head window -/
+
+/-- Only the part of the aggregate slice on the physical support window of
+the head can contribute to the zero-lag overlap. -/
+def monotonePrimeAtomAggregateHeadWindowEnergy
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) : ℝ :=
+  ∫ x : ℝ in Set.Icc (quarterLogLatticePoint k)
+      (quarterLogLatticePoint (k + 2)),
+    ‖monotonePrimeAtomAggregateSlice parent k S x‖ ^ 2
+
+private theorem aggregateWindow_normSq_integral_star_mul_le
+    {α : Type*} [MeasurableSpace α] (mu : Measure α)
+    (F G : α → ℂ)
+    (hFmeas : AEStronglyMeasurable F mu)
+    (hGmeas : AEStronglyMeasurable G mu)
+    (hFsq : Integrable (fun x ↦ ‖F x‖ ^ 2) mu)
+    (hGsq : Integrable (fun x ↦ ‖G x‖ ^ 2) mu) :
+    Complex.normSq (∫ x, starRingEnd ℂ (F x) * G x ∂mu) ≤
+      (∫ x, ‖F x‖ ^ 2 ∂mu) * ∫ x, ‖G x‖ ^ 2 ∂mu := by
+  have hFLp : MemLp F 2 mu :=
+    (memLp_two_iff_integrable_sq_norm hFmeas).2 hFsq
+  have hGLp : MemLp G 2 mu :=
+    (memLp_two_iff_integrable_sq_norm hGmeas).2 hGsq
+  have hholder := integral_mul_norm_le_Lp_mul_Lq
+    (p := 2) (q := 2) (f := F) (g := G) (μ := mu)
+    Real.HolderConjugate.two_two (by simpa using hFLp) (by simpa using hGLp)
+  let A : ℝ := ∫ x, ‖F x‖ ^ 2 ∂mu
+  let B : ℝ := ∫ x, ‖G x‖ ^ 2 ∂mu
+  have hA0 : 0 ≤ A := integral_nonneg fun _ ↦ sq_nonneg _
+  have hB0 : 0 ≤ B := integral_nonneg fun _ ↦ sq_nonneg _
+  have hholder' :
+      (∫ x, ‖F x‖ * ‖G x‖ ∂mu) ≤ Real.sqrt A * Real.sqrt B := by
+    rw [Real.sqrt_eq_rpow, Real.sqrt_eq_rpow]
+    simpa only [A, B, Real.rpow_two] using hholder
+  have hnorm :
+      ‖∫ x, starRingEnd ℂ (F x) * G x ∂mu‖ ≤
+        ∫ x, ‖F x‖ * ‖G x‖ ∂mu := by
+    calc
+      ‖∫ x, starRingEnd ℂ (F x) * G x ∂mu‖ ≤
+          ∫ x, ‖starRingEnd ℂ (F x) * G x‖ ∂mu :=
+        norm_integral_le_integral_norm _
+      _ = ∫ x, ‖F x‖ * ‖G x‖ ∂mu := by
+        apply integral_congr_ae
+        filter_upwards [] with x
+        rw [norm_mul, Complex.norm_conj]
+  have hbound := hnorm.trans hholder'
+  rw [Complex.normSq_eq_norm_sq]
+  calc
+    ‖∫ x, starRingEnd ℂ (F x) * G x ∂mu‖ ^ 2 ≤
+        (Real.sqrt A * Real.sqrt B) ^ 2 :=
+      (sq_le_sq₀ (norm_nonneg _) (by positivity)).2 hbound
+    _ = A * B := by
+      rw [mul_pow, Real.sq_sqrt hA0, Real.sq_sqrt hB0]
+    _ = _ := rfl
+
+private theorem monotoneQuarterCell_headWindowEnergy_eq_criticalLogEnergy
+    (parent : BombieriTest) (k : ℤ) :
+    (∫ x : ℝ in Set.Icc (quarterLogLatticePoint k)
+        (quarterLogLatticePoint (k + 2)),
+      ‖monotoneQuarterCell parent k x‖ ^ 2) =
+      bombieriCriticalLogEnergy (monotoneQuarterCell parent k) := by
+  rw [bombieriCriticalLogEnergy_eq_integral_Ioi_norm_sq]
+  symm
+  apply setIntegral_eq_of_subset_of_forall_diff_eq_zero measurableSet_Ioi
+  · intro x hx
+    exact (quarterLogLatticePoint_pos k).trans_le hx.1
+  · intro x hx
+    have hzero : monotoneQuarterCell parent k x = 0 := by
+      by_contra hne
+      exact hx.2 (monotoneQuarterCell_tsupport_subset parent k
+        (subset_tsupport _ (Function.mem_support.mpr hne)))
+    rw [hzero, norm_zero]
+    norm_num
+
+private theorem aggregate_zeroLag_eq_headWindowIntegral
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    bombieriDirectedCorrelation
+        (monotonePrimeAtomAggregateSlice parent k S)
+        (monotoneQuarterCell parent k) 1 =
+      ∫ x : ℝ in Set.Icc (quarterLogLatticePoint k)
+          (quarterLogLatticePoint (k + 2)),
+        monotonePrimeAtomAggregateSlice parent k S x *
+          starRingEnd ℂ (monotoneQuarterCell parent k x) := by
+  unfold bombieriDirectedCorrelation
+  simp only [one_mul]
+  apply setIntegral_eq_of_subset_of_forall_diff_eq_zero measurableSet_Ioi
+  · intro x hx
+    exact (quarterLogLatticePoint_pos k).trans_le hx.1
+  · intro x hx
+    have hzero : monotoneQuarterCell parent k x = 0 := by
+      by_contra hne
+      exact hx.2 (monotoneQuarterCell_tsupport_subset parent k
+        (subset_tsupport _ (Function.mem_support.mpr hne)))
+    rw [hzero, map_zero, mul_zero]
+
+/-- Sharp localized Cauchy--Schwarz: the whole finite prime row costs the
+head critical energy and only the aggregate mass on the head's two-quarter
+window.  No aggregate mass outside the interaction window is charged. -/
+theorem monotonePrimeAtom_finset_sum_sq_le_headWindowEnergy
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    (∑ j ∈ S, monotonePrimeAtomValue parent k j) ^ 2 ≤
+      monotonePrimeAtomAggregateHeadWindowEnergy parent k S *
+        bombieriCriticalLogEnergy (monotoneQuarterCell parent k) := by
+  rw [monotonePrimeAtom_finset_sum_eq_aggregate_zeroLagOverlap]
+  let A : BombieriTest := monotonePrimeAtomAggregateSlice parent k S
+  let H : BombieriTest := monotoneQuarterCell parent k
+  let I : Set ℝ := Set.Icc (quarterLogLatticePoint k)
+    (quarterLogLatticePoint (k + 2))
+  let mu : Measure ℝ := volume.restrict I
+  have hAmeas : AEStronglyMeasurable (fun x : ℝ ↦ A x) mu :=
+    A.contDiff.continuous.aestronglyMeasurable.restrict
+  have hHmeas : AEStronglyMeasurable (fun x : ℝ ↦ H x) mu :=
+    H.contDiff.continuous.aestronglyMeasurable.restrict
+  have hAsq : Integrable (fun x : ℝ ↦ ‖A x‖ ^ 2) mu :=
+    (A.contDiff.continuous.norm.pow 2).continuousOn.integrableOn_compact
+      isCompact_Icc
+  have hHsq : Integrable (fun x : ℝ ↦ ‖H x‖ ^ 2) mu :=
+    (H.contDiff.continuous.norm.pow 2).continuousOn.integrableOn_compact
+      isCompact_Icc
+  have hcauchy := aggregateWindow_normSq_integral_star_mul_le
+    mu (fun x : ℝ ↦ H x) (fun x : ℝ ↦ A x)
+    hHmeas hAmeas hHsq hAsq
+  have hcommute :
+      (∫ x : ℝ in I, A x * starRingEnd ℂ (H x)) =
+        ∫ x : ℝ in I, starRingEnd ℂ (H x) * A x := by
+    apply setIntegral_congr_fun measurableSet_Icc
+    intro x _hx
+    ring
+  have hnormSq :
+      Complex.normSq
+          (bombieriDirectedCorrelation A H 1) ≤
+        (∫ x : ℝ in I, ‖H x‖ ^ 2) *
+          ∫ x : ℝ in I, ‖A x‖ ^ 2 := by
+    rw [show bombieriDirectedCorrelation A H 1 =
+        ∫ x : ℝ in I, A x * starRingEnd ℂ (H x) by
+      simpa only [A, H, I] using
+        aggregate_zeroLag_eq_headWindowIntegral parent k S,
+      hcommute]
+    simpa only [mu] using hcauchy
+  have hre :
+      (bombieriDirectedCorrelation A H 1).re ^ 2 ≤
+        Complex.normSq (bombieriDirectedCorrelation A H 1) := by
+    simp only [Complex.normSq_apply]
+    nlinarith [sq_nonneg (bombieriDirectedCorrelation A H 1).im]
+  have hbound := hre.trans hnormSq
+  rw [monotoneQuarterCell_headWindowEnergy_eq_criticalLogEnergy]
+    at hbound
+  simpa only [A, H, I, monotonePrimeAtomAggregateHeadWindowEnergy,
+    mul_comm] using hbound
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
