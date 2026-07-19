@@ -30,6 +30,7 @@ open YoshidaEndpointPullbackLipschitz
 open YoshidaFourCellOddPolarPotentialStructural
 open YoshidaFourCellOddStripCapacityAssemblyStructural
 open YoshidaFourCellOddEndpointStripCoercivityStructural
+open YoshidaFourCellOddStripEmbeddingStructural
 open YoshidaFourCellRawParityFoldStructural
 open YoshidaFourCellRegularParityFoldStructural
 open YoshidaFourCellParityHalfFoldStructural
@@ -2067,6 +2068,95 @@ def fourCellOddStripLocalWidthDefect (w : ℝ → ℝ) : ℝ :=
       (∫ t : ℝ in 0..2,
         yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
           centeredEndpointCorrelation w t)
+
+/-! ## Exact raw-strip cancellation -/
+
+/-- The part of the centered raw reserve left after the adverse strip-odd
+raw energy is restored.  It keeps the unused same-sign square, the
+reflection-even strip square, and the complete reflected square coupled. -/
+def fourCellOddRawStripCancellationReserve (w : ℝ → ℝ) : ℝ :=
+  (1 / 2 : ℝ) *
+      (fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1)) -
+    (1 / 2 : ℝ) * fourCellOddEndpointStripOddRawEnergy w
+
+/-- Once the raw strip has been retained exactly, the remaining expression
+contains no singular logarithmic energy.  In particular, the artificial
+`14 / 5` mass insertion cancels out of this exact remainder. -/
+def fourCellOddStripReducedRemainder (w : ℝ → ℝ) : ℝ :=
+  Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+    (2 - Real.sqrt 2 * Real.log 2) *
+      fourCellOddEndpointStripOddMass w +
+    (93 / 50 : ℝ) *
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) -
+    (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+      (∫ x : ℝ in 0..1, w x ^ 2) -
+    2 * fourCellOperatorHalfWidth *
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t)
+
+private theorem centeredRawLogEnergy_nonneg (u : ℝ → ℝ) :
+    0 ≤ centeredRawLogEnergy u := by
+  unfold centeredRawLogEnergy
+  apply intervalIntegral.integral_nonneg (by norm_num)
+  intro x _hx
+  apply intervalIntegral.integral_nonneg (by norm_num)
+  intro y _hy
+  exact div_nonneg (sq_nonneg _) (abs_nonneg _)
+
+private theorem fourCellOddEndpointStripEvenRawEnergy_nonneg
+    (w : ℝ → ℝ) :
+    0 ≤ fourCellOddEndpointStripEvenRawEnergy w := by
+  unfold fourCellOddEndpointStripEvenRawEnergy
+  exact mul_nonneg (by norm_num) (centeredRawLogEnergy_nonneg _)
+
+private theorem fourCellPositiveHalfRawReflectedEnergy_nonneg
+    (w : ℝ → ℝ) :
+    0 ≤ fourCellPositiveHalfRawReflectedEnergy w (-1) := by
+  unfold fourCellPositiveHalfRawReflectedEnergy
+  apply intervalIntegral.integral_nonneg (by norm_num)
+  intro x hx
+  apply intervalIntegral.integral_nonneg (by norm_num)
+  intro y hy
+  exact div_nonneg (sq_nonneg _) (add_nonneg hx.1 hy.1)
+
+/-- The adverse strip-odd raw form is absorbed without a spectral truncation:
+the strip embeds in the positive-half square, and strip parity supplies the
+missing reflection-even square. -/
+theorem fourCellOddRawStripCancellationReserve_nonneg
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    0 ≤ fourCellOddRawStripCancellationReserve w := by
+  have hembed := fourCellOddEndpointStripRawEnergy_le_positiveHalf w hw
+  have hparity := fourCellOddEndpointStrip_rawEnergy_eq_even_add_odd w hw
+  have heven := fourCellOddEndpointStripEvenRawEnergy_nonneg w
+  have hreflected := fourCellPositiveHalfRawReflectedEnergy_nonneg w
+  unfold fourCellOddRawStripCancellationReserve
+  linarith
+
+/-- Exact singular/nonsingular split of the universal absorption target.
+All high-frequency growth is retained in the nonnegative raw-strip reserve;
+the second summand is a regular-kernel and diagonal problem. -/
+theorem fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced
+    (w : ℝ → ℝ) :
+    fourCellOddHalfCoreReserve w + fourCellOddStripLocalWidthDefect w =
+      fourCellOddRawStripCancellationReserve w +
+        fourCellOddStripReducedRemainder w := by
+  unfold fourCellOddHalfCoreReserve fourCellOddStripLocalWidthDefect
+    fourCellOddRawStripCancellationReserve fourCellOddStripReducedRemainder
+  ring
+
+/-- Consequently, a lower bound for the nonsingular remainder alone closes
+the original local-width defect. -/
+theorem neg_fourCellOddStripLocalWidthDefect_le_core_of_reduced_nonneg
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w)
+    (hreduced : 0 ≤ fourCellOddStripReducedRemainder w) :
+    -fourCellOddStripLocalWidthDefect w ≤ fourCellOddHalfCoreReserve w := by
+  have hraw := fourCellOddRawStripCancellationReserve_nonneg w hw
+  have hsplit :=
+    fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced w
+  linarith
 
 /-- Exact `P₁/P₃` normal form of the local four-cell defect.  Every
 strip, potential, and scalar term is now an explicit `2 × 2` quadratic;
