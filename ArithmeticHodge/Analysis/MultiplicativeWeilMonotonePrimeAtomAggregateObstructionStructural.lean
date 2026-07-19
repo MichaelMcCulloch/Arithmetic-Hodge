@@ -298,6 +298,270 @@ theorem innerSuffix_add_smul_aggregateSlice_not_ratioTwo_of_separated_tail
   simpa only [innerSuffix_add_smul_aggregateSlice_apply_of_upper
     parent k S c hy] using htail
 
+/-! ## Concrete aggregate-orthogonal residuals -/
+
+/-- The head with its real aggregate component cleared. -/
+def monotonePrimeAtomHeadAggregateOrthogonalResidual
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) : BombieriTest :=
+  let T := monotonePrimeAtomAggregateReserve parent k S
+  let C := (monotonePrimeAtomAggregateCross parent k S).re
+  (T : ℂ) • monotoneQuarterCell parent k +
+    ((-C : ℝ) : ℂ) • monotonePrimeAtomAggregateSlice parent k S
+
+/-- The inner suffix with its real aggregate component cleared. -/
+def monotonePrimeAtomInnerAggregateOrthogonalResidual
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) : BombieriTest :=
+  let T := monotonePrimeAtomAggregateReserve parent k S
+  let K := monotonePrimeAtomInnerSuffixAggregateCross parent k S
+  (T : ℂ) • monotoneQuarterCutoff parent (k + 1) +
+    ((-K : ℝ) : ℂ) • monotonePrimeAtomAggregateSlice parent k S
+
+private theorem aggregateCross_real_smul_both_re
+    (f g : BombieriTest) (a b : ℝ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      ((a : ℂ) • f) ((b : ℂ) • g)).re =
+      a * b * (bombieriTwoBlockGlobalCrossSymbol f g).re := by
+  rw [bombieriTwoBlockGlobalCrossSymbol_smul_left,
+    bombieriTwoBlockGlobalCrossSymbol_smul_right]
+  rw [show starRingEnd ℂ (a : ℂ) = (a : ℂ) by
+    rw [starRingEnd_apply, Complex.star_def, Complex.conj_ofReal]]
+  simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    zero_mul, sub_zero]
+  ring
+
+private theorem aggregateCross_real_linearCombination_re
+    (f g h i : BombieriTest) (a b c d : ℝ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      ((a : ℂ) • f + (b : ℂ) • g)
+      ((c : ℂ) • h + (d : ℂ) • i)).re =
+      a * c * (bombieriTwoBlockGlobalCrossSymbol f h).re +
+        a * d * (bombieriTwoBlockGlobalCrossSymbol f i).re +
+        b * c * (bombieriTwoBlockGlobalCrossSymbol g h).re +
+        b * d * (bombieriTwoBlockGlobalCrossSymbol g i).re := by
+  rw [bombieriTwoBlockGlobalCrossSymbol_add_left,
+    bombieriTwoBlockGlobalCrossSymbol_add_right,
+    bombieriTwoBlockGlobalCrossSymbol_add_right]
+  simp only [Complex.add_re]
+  rw [aggregateCross_real_smul_both_re,
+    aggregateCross_real_smul_both_re,
+    aggregateCross_real_smul_both_re,
+    aggregateCross_real_smul_both_re]
+  ring
+
+private theorem aggregateQuadratic_real_linearCombination
+    (f g : BombieriTest) (a b : ℝ) :
+    bombieriRealQuadraticValue ((a : ℂ) • f + (b : ℂ) • g) =
+      a ^ 2 * bombieriRealQuadraticValue f +
+        b ^ 2 * bombieriRealQuadraticValue g +
+        2 * a * b * (bombieriTwoBlockGlobalCrossSymbol f g).re := by
+  have hswap := congrArg Complex.re
+    (bombieriTwoBlockGlobalCrossSymbol_conj_swap f g)
+  simp only [Complex.star_def, Complex.conj_re] at hswap
+  unfold bombieriRealQuadraticValue
+  rw [← bombieriTwoBlockGlobalCrossSymbol_self]
+  rw [aggregateCross_real_linearCombination_re]
+  rw [bombieriTwoBlockGlobalCrossSymbol_self,
+    bombieriTwoBlockGlobalCrossSymbol_self]
+  simp only [pow_two]
+  rw [hswap]
+  ring
+
+/-- Exact quadratic and mixed coordinates of the two aggregate-orthogonal
+residual tests. -/
+theorem monotonePrimeAtom_aggregateOrthogonalResidual_coordinates
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    let H := bombieriRealQuadraticValue (monotoneQuarterCell parent k)
+    let I := bombieriRealQuadraticValue
+      (monotoneQuarterCutoff parent (k + 1))
+    let T := monotonePrimeAtomAggregateReserve parent k S
+    let C := (monotonePrimeAtomAggregateCross parent k S).re
+    let K := monotonePrimeAtomInnerSuffixAggregateCross parent k S
+    let D := monotonePrimeAtomHeadSuffixGlobalCross parent k
+    bombieriRealQuadraticValue
+        (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S) =
+          T * (H * T - C ^ 2) ∧
+      bombieriRealQuadraticValue
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) =
+            T * (I * T - K ^ 2) ∧
+      (bombieriTwoBlockGlobalCrossSymbol
+        (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S)
+        (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)).re =
+          T * (T * D - C * K) := by
+  dsimp only
+  let h : BombieriTest := monotoneQuarterCell parent k
+  let i : BombieriTest := monotoneQuarterCutoff parent (k + 1)
+  let t : BombieriTest := monotonePrimeAtomAggregateSlice parent k S
+  let H : ℝ := bombieriRealQuadraticValue h
+  let I : ℝ := bombieriRealQuadraticValue i
+  let T : ℝ := bombieriRealQuadraticValue t
+  let C : ℝ := (bombieriTwoBlockGlobalCrossSymbol h t).re
+  let K : ℝ := (bombieriTwoBlockGlobalCrossSymbol i t).re
+  let D : ℝ := (bombieriTwoBlockGlobalCrossSymbol h i).re
+  have hhead := aggregateQuadratic_real_linearCombination h t T (-C)
+  have hinner := aggregateQuadratic_real_linearCombination i t T (-K)
+  have hcross := aggregateCross_real_linearCombination_re
+    h t i t T (-C) T (-K)
+  have htt : (bombieriTwoBlockGlobalCrossSymbol t t).re = T := by
+    rw [bombieriTwoBlockGlobalCrossSymbol_self]
+    rfl
+  have hti : (bombieriTwoBlockGlobalCrossSymbol t i).re = K := by
+    have hswap := congrArg Complex.re
+      (bombieriTwoBlockGlobalCrossSymbol_conj_swap i t)
+    simpa only [Complex.star_def, Complex.conj_re, K] using hswap
+  change
+    bombieriRealQuadraticValue ((T : ℂ) • h + ((-C : ℝ) : ℂ) • t) =
+        T * (H * T - C ^ 2) ∧
+      bombieriRealQuadraticValue ((T : ℂ) • i + ((-K : ℝ) : ℂ) • t) =
+        T * (I * T - K ^ 2) ∧
+      (bombieriTwoBlockGlobalCrossSymbol
+        ((T : ℂ) • h + ((-C : ℝ) : ℂ) • t)
+        ((T : ℂ) • i + ((-K : ℝ) : ℂ) • t)).re =
+          T * (T * D - C * K)
+  constructor
+  · rw [hhead]
+    dsimp only [H, T, C]
+    ring
+  constructor
+  · rw [hinner]
+    dsimp only [I, T, K]
+    ring
+  · rw [hcross, htt, hti]
+    dsimp only [T, C, K, D]
+    ring
+
+/-- With a positive aggregate pivot, the scalar three-way contraction is
+exactly real Cauchy--Schwarz for the two concrete aggregate-orthogonal
+residual tests. -/
+theorem aggregateThreeWayResidualContraction_iff_residualCross
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S) :
+    AggregateThreeWayResidualContraction
+        (bombieriRealQuadraticValue (monotoneQuarterCell parent k))
+        (bombieriRealQuadraticValue
+          (monotoneQuarterCutoff parent (k + 1)))
+        (monotonePrimeAtomAggregateReserve parent k S)
+        (monotonePrimeAtomAggregateCross parent k S).re
+        (monotonePrimeAtomInnerSuffixAggregateCross parent k S)
+        (monotonePrimeAtomHeadSuffixGlobalCross parent k) ↔
+      (bombieriTwoBlockGlobalCrossSymbol
+        (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S)
+        (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)).re ^ 2 ≤
+        bombieriRealQuadraticValue
+            (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S) *
+          bombieriRealQuadraticValue
+            (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) := by
+  let H : ℝ := bombieriRealQuadraticValue (monotoneQuarterCell parent k)
+  let I : ℝ := bombieriRealQuadraticValue
+    (monotoneQuarterCutoff parent (k + 1))
+  let T : ℝ := monotonePrimeAtomAggregateReserve parent k S
+  let C : ℝ := (monotonePrimeAtomAggregateCross parent k S).re
+  let K : ℝ := monotonePrimeAtomInnerSuffixAggregateCross parent k S
+  let D : ℝ := monotonePrimeAtomHeadSuffixGlobalCross parent k
+  let alpha : ℝ := H * T - C ^ 2
+  let beta : ℝ := I * T - K ^ 2
+  let delta : ℝ := T * D - C * K
+  have hcoordinates :=
+    monotonePrimeAtom_aggregateOrthogonalResidual_coordinates parent k S
+  change
+    bombieriRealQuadraticValue
+        (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S) =
+          T * alpha ∧
+      bombieriRealQuadraticValue
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) =
+            T * beta ∧
+      (bombieriTwoBlockGlobalCrossSymbol
+        (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S)
+        (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)).re =
+          T * delta at hcoordinates
+  change delta ^ 2 ≤ alpha * beta ↔
+    (bombieriTwoBlockGlobalCrossSymbol
+      (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S)
+      (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)).re ^ 2 ≤
+      bombieriRealQuadraticValue
+          (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S) *
+        bombieriRealQuadraticValue
+          (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)
+  rw [hcoordinates.1, hcoordinates.2.1, hcoordinates.2.2]
+  constructor
+  · intro h
+    calc
+      (T * delta) ^ 2 = T ^ 2 * delta ^ 2 := by ring
+      _ ≤ T ^ 2 * (alpha * beta) :=
+        mul_le_mul_of_nonneg_left h (sq_nonneg T)
+      _ = (T * alpha) * (T * beta) := by ring
+  · intro h
+    have hscaled : T ^ 2 * delta ^ 2 ≤ T ^ 2 * (alpha * beta) := by
+      calc
+        T ^ 2 * delta ^ 2 = (T * delta) ^ 2 := by ring
+        _ ≤ (T * alpha) * (T * beta) := h
+        _ = T ^ 2 * (alpha * beta) := by ring
+    exact le_of_mul_le_mul_left hscaled (sq_pos_of_pos hT)
+
+private theorem ratioTwo_real_smul
+    (f : BombieriTest) (c : ℝ) (hf : BombieriRatioTwoCell f) :
+    BombieriRatioTwoCell ((c : ℂ) • f) := by
+  rcases hf with ⟨a, b, ha, hab, hsupport, hratio⟩
+  refine ⟨a, b, ha, hab, ?_, hratio⟩
+  exact (tsupport_smul_subset_right (fun _x : ℝ ↦ (c : ℂ))
+    (f : ℝ → ℂ)).trans hsupport
+
+/-- The head residual is still an honest ratio-two test because both of its
+terms lie in the aggregate plateau. -/
+theorem monotonePrimeAtomHeadAggregateOrthogonalResidual_ratioTwo
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : monotonePrimeAtomAggregateReserve parent k S ≠ 0) :
+    BombieriRatioTwoCell
+      (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S) := by
+  let T : ℝ := monotonePrimeAtomAggregateReserve parent k S
+  let C : ℝ := (monotonePrimeAtomAggregateCross parent k S).re
+  have hT' : T ≠ 0 := hT
+  have hpencil := monotonePrimeAtom_head_add_smul_aggregateSlice_ratioTwo
+    parent k S (((-C / T : ℝ) : ℂ))
+  have heq :
+      monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S =
+        (T : ℂ) • (monotoneQuarterCell parent k +
+          (((-C / T : ℝ) : ℂ) •
+            monotonePrimeAtomAggregateSlice parent k S)) := by
+    apply TestFunction.ext
+    intro x
+    change
+      (T : ℂ) * monotoneQuarterCell parent k x +
+          ((-C : ℝ) : ℂ) * monotonePrimeAtomAggregateSlice parent k S x =
+        (T : ℂ) * (monotoneQuarterCell parent k x +
+          (((-C / T : ℝ) : ℂ) *
+            monotonePrimeAtomAggregateSlice parent k S x))
+    rw [mul_add, ← mul_assoc]
+    congr 2
+    push_cast
+    field_simp [hT']
+  rw [heq]
+  exact ratioTwo_real_smul _ T hpencil
+
+/-- The inner residual retains the original suffix tail, scaled only by the
+aggregate reserve. -/
+theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_apply_of_upper
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    {x : ℝ} (hx : quarterLogLatticePoint (k + 3) ≤ x) :
+    monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S x =
+      (monotonePrimeAtomAggregateReserve parent k S : ℂ) * parent x := by
+  have hinner : monotoneQuarterStep (k + 1) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    exact (quarterLogLatticePoint_mono (by omega)).trans hx
+  have hlower : monotoneQuarterStep (k - 1) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    rw [show k - 1 + 1 = k by ring]
+    exact (quarterLogLatticePoint_mono (by omega)).trans hx
+  have hupper : monotoneQuarterStep (k + 2) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    simpa only [show k + 2 + 1 = k + 3 by ring] using hx
+  simp only [monotonePrimeAtomInnerAggregateOrthogonalResidual,
+    TestFunction.coe_add, Pi.add_apply,
+    TestFunction.coe_smul, Pi.smul_apply, smul_eq_mul,
+    monotoneQuarterCutoff_apply, monotonePrimeAtomAggregateSlice,
+    monotoneRatioTwoBlock_apply, monotoneRatioTwoBlockMultiplier]
+  rw [hinner, show k - 1 + 3 = k + 2 by ring, hlower, hupper]
+  norm_num
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
