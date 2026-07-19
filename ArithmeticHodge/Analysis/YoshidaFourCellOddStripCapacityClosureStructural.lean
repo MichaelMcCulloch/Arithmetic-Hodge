@@ -39,6 +39,7 @@ open YoshidaFourCellRegularParityFoldStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaFactorTwoPhaseIntrinsicRankResidualBound
+open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
@@ -4248,6 +4249,149 @@ theorem fourCellOddSignedMassRegularBilinear_sq_le_mul
   convert hnonneg using 1
   all_goals ring
 
+private theorem integral_factorTwoCenteredCorrelationBilinear_eq_zero_of_odd
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) :
+    (∫ t : ℝ in 0..2,
+      factorTwoCenteredCorrelationBilinear u v t) = 0 := by
+  have hsum : Function.Odd (u + v) := huodd.add hvodd
+  have hu0 := integral_centeredEndpointCorrelation_eq_zero_of_odd
+    u hu huodd
+  have hv0 := integral_centeredEndpointCorrelation_eq_zero_of_odd
+    v hv hvodd
+  have huv0 := integral_centeredEndpointCorrelation_eq_zero_of_odd
+    (u + v) (hu.add hv) hsum
+  have hCu : Continuous (centeredEndpointCorrelation u) :=
+    continuous_centeredEndpointCorrelation_of_continuous u hu
+  have hCv : Continuous (centeredEndpointCorrelation v) :=
+    continuous_centeredEndpointCorrelation_of_continuous v hv
+  have hB : Continuous (factorTwoCenteredCorrelationBilinear u v) := by
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation u v hu hv).add
+      (continuous_factorTwoCenteredCrossCorrelation v u hv hu)).div_const 2
+  have hCuInt : IntervalIntegrable (centeredEndpointCorrelation u)
+      volume 0 2 := hCu.intervalIntegrable _ _
+  have hCvInt : IntervalIntegrable (centeredEndpointCorrelation v)
+      volume 0 2 := hCv.intervalIntegrable _ _
+  have hBInt : IntervalIntegrable
+      (fun t : ℝ ↦ 2 * factorTwoCenteredCorrelationBilinear u v t)
+      volume 0 2 := (hB.const_mul 2).intervalIntegrable _ _
+  have hCuBInt : IntervalIntegrable
+      (fun t : ℝ ↦ centeredEndpointCorrelation u t +
+        2 * factorTwoCenteredCorrelationBilinear u v t)
+      volume 0 2 := hCuInt.add hBInt
+  have hexpand :
+      (∫ t : ℝ in 0..2, centeredEndpointCorrelation (u + v) t) =
+        (∫ t : ℝ in 0..2, centeredEndpointCorrelation u t) +
+          2 * (∫ t : ℝ in 0..2,
+            factorTwoCenteredCorrelationBilinear u v t) +
+          ∫ t : ℝ in 0..2, centeredEndpointCorrelation v t := by
+    rw [show (fun t : ℝ ↦ centeredEndpointCorrelation (u + v) t) =
+        fun t ↦ centeredEndpointCorrelation u t +
+          2 * factorTwoCenteredCorrelationBilinear u v t +
+            centeredEndpointCorrelation v t by
+      funext t
+      rw [centeredEndpointCorrelation_add u v hu hv t]]
+    calc
+      _ = (∫ t : ℝ in 0..2,
+            centeredEndpointCorrelation u t +
+              2 * factorTwoCenteredCorrelationBilinear u v t) +
+          ∫ t : ℝ in 0..2, centeredEndpointCorrelation v t :=
+        intervalIntegral.integral_add hCuBInt hCvInt
+      _ = ((∫ t : ℝ in 0..2, centeredEndpointCorrelation u t) +
+            ∫ t : ℝ in 0..2,
+              2 * factorTwoCenteredCorrelationBilinear u v t) +
+          ∫ t : ℝ in 0..2, centeredEndpointCorrelation v t := by
+        rw [intervalIntegral.integral_add hCuInt hBInt]
+      _ = _ := by
+        rw [intervalIntegral.integral_const_mul]
+  linarith
+
+/-- After the constant `1/5` regular-kernel row is annihilated by oddness,
+the complete mixed regular row costs only the `1/20` kernel fluctuation. -/
+theorem abs_fourCellRegularBilinear_le_one_twentieth_integral_abs
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) :
+    |(∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear u v t)| ≤
+      (1 / 20 : ℝ) * ∫ t : ℝ in 0..2,
+        |factorTwoCenteredCorrelationBilinear u v t| := by
+  let B : ℝ → ℝ := factorTwoCenteredCorrelationBilinear u v
+  let δ : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) - 1 / 5
+  have hB : Continuous B := by
+    dsimp only [B]
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation u v hu hv).add
+      (continuous_factorTwoCenteredCrossCorrelation v u hv hu)).div_const 2
+  have hBint : IntervalIntegrable B volume 0 2 :=
+    hB.intervalIntegrable _ _
+  have hKB := intervalIntegrable_fourCellRegularKernel_mul_continuous B hB
+  have hconst : IntervalIntegrable (fun t : ℝ ↦ (1 / 5 : ℝ) * B t)
+      volume 0 2 := hBint.const_mul (1 / 5)
+  have hδB : IntervalIntegrable (fun t : ℝ ↦ δ t * B t)
+      volume 0 2 := by
+    apply hKB.sub hconst |>.congr
+    intro t _ht
+    dsimp only [δ]
+    ring
+  have hmean : (∫ t : ℝ in 0..2, B t) = 0 := by
+    simpa only [B] using
+      integral_factorTwoCenteredCorrelationBilinear_eq_zero_of_odd
+        u v hu hv huodd hvodd
+  have hrewrite :
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * B t) =
+      ∫ t : ℝ in 0..2, δ t * B t := by
+    rw [show (fun t : ℝ ↦
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * B t) =
+      fun t ↦ δ t * B t + (1 / 5 : ℝ) * B t by
+      funext t
+      dsimp only [δ]
+      ring,
+      intervalIntegral.integral_add hδB hconst,
+      intervalIntegral.integral_const_mul, hmean]
+    ring
+  have hpoint : ∀ t ∈ Icc (0 : ℝ) 2,
+      |δ t * B t| ≤ (1 / 20 : ℝ) * |B t| := by
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+    have harg4 : fourCellOperatorHalfWidth * t ≤ 5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤ fourCellOperatorHalfWidth * 2 := hmul
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hk0 := one_fifth_le_yoshidaRegularKernel_fourCellRange harg0 harg4
+    have hk1 := yoshidaRegularKernel_le_quarter harg0
+    have hδ0 : 0 ≤ δ t := by dsimp only [δ]; linarith
+    have hδ1 : δ t ≤ (1 / 20 : ℝ) := by dsimp only [δ]; linarith
+    rw [abs_mul, abs_of_nonneg hδ0]
+    exact mul_le_mul_of_nonneg_right hδ1 (abs_nonneg _)
+  have habsInt : IntervalIntegrable (fun t : ℝ ↦ |δ t * B t|)
+      volume 0 2 := hδB.abs
+  have hmajorInt : IntervalIntegrable (fun t : ℝ ↦
+      (1 / 20 : ℝ) * |B t|) volume 0 2 :=
+    (hB.abs.intervalIntegrable _ _).const_mul (1 / 20)
+  have hmono :
+      (∫ t : ℝ in 0..2, |δ t * B t|) ≤
+        ∫ t : ℝ in 0..2, (1 / 20 : ℝ) * |B t| := by
+    apply intervalIntegral.integral_mono_on (by norm_num) habsInt hmajorInt
+    exact hpoint
+  have hnorm := intervalIntegral.norm_integral_le_integral_norm
+    (by norm_num : (0 : ℝ) ≤ 2) (f := fun t ↦ δ t * B t)
+      (μ := volume)
+  rw [intervalIntegral.integral_const_mul] at hmono
+  rw [hrewrite]
+  simp only [Real.norm_eq_abs] at hnorm
+  dsimp only [B] at hmono hnorm ⊢
+  linarith
+
 /-- The exact strip-prime diagonal dominates `49/50` of the physical
 endpoint mass.  Both parity coefficients are kept; the rational constant is
 only a common lower bound. -/
@@ -7054,6 +7198,146 @@ theorem centeredOddP5Coefficient_oneThreeFiveResidual_eq_zero
   rw [hsplit, hnorm]
   unfold fourCellOddP5TailCoefficient centeredOddP5Coefficient
   ring
+
+/-- Exact positive-half `L²` orthogonality of the `P₁/P₃/P₅` pivot and its
+infinite tail.  In particular, the large scalar-mass row contributes no
+mixed Schur term. -/
+theorem integral_zero_one_oneThreeFiveLowProfile_mul_tail_eq_zero
+    (r : ℝ → ℝ) (hr : Continuous r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (c d e : ℝ) :
+    (∫ x : ℝ in 0..1,
+      fourCellOddOneThreeFiveLowProfile c d e x * r x) = 0 := by
+  have honeInt : (∫ x : ℝ in -1..1, r x * centeredP1 x) = 0 := by
+    rw [integral_mul_centeredP1_eq, hone]
+    ring
+  have hthreeInt : (∫ x : ℝ in -1..1, r x * centeredP3 x) = 0 := by
+    rw [integral_mul_centeredP3_eq, hthree]
+    ring
+  have hfiveInt :
+      (∫ x : ℝ in -1..1, r x * factorTwoCenteredP5 x) = 0 := by
+    unfold centeredOddP5Coefficient at hfive
+    nlinarith
+  have hrOne : IntervalIntegrable (fun x : ℝ ↦ r x * centeredP1 x)
+      volume (-1) 1 :=
+    (hr.mul (by unfold centeredP1; fun_prop)).intervalIntegrable _ _
+  have hrThree : IntervalIntegrable (fun x : ℝ ↦ r x * centeredP3 x)
+      volume (-1) 1 :=
+    (hr.mul (by unfold centeredP3; fun_prop)).intervalIntegrable _ _
+  have hrFive : IntervalIntegrable
+      (fun x : ℝ ↦ r x * factorTwoCenteredP5 x) volume (-1) 1 :=
+    (hr.mul continuous_factorTwoCenteredP5).intervalIntegrable _ _
+  let p : ℝ → ℝ := fourCellOddOneThreeFiveLowProfile c d e
+  have hp : Continuous p := by
+    simpa only [p] using
+      (contDiff_fourCellOddOneThreeFiveLowProfile c d e).continuous
+  have hpodd : Function.Odd p := by
+    simpa only [p] using odd_fourCellOddOneThreeFiveLowProfile c d e
+  have hfull : (∫ x : ℝ in -1..1, p x * r x) = 0 := by
+    rw [show (fun x : ℝ ↦ p x * r x) =
+        fun x ↦ c * (r x * centeredP1 x) +
+          d * (r x * centeredP3 x) +
+            e * (r x * factorTwoCenteredP5 x) by
+      funext x
+      dsimp only [p]
+      unfold fourCellOddOneThreeFiveLowProfile
+        factorTwoOddStructuralLowProfile
+      ring,
+      intervalIntegral.integral_add
+        ((hrOne.const_mul c).add (hrThree.const_mul d))
+        (hrFive.const_mul e),
+      intervalIntegral.integral_add
+        (hrOne.const_mul c) (hrThree.const_mul d)]
+    repeat rw [intervalIntegral.integral_const_mul]
+    rw [honeInt, hthreeInt, hfiveInt]
+    ring
+  have hproductEven : Function.Even (fun x : ℝ ↦ p x * r x) := by
+    intro x
+    change p (-x) * r (-x) = p x * r x
+    rw [hpodd, hodd]
+    ring
+  have hproductInt : IntervalIntegrable (fun x : ℝ ↦ p x * r x)
+      volume (-1) 1 := (hp.mul hr).intervalIntegrable _ _
+  have hfold :
+      (∫ x : ℝ in -1..1, p x * r x) =
+        2 * ∫ x : ℝ in 0..1, p x * r x :=
+    integral_neg_one_one_eq_two_mul_zero_one_of_even
+      (fun x : ℝ ↦ p x * r x) hproductInt hproductEven
+  linarith
+
+/-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
+remaining wide-regular term is controlled by the product `L²` energy. -/
+theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
+    (r : ℝ → ℝ) (hr : Continuous r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (c d e : ℝ) :
+    fourCellOddSignedMassRegularBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) r ^ 2 ≤
+      (fourCellOperatorHalfWidth / 10) ^ 2 *
+        factorTwoIntrinsicEnergy
+          (fourCellOddOneThreeFiveLowProfile c d e) *
+        factorTwoIntrinsicEnergy r := by
+  let p : ℝ → ℝ := fourCellOddOneThreeFiveLowProfile c d e
+  let I : ℝ := ∫ t : ℝ in 0..2,
+    |factorTwoCenteredCorrelationBilinear p r t|
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      factorTwoCenteredCorrelationBilinear p r t
+  let Eₚ : ℝ := factorTwoIntrinsicEnergy p
+  let Eᵣ : ℝ := factorTwoIntrinsicEnergy r
+  have hp : Continuous p := by
+    simpa only [p] using
+      (contDiff_fourCellOddOneThreeFiveLowProfile c d e).continuous
+  have hpodd : Function.Odd p := by
+    simpa only [p] using odd_fourCellOddOneThreeFiveLowProfile c d e
+  have hmass : (∫ x : ℝ in 0..1, p x * r x) = 0 := by
+    simpa only [p] using
+      integral_zero_one_oneThreeFiveLowProfile_mul_tail_eq_zero
+        r hr hodd hone hthree hfive c d e
+  have hregular : |R| ≤ (1 / 20 : ℝ) * I := by
+    simpa only [R, I, p] using
+      abs_fourCellRegularBilinear_le_one_twentieth_integral_abs
+        p r hp hr hpodd hodd
+  have hrow :
+      fourCellOddSignedMassRegularBilinear p r =
+        2 * fourCellOperatorHalfWidth * R := by
+    unfold fourCellOddSignedMassRegularBilinear
+    rw [hmass]
+    dsimp only [R]
+    ring
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hI0 : 0 ≤ I := by
+    dsimp only [I]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _t _ht ↦ abs_nonneg _)
+  have habs :
+      |fourCellOddSignedMassRegularBilinear p r| ≤
+        (fourCellOperatorHalfWidth / 10) * I := by
+    rw [hrow, abs_mul, abs_of_nonneg (by positivity :
+      0 ≤ 2 * fourCellOperatorHalfWidth)]
+    nlinarith
+  have hI : I ^ 2 ≤ Eₚ * Eᵣ := by
+    dsimp only [I, Eₚ, Eᵣ]
+    exact
+      ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural.integral_abs_factorTwoCenteredCorrelationBilinear_sq_le_energy_mul
+        p r hp hr
+  calc
+    fourCellOddSignedMassRegularBilinear p r ^ 2 =
+        |fourCellOddSignedMassRegularBilinear p r| ^ 2 := by
+      rw [sq_abs]
+    _ ≤ ((fourCellOperatorHalfWidth / 10) * I) ^ 2 :=
+      (sq_le_sq₀ (abs_nonneg _)
+        (mul_nonneg (div_nonneg ha0 (by norm_num)) hI0)).2 habs
+    _ = (fourCellOperatorHalfWidth / 10) ^ 2 * I ^ 2 := by ring
+    _ ≤ (fourCellOperatorHalfWidth / 10) ^ 2 * (Eₚ * Eᵣ) :=
+      mul_le_mul_of_nonneg_left hI (sq_nonneg _)
+    _ = (fourCellOperatorHalfWidth / 10) ^ 2 * Eₚ * Eᵣ := by ring
 
 /-- After the exact `P₁/P₃/P₅` raw-log orthogonality is used, the global
 same-sign/reflected raw polarization vanishes.  The raw part of the Schur
