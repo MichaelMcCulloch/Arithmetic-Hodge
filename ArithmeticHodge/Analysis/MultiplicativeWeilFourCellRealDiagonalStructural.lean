@@ -27,12 +27,10 @@ complete local critical diagonal therefore has the arbitrary-halfwidth
 physical expression, with no coercive relaxation or discarded kernel term.
 -/
 
-/-- The normalized complete four-cell profile is smooth, hence locally
-Lipschitz on the centered physical interval. -/
-theorem fourCellNormalizedRealProfile_locallyLipschitzOn
+/-- The normalized complete four-cell profile retains one full derivative. -/
+theorem fourCellNormalizedRealProfile_contDiff
     (parent : BombieriTest) (k : ℤ) :
-    LocallyLipschitzOn (Icc (-1) 1)
-      (fourCellNormalizedRealProfile parent k) := by
+    ContDiff ℝ 1 (fourCellNormalizedRealProfile parent k) := by
   have hsupported :=
     fourCellWholeCentered_criticalPullbackSupported parent k
   have hscale : ContDiff ℝ 1
@@ -44,14 +42,20 @@ theorem fourCellNormalizedRealProfile_locallyLipschitzOn
           (fourCellWholeHalfWidth k * x)) :=
     ((fourCellWholeCentered parent k).logarithmicPullbackSchwartz (1 / 2)).smooth 1
       |>.comp hscale
-  have hprofile : ContDiff ℝ 1
+  unfold fourCellNormalizedRealProfile centeredRescale
+  rw [show (fourCellWholeProfile parent k : ℝ → ℂ) =
+      (fourCellWholeCentered parent k).logarithmicPullbackSchwartz (1 / 2) by
+    exact yoshidaCriticalPullbackCrop_eq_logarithmicPullbackSchwartz hsupported]
+  exact Complex.reCLM.contDiff.comp hpullback
+
+/-- The normalized complete four-cell profile is smooth, hence locally
+Lipschitz on the centered physical interval. -/
+theorem fourCellNormalizedRealProfile_locallyLipschitzOn
+    (parent : BombieriTest) (k : ℤ) :
+    LocallyLipschitzOn (Icc (-1) 1)
       (fourCellNormalizedRealProfile parent k) := by
-    unfold fourCellNormalizedRealProfile centeredRescale
-    rw [show (fourCellWholeProfile parent k : ℝ → ℂ) =
-        (fourCellWholeCentered parent k).logarithmicPullbackSchwartz (1 / 2) by
-      exact yoshidaCriticalPullbackCrop_eq_logarithmicPullbackSchwartz hsupported]
-    exact Complex.reCLM.contDiff.comp hpullback
-  exact hprofile.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  exact (fourCellNormalizedRealProfile_contDiff parent k).contDiffOn
+    |>.locallyLipschitzOn (convex_Icc (-1) 1)
 
 /-- The local critical diagonal of a conjugation-fixed production four-cell
 block is exactly the halfwidth times the centered physical quadratic. -/
