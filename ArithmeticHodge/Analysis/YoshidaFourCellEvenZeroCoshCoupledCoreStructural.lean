@@ -346,20 +346,20 @@ theorem fourCellEvenZeroCoshCoupledCore_intrinsicEvenP024Profile_eq_quadratic
   linarith
 
 set_option maxHeartbeats 600000 in
-/-- The complete low `P₀/P₂/P₄` coupled core clears `33 / 20` on
-the same narrow constant cone forced by the zero-wide-cosh condition.  This
-is a three-coordinate Schur estimate for the joint raw/potential/prime Gram;
-no list of test profiles and no independent prime payment is used. -/
-theorem thirtyThree_div_twenty_mass_le_coupledCore_intrinsicEvenP024_of_constant_small
-    (c0 c2 c4 : ℝ)
-    (hconstant : c0 ^ 2 ≤ (1 / 4000 : ℝ) *
-      (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
-        (2 / 9 : ℝ) * c4 ^ 2)) :
+/-- Quantitative low-block reserve before imposing the zero-cosh cone.  The
+nonconstant `P₂/P₄` mass survives with coefficient `3 / 100`; the only
+defect is the displayed constant-coordinate charge.  This is the form that
+can be absorbed jointly with the infinite tail. -/
+theorem three_div_hundred_nonconstantReserve_le_coupledCore_add_constantDefect
+    (c0 c2 c4 : ℝ) :
     (33 / 20 : ℝ) *
         (∫ x : ℝ in -1..1,
-          factorTwoIntrinsicEvenP024Profile c0 c2 c4 x ^ 2) ≤
+          factorTwoIntrinsicEvenP024Profile c0 c2 c4 x ^ 2) +
+        (3 / 100 : ℝ) *
+          ((2 / 5 : ℝ) * c2 ^ 2 + (2 / 9 : ℝ) * c4 ^ 2) ≤
       fourCellEvenZeroCoshCoupledCore
-        (factorTwoIntrinsicEvenP024Profile c0 c2 c4) := by
+        (factorTwoIntrinsicEvenP024Profile c0 c2 c4) +
+          (451 / 10 : ℝ) * c0 ^ 2 := by
   let beta : ℝ := Real.sqrt 2 * Real.log 2
   let N : ℝ := (2 / 5 : ℝ) * c2 ^ 2 + (2 / 9 : ℝ) * c4 ^ 2
   let A00 : ℝ :=
@@ -521,29 +521,51 @@ theorem thirtyThree_div_twenty_mass_le_coupledCore_intrinsicEvenP024_of_constant
     have h44 := mul_le_mul_of_nonneg_right hA44 (sq_nonneg c4)
     dsimp only [N]
     nlinarith
-  have hconstant' : 3998 * c0 ^ 2 ≤ N := by
+  have hminorCost :
+      (1 / 250 : ℝ) * c2 ^ 2 + (1 / 896 : ℝ) * c4 ^ 2 ≤
+        (1 / 100 : ℝ) * N := by
     dsimp only [N]
-    nlinarith only [hconstant]
-  have habsorb :
-      (31 / 10 : ℝ) * c0 ^ 2 + 28 * c0 ^ 2 + 14 * c0 ^ 2 +
-          (1 / 250 : ℝ) * c2 ^ 2 +
-          (1 / 896 : ℝ) * c4 ^ 2 ≤
-        (1 / 25 : ℝ) * N := by
-    dsimp only [N] at hconstant' ⊢
-    nlinarith only [hconstant', sq_nonneg c0, sq_nonneg c2, sq_nonneg c4]
-  have hquadratic : 0 ≤
+    nlinarith only [sq_nonneg c2, sq_nonneg c4]
+  have hquadratic : (3 / 100 : ℝ) * N ≤
       A00 * c0 ^ 2 + A22 * c2 ^ 2 + A44 * c4 ^ 2 +
-        C02 * c0 * c2 + C04 * c0 * c4 + C24 * c2 * c4 := by
+        C02 * c0 * c2 + C04 * c0 * c4 + C24 * c2 * c4 +
+          (451 / 10 : ℝ) * c0 ^ 2 := by
     have h00 := mul_le_mul_of_nonneg_right hA00 (sq_nonneg c0)
-    linear_combination h00 + hp24 + hcross02 + hcross04 + habsorb
+    linear_combination h00 + hp24 + hcross02 + hcross04 + hminorCost
   have hcore :=
     fourCellEvenZeroCoshCoupledCore_intrinsicEvenP024Profile_eq_quadratic
       c0 c2 c4
   have hmass := integral_factorTwoIntrinsicEvenP024Profile_sq c0 c2 c4
   rw [hmass, hcore]
   unfold symmetricQuadratic
-  dsimp only [A00, A22, A44, C02, C04, C24, beta] at hquadratic
+  dsimp only [A00, A22, A44, C02, C04, C24, beta, N] at hquadratic
   nlinarith only [hquadratic]
+
+/-- The complete low `P₀/P₂/P₄` coupled core clears `33 / 20` on
+the narrow constant cone.  This is a direct corollary of the quantitative
+nonconstant reserve above. -/
+theorem thirtyThree_div_twenty_mass_le_coupledCore_intrinsicEvenP024_of_constant_small
+    (c0 c2 c4 : ℝ)
+    (hconstant : c0 ^ 2 ≤ (1 / 4000 : ℝ) *
+      (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+        (2 / 9 : ℝ) * c4 ^ 2)) :
+    (33 / 20 : ℝ) *
+        (∫ x : ℝ in -1..1,
+          factorTwoIntrinsicEvenP024Profile c0 c2 c4 x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore
+        (factorTwoIntrinsicEvenP024Profile c0 c2 c4) := by
+  let N : ℝ := (2 / 5 : ℝ) * c2 ^ 2 + (2 / 9 : ℝ) * c4 ^ 2
+  have hreserve :=
+    three_div_hundred_nonconstantReserve_le_coupledCore_add_constantDefect
+      c0 c2 c4
+  have hconstant' : 3998 * c0 ^ 2 ≤ N := by
+    dsimp only [N]
+    nlinarith only [hconstant]
+  have habsorb : (451 / 10 : ℝ) * c0 ^ 2 ≤
+      (3 / 100 : ℝ) * N := by
+    nlinarith only [hconstant']
+  dsimp only [N] at hreserve habsorb
+  linarith
 
 private theorem upperStripPotential_le_fullPotential_of_even
     (w : ℝ → ℝ) (hw : Continuous w) (heven : Function.Even w) :
