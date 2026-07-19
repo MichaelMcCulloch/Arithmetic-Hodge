@@ -8534,6 +8534,169 @@ theorem fourCellOddOneThreeFiveCombined_entry_bounds :
   · nlinarith
   constructor <;> nlinarith
 
+/-- Leading `P₁/P₃` principal minor of the exact algebraic block. -/
+def fourCellOddOneThreeFiveCombinedMinor13 : ℝ :=
+  fourCellOddLowCombined11 * fourCellOddLowCombined33 -
+    fourCellOddLowCombined13 ^ 2
+
+/-- Determinant of the exact algebraic P135 block. -/
+def fourCellOddOneThreeFiveCombinedDeterminant : ℝ :=
+  fourCellOddLowCombined11 * fourCellOddLowCombined33 *
+      fourCellOddOneThreeFiveCombined55 +
+    2 * fourCellOddLowCombined13 *
+      fourCellOddOneThreeFiveCombined15 *
+        fourCellOddOneThreeFiveCombined35 -
+    fourCellOddLowCombined11 * fourCellOddOneThreeFiveCombined35 ^ 2 -
+    fourCellOddLowCombined33 * fourCellOddOneThreeFiveCombined15 ^ 2 -
+    fourCellOddOneThreeFiveCombined55 * fourCellOddLowCombined13 ^ 2
+
+/-- Strict Sylvester data for the exact algebraic P135 block. -/
+theorem fourCellOddOneThreeFiveCombined_principal_data :
+    0 < fourCellOddLowCombined11 ∧
+      0 < fourCellOddOneThreeFiveCombinedMinor13 ∧
+        (1 / 5000 : ℝ) <
+          fourCellOddOneThreeFiveCombinedDeterminant := by
+  let A : ℝ := fourCellOddLowCombined11
+  let B : ℝ := fourCellOddLowCombined13
+  let D : ℝ := fourCellOddLowCombined33
+  let E : ℝ := fourCellOddOneThreeFiveCombined15
+  let F : ℝ := fourCellOddOneThreeFiveCombined35
+  let G : ℝ := fourCellOddOneThreeFiveCombined55
+  rcases fourCellOddOneThreeFiveCombined_entry_bounds with
+    ⟨hAlo, hAhi, hBlo, hBhi, hDlo, hDhi,
+      hElo, hEhi, hFlo, hFhi, hGlo, hGhi⟩
+  change (629 / 2500 : ℝ) < A at hAlo
+  change A < (1261 / 5000 : ℝ) at hAhi
+  change (1093 / 5000 : ℝ) < B at hBlo
+  change B < (2187 / 10000 : ℝ) at hBhi
+  change (41 / 200 : ℝ) < D at hDlo
+  change D < (2053 / 10000 : ℝ) at hDhi
+  change (169 / 12500 : ℝ) < E at hElo
+  change E < (677 / 50000 : ℝ) at hEhi
+  change (6293 / 100000 : ℝ) < F at hFlo
+  change F < (1259 / 20000 : ℝ) at hFhi
+  change (49 / 200 : ℝ) < G at hGlo
+  change G < (613 / 2500 : ℝ) at hGhi
+  have hA0 : 0 ≤ A := by linarith
+  have hB0 : 0 ≤ B := by linarith
+  have hD0 : 0 ≤ D := by linarith
+  have hE0 : 0 ≤ E := by linarith
+  have hF0 : 0 ≤ F := by linarith
+  have hG0 : 0 ≤ G := by linarith
+  have hBsq : B ^ 2 ≤ (2187 / 10000 : ℝ) ^ 2 := by
+    nlinarith [mul_nonneg hB0 (sub_nonneg.mpr hBhi.le)]
+  have hEsq : E ^ 2 ≤ (677 / 50000 : ℝ) ^ 2 := by
+    nlinarith [mul_nonneg hE0 (sub_nonneg.mpr hEhi.le)]
+  have hFsq : F ^ 2 ≤ (1259 / 20000 : ℝ) ^ 2 := by
+    nlinarith [mul_nonneg hF0 (sub_nonneg.mpr hFhi.le)]
+  have hADlo : (629 / 2500 : ℝ) * (41 / 200) ≤ A * D := by
+    calc
+      (629 / 2500 : ℝ) * (41 / 200) ≤ A * (41 / 200) :=
+        mul_le_mul_of_nonneg_right hAlo.le (by norm_num)
+      _ ≤ A * D := mul_le_mul_of_nonneg_left hDlo.le hA0
+  have hADGlo :
+      (629 / 2500 : ℝ) * (41 / 200) * (49 / 200) ≤ A * D * G := by
+    calc
+      (629 / 2500 : ℝ) * (41 / 200) * (49 / 200) ≤
+          (A * D) * (49 / 200) :=
+        mul_le_mul_of_nonneg_right hADlo (by norm_num)
+      _ ≤ A * D * G :=
+        mul_le_mul_of_nonneg_left hGlo.le (mul_nonneg hA0 hD0)
+  have hBElo :
+      (1093 / 5000 : ℝ) * (169 / 12500) ≤ B * E := by
+    calc
+      (1093 / 5000 : ℝ) * (169 / 12500) ≤
+          B * (169 / 12500) :=
+        mul_le_mul_of_nonneg_right hBlo.le (by norm_num)
+      _ ≤ B * E := mul_le_mul_of_nonneg_left hElo.le hB0
+  have hBEFlo :
+      (1093 / 5000 : ℝ) * (169 / 12500) * (6293 / 100000) ≤
+        B * E * F := by
+    calc
+      (1093 / 5000 : ℝ) * (169 / 12500) * (6293 / 100000) ≤
+          (B * E) * (6293 / 100000) :=
+        mul_le_mul_of_nonneg_right hBElo (by norm_num)
+      _ ≤ B * E * F :=
+        mul_le_mul_of_nonneg_left hFlo.le (mul_nonneg hB0 hE0)
+  have hAFsq : A * F ^ 2 ≤
+      (1261 / 5000 : ℝ) * (1259 / 20000) ^ 2 := by
+    calc
+      A * F ^ 2 ≤ (1261 / 5000 : ℝ) * F ^ 2 :=
+        mul_le_mul_of_nonneg_right hAhi.le (sq_nonneg F)
+      _ ≤ (1261 / 5000 : ℝ) * (1259 / 20000) ^ 2 :=
+        mul_le_mul_of_nonneg_left hFsq (by norm_num)
+  have hDEsq : D * E ^ 2 ≤
+      (2053 / 10000 : ℝ) * (677 / 50000) ^ 2 := by
+    calc
+      D * E ^ 2 ≤ (2053 / 10000 : ℝ) * E ^ 2 :=
+        mul_le_mul_of_nonneg_right hDhi.le (sq_nonneg E)
+      _ ≤ (2053 / 10000 : ℝ) * (677 / 50000) ^ 2 :=
+        mul_le_mul_of_nonneg_left hEsq (by norm_num)
+  have hGBsq : G * B ^ 2 ≤
+      (613 / 2500 : ℝ) * (2187 / 10000) ^ 2 := by
+    calc
+      G * B ^ 2 ≤ (613 / 2500 : ℝ) * B ^ 2 :=
+        mul_le_mul_of_nonneg_right hGhi.le (sq_nonneg B)
+      _ ≤ (613 / 2500 : ℝ) * (2187 / 10000) ^ 2 :=
+        mul_le_mul_of_nonneg_left hBsq (by norm_num)
+  change 0 < A ∧ 0 < A * D - B ^ 2 ∧
+    (1 / 5000 : ℝ) <
+      A * D * G + 2 * B * E * F - A * F ^ 2 - D * E ^ 2 - G * B ^ 2
+  constructor
+  · exact hAlo.trans' (by norm_num)
+  constructor
+  · nlinarith [hADlo, hBsq]
+  · nlinarith [hADGlo, hBEFlo, hAFsq, hDEsq, hGBsq]
+
+/-- The exact algebraic P135 block is positive semidefinite.  The proof is
+an explicit `LDLᵀ` identity driven by the strict principal-minor data. -/
+theorem fourCellOddOneThreeFiveCombinedQuadratic_nonneg
+    (c d e : ℝ) :
+    0 ≤ fourCellOddOneThreeFiveCombinedQuadratic c d e := by
+  let A : ℝ := fourCellOddLowCombined11
+  let B : ℝ := fourCellOddLowCombined13
+  let D : ℝ := fourCellOddLowCombined33
+  let E : ℝ := fourCellOddOneThreeFiveCombined15
+  let F : ℝ := fourCellOddOneThreeFiveCombined35
+  let G : ℝ := fourCellOddOneThreeFiveCombined55
+  let Δ : ℝ := A * D - B ^ 2
+  let det : ℝ :=
+    A * D * G + 2 * B * E * F - A * F ^ 2 - D * E ^ 2 - G * B ^ 2
+  rcases fourCellOddOneThreeFiveCombined_principal_data with
+    ⟨hA, hΔ, hdet⟩
+  change 0 < A at hA
+  change 0 < Δ at hΔ
+  change (1 / 5000 : ℝ) < det at hdet
+  change 0 ≤
+    A * c ^ 2 + 2 * B * c * d + D * d ^ 2 +
+      2 * E * c * e + 2 * F * d * e + G * e ^ 2
+  let Q : ℝ :=
+    A * c ^ 2 + 2 * B * c * d + D * d ^ 2 +
+      2 * E * c * e + 2 * F * d * e + G * e ^ 2
+  have hid : A * Δ * Q =
+      Δ * (A * c + B * d + E * e) ^ 2 +
+        (Δ * d + (A * F - B * E) * e) ^ 2 +
+          A * det * e ^ 2 := by
+    dsimp only [Q, Δ, det]
+    ring
+  have hrhs : 0 ≤
+      Δ * (A * c + B * d + E * e) ^ 2 +
+        (Δ * d + (A * F - B * E) * e) ^ 2 +
+          A * det * e ^ 2 := by
+    have hdet0 : 0 ≤ det := by linarith
+    positivity
+  have hprod : 0 ≤ A * Δ * Q := by
+    rw [hid]
+    exact hrhs
+  have hcoef : 0 < A * Δ := mul_pos hA hΔ
+  have hQ : 0 ≤ Q := by
+    by_contra hneg
+    have hQneg : Q < 0 := lt_of_not_ge hneg
+    have hmulNeg : A * Δ * Q < 0 := by
+      exact mul_neg_of_pos_of_neg hcoef hQneg
+    linarith
+  exact hQ
+
 /-- Exact P135 diagonal of the complete core-plus-local target.  This is
 the finite `3 × 3` block minus one fully expanded wide regular form. -/
 theorem fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_eq
