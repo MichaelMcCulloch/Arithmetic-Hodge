@@ -57,6 +57,7 @@ open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseEnvelope
 open YoshidaFactorTwoPhaseSingularWeightedCauchyStructural
+open YoshidaFactorTwoPhaseStructuralLowData
 open YoshidaFourCellEvenCapacityStructural
 open YoshidaFourCellEvenEndpointCapacityCauchyStructural
 open YoshidaFourCellEvenPolarSchurStructural
@@ -2069,6 +2070,239 @@ theorem integral_fixedLagK_intrinsicEvenP0246_sq_eq_fullGram
     linarith [two_mul_integral_fixedLagRightP6_P6]
   rw [h00, h02, h04, h06, h22, h24, h26, h44, h46, h66]
   unfold fourCellEvenP0246CutoffEightFixedLagFullGram
+  ring
+
+private theorem factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_left
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (t : ℝ) (hr : Continuous r) :
+    factorTwoCenteredCorrelationBilinear
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r t =
+      c0 * factorTwoCenteredCorrelationBilinear centeredEvenP0 r t +
+        c2 * factorTwoCenteredCorrelationBilinear centeredEvenP2 r t +
+        c4 * factorTwoCenteredCorrelationBilinear factorTwoCenteredP4 r t +
+        c6 * factorTwoCenteredCorrelationBilinear factorTwoCenteredP6 r t := by
+  have h0 : Continuous centeredEvenP0 := by
+    unfold centeredEvenP0
+    fun_prop
+  have h2 : Continuous centeredEvenP2 := by
+    unfold centeredEvenP2
+    fun_prop
+  have h4 : Continuous factorTwoCenteredP4 :=
+    continuous_factorTwoCenteredP4
+  have h6 : Continuous factorTwoCenteredP6 :=
+    continuous_factorTwoCenteredP6
+  let f0 : ℝ → ℝ := fun x ↦ c0 * centeredEvenP0 x
+  let f2 : ℝ → ℝ := fun x ↦ c2 * centeredEvenP2 x
+  let f4 : ℝ → ℝ := fun x ↦ c4 * factorTwoCenteredP4 x
+  let f6 : ℝ → ℝ := fun x ↦ c6 * factorTwoCenteredP6 x
+  have hf0 : Continuous f0 := continuous_const.mul h0
+  have hf2 : Continuous f2 := continuous_const.mul h2
+  have hf4 : Continuous f4 := continuous_const.mul h4
+  have hf6 : Continuous f6 := continuous_const.mul h6
+  have hadd (u v w : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+      (hw : Continuous w) :
+      factorTwoCenteredCorrelationBilinear (u + v) w t =
+        factorTwoCenteredCorrelationBilinear u w t +
+          factorTwoCenteredCorrelationBilinear v w t := by
+    unfold factorTwoCenteredCorrelationBilinear
+    rw [factorTwoCenteredCrossCorrelation_add_left u v w hu hv hw t,
+      factorTwoCenteredCrossCorrelation_add_right w u v hw hu hv t]
+    ring
+  have hprofile :
+      factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 =
+        ((f0 + f2) + f4) + f6 := by
+    funext x
+    unfold factorTwoIntrinsicEvenP0246Profile
+      factorTwoIntrinsicEvenP024Profile factorTwoEvenStructuralLowProfile
+      factorTwoIntrinsicSixEvenTail
+    simp only [f0, f2, f4, f6, Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  rw [hprofile,
+    hadd ((f0 + f2) + f4) f6 r ((hf0.add hf2).add hf4) hf6 hr,
+    hadd (f0 + f2) f4 r (hf0.add hf2) hf4 hr,
+    hadd f0 f2 r hf0 hf2 hr]
+  change
+    factorTwoCenteredCorrelationBilinear (c0 • centeredEvenP0) r t +
+          factorTwoCenteredCorrelationBilinear (c2 • centeredEvenP2) r t +
+        factorTwoCenteredCorrelationBilinear (c4 • factorTwoCenteredP4) r t +
+      factorTwoCenteredCorrelationBilinear (c6 • factorTwoCenteredP6) r t = _
+  have hsmul (c : ℝ) (u : ℝ → ℝ) :
+      factorTwoCenteredCorrelationBilinear (c • u) r t =
+        c * factorTwoCenteredCorrelationBilinear u r t := by
+    simpa using factorTwoCenteredCorrelationBilinear_smul_smul
+      c 1 u r t
+  rw [hsmul c0 centeredEvenP0, hsmul c2 centeredEvenP2,
+    hsmul c4 factorTwoCenteredP4, hsmul c6 factorTwoCenteredP6]
+
+private theorem factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_p0
+    (c0 c2 c4 c6 : ℝ) :
+    factorTwoCenteredCorrelationBilinear
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)
+        centeredEvenP0 (8 / 5) =
+      (2 / 5 : ℝ) * c0 + (24 / 125 : ℝ) * c2 -
+        (72 / 3125 : ℝ) * c4 - (2856 / 78125 : ℝ) * c6 := by
+  rw [factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_left
+    c0 c2 c4 c6 centeredEvenP0 (8 / 5) (by
+      unfold centeredEvenP0
+      fun_prop),
+    factorTwoCenteredCorrelationBilinear_p0_p0,
+    factorTwoCenteredCorrelationBilinear_comm centeredEvenP2 centeredEvenP0,
+    factorTwoCenteredCorrelationBilinear_p0_p2,
+    factorTwoCenteredCorrelationBilinear_comm factorTwoCenteredP4 centeredEvenP0,
+    factorTwoCenteredCorrelationBilinear_p0_p4,
+    factorTwoCenteredCorrelationBilinear_comm factorTwoCenteredP6 centeredEvenP0,
+    factorTwoCenteredCorrelationBilinear_p0_p6]
+  norm_num [factorTwoIntrinsicP4Correlation04,
+    factorTwoIntrinsicP6Correlation06]
+  ring
+
+private theorem factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_p2
+    (c0 c2 c4 c6 : ℝ) :
+    factorTwoCenteredCorrelationBilinear
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)
+        centeredEvenP2 (8 / 5) =
+      (24 / 125 : ℝ) * c0 + (962 / 15625 : ℝ) * c2 -
+        (4072 / 78125 : ℝ) * c4 - (46536 / 1953125 : ℝ) * c6 := by
+  rw [factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_left
+    c0 c2 c4 c6 centeredEvenP2 (8 / 5) (by
+      unfold centeredEvenP2
+      fun_prop),
+    factorTwoCenteredCorrelationBilinear_p0_p2,
+    factorTwoCenteredCorrelationBilinear_p2_p2,
+    factorTwoCenteredCorrelationBilinear_comm factorTwoCenteredP4 centeredEvenP2,
+    factorTwoCenteredCorrelationBilinear_p2_p4,
+    factorTwoCenteredCorrelationBilinear_comm factorTwoCenteredP6 centeredEvenP2,
+    factorTwoCenteredCorrelationBilinear_p2_p6]
+  norm_num [factorTwoIntrinsicP4Correlation24,
+    factorTwoIntrinsicP6Correlation26]
+  ring
+
+private theorem factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_p4
+    (c0 c2 c4 c6 : ℝ) :
+    factorTwoCenteredCorrelationBilinear
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)
+        factorTwoCenteredP4 (8 / 5) =
+      -(72 / 3125 : ℝ) * c0 - (4072 / 78125 : ℝ) * c2 -
+        (164582 / 3515625 : ℝ) * c4 +
+        (381976 / 48828125 : ℝ) * c6 := by
+  rw [factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_left
+    c0 c2 c4 c6 factorTwoCenteredP4 (8 / 5)
+      continuous_factorTwoCenteredP4,
+    factorTwoCenteredCorrelationBilinear_p0_p4,
+    factorTwoCenteredCorrelationBilinear_p2_p4,
+    factorTwoCenteredCorrelationBilinear_self,
+    centeredEndpointCorrelation_p4,
+    factorTwoCenteredCorrelationBilinear_comm factorTwoCenteredP6 factorTwoCenteredP4,
+    factorTwoCenteredCorrelationBilinear_p4_p6]
+  norm_num [factorTwoIntrinsicP4Correlation04,
+    factorTwoIntrinsicP4Correlation24, factorTwoIntrinsicP4Correlation44,
+    factorTwoIntrinsicP6Correlation46]
+  ring
+
+private theorem factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_p6
+    (c0 c2 c4 c6 : ℝ) :
+    factorTwoCenteredCorrelationBilinear
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)
+        factorTwoCenteredP6 (8 / 5) =
+      -(2856 / 78125 : ℝ) * c0 - (46536 / 1953125 : ℝ) * c2 +
+        (381976 / 48828125 : ℝ) * c4 +
+        (456595778 / 15869140625 : ℝ) * c6 := by
+  rw [factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_left
+    c0 c2 c4 c6 factorTwoCenteredP6 (8 / 5)
+      continuous_factorTwoCenteredP6,
+    factorTwoCenteredCorrelationBilinear_p0_p6,
+    factorTwoCenteredCorrelationBilinear_p2_p6,
+    factorTwoCenteredCorrelationBilinear_p4_p6,
+    factorTwoCenteredCorrelationBilinear_p6_p6]
+  norm_num [factorTwoIntrinsicP6Correlation06,
+    factorTwoIntrinsicP6Correlation26, factorTwoIntrinsicP6Correlation46,
+    factorTwoIntrinsicP6Correlation66]
+  ring
+
+/-- Exact low Legendre coordinates of the fixed-lag representer. -/
+def fourCellEvenP0246CutoffEightFixedLagRow0
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  (4 / 5 : ℝ) * c0 + (48 / 125 : ℝ) * c2 -
+    (144 / 3125 : ℝ) * c4 - (5712 / 78125 : ℝ) * c6
+
+def fourCellEvenP0246CutoffEightFixedLagRow2
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  (48 / 125 : ℝ) * c0 + (1924 / 15625 : ℝ) * c2 -
+    (8144 / 78125 : ℝ) * c4 - (93072 / 1953125 : ℝ) * c6
+
+def fourCellEvenP0246CutoffEightFixedLagRow4
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  -(144 / 3125 : ℝ) * c0 - (8144 / 78125 : ℝ) * c2 -
+    (329164 / 3515625 : ℝ) * c4 +
+    (763952 / 48828125 : ℝ) * c6
+
+def fourCellEvenP0246CutoffEightFixedLagRow6
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  -(5712 / 78125 : ℝ) * c0 - (93072 / 1953125 : ℝ) * c2 +
+    (763952 / 48828125 : ℝ) * c4 +
+    (913191556 / 15869140625 : ℝ) * c6
+
+private theorem integral_fixedLagK_intrinsicEvenP0246_mul_eq_two_correlation
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r) :
+    (∫ x : ℝ in -1..1,
+      factorTwoFixedLagK (8 / 5)
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x * r x) =
+      2 * factorTwoCenteredCorrelationBilinear
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r (8 / 5) := by
+  have h := correlationBilinear_eq_fixedLagK
+    (8 / 5) (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r
+    (continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) hr
+    (by norm_num : (8 / 5 : ℝ) ∈ Icc 0 2)
+  linarith
+
+theorem integral_fixedLagK_intrinsicEvenP0246_mul_P0
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      factorTwoFixedLagK (8 / 5)
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x *
+        centeredEvenP0 x) =
+      fourCellEvenP0246CutoffEightFixedLagRow0 c0 c2 c4 c6 := by
+  rw [integral_fixedLagK_intrinsicEvenP0246_mul_eq_two_correlation
+    c0 c2 c4 c6 centeredEvenP0 (by unfold centeredEvenP0; fun_prop),
+    factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_p0]
+  unfold fourCellEvenP0246CutoffEightFixedLagRow0
+  ring
+
+theorem integral_fixedLagK_intrinsicEvenP0246_mul_P2
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      factorTwoFixedLagK (8 / 5)
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x *
+        centeredEvenP2 x) =
+      fourCellEvenP0246CutoffEightFixedLagRow2 c0 c2 c4 c6 := by
+  rw [integral_fixedLagK_intrinsicEvenP0246_mul_eq_two_correlation
+    c0 c2 c4 c6 centeredEvenP2 (by unfold centeredEvenP2; fun_prop),
+    factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_p2]
+  unfold fourCellEvenP0246CutoffEightFixedLagRow2
+  ring
+
+theorem integral_fixedLagK_intrinsicEvenP0246_mul_P4
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      factorTwoFixedLagK (8 / 5)
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x *
+        factorTwoCenteredP4 x) =
+      fourCellEvenP0246CutoffEightFixedLagRow4 c0 c2 c4 c6 := by
+  rw [integral_fixedLagK_intrinsicEvenP0246_mul_eq_two_correlation
+    c0 c2 c4 c6 factorTwoCenteredP4 continuous_factorTwoCenteredP4,
+    factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_p4]
+  unfold fourCellEvenP0246CutoffEightFixedLagRow4
+  ring
+
+theorem integral_fixedLagK_intrinsicEvenP0246_mul_P6
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      factorTwoFixedLagK (8 / 5)
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x *
+        factorTwoCenteredP6 x) =
+      fourCellEvenP0246CutoffEightFixedLagRow6 c0 c2 c4 c6 := by
+  rw [integral_fixedLagK_intrinsicEvenP0246_mul_eq_two_correlation
+    c0 c2 c4 c6 factorTwoCenteredP6 continuous_factorTwoCenteredP6,
+    factorTwoCenteredCorrelationBilinear_intrinsicEvenP0246_p6]
+  unfold fourCellEvenP0246CutoffEightFixedLagRow6
   ring
 
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
