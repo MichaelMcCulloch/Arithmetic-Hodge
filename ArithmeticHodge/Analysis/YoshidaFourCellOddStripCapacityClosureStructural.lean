@@ -3396,6 +3396,78 @@ theorem endpointStripScalarMass_le_weightedRaw_prime_potential
     intervalIntegral.integral_const_mul] at hmono
   exact hmono
 
+private theorem upperStripPotential_le_positiveHalfPotential
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ x : ℝ in 3 / 5..1,
+        yoshidaEndpointPotential x * w x ^ 2) ≤
+      ∫ x : ℝ in 0..1,
+        yoshidaEndpointPotential x * w x ^ 2 := by
+  have hfull := intervalIntegrable_endpointPotential_mul_sq w hw
+  have hleft : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * w x ^ 2)
+      volume 0 (3 / 5) := by
+    apply hfull.mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 3 / 5)] at hx
+    rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
+    exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  have hright : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * w x ^ 2)
+      volume (3 / 5) 1 := by
+    apply hfull.mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hleftNonneg : 0 ≤
+      ∫ x : ℝ in 0..3 / 5,
+        yoshidaEndpointPotential x * w x ^ 2 := by
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro x hx
+    have hoctic :
+        yoshidaEndpointOctic x ≤ yoshidaEndpointPotential x := by
+      apply octic_le_endpointPotential
+      rw [abs_lt]
+      constructor <;> linarith [hx.1, hx.2]
+    have hocticNonneg : 0 ≤ yoshidaEndpointOctic x := by
+      unfold yoshidaEndpointOctic
+      positivity
+    exact mul_nonneg (hocticNonneg.trans hoctic) (sq_nonneg _)
+  have hsplit := intervalIntegral.integral_add_adjacent_intervals hleft hright
+  linarith
+
+/-- Complete endpoint-strip closure inside the universal defect.  After the
+weighted raw and centered regular rows are coupled, the exact prime and
+potential diagonals pay `163/50` of the physical upper-strip mass. -/
+theorem endpointStripScalarMass_sub_regularCharge_le_coupledReserve
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (163 / 50 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) -
+        (fourCellOperatorHalfWidth / 10) *
+          (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellOddRawStripCancellationReserve w +
+        Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          fourCellOddEndpointStripOddMass w +
+        (93 / 50 : ℝ) *
+          (∫ x : ℝ in 0..1,
+            yoshidaEndpointPotential x * w x ^ 2) -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation w t) := by
+  have hdiagonal := endpointStripScalarMass_le_weightedRaw_prime_potential
+    w hw.continuous
+  have hraw :=
+    upperStripWeightedMass_sub_regularCharge_le_rawReserve_sub_regular
+      w hw hodd
+  have hprime := forty_nine_fiftieths_upperStripMass_le_primeDiagonal
+    w hw.continuous
+  have hpotential := upperStripPotential_le_positiveHalfPotential
+    w hw.continuous
+  have hpotentialMul := mul_le_mul_of_nonneg_left hpotential
+    (by norm_num : (0 : ℝ) ≤ 93 / 50)
+  linarith
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
