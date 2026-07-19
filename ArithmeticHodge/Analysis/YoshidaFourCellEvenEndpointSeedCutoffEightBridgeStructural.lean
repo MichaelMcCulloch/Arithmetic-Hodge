@@ -99,6 +99,14 @@ def fourCellEvenEndpointSeedP0246CoreRow
     (-(1 / 189 : ℝ) +
       (16576 / 1953125) * Real.sqrt 2 * Real.log 2) * c6
 
+/-- The complete finite endpoint-seed row on the `P0/P2/P4/P6` block. -/
+def fourCellEvenEndpointSeedP0246CompleteLowRow
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  fourCellEvenEndpointSeedP0246CoreRow c0 c2 c4 c6 -
+    fourCellEvenSignedMassRegularPolarization
+      fourCellEvenEndpointCoshSeed
+      (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)
+
 /-- Exact evaluation of the finite endpoint-seed coupled-core row.  This
 turns the outer low block into one explicit four-vector; no interval or
 analytic estimate enters the identity. -/
@@ -331,6 +339,42 @@ theorem fourCellEvenEndpointSeedRow_P0246_add_tail_eq_explicit
   rw [fourCellEvenEndpointSeedRow_P0246_add_tail_eq
     c0 c2 c4 c6 r hr hlocal hre hzero hlow,
     fourCellEvenZeroCoshCoupledCorePolarization_endpointSeed_P0246_eq]
+
+/-- Fully separated outer row for the cutoff-eight split.  The first summand
+is a fixed four-dimensional row.  The tail contributes only its endpoint
+capacity row minus the smooth regular-kernel row; no scalar mass or raw-log
+cross term remains. -/
+theorem fourCellEvenEndpointSeedRow_P0246_add_tail_eq_low_add_tail
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hre : Function.Even r)
+    (hzero : fourCellPositiveCoshMoment
+      (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 + r)
+        (fourCellOperatorHalfWidth / 2) = 0)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    fourCellEvenEndpointSeedRow
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 + r) =
+      fourCellEvenEndpointSeedP0246CompleteLowRow c0 c2 c4 c6 +
+        fourCellEvenEndpointCapacityPolarization
+          fourCellEvenEndpointCoshSeed r -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear
+                fourCellEvenEndpointCoshSeed r t) := by
+  have hp : Continuous
+      (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) :=
+    continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  rw [fourCellEvenEndpointSeedRow_P0246_add_tail_eq_explicit
+      c0 c2 c4 c6 r hr hlocal hre hzero hlow,
+    fourCellEvenSignedMassRegularPolarization_add_right
+      fourCellEvenEndpointCoshSeed
+      (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r
+      fourCellEvenEndpointCoshSeed_continuous hp hr,
+    fourCellEvenSignedMassRegularPolarization_endpointSeed_tail_eq_regular
+      r hr hlow]
+  unfold fourCellEvenEndpointSeedP0246CompleteLowRow
+  ring
 
 end
 

@@ -550,6 +550,64 @@ theorem fourCellEvenSignedMassRegularPolarization_smul_right
     intervalIntegral.integral_const_mul]
   ring
 
+/-- Additivity of the scalar-mass and smooth-kernel polarization in its
+second real argument. -/
+theorem fourCellEvenSignedMassRegularPolarization_add_right
+    (u v w : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (hw : Continuous w) :
+    fourCellEvenSignedMassRegularPolarization u (v + w) =
+      fourCellEvenSignedMassRegularPolarization u v +
+        fourCellEvenSignedMassRegularPolarization u w := by
+  have hmassV : IntervalIntegrable (fun x : ℝ ↦ u x * v x)
+      volume (-1) 1 := (hu.mul hv).intervalIntegrable _ _
+  have hmassW : IntervalIntegrable (fun x : ℝ ↦ u x * w x)
+      volume (-1) 1 := (hu.mul hw).intervalIntegrable _ _
+  have hmass :
+      (∫ x : ℝ in -1..1, u x * (v + w) x) =
+        (∫ x : ℝ in -1..1, u x * v x) +
+          ∫ x : ℝ in -1..1, u x * w x := by
+    rw [show (fun x : ℝ ↦ u x * (v + w) x) =
+        fun x ↦ u x * v x + u x * w x by
+      funext x
+      simp only [Pi.add_apply]
+      ring,
+      intervalIntegral.integral_add hmassV hmassW]
+  have hcorr (t : ℝ) :
+      factorTwoCenteredCorrelationBilinear u (v + w) t =
+        factorTwoCenteredCorrelationBilinear u v t +
+          factorTwoCenteredCorrelationBilinear u w t := by
+    unfold factorTwoCenteredCorrelationBilinear
+    rw [factorTwoCenteredCrossCorrelation_add_right u v w hu hv hw t,
+      factorTwoCenteredCrossCorrelation_add_left v w u hv hw hu t]
+    ring
+  have hBv : Continuous (factorTwoCenteredCorrelationBilinear u v) := by
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation u v hu hv).add
+      (continuous_factorTwoCenteredCrossCorrelation v u hv hu)).div_const 2
+  have hBw : Continuous (factorTwoCenteredCorrelationBilinear u w) := by
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation u w hu hw).add
+      (continuous_factorTwoCenteredCrossCorrelation w u hw hu)).div_const 2
+  have hIv := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (factorTwoCenteredCorrelationBilinear u v) hBv
+  have hIw := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (factorTwoCenteredCorrelationBilinear u w) hBw
+  unfold fourCellEvenSignedMassRegularPolarization
+  rw [hmass]
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        factorTwoCenteredCorrelationBilinear u (v + w) t) =
+      fun t ↦
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear u v t +
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear u w t by
+    funext t
+    rw [hcorr]
+    ring,
+    intervalIntegral.integral_add hIv hIw]
+  ring
+
 /-- Structural Cauchy--Schwarz for the positive scalar-mass and smooth
 regular-kernel form. -/
 theorem fourCellEvenSignedMassRegularPolarization_sq_le_mul
