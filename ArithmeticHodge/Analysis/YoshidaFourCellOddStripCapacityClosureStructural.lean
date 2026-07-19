@@ -7579,6 +7579,93 @@ theorem integral_zero_one_endpointPotential_mul_factorTwoCenteredP5_sq :
   rw [integral_endpointPotential_mul_factorTwoCenteredP5_sq] at hfold
   linarith
 
+/-- Exact endpoint-potential quadratic on the retained odd three-mode
+pivot.  All logarithmic diagonal terms and both rational cross moments are
+kept in closed form. -/
+theorem integral_zero_one_endpointPotential_oneThreeFiveLowProfile
+    (c d e : ℝ) :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x *
+        fourCellOddOneThreeFiveLowProfile c d e x ^ 2) =
+      (4 / 9 - (1 / 3 : ℝ) * Real.log 2) * c ^ 2 +
+        (1 / 5 : ℝ) * c * d +
+        (289 / 1470 - (1 / 7 : ℝ) * Real.log 2) * d ^ 2 +
+        (1 / 14 : ℝ) * c * e + (1 / 9 : ℝ) * d * e +
+        (19157 / 152460 - (1 / 11 : ℝ) * Real.log 2) * e ^ 2 := by
+  let q : ℝ → ℝ := factorTwoOddStructuralLowProfile c d
+  let v : ℝ → ℝ := fun x ↦ e * factorTwoCenteredP5 x
+  have hq : Continuous q := by
+    simpa only [q] using continuous_factorTwoOddStructuralLowProfile c d
+  have hv : Continuous v := by
+    dsimp only [v]
+    exact continuous_const.mul continuous_factorTwoCenteredP5
+  have hadd := integral_zero_one_endpointPotential_add_sq q v hq hv
+  have h15Full := intervalIntegrable_endpointPotential_mul
+    (fun x : ℝ ↦ centeredP1 x * factorTwoCenteredP5 x)
+    (by unfold centeredP1 factorTwoCenteredP5; fun_prop)
+  have h35Full := intervalIntegrable_endpointPotential_mul
+    (fun x : ℝ ↦ centeredP3 x * factorTwoCenteredP5 x)
+    (by unfold centeredP3 factorTwoCenteredP5; fun_prop)
+  have hsub : uIcc (0 : ℝ) 1 ⊆ uIcc (-1 : ℝ) 1 := by
+    intro x hx
+    norm_num at hx ⊢
+    constructor <;> linarith
+  have h15 := h15Full.mono_set hsub
+  have h35 := h35Full.mono_set hsub
+  have h15' : IntervalIntegrable
+    (fun x : ℝ ↦ yoshidaEndpointPotential x * centeredP1 x *
+      factorTwoCenteredP5 x) volume 0 1 := by
+    apply h15.congr
+    intro x _hx
+    ring
+  have h35' : IntervalIntegrable
+    (fun x : ℝ ↦ yoshidaEndpointPotential x * centeredP3 x *
+      factorTwoCenteredP5 x) volume 0 1 := by
+    apply h35.congr
+    intro x _hx
+    ring
+  have hcross :
+      (∫ x : ℝ in 0..1,
+        yoshidaEndpointPotential x * q x * v x) =
+        e * (c / 28 + d / 18) := by
+    rw [show (fun x : ℝ ↦ yoshidaEndpointPotential x * q x * v x) =
+        fun x ↦ (e * c) *
+            (yoshidaEndpointPotential x * centeredP1 x *
+              factorTwoCenteredP5 x) +
+          (e * d) *
+            (yoshidaEndpointPotential x * centeredP3 x *
+              factorTwoCenteredP5 x) by
+      funext x
+      dsimp only [q, v]
+      unfold factorTwoOddStructuralLowProfile
+      ring,
+      intervalIntegral.integral_add (h15'.const_mul (e * c))
+        (h35'.const_mul (e * d)),
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_const_mul,
+      integral_zero_one_endpointPotential_mul_centeredP1_mul_P5,
+      integral_zero_one_endpointPotential_mul_centeredP3_mul_P5]
+    ring
+  have hvSq :
+      (∫ x : ℝ in 0..1,
+        yoshidaEndpointPotential x * v x ^ 2) =
+        e ^ 2 *
+          (19157 / 152460 - (1 / 11 : ℝ) * Real.log 2) := by
+    rw [show (fun x : ℝ ↦ yoshidaEndpointPotential x * v x ^ 2) =
+        fun x ↦ e ^ 2 *
+          (yoshidaEndpointPotential x * factorTwoCenteredP5 x ^ 2) by
+      funext x
+      dsimp only [v]
+      ring,
+      intervalIntegral.integral_const_mul,
+      integral_zero_one_endpointPotential_mul_factorTwoCenteredP5_sq]
+  change (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * (q x + v x) ^ 2) = _
+  rw [hadd, hcross, hvSq]
+  dsimp only [q]
+  rw [integral_zero_one_endpointPotential_oddStructuralLow]
+  ring
+
 theorem contDiff_fourCellOddOneThreeFiveResidual
     (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
     ContDiff ℝ 1 (fourCellOddOneThreeFiveResidual w) := by
