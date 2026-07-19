@@ -2305,6 +2305,277 @@ theorem integral_fixedLagK_intrinsicEvenP0246_mul_P6
   unfold fourCellEvenP0246CutoffEightFixedLagRow6
   ring
 
+/-- The exact low Legendre projection of the fixed-lag representer. -/
+def fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+    (c0 c2 c4 c6 : ℝ) : ℝ[X] :=
+  factorTwoIntrinsicEvenP0246Polynomial
+    (fourCellEvenP0246CutoffEightFixedLagRow0 c0 c2 c4 c6 / 2)
+    (5 * fourCellEvenP0246CutoffEightFixedLagRow2 c0 c2 c4 c6 / 2)
+    (9 * fourCellEvenP0246CutoffEightFixedLagRow4 c0 c2 c4 c6 / 2)
+    (13 * fourCellEvenP0246CutoffEightFixedLagRow6 c0 c2 c4 c6 / 2)
+
+theorem centeredPolynomialLift_cutoffEightFixedLagSelector
+    (c0 c2 c4 c6 : ℝ) :
+    centeredPolynomialLift
+        (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+          c0 c2 c4 c6) =
+      factorTwoIntrinsicEvenP0246Profile
+        (fourCellEvenP0246CutoffEightFixedLagRow0 c0 c2 c4 c6 / 2)
+        (5 * fourCellEvenP0246CutoffEightFixedLagRow2 c0 c2 c4 c6 / 2)
+        (9 * fourCellEvenP0246CutoffEightFixedLagRow4 c0 c2 c4 c6 / 2)
+        (13 * fourCellEvenP0246CutoffEightFixedLagRow6 c0 c2 c4 c6 / 2) := by
+  unfold fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+  exact centeredPolynomialLift_intrinsicEvenP0246Polynomial _ _ _ _
+
+def fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  fourCellEvenP0246CutoffEightFixedLagRow0 c0 c2 c4 c6 ^ 2 / 2 +
+    (5 / 2 : ℝ) *
+      fourCellEvenP0246CutoffEightFixedLagRow2 c0 c2 c4 c6 ^ 2 +
+    (9 / 2 : ℝ) *
+      fourCellEvenP0246CutoffEightFixedLagRow4 c0 c2 c4 c6 ^ 2 +
+    (13 / 2 : ℝ) *
+      fourCellEvenP0246CutoffEightFixedLagRow6 c0 c2 c4 c6 ^ 2
+
+def fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+    (c0 c2 c4 c6 : ℝ) (x : ℝ) : ℝ :=
+  factorTwoFixedLagK (8 / 5)
+      (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x -
+    centeredPolynomialLift
+      (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+        c0 c2 c4 c6) x
+
+private theorem intervalIntegrable_fixedLagK_intrinsicEvenP0246_mul
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r) :
+    IntervalIntegrable
+      (fun x : ℝ ↦
+        factorTwoFixedLagK (8 / 5)
+            (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x * r x)
+      volume (-1) 1 := by
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hp : Continuous p := by
+    simpa only [p] using
+      continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hright :=
+    intervalIntegrable_mul_factorTwoFixedLagRightRepresenter
+      (8 / 5) p r hp hr
+  have hleft0 :=
+    intervalIntegrable_mul_factorTwoFixedLagLeftRepresenter
+      (8 / 5) r p hr hp
+  have hleft : IntervalIntegrable
+      (fun x : ℝ ↦ factorTwoFixedLagLeftRepresenter (8 / 5) p x * r x)
+      volume (-1) 1 := by
+    apply hleft0.congr
+    intro x _hx
+    ring
+  apply (hright.add hleft).congr
+  intro x _hx
+  unfold factorTwoFixedLagK
+  dsimp only [p]
+  ring
+
+theorem integral_cutoffEightFixedLagSelector_sq_eq_lowProjectionEnergy
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+            c0 c2 c4 c6) x ^ 2) =
+      fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+        c0 c2 c4 c6 := by
+  rw [centeredPolynomialLift_cutoffEightFixedLagSelector]
+  have hmass := factorTwoIntrinsicEnergy_intrinsicEvenP0246
+    (fourCellEvenP0246CutoffEightFixedLagRow0 c0 c2 c4 c6 / 2)
+    (5 * fourCellEvenP0246CutoffEightFixedLagRow2 c0 c2 c4 c6 / 2)
+    (9 * fourCellEvenP0246CutoffEightFixedLagRow4 c0 c2 c4 c6 / 2)
+    (13 * fourCellEvenP0246CutoffEightFixedLagRow6 c0 c2 c4 c6 / 2)
+  change (∫ x : ℝ in -1..1,
+      factorTwoIntrinsicEvenP0246Profile
+        (fourCellEvenP0246CutoffEightFixedLagRow0 c0 c2 c4 c6 / 2)
+        (5 * fourCellEvenP0246CutoffEightFixedLagRow2 c0 c2 c4 c6 / 2)
+        (9 * fourCellEvenP0246CutoffEightFixedLagRow4 c0 c2 c4 c6 / 2)
+        (13 * fourCellEvenP0246CutoffEightFixedLagRow6 c0 c2 c4 c6 / 2) x ^ 2) = _
+    at hmass
+  rw [hmass]
+  unfold fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+  ring
+
+theorem integral_fixedLagK_mul_cutoffEightSelector_eq_lowProjectionEnergy
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      factorTwoFixedLagK (8 / 5)
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) x *
+        centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+            c0 c2 c4 c6) x) =
+      fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+        c0 c2 c4 c6 := by
+  let K : ℝ → ℝ := factorTwoFixedLagK (8 / 5)
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)
+  let b0 : ℝ := fourCellEvenP0246CutoffEightFixedLagRow0 c0 c2 c4 c6
+  let b2 : ℝ := fourCellEvenP0246CutoffEightFixedLagRow2 c0 c2 c4 c6
+  let b4 : ℝ := fourCellEvenP0246CutoffEightFixedLagRow4 c0 c2 c4 c6
+  let b6 : ℝ := fourCellEvenP0246CutoffEightFixedLagRow6 c0 c2 c4 c6
+  let d0 : ℝ := b0 / 2
+  let d2 : ℝ := 5 * b2 / 2
+  let d4 : ℝ := 9 * b4 / 2
+  let d6 : ℝ := 13 * b6 / 2
+  have h0 : Continuous centeredEvenP0 := by
+    unfold centeredEvenP0
+    fun_prop
+  have h2 : Continuous centeredEvenP2 := by
+    unfold centeredEvenP2
+    fun_prop
+  have h0I : IntervalIntegrable (fun x : ℝ ↦ K x * centeredEvenP0 x)
+      volume (-1) 1 := by
+    simpa only [K] using
+      intervalIntegrable_fixedLagK_intrinsicEvenP0246_mul
+        c0 c2 c4 c6 centeredEvenP0 h0
+  have h2I : IntervalIntegrable (fun x : ℝ ↦ K x * centeredEvenP2 x)
+      volume (-1) 1 := by
+    simpa only [K] using
+      intervalIntegrable_fixedLagK_intrinsicEvenP0246_mul
+        c0 c2 c4 c6 centeredEvenP2 h2
+  have h4I : IntervalIntegrable (fun x : ℝ ↦ K x * factorTwoCenteredP4 x)
+      volume (-1) 1 := by
+    simpa only [K] using
+      intervalIntegrable_fixedLagK_intrinsicEvenP0246_mul
+        c0 c2 c4 c6 factorTwoCenteredP4 continuous_factorTwoCenteredP4
+  have h6I : IntervalIntegrable (fun x : ℝ ↦ K x * factorTwoCenteredP6 x)
+      volume (-1) 1 := by
+    simpa only [K] using
+      intervalIntegrable_fixedLagK_intrinsicEvenP0246_mul
+        c0 c2 c4 c6 factorTwoCenteredP6 continuous_factorTwoCenteredP6
+  rw [centeredPolynomialLift_cutoffEightFixedLagSelector]
+  change (∫ x : ℝ in -1..1,
+    K x * factorTwoIntrinsicEvenP0246Profile d0 d2 d4 d6 x) = _
+  rw [show (fun x : ℝ ↦
+      K x * factorTwoIntrinsicEvenP0246Profile d0 d2 d4 d6 x) =
+    fun x ↦ d0 * (K x * centeredEvenP0 x) +
+      (d2 * (K x * centeredEvenP2 x) +
+        (d4 * (K x * factorTwoCenteredP4 x) +
+          d6 * (K x * factorTwoCenteredP6 x))) by
+    funext x
+    unfold factorTwoIntrinsicEvenP0246Profile
+      factorTwoIntrinsicEvenP024Profile factorTwoEvenStructuralLowProfile
+      factorTwoIntrinsicSixEvenTail
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    ring,
+    intervalIntegral.integral_add (h0I.const_mul d0)
+      ((h2I.const_mul d2).add ((h4I.const_mul d4).add (h6I.const_mul d6))),
+    intervalIntegral.integral_add (h2I.const_mul d2)
+      ((h4I.const_mul d4).add (h6I.const_mul d6)),
+    intervalIntegral.integral_add (h4I.const_mul d4) (h6I.const_mul d6)]
+  repeat rw [intervalIntegral.integral_const_mul]
+  dsimp only [K]
+  rw [integral_fixedLagK_intrinsicEvenP0246_mul_P0,
+    integral_fixedLagK_intrinsicEvenP0246_mul_P2,
+    integral_fixedLagK_intrinsicEvenP0246_mul_P4,
+    integral_fixedLagK_intrinsicEvenP0246_mul_P6]
+  dsimp only [d0, d2, d4, d6, b0, b2, b4, b6]
+  unfold fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+  ring
+
+theorem integral_cutoffEightProjectedFixedLagRepresenter_sq_eq
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+        c0 c2 c4 c6 x ^ 2) =
+      fourCellEvenP0246CutoffEightFixedLagFullGram c0 c2 c4 c6 -
+        fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+          c0 c2 c4 c6 := by
+  let K : ℝ → ℝ := factorTwoFixedLagK (8 / 5)
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6)
+  let S : ℝ → ℝ := centeredPolynomialLift
+    (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial c0 c2 c4 c6)
+  have hScont : Continuous S := by
+    dsimp only [S]
+    unfold centeredPolynomialLift
+    fun_prop
+  have hKsqOn : Integrable (fun x : ℝ ↦ ‖K x‖ ^ 2)
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    (memLp_fixedLagK_intrinsicEvenP0246 c0 c2 c4 c6).integrable_norm_pow
+      (by norm_num)
+  have hKsq : IntervalIntegrable (fun x : ℝ ↦ K x ^ 2)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    apply hKsqOn.congr
+    filter_upwards with x
+    rw [Real.norm_eq_abs, sq_abs]
+  have hKS : IntervalIntegrable (fun x : ℝ ↦ K x * S x)
+      volume (-1) 1 := by
+    simpa only [K, S] using
+      intervalIntegrable_fixedLagK_intrinsicEvenP0246_mul c0 c2 c4 c6
+        (centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+            c0 c2 c4 c6)) hScont
+  have hSsq : IntervalIntegrable (fun x : ℝ ↦ S x ^ 2)
+      volume (-1) 1 := (hScont.pow 2).intervalIntegrable (-1) 1
+  have hpair : (∫ x : ℝ in -1..1, K x * S x) =
+      fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+        c0 c2 c4 c6 := by
+    simpa only [K, S] using
+      integral_fixedLagK_mul_cutoffEightSelector_eq_lowProjectionEnergy
+        c0 c2 c4 c6
+  have hSnorm : (∫ x : ℝ in -1..1, S x ^ 2) =
+      fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+        c0 c2 c4 c6 := by
+    simpa only [S] using
+      integral_cutoffEightFixedLagSelector_sq_eq_lowProjectionEnergy
+        c0 c2 c4 c6
+  have hKnorm : (∫ x : ℝ in -1..1, K x ^ 2) =
+      fourCellEvenP0246CutoffEightFixedLagFullGram c0 c2 c4 c6 := by
+    simpa only [K] using
+      integral_fixedLagK_intrinsicEvenP0246_sq_eq_fullGram c0 c2 c4 c6
+  change (∫ x : ℝ in -1..1, (K x - S x) ^ 2) = _
+  rw [show (fun x : ℝ ↦ (K x - S x) ^ 2) =
+      fun x ↦ K x ^ 2 - 2 * (K x * S x) + S x ^ 2 by
+    funext x
+    ring,
+    intervalIntegral.integral_add (hKsq.sub (hKS.const_mul 2)) hSsq,
+    intervalIntegral.integral_sub hKsq (hKS.const_mul 2),
+    intervalIntegral.integral_const_mul, hKnorm, hpair, hSnorm]
+  ring
+
+/-- Exact rational Gram of the fixed-lag representer after removing its
+four low even Legendre coordinates. -/
+def fourCellEvenP0246CutoffEightProjectedFixedLagGram
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  (409292364 / 6103515625 : ℝ) * c0 ^ 2 +
+    2 * (10364852784 / 152587890625 : ℝ) * c0 * c2 +
+    2 * (230583359856 / 3814697265625 : ℝ) * c0 * c4 +
+    2 * (3096631893936 / 95367431640625 : ℝ) * c0 * c6 +
+    (269782035804 / 3814697265625 : ℝ) * c2 ^ 2 +
+    2 * (6330010863536 / 95367431640625 : ℝ) * c2 * c4 +
+    2 * (94043534060016 / 2384185791015625 : ℝ) * c2 * c6 +
+    (495807790725572 / 7152557373046875 : ℝ) * c4 ^ 2 +
+    2 * (3027599173655344 / 59604644775390625 : ℝ) * c4 * c6 +
+    (1039233584463721932 / 19371509552001953125 : ℝ) * c6 ^ 2
+
+set_option maxHeartbeats 800000 in
+theorem fixedLagFullGram_sub_lowProjectionEnergy_eq_projectedGram
+    (c0 c2 c4 c6 : ℝ) :
+    fourCellEvenP0246CutoffEightFixedLagFullGram c0 c2 c4 c6 -
+        fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+          c0 c2 c4 c6 =
+      fourCellEvenP0246CutoffEightProjectedFixedLagGram c0 c2 c4 c6 := by
+  unfold fourCellEvenP0246CutoffEightFixedLagFullGram
+    fourCellEvenP0246CutoffEightFixedLagLowProjectionEnergy
+    fourCellEvenP0246CutoffEightFixedLagRow0
+    fourCellEvenP0246CutoffEightFixedLagRow2
+    fourCellEvenP0246CutoffEightFixedLagRow4
+    fourCellEvenP0246CutoffEightFixedLagRow6
+    fourCellEvenP0246CutoffEightProjectedFixedLagGram
+  ring
+
+theorem integral_cutoffEightProjectedFixedLagRepresenter_sq_eq_projectedGram
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+        c0 c2 c4 c6 x ^ 2) =
+      fourCellEvenP0246CutoffEightProjectedFixedLagGram c0 c2 c4 c6 := by
+  rw [integral_cutoffEightProjectedFixedLagRepresenter_sq_eq,
+    fixedLagFullGram_sub_lowProjectionEnergy_eq_projectedGram]
+
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
     (hlow : centeredLegendreMomentsVanishBelow r 8)
