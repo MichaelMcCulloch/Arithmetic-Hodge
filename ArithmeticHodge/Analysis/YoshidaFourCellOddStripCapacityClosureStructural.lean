@@ -2348,6 +2348,150 @@ theorem neg_fourCellOddStripLocalWidthDefect_low_le_core
         (factorTwoOddStructuralLowProfile c d) := by
   linarith [fourCellOddHalfCoreReserve_add_localWidthDefect_low_nonneg c d]
 
+/-! The low block of the retained octic core model. -/
+
+def fourCellOddOcticLowCombined11 : ℝ :=
+  rawLowQ11 + fourCellOddLowLocalAlgebraic11
+
+def fourCellOddOcticLowCombined13 : ℝ :=
+  rawLowQ13 + fourCellOddLowLocalAlgebraic13
+
+def fourCellOddOcticLowCombined33 : ℝ :=
+  rawLowQ33 + fourCellOddLowLocalAlgebraic33
+
+private theorem thirty_nine_two_fiftieths_le_fourCellOddOcticLowCombined11 :
+    (39 / 250 : ℝ) ≤ fourCellOddOcticLowCombined11 := by
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  have hp := sqrt_two_mul_log_two_bounds.1
+  have hl := strict_log_two_bounds.1
+  rw [show fourCellOddOcticLowCombined11 =
+      386959 / 415800 + (7 / 150 : ℝ) * Real.log 2 +
+        (94 / 375 : ℝ) * (Real.sqrt 2 * Real.log 2) -
+          (2 / 3 : ℝ) *
+            (Real.log (2 * fourCellOperatorHalfWidth) +
+              Real.eulerMascheroniConstant + Real.log Real.pi) by
+    unfold fourCellOddOcticLowCombined11
+      fourCellOddLowLocalAlgebraic11 rawLowQ11
+    ring]
+  nlinarith
+
+private theorem fourCellOddOcticLowCombined13_nonneg :
+    0 ≤ fourCellOddOcticLowCombined13 := by
+  rw [show fourCellOddOcticLowCombined13 =
+      709 / 6500 + (104 / 3125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) by
+    unfold fourCellOddOcticLowCombined13
+      fourCellOddLowLocalAlgebraic13 rawLowQ13
+    ring]
+  positivity
+
+private theorem fourCellOddOcticLowCombined13_le_seventy_one_five_hundredths :
+    fourCellOddOcticLowCombined13 ≤ (71 / 500 : ℝ) := by
+  have hp := sqrt_two_mul_log_two_bounds.2
+  rw [show fourCellOddOcticLowCombined13 =
+      709 / 6500 + (104 / 3125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) by
+    unfold fourCellOddOcticLowCombined13
+      fourCellOddLowLocalAlgebraic13 rawLowQ13
+    ring]
+  nlinarith
+
+private theorem sixty_nine_five_hundredths_le_fourCellOddOcticLowCombined33 :
+    (69 / 500 : ℝ) ≤ fourCellOddOcticLowCombined33 := by
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  have hp := sqrt_two_mul_log_two_bounds.2
+  have hl := strict_log_two_bounds.1
+  rw [show fourCellOddOcticLowCombined33 =
+      701216011 / 1126125000 - (5242 / 109375 : ℝ) *
+          (Real.sqrt 2 * Real.log 2) +
+        (1 / 50 : ℝ) * Real.log 2 -
+          (2 / 7 : ℝ) *
+            (Real.log (2 * fourCellOperatorHalfWidth) +
+              Real.eulerMascheroniConstant + Real.log Real.pi) by
+    unfold fourCellOddOcticLowCombined33
+      fourCellOddLowLocalAlgebraic33 rawLowQ33
+    ring]
+  nlinarith
+
+/-- The low block of the uncompleted octic core already absorbs the full
+wide regular budget.  This leaves the entire `53 / 60` tail reserve available
+for genuine low--tail and tail--tail terms. -/
+theorem fourCellOddLowRegularBudget_le_octicCombined (c d : ℝ) :
+    (13 / 2500 : ℝ) * c ^ 2 +
+        (91 / 50000 : ℝ) * |c * d| +
+          (61 / 100000 : ℝ) * d ^ 2 ≤
+      fourCellOddOcticLowCombined11 * c ^ 2 +
+        2 * fourCellOddOcticLowCombined13 * c * d +
+          fourCellOddOcticLowCombined33 * d ^ 2 := by
+  let A : ℝ := fourCellOddOcticLowCombined11
+  let B : ℝ := fourCellOddOcticLowCombined13
+  let D : ℝ := fourCellOddOcticLowCombined33
+  have hA : (39 / 250 : ℝ) ≤ A := by
+    simpa only [A] using
+      thirty_nine_two_fiftieths_le_fourCellOddOcticLowCombined11
+  have hB0 : 0 ≤ B := by
+    simpa only [B] using fourCellOddOcticLowCombined13_nonneg
+  have hB1 : B ≤ (71 / 500 : ℝ) := by
+    simpa only [B] using
+      fourCellOddOcticLowCombined13_le_seventy_one_five_hundredths
+  have hD : (69 / 500 : ℝ) ≤ D := by
+    simpa only [D] using
+      sixty_nine_five_hundredths_le_fourCellOddOcticLowCombined33
+  have hBabs : |B| ≤ (71 / 500 : ℝ) := by
+    apply abs_le.mpr
+    constructor <;> linarith
+  have hAcross : |2 * B * c * d| ≤ (71 / 250 : ℝ) * |c * d| := by
+    calc
+      |2 * B * c * d| = 2 * |B| * |c * d| := by
+        rw [show 2 * B * c * d = 2 * B * (c * d) by ring,
+          abs_mul, abs_mul]
+        norm_num
+      _ ≤ 2 * (71 / 500 : ℝ) * |c * d| := by gcongr
+      _ = (71 / 250 : ℝ) * |c * d| := by ring
+  have hcross : -(71 / 250 : ℝ) * |c * d| ≤ 2 * B * c * d := by
+    have h := (abs_le.mp hAcross).1
+    linarith
+  have hAmul : (39 / 250 : ℝ) * c ^ 2 ≤ A * c ^ 2 :=
+    mul_le_mul_of_nonneg_right hA (sq_nonneg c)
+  have hDmul : (69 / 500 : ℝ) * d ^ 2 ≤ D * d ^ 2 :=
+    mul_le_mul_of_nonneg_right hD (sq_nonneg d)
+  let A₀ : ℝ := 39 / 250 - 13 / 2500
+  let D₀ : ℝ := 69 / 500 - 61 / 100000
+  let K₀ : ℝ := 14291 / 50000
+  have hreduce :
+      A₀ * c ^ 2 + D₀ * d ^ 2 - K₀ * |c * d| ≤
+        A * c ^ 2 + 2 * B * c * d + D * d ^ 2 -
+          ((13 / 2500 : ℝ) * c ^ 2 +
+            (91 / 50000 : ℝ) * |c * d| +
+              (61 / 100000 : ℝ) * d ^ 2) := by
+    dsimp only [A₀, D₀, K₀]
+    linarith
+  have hsquare : 0 ≤ (21 * |c| - 20 * |d|) ^ 2 := sq_nonneg _
+  have hyoung :
+      2 * |c * d| ≤ (21 / 20 : ℝ) * c ^ 2 +
+        (20 / 21 : ℝ) * d ^ 2 := by
+    rw [abs_mul]
+    have hc : |c| ^ 2 = c ^ 2 := sq_abs c
+    have hd : |d| ^ 2 = d ^ 2 := sq_abs d
+    nlinarith
+  have hweighted := mul_le_mul_of_nonneg_left hyoung
+    (by norm_num : (0 : ℝ) ≤ 14291 / 100000)
+  have hcCoeff :
+      (14291 / 100000 : ℝ) * (21 / 20) ≤ A₀ := by
+    norm_num [A₀]
+  have hdCoeff :
+      (14291 / 100000 : ℝ) * (20 / 21) ≤ D₀ := by
+    norm_num [D₀]
+  have hcMul := mul_le_mul_of_nonneg_right hcCoeff (sq_nonneg c)
+  have hdMul := mul_le_mul_of_nonneg_right hdCoeff (sq_nonneg d)
+  have hpositive : 0 ≤
+      A₀ * c ^ 2 + D₀ * d ^ 2 - K₀ * |c * d| := by
+    dsimp only [K₀] at hweighted ⊢
+    linarith
+  have hfinal := hpositive.trans hreduce
+  dsimp only [A, B, D] at hfinal
+  linarith
+
 /-- The endpoint-strip parity split cancels every nonlocal raw term outside
 the strip from the core defect. -/
 theorem fourCellOddStripCorrelationCoreDefect_eq_localWidthDefect
