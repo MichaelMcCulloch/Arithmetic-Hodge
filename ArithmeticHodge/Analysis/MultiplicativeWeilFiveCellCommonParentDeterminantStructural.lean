@@ -756,6 +756,73 @@ def FiveCellCommonParentMiddlePivotResidualContraction
   (M * X - U * V) ^ 2 ≤
     (A * M - U ^ 2) * (M * E - V ^ 2)
 
+/-- For a positive middle pivot, the common-parent residual contraction is
+exactly real Cauchy--Schwarz for the two concrete middle-orthogonal residual
+tests. -/
+theorem fiveCellCommonParentMiddlePivotResidualContraction_iff_residualCross
+    (parent : BombieriTest) (k : ℤ)
+    (hMpos : 0 < bombieriRealQuadraticValue
+      (_root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k)) :
+    FiveCellCommonParentMiddlePivotResidualContraction parent k ↔
+      (bombieriTwoBlockGlobalCrossSymbol
+        (fiveCellLeftMiddleOrthogonalResidual parent k)
+        (fiveCellRightMiddleOrthogonalResidual parent k)).re ^ 2 ≤
+        bombieriRealQuadraticValue
+            (fiveCellLeftMiddleOrthogonalResidual parent k) *
+          bombieriRealQuadraticValue
+            (fiveCellRightMiddleOrthogonalResidual parent k) := by
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest :=
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+      parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ :=
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellRemoteEndpointBalance
+      parent k
+  let alpha : ℝ := A * M - U ^ 2
+  let beta : ℝ := M * E - V ^ 2
+  let delta : ℝ := M * X - U * V
+  change 0 < M at hMpos
+  have hcoordinates := fiveCell_middleOrthogonalResidual_coordinates parent k
+  change
+    bombieriRealQuadraticValue
+        (fiveCellLeftMiddleOrthogonalResidual parent k) = M * alpha ∧
+      bombieriRealQuadraticValue
+          (fiveCellRightMiddleOrthogonalResidual parent k) = M * beta ∧
+      (bombieriTwoBlockGlobalCrossSymbol
+        (fiveCellLeftMiddleOrthogonalResidual parent k)
+        (fiveCellRightMiddleOrthogonalResidual parent k)).re =
+          M * delta at hcoordinates
+  change delta ^ 2 ≤ alpha * beta ↔
+    (bombieriTwoBlockGlobalCrossSymbol
+      (fiveCellLeftMiddleOrthogonalResidual parent k)
+      (fiveCellRightMiddleOrthogonalResidual parent k)).re ^ 2 ≤
+      bombieriRealQuadraticValue
+          (fiveCellLeftMiddleOrthogonalResidual parent k) *
+        bombieriRealQuadraticValue
+          (fiveCellRightMiddleOrthogonalResidual parent k)
+  rw [hcoordinates.1, hcoordinates.2.1, hcoordinates.2.2]
+  constructor
+  · intro h
+    calc
+      (M * delta) ^ 2 = M ^ 2 * delta ^ 2 := by ring
+      _ ≤ M ^ 2 * (alpha * beta) :=
+        mul_le_mul_of_nonneg_left h (sq_nonneg M)
+      _ = (M * alpha) * (M * beta) := by ring
+  · intro h
+    have hscaled : M ^ 2 * delta ^ 2 ≤ M ^ 2 * (alpha * beta) := by
+      calc
+        M ^ 2 * delta ^ 2 = (M * delta) ^ 2 := by ring
+        _ ≤ (M * alpha) * (M * beta) := h
+        _ = M ^ 2 * (alpha * beta) := by ring
+    exact le_of_mul_le_mul_left hscaled (sq_pos_of_pos hMpos)
+
 /-- Sharp production reduction for the actual common-parent determinant.
 Universal four-cell positivity supplies the adjacent factors; the displayed
 middle-pivot residual contraction is the only additional analytic input. -/
