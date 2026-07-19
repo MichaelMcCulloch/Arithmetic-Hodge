@@ -8422,6 +8422,118 @@ def fourCellOddOneThreeFiveCombinedQuadratic (c d e : ℝ) : ℝ :=
     2 * fourCellOddOneThreeFiveCombined35 * d * e +
     fourCellOddOneThreeFiveCombined55 * e ^ 2
 
+private theorem log_five_four_gt_2231_div_10000_oneThreeFive :
+    (2231 / 10000 : ℝ) < Real.log (5 / 4 : ℝ) := by
+  have h := Real.sum_range_le_log_div (x := (1 / 9 : ℝ))
+    (by norm_num) (by norm_num) 3
+  norm_num [Finset.sum_range_succ] at h ⊢
+  linarith
+
+private theorem fourCellScalar_gt_15783_div_10000_oneThreeFive :
+    (15783 / 10000 : ℝ) <
+      Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi := by
+  have hlogTwo : Real.log 2 ≠ 0 := (Real.log_pos (by norm_num)).ne'
+  have hwidth :
+      Real.log (2 * fourCellOperatorHalfWidth) =
+        Real.log (5 / 4 : ℝ) + Real.log (Real.log 2) := by
+    rw [show 2 * fourCellOperatorHalfWidth =
+        (5 / 4 : ℝ) * Real.log 2 by
+      unfold fourCellOperatorHalfWidth
+      ring,
+      Real.log_mul (by norm_num : (5 / 4 : ℝ) ≠ 0) hlogTwo]
+  rw [hwidth]
+  linarith [log_five_four_gt_2231_div_10000_oneThreeFive,
+    strict_log_log_two_bounds.1, strict_euler_gamma_bounds.1,
+    strict_log_pi_bounds.1]
+
+/-- Tight rational enclosure of all six entries of the algebraic P135
+matrix.  These intervals are only used to certify its principal minors. -/
+theorem fourCellOddOneThreeFiveCombined_entry_bounds :
+    (629 / 2500 : ℝ) < fourCellOddLowCombined11 ∧
+    fourCellOddLowCombined11 < (1261 / 5000 : ℝ) ∧
+    (1093 / 5000 : ℝ) < fourCellOddLowCombined13 ∧
+    fourCellOddLowCombined13 < (2187 / 10000 : ℝ) ∧
+    (41 / 200 : ℝ) < fourCellOddLowCombined33 ∧
+    fourCellOddLowCombined33 < (2053 / 10000 : ℝ) ∧
+    (169 / 12500 : ℝ) < fourCellOddOneThreeFiveCombined15 ∧
+    fourCellOddOneThreeFiveCombined15 < (677 / 50000 : ℝ) ∧
+    (6293 / 100000 : ℝ) < fourCellOddOneThreeFiveCombined35 ∧
+    fourCellOddOneThreeFiveCombined35 < (1259 / 20000 : ℝ) ∧
+    (49 / 200 : ℝ) < fourCellOddOneThreeFiveCombined55 ∧
+    fourCellOddOneThreeFiveCombined55 < (613 / 2500 : ℝ) := by
+  have hL := strict_log_two_bounds
+  have hS := sqrt_two_mul_log_two_bounds
+  have hTlo := fourCellScalar_gt_15783_div_10000_oneThreeFive
+  have hThi := fourCellScalar_lt_31577_div_20000
+  have h11 : fourCellOddLowCombined11 =
+      893 / 600 - (31 / 50 : ℝ) * Real.log 2 +
+        (94 / 375 : ℝ) * (Real.sqrt 2 * Real.log 2) -
+          (2 / 3 : ℝ) *
+            (Real.log (2 * fourCellOperatorHalfWidth) +
+              Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddLowCombined11 fourCellOddLowLocalAlgebraic11
+    ring
+  have h13 : fourCellOddLowCombined13 =
+      93 / 500 + (104 / 3125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddLowCombined13 fourCellOddLowLocalAlgebraic13
+    ring
+  have h33 : fourCellOddLowCombined33 =
+      5434921 / 6125000 - (5242 / 109375 : ℝ) *
+          (Real.sqrt 2 * Real.log 2) -
+        (93 / 350 : ℝ) * Real.log 2 -
+        (2 / 7 : ℝ) *
+          (Real.log (2 * fourCellOperatorHalfWidth) +
+            Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddLowCombined33 fourCellOddLowLocalAlgebraic33
+    ring
+  have h15 : fourCellOddOneThreeFiveCombined15 =
+      93 / 1400 - (4216 / 78125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddOneThreeFiveCombined15
+      fourCellOddOneThreeFiveLocalAlgebraic15
+    ring
+  have h35 : fourCellOddOneThreeFiveCombined35 =
+      96779 / 937500 - (16056 / 390625 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddOneThreeFiveCombined35
+      fourCellOddOneThreeFiveLocalAlgebraic35
+    ring
+  have h55 : fourCellOddOneThreeFiveCombined55 =
+      1602471330659 / 2481445312500 +
+        (1933534 / 537109375 : ℝ) *
+          (Real.sqrt 2 * Real.log 2) -
+        (93 / 550 : ℝ) * Real.log 2 -
+        (2 / 11 : ℝ) *
+          (Real.log (2 * fourCellOperatorHalfWidth) +
+            Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddOneThreeFiveCombined55
+      fourCellOddOneThreeFiveLocalAlgebraic55
+    ring
+  rw [h11, h13, h33, h15, h35, h55]
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
 /-- Exact P135 diagonal of the complete core-plus-local target.  This is
 the finite `3 × 3` block minus one fully expanded wide regular form. -/
 theorem fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_eq
