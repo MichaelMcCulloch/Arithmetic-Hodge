@@ -142,6 +142,41 @@ theorem fourCellOddHalfCoreReserve_nonneg
   unfold fourCellOddHalfCoreReserve
   linarith
 
+/-! ## Odd ground-state transform for the coupled raw kernels -/
+
+/-- After writing an odd profile as `w x = x * u x`, the same-sign and
+reflected raw kernels have an exact ground-state transform on the ordered
+positive triangle.  The linear odd mode is the ground state, while every
+deviation from it remains in the explicit positive square on the right. -/
+theorem fourCellOddRawGroundStateKernel_eq
+    {x y u v : ℝ} (hy : 0 ≤ y) (hxy : y < x) :
+    (x * u - y * v) ^ 2 / (x - y) +
+        (x * u + y * v) ^ 2 / (x + y) =
+      2 * x * u ^ 2 +
+        (2 * x * y ^ 2 / ((x - y) * (x + y))) * (u - v) ^ 2 := by
+  have hsub : x - y ≠ 0 := ne_of_gt (sub_pos.mpr hxy)
+  have hsum : x + y ≠ 0 := by
+    have hx : 0 < x := hy.trans_lt hxy
+    positivity
+  field_simp [hsub, hsum]
+  ring
+
+/-- The positive-square consequence of the odd raw ground-state transform.
+This is the pointwise source of the sharp linear-mode raw gap. -/
+theorem two_mul_oddGroundState_le_coupledRawKernel
+    {x y u v : ℝ} (hy : 0 ≤ y) (hxy : y < x) :
+    2 * x * u ^ 2 ≤
+      (x * u - y * v) ^ 2 / (x - y) +
+        (x * u + y * v) ^ 2 / (x + y) := by
+  rw [fourCellOddRawGroundStateKernel_eq hy hxy]
+  have hx : 0 ≤ x := (hy.trans_lt hxy).le
+  have hsub : 0 ≤ x - y := (sub_pos.mpr hxy).le
+  have hsum : 0 ≤ x + y := add_nonneg hx hy
+  have hcoefficient :
+      0 ≤ 2 * x * y ^ 2 / ((x - y) * (x + y)) := by
+    exact div_nonneg (by positivity) (mul_nonneg hsub hsum)
+  nlinarith [mul_nonneg hcoefficient (sq_nonneg (u - v))]
+
 /-- The residual after extracting the known sharp odd core.  It contains
 exactly the endpoint-strip prime modification, the wider scalar shift, the
 retained regular completion, and the diagonal allocation used by the odd
