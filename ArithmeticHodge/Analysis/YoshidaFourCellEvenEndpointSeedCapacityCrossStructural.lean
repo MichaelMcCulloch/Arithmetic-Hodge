@@ -10,11 +10,14 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCapacityCrossS
 noncomputable section
 
 open YoshidaEndpointPotentialBound
+open YoshidaEndpointPotentialIntegrable
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoFixedLagRepresenterStructural
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
+open YoshidaFourCellEvenPolarSchurStructural
 open YoshidaFourCellEvenZeroCoshCoupledCoreStructural
+open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 
 /-!
@@ -275,6 +278,209 @@ theorem neg_integral_seedOverlapPolynomial_mul_log_one_sub_sq :
     ring
   rw [hsplit, hminus, hplus]
   linarith [log_seed_overlap_identity]
+
+/-! ## From the overlap interval to the full fixed-lag cross -/
+
+/-- A continuous extension of the endpoint seed translated onto the two
+fixed-lag boundary components. -/
+private def endpointSeedFixedLagExtension (x : ℝ) : ℝ :=
+  if x ≤ -(3 / 5 : ℝ) then fourCellEvenEndpointCoshSeed (x + 8 / 5)
+  else if x ≤ (3 / 5 : ℝ) then 0
+  else fourCellEvenEndpointCoshSeed (x - 8 / 5)
+
+private theorem continuous_endpointSeedFixedLagExtension :
+    Continuous endpointSeedFixedLagExtension := by
+  unfold endpointSeedFixedLagExtension
+  apply Continuous.if_le
+    (fourCellEvenEndpointCoshSeed_continuous.comp
+      (continuous_id.add continuous_const))
+    (by
+      apply Continuous.if_le continuous_const
+        (fourCellEvenEndpointCoshSeed_continuous.comp
+          (continuous_id.sub continuous_const))
+        continuous_id continuous_const
+      intro x hx
+      unfold fourCellEvenEndpointCoshSeed
+      simp only [Function.comp_apply, id_eq] at hx ⊢
+      rw [hx]
+      norm_num)
+    continuous_id continuous_const
+  intro x hx
+  unfold fourCellEvenEndpointCoshSeed
+  simp only [Function.comp_apply, id_eq] at hx ⊢
+  rw [hx]
+  norm_num
+
+private theorem fixedLagK_endpointSeed_eq_extension
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed x =
+      endpointSeedFixedLagExtension x := by
+  by_cases hneg : x ≤ -(3 / 5 : ℝ)
+  · have hright : x ∈ Icc (-1 : ℝ) (1 - 8 / 5) := by
+      constructor <;> norm_num at hx hneg ⊢ <;> linarith [hx.1, hneg]
+    have hleft : x ∉ Icc (-1 + 8 / 5 : ℝ) 1 := by
+      intro h
+      norm_num at h hneg
+      linarith [h.1]
+    unfold endpointSeedFixedLagExtension factorTwoFixedLagK
+      factorTwoFixedLagRightRepresenter factorTwoFixedLagLeftRepresenter
+    rw [if_pos hneg, Set.indicator_of_mem hright,
+      Set.indicator_of_notMem hleft]
+    ring
+  · have hneg' : -(3 / 5 : ℝ) < x := lt_of_not_ge hneg
+    by_cases hmid : x ≤ (3 / 5 : ℝ)
+    · have hright : x ∉ Icc (-1 : ℝ) (1 - 8 / 5) := by
+        intro h
+        norm_num at h
+        linarith [h.2]
+      by_cases heq : x = (3 / 5 : ℝ)
+      · have hleft : x ∈ Icc (-1 + 8 / 5 : ℝ) 1 := by
+          rw [heq]
+          norm_num
+        unfold endpointSeedFixedLagExtension factorTwoFixedLagK
+          factorTwoFixedLagRightRepresenter factorTwoFixedLagLeftRepresenter
+        rw [if_neg hneg, if_pos hmid, Set.indicator_of_notMem hright,
+          Set.indicator_of_mem hleft]
+        unfold fourCellEvenEndpointCoshSeed
+        norm_num [heq]
+      · have hleft : x ∉ Icc (-1 + 8 / 5 : ℝ) 1 := by
+          intro h
+          norm_num at h
+          have hxlt : x < 3 / 5 := lt_of_le_of_ne hmid heq
+          linarith [h.1]
+        unfold endpointSeedFixedLagExtension factorTwoFixedLagK
+          factorTwoFixedLagRightRepresenter factorTwoFixedLagLeftRepresenter
+        rw [if_neg hneg, if_pos hmid, Set.indicator_of_notMem hright,
+          Set.indicator_of_notMem hleft]
+        norm_num
+    · have hmid' : (3 / 5 : ℝ) < x := lt_of_not_ge hmid
+      have hright : x ∉ Icc (-1 : ℝ) (1 - 8 / 5) := by
+        intro h
+        norm_num at h
+        linarith [h.2]
+      have hleft : x ∈ Icc (-1 + 8 / 5 : ℝ) 1 := by
+        constructor <;> norm_num at hmid' hx ⊢ <;> linarith [hmid', hx.2]
+      unfold endpointSeedFixedLagExtension factorTwoFixedLagK
+        factorTwoFixedLagRightRepresenter factorTwoFixedLagLeftRepresenter
+      rw [if_neg hneg, if_neg hmid, Set.indicator_of_notMem hright,
+        Set.indicator_of_mem hleft]
+      ring
+
+private theorem intervalIntegrable_endpointPotential_seed_mul_fixedLagK_seed :
+    IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x *
+        fourCellEvenEndpointCoshSeed x *
+          factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed x)
+      volume (-1) 1 := by
+  have hbase := intervalIntegrable_endpointPotential_mul
+    (fun x : ℝ ↦ fourCellEvenEndpointCoshSeed x *
+      endpointSeedFixedLagExtension x)
+    (fourCellEvenEndpointCoshSeed_continuous.mul
+      continuous_endpointSeedFixedLagExtension)
+  apply hbase.congr
+  intro x hx
+  have hx' : x ∈ Icc (-1 : ℝ) 1 := by
+    rw [uIoc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+    exact ⟨hx.1.le, hx.2⟩
+  dsimp only
+  rw [fixedLagK_endpointSeed_eq_extension hx']
+  ring
+
+/-- The full potential--fixed-lag cross generated by the endpoint seed.  The
+support reduction leaves exactly the one structural overlap integral above. -/
+theorem integral_endpointPotential_seed_mul_fixedLagK_seed :
+    (∫ x : ℝ in -1..1,
+      (yoshidaEndpointPotential x * fourCellEvenEndpointCoshSeed x) *
+        factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed x) =
+      -(350824 / 703125 : ℝ) +
+        (37744 / 15625) * Real.log (5 / 4 : ℝ) := by
+  let K : ℝ → ℝ := factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed
+  let f : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * fourCellEvenEndpointCoshSeed x * K x
+  have hInt : IntervalIntegrable f volume (-1) 1 := by
+    simpa only [f, K, mul_assoc] using
+      intervalIntegrable_endpointPotential_seed_mul_fixedLagK_seed
+  have hseedEven : Function.Even fourCellEvenEndpointCoshSeed :=
+    fourCellEvenEndpointCoshSeed_even
+  have hKEven : Function.Even K := by
+    intro x
+    unfold K factorTwoFixedLagK
+    rw [factorTwoFixedLagRightRepresenter_neg_of_even hseedEven,
+      factorTwoFixedLagLeftRepresenter_neg_of_even hseedEven]
+    ring
+  have hfEven : Function.Even f := by
+    intro x
+    dsimp only [f]
+    rw [hseedEven x, hKEven x]
+    unfold yoshidaEndpointPotential
+    rw [neg_sq]
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even f hInt hfEven
+  have hzero : (∫ x : ℝ in 0..3 / 5, f x) = 0 := by
+    apply intervalIntegral.integral_zero_ae
+    filter_upwards [MeasureTheory.Measure.ae_ne volume (3 / 5 : ℝ)] with x hxne hx
+    rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 3 / 5)] at hx
+    have hxlt : x < 3 / 5 := lt_of_le_of_ne hx.2 hxne
+    have hright : x ∉ Icc (-1 : ℝ) (1 - 8 / 5) := by
+      intro h
+      norm_num at h
+      linarith [hx.1, h.2]
+    have hleft : x ∉ Icc (-1 + 8 / 5 : ℝ) 1 := by
+      intro h
+      norm_num at h
+      linarith [hxlt, h.1]
+    unfold f K factorTwoFixedLagK factorTwoFixedLagRightRepresenter
+      factorTwoFixedLagLeftRepresenter
+    rw [Set.indicator_of_notMem hright, Set.indicator_of_notMem hleft]
+    ring
+  have hright :
+      (∫ x : ℝ in 3 / 5..1, f x) =
+        ∫ x : ℝ in 3 / 5..1,
+          yoshidaEndpointPotential x * fourCellEvenEndpointCoshSeed x *
+            fourCellEvenEndpointCoshSeed (x - 8 / 5) := by
+    apply intervalIntegral.integral_congr
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    have hrightNot : x ∉ Icc (-1 : ℝ) (1 - 8 / 5) := by
+      intro h
+      norm_num at h
+      linarith [hx.1, h.2]
+    have hleftMem : x ∈ Icc (-1 + 8 / 5 : ℝ) 1 := by
+      constructor <;> norm_num at hx ⊢ <;> linarith [hx.1, hx.2]
+    unfold f K factorTwoFixedLagK factorTwoFixedLagRightRepresenter
+      factorTwoFixedLagLeftRepresenter
+    rw [Set.indicator_of_notMem hrightNot,
+      Set.indicator_of_mem hleftMem, zero_add]
+  have hzeroI : IntervalIntegrable f volume 0 (3 / 5) :=
+    hInt.mono_set (by
+      intro x hx
+      norm_num at hx ⊢
+      constructor <;> linarith [hx.1, hx.2])
+  have hrightI : IntervalIntegrable f volume (3 / 5) 1 :=
+    hInt.mono_set (by
+      intro x hx
+      norm_num at hx ⊢
+      constructor <;> linarith [hx.1, hx.2])
+  have hsplit := intervalIntegral.integral_add_adjacent_intervals hzeroI hrightI
+  rw [hzero, zero_add, hright] at hsplit
+  rw [← hsplit] at hfold
+  have hoverlap :
+      (fun x : ℝ ↦ 2 *
+        (yoshidaEndpointPotential x * fourCellEvenEndpointCoshSeed x *
+          fourCellEvenEndpointCoshSeed (x - 8 / 5))) =
+      fun x ↦ -seedOverlapPolynomial x * Real.log (1 - x ^ 2) := by
+    funext x
+    unfold yoshidaEndpointPotential fourCellEvenEndpointCoshSeed
+      seedOverlapPolynomial
+    ring
+  change (∫ x : ℝ in -1..1, f x) = _
+  rw [hfold, ← intervalIntegral.integral_const_mul, hoverlap]
+  rw [show (fun x : ℝ ↦
+      -seedOverlapPolynomial x * Real.log (1 - x ^ 2)) =
+      fun x ↦ -(seedOverlapPolynomial x * Real.log (1 - x ^ 2)) by
+    funext x
+    ring,
+    intervalIntegral.integral_neg]
+  exact neg_integral_seedOverlapPolynomial_mul_log_one_sub_sq
 
 end
 
