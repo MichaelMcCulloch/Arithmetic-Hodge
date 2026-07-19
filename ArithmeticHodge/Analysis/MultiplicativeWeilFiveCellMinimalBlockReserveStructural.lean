@@ -302,6 +302,23 @@ theorem FiveCellCoupledEndpointSchurConstraints.threeBlockDeterminant_neg_of_pai
       hA hM hE hAM hME hAE hdet
   exact (not_lt_of_ge hnonnegative) hwhole
 
+/-- Sharp semidefinite alternative: every minimal five-cell scalar
+configuration reverses an adjacent pairwise minor, the remote pairwise minor,
+or the full three-block determinant. -/
+theorem FiveCellCoupledEndpointSchurConstraints.principalMinor_or_threeBlock_reversed
+    {A M E U V X : ℝ}
+    (h : FiveCellCoupledEndpointSchurConstraints A M E U V X) :
+    A * M < U ^ 2 ∨ M * E < V ^ 2 ∨ A * E < X ^ 2 ∨
+      fiveCellThreeBlockDeterminant A M E U V X < 0 := by
+  by_cases hAM : U ^ 2 ≤ A * M
+  · by_cases hME : V ^ 2 ≤ M * E
+    · by_cases hAE : X ^ 2 ≤ A * E
+      · exact Or.inr (Or.inr (Or.inr
+          (h.threeBlockDeterminant_neg_of_pairwise hAM hME hAE)))
+      · exact Or.inr (Or.inr (Or.inl (lt_of_not_ge hAE)))
+    · exact Or.inr (Or.inl (lt_of_not_ge hME))
+  · exact Or.inl (lt_of_not_ge hAM)
+
 /-- Geometric-mean form of the two strict Schur reversals.  This extracts the
 sharp signed information from the squared determinant inequalities: the
 remote-corrected endpoint rows lie strictly below the negative square roots
@@ -477,6 +494,30 @@ theorem supportMinimalNegativeMonotoneBlock_length_five_coupledEndpointSchur
     linarith
   exact ⟨hA, hM, hE, hprefix, hsuffix, hleftMean, hleftDet,
     hrightMean, hrightDet, hwhole⟩
+
+/-- Production form of the sharp semidefinite alternative.  The remote entry
+is already the exact local-minus-prime balance, so every minimal negative
+five-cell block must exhibit one of these four strict analytic reversals. -/
+theorem supportMinimalNegativeMonotoneBlock_length_five_principalMinor_or_threeBlock_reversed
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) (hlen : len = 5) :
+    let k := monotoneQuarterFiniteBlockBase lo start
+    let a := monotoneQuarterCell parent k
+    let m := monotoneQuarterFiniteBlock parent lo (start + 1) 3
+    let e := monotoneQuarterCell parent (k + 4)
+    let A := bombieriRealQuadraticValue a
+    let M := bombieriRealQuadraticValue m
+    let E := bombieriRealQuadraticValue e
+    let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X := fiveCellRemoteEndpointBalance parent k
+    A * M < U ^ 2 ∨ M * E < V ^ 2 ∨ A * E < X ^ 2 ∨
+      fiveCellThreeBlockDeterminant A M E U V X < 0 := by
+  have h :=
+    supportMinimalNegativeMonotoneBlock_length_five_coupledEndpointSchur
+      hmin hlen
+  exact h.principalMinor_or_threeBlock_reversed
 
 /-- Sharp signed reserve forced at both ends of an actual minimal negative
 five-cell block.  The same production local-minus-prime corner must lie below
