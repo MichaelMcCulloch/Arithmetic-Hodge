@@ -6276,6 +6276,152 @@ theorem rawPrimePotentialTailWeight_le_core_add_localWidthDefect_of_P1
     at hcombined hhalfSplit hbudget ⊢
   nlinarith
 
+/-- The coupled upper-strip octic density retains a uniform `1/50` margin.
+The proof is one Bernstein-positive polynomial identity on the complete
+strip, not separate minimizations of the raw and potential terms. -/
+private theorem one_fiftieth_mul_x_le_endpointStripOcticDensity_gap
+    {x : ℝ} (hx0 : (3 / 5 : ℝ) ≤ x) (hx1 : x ≤ 1) :
+    (1 / 50 : ℝ) * x ≤
+      (6 / 5 : ℝ) - (57 / 25) * x +
+        (93 / 50) * x * yoshidaEndpointOctic x := by
+  let t : ℝ := (5 * x - 3) / 2
+  have ht0 : 0 ≤ t := by dsimp only [t]; linarith
+  have ht1 : t ≤ 1 := by dsimp only [t]; linarith
+  have hcomp : 0 ≤ 1 - t := sub_nonneg.mpr ht1
+  rw [← sub_nonneg]
+  rw [show
+      (6 / 5 : ℝ) - (57 / 25) * x +
+          (93 / 50) * x * yoshidaEndpointOctic x - (1 / 50) * x =
+        (53171469 / 781250000 : ℝ) * (1 - t) ^ 9 +
+        (42090487 / 156250000 : ℝ) * t * (1 - t) ^ 8 +
+        (1968121 / 7812500 : ℝ) * t ^ 2 * (1 - t) ^ 7 +
+        (15799 / 62500 : ℝ) * t ^ 3 * (1 - t) ^ 6 +
+        (1806347 / 625000 : ℝ) * t ^ 4 * (1 - t) ^ 5 +
+        (1157849 / 125000 : ℝ) * t ^ 5 * (1 - t) ^ 4 +
+        (172237 / 12500 : ℝ) * t ^ 6 * (1 - t) ^ 3 +
+        (27683 / 2500 : ℝ) * t ^ 7 * (1 - t) ^ 2 +
+        (9413 / 2000 : ℝ) * t ^ 8 * (1 - t) +
+        (67 / 80 : ℝ) * t ^ 9 by
+    dsimp only [t]
+    unfold yoshidaEndpointOctic
+    ring]
+  positivity
+
+private theorem one_fiftieth_le_endpointStripOcticTailDensity
+    {x : ℝ} (hx0 : (3 / 5 : ℝ) < x) (hx1 : x < 1) :
+    (1 / 50 : ℝ) ≤
+      (6 / 5 : ℝ) / x - 57 / 25 +
+        (93 / 50) * yoshidaEndpointOctic x := by
+  have hxpos : 0 < x := by linarith
+  have hgap := one_fiftieth_mul_x_le_endpointStripOcticDensity_gap
+    hx0.le hx1.le
+  apply le_of_mul_le_mul_right ?_ hxpos
+  rw [show
+      ((6 / 5 : ℝ) / x - 57 / 25 +
+          (93 / 50) * yoshidaEndpointOctic x) * x =
+        (6 / 5 : ℝ) - (57 / 25) * x +
+          (93 / 50) * x * yoshidaEndpointOctic x by
+    field_simp [hxpos.ne']]
+  simpa only [mul_comm (1 / 50 : ℝ) x] using hgap
+
+/-- Scalar consequence of the retained raw/prime/octic tail density.  It
+keeps `1/50` of the full positive-half mass, including endpoint-supported
+tails that are invisible to the lower-strip reserve alone. -/
+theorem one_fiftieth_positiveHalfMass_le_rawPrimePotentialTailWeight
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (1 / 50 : ℝ) * (∫ x : ℝ in 0..1, w x ^ 2) ≤
+      (27 / 250 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) +
+        (93 / 50 : ℝ) *
+          (∫ x : ℝ in 0..1, yoshidaEndpointOctic x * w x ^ 2) +
+        (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) -
+        (57 / 25 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) := by
+  have hmassLower : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume 0 (3 / 5) := (hw.pow 2).intervalIntegrable _ _
+  have hmassUpper : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume (3 / 5) 1 := (hw.pow 2).intervalIntegrable _ _
+  have hocticLower : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointOctic x * w x ^ 2)
+      volume 0 (3 / 5) := by
+    apply Continuous.intervalIntegrable
+    unfold yoshidaEndpointOctic
+    fun_prop
+  have hocticUpper : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointOctic x * w x ^ 2)
+      volume (3 / 5) 1 := by
+    apply Continuous.intervalIntegrable
+    unfold yoshidaEndpointOctic
+    fun_prop
+  have hweighted : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2 / x)
+      volume (3 / 5) 1 := by
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.div (hw.pow 2).continuousOn continuous_id.continuousOn
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    simpa only [id_eq] using (by linarith [hx.1] : x ≠ 0)
+  have hlower :
+      (∫ x : ℝ in 0..3 / 5, (1 / 50 : ℝ) * w x ^ 2) ≤
+        ∫ x : ℝ in 0..3 / 5,
+          (27 / 250 : ℝ) * w x ^ 2 +
+            (93 / 50 : ℝ) *
+              (yoshidaEndpointOctic x * w x ^ 2) := by
+    apply intervalIntegral.integral_mono_on_of_le_Ioo (by norm_num)
+      (hmassLower.const_mul _)
+      ((hmassLower.const_mul _).add (hocticLower.const_mul _))
+    intro x _hx
+    have hoctic : 0 ≤ yoshidaEndpointOctic x := by
+      unfold yoshidaEndpointOctic
+      positivity
+    have hmul := mul_nonneg hoctic (sq_nonneg (w x))
+    nlinarith
+  have hupper :
+      (∫ x : ℝ in 3 / 5..1, (1 / 50 : ℝ) * w x ^ 2) ≤
+        ∫ x : ℝ in 3 / 5..1,
+          ((6 / 5 : ℝ) * (w x ^ 2 / x) -
+            (57 / 25 : ℝ) * w x ^ 2) +
+              (93 / 50 : ℝ) *
+                (yoshidaEndpointOctic x * w x ^ 2) := by
+    apply intervalIntegral.integral_mono_on_of_le_Ioo (by norm_num)
+      (hmassUpper.const_mul _)
+      (((hweighted.const_mul _).sub (hmassUpper.const_mul _)).add
+        (hocticUpper.const_mul _))
+    intro x hx
+    have hdensity := one_fiftieth_le_endpointStripOcticTailDensity
+      hx.1 hx.2
+    have hmul := mul_le_mul_of_nonneg_right hdensity (sq_nonneg (w x))
+    convert hmul using 1
+    field_simp [ne_of_gt (by linarith [hx.1] : 0 < x)]
+  repeat rw [intervalIntegral.integral_const_mul] at hlower hupper
+  rw [intervalIntegral.integral_add
+      (hmassLower.const_mul _) (hocticLower.const_mul _),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul] at hlower
+  rw [intervalIntegral.integral_add
+      ((hweighted.const_mul _).sub (hmassUpper.const_mul _))
+      (hocticUpper.const_mul _),
+    intervalIntegral.integral_sub
+      (hweighted.const_mul _) (hmassUpper.const_mul _),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul] at hupper
+  have hmassSplit := intervalIntegral.integral_add_adjacent_intervals
+    hmassLower hmassUpper
+  have hocticSplit := intervalIntegral.integral_add_adjacent_intervals
+    hocticLower hocticUpper
+  nlinarith
+
+/-- Strong scalar tail coercivity obtained from the retained form-level
+density.  This replaces the fallback `13/20000` global mass gap by `1/50`
+without discarding the raw/prime/potential coupling used to prove it. -/
+theorem one_fiftieth_positiveHalfMass_le_core_add_localWidthDefect_of_P1
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
+    (hone : centeredOddP1Coefficient w = 0) :
+    (1 / 50 : ℝ) * (∫ x : ℝ in 0..1, w x ^ 2) ≤
+      fourCellOddHalfCoreReserve w + fourCellOddStripLocalWidthDefect w := by
+  exact (one_fiftieth_positiveHalfMass_le_rawPrimePotentialTailWeight
+    w hw.continuous).trans
+      (rawPrimePotentialTailWeight_le_core_add_localWidthDefect_of_P1
+        w hw hodd hone)
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
