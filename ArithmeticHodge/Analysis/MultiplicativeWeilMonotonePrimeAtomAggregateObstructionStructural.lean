@@ -1567,6 +1567,118 @@ theorem monotonePrimeAtomLocalDilationGram_sq_le_diagonal_mul
   unfold monotonePrimeAtomLocalDilationGram
   simpa only [I, F, G] using hrealSq.trans hcauchy
 
+/-! ## The complete reserve Gram on the same atom indices -/
+
+/-- Complete Bombieri cross Gram of two transplanted atom slices. -/
+def monotonePrimeAtomCompleteSliceGram
+    (parent : BombieriTest) (k : ℤ) (i j : ℕ) : ℝ :=
+  (bombieriTwoBlockGlobalCrossSymbol
+    (monotonePrimeAtomTransplantedSlice parent k i)
+    (monotonePrimeAtomTransplantedSlice parent k j)).re
+
+/-- The complete slice Gram is symmetric on real coordinates. -/
+theorem monotonePrimeAtomCompleteSliceGram_comm
+    (parent : BombieriTest) (k : ℤ) (i j : ℕ) :
+    monotonePrimeAtomCompleteSliceGram parent k i j =
+      monotonePrimeAtomCompleteSliceGram parent k j i := by
+  have hswap := congrArg Complex.re
+    (bombieriTwoBlockGlobalCrossSymbol_conj_swap
+      (monotonePrimeAtomTransplantedSlice parent k i)
+      (monotonePrimeAtomTransplantedSlice parent k j))
+  simpa only [monotonePrimeAtomCompleteSliceGram,
+    Complex.star_def, Complex.conj_re] using hswap.symm
+
+private theorem completeCross_finset_sum_right_re
+    (f : BombieriTest) (S : Finset ℕ)
+    (c : ℕ → ℝ) (g : ℕ → BombieriTest) :
+    (bombieriTwoBlockGlobalCrossSymbol f
+      (∑ j ∈ S, ((c j : ℝ) : ℂ) • g j)).re =
+      ∑ j ∈ S, c j *
+        (bombieriTwoBlockGlobalCrossSymbol f (g j)).re := by
+  induction S using Finset.induction_on with
+  | empty =>
+      simp [bombieriTwoBlockGlobalCrossSymbol_zero_right]
+  | @insert j S hj ih =>
+      rw [Finset.sum_insert hj, Finset.sum_insert hj,
+        bombieriTwoBlockGlobalCrossSymbol_add_right,
+        bombieriTwoBlockGlobalCrossSymbol_smul_right,
+        Complex.add_re, ih]
+      simp only [Complex.mul_re, Complex.ofReal_re,
+        Complex.ofReal_im, zero_mul, sub_zero]
+
+private theorem completeCross_finset_sum_both_re
+    (S : Finset ℕ) (c : ℕ → ℝ)
+    (f : ℕ → BombieriTest) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      (∑ i ∈ S, ((c i : ℝ) : ℂ) • f i)
+      (∑ j ∈ S, ((c j : ℝ) : ℂ) • f j)).re =
+      ∑ i ∈ S, ∑ j ∈ S, c i * c j *
+        (bombieriTwoBlockGlobalCrossSymbol (f i) (f j)).re := by
+  let F : BombieriTest :=
+    ∑ i ∈ S, ((c i : ℝ) : ℂ) • f i
+  have hswap (i : ℕ) :
+      (bombieriTwoBlockGlobalCrossSymbol F (f i)).re =
+        (bombieriTwoBlockGlobalCrossSymbol (f i) F).re := by
+    have h := congrArg Complex.re
+      (bombieriTwoBlockGlobalCrossSymbol_conj_swap (f i) F)
+    simpa only [Complex.star_def, Complex.conj_re] using h
+  change (bombieriTwoBlockGlobalCrossSymbol F F).re = _
+  rw [completeCross_finset_sum_right_re]
+  apply Finset.sum_congr rfl
+  intro i _hi
+  rw [hswap, completeCross_finset_sum_right_re, Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro j _hj
+  ring
+
+/-- The complete aggregate reserve is exactly the Mangoldt-weighted
+quadratic of the complete slice Gram.  This is the second Hermitian form on
+the same atom index set as the physical dilation Gram. -/
+theorem monotonePrimeAtomAggregateReserve_eq_completeSliceGram
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    monotonePrimeAtomAggregateReserve parent k S =
+      ∑ i ∈ S, ∑ j ∈ S,
+        bombieriLogPrimeAtomWeight i * bombieriLogPrimeAtomWeight j *
+          monotonePrimeAtomCompleteSliceGram parent k i j := by
+  unfold monotonePrimeAtomAggregateReserve bombieriRealQuadraticValue
+  rw [← bombieriTwoBlockGlobalCrossSymbol_self,
+    monotonePrimeAtomAggregateSlice_eq_sum]
+  simpa only [monotonePrimeAtomCompleteSliceGram] using
+    completeCross_finset_sum_both_re S bombieriLogPrimeAtomWeight
+      (monotonePrimeAtomTransplantedSlice parent k)
+
+/-- Physical head coordinate of one unweighted transplanted slice. -/
+def monotonePrimeAtomPhysicalHeadSliceCoordinate
+    (parent : BombieriTest) (k : ℤ) (j : ℕ) : ℝ :=
+  (bombieriDirectedCorrelation
+    (monotonePrimeAtomTransplantedSlice parent k j)
+    (monotoneQuarterCell parent k) 1).re
+
+/-- The finite prime row is the Mangoldt-weighted pairing of the physical
+head vector with the transplanted-slice family. -/
+theorem monotonePrimeAtom_finset_sum_eq_physicalHeadSliceCoordinates
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    ∑ j ∈ S, monotonePrimeAtomValue parent k j =
+      ∑ j ∈ S, bombieriLogPrimeAtomWeight j *
+        monotonePrimeAtomPhysicalHeadSliceCoordinate parent k j := by
+  rw [monotonePrimeAtom_finset_sum_eq_aggregate_zeroLagOverlap,
+    monotonePrimeAtomAggregateSlice_eq_sum,
+    aggregateDirectedCorrelation_finset_sum_left]
+  change
+    Complex.reCLM
+        (∑ j ∈ S,
+          bombieriDirectedCorrelation
+            (((bombieriLogPrimeAtomWeight j : ℝ) : ℂ) •
+              monotonePrimeAtomTransplantedSlice parent k j)
+            (monotoneQuarterCell parent k) 1) = _
+  rw [map_sum Complex.reCLM]
+  apply Finset.sum_congr rfl
+  intro j _hj
+  rw [bombieriDirectedCorrelation_smul_left]
+  simp only [Complex.reCLM_apply, Complex.mul_re, Complex.ofReal_re,
+    Complex.ofReal_im, zero_mul, sub_zero,
+    monotonePrimeAtomPhysicalHeadSliceCoordinate]
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
