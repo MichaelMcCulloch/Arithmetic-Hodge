@@ -2082,6 +2082,33 @@ def fourCellOddRawStripCancellationReserve (w : ℝ → ℝ) : ℝ :=
         fourCellPositiveHalfRawReflectedEnergy w (-1)) -
     (1 / 2 : ℝ) * fourCellOddEndpointStripOddRawEnergy w
 
+/-- Symmetric polarization of the whole raw-strip reserve.  Keeping this as
+one object prevents the unused same-sign square, reflected square, and
+strip-parity compensation from being estimated independently. -/
+def fourCellOddRawStripCancellationPolarization
+    (u v : ℝ → ℝ) : ℝ :=
+  (fourCellOddRawStripCancellationReserve (u + v) -
+      fourCellOddRawStripCancellationReserve u -
+      fourCellOddRawStripCancellationReserve v) / 2
+
+theorem fourCellOddRawStripCancellationReserve_add
+    (u v : ℝ → ℝ) :
+    fourCellOddRawStripCancellationReserve (u + v) =
+      fourCellOddRawStripCancellationReserve u +
+        2 * fourCellOddRawStripCancellationPolarization u v +
+          fourCellOddRawStripCancellationReserve v := by
+  unfold fourCellOddRawStripCancellationPolarization
+  ring
+
+/-- The canonical intrinsic low part of an arbitrary profile. -/
+def fourCellOddOneThreeLowPart (w : ℝ → ℝ) : ℝ → ℝ :=
+  factorTwoOddStructuralLowProfile
+    (centeredOddP1Coefficient w) (centeredOddP3Coefficient w)
+
+theorem fourCellOddOneThreeLowPart_add_residual (w : ℝ → ℝ) :
+    fourCellOddOneThreeLowPart w + centeredOddOneThreeResidual w = w := by
+  exact oddLow_add_oneThreeResidual_eq w
+
 /-- Once the raw strip has been retained exactly, the remaining expression
 contains no singular logarithmic energy.  In particular, the artificial
 `14 / 5` mass insertion cancels out of this exact remainder. -/
@@ -2644,6 +2671,89 @@ theorem neg_fourCellOddStripLocalWidthDefect_low_le_core
       fourCellOddHalfCoreReserve
         (factorTwoOddStructuralLowProfile c d) := by
   linarith [fourCellOddHalfCoreReserve_add_localWidthDefect_low_nonneg c d]
+
+/-! ## Exact universal low--tail reduction -/
+
+/-- Exact decomposition of the full absorption target into the already
+closed intrinsic low block, one coupled low--tail polarization, and the
+genuine tail block.  The raw strip terms remain coupled in
+`fourCellOddRawStripCancellationPolarization`, while the complete regular
+correlation remains coupled in `fourCellOddStripReducedBilinear`. -/
+theorem fourCellOddCoreLocal_lowTail_decomposition
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    fourCellOddHalfCoreReserve w + fourCellOddStripLocalWidthDefect w =
+      fourCellOddHalfCoreReserve (fourCellOddOneThreeLowPart w) +
+        fourCellOddStripLocalWidthDefect (fourCellOddOneThreeLowPart w) +
+      2 * (fourCellOddRawStripCancellationPolarization
+          (fourCellOddOneThreeLowPart w)
+          (centeredOddOneThreeResidual w) +
+        fourCellOddStripReducedBilinear
+          (fourCellOddOneThreeLowPart w)
+          (centeredOddOneThreeResidual w)) +
+      fourCellOddRawStripCancellationReserve
+        (centeredOddOneThreeResidual w) +
+      fourCellOddStripReducedRemainder
+        (centeredOddOneThreeResidual w) := by
+  let p : ℝ → ℝ := fourCellOddOneThreeLowPart w
+  let v : ℝ → ℝ := centeredOddOneThreeResidual w
+  have hp : Continuous p := by
+    dsimp only [p, fourCellOddOneThreeLowPart]
+    exact continuous_factorTwoOddStructuralLowProfile _ _
+  have hv : Continuous v := by
+    dsimp only [v]
+    exact continuous_centeredOddOneThreeResidual w hw
+  have hreconstruct : p + v = w := by
+    dsimp only [p, v]
+    exact fourCellOddOneThreeLowPart_add_residual w
+  have hsplitP :=
+    fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced p
+  have hraw := fourCellOddRawStripCancellationReserve_add p v
+  have hreduced := fourCellOddStripReducedRemainder_add p v hp hv
+  change fourCellOddHalfCoreReserve w + fourCellOddStripLocalWidthDefect w =
+    fourCellOddHalfCoreReserve p + fourCellOddStripLocalWidthDefect p +
+      2 * (fourCellOddRawStripCancellationPolarization p v +
+        fourCellOddStripReducedBilinear p v) +
+      fourCellOddRawStripCancellationReserve v +
+        fourCellOddStripReducedRemainder v
+  calc
+    fourCellOddHalfCoreReserve w + fourCellOddStripLocalWidthDefect w =
+        fourCellOddRawStripCancellationReserve w +
+          fourCellOddStripReducedRemainder w :=
+      fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced w
+    _ = fourCellOddRawStripCancellationReserve (p + v) +
+          fourCellOddStripReducedRemainder (p + v) := by rw [hreconstruct]
+    _ = (fourCellOddRawStripCancellationReserve p +
+          fourCellOddStripReducedRemainder p) +
+        2 * (fourCellOddRawStripCancellationPolarization p v +
+          fourCellOddStripReducedBilinear p v) +
+        fourCellOddRawStripCancellationReserve v +
+          fourCellOddStripReducedRemainder v := by
+      rw [hraw, hreduced]
+      ring
+    _ = _ := by rw [← hsplitP]
+
+/-- Thus the universal theorem has one remaining, genuinely coupled
+low--tail obligation; no finite cutoff or separate correlation estimate is
+built into this reduction. -/
+theorem neg_fourCellOddStripLocalWidthDefect_le_core_of_lowTail_nonneg
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w)
+    (htail :
+      0 ≤ 2 * (fourCellOddRawStripCancellationPolarization
+            (fourCellOddOneThreeLowPart w)
+            (centeredOddOneThreeResidual w) +
+          fourCellOddStripReducedBilinear
+            (fourCellOddOneThreeLowPart w)
+            (centeredOddOneThreeResidual w)) +
+        fourCellOddRawStripCancellationReserve
+          (centeredOddOneThreeResidual w) +
+        fourCellOddStripReducedRemainder
+          (centeredOddOneThreeResidual w)) :
+    -fourCellOddStripLocalWidthDefect w ≤ fourCellOddHalfCoreReserve w := by
+  have hlow := fourCellOddHalfCoreReserve_add_localWidthDefect_low_nonneg
+    (centeredOddP1Coefficient w) (centeredOddP3Coefficient w)
+  have hdecomp := fourCellOddCoreLocal_lowTail_decomposition w hw.continuous
+  unfold fourCellOddOneThreeLowPart at hdecomp htail
+  linarith
 
 /-! The low block of the retained octic core model. -/
 
