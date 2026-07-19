@@ -1601,6 +1601,135 @@ theorem integral_yoshidaRegularKernel_mul_oddStructuralCorrelation33_le :
       dsimp only [P, C, B]
       linarith
 
+/-- The retained wide regular row on the intrinsic odd two-mode block. -/
+def fourCellOddLowRegularQuadratic (c d : ℝ) : ℝ :=
+  ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      (c ^ 2 * oddStructuralCorrelation11 t +
+        2 * c * d * oddStructuralCorrelation13 t +
+        d ^ 2 * oddStructuralCorrelation33 t)
+
+theorem fourCellOddLowRegularQuadratic_expansion (c d : ℝ) :
+    fourCellOddLowRegularQuadratic c d =
+      c ^ 2 * (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          oddStructuralCorrelation11 t) +
+      2 * c * d * (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          oddStructuralCorrelation13 t) +
+      d ^ 2 * (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          oddStructuralCorrelation33 t) := by
+  have h11 := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    oddStructuralCorrelation11
+      (by unfold oddStructuralCorrelation11; fun_prop)
+  have h13 := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    oddStructuralCorrelation13
+      (by unfold oddStructuralCorrelation13; fun_prop)
+  have h33 := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    oddStructuralCorrelation33
+      (by unfold oddStructuralCorrelation33; fun_prop)
+  unfold fourCellOddLowRegularQuadratic
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        (c ^ 2 * oddStructuralCorrelation11 t +
+          2 * c * d * oddStructuralCorrelation13 t +
+          d ^ 2 * oddStructuralCorrelation33 t)) =
+      fun t ↦ c ^ 2 *
+          (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            oddStructuralCorrelation11 t) +
+        (2 * c * d) *
+          (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            oddStructuralCorrelation13 t) +
+        d ^ 2 *
+          (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            oddStructuralCorrelation33 t) by
+    funext t
+    ring,
+    intervalIntegral.integral_add
+      ((h11.const_mul (c ^ 2)).add (h13.const_mul (2 * c * d)))
+      (h33.const_mul (d ^ 2)),
+    intervalIntegral.integral_add (h11.const_mul (c ^ 2))
+      (h13.const_mul (2 * c * d))]
+  repeat rw [intervalIntegral.integral_const_mul]
+
+/-- Coupled Loewner budget for the complete low regular row.  The polarized
+entry is retained as an absolute cross term, rather than separately charged
+to both diagonal coordinates. -/
+theorem fourCellOddLowRegularQuadratic_le (c d : ℝ) :
+    fourCellOddLowRegularQuadratic c d ≤
+      (3 / 500 : ℝ) * c ^ 2 +
+        (21 / 10000 : ℝ) * |c * d| +
+          (7 / 10000 : ℝ) * d ^ 2 := by
+  let R₁₁ : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddStructuralCorrelation11 t
+  let R₁₃ : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddStructuralCorrelation13 t
+  let R₃₃ : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddStructuralCorrelation33 t
+  have h11 : R₁₁ ≤ (3 / 500 : ℝ) := by
+    simpa only [R₁₁] using
+      integral_yoshidaRegularKernel_mul_oddStructuralCorrelation11_le
+  have h13 : |R₁₃| ≤ (21 / 20000 : ℝ) := by
+    simpa only [R₁₃] using
+      abs_integral_yoshidaRegularKernel_mul_oddStructuralCorrelation13_le
+  have h33 : R₃₃ ≤ (7 / 10000 : ℝ) := by
+    simpa only [R₃₃] using
+      integral_yoshidaRegularKernel_mul_oddStructuralCorrelation33_le
+  have h11mul : c ^ 2 * R₁₁ ≤ (3 / 500 : ℝ) * c ^ 2 := by
+    have := mul_le_mul_of_nonneg_left h11 (sq_nonneg c)
+    linarith
+  have h33mul : d ^ 2 * R₃₃ ≤ (7 / 10000 : ℝ) * d ^ 2 := by
+    have := mul_le_mul_of_nonneg_left h33 (sq_nonneg d)
+    linarith
+  have h13mul : 2 * c * d * R₁₃ ≤
+      (21 / 10000 : ℝ) * |c * d| := by
+    calc
+      2 * c * d * R₁₃ ≤ |2 * c * d * R₁₃| := le_abs_self _
+      _ = 2 * |c * d| * |R₁₃| := by
+        rw [show 2 * c * d * R₁₃ = 2 * (c * d) * R₁₃ by ring,
+          abs_mul, abs_mul]
+        norm_num
+      _ ≤ 2 * |c * d| * (21 / 20000 : ℝ) := by gcongr
+      _ = (21 / 10000 : ℝ) * |c * d| := by ring
+  rw [fourCellOddLowRegularQuadratic_expansion]
+  linarith
+
+/-- After restoring the exact width factor, the complete regular cost is a
+small explicit `2 × 2` budget. -/
+theorem two_mul_width_mul_fourCellOddLowRegularQuadratic_le (c d : ℝ) :
+    2 * fourCellOperatorHalfWidth * fourCellOddLowRegularQuadratic c d ≤
+      (13 / 2500 : ℝ) * c ^ 2 +
+        (91 / 50000 : ℝ) * |c * d| +
+          (61 / 100000 : ℝ) * d ^ 2 := by
+  let Q : ℝ := (3 / 500 : ℝ) * c ^ 2 +
+    (21 / 10000 : ℝ) * |c * d| + (7 / 10000 : ℝ) * d ^ 2
+  have hQ : fourCellOddLowRegularQuadratic c d ≤ Q := by
+    simpa only [Q] using fourCellOddLowRegularQuadratic_le c d
+  have hwidth0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hwidth : 2 * fourCellOperatorHalfWidth ≤ (1733 / 2000 : ℝ) := by
+    unfold fourCellOperatorHalfWidth
+    linarith [strict_log_two_bounds.2]
+  have hQ0 : 0 ≤ Q := by
+    dsimp only [Q]
+    positivity
+  calc
+    2 * fourCellOperatorHalfWidth * fourCellOddLowRegularQuadratic c d ≤
+        2 * fourCellOperatorHalfWidth * Q :=
+      mul_le_mul_of_nonneg_left hQ hwidth0
+    _ ≤ (1733 / 2000 : ℝ) * Q :=
+      mul_le_mul_of_nonneg_right hwidth hQ0
+    _ ≤ (13 / 2500 : ℝ) * c ^ 2 +
+        (91 / 50000 : ℝ) * |c * d| +
+          (61 / 100000 : ℝ) * d ^ 2 := by
+      dsimp only [Q]
+      nlinarith [sq_nonneg c, sq_nonneg d, abs_nonneg (c * d)]
+
 /-! ## Exact `P₁/P₃` local-width block -/
 
 theorem fourCellOddEndpointStripEven_oddStructuralLow
