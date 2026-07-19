@@ -5056,6 +5056,122 @@ theorem lowerTailMargin_add_globalMass_le_core_add_localWidthDefect_of_P1
     w hw.continuous
   nlinarith
 
+private theorem positiveHalfOcticEnergy_le_endpointPotentialEnergy
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ x : ℝ in 0..1, yoshidaEndpointOctic x * w x ^ 2) ≤
+      ∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2 := by
+  have hoctic : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointOctic x * w x ^ 2)
+      volume 0 1 := by
+    apply Continuous.intervalIntegrable
+    unfold yoshidaEndpointOctic
+    fun_prop
+  have hpotential : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * w x ^ 2)
+      volume 0 1 := by
+    apply (intervalIntegrable_endpointPotential_mul_sq w hw).mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at hx
+    rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
+    exact ⟨by linarith [hx.1], hx.2⟩
+  apply intervalIntegral.integral_mono_on_of_le_Ioo
+    (by norm_num : (0 : ℝ) ≤ 1) hoctic hpotential
+  intro x hx
+  exact mul_le_mul_of_nonneg_right
+    (octic_le_endpointPotential (by
+      rw [abs_lt]
+      constructor <;> linarith [hx.1, hx.2]))
+    (sq_nonneg (w x))
+
+/-- Strong `P₁`-orthogonal tail reserve before minimizing the endpoint
+density.  It retains the exact weighted raw gain, prime mass, and octic
+potential on `[3/5,1]`; unlike a scalar global gap, this is quantitatively
+large enough to support the exact low--tail Riesz row. -/
+theorem rawPrimePotentialTailWeight_le_core_add_localWidthDefect_of_P1
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
+    (hone : centeredOddP1Coefficient w = 0) :
+    (27 / 250 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) +
+        (93 / 50 : ℝ) *
+          (∫ x : ℝ in 0..1, yoshidaEndpointOctic x * w x ^ 2) +
+        (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) -
+        (57 / 25 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) ≤
+      fourCellOddHalfCoreReserve w +
+        fourCellOddStripLocalWidthDefect w := by
+  let L : ℝ := ∫ x : ℝ in 0..3 / 5, w x ^ 2
+  let U : ℝ := ∫ x : ℝ in 3 / 5..1, w x ^ 2
+  let H : ℝ := ∫ x : ℝ in 0..1, w x ^ 2
+  let A : ℝ := ∫ x : ℝ in 0..3 / 5, x * w x
+  let J : ℝ := ∫ x : ℝ in 3 / 5..1, w x ^ 2 / x
+  let P : ℝ := ∫ x : ℝ in 0..1,
+    yoshidaEndpointOctic x * w x ^ 2
+  let C : ℝ :=
+    2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200
+  let E : ℝ :=
+    fourCellOddRawStripCancellationReserve w +
+      Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+      (2 - Real.sqrt 2 * Real.log 2) *
+        fourCellOddEndpointStripOddMass w +
+      (93 / 50 : ℝ) *
+        (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) -
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            centeredEndpointCorrelation w t)
+  have hraw :=
+    lowerP1Surplus_add_weightedUpperMass_add_crossP1Square_sub_regular_le
+      w hw hodd
+  have hprime := forty_nine_fiftieths_upperStripMass_le_primeDiagonal
+    w hw.continuous
+  have hpotential := positiveHalfOcticEnergy_le_endpointPotentialEnergy
+    w hw.continuous
+  have hpotentialMul := mul_le_mul_of_nonneg_left hpotential
+    (by norm_num : (0 : ℝ) ≤ 93 / 50)
+  have hcombined :
+      (11 / 3 : ℝ) * L - (625 / 27 : ℝ) * A ^ 2 +
+          (6 / 5 : ℝ) * J + fourCellOddCrossP1Square w +
+          (49 / 50 : ℝ) * U + (93 / 50 : ℝ) * P -
+          (fourCellOperatorHalfWidth / 10) *
+            (∫ x : ℝ in -1..1, w x ^ 2) ≤ E := by
+    dsimp only [L, U, A, J, P, E]
+    linarith
+  have hcentered : (∫ x : ℝ in -1..1, w x ^ 2) = 2 * H := by
+    simpa only [H] using integral_sq_eq_two_mul_positiveHalf
+      w hw.continuous (Or.inr hodd)
+  have hlowerInt : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume 0 (3 / 5) := (hw.continuous.pow 2).intervalIntegrable _ _
+  have hupperInt : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume (3 / 5) 1 := (hw.continuous.pow 2).intervalIntegrable _ _
+  have hhalfSplit : L + U = H := by
+    simpa only [L, U, H] using
+      intervalIntegral.integral_add_adjacent_intervals hlowerInt hupperInt
+  have hhalfNonneg : 0 ≤ H := by
+    dsimp only [H]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg _)
+  have hcoefficient : C + fourCellOperatorHalfWidth / 5 ≤
+      (163 / 50 : ℝ) := by
+    simpa only [C] using fourCellScalar_add_regularCharge_lt_163_div_50.le
+  have hbudget :
+      C * H + fourCellOperatorHalfWidth / 5 * H ≤
+        (163 / 50 : ℝ) * H := by
+    calc
+      C * H + fourCellOperatorHalfWidth / 5 * H =
+          (C + fourCellOperatorHalfWidth / 5) * H := by ring
+      _ ≤ (163 / 50 : ℝ) * H :=
+        mul_le_mul_of_nonneg_right hcoefficient hhalfNonneg
+  have hcharge (a m : ℝ) : a / 10 * (2 * m) = a / 5 * m := by ring
+  rw [hcentered, hcharge] at hcombined
+  have hcross := nineteen_mul_lowerP1Moment_sq_le_crossP1Square
+    w hw hodd hone
+  have hmoment := lowerP1Moment_sq_le_nine_one_twenty_fifths_lowerMass
+    w hw.continuous
+  rw [fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced]
+  unfold fourCellOddStripReducedRemainder
+  dsimp only [L, U, H, A, J, P, C, E]
+    at hcombined hhalfSplit hbudget ⊢
+  nlinarith
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
