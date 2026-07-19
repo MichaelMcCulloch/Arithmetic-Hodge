@@ -2322,6 +2322,13 @@ def fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
     (9 * fourCellEvenP0246CutoffEightFixedLagRow4 c0 c2 c4 c6 / 2)
     (13 * fourCellEvenP0246CutoffEightFixedLagRow6 c0 c2 c4 c6 / 2)
 
+theorem natDegree_fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial_lt_eight
+    (c0 c2 c4 c6 : ℝ) :
+    (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+      c0 c2 c4 c6).natDegree < 8 := by
+  unfold fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+  exact natDegree_factorTwoIntrinsicEvenP0246Polynomial_lt_eight _ _ _ _
+
 theorem centeredPolynomialLift_cutoffEightFixedLagSelector
     (c0 c2 c4 c6 : ℝ) :
     centeredPolynomialLift
@@ -3348,6 +3355,28 @@ def cutoffEightPotentialLegendreSelectorPolynomial (m : ℕ) : ℝ[X] :=
   shiftedLegendrePartialProjectionPolynomial
     (cutoffEightPotentialLegendreSourceL2 m) 8
 
+/-- The exact endpoint-potential selector uses only the first eight shifted
+Legendre coordinates. -/
+theorem natDegree_cutoffEightPotentialLegendreSelectorPolynomial_lt_eight
+    (m : ℕ) :
+    (cutoffEightPotentialLegendreSelectorPolynomial m).natDegree < 8 := by
+  unfold cutoffEightPotentialLegendreSelectorPolynomial
+    shiftedLegendrePartialProjectionPolynomial
+  have hle :
+      (∑ n ∈ Finset.range 8,
+        shiftedLegendreHilbertBasis.repr
+            (cutoffEightPotentialLegendreSourceL2 m) n •
+          normalizedShiftedLegendrePolynomial n).natDegree ≤ 7 :=
+    Polynomial.natDegree_sum_le_of_forall_le (Finset.range 8) _
+      (fun n hn ↦
+        (Polynomial.natDegree_smul_le _ _).trans (by
+          unfold normalizedShiftedLegendrePolynomial
+          apply (Polynomial.natDegree_smul_le _ _).trans
+          rw [ShiftedLegendreBasis.natDegree_shiftedLegendreReal]
+          simp only [Finset.mem_range] at hn
+          omega))
+  omega
+
 /-- Pointwise centered endpoint-potential source after removing its first
 eight Hilbert coordinates. -/
 def cutoffEightProjectedPotentialLegendreSource (m : ℕ) (x : ℝ) : ℝ :=
@@ -3503,6 +3532,30 @@ def fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
     c2 • cutoffEightPotentialLegendreSelectorPolynomial 2 +
     c4 • cutoffEightPotentialLegendreSelectorPolynomial 4 +
     c6 • cutoffEightPotentialLegendreSelectorPolynomial 6
+
+theorem natDegree_fourCellEvenP0246CutoffEightPotentialSelectorPolynomial_lt_eight
+    (c0 c2 c4 c6 : ℝ) :
+    (fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
+      c0 c2 c4 c6).natDegree < 8 := by
+  have h0 : (c0 • cutoffEightPotentialLegendreSelectorPolynomial 0).natDegree < 8 :=
+    (Polynomial.natDegree_smul_le _ _).trans_lt
+      (natDegree_cutoffEightPotentialLegendreSelectorPolynomial_lt_eight 0)
+  have h2 : (c2 • cutoffEightPotentialLegendreSelectorPolynomial 2).natDegree < 8 :=
+    (Polynomial.natDegree_smul_le _ _).trans_lt
+      (natDegree_cutoffEightPotentialLegendreSelectorPolynomial_lt_eight 2)
+  have h4 : (c4 • cutoffEightPotentialLegendreSelectorPolynomial 4).natDegree < 8 :=
+    (Polynomial.natDegree_smul_le _ _).trans_lt
+      (natDegree_cutoffEightPotentialLegendreSelectorPolynomial_lt_eight 4)
+  have h6 : (c6 • cutoffEightPotentialLegendreSelectorPolynomial 6).natDegree < 8 :=
+    (Polynomial.natDegree_smul_le _ _).trans_lt
+      (natDegree_cutoffEightPotentialLegendreSelectorPolynomial_lt_eight 6)
+  unfold fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
+  exact lt_of_le_of_lt (Polynomial.natDegree_add_le _ _)
+    (max_lt
+      (lt_of_le_of_lt (Polynomial.natDegree_add_le _ _)
+        (max_lt
+          (lt_of_le_of_lt (Polynomial.natDegree_add_le _ _) (max_lt h0 h2)) h4))
+      h6)
 
 /-- Endpoint-potential representer after removing its first eight Hilbert
 coordinates. -/
@@ -3734,6 +3787,86 @@ theorem integral_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter_sq_eq
     nlinarith only [hinner] :
       (∫ x : ℝ in -1..1, V x ^ 2) =
         fourCellEvenP0246CutoffEightProjectedPotentialGram c0 c2 c4 c6)
+
+/-! ## Split selector for the complete capacity row -/
+
+/-- Assemble the exact potential and fixed-lag low projections before taking
+the capacity norm.  This keeps the infinite-dimensional estimate separated
+into the two exact tail Grams computed above. -/
+def fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+    (c0 c2 c4 c6 : ℝ) : ℝ[X] :=
+  fourCellEvenP0246CutoffEightPotentialSelectorPolynomial c0 c2 c4 c6 -
+    (Real.sqrt 2 * Real.log 2 / 2) •
+      fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial c0 c2 c4 c6
+
+theorem natDegree_fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial_lt_eight
+    (c0 c2 c4 c6 : ℝ) :
+    (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+      c0 c2 c4 c6).natDegree < 8 := by
+  have hV :=
+    natDegree_fourCellEvenP0246CutoffEightPotentialSelectorPolynomial_lt_eight
+      c0 c2 c4 c6
+  have hK :
+      ((Real.sqrt 2 * Real.log 2 / 2) •
+        fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+          c0 c2 c4 c6).natDegree < 8 :=
+    (Polynomial.natDegree_smul_le _ _).trans_lt
+      (natDegree_fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial_lt_eight
+        c0 c2 c4 c6)
+  unfold fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+  exact lt_of_le_of_lt (Polynomial.natDegree_sub_le _ _) (max_lt hV hK)
+
+/-- With the split selector, the projected capacity row is pointwise the
+endpoint-potential tail minus its exact fixed-lag tail. -/
+theorem projectedCapacityRepresenter_split_eq
+    (c0 c2 c4 c6 x : ℝ) :
+    fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+        c0 c2 c4 c6
+        (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+          c0 c2 c4 c6) x =
+      fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+          c0 c2 c4 c6 x -
+        (Real.sqrt 2 * Real.log 2 / 2) *
+          fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+            c0 c2 c4 c6 x := by
+  rw [projectedPotentialRepresenter_eq_potential_sub_selector]
+  unfold fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+    fourCellEvenP0246CutoffEightCapacityRepresenter
+    fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+    fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+    centeredPolynomialLift
+  simp only [Polynomial.eval_sub, Polynomial.eval_smul, smul_eq_mul]
+  ring
+
+/-- Pointwise Young bound with the exact capacity normalization. -/
+theorem sq_projectedCapacityRepresenter_split_le
+    (c0 c2 c4 c6 x : ℝ) :
+    fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+        c0 c2 c4 c6
+        (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+          c0 c2 c4 c6) x ^ 2 ≤
+      2 * fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+          c0 c2 c4 c6 x ^ 2 +
+        Real.log 2 ^ 2 *
+          fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+            c0 c2 c4 c6 x ^ 2 := by
+  rw [projectedCapacityRepresenter_split_eq]
+  let V := fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+    c0 c2 c4 c6 x
+  let K := fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+    c0 c2 c4 c6 x
+  let a := Real.sqrt 2 * Real.log 2 / 2
+  have hsqrt : Real.sqrt 2 ^ 2 = (2 : ℝ) :=
+    Real.sq_sqrt (by norm_num)
+  have ha : 2 * a ^ 2 = Real.log 2 ^ 2 := by
+    dsimp only [a]
+    rw [div_pow, mul_pow, hsqrt]
+    ring
+  calc
+    (V - a * K) ^ 2 ≤ 2 * V ^ 2 + 2 * (a * K) ^ 2 := by
+      nlinarith only [sq_nonneg (V + a * K)]
+    _ = 2 * V ^ 2 + (2 * a ^ 2) * K ^ 2 := by ring
+    _ = 2 * V ^ 2 + Real.log 2 ^ 2 * K ^ 2 := by rw [ha]
 
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
