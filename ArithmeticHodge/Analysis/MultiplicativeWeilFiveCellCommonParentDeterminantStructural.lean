@@ -3,7 +3,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstruct
 
 set_option autoImplicit false
 
-open Complex Real Set
+open Complex MeasureTheory Real Set
 
 namespace ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellCommonParentDeterminantStructural
 
@@ -20,6 +20,7 @@ open MultiplicativeWeilMonotoneFourCellPrimeGeometryStructural
 open MultiplicativeWeilMonotoneCellEnergyFrameStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilMonotoneNullSuffixVariationStructural
+open MultiplicativeWeilQuarterLogLatticePartitionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 open MultiplicativeWeilRealMonotoneTailConeCriterionStructural
 
@@ -663,6 +664,151 @@ theorem middlePivotResidualContraction_of_middle_zero
     bombieriTwoBlockGlobalCrossSymbol_zero_right,
     bombieriTwoBlockGlobalCrossSymbol_zero_left]
   norm_num
+
+private theorem fiveCellMiddleThree_apply
+    (parent : BombieriTest) (k : ℤ) (x : ℝ) :
+    _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k x =
+      ((monotoneQuarterStep (k + 1) x -
+          monotoneQuarterStep (k + 4) x : ℝ) : ℂ) * parent x := by
+  rw [_root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree]
+  simp only [TestFunction.coe_add, Pi.add_apply, monotoneQuarterCell_apply]
+  unfold monotoneQuarterWeight
+  push_cast
+  ring
+
+private theorem monotoneQuarterStep_lt_one_of_lt_succ
+    (j : ℤ) {x : ℝ}
+    (hx : x < quarterLogLatticePoint (j + 1)) :
+    monotoneQuarterStep j x < 1 := by
+  unfold monotoneQuarterStep
+  apply Real.smoothTransition.lt_one_of_lt_one
+  rw [div_lt_one (quarterLogLatticePoint_gap_pos j)]
+  linarith
+
+private theorem parent_two_mul_eq_zero_of_middle_zero_of_left
+    (parent : BombieriTest) (k : ℤ)
+    (hmiddle :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k = 0)
+    {x : ℝ}
+    (hxleft : quarterLogLatticePoint k < x)
+    (hxright : x < quarterLogLatticePoint (k + 1)) :
+    parent (2 * x) = 0 := by
+  have hpoint := congrArg (fun g : BombieriTest ↦ g (2 * x)) hmiddle
+  have hpoint' :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+          parent k (2 * x) = 0 := by
+    simpa only [TestFunction.coe_zero, Pi.zero_apply] using hpoint
+  rw [fiveCellMiddleThree_apply] at hpoint'
+  have hstepOne : monotoneQuarterStep (k + 1) (2 * x) = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    calc
+      quarterLogLatticePoint (k + 1 + 1) ≤
+          quarterLogLatticePoint (k + 4) :=
+        quarterLogLatticePoint_mono (by omega)
+      _ = 2 * quarterLogLatticePoint k := by
+        rw [quarterLogLatticePoint_add_four]
+      _ ≤ 2 * x := (mul_lt_mul_of_pos_left hxleft (by norm_num)).le
+  have htransport :
+      monotoneQuarterStep (k + 4) (2 * x) =
+        monotoneQuarterStep k x :=
+    monotoneQuarterStep_add_four_two_mul k x
+  have hstepLt : monotoneQuarterStep k x < 1 :=
+    monotoneQuarterStep_lt_one_of_lt_succ k hxright
+  rw [hstepOne, htransport] at hpoint'
+  exact (mul_eq_zero.mp hpoint').resolve_left
+    (Complex.ofReal_ne_zero.mpr (sub_pos.mpr hstepLt).ne')
+
+private theorem parent_eq_zero_of_middle_zero_of_right
+    (parent : BombieriTest) (k : ℤ)
+    (hmiddle :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k = 0)
+    {x : ℝ}
+    (hxleft : quarterLogLatticePoint (k + 1) < x)
+    (hxright : x < quarterLogLatticePoint (k + 2)) :
+    parent x = 0 := by
+  have hpoint := congrArg (fun g : BombieriTest ↦ g x) hmiddle
+  have hpoint' :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+          parent k x = 0 := by
+    simpa only [TestFunction.coe_zero, Pi.zero_apply] using hpoint
+  rw [fiveCellMiddleThree_apply] at hpoint'
+  have hstepPos : 0 < monotoneQuarterStep (k + 1) x :=
+    monotoneQuarterStep_pos_of_lattice_lt (k + 1) hxleft
+  have hstepZero : monotoneQuarterStep (k + 4) x = 0 := by
+    apply monotoneQuarterStep_eq_zero_of_le
+    exact hxright.le.trans (quarterLogLatticePoint_mono (by omega))
+  rw [hstepZero, sub_zero] at hpoint'
+  exact (mul_eq_zero.mp hpoint').resolve_left
+    (Complex.ofReal_ne_zero.mpr hstepPos.ne')
+
+/-- A zero middle-three block annihilates the only factor-two prime atom of
+the sparse endpoint pair.  The possible common-parent value at the shared
+lattice boundary is a singleton and therefore does not contribute to the
+integral. -/
+theorem fiveCell_remoteEndpointCross_eq_zero_of_middle_zero
+    (parent : BombieriTest) (k : ℤ)
+    (hmiddle :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k = 0) :
+    bombieriQuadraticCrossTest
+        (monotoneQuarterCell parent k)
+        (monotoneQuarterCell parent (k + 4)) 2 = 0 := by
+  rw [fiveCell_remoteEndpointCross_eq_squareMaskIntegral]
+  have hzero :
+      ∀ᵐ x : ℝ ∂volume.restrict (Set.Ioi 0),
+        ((monotoneQuarterWeight k x ^ 2 : ℝ) : ℂ) *
+            parent (2 * x) * starRingEnd ℂ (parent x) = 0 := by
+    filter_upwards [
+        (show ∀ᵐ x : ℝ ∂volume,
+            x ≠ quarterLogLatticePoint (k + 1) by
+          simp [ae_iff, measure_singleton]).filter_mono
+            (ae_mono Measure.restrict_le_self)] with x hxne
+    by_cases hxBoundary : x < quarterLogLatticePoint (k + 1)
+    · by_cases hxSupport : x ≤ quarterLogLatticePoint k
+      · rw [monotoneQuarterWeight_eq_zero_of_le k hxSupport]
+        simp
+      · have hparentTwo : parent (2 * x) = 0 :=
+          parent_two_mul_eq_zero_of_middle_zero_of_left
+            parent k hmiddle (lt_of_not_ge hxSupport) hxBoundary
+        rw [hparentTwo]
+        ring
+    · have hxBoundary' : quarterLogLatticePoint (k + 1) < x :=
+        lt_of_le_of_ne (le_of_not_gt hxBoundary) (Ne.symm hxne)
+      by_cases hxSupport : quarterLogLatticePoint (k + 2) ≤ x
+      · rw [monotoneQuarterWeight_eq_zero_of_le_left k hxSupport]
+        simp
+      · have hparent : parent x = 0 :=
+          parent_eq_zero_of_middle_zero_of_right
+            parent k hmiddle hxBoundary' (lt_of_not_ge hxSupport)
+        rw [hparent]
+        simp
+  simpa only [integral_zero] using (integral_congr_ae hzero)
+
+/-- Consequently the sparse endpoint pair has no arithmetic prime cost at
+all; its exact Bombieri value is the purely local critical quadratic. -/
+theorem bombieriFunctional_remoteEndpointPair_re_eq_local_of_middle_zero
+    (parent : BombieriTest) (k : ℤ)
+    (hmiddle :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k = 0) :
+    (bombieriFunctional (bombieriQuadraticTest
+      (monotoneQuarterCell parent k +
+        monotoneQuarterCell parent (k + 4)))).re =
+      (bombieriLocalCriticalForm
+        (monotoneQuarterCell parent k)
+        (monotoneQuarterCell parent k)).re +
+      (bombieriLocalCriticalForm
+        (monotoneQuarterCell parent (k + 4))
+        (monotoneQuarterCell parent (k + 4))).re +
+      2 * (bombieriLocalCriticalForm
+        (monotoneQuarterCell parent k)
+        (monotoneQuarterCell parent (k + 4))).re := by
+  rw [bombieriFunctional_remoteEndpointPair_re_eq_localEnergyBalance,
+    fiveCell_remoteEndpointCross_eq_zero_of_middle_zero parent k hmiddle]
+  simp
 
 /-- Exact scalar form of the new common-parent obstruction.  Once the two
 adjacent minors are nonnegative and the middle diagonal is positive, a
