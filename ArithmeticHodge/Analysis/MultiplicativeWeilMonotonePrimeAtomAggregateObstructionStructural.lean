@@ -3785,6 +3785,84 @@ theorem not_universal_real_remoteTwoPrefixChebyshevEnergyGap
   simp only [Complex.neg_re] at hminus
   linarith
 
+/-! ## What support minimality actually forces -/
+
+/-- Complete interval-and-cut package attached to a support-minimal negative
+monotone block.  The quantified interval clause contains every proper
+prefix, every proper suffix, and every proper adjacent subblock.  The cut
+clause records, simultaneously at every internal cut, the two nonnegative
+diagonals together with the strict arithmetic-mean and determinant
+reversals of their complete cross.
+
+This is the full direct scalar information supplied by support minimality;
+no endpoint propagation or global positivity statement is assumed. -/
+theorem supportMinimalNegativeMonotoneBlock_completeIntervalCutConstraints
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) :
+    4 ≤ len ∧
+      bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo start len) < 0 ∧
+      (∀ offset sublen : ℕ,
+        offset + sublen ≤ len → sublen < len →
+          0 ≤ bombieriRealQuadraticValue
+            (monotoneQuarterFiniteBlock parent lo
+              (start + offset) sublen)) ∧
+      ∀ cut : ℕ, 0 < cut → cut < len →
+        let leftBlock := monotoneQuarterFiniteBlock parent lo start cut
+        let rightBlock := monotoneQuarterFiniteBlock parent lo
+          (start + cut) (len - cut)
+        0 ≤ bombieriRealQuadraticValue leftBlock ∧
+          0 ≤ bombieriRealQuadraticValue rightBlock ∧
+          (bombieriTwoBlockGlobalCrossSymbol leftBlock rightBlock).re <
+            -(bombieriRealQuadraticValue leftBlock +
+                bombieriRealQuadraticValue rightBlock) / 2 ∧
+          bombieriRealQuadraticValue leftBlock *
+              bombieriRealQuadraticValue rightBlock <
+            (bombieriTwoBlockGlobalCrossSymbol leftBlock rightBlock).re ^ 2 := by
+  refine ⟨four_le_length_of_supportMinimalNegativeMonotoneBlock hmin,
+    hmin.negative, ?_, ?_⟩
+  · intro offset sublen hinside hproper
+    exact supportMinimalNegativeMonotoneBlock_properSubblock_nonnegative
+      hmin offset sublen hinside hproper
+  · intro cut hcutPos hcutLt
+    let leftBlock := monotoneQuarterFiniteBlock parent lo start cut
+    let rightBlock := monotoneQuarterFiniteBlock parent lo
+      (start + cut) (len - cut)
+    have hcut := supportMinimalNegativeMonotoneBlock_internalCut_constraints
+      hmin cut hcutPos hcutLt
+    exact ⟨hcut.left_nonnegative, hcut.right_nonnegative,
+      hcut.cross_strictly_below_arithmeticMean,
+      hcut.determinant_strictly_reversed⟩
+
+/-- At the right-endpoint cut, support minimality forces the strict negation
+of both candidate endpoint absorptions.  The endpoint cross is below the
+negative arithmetic mean, and its square is strictly larger than the
+prefix--endpoint diagonal product.  Thus the minimal-block hypothesis does
+not furnish the missing Schur estimate: conditional on a minimal negative
+block, it reverses that estimate. -/
+theorem supportMinimalNegativeMonotoneBlock_rightEndpoint_absorption_strictly_fails
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) :
+    let front := monotoneQuarterFiniteBlock parent lo start (len - 1)
+    let endpoint := monotoneQuarterFiniteBlock parent lo
+      (start + (len - 1)) 1
+    0 ≤ bombieriRealQuadraticValue front ∧
+      0 ≤ bombieriRealQuadraticValue endpoint ∧
+      ¬ (-(bombieriRealQuadraticValue front +
+            bombieriRealQuadraticValue endpoint) / 2 ≤
+          (bombieriTwoBlockGlobalCrossSymbol front endpoint).re) ∧
+      ¬ ((bombieriTwoBlockGlobalCrossSymbol front endpoint).re ^ 2 ≤
+          bombieriRealQuadraticValue front *
+            bombieriRealQuadraticValue endpoint) := by
+  dsimp only
+  have hright :=
+    supportMinimalNegativeMonotoneBlock_rightEndpoint_constraints hmin
+  exact ⟨hright.left_nonnegative, hright.right_nonnegative,
+    not_le_of_gt hright.cross_strictly_below_arithmeticMean,
+    not_le_of_gt hright.determinant_strictly_reversed⟩
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
