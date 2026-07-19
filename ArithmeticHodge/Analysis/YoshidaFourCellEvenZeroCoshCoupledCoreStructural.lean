@@ -3868,6 +3868,100 @@ theorem sq_projectedCapacityRepresenter_split_le
     _ = 2 * V ^ 2 + (2 * a ^ 2) * K ^ 2 := by ring
     _ = 2 * V ^ 2 + Real.log 2 ^ 2 * K ^ 2 := by rw [ha]
 
+private theorem memLp_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+    (c0 c2 c4 c6 : ℝ) :
+    MemLp
+      (fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+        c0 c2 c4 c6) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have h0 := memLp_cutoffEightProjectedPotentialLegendreSource_restrict 0
+  have h2 := memLp_cutoffEightProjectedPotentialLegendreSource_restrict 2
+  have h4 := memLp_cutoffEightProjectedPotentialLegendreSource_restrict 4
+  have h6 := memLp_cutoffEightProjectedPotentialLegendreSource_restrict 6
+  simpa only [fourCellEvenP0246CutoffEightProjectedPotentialRepresenter,
+    Pi.add_apply, Pi.smul_apply] using
+    (((h0.const_smul c0).add (h2.const_smul c2)).add
+      (h4.const_smul c4)).add (h6.const_smul c6)
+
+private theorem memLp_fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+    (c0 c2 c4 c6 : ℝ) :
+    MemLp
+      (fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+        c0 c2 c4 c6) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hS : Continuous (centeredPolynomialLift
+      (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+        c0 c2 c4 c6)) := by
+    unfold centeredPolynomialLift
+    fun_prop
+  have hSLp := memLp_two_restrict_centered_of_continuous _ hS
+  simpa only [fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter] using
+    (memLp_fixedLagK_intrinsicEvenP0246 c0 c2 c4 c6).sub hSLp
+
+private theorem intervalIntegrable_sq_of_memLp_two_restrict
+    (f : ℝ → ℝ)
+    (hf : MemLp f 2 (volume.restrict (Ioc (-1 : ℝ) 1))) :
+    IntervalIntegrable (fun x : ℝ ↦ f x ^ 2) volume (-1) 1 := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+  apply (hf.integrable_norm_pow (by norm_num)).congr
+  filter_upwards with x
+  rw [Real.norm_eq_abs, sq_abs]
+
+/-- The infinite-dimensional capacity norm is bounded exactly by the two
+closed projected Grams.  All remaining quantitative work is therefore a
+finite quadratic-form comparison. -/
+theorem integral_projectedCapacityRepresenter_split_sq_le_grams
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+        c0 c2 c4 c6
+        (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+          c0 c2 c4 c6) x ^ 2) ≤
+      2 * fourCellEvenP0246CutoffEightProjectedPotentialGram
+          c0 c2 c4 c6 +
+        Real.log 2 ^ 2 *
+          fourCellEvenP0246CutoffEightProjectedFixedLagGram
+            c0 c2 c4 c6 := by
+  let G := fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+    c0 c2 c4 c6
+      (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+        c0 c2 c4 c6)
+  let V := fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+    c0 c2 c4 c6
+  let K := fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+    c0 c2 c4 c6
+  have hG : IntervalIntegrable (fun x : ℝ ↦ G x ^ 2) volume (-1) 1 :=
+    intervalIntegrable_sq_of_memLp_two_restrict G
+      (memLp_fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+        c0 c2 c4 c6
+        (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+          c0 c2 c4 c6))
+  have hV : IntervalIntegrable (fun x : ℝ ↦ V x ^ 2) volume (-1) 1 :=
+    intervalIntegrable_sq_of_memLp_two_restrict V
+      (memLp_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+        c0 c2 c4 c6)
+  have hK : IntervalIntegrable (fun x : ℝ ↦ K x ^ 2) volume (-1) 1 :=
+    intervalIntegrable_sq_of_memLp_two_restrict K
+      (memLp_fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+        c0 c2 c4 c6)
+  have hmono :
+      (∫ x : ℝ in -1..1, G x ^ 2) ≤
+        ∫ x : ℝ in -1..1,
+          2 * V x ^ 2 + Real.log 2 ^ 2 * K x ^ 2 := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hG
+      ((hV.const_mul 2).add (hK.const_mul (Real.log 2 ^ 2)))
+    intro x _hx
+    simpa only [G, V, K] using
+      sq_projectedCapacityRepresenter_split_le c0 c2 c4 c6 x
+  rw [intervalIntegral.integral_add (hV.const_mul 2)
+      (hK.const_mul (Real.log 2 ^ 2)),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul,
+    integral_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter_sq_eq_gram,
+    integral_cutoffEightProjectedFixedLagRepresenter_sq_eq_projectedGram]
+    at hmono
+  simpa only [G, V, K] using hmono
+
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
     (hlow : centeredLegendreMomentsVanishBelow r 8)
@@ -3953,6 +4047,35 @@ theorem cutoffEight_capacitySchur_of_projectedCapacityRepresenterNorm
     c0 c2 c4 c6 r hr hlow q hq
       (memLp_fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
         c0 c2 c4 c6 q) hdual
+
+/-- Finite-matrix handoff for the cutoff-eight capacity Schur step.  The
+exact projected tail calculations and Young's inequality leave only the
+displayed quadratic-form comparison in the four low coordinates. -/
+theorem cutoffEight_capacitySchur_of_splitGramBound
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8)
+    (hgram :
+      2 * fourCellEvenP0246CutoffEightProjectedPotentialGram
+          c0 c2 c4 c6 +
+        Real.log 2 ^ 2 *
+          fourCellEvenP0246CutoffEightProjectedFixedLagGram
+            c0 c2 c4 c6 ≤
+        (7461 / 7000 : ℝ) *
+          fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6) :
+    fourCellEvenEndpointCapacityPolarization
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r ^ 2 ≤
+      fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6 *
+        ((7461 / 7000 : ℝ) *
+          (∫ x : ℝ in -1..1, r x ^ 2)) := by
+  apply cutoffEight_capacitySchur_of_projectedCapacityRepresenterNorm
+    c0 c2 c4 c6 r hr hlow
+    (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+      c0 c2 c4 c6)
+    (natDegree_fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial_lt_eight
+      c0 c2 c4 c6)
+  exact
+    (integral_projectedCapacityRepresenter_split_sq_le_grams
+      c0 c2 c4 c6).trans hgram
 
 /-- Exact scalar Schur reduction of the last cutoff-eight capacity border.
 The tail factor `7461 / 7000 = 299 / 280 - 1 / 500` is what remains after
