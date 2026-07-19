@@ -126,6 +126,45 @@ theorem centeredLegendreLowProjection_six_eq_intrinsicEvenP024Profile
   simp only [Pi.add_apply]
   ring
 
+/-- The canonical cutoff-eight projection of an even profile is exactly its
+four genuine `P₀/P₂/P₄/P₆` coordinates. -/
+theorem centeredLegendreLowProjection_eight_eq_intrinsicEvenP0246Profile
+    (w : ℝ → ℝ) (hw : Continuous w) (heven : Function.Even w) :
+    centeredLegendreLowProjection w hw 8 =
+      factorTwoIntrinsicEvenP0246Profile
+        (factorTwoCanonicalLegendreCoefficient w hw 0)
+        (factorTwoCanonicalLegendreCoefficient w hw 2)
+        (factorTwoCanonicalLegendreCoefficient w hw 4)
+        (factorTwoCanonicalLegendreCoefficient w hw 6) := by
+  have h1 := centeredPullback_repr_eq_zero_of_even_of_odd
+    w (centeredPullback_memLp_two w hw) heven 1 (by norm_num : Odd 1)
+  have h3 := centeredPullback_repr_eq_zero_of_even_of_odd
+    w (centeredPullback_memLp_two w hw) heven 3 (by norm_num : Odd 3)
+  have h5 := centeredPullback_repr_eq_zero_of_even_of_odd
+    w (centeredPullback_memLp_two w hw) heven 5 (by norm_num : Odd 5)
+  have h7 := centeredPullback_repr_eq_zero_of_even_of_odd
+    w (centeredPullback_memLp_two w hw) heven 7 (by norm_num : Odd 7)
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 w hw) 1 = 0 at h1
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 w hw) 3 = 0 at h3
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 w hw) 5 = 0 at h5
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 w hw) 7 = 0 at h7
+  funext x
+  unfold centeredLegendreLowProjection centeredLegendreProjectionPolynomial
+    shiftedLegendrePartialProjectionPolynomial
+  rw [Polynomial.eval_finset_sum]
+  simp only [normalizedShiftedLegendrePolynomial, Polynomial.eval_smul,
+    smul_eq_mul, Finset.sum_range_succ, Finset.sum_range_zero,
+    h1, h3, h5, h7, zero_mul, zero_add, add_zero]
+  rw [shiftedLegendreReal_zero_centered_six,
+    shiftedLegendreReal_two_centered_six,
+    shiftedLegendreReal_four_centered_six]
+  unfold factorTwoIntrinsicEvenP0246Profile
+    factorTwoIntrinsicEvenP024Profile factorTwoEvenStructuralLowProfile
+    factorTwoIntrinsicSixEvenTail factorTwoCanonicalLegendreCoefficient
+    factorTwoCenteredP6
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  ring
+
 /-- The canonical degree-zero Hilbert coordinate is exactly the ordinary
 centered constant coefficient. -/
 theorem factorTwoCanonicalLegendreCoefficient_zero_eq_centeredEvenP0Coefficient
@@ -144,6 +183,13 @@ def factorTwoIntrinsicEvenP024Polynomial
   c0 • shiftedLegendreReal 0 + c2 • shiftedLegendreReal 2 +
     c4 • shiftedLegendreReal 4
 
+/-- Unit-interval polynomial representing the intrinsic even
+`P₀/P₂/P₄/P₆` profile. -/
+def factorTwoIntrinsicEvenP0246Polynomial
+    (c0 c2 c4 c6 : ℝ) : ℝ[X] :=
+  factorTwoIntrinsicEvenP024Polynomial c0 c2 c4 +
+    c6 • shiftedLegendreReal 6
+
 theorem centeredPolynomialLift_intrinsicEvenP024Polynomial
     (c0 c2 c4 : ℝ) :
     centeredPolynomialLift
@@ -159,6 +205,22 @@ theorem centeredPolynomialLift_intrinsicEvenP024Polynomial
     factorTwoIntrinsicSixEvenTail
   simp only [Pi.add_apply]
 
+theorem centeredPolynomialLift_intrinsicEvenP0246Polynomial
+    (c0 c2 c4 c6 : ℝ) :
+    centeredPolynomialLift
+        (factorTwoIntrinsicEvenP0246Polynomial c0 c2 c4 c6) =
+      factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 := by
+  funext x
+  unfold factorTwoIntrinsicEvenP0246Polynomial centeredPolynomialLift
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  rw [show
+      (factorTwoIntrinsicEvenP024Polynomial c0 c2 c4).eval ((x + 1) / 2) =
+        factorTwoIntrinsicEvenP024Profile c0 c2 c4 x by
+    exact congrFun
+      (centeredPolynomialLift_intrinsicEvenP024Polynomial c0 c2 c4) x]
+  unfold factorTwoIntrinsicEvenP0246Profile factorTwoCenteredP6
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+
 theorem natDegree_factorTwoIntrinsicEvenP024Polynomial_lt_six
     (c0 c2 c4 : ℝ) :
     (factorTwoIntrinsicEvenP024Polynomial c0 c2 c4).natDegree < 6 := by
@@ -166,6 +228,18 @@ theorem natDegree_factorTwoIntrinsicEvenP024Polynomial_lt_six
   have hdeg :
       (c0 • shiftedLegendreReal 0 + c2 • shiftedLegendreReal 2 +
         c4 • shiftedLegendreReal 4).natDegree ≤ 4 := by
+    compute_degree
+  omega
+
+theorem natDegree_factorTwoIntrinsicEvenP0246Polynomial_lt_eight
+    (c0 c2 c4 c6 : ℝ) :
+    (factorTwoIntrinsicEvenP0246Polynomial c0 c2 c4 c6).natDegree < 8 := by
+  unfold factorTwoIntrinsicEvenP0246Polynomial
+    factorTwoIntrinsicEvenP024Polynomial
+  have hdeg :
+      (c0 • shiftedLegendreReal 0 + c2 • shiftedLegendreReal 2 +
+        c4 • shiftedLegendreReal 4 +
+          c6 • shiftedLegendreReal 6).natDegree ≤ 6 := by
     compute_degree
   omega
 
@@ -792,6 +866,162 @@ theorem three_div_hundred_nonconstantReserve_P0246_le_core_add_constantDefect
   dsimp only [a, b, c, d, e, f, x, y, z, D, beta] at hbox
   unfold symmetricQuadratic at hbox
   nlinarith only [hbox]
+
+/-! ## Canonical cutoff-eight low/tail split -/
+
+/-- Shifted-Legendre orthogonality removes the complete raw-energy cross
+between `P₀/P₂/P₄/P₆` and every tail starting at degree eight. -/
+theorem centeredRawLogEnergy_intrinsicEvenP0246_add_tail
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    centeredRawLogEnergy
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 + r) =
+      centeredRawLogEnergy
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) +
+        centeredRawLogEnergy r := by
+  let p : ℝ[X] := factorTwoIntrinsicEvenP0246Polynomial c0 c2 c4 c6
+  have hpdeg : p.natDegree < 8 := by
+    simpa only [p] using
+      natDegree_factorTwoIntrinsicEvenP0246Polynomial_lt_eight c0 c2 c4 c6
+  have hsplit := centeredRawLogEnergy_centeredPolynomialLift_add_tail
+    p r hr hlocal hlow hpdeg
+  rw [show centeredPolynomialLift p =
+      factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 by
+    simpa only [p] using
+      centeredPolynomialLift_intrinsicEvenP0246Polynomial c0 c2 c4 c6] at hsplit
+  exact hsplit
+
+/-- The ordinary mass cross between `P₀/P₂/P₄/P₆` and its
+moment-eight tail vanishes exactly. -/
+theorem intervalIntegral_intrinsicEvenP0246_mul_tail_eq_zero
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    (∫ x : ℝ in -1..1,
+      factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x * r x) = 0 := by
+  let p : ℝ[X] := factorTwoIntrinsicEvenP0246Polynomial c0 c2 c4 c6
+  have hpdeg : p.natDegree < 8 := by
+    simpa only [p] using
+      natDegree_factorTwoIntrinsicEvenP0246Polynomial_lt_eight c0 c2 c4 c6
+  have hzero := intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+    p r hr hlow hpdeg
+  rw [show centeredPolynomialLift p =
+      factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 by
+    simpa only [p] using
+      centeredPolynomialLift_intrinsicEvenP0246Polynomial c0 c2 c4 c6] at hzero
+  exact hzero
+
+/-- Exact Pythagorean mass split at the canonical even cutoff eight. -/
+theorem integral_intrinsicEvenP0246_add_tail_sq
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    (∫ x : ℝ in -1..1,
+      (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x + r x) ^ 2) =
+      (∫ x : ℝ in -1..1,
+        factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x ^ 2) +
+        ∫ x : ℝ in -1..1, r x ^ 2 := by
+  have hp := continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hsplit := integral_add_sq
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r hp hr
+  have hcross := intervalIntegral_intrinsicEvenP0246_mul_tail_eq_zero
+    c0 c2 c4 c6 r hr hlow
+  simpa only [Pi.add_apply, hcross, mul_zero, zero_add, add_zero] using hsplit
+
+/-- Exact coupled-core polarization at cutoff eight.  Raw orthogonality leaves
+only the joint endpoint-capacity border between the finite low block and the
+infinite tail. -/
+theorem fourCellEvenZeroCoshCoupledCore_intrinsicEvenP0246_add_tail
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    fourCellEvenZeroCoshCoupledCore
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 + r) =
+      fourCellEvenZeroCoshCoupledCore
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) +
+        2 * fourCellEvenEndpointCapacityPolarization
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r +
+        fourCellEvenZeroCoshCoupledCore r := by
+  have hp := continuous_factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  have hraw := centeredRawLogEnergy_intrinsicEvenP0246_add_tail
+    c0 c2 c4 c6 r hr hlocal hlow
+  have hcapacity := fourCellEvenEndpointCapacityQuadratic_add
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r hp hr
+  unfold fourCellEvenZeroCoshCoupledCore
+  unfold fourCellEvenEndpointCapacityQuadratic at hcapacity
+  rw [hraw]
+  linarith
+
+/-- Every even tail starting at `P₈` retains the full eighth harmonic
+coefficient `761 / 280`.  The endpoint-potential/prime capacity is kept as
+one nonnegative block. -/
+theorem sevenHundredSixtyOne_div_twoHundredEighty_mass_le_coupledCore_of_even_legendreTail
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hlow : centeredLegendreMomentsVanishBelow w 8) :
+    (761 / 280 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore w := by
+  let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  let B : ℝ := fourCellEvenEndpointCapacityQuadratic w
+  have hB : 0 ≤ B := by
+    simpa only [B] using
+      fourCellEvenEndpointCapacityQuadratic_nonnegative w hw heven
+  have hraw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    w hw hlocal 8 hlow
+  norm_num [harmonic, Finset.sum_range_succ] at hraw
+  have hgap : (761 / 280 : ℝ) * M ≤ centeredRawLogEnergy w / 4 := by
+    simpa only [M, factorTwoIntrinsicEnergy] using hraw
+  change 0 ≤ (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x * w x ^ 2) -
+    Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w at hB
+  unfold fourCellEvenZeroCoshCoupledCore
+  dsimp only [M] at hgap ⊢
+  linarith
+
+/-- At cutoff eight, the finite low block and infinite tail diagonal blocks
+already clear the full `33 / 20` target under the global constant-coordinate
+bound.  The promoted low reserve and the tail's `299 / 280` surplus absorb
+the finite block's constant defect. -/
+theorem thirtyThree_div_twenty_mass_le_coupledCore_diagonalSum_P0246_add_tail
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8)
+    (hconstant : c0 ^ 2 ≤ (1 / 4000 : ℝ) *
+      (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+        (2 / 9 : ℝ) * c4 ^ 2 + (2 / 13 : ℝ) * c6 ^ 2 +
+        (∫ x : ℝ in -1..1, r x ^ 2))) :
+    (33 / 20 : ℝ) *
+        (∫ x : ℝ in -1..1,
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x + r x) ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) +
+        fourCellEvenZeroCoshCoupledCore r := by
+  let N : ℝ := (2 / 5 : ℝ) * c2 ^ 2 + (2 / 9 : ℝ) * c4 ^ 2 +
+    (2 / 13 : ℝ) * c6 ^ 2
+  let R : ℝ := ∫ x : ℝ in -1..1, r x ^ 2
+  have hR : 0 ≤ R := by
+    dsimp only [R]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hconstant' : 3998 * c0 ^ 2 ≤ N + R := by
+    dsimp only [N, R]
+    nlinarith only [hconstant]
+  have habsorb : 5 * c0 ^ 2 ≤
+      (3 / 100 : ℝ) * N + (299 / 280 : ℝ) * R := by
+    nlinarith only [hconstant', hR, sq_nonneg c2, sq_nonneg c4,
+      sq_nonneg c6]
+  have hlowReserve :=
+    three_div_hundred_nonconstantReserve_P0246_le_core_add_constantDefect
+      c0 c2 c4 c6
+  have htail :=
+    sevenHundredSixtyOne_div_twoHundredEighty_mass_le_coupledCore_of_even_legendreTail
+      r hr hlocal heven hlow
+  have hmassSplit := integral_intrinsicEvenP0246_add_tail_sq
+    c0 c2 c4 c6 r hr hlow
+  rw [hmassSplit]
+  dsimp only [N, R] at habsorb
+  nlinarith only [hlowReserve, htail, habsorb]
 
 private theorem integral_polynomial_ten
     (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ l r : ℝ) :
