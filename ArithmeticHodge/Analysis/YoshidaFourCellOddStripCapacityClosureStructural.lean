@@ -4,6 +4,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicRankResidualBound
 import ArithmeticHodge.Analysis.YoshidaEndpointPotentialOddCoercivity
 import ArithmeticHodge.Analysis.YoshidaEndpointPullbackLipschitz
 import ArithmeticHodge.Analysis.UnitIntervalLogEnergyLipschitz
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 
 set_option autoImplicit false
 
@@ -32,6 +33,10 @@ open YoshidaFourCellRegularParityFoldStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaFactorTwoPhaseIntrinsicRankResidualBound
+open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
+open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
+open YoshidaEndpointOddOneThreeRawPolarization
+open YoshidaEndpointOddResidualRegularity
 open YoshidaRegularKernelBound
 open UnitIntervalLogEnergyAffine
 open UnitIntervalLogEnergyLipschitz
@@ -313,6 +318,124 @@ theorem two_mul_oddGroundState_le_coupledRawKernel
     exact div_nonneg (by positivity) (mul_nonneg hsub hsum)
   nlinarith [mul_nonneg hcoefficient (sq_nonneg (u - v))]
 
+/-! ## Exact `P₁/P₃` local-width block -/
+
+theorem fourCellOddEndpointStripEven_oddStructuralLow
+    (c d z : ℝ) :
+    fourCellOddEndpointStripEven
+        (factorTwoOddStructuralLowProfile c d) z =
+      (2 / 25 : ℝ) * (10 * c + d + 3 * d * z ^ 2) := by
+  unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
+    factorTwoOddStructuralLowProfile centeredP1 centeredP3
+  ring
+
+theorem fourCellOddEndpointStripOdd_oddStructuralLow
+    (c d z : ℝ) :
+    fourCellOddEndpointStripOdd
+        (factorTwoOddStructuralLowProfile c d) z =
+      z * (10 * c + 33 * d + d * z ^ 2) / 50 := by
+  unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+    factorTwoOddStructuralLowProfile centeredP1 centeredP3
+  ring
+
+theorem fourCellOddEndpointStripEvenMass_oddStructuralLow
+    (c d : ℝ) :
+    fourCellOddEndpointStripEvenMass
+        (factorTwoOddStructuralLowProfile c d) =
+      (32 / 125 : ℝ) * c ^ 2 +
+        2 * (32 / 625 : ℝ) * c * d +
+        (192 / 15625 : ℝ) * d ^ 2 := by
+  unfold fourCellOddEndpointStripEvenMass
+  simp_rw [fourCellOddEndpointStripEven_oddStructuralLow]
+  rw [show (fun z : ℝ ↦
+      ((2 / 25 : ℝ) * (10 * c + d + 3 * d * z ^ 2)) ^ 2) =
+      fun z ↦
+        ((4 / 625 : ℝ) * (10 * c + d) ^ 2) * z ^ 0 +
+          ((24 / 625 : ℝ) * (10 * c + d) * d) * z ^ 2 +
+          ((36 / 625 : ℝ) * d ^ 2) * z ^ 4 by
+    funext z
+    ring]
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)]
+  repeat rw [intervalIntegral.integral_const_mul, integral_pow_nat]
+  norm_num
+  ring
+
+theorem fourCellOddEndpointStripOddMass_oddStructuralLow
+    (c d : ℝ) :
+    fourCellOddEndpointStripOddMass
+        (factorTwoOddStructuralLowProfile c d) =
+      (2 / 375 : ℝ) * c ^ 2 +
+        2 * (56 / 3125 : ℝ) * c * d +
+        (6586 / 109375 : ℝ) * d ^ 2 := by
+  unfold fourCellOddEndpointStripOddMass
+  simp_rw [fourCellOddEndpointStripOdd_oddStructuralLow]
+  rw [show (fun z : ℝ ↦
+      (z * (10 * c + 33 * d + d * z ^ 2) / 50) ^ 2) =
+      fun z ↦
+        (((10 * c + 33 * d) ^ 2 / 2500 : ℝ)) * z ^ 2 +
+          (((10 * c + 33 * d) * d / 1250 : ℝ)) * z ^ 4 +
+          ((d ^ 2 / 2500 : ℝ)) * z ^ 6 by
+    funext z
+    ring]
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)]
+  repeat rw [intervalIntegral.integral_const_mul, integral_pow_nat]
+  norm_num
+  ring
+
+theorem fourCellOddEndpointStripOdd_oddStructuralLow_eq_lowProfile
+    (c d : ℝ) :
+    fourCellOddEndpointStripOdd
+        (factorTwoOddStructuralLowProfile c d) =
+      factorTwoOddStructuralLowProfile
+        (c / 5 + 84 * d / 125) (d / 125) := by
+  funext z
+  rw [fourCellOddEndpointStripOdd_oddStructuralLow]
+  unfold factorTwoOddStructuralLowProfile centeredP1 centeredP3
+  ring
+
+theorem fourCellOddEndpointStripOddRawEnergy_oddStructuralLow
+    (c d : ℝ) :
+    fourCellOddEndpointStripOddRawEnergy
+        (factorTwoOddStructuralLowProfile c d) =
+      (8 / 375 : ℝ) * c ^ 2 +
+        2 * (224 / 3125 : ℝ) * c * d +
+        (79036 / 328125 : ℝ) * d ^ 2 := by
+  unfold fourCellOddEndpointStripOddRawEnergy
+  rw [fourCellOddEndpointStripOdd_oddStructuralLow_eq_lowProfile,
+    centeredRawLogEnergy_factorTwoOddStructuralLowProfile]
+  ring
+
+theorem integral_zero_one_oddStructuralLow_sq
+    (c d : ℝ) :
+    (∫ x : ℝ in 0..1,
+      factorTwoOddStructuralLowProfile c d x ^ 2) =
+      (1 / 3 : ℝ) * c ^ 2 + (1 / 7 : ℝ) * d ^ 2 := by
+  have hfull := integral_oddStructuralLow_sq c d
+  have hhalf := integral_sq_eq_two_mul_positiveHalf
+    (factorTwoOddStructuralLowProfile c d)
+    (continuous_factorTwoOddStructuralLowProfile c d)
+    (Or.inr (odd_factorTwoOddStructuralLowProfile c d))
+  linarith
+
+theorem integral_zero_one_endpointPotential_oddStructuralLow
+    (c d : ℝ) :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x *
+        factorTwoOddStructuralLowProfile c d x ^ 2) =
+      (4 / 9 - (1 / 3 : ℝ) * Real.log 2) * c ^ 2 +
+        (1 / 5 : ℝ) * c * d +
+        (289 / 1470 - (1 / 7 : ℝ) * Real.log 2) * d ^ 2 := by
+  have hfull := integral_endpointPotential_oddStructuralLow c d
+  have hhalf := endpointPotential_eq_two_mul_positiveHalf
+    (factorTwoOddStructuralLowProfile c d)
+    (continuous_factorTwoOddStructuralLowProfile c d)
+    (Or.inr (odd_factorTwoOddStructuralLowProfile c d))
+  linarith
+
 /-- The residual after extracting the known sharp odd core.  It contains
 exactly the endpoint-strip prime modification, the wider scalar shift, the
 retained regular completion, and the diagonal allocation used by the odd
@@ -356,6 +479,44 @@ def fourCellOddStripCorrelationCoreDefect (w : ℝ → ℝ) : ℝ :=
         yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
           centeredEndpointCorrelation w t)
 
+/-- Algebraic `(1,1)` entry of the exact local defect on `span(P₁,P₃)`,
+before the wide regular autocorrelation is added. -/
+def fourCellOddLowLocalAlgebraic11 : ℝ :=
+  -(1 / 2 : ℝ) * (8 / 375) +
+    Real.sqrt 2 * Real.log 2 * (32 / 125) +
+    (2 - Real.sqrt 2 * Real.log 2) * (2 / 375) +
+    ((14 / 5 : ℝ) -
+      2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) - 3 / 200) *
+      (1 / 3) -
+    (7 / 50 : ℝ) * (4 / 9 - (1 / 3) * Real.log 2)
+
+/-- Algebraic polarized `(1,3)` entry of the exact local low block. -/
+def fourCellOddLowLocalAlgebraic13 : ℝ :=
+  -(1 / 2 : ℝ) * (224 / 3125) +
+    Real.sqrt 2 * Real.log 2 * (32 / 625) +
+    (2 - Real.sqrt 2 * Real.log 2) * (56 / 3125) -
+    (7 / 50 : ℝ) * (1 / 10)
+
+/-- Algebraic `(3,3)` entry of the exact local defect on `span(P₁,P₃)`.
+-/
+def fourCellOddLowLocalAlgebraic33 : ℝ :=
+  -(1 / 2 : ℝ) * (79036 / 328125) +
+    Real.sqrt 2 * Real.log 2 * (192 / 15625) +
+    (2 - Real.sqrt 2 * Real.log 2) * (6586 / 109375) +
+    ((14 / 5 : ℝ) -
+      2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) - 3 / 200) *
+      (1 / 7) -
+    (7 / 50 : ℝ) * (289 / 1470 - (1 / 7) * Real.log 2)
+
+/-- Exact algebraic quadratic part of the local defect on the intrinsic odd
+two-mode block. -/
+def fourCellOddLowLocalAlgebraicQuadratic (c d : ℝ) : ℝ :=
+  fourCellOddLowLocalAlgebraic11 * c ^ 2 +
+    2 * fourCellOddLowLocalAlgebraic13 * c * d +
+    fourCellOddLowLocalAlgebraic33 * d ^ 2
+
 /-- Local normal form of the four-cell defect.  The global raw form cancels
 exactly: only the removed strip-odd raw energy and its two retained prime
 masses remain, together with the width scalar, allocation, and exact regular
@@ -375,6 +536,33 @@ def fourCellOddStripLocalWidthDefect (w : ℝ → ℝ) : ℝ :=
       (∫ t : ℝ in 0..2,
         yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
           centeredEndpointCorrelation w t)
+
+/-- Exact `P₁/P₃` normal form of the local four-cell defect.  Every
+strip, potential, and scalar term is now an explicit `2 × 2` quadratic;
+the only nonalgebraic entries left are the three wide regular-kernel moments.
+-/
+theorem fourCellOddStripLocalWidthDefect_oddStructuralLow_eq
+    (c d : ℝ) :
+    fourCellOddStripLocalWidthDefect
+        (factorTwoOddStructuralLowProfile c d) =
+      fourCellOddLowLocalAlgebraicQuadratic c d -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              (c ^ 2 * oddStructuralCorrelation11 t +
+                2 * c * d * oddStructuralCorrelation13 t +
+                d ^ 2 * oddStructuralCorrelation33 t)) := by
+  unfold fourCellOddStripLocalWidthDefect
+    fourCellOddLowLocalAlgebraicQuadratic
+    fourCellOddLowLocalAlgebraic11 fourCellOddLowLocalAlgebraic13
+    fourCellOddLowLocalAlgebraic33
+  rw [fourCellOddEndpointStripOddRawEnergy_oddStructuralLow,
+    fourCellOddEndpointStripEvenMass_oddStructuralLow,
+    fourCellOddEndpointStripOddMass_oddStructuralLow,
+    integral_zero_one_oddStructuralLow_sq,
+    integral_zero_one_endpointPotential_oddStructuralLow]
+  simp_rw [centeredEndpointCorrelation_oddStructuralLow]
+  ring
 
 /-- The endpoint-strip parity split cancels every nonlocal raw term outside
 the strip from the core defect. -/
