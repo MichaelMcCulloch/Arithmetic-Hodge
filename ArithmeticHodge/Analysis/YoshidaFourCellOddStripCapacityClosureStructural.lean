@@ -44,6 +44,7 @@ open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
+open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointClean
@@ -4112,6 +4113,140 @@ theorem fourCellOddSignedMassRegularQuadratic_nonneg_of_odd
   unfold fourCellOddSignedMassRegularQuadratic
   dsimp only [H, R, C] at hregular hmass ⊢
   linarith
+
+private theorem fourCellOddSignedMassRegularQuadratic_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddSignedMassRegularQuadratic (u + v) =
+      fourCellOddSignedMassRegularQuadratic u +
+        2 * fourCellOddSignedMassRegularBilinear u v +
+          fourCellOddSignedMassRegularQuadratic v := by
+  have hreduced := fourCellOddStripReducedRemainder_add u v hu hv
+  have hpositive := fourCellOddRetainedPrimePotentialQuadratic_add u v hu hv
+  have hq (w : ℝ → ℝ) :
+      fourCellOddStripReducedRemainder w =
+        fourCellOddRetainedPrimePotentialQuadratic w -
+          fourCellOddSignedMassRegularQuadratic w := by
+    rw [fourCellOddStripReducedRemainder_eq_retained_sub_signed]
+    unfold fourCellOddSignedMassRegularQuadratic
+    ring
+  have hb : fourCellOddStripReducedBilinear u v =
+      fourCellOddRetainedPrimePotentialBilinear u v -
+        fourCellOddSignedMassRegularBilinear u v := by
+    rw [fourCellOddStripReducedBilinear_eq_retained_sub_signed]
+    unfold fourCellOddSignedMassRegularBilinear
+    ring
+  rw [hq, hq, hq, hb, hpositive] at hreduced
+  linarith
+
+private theorem integral_zero_one_const_mul_sq
+    (v : ℝ → ℝ) (a : ℝ) :
+    (∫ x : ℝ in 0..1, (a * v x) ^ 2) =
+      a ^ 2 * ∫ x : ℝ in 0..1, v x ^ 2 := by
+  rw [show (fun x : ℝ ↦ (a * v x) ^ 2) =
+      fun x ↦ a ^ 2 * v x ^ 2 by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul]
+
+private theorem centeredEndpointCorrelation_const_mul_local
+    (v : ℝ → ℝ) (a t : ℝ) :
+    centeredEndpointCorrelation (fun x ↦ a * v x) t =
+      a ^ 2 * centeredEndpointCorrelation v t := by
+  have hav : (fun x ↦ a * v x) = a • v := by
+    funext x
+    simp only [Pi.smul_apply, smul_eq_mul]
+  rw [hav, ← factorTwoCenteredCorrelationBilinear_self,
+    factorTwoCenteredCorrelationBilinear_smul_smul,
+    factorTwoCenteredCorrelationBilinear_self]
+  ring
+
+private theorem fourCellOddSignedMassRegularQuadratic_const_mul
+    (v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddSignedMassRegularQuadratic (fun x ↦ a * v x) =
+      a ^ 2 * fourCellOddSignedMassRegularQuadratic v := by
+  unfold fourCellOddSignedMassRegularQuadratic
+  rw [integral_zero_one_const_mul_sq]
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation (fun x ↦ a * v x) t) =
+      fun t ↦ a ^ 2 *
+        (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation v t) by
+    funext t
+    rw [centeredEndpointCorrelation_const_mul_local]
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+private theorem integral_zero_one_mul_const_mul_right
+    (u v : ℝ → ℝ) (a : ℝ) :
+    (∫ x : ℝ in 0..1, u x * (a * v x)) =
+      a * ∫ x : ℝ in 0..1, u x * v x := by
+  rw [show (fun x : ℝ ↦ u x * (a * v x)) =
+      fun x ↦ a * (u x * v x) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul]
+
+private theorem factorTwoCenteredCorrelationBilinear_const_mul_right_local
+    (u v : ℝ → ℝ) (a t : ℝ) :
+    factorTwoCenteredCorrelationBilinear u (fun x ↦ a * v x) t =
+      a * factorTwoCenteredCorrelationBilinear u v t := by
+  have hv : (fun x ↦ a * v x) = a • v := by
+    funext x
+    simp only [Pi.smul_apply, smul_eq_mul]
+  rw [hv]
+  simpa only [one_mul, one_smul] using
+    factorTwoCenteredCorrelationBilinear_smul_smul 1 a u v t
+
+private theorem fourCellOddSignedMassRegularBilinear_const_mul_right
+    (u v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddSignedMassRegularBilinear u (fun x ↦ a * v x) =
+      a * fourCellOddSignedMassRegularBilinear u v := by
+  unfold fourCellOddSignedMassRegularBilinear
+  rw [integral_zero_one_mul_const_mul_right]
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        factorTwoCenteredCorrelationBilinear u (fun x ↦ a * v x) t) =
+      fun t ↦ a *
+        (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear u v t) by
+    funext t
+    rw [factorTwoCenteredCorrelationBilinear_const_mul_right_local]
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+/-- Cauchy--Schwarz for the isolated positive scalar-mass/regular form. -/
+theorem fourCellOddSignedMassRegularBilinear_sq_le_mul
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) :
+    fourCellOddSignedMassRegularBilinear u v ^ 2 ≤
+      fourCellOddSignedMassRegularQuadratic u *
+        fourCellOddSignedMassRegularQuadratic v := by
+  apply sq_le_mul_of_forall_quadratic_nonneg
+    (fourCellOddSignedMassRegularQuadratic u)
+    (fourCellOddSignedMassRegularBilinear u v)
+    (fourCellOddSignedMassRegularQuadratic v)
+    (fourCellOddSignedMassRegularQuadratic_nonneg_of_odd v hv hvodd)
+  intro t
+  let tv : ℝ → ℝ := fun x ↦ t * v x
+  have htv : Continuous tv := by
+    dsimp only [tv]
+    fun_prop
+  have htvodd : Function.Odd tv := by
+    intro x
+    change t * v (-x) = -(t * v x)
+    rw [hvodd]
+    ring
+  have hnonneg := fourCellOddSignedMassRegularQuadratic_nonneg_of_odd
+    (u + tv) (hu.add htv) (huodd.add htvodd)
+  rw [fourCellOddSignedMassRegularQuadratic_add u tv hu htv] at hnonneg
+  dsimp only [tv] at hnonneg
+  rw [fourCellOddSignedMassRegularBilinear_const_mul_right,
+    fourCellOddSignedMassRegularQuadratic_const_mul] at hnonneg
+  convert hnonneg using 1
+  all_goals ring
 
 /-- The exact strip-prime diagonal dominates `49/50` of the physical
 endpoint mass.  Both parity coefficients are kept; the rational constant is
