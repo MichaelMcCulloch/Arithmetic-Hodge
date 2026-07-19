@@ -7662,6 +7662,74 @@ theorem abs_fourCellOddOneThreeFiveRegular55_le :
   norm_num at hbound ⊢
   exact hbound
 
+/-- Complete wide regular quadratic on the retained P135 pivot. -/
+def fourCellOddOneThreeFiveRegularQuadratic (c d e : ℝ) : ℝ :=
+  ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation
+        (fourCellOddOneThreeFiveLowProfile c d e) t
+
+/-- Exact six-entry expansion of the retained wide regular quadratic. -/
+theorem fourCellOddOneThreeFiveRegularQuadratic_expansion
+    (c d e : ℝ) :
+    fourCellOddOneThreeFiveRegularQuadratic c d e =
+      fourCellOddLowRegularQuadratic c d +
+        2 * c * e * fourCellOddOneThreeFiveRegular15 +
+        2 * d * e * fourCellOddOneThreeFiveRegular35 +
+        e ^ 2 * fourCellOddOneThreeFiveRegular55 := by
+  let C13 : ℝ → ℝ := fun t ↦
+    c ^ 2 * oddStructuralCorrelation11 t +
+      2 * c * d * oddStructuralCorrelation13 t +
+        d ^ 2 * oddStructuralCorrelation33 t
+  have hC13 : Continuous C13 := by
+    dsimp only [C13]
+    unfold oddStructuralCorrelation11 oddStructuralCorrelation13
+      oddStructuralCorrelation33
+    fun_prop
+  have hlow := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    C13 hC13
+  have h15 := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    oddP5Correlation15 (by unfold oddP5Correlation15; fun_prop)
+  have h35 := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    oddP5Correlation35 (by unfold oddP5Correlation35; fun_prop)
+  have h55 := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    oddP5Correlation55 continuous_oddP5Correlation55
+  unfold fourCellOddOneThreeFiveRegularQuadratic
+  simp_rw [centeredEndpointCorrelation_oneThreeFiveLowProfile]
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        (c ^ 2 * oddStructuralCorrelation11 t +
+          2 * c * d * oddStructuralCorrelation13 t +
+          d ^ 2 * oddStructuralCorrelation33 t +
+          2 * c * e * oddP5Correlation15 t +
+          2 * d * e * oddP5Correlation35 t +
+          e ^ 2 * oddP5Correlation55 t)) = fun t ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C13 t +
+        (2 * c * e) *
+          (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            oddP5Correlation15 t) +
+        (2 * d * e) *
+          (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            oddP5Correlation35 t) +
+        e ^ 2 *
+          (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            oddP5Correlation55 t) by
+    funext t
+    dsimp only [C13]
+    ring,
+    intervalIntegral.integral_add
+      ((hlow.add (h15.const_mul (2 * c * e))).add
+        (h35.const_mul (2 * d * e))) (h55.const_mul (e ^ 2)),
+    intervalIntegral.integral_add
+      (hlow.add (h15.const_mul (2 * c * e)))
+      (h35.const_mul (2 * d * e)),
+    intervalIntegral.integral_add hlow (h15.const_mul (2 * c * e))]
+  repeat rw [intervalIntegral.integral_const_mul]
+  unfold fourCellOddLowRegularQuadratic
+    fourCellOddOneThreeFiveRegular15 fourCellOddOneThreeFiveRegular35
+    fourCellOddOneThreeFiveRegular55
+  rfl
+
 /-- Positive-half potential cross of `P₁` and `P₅`. -/
 theorem integral_zero_one_endpointPotential_mul_centeredP1_mul_P5 :
     (∫ x : ℝ in 0..1,
