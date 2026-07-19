@@ -7972,6 +7972,191 @@ theorem fourCell_yoshidaRegularKernelPolynomial6_wide_envelope
           nlinarith
         exact this.trans hEndpoint
 
+/-- Signed remainder after replacing the full-width regular kernel by its
+sixth-order polynomial. -/
+def fourCellWideRegularEnvelopeError (C : ℝ → ℝ) : ℝ :=
+  ∫ t : ℝ in 0..2,
+    (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t)) * C t
+
+private theorem fourCellWideRegularEnvelope_pointwise
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) ∧
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) <
+        (1 / 1900 : ℝ) := by
+  apply fourCell_yoshidaRegularKernelPolynomial6_wide_envelope
+  · exact mul_nonneg
+      (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+  · have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+    have hlog : 0 ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
+    calc
+      fourCellOperatorHalfWidth * t ≤
+          fourCellOperatorHalfWidth * 2 := hmul
+      _ = 5 * Real.log 2 / 4 := by
+        unfold fourCellOperatorHalfWidth
+        ring
+      _ ≤ 2 * Real.log 2 := by nlinarith
+
+private theorem intervalIntegrable_fourCellWideRegularEnvelope_mul
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    IntervalIntegrable
+      (fun t ↦
+        (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t)) *
+            C t)
+      volume 0 2 := by
+  let f : ℝ → ℝ := fun t ↦
+    (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t)) * C t
+  let g : ℝ → ℝ := fun t ↦ (1 / 1900 : ℝ) * |C t|
+  have hgIcc : IntegrableOn g (Icc (0 : ℝ) 2) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact (continuous_const.mul hC.abs).continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (0 : ℝ) 2)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (0 : ℝ) 2)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact ((measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)).sub
+        (by unfold yoshidaRegularKernelPolynomial6; fun_prop)).mul
+          hC.measurable
+  have hfg : ∀ᵐ t : ℝ ∂(volume.restrict (Ioc (0 : ℝ) 2)),
+      ‖f t‖ ≤ g t := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have htIcc : t ∈ Icc (0 : ℝ) 2 := ⟨ht.1.le, ht.2⟩
+    have henv := fourCellWideRegularEnvelope_pointwise htIcc
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg henv.1]
+    exact mul_le_mul_of_nonneg_right henv.2.le (abs_nonneg (C t))
+  constructor
+  · exact Integrable.mono' hg hfmeas hfg
+  · simp
+
+/-- The full-width polynomial replacement loses at most `1/1900` times
+the exact correlation `L¹` mass. -/
+theorem abs_fourCellWideRegularEnvelopeError_le
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    |fourCellWideRegularEnvelopeError C| ≤
+      (1 / 1900 : ℝ) * (∫ t : ℝ in 0..2, |C t|) := by
+  let f : ℝ → ℝ := fun t ↦
+    (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t)) * C t
+  let g : ℝ → ℝ := fun t ↦ (1 / 1900 : ℝ) * |C t|
+  have hf : IntervalIntegrable f volume 0 2 := by
+    dsimp only [f]
+    exact intervalIntegrable_fourCellWideRegularEnvelope_mul C hC
+  have hg : IntervalIntegrable g volume 0 2 := by
+    dsimp only [g]
+    exact (hC.abs.const_mul (1 / 1900 : ℝ)).intervalIntegrable 0 2
+  have hmono :
+      (∫ t : ℝ in 0..2, |f t|) ≤ ∫ t : ℝ in 0..2, g t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hf.abs hg
+    intro t ht
+    have henv := fourCellWideRegularEnvelope_pointwise ht
+    dsimp only [f, g]
+    rw [abs_mul, abs_of_nonneg henv.1]
+    exact mul_le_mul_of_nonneg_right henv.2.le (abs_nonneg (C t))
+  calc
+    |fourCellWideRegularEnvelopeError C| =
+        |∫ t : ℝ in 0..2, f t| := by
+      unfold fourCellWideRegularEnvelopeError
+      rfl
+    _ ≤ ∫ t : ℝ in 0..2, |f t| :=
+      intervalIntegral.abs_integral_le_integral_abs (by norm_num)
+    _ ≤ ∫ t : ℝ in 0..2, g t := hmono
+    _ = (1 / 1900 : ℝ) * (∫ t : ℝ in 0..2, |C t|) := by
+      dsimp only [g]
+      rw [intervalIntegral.integral_const_mul]
+
+private theorem fourCellRegularIntegral_eq_polynomial_add_error
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t) =
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+          C t) +
+        fourCellWideRegularEnvelopeError C := by
+  have herr := intervalIntegrable_fourCellWideRegularEnvelope_mul C hC
+  have hpoly : IntervalIntegrable
+      (fun t : ℝ ↦
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+          C t) volume 0 2 := by
+    exact (by
+      unfold yoshidaRegularKernelPolynomial6
+      fun_prop : Continuous (fun t : ℝ ↦
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+          C t)).intervalIntegrable 0 2
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t) =
+      fun t ↦
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+            C t +
+          (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+            yoshidaRegularKernelPolynomial6
+              (fourCellOperatorHalfWidth * t)) * C t by
+    funext t
+    ring,
+    intervalIntegral.integral_add hpoly herr]
+  unfold fourCellWideRegularEnvelopeError
+  ring
+
+theorem abs_fourCellWideRegularEnvelopeError11_le :
+    |fourCellWideRegularEnvelopeError oddStructuralCorrelation11| ≤
+      (1 / 2850 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le
+    oddStructuralCorrelation11
+      (by unfold oddStructuralCorrelation11; fun_prop)
+  have hmass := integral_abs_oddStructuralCorrelation11_le
+  nlinarith
+
+theorem abs_fourCellWideRegularEnvelopeError13_lt :
+    |fourCellWideRegularEnvelopeError oddStructuralCorrelation13| <
+      (1 / 11400 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le
+    oddStructuralCorrelation13
+      (by unfold oddStructuralCorrelation13; fun_prop)
+  have hmass := integral_abs_oddStructuralCorrelation13_lt
+  nlinarith
+
+theorem abs_fourCellWideRegularEnvelopeError33_le :
+    |fourCellWideRegularEnvelopeError oddStructuralCorrelation33| ≤
+      (1 / 6650 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le
+    oddStructuralCorrelation33
+      (by unfold oddStructuralCorrelation33; fun_prop)
+  have hmass := integral_abs_oddStructuralCorrelation33_le
+  nlinarith
+
+theorem abs_fourCellWideRegularEnvelopeError15_lt :
+    |fourCellWideRegularEnvelopeError oddP5Correlation15| <
+      (1 / 23750 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le oddP5Correlation15
+    (by unfold oddP5Correlation15; fun_prop)
+  have hmass := integral_abs_oddP5Correlation15_lt
+  nlinarith
+
+theorem abs_fourCellWideRegularEnvelopeError35_lt :
+    |fourCellWideRegularEnvelopeError oddP5Correlation35| <
+      (11 / 237500 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le oddP5Correlation35
+    (by unfold oddP5Correlation35; fun_prop)
+  have hmass := integral_abs_oddP5Correlation35_lt
+  nlinarith
+
+theorem abs_fourCellWideRegularEnvelopeError55_le :
+    |fourCellWideRegularEnvelopeError oddP5Correlation55| ≤
+      (1 / 10450 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le oddP5Correlation55
+    continuous_oddP5Correlation55
+  have hmass := integral_abs_oddP5Correlation55_le
+  nlinarith
+
 /-- Wide four-cell regular entry coupling `P₁` to `P₅`. -/
 def fourCellOddOneThreeFiveRegular15 : ℝ :=
   ∫ t : ℝ in 0..2,
