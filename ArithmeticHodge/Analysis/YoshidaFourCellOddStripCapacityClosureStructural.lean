@@ -8065,6 +8065,47 @@ theorem fourCellOddEndpointStripEvenMass_oneThreeFiveLowProfile
   norm_num
   ring
 
+/-- Exact core reserve on the retained three-mode pivot.  The only
+transcendental coefficient is the common endpoint-potential `log 2`
+diagonal; all cross entries are rational. -/
+theorem fourCellOddHalfCoreReserve_oneThreeFiveLowProfile
+    (c d e : ℝ) :
+    fourCellOddHalfCoreReserve
+        (fourCellOddOneThreeFiveLowProfile c d e) =
+      (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
+        (2 / 5 : ℝ) * c * d + (1 / 7 : ℝ) * c * e +
+        (76 / 147 - (2 / 7 : ℝ) * Real.log 2) * d ^ 2 +
+        (2 / 9 : ℝ) * d * e +
+        (3140 / 7623 - (2 / 11 : ℝ) * Real.log 2) * e ^ 2 := by
+  let p : ℝ → ℝ := fourCellOddOneThreeFiveLowProfile c d e
+  have hp : ContDiff ℝ 1 p := by
+    simpa only [p] using contDiff_fourCellOddOneThreeFiveLowProfile c d e
+  have hpLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) p :=
+    hp.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hpOdd : Function.Odd p := by
+    simpa only [p] using odd_fourCellOddOneThreeFiveLowProfile c d e
+  have hraw := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    p hpLocal hpOdd
+  have hmass := integral_sq_eq_two_mul_positiveHalf
+    p hp.continuous (Or.inr hpOdd)
+  unfold fourCellOddHalfCoreReserve
+  rw [← hraw]
+  have hhalfMassP : (∫ x : ℝ in 0..1, p x ^ 2) =
+      (1 / 2 : ℝ) * factorTwoIntrinsicEnergy p := by
+    unfold factorTwoIntrinsicEnergy
+    linarith
+  have hhalfMass : (∫ x : ℝ in 0..1,
+      fourCellOddOneThreeFiveLowProfile c d e x ^ 2) =
+      (1 / 2 : ℝ) * factorTwoIntrinsicEnergy
+        (fourCellOddOneThreeFiveLowProfile c d e) := by
+    simpa only [p] using hhalfMassP
+  rw [hhalfMass]
+  dsimp only [p] at *
+  rw [centeredRawLogEnergy_oneThreeFiveLowProfile,
+    integral_zero_one_endpointPotential_oneThreeFiveLowProfile,
+    factorTwoIntrinsicEnergy_oneThreeFiveLowProfile]
+  ring
+
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
 theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
