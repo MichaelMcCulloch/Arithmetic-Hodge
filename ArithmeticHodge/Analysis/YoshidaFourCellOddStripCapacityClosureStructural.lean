@@ -3,6 +3,7 @@ import ArithmeticHodge.Analysis.YoshidaFourCellOddPolarPotentialStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicRankResidualBound
 import ArithmeticHodge.Analysis.YoshidaEndpointPotentialOddCoercivity
 import ArithmeticHodge.Analysis.YoshidaEndpointPullbackLipschitz
+import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 import ArithmeticHodge.Analysis.UnitIntervalLogEnergyLipschitz
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 
@@ -24,6 +25,7 @@ open YoshidaEndpointPotentialOddCoercivity
 open YoshidaEndpointOcticOddCoercivity
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOcticTwoModeSchurData
+open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 open YoshidaEndpointPullbackLipschitz
 open YoshidaFourCellOddPolarPotentialStructural
 open YoshidaFourCellOddStripCapacityAssemblyStructural
@@ -33,6 +35,7 @@ open YoshidaFourCellRegularParityFoldStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaFactorTwoPhaseIntrinsicRankResidualBound
+open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaEndpointOddOneThreeRawPolarization
@@ -471,6 +474,337 @@ theorem one_fifth_le_yoshidaRegularKernel_fourCellRange
         linarith
       _ ≤ r ^ 3 / (r ^ 4 - 1) - 1 / (2 * t) :=
         sub_le_sub_left hrecip _
+
+/-! ## A signed wide moment on the odd ground state -/
+
+private theorem integral_polynomial_nine
+    (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ l r : ℝ) :
+    (∫ x : ℝ in l..r,
+      a₀ * x ^ 0 + a₁ * x ^ 1 + a₂ * x ^ 2 + a₃ * x ^ 3 +
+        a₄ * x ^ 4 + a₅ * x ^ 5 + a₆ * x ^ 6 + a₇ * x ^ 7 +
+          a₈ * x ^ 8 + a₉ * x ^ 9) =
+      a₀ * (r - l) + a₁ * (r ^ 2 - l ^ 2) / 2 +
+        a₂ * (r ^ 3 - l ^ 3) / 3 + a₃ * (r ^ 4 - l ^ 4) / 4 +
+          a₄ * (r ^ 5 - l ^ 5) / 5 + a₅ * (r ^ 6 - l ^ 6) / 6 +
+            a₆ * (r ^ 7 - l ^ 7) / 7 + a₇ * (r ^ 8 - l ^ 8) / 8 +
+              a₈ * (r ^ 9 - l ^ 9) / 9 +
+                a₉ * (r ^ 10 - l ^ 10) / 10 := by
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) l r)
+    (Continuous.intervalIntegrable (by fun_prop) l r)]
+  repeat rw [intervalIntegral.integral_const_mul, integral_pow]
+  norm_num
+  ring
+
+private theorem intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    IntervalIntegrable
+      (fun t : ℝ ↦
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t)
+      volume 0 2 := by
+  let f : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t
+  let g : ℝ → ℝ := fun t ↦ (1 / 4 : ℝ) * |C t|
+  have hgIcc : IntegrableOn g (Icc (0 : ℝ) 2) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact (continuous_const.mul hC.abs).continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (0 : ℝ) 2)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (0 : ℝ) 2)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact (measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)).mul hC.measurable
+  have hfg : ∀ᵐ t : ℝ ∂(volume.restrict (Ioc (0 : ℝ) 2)),
+      ‖f t‖ ≤ g t := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1.le
+    have harg4 : fourCellOperatorHalfWidth * t ≤ 5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤
+            fourCellOperatorHalfWidth * 2 := hmul
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 harg4
+    have hk1 := yoshidaRegularKernel_le_quarter harg0
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hk0]
+    exact mul_le_mul_of_nonneg_right hk1 (abs_nonneg (C t))
+  constructor
+  · exact Integrable.mono' hg hfmeas hfg
+  · simp
+
+private theorem oddStructuralCorrelation11_nonpos_tail
+    {t : ℝ} (ht : t ∈ Icc (8 / 5 : ℝ) 2) :
+    oddStructuralCorrelation11 t ≤ 0 := by
+  have hfirst : t - 2 ≤ 0 := by linarith [ht.2]
+  have hsecond : 0 ≤ t ^ 2 + 2 * t - 2 := by
+    nlinarith [sq_nonneg t, ht.1]
+  have hmul := mul_nonpos_of_nonpos_of_nonneg hfirst hsecond
+  unfold oddStructuralCorrelation11
+  nlinarith
+
+theorem integral_regularPolynomial6_mul_oddStructuralCorrelation11_head :
+    (∫ t : ℝ in 0..8 / 5,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddStructuralCorrelation11 t) =
+      28 / 1875 + (119 / 56250 : ℝ) * Real.log 2 +
+        (2 / 625 : ℝ) * Real.log 2 ^ 2 -
+          (293 / 5400000 : ℝ) * Real.log 2 ^ 3 -
+            (1 / 4000 : ℝ) * Real.log 2 ^ 4 +
+              (30473 / 28576800000 : ℝ) * Real.log 2 ^ 5 +
+                (29219 / 1512000000 : ℝ) * Real.log 2 ^ 6 := by
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddStructuralCorrelation11 t) =
+      fun t ↦
+        (1 / 6 : ℝ) * t ^ 0 +
+        (-(1 / 4) - (5 / 576 : ℝ) * Real.log 2) * t ^ 1 +
+        ((5 / 384 : ℝ) * Real.log 2 -
+          (25 / 3072 : ℝ) * Real.log 2 ^ 2) * t ^ 2 +
+        ((1 / 24 : ℝ) + (25 / 2048 : ℝ) * Real.log 2 ^ 2 +
+          (175 / 1769472 : ℝ) * Real.log 2 ^ 3) * t ^ 3 +
+        (-(5 / 2304 : ℝ) * Real.log 2 -
+          (175 / 1179648 : ℝ) * Real.log 2 ^ 3 +
+            (3125 / 9437184 : ℝ) * Real.log 2 ^ 4) * t ^ 4 +
+        (-(25 / 12288 : ℝ) * Real.log 2 ^ 2 -
+          (3125 / 6291456 : ℝ) * Real.log 2 ^ 4 -
+            (19375 / 19025362944 : ℝ) * Real.log 2 ^ 5) * t ^ 5 +
+        ((175 / 7077888 : ℝ) * Real.log 2 ^ 3 +
+          (19375 / 12683575296 : ℝ) * Real.log 2 ^ 5 -
+            (190625 / 14495514624 : ℝ) * Real.log 2 ^ 6) * t ^ 6 +
+        ((3125 / 37748736 : ℝ) * Real.log 2 ^ 4 +
+          (190625 / 9663676416 : ℝ) * Real.log 2 ^ 6) * t ^ 7 +
+        (-(19375 / 76101451776 : ℝ) * Real.log 2 ^ 5) * t ^ 8 +
+        (-(190625 / 57982058496 : ℝ) * Real.log 2 ^ 6) * t ^ 9 by
+    funext t
+    unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+      oddStructuralCorrelation11
+    ring,
+    integral_polynomial_nine]
+  ring
+
+theorem integral_one_fifth_mul_oddStructuralCorrelation11_tail :
+    (∫ t : ℝ in 8 / 5..2,
+      (1 / 5 : ℝ) * oddStructuralCorrelation11 t) =
+      (-112 / 9375 : ℝ) := by
+  rw [show (fun t : ℝ ↦
+      (1 / 5 : ℝ) * oddStructuralCorrelation11 t) =
+      fun t ↦ (2 / 15 : ℝ) * t ^ 0 + (-1 / 5 : ℝ) * t ^ 1 +
+        0 * t ^ 2 + (1 / 30 : ℝ) * t ^ 3 + 0 * t ^ 4 +
+          0 * t ^ 5 + 0 * t ^ 6 + 0 * t ^ 7 + 0 * t ^ 8 +
+            0 * t ^ 9 by
+    funext t
+    unfold oddStructuralCorrelation11
+    ring,
+    integral_polynomial_nine]
+  norm_num
+
+private theorem fourCellOddLowRegular11_model_le :
+    (∫ t : ℝ in 0..8 / 5,
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+          oddStructuralCorrelation11 t) +
+      ∫ t : ℝ in 8 / 5..2,
+        (1 / 5 : ℝ) * oddStructuralCorrelation11 t ≤
+      (2997 / 500000 : ℝ) := by
+  rw [integral_regularPolynomial6_mul_oddStructuralCorrelation11_head,
+    integral_one_fifth_mul_oddStructuralCorrelation11_tail]
+  let L₁ : ℝ := 6932 / 10000
+  have hL0 : 0 ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
+  have hL1 : Real.log 2 ≤ L₁ := by
+    dsimp only [L₁]
+    exact strict_log_two_bounds.2.le
+  have hpow2 := pow_le_pow_left₀ hL0 hL1 2
+  have hpow5 := pow_le_pow_left₀ hL0 hL1 5
+  have hpow6 := pow_le_pow_left₀ hL0 hL1 6
+  have hpow3 : 0 ≤ Real.log 2 ^ 3 := pow_nonneg hL0 3
+  have hpow4 : 0 ≤ Real.log 2 ^ 4 := pow_nonneg hL0 4
+  have hdrop :
+      28 / 1875 + (119 / 56250 : ℝ) * Real.log 2 +
+          (2 / 625 : ℝ) * Real.log 2 ^ 2 -
+            (293 / 5400000 : ℝ) * Real.log 2 ^ 3 -
+              (1 / 4000 : ℝ) * Real.log 2 ^ 4 +
+                (30473 / 28576800000 : ℝ) * Real.log 2 ^ 5 +
+                  (29219 / 1512000000 : ℝ) * Real.log 2 ^ 6 -
+                    112 / 9375 ≤
+        28 / 1875 + (119 / 56250 : ℝ) * Real.log 2 +
+          (2 / 625 : ℝ) * Real.log 2 ^ 2 +
+            (30473 / 28576800000 : ℝ) * Real.log 2 ^ 5 +
+              (29219 / 1512000000 : ℝ) * Real.log 2 ^ 6 -
+                112 / 9375 := by
+    nlinarith
+  have hmono :
+    28 / 1875 + (119 / 56250 : ℝ) * Real.log 2 +
+          (2 / 625 : ℝ) * Real.log 2 ^ 2 +
+            (30473 / 28576800000 : ℝ) * Real.log 2 ^ 5 +
+              (29219 / 1512000000 : ℝ) * Real.log 2 ^ 6 -
+                112 / 9375 ≤
+        28 / 1875 + (119 / 56250 : ℝ) * L₁ +
+          (2 / 625 : ℝ) * L₁ ^ 2 +
+            (30473 / 28576800000 : ℝ) * L₁ ^ 5 +
+              (29219 / 1512000000 : ℝ) * L₁ ^ 6 -
+                112 / 9375 := by gcongr
+  have hrat :
+      28 / 1875 + (119 / 56250 : ℝ) * L₁ +
+          (2 / 625 : ℝ) * L₁ ^ 2 +
+            (30473 / 28576800000 : ℝ) * L₁ ^ 5 +
+              (29219 / 1512000000 : ℝ) * L₁ ^ 6 -
+                112 / 9375 ≤ 2997 / 500000 := by
+    norm_num [L₁]
+  have hfinal := hdrop.trans (hmono.trans hrat)
+  convert hfinal using 1
+  ring
+
+/-- The exact wide regular moment of the odd ground state is still below
+`3 / 500`.  The proof uses the sixth-order analytic envelope only on its
+natural head interval and retains the signed kernel tail through the
+structural lower bound `K ≥ 1 / 5`. -/
+theorem integral_yoshidaRegularKernel_mul_oddStructuralCorrelation11_le :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        oddStructuralCorrelation11 t) ≤ (3 / 500 : ℝ) := by
+  let C : ℝ → ℝ := oddStructuralCorrelation11
+  let K : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+  let P : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t)
+  let ε : ℝ := 1 / 500000
+  have hC : Continuous C := by
+    dsimp only [C]
+    unfold oddStructuralCorrelation11
+    fun_prop
+  have hP : Continuous P := by
+    dsimp only [P]
+    unfold yoshidaRegularKernelPolynomial6
+    fun_prop
+  have hfull : IntervalIntegrable (fun t : ℝ ↦ K t * C t)
+      volume 0 2 := by
+    simpa only [K, C] using
+      intervalIntegrable_fourCellRegularKernel_mul_continuous C hC
+  have hleft : IntervalIntegrable (fun t : ℝ ↦ K t * C t)
+      volume 0 (8 / 5) :=
+    hfull.mono_set (by
+      intro t ht
+      norm_num at ht ⊢
+      constructor <;> linarith :
+        uIcc (0 : ℝ) (8 / 5) ⊆ uIcc (0 : ℝ) 2)
+  have htail : IntervalIntegrable (fun t : ℝ ↦ K t * C t)
+      volume (8 / 5) 2 :=
+    hfull.mono_set (by
+      intro t ht
+      norm_num at ht ⊢
+      constructor <;> linarith :
+        uIcc (8 / 5 : ℝ) 2 ⊆ uIcc (0 : ℝ) 2)
+  have hpoly : IntervalIntegrable (fun t : ℝ ↦ P t * C t)
+      volume 0 (8 / 5) := (hP.mul hC).intervalIntegrable _ _
+  have herr : IntervalIntegrable (fun t : ℝ ↦ ε * |C t|)
+      volume 0 (8 / 5) :=
+    (continuous_const.mul hC.abs).intervalIntegrable _ _
+  have hmajor : IntervalIntegrable
+      (fun t : ℝ ↦ P t * C t + ε * |C t|)
+      volume 0 (8 / 5) := hpoly.add herr
+  have hleftMono :
+      (∫ t : ℝ in 0..8 / 5, K t * C t) ≤
+        ∫ t : ℝ in 0..8 / 5, P t * C t + ε * |C t| := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hleft hmajor
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+    have hargLog : fourCellOperatorHalfWidth * t ≤ Real.log 2 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤
+            fourCellOperatorHalfWidth * (8 / 5) := hmul
+        _ = Real.log 2 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have henv := yoshidaRegularKernelPolynomial6_envelope harg0 hargLog
+    calc
+      K t * C t = P t * C t + (K t - P t) * C t := by ring
+      _ ≤ P t * C t + |(K t - P t) * C t| := by
+        linarith [le_abs_self ((K t - P t) * C t)]
+      _ = P t * C t + |K t - P t| * |C t| := by rw [abs_mul]
+      _ ≤ P t * C t + ε * |C t| := by
+        gcongr
+        rw [abs_of_nonneg]
+        · simpa only [K, P, ε] using henv.2.le
+        · simpa only [K, P] using henv.1
+  have htailMajor : IntervalIntegrable
+      (fun t : ℝ ↦ (1 / 5 : ℝ) * C t) volume (8 / 5) 2 :=
+    (continuous_const.mul hC).intervalIntegrable _ _
+  have htailMono :
+      (∫ t : ℝ in 8 / 5..2, K t * C t) ≤
+        ∫ t : ℝ in 8 / 5..2, (1 / 5 : ℝ) * C t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) htail htailMajor
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity)
+        (by linarith [ht.1])
+    have harg4 : fourCellOperatorHalfWidth * t ≤
+        5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤
+            fourCellOperatorHalfWidth * 2 := hmul
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hk : (1 / 5 : ℝ) ≤ K t := by
+      dsimp only [K]
+      exact one_fifth_le_yoshidaRegularKernel_fourCellRange harg0 harg4
+    have hCt : C t ≤ 0 := by
+      dsimp only [C]
+      exact oddStructuralCorrelation11_nonpos_tail ht
+    exact mul_le_mul_of_nonpos_right hk hCt
+  have habsSub :
+      (∫ t : ℝ in 0..8 / 5, |C t|) ≤
+        ∫ t : ℝ in 0..2, |C t| := by
+    apply intervalIntegral.integral_mono_interval
+      (c := (0 : ℝ)) (d := 2) le_rfl (by norm_num) (by norm_num)
+    · filter_upwards with t
+      exact abs_nonneg (C t)
+    · exact hC.abs.intervalIntegrable _ _
+  have habsFull :
+      (∫ t : ℝ in 0..2, |C t|) ≤ (2 / 3 : ℝ) := by
+    simpa only [C] using integral_abs_oddStructuralCorrelation11_le
+  have hmajorEq :
+      (∫ t : ℝ in 0..8 / 5, P t * C t + ε * |C t|) =
+        (∫ t : ℝ in 0..8 / 5, P t * C t) +
+          ε * ∫ t : ℝ in 0..8 / 5, |C t| := by
+    rw [intervalIntegral.integral_add hpoly herr,
+      intervalIntegral.integral_const_mul]
+  have hsplit := intervalIntegral.integral_add_adjacent_intervals hleft htail
+  calc
+    (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          oddStructuralCorrelation11 t) =
+        (∫ t : ℝ in 0..8 / 5, K t * C t) +
+          ∫ t : ℝ in 8 / 5..2, K t * C t := by
+      simpa only [K, C] using hsplit.symm
+    _ ≤ (∫ t : ℝ in 0..8 / 5, P t * C t + ε * |C t|) +
+          ∫ t : ℝ in 8 / 5..2, (1 / 5 : ℝ) * C t :=
+      add_le_add hleftMono htailMono
+    _ = ((∫ t : ℝ in 0..8 / 5, P t * C t) +
+          ∫ t : ℝ in 8 / 5..2, (1 / 5 : ℝ) * C t) +
+        ε * ∫ t : ℝ in 0..8 / 5, |C t| := by
+      rw [hmajorEq]
+      ring
+    _ ≤ (2997 / 500000 : ℝ) + (1 / 500000) * (2 / 3) := by
+      apply add_le_add
+      · simpa only [P, C] using fourCellOddLowRegular11_model_le
+      · dsimp only [ε]
+        exact mul_le_mul_of_nonneg_left (habsSub.trans habsFull) (by norm_num)
+    _ ≤ 3 / 500 := by norm_num
 
 /-! ## Exact `P₁/P₃` local-width block -/
 
