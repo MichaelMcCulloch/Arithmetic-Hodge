@@ -82,6 +82,44 @@ theorem bombieriFunctional_fourBlock_re_nonnegative_of_parityCapacity
     parent k hparent]
   exact mul_nonneg (fourCellWholeHalfWidth_pos k).le hbracket
 
+/-- The lossless production assembly.  Unlike the older lower-operator
+interface above, this theorem asks only for the two exact parity brackets
+that occur in the Bombieri value. -/
+theorem bombieriFunctional_fourBlock_re_nonnegative_of_exactParityCapacity
+    (parent : BombieriTest) (k : ℤ)
+    (hparent : bombieriConjugateTest parent = parent)
+    (heven : 0 ≤
+      centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth
+          (fourCellNormalizedEvenProfile parent k) -
+        Real.sqrt 2 * Real.log 2 *
+          fourCellEndpointPairing (fourCellNormalizedEvenProfile parent k))
+    (hodd : 0 ≤
+      centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth
+          (fourCellNormalizedOddProfile parent k) -
+        Real.sqrt 2 * Real.log 2 *
+          fourCellEndpointPairing (fourCellNormalizedOddProfile parent k)) :
+    0 ≤ (bombieriFunctional
+      (bombieriQuadraticTest (monotoneQuarterFourBlock parent k))).re := by
+  let e := fourCellNormalizedEvenProfile parent k
+  let o := fourCellNormalizedOddProfile parent k
+  have hsplit :=
+    fourCell_centeredPhysical_sub_pairing_eq_parity parent k hparent
+  have hbracket : 0 ≤
+      centeredClippedPhysicalQuadratic (fourCellWholeHalfWidth k)
+          (fourCellNormalizedRealProfile parent k) -
+        Real.sqrt 2 * Real.log 2 *
+          fourCellEndpointPairing (fourCellNormalizedRealProfile parent k) := by
+    rw [hsplit, fourCellWholeHalfWidth_eq]
+    change 0 ≤
+      (centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth e -
+          Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing e) +
+        (centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth o -
+          Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing o)
+    exact add_nonneg heven hodd
+  rw [bombieriFunctional_fourBlock_re_eq_centeredPhysical_sub_pairing
+    parent k hparent]
+  exact mul_nonneg (fourCellWholeHalfWidth_pos k).le hbracket
+
 /-- A length-four block at offset `start` is the canonical four-cell block at
 the corresponding physical lattice index. -/
 theorem monotoneQuarterFiniteBlock_four_eq_fourBlock
@@ -117,6 +155,41 @@ theorem bombieriRealQuadraticValue_fourBlock_nonnegative_of_parityCapacity
     (hOdd (fourCellNormalizedOddProfile parent k)
       (fourCellNormalizedOddProfile_contDiff parent k)
       (fourCellNormalizedOddProfile_odd parent k))
+  unfold bombieriRealQuadraticValue
+  rw [monotoneQuarterFiniteBlock_four_eq_fourBlock parent lo start]
+  exact hprod
+
+/-- The viable universal four-cell frontier.  Production profiles are not
+arbitrary parity profiles: both traces vanish.  Exact endpoint-zero parity
+capacity therefore suffices to exclude every length-four negative block,
+without either of the false lossy even lower operators. -/
+theorem
+    bombieriRealQuadraticValue_fourBlock_nonnegative_of_endpointZeroExactParityCapacity
+    (hEven : ∀ w : ℝ → ℝ, ContDiff ℝ 1 w → Function.Even w →
+      w (-1) = 0 ∧ w 1 = 0 →
+      0 ≤ centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth w -
+        Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w)
+    (hOdd : ∀ w : ℝ → ℝ, ContDiff ℝ 1 w → Function.Odd w →
+      w (-1) = 0 ∧ w 1 = 0 →
+      0 ≤ centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth w -
+        Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w)
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (lo : ℤ) (start : ℕ) :
+    0 ≤ bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent lo start 4) := by
+  let k : ℤ := lo + (start : ℤ)
+  have hprod :=
+    bombieriFunctional_fourBlock_re_nonnegative_of_exactParityCapacity
+      parent k hparent
+      (hEven (fourCellNormalizedEvenProfile parent k)
+        (fourCellNormalizedEvenProfile_contDiff parent k)
+        (fourCellNormalizedEvenProfile_even parent k)
+        (fourCellNormalizedEvenProfile_endpoints_zero parent k))
+      (hOdd (fourCellNormalizedOddProfile parent k)
+        (fourCellNormalizedOddProfile_contDiff parent k)
+        (fourCellNormalizedOddProfile_odd parent k)
+        (fourCellNormalizedOddProfile_endpoints_zero parent k))
   unfold bombieriRealQuadraticValue
   rw [monotoneQuarterFiniteBlock_four_eq_fourBlock parent lo start]
   exact hprod

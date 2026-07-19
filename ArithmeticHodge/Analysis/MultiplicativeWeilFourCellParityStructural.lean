@@ -84,6 +84,26 @@ theorem fourCellNormalizedOddProfile_contDiff
   unfold fourCellNormalizedOddProfile factorTwoReflectionOddPart
   exact (hw.sub hreflect).div_const 2
 
+/-- The reflection-even production profile retains the zero endpoint trace
+of the complete normalized four-cell profile. -/
+theorem fourCellNormalizedEvenProfile_endpoints_zero
+    (parent : BombieriTest) (k : ℤ) :
+    fourCellNormalizedEvenProfile parent k (-1) = 0 ∧
+      fourCellNormalizedEvenProfile parent k 1 = 0 := by
+  have hends := fourCellNormalizedRealProfile_endpoints_zero parent k
+  unfold fourCellNormalizedEvenProfile factorTwoReflectionEvenPart
+  constructor <;> norm_num [hends.1, hends.2]
+
+/-- The reflection-odd production profile likewise has zero traces at both
+normalized endpoints. -/
+theorem fourCellNormalizedOddProfile_endpoints_zero
+    (parent : BombieriTest) (k : ℤ) :
+    fourCellNormalizedOddProfile parent k (-1) = 0 ∧
+      fourCellNormalizedOddProfile parent k 1 = 0 := by
+  have hends := fourCellNormalizedRealProfile_endpoints_zero parent k
+  unfold fourCellNormalizedOddProfile factorTwoReflectionOddPart
+  constructor <;> norm_num [hends.1, hends.2]
+
 private theorem centeredRescale_evenCore_eq_normalizedEven
     (parent : BombieriTest) (k : ℤ) :
     centeredRescale (fourCellWholeHalfWidth k) (fun y ↦

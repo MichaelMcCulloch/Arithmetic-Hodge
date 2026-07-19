@@ -119,6 +119,24 @@ theorem fourCellWholeProfile_endpoints_zero
     yoshidaCriticalPullbackCrop_eq_logarithmicPullbackSchwartz hsupported
   simpa only [fourCellWholeProfile, hprofile] using hend
 
+/-- Normalization transports the two production endpoint traces to
+`-1` and `1`.  This is the actual domain restriction available to every
+four-cell capacity argument. -/
+theorem fourCellNormalizedRealProfile_endpoints_zero
+    (parent : BombieriTest) (k : ℤ) :
+    fourCellNormalizedRealProfile parent k (-1) = 0 ∧
+      fourCellNormalizedRealProfile parent k 1 = 0 := by
+  have hends := fourCellWholeProfile_endpoints_zero parent k
+  constructor
+  · unfold fourCellNormalizedRealProfile centeredRescale
+    rw [show fourCellWholeHalfWidth k * (-1 : ℝ) =
+        -fourCellWholeHalfWidth k by ring]
+    simpa using congrArg Complex.re hends.1
+  · unfold fourCellNormalizedRealProfile centeredRescale
+    rw [show fourCellWholeHalfWidth k * (1 : ℝ) =
+        fourCellWholeHalfWidth k by ring]
+    simpa using congrArg Complex.re hends.2
+
 /-- The normalized right-to-left endpoint pairing is the usual centered
 one-sided autocorrelation at lag `8/5`. -/
 theorem fourCellEndpointPairing_eq_centeredEndpointCorrelation
