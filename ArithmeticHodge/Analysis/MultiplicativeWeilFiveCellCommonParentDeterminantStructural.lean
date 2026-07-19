@@ -9,6 +9,7 @@ import ArithmeticHodge.Analysis.YoshidaEndpointWeightedCauchy
 import ArithmeticHodge.Analysis.YoshidaFactorTwoEndpointClean
 import ArithmeticHodge.Analysis.YoshidaPinnedHalfLogEnergyStructural
 import ArithmeticHodge.Analysis.YoshidaEndpointTriangleFoldLipschitz
+import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
 set_option autoImplicit false
 
@@ -3478,6 +3479,583 @@ theorem fiveCell_endpointLocalCritical_diagonal_coercivity_of_middle_zero
         (quarterLogLatticePoint_mono (by omega)) hcollapse.2
         hrightRatio hrightWidth
     exact bombieriConjugateTest_monotoneQuarterCell parent hparent (k + 4)
+
+private theorem fiveCellSeparatedLocalKernelWeight_le_one
+    {x : ℝ} (hx : 2 ≤ x) :
+    fiveCellSeparatedLocalKernelWeight x ≤ 1 := by
+  have hxpos : 0 < x := (by norm_num : (0 : ℝ) < 2).trans_le hx
+  have hden : 0 < x * (x ^ 2 - 1) := by
+    exact mul_pos hxpos (by nlinarith [sq_nonneg (x - 2)])
+  unfold fiveCellSeparatedLocalKernelWeight
+  exact sub_le_self _ (inv_nonneg.mpr hden.le)
+
+private theorem bombieriTest_norm_integrable_fiveCell (g : BombieriTest) :
+    Integrable (fun x : ℝ ↦ ‖g x‖) := by
+  exact g.contDiff.continuous.norm.integrable_of_hasCompactSupport
+    g.hasCompactSupport.norm
+
+private theorem setIntegral_Ioi_norm_eq_supportInterval_fiveCell
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hsupport : tsupport g ⊆ Icc a b) :
+    (∫ x : ℝ in Ioi 0, ‖g x‖) = ∫ x : ℝ in Icc a b, ‖g x‖ := by
+  apply setIntegral_eq_of_subset_of_forall_diff_eq_zero measurableSet_Ioi
+  · intro x hx
+    exact ha.trans_le hx.1
+  · intro x hx
+    have hzero : g x = 0 := by
+      by_contra hne
+      exact hx.2 (hsupport
+        (subset_tsupport g (Function.mem_support.mpr hne)))
+    rw [hzero, norm_zero]
+
+private theorem setIntegral_supportInterval_norm_sq_eq_criticalLogEnergy_fiveCell
+    (g : BombieriTest) {a b : ℝ}
+    (ha : 0 < a) (hsupport : tsupport g ⊆ Icc a b) :
+    (∫ x : ℝ in Icc a b, ‖g x‖ ^ 2) =
+      bombieriCriticalLogEnergy g := by
+  rw [bombieriCriticalLogEnergy_eq_integral_Ioi_norm_sq]
+  symm
+  apply setIntegral_eq_of_subset_of_forall_diff_eq_zero measurableSet_Ioi
+  · intro x hx
+    exact ha.trans_le hx.1
+  · intro x hx
+    have hzero : g x = 0 := by
+      by_contra hne
+      exact hx.2 (hsupport
+        (subset_tsupport g (Function.mem_support.mpr hne)))
+    rw [hzero, norm_zero]
+    norm_num
+
+private theorem setIntegral_inv_sq_Icc_fiveCell
+    {a b : ℝ} (ha : 0 < a) (hab : a ≤ b) :
+    (∫ x : ℝ in Icc a b, (x⁻¹) ^ 2) = a⁻¹ - b⁻¹ := by
+  rw [integral_Icc_eq_integral_Ioc,
+    ← intervalIntegral.integral_of_le hab]
+  have hzero : (0 : ℝ) ∉ uIcc a b := by
+    rw [uIcc_of_le hab]
+    intro h
+    exact (not_le_of_gt ha) h.1
+  rw [show (fun x : ℝ ↦ (x⁻¹) ^ 2) =
+      fun x : ℝ ↦ x ^ (-2 : ℤ) by
+    funext x
+    simp [zpow_neg]
+    rfl]
+  rw [integral_zpow (n := (-2 : ℤ))
+    (Or.inr ⟨by norm_num, hzero⟩)]
+  norm_num [zpow_neg]
+  ring
+
+private theorem norm_star_bombieriDirectedCorrelation_le_supportLone
+    (f g : BombieriTest) {ag bg x : ℝ}
+    (hag : 0 < ag)
+    (hgsupport : tsupport g ⊆ Icc ag bg) :
+    ‖starRingEnd ℂ (bombieriDirectedCorrelation f g x)‖ ≤
+      ∫ y : ℝ in Icc ag bg, ‖f (x * y)‖ * ‖g y‖ := by
+  have hJpos : Icc ag bg ⊆ Ioi (0 : ℝ) := by
+    intro y hy
+    exact hag.trans_le hy.1
+  have hrestrict :
+      (∫ y : ℝ in Ioi 0,
+          f (x * y) * starRingEnd ℂ (g y)) =
+        ∫ y : ℝ in Icc ag bg,
+          f (x * y) * starRingEnd ℂ (g y) := by
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero measurableSet_Ioi
+    · exact hJpos
+    · intro y hy
+      have hzero : g y = 0 := by
+        by_contra hne
+        exact hy.2 (hgsupport
+          (subset_tsupport g (Function.mem_support.mpr hne)))
+      rw [hzero, map_zero, mul_zero]
+  rw [starRingEnd_apply, Complex.star_def, Complex.norm_conj,
+    bombieriDirectedCorrelation, hrestrict]
+  calc
+    ‖∫ y : ℝ in Icc ag bg,
+        f (x * y) * starRingEnd ℂ (g y)‖ ≤
+        ∫ y : ℝ in Icc ag bg,
+          ‖f (x * y) * starRingEnd ℂ (g y)‖ :=
+      norm_integral_le_integral_norm _
+    _ = ∫ y : ℝ in Icc ag bg, ‖f (x * y)‖ * ‖g y‖ := by
+      apply setIntegral_congr_fun measurableSet_Icc
+      intro y _hy
+      change ‖f (x * y) * starRingEnd ℂ (g y)‖ =
+        ‖f (x * y)‖ * ‖g y‖
+      rw [norm_mul, starRingEnd_apply, Complex.star_def,
+        Complex.norm_conj]
+
+/-- The separated positive local kernel is bounded by the product of the
+physical `L¹(dx)` norm of the upper test and the reciprocal-weighted `L¹`
+norm of the lower test.  This is Young's inequality after the exact
+multiplicative change of variables `z = x y`. -/
+private theorem norm_bombieriLocalCriticalForm_le_supportLoneProduct
+    (f g : BombieriTest) {af bf ag bg : ℝ}
+    (haf : 0 < af) (hag : 0 < ag) (hbg : 0 < bg)
+    (hfsupport : tsupport f ⊆ Icc af bf)
+    (hgsupport : tsupport g ⊆ Icc ag bg)
+    (hquot : 2 ≤ af / bg) :
+    ‖bombieriLocalCriticalForm f g‖ ≤
+      (∫ z : ℝ in Icc af bf, ‖f z‖) *
+        ∫ y : ℝ in Icc ag bg, ‖g y‖ / y := by
+  let K : Set ℝ := Icc (af / bg) (bf / ag)
+  let J : Set ℝ := Icc ag bg
+  let H : ℝ → ℂ := fun x ↦
+    starRingEnd ℂ (bombieriDirectedCorrelation f g x)
+  let B : ℝ → ℝ := fun x ↦
+    ∫ y : ℝ in J, ‖f (x * y)‖ * ‖g y‖
+  let P : ℝ × ℝ → ℝ := fun p ↦ ‖f (p.1 * p.2)‖ * ‖g p.2‖
+  have hafbg : bg < af := by
+    have htwo : 2 * bg ≤ af := by
+      exact (le_div_iff₀ hbg).mp (by simpa [mul_comm] using hquot)
+    nlinarith
+  have hsep : bg / af < 1 := (div_lt_one haf).2 hafbg
+  have hkernel :=
+    bombieriLocalCriticalForm_eq_separatedPositiveKernel_one
+      f g haf hag hbg hfsupport hgsupport hsep
+  have hKpos : K ⊆ Ioi (0 : ℝ) := by
+    intro x hx
+    exact (div_pos haf hbg).trans_le hx.1
+  have hPInt : IntegrableOn P (K ×ˢ J) := by
+    exact (by fun_prop : Continuous P).continuousOn.integrableOn_compact
+      (isCompact_Icc.prod isCompact_Icc)
+  have hPIntRestrict : Integrable P
+      ((volume.restrict K).prod (volume.restrict J)) := by
+    rw [Measure.prod_restrict]
+    exact hPInt
+  have hBInt : Integrable B (volume.restrict K) := by
+    simpa only [B, P, J] using hPIntRestrict.integral_prod_left
+  have hweightContinuous : ContinuousOn
+      fiveCellSeparatedLocalKernelWeight K := by
+    intro x hx
+    have hxge : 2 ≤ x := hquot.trans hx.1
+    have hden : x * (x ^ 2 - 1) ≠ 0 := by
+      have hxpos : 0 < x := (by norm_num : (0 : ℝ) < 2).trans_le hxge
+      exact (mul_pos hxpos (by nlinarith [sq_nonneg (x - 2)])).ne'
+    unfold fiveCellSeparatedLocalKernelWeight
+    have hbase : ContinuousAt (fun y : ℝ ↦ y * (y ^ 2 - 1)) x := by
+      fun_prop
+    exact continuousWithinAt_const.sub
+      ((hbase.inv₀ hden).continuousWithinAt)
+  have hHWInt : IntegrableOn
+      (fun x : ℝ ↦ H x *
+        (fiveCellSeparatedLocalKernelWeight x : ℂ)) K := by
+    have hHContinuous : Continuous H := by
+      dsimp only [H]
+      exact star_bombieriDirectedCorrelation_contDiff f g |>.continuous
+    have hcastContinuous : ContinuousOn
+        (fun x : ℝ ↦ (fiveCellSeparatedLocalKernelWeight x : ℂ)) K :=
+      Complex.continuous_ofReal.comp_continuousOn hweightContinuous
+    exact hHContinuous.continuousOn.mul hcastContinuous
+      |>.integrableOn_compact isCompact_Icc
+  have hBnonneg (x : ℝ) : 0 ≤ B x := by
+    dsimp only [B]
+    exact integral_nonneg fun y ↦ mul_nonneg (norm_nonneg _) (norm_nonneg _)
+  have hpoint (x : ℝ) (hx : x ∈ K) :
+      ‖H x * (fiveCellSeparatedLocalKernelWeight x : ℂ)‖ ≤ B x := by
+    have hcorr : ‖H x‖ ≤ B x := by
+      simpa only [H, B, J] using
+        norm_star_bombieriDirectedCorrelation_le_supportLone
+          f g hag hgsupport
+    have hwpos : 0 ≤ fiveCellSeparatedLocalKernelWeight x :=
+      (fiveCellSeparatedLocalKernelWeight_pos (hquot.trans hx.1)).le
+    have hwle : fiveCellSeparatedLocalKernelWeight x ≤ 1 :=
+      fiveCellSeparatedLocalKernelWeight_le_one (hquot.trans hx.1)
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+      abs_of_nonneg hwpos]
+    calc
+      ‖H x‖ * fiveCellSeparatedLocalKernelWeight x ≤
+          B x * fiveCellSeparatedLocalKernelWeight x :=
+        mul_le_mul_of_nonneg_right hcorr hwpos
+      _ ≤ B x * 1 := mul_le_mul_of_nonneg_left hwle (hBnonneg x)
+      _ = B x := mul_one _
+  have houter : ‖bombieriLocalCriticalForm f g‖ ≤ ∫ x : ℝ in K, B x := by
+    rw [hkernel]
+    change ‖∫ x : ℝ in K,
+      H x * (fiveCellSeparatedLocalKernelWeight x : ℂ)‖ ≤ _
+    calc
+      ‖∫ x : ℝ in K,
+          H x * (fiveCellSeparatedLocalKernelWeight x : ℂ)‖ ≤
+          ∫ x : ℝ in K,
+            ‖H x * (fiveCellSeparatedLocalKernelWeight x : ℂ)‖ :=
+        norm_integral_le_integral_norm _
+      _ ≤ ∫ x : ℝ in K, B x := by
+        apply integral_mono_ae hHWInt.norm hBInt
+        filter_upwards [ae_restrict_mem measurableSet_Icc] with x hx
+        exact hpoint x hx
+  have hswap :
+      (∫ x : ℝ in K, B x) =
+        ∫ y : ℝ in J, ∫ x : ℝ in K, P (x, y) := by
+    simpa only [B, P] using
+      integral_integral_swap hPIntRestrict
+  have hupper (y : ℝ) (hy : y ∈ J) :
+      (∫ x : ℝ in K, P (x, y)) ≤
+        (∫ z : ℝ in Icc af bf, ‖f z‖) * (‖g y‖ / y) := by
+    have hypos : 0 < y := hag.trans_le hy.1
+    have hscaledInt : IntegrableOn (fun x : ℝ ↦ ‖f (y * x)‖) (Ioi 0) :=
+      ((bombieriTest_norm_integrable_fiveCell f).comp_mul_left'
+        hypos.ne').integrableOn
+    have hscaledLe :
+        (∫ x : ℝ in K, ‖f (y * x)‖) ≤
+          ∫ x : ℝ in Ioi 0, ‖f (y * x)‖ := by
+      apply setIntegral_mono_set hscaledInt
+        (Filter.Eventually.of_forall fun x ↦ norm_nonneg _)
+        (Filter.Eventually.of_forall hKpos)
+    have hscale := integral_comp_mul_left_Ioi
+      (fun z : ℝ ↦ ‖f z‖) 0 hypos
+    have hsupportNorm :=
+      setIntegral_Ioi_norm_eq_supportInterval_fiveCell f haf hfsupport
+    have hscaledBound :
+        (∫ x : ℝ in K, ‖f (x * y)‖) ≤
+          y⁻¹ * ∫ z : ℝ in Icc af bf, ‖f z‖ := by
+      rw [show (fun x : ℝ ↦ ‖f (x * y)‖) =
+          fun x : ℝ ↦ ‖f (y * x)‖ by
+        funext x
+        rw [mul_comm]]
+      calc
+        (∫ x : ℝ in K, ‖f (y * x)‖) ≤
+            ∫ x : ℝ in Ioi 0, ‖f (y * x)‖ := hscaledLe
+        _ = y⁻¹ * ∫ z : ℝ in Ioi 0, ‖f z‖ := by
+          simpa only [mul_zero, smul_eq_mul] using hscale
+        _ = y⁻¹ * ∫ z : ℝ in Icc af bf, ‖f z‖ := by
+          rw [hsupportNorm]
+    dsimp only [P]
+    rw [integral_mul_const]
+    have hg0 : 0 ≤ ‖g y‖ := norm_nonneg _
+    calc
+      (∫ x : ℝ in K, ‖f (x * y)‖) * ‖g y‖ ≤
+          (y⁻¹ * ∫ z : ℝ in Icc af bf, ‖f z‖) * ‖g y‖ :=
+        mul_le_mul_of_nonneg_right hscaledBound hg0
+      _ = (∫ z : ℝ in Icc af bf, ‖f z‖) * (‖g y‖ / y) := by
+        rw [div_eq_mul_inv]
+        ring
+  have hrightInt : IntegrableOn
+      (fun y : ℝ ↦
+        (∫ z : ℝ in Icc af bf, ‖f z‖) * (‖g y‖ / y)) J := by
+    have hinv : ContinuousOn (fun y : ℝ ↦ y⁻¹) J := by
+      exact continuousOn_id.inv₀ fun y hy ↦ (hag.trans_le hy.1).ne'
+    have hquotContinuous : ContinuousOn (fun y : ℝ ↦ ‖g y‖ / y) J := by
+      simpa only [div_eq_mul_inv] using
+        g.contDiff.continuous.norm.continuousOn.mul hinv
+    exact continuousOn_const.mul hquotContinuous
+      |>.integrableOn_compact isCompact_Icc
+  have hleftInt : Integrable
+      (fun y : ℝ ↦ ∫ x : ℝ in K, P (x, y))
+      (volume.restrict J) := by
+    simpa only [P] using hPIntRestrict.integral_prod_right
+  calc
+    ‖bombieriLocalCriticalForm f g‖ ≤ ∫ x : ℝ in K, B x := houter
+    _ = ∫ y : ℝ in J, ∫ x : ℝ in K, P (x, y) := hswap
+    _ ≤ ∫ y : ℝ in J,
+        (∫ z : ℝ in Icc af bf, ‖f z‖) * (‖g y‖ / y) := by
+      apply integral_mono_ae hleftInt hrightInt
+      filter_upwards [ae_restrict_mem measurableSet_Icc] with y hy
+      exact hupper y hy
+    _ = (∫ z : ℝ in Icc af bf, ‖f z‖) *
+          ∫ y : ℝ in Icc ag bg, ‖g y‖ / y := by
+      dsimp only [J]
+      rw [integral_const_mul]
+
+/-- Squaring the preceding multiplicative Young estimate and applying
+Cauchy--Schwarz on the two physical support intervals gives the exact
+Hilbert--Schmidt support coefficient. -/
+private theorem normSq_bombieriLocalCriticalForm_le_supportGeometryEnergy
+    (f g : BombieriTest) {af bf ag bg : ℝ}
+    (haf : 0 < af) (hafbf : af ≤ bf)
+    (hag : 0 < ag) (hagbg : ag ≤ bg) (hbg : 0 < bg)
+    (hfsupport : tsupport f ⊆ Icc af bf)
+    (hgsupport : tsupport g ⊆ Icc ag bg)
+    (hquot : 2 ≤ af / bg) :
+    Complex.normSq (bombieriLocalCriticalForm f g) ≤
+      (bf - af) * (ag⁻¹ - bg⁻¹) *
+        bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g := by
+  let F : ℝ := ∫ z : ℝ in Icc af bf, ‖f z‖
+  let G : ℝ := ∫ y : ℝ in Icc ag bg, ‖g y‖ / y
+  let Ef : ℝ := bombieriCriticalLogEnergy f
+  let Eg : ℝ := bombieriCriticalLogEnergy g
+  have hLone : ‖bombieriLocalCriticalForm f g‖ ≤ F * G := by
+    simpa only [F, G] using
+      norm_bombieriLocalCriticalForm_le_supportLoneProduct
+        f g haf hag hbg hfsupport hgsupport hquot
+  have hF0 : 0 ≤ F := by
+    dsimp only [F]
+    exact integral_nonneg fun z ↦ norm_nonneg _
+  have hG0 : 0 ≤ G := by
+    dsimp only [G]
+    apply integral_nonneg_of_ae
+    filter_upwards [ae_restrict_mem measurableSet_Icc] with y hy
+    exact div_nonneg (norm_nonneg _) (hag.trans_le hy.1).le
+  have hvolumeF :
+      (∫ _z : ℝ in Icc af bf, (1 : ℝ) ^ 2) = bf - af := by
+    rw [setIntegral_const, Real.volume_real_Icc_of_le hafbf]
+    norm_num
+  have hFcs := sq_setIntegral_mul_le_of_continuous
+    (a := af) (b := bf)
+    (fun z : ℝ ↦ ‖f z‖) (fun _z : ℝ ↦ (1 : ℝ))
+    f.contDiff.continuous.norm continuous_const
+  have hFenergy :=
+    setIntegral_supportInterval_norm_sq_eq_criticalLogEnergy_fiveCell
+      f haf hfsupport
+  have hFsq : F ^ 2 ≤ (bf - af) * Ef := by
+    dsimp only [F, Ef]
+    simp only [mul_one] at hFcs
+    rw [hvolumeF, hFenergy] at hFcs
+    simpa [mul_comm] using hFcs
+  have hinvSq := setIntegral_inv_sq_Icc_fiveCell hag hagbg
+  let R : ℝ → ℝ := fun y ↦ (max y ag)⁻¹
+  have hRContinuous : Continuous R := by
+    dsimp only [R]
+    apply Continuous.inv₀ (continuous_id.max continuous_const)
+    intro y
+    exact (hag.trans_le (le_max_right y ag)).ne'
+  have hReq (y : ℝ) (hy : y ∈ Icc ag bg) : R y = y⁻¹ := by
+    dsimp only [R]
+    rw [max_eq_left hy.1]
+  have hGcs := sq_setIntegral_mul_le_of_continuous
+    (a := ag) (b := bg)
+    (fun y : ℝ ↦ ‖g y‖) R
+    g.contDiff.continuous.norm hRContinuous
+  have hGleft :
+      (∫ y : ℝ in Icc ag bg, ‖g y‖ * R y) = G := by
+    dsimp only [G]
+    apply setIntegral_congr_fun measurableSet_Icc
+    intro y hy
+    change ‖g y‖ * R y = ‖g y‖ / y
+    rw [hReq y hy, div_eq_mul_inv]
+  have hGright :
+      (∫ y : ℝ in Icc ag bg, R y ^ 2) = ag⁻¹ - bg⁻¹ := by
+    rw [← hinvSq]
+    apply setIntegral_congr_fun measurableSet_Icc
+    intro y hy
+    change R y ^ 2 = (y⁻¹) ^ 2
+    rw [hReq y hy]
+  have hGenergy :=
+    setIntegral_supportInterval_norm_sq_eq_criticalLogEnergy_fiveCell
+      g hag hgsupport
+  have hGsq : G ^ 2 ≤ (ag⁻¹ - bg⁻¹) * Eg := by
+    dsimp only [G, Eg]
+    rw [hGleft, hGright, hGenergy] at hGcs
+    simpa [mul_comm] using hGcs
+  have hEf0 : 0 ≤ Ef := bombieriCriticalLogEnergy_nonnegative f
+  have hEg0 : 0 ≤ Eg := bombieriCriticalLogEnergy_nonnegative g
+  have hwidthF0 : 0 ≤ bf - af := sub_nonneg.mpr hafbf
+  have hwidthG0 : 0 ≤ ag⁻¹ - bg⁻¹ := by
+    rw [← hinvSq]
+    exact integral_nonneg fun y ↦ sq_nonneg _
+  have hnormSq :
+      ‖bombieriLocalCriticalForm f g‖ ^ 2 ≤ (F * G) ^ 2 :=
+    (sq_le_sq₀ (norm_nonneg _)
+      (mul_nonneg hF0 hG0)).2 hLone
+  rw [Complex.normSq_eq_norm_sq]
+  calc
+    ‖bombieriLocalCriticalForm f g‖ ^ 2 ≤ (F * G) ^ 2 := hnormSq
+    _ = F ^ 2 * G ^ 2 := by ring
+    _ ≤ ((bf - af) * Ef) * ((ag⁻¹ - bg⁻¹) * Eg) :=
+      mul_le_mul hFsq hGsq (sq_nonneg G)
+        (mul_nonneg hwidthF0 hEf0)
+    _ = (bf - af) * (ag⁻¹ - bg⁻¹) * Ef * Eg := by ring
+
+private theorem quarterLogLatticePoint_one_pow_four_fiveCell :
+    quarterLogLatticePoint 1 ^ 4 = 2 := by
+  unfold quarterLogLatticePoint
+  norm_num
+  rw [← Real.exp_nat_mul]
+  convert Real.exp_log (by norm_num : (0 : ℝ) < 2) using 1
+  ring_nf
+
+private theorem quarterLogLatticePoint_one_lt_one_hundred_nineteen_div_hundred :
+    quarterLogLatticePoint 1 < (119 / 100 : ℝ) := by
+  have hq0 : 0 ≤ quarterLogLatticePoint 1 :=
+    (quarterLogLatticePoint_pos 1).le
+  by_contra hnot
+  have hlower : (119 / 100 : ℝ) ≤ quarterLogLatticePoint 1 :=
+    le_of_not_gt hnot
+  have hpow := pow_le_pow_left₀ (by norm_num : (0 : ℝ) ≤ 119 / 100)
+    hlower 4
+  rw [quarterLogLatticePoint_one_pow_four_fiveCell] at hpow
+  norm_num at hpow
+
+private theorem fiveCell_collapsed_supportGeometry_eq (k : ℤ) :
+    (quarterLogLatticePoint (k + 6) -
+        quarterLogLatticePoint (k + 5)) *
+      ((quarterLogLatticePoint k)⁻¹ -
+        (quarterLogLatticePoint (k + 1))⁻¹) =
+      2 * (quarterLogLatticePoint 1 - 1) ^ 2 := by
+  have hq : quarterLogLatticePoint k ≠ 0 :=
+    (quarterLogLatticePoint_pos k).ne'
+  have hr : quarterLogLatticePoint 1 ≠ 0 :=
+    (quarterLogLatticePoint_pos 1).ne'
+  have hqOne : quarterLogLatticePoint (k + 1) =
+      quarterLogLatticePoint 1 * quarterLogLatticePoint k :=
+    quarterLogLatticePoint_add k 1
+  have hqTwo : quarterLogLatticePoint (k + 2) =
+      quarterLogLatticePoint 1 ^ 2 * quarterLogLatticePoint k := by
+    calc
+      quarterLogLatticePoint (k + 2) =
+          quarterLogLatticePoint 2 * quarterLogLatticePoint k :=
+        quarterLogLatticePoint_add k 2
+      _ = quarterLogLatticePoint 1 ^ 2 *
+          quarterLogLatticePoint k := by
+        rw [show (2 : ℤ) = 1 + 1 by norm_num,
+          quarterLogLatticePoint_add]
+        ring
+  rw [show k + 5 = (k + 1) + 4 by ring,
+    show k + 6 = (k + 2) + 4 by ring,
+    quarterLogLatticePoint_add_four,
+    quarterLogLatticePoint_add_four, hqOne, hqTwo]
+  field_simp [hq, hr]
+
+private theorem fiveCell_collapsed_supportGeometry_lt_diagonalConstantSq
+    (k : ℤ) :
+    (quarterLogLatticePoint (k + 6) -
+        quarterLogLatticePoint (k + 5)) *
+      ((quarterLogLatticePoint k)⁻¹ -
+        (quarterLogLatticePoint (k + 1))⁻¹) <
+      (27 / 100 : ℝ) ^ 2 := by
+  rw [fiveCell_collapsed_supportGeometry_eq]
+  have hqLower : (1 : ℝ) ≤ quarterLogLatticePoint 1 := by
+    simpa only [← quarterLogLatticePoint_zero] using
+      quarterLogLatticePoint_mono (show (0 : ℤ) ≤ 1 by omega)
+  have hqUpper :=
+    quarterLogLatticePoint_one_lt_one_hundred_nineteen_div_hundred
+  let d : ℝ := quarterLogLatticePoint 1 - 1
+  have hd0 : 0 ≤ d := by
+    dsimp only [d]
+    linarith
+  have hdUpper : d < (19 / 100 : ℝ) := by
+    dsimp only [d]
+    linarith
+  have hprod :
+      0 < ((19 / 100 : ℝ) - d) * ((19 / 100 : ℝ) + d) :=
+    mul_pos (sub_pos.mpr hdUpper) (by linarith)
+  dsimp only [d] at hd0 hdUpper hprod ⊢
+  nlinarith
+
+/-- The remote local-critical cross in the zero-middle geometry is strictly
+below the square of the `27/100` diagonal energy constant.  The strictness is
+in the support coefficient; the stated energy estimate remains non-strict
+so it also covers a vanishing endpoint. -/
+theorem normSq_fiveCell_remoteEndpointLocalCriticalCross_le_energyProduct_of_middle_zero
+    (parent : BombieriTest) (k : ℤ)
+    (hmiddle : fiveCellMiddleThree parent k = 0) :
+    Complex.normSq (bombieriLocalCriticalForm
+        (monotoneQuarterCell parent k)
+        (monotoneQuarterCell parent (k + 4))) ≤
+      (27 / 100 : ℝ) ^ 2 *
+        bombieriCriticalLogEnergy (monotoneQuarterCell parent k) *
+          bombieriCriticalLogEnergy
+            (monotoneQuarterCell parent (k + 4)) := by
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let Ea : ℝ := bombieriCriticalLogEnergy a
+  let Ee : ℝ := bombieriCriticalLogEnergy e
+  have hcollapse :=
+    fiveCell_endpoint_tsupports_collapse_of_middle_zero parent k hmiddle
+  have hquot :
+      2 ≤ quarterLogLatticePoint (k + 5) /
+        quarterLogLatticePoint (k + 1) := by
+    rw [show k + 5 = (k + 1) + 4 by ring,
+      quarterLogLatticePoint_add_four]
+    field_simp [(quarterLogLatticePoint_pos (k + 1)).ne']
+    norm_num
+  have hraw :=
+    normSq_bombieriLocalCriticalForm_le_supportGeometryEnergy
+      e a
+      (quarterLogLatticePoint_pos (k + 5))
+      (quarterLogLatticePoint_mono (by omega))
+      (quarterLogLatticePoint_pos k)
+      (quarterLogLatticePoint_mono (by omega))
+      (quarterLogLatticePoint_pos (k + 1))
+      hcollapse.2 hcollapse.1 hquot
+  have hgeometry :=
+    fiveCell_collapsed_supportGeometry_lt_diagonalConstantSq k
+  have hEa0 : 0 ≤ Ea := bombieriCriticalLogEnergy_nonnegative a
+  have hEe0 : 0 ≤ Ee := bombieriCriticalLogEnergy_nonnegative e
+  have hscaled :
+      (quarterLogLatticePoint (k + 6) -
+          quarterLogLatticePoint (k + 5)) *
+          ((quarterLogLatticePoint k)⁻¹ -
+            (quarterLogLatticePoint (k + 1))⁻¹) * Ee * Ea ≤
+        (27 / 100 : ℝ) ^ 2 * Ee * Ea := by
+    have hfirst := mul_le_mul_of_nonneg_right hgeometry.le hEe0
+    have hsecond := mul_le_mul_of_nonneg_right hfirst hEa0
+    simpa only [mul_assoc] using hsecond
+  have hswap := bombieriLocalCriticalForm_conj_apply a e
+  change Complex.normSq (bombieriLocalCriticalForm a e) ≤
+    (27 / 100 : ℝ) ^ 2 * Ea * Ee
+  calc
+    Complex.normSq (bombieriLocalCriticalForm a e) =
+        Complex.normSq
+          (starRingEnd ℂ (bombieriLocalCriticalForm e a)) :=
+      congrArg Complex.normSq hswap.symm
+    _ = Complex.normSq (bombieriLocalCriticalForm e a) :=
+      Complex.normSq_conj _
+    _ ≤ (quarterLogLatticePoint (k + 6) -
+          quarterLogLatticePoint (k + 5)) *
+        ((quarterLogLatticePoint k)⁻¹ -
+          (quarterLogLatticePoint (k + 1))⁻¹) * Ee * Ea := hraw
+    _ ≤ (27 / 100 : ℝ) ^ 2 * Ee * Ea := hscaled
+    _ = (27 / 100 : ℝ) ^ 2 * Ea * Ee := by ring
+
+/-- Full degenerate five-cell determinant.  For a conjugation-fixed common
+parent, vanishing of the middle three cells leaves a positive semidefinite
+local-critical form on the two remote endpoint cells. -/
+theorem fiveCell_remoteEndpointLocalCritical_determinant_of_middle_zero
+    (parent : BombieriTest) (k : ℤ)
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmiddle : fiveCellMiddleThree parent k = 0) :
+    Complex.normSq (bombieriLocalCriticalForm
+        (monotoneQuarterCell parent k)
+        (monotoneQuarterCell parent (k + 4))) ≤
+      (bombieriLocalCriticalForm
+          (monotoneQuarterCell parent k)
+          (monotoneQuarterCell parent k)).re *
+        (bombieriLocalCriticalForm
+          (monotoneQuarterCell parent (k + 4))
+          (monotoneQuarterCell parent (k + 4))).re := by
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let Ea : ℝ := bombieriCriticalLogEnergy a
+  let Ee : ℝ := bombieriCriticalLogEnergy e
+  let A : ℝ := (bombieriLocalCriticalForm a a).re
+  let E : ℝ := (bombieriLocalCriticalForm e e).re
+  have hdiag :=
+    fiveCell_endpointLocalCritical_diagonal_coercivity_of_middle_zero
+      parent k hparent hmiddle
+  have hcross :=
+    normSq_fiveCell_remoteEndpointLocalCriticalCross_le_energyProduct_of_middle_zero
+      parent k hmiddle
+  have hEa0 : 0 ≤ Ea := bombieriCriticalLogEnergy_nonnegative a
+  have hEe0 : 0 ≤ Ee := bombieriCriticalLogEnergy_nonnegative e
+  have hc0 : 0 ≤ (27 / 100 : ℝ) := by norm_num
+  have hA0 : 0 ≤ A := by
+    dsimp only [A, Ea, a] at hdiag ⊢
+    exact (mul_nonneg hc0 hEa0).trans hdiag.1
+  have hproduct :
+      ((27 / 100 : ℝ) * Ea) * ((27 / 100 : ℝ) * Ee) ≤ A * E := by
+    apply mul_le_mul
+    · simpa only [A, Ea, a] using hdiag.1
+    · simpa only [E, Ee, e] using hdiag.2
+    · exact mul_nonneg hc0 hEe0
+    · exact hA0
+  dsimp only [a, e, Ea, Ee, A, E] at hcross hproduct ⊢
+  calc
+    Complex.normSq (bombieriLocalCriticalForm
+        (monotoneQuarterCell parent k)
+        (monotoneQuarterCell parent (k + 4))) ≤
+        (27 / 100 : ℝ) ^ 2 *
+          bombieriCriticalLogEnergy (monotoneQuarterCell parent k) *
+            bombieriCriticalLogEnergy
+              (monotoneQuarterCell parent (k + 4)) := hcross
+    _ = ((27 / 100 : ℝ) *
+          bombieriCriticalLogEnergy (monotoneQuarterCell parent k)) *
+        ((27 / 100 : ℝ) *
+          bombieriCriticalLogEnergy
+            (monotoneQuarterCell parent (k + 4))) := by ring
+    _ ≤ (bombieriLocalCriticalForm
+          (monotoneQuarterCell parent k)
+          (monotoneQuarterCell parent k)).re *
+        (bombieriLocalCriticalForm
+          (monotoneQuarterCell parent (k + 4))
+          (monotoneQuarterCell parent (k + 4))).re := hproduct
 
 /-- Exact scalar form of the new common-parent obstruction.  Once the two
 adjacent minors are nonnegative and the middle diagonal is positive, a
