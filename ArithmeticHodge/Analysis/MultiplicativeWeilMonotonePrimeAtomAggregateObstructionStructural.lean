@@ -2936,6 +2936,103 @@ theorem supportMinimalNegativeMonotoneBlock_terminalRemoteRow_deficit
     at hnegative
   linarith
 
+/-! ## Lag polarization is circular beyond the ratio-two range -/
+
+/-- The cross of two endpoint cells at lag `n + 1` is the mixed second
+difference of the four contiguous interval quadratics determined by those
+endpoints.  This is the strongest exact lag-polarization telescope.
+
+For `n ≤ 1` all four intervals have at most three cells and ratio-two
+positivity applies.  At the first genuinely remote lag, `n = 2`, the leading
+term is the four-cell quadratic itself.  Hence solving the remote cross by
+this identity is circular; further lag expansion only replaces it by still
+longer interval quadratics. -/
+theorem two_mul_endpointCellCross_eq_intervalQuadratic_mixedDifference
+    (parent : BombieriTest) (lo : ℤ) (start n : ℕ) :
+    2 * (bombieriTwoBlockGlobalCrossSymbol
+          (monotoneQuarterFiniteBlock parent lo start 1)
+          (monotoneQuarterFiniteBlock parent lo (start + n + 1) 1)).re =
+      bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo start (n + 2)) -
+        bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo start (n + 1)) -
+        bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo (start + 1) (n + 1)) +
+        bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo (start + 1) n) := by
+  let left := monotoneQuarterFiniteBlock parent lo start 1
+  let middle := monotoneQuarterFiniteBlock parent lo (start + 1) n
+  let right := monotoneQuarterFiniteBlock parent lo (start + n + 1) 1
+  have hleftMiddleSplit := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo start (n + 1) 1 (by omega)
+  have hmiddleRightSplit := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo (start + 1) (n + 1) n (by omega)
+  have hwholeSplit := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo start (n + 2) (n + 1) (by omega)
+  have hleftMiddle : left + middle =
+      monotoneQuarterFiniteBlock parent lo start (n + 1) := by
+    simpa only [left, middle, show n + 1 - 1 = n by omega]
+      using hleftMiddleSplit.symm
+  have hmiddleRight : middle + right =
+      monotoneQuarterFiniteBlock parent lo (start + 1) (n + 1) := by
+    simpa only [middle, right, Nat.add_assoc, Nat.add_comm 1 n,
+      show n + 1 - n = 1 by omega]
+      using hmiddleRightSplit.symm
+  have hwhole : monotoneQuarterFiniteBlock parent lo start (n + 2) =
+      (left + middle) + right := by
+    rw [hwholeSplit, ← hleftMiddle]
+    simp only [right, Nat.add_assoc,
+      show n + 2 - (n + 1) = 1 by omega]
+  have hoverlap :=
+    bombieriRealQuadraticValue_threeTerm_overlap_for_telescope
+      left middle right
+  rw [← hwhole, hleftMiddle, hmiddleRight] at hoverlap
+  dsimp only [left, middle, right] at hoverlap
+  linarith
+
+/-- A finite-coordinate quadratic carrying only one remote corner.  The
+parameter `X` is completely invisible on each of the two adjacent
+three-coordinate subspaces. -/
+def remoteCornerFourCoordinateQuadratic
+    (X a b c d : ℝ) : ℝ :=
+  a ^ 2 + b ^ 2 + c ^ 2 + d ^ 2 + 2 * X * a * d
+
+theorem remoteCornerFourCoordinateQuadratic_leftTriple
+    (X a b c : ℝ) :
+    remoteCornerFourCoordinateQuadratic X a b c 0 =
+      a ^ 2 + b ^ 2 + c ^ 2 := by
+  unfold remoteCornerFourCoordinateQuadratic
+  ring
+
+theorem remoteCornerFourCoordinateQuadratic_rightTriple
+    (X b c d : ℝ) :
+    remoteCornerFourCoordinateQuadratic X 0 b c d =
+      b ^ 2 + c ^ 2 + d ^ 2 := by
+  unfold remoteCornerFourCoordinateQuadratic
+  ring
+
+/-- Adjacent ratio-two PSD, including every overlap diagonal and every
+linear combination inside either adjacent triple, does not control the
+remote row.  With remote corner `X = -3`, both local `3 x 3` restrictions
+are the identity form, while the all-ones four-coordinate vector is strictly
+negative.  Therefore no sum of already-local ratio-two quadratics can recover
+the remote cross without an additional nonlocal input. -/
+theorem adjacentTriplePSD_and_all_overlapData_allow_negative_remoteCorner :
+    ∃ X : ℝ,
+      (∀ a b c : ℝ,
+        0 ≤ remoteCornerFourCoordinateQuadratic X a b c 0) ∧
+      (∀ b c d : ℝ,
+        0 ≤ remoteCornerFourCoordinateQuadratic X 0 b c d) ∧
+      remoteCornerFourCoordinateQuadratic X 1 1 1 1 < 0 := by
+  refine ⟨-3, ?_, ?_, ?_⟩
+  · intro a b c
+    rw [remoteCornerFourCoordinateQuadratic_leftTriple]
+    nlinarith [sq_nonneg a, sq_nonneg b, sq_nonneg c]
+  · intro b c d
+    rw [remoteCornerFourCoordinateQuadratic_rightTriple]
+    nlinarith [sq_nonneg b, sq_nonneg c, sq_nonneg d]
+  · norm_num [remoteCornerFourCoordinateQuadratic]
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
