@@ -11,12 +11,16 @@ noncomputable section
 
 open CenteredEndpointCorrelation
 open MultiplicativeWeilFourCellRealRescaleStructural
+open YoshidaConstantBounds
 open YoshidaEndpointEvenFullPolarization
 open YoshidaEndpointEvenMeanZeroPositive
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialIntegrable
 open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoEndpointClean
+open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseLowSchur
+open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFourCellEvenCapacityStructural
 open YoshidaFourCellEvenCoshMixedStructural
 open YoshidaFourCellEndpointVarianceStructural
@@ -251,6 +255,328 @@ theorem fourCellEvenEndpointCapacityPolarization_sq_le_mul
     fourCellEvenEndpointCapacityQuadratic_smul] at hnonneg
   dsimp only [a, b, c]
   nlinarith only [hnonneg]
+
+/-! ## The complementary scalar and smooth-kernel form -/
+
+/-- The scalar mass and smooth regular-kernel diagonal which is subtracted
+from the raw-plus-endpoint core in the polar-free even operator. -/
+def fourCellEvenSignedMassRegularQuadratic (w : ℝ → ℝ) : ℝ :=
+  (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) *
+      (∫ x : ℝ in -1..1, w x ^ 2) +
+    2 * fourCellOperatorHalfWidth *
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t)
+
+/-- The exact polarization of the scalar-mass and smooth regular-kernel
+diagonal. -/
+def fourCellEvenSignedMassRegularPolarization
+    (u v : ℝ → ℝ) : ℝ :=
+  (Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi) *
+      (∫ x : ℝ in -1..1, u x * v x) +
+    2 * fourCellOperatorHalfWidth *
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear u v t)
+
+private theorem intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    IntervalIntegrable
+      (fun t : ℝ ↦
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t)
+      volume 0 2 := by
+  let f : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t
+  let g : ℝ → ℝ := fun t ↦ (1 / 4 : ℝ) * |C t|
+  have hgIcc : IntegrableOn g (Icc (0 : ℝ) 2) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact (continuous_const.mul hC.abs).continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (0 : ℝ) 2)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (0 : ℝ) 2)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact (measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)).mul hC.measurable
+  have hfg : ∀ᵐ t : ℝ ∂(volume.restrict (Ioc (0 : ℝ) 2)),
+      ‖f t‖ ≤ g t := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1.le
+    have harg4 : fourCellOperatorHalfWidth * t ≤ 5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤
+            fourCellOperatorHalfWidth * 2 := hmul
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 harg4
+    have hk1 := yoshidaRegularKernel_le_quarter harg0
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg hk0]
+    exact mul_le_mul_of_nonneg_right hk1 (abs_nonneg (C t))
+  constructor
+  · exact Integrable.mono' hg hfmeas hfg
+  · simp
+
+/-- The complete smooth regular correlation has the generic sharp quarter
+mass bound.  No parity or sign is imposed on the profile. -/
+theorem abs_fourCellEvenRegularCorrelation_le_quarter_mass
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    |(∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t)| ≤
+      (1 / 4 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let C : ℝ → ℝ := centeredEndpointCorrelation w
+  have hC : Continuous C :=
+    continuous_centeredEndpointCorrelation_of_continuous w hw
+  have hKC := intervalIntegrable_fourCellRegularKernel_mul_continuous C hC
+  have hpoint : ∀ t ∈ Icc (0 : ℝ) 2,
+      |yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t| ≤
+        (1 / 4 : ℝ) * |C t| := by
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+    have harg4 : fourCellOperatorHalfWidth * t ≤ 5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤
+            fourCellOperatorHalfWidth * 2 := hmul
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 harg4
+    have hk1 := yoshidaRegularKernel_le_quarter harg0
+    rw [abs_mul, abs_of_nonneg hk0]
+    exact mul_le_mul_of_nonneg_right hk1 (abs_nonneg _)
+  have habsInt := hKC.abs
+  have hmajorInt : IntervalIntegrable
+      (fun t : ℝ ↦ (1 / 4 : ℝ) * |C t|) volume 0 2 :=
+    (hC.abs.intervalIntegrable _ _).const_mul (1 / 4)
+  have hmono :
+      (∫ t : ℝ in 0..2,
+          |yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t|) ≤
+        ∫ t : ℝ in 0..2, (1 / 4 : ℝ) * |C t| := by
+    apply intervalIntegral.integral_mono_on (by norm_num) habsInt hmajorInt
+    exact hpoint
+  have hnorm := intervalIntegral.norm_integral_le_integral_norm
+    (by norm_num : (0 : ℝ) ≤ 2)
+    (f := fun t ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t)
+      (μ := volume)
+  have hcorr := integral_abs_centeredEndpointCorrelation_le_energy w hw
+  rw [intervalIntegral.integral_const_mul] at hmono
+  simp only [Real.norm_eq_abs] at hnorm
+  linarith
+
+private theorem one_lt_fourCellScalar :
+    (1 : ℝ) < Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi := by
+  have hlogTwo : Real.log 2 ≠ 0 := (Real.log_pos (by norm_num)).ne'
+  have hwidth :
+      Real.log (2 * fourCellOperatorHalfWidth) =
+        Real.log (5 / 4 : ℝ) + Real.log (Real.log 2) := by
+    rw [show 2 * fourCellOperatorHalfWidth =
+        (5 / 4 : ℝ) * Real.log 2 by
+      unfold fourCellOperatorHalfWidth
+      ring,
+      Real.log_mul (by norm_num : (5 / 4 : ℝ) ≠ 0) hlogTwo]
+  have hfive : 0 < Real.log (5 / 4 : ℝ) :=
+    Real.log_pos (by norm_num)
+  rw [hwidth]
+  linarith [strict_log_log_two_bounds.1,
+    strict_euler_gamma_bounds.1, strict_log_pi_bounds.1]
+
+private theorem fourCellOperatorHalfWidth_le_one_half :
+    fourCellOperatorHalfWidth ≤ (1 / 2 : ℝ) := by
+  have hlog := strict_log_two_bounds.2
+  unfold fourCellOperatorHalfWidth
+  nlinarith
+
+/-- The scalar-mass plus smooth regular-kernel form is positive on every
+continuous real profile. -/
+theorem fourCellEvenSignedMassRegularQuadratic_nonnegative
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    0 ≤ fourCellEvenSignedMassRegularQuadratic w := by
+  let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation w t
+  let S : ℝ := Real.log (2 * fourCellOperatorHalfWidth) +
+    Real.eulerMascheroniConstant + Real.log Real.pi
+  have hM : 0 ≤ M := by
+    dsimp only [M]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hRabs : |R| ≤ (1 / 4 : ℝ) * M := by
+    simpa only [R, M] using
+      abs_fourCellEvenRegularCorrelation_le_quarter_mass w hw
+  have hRlower : -(1 / 4 : ℝ) * M ≤ R := by
+    linarith [neg_abs_le R]
+  have ha0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hregular := mul_le_mul_of_nonneg_left hRlower ha0
+  have hS : 1 < S := by simpa only [S] using one_lt_fourCellScalar
+  have ha := fourCellOperatorHalfWidth_le_one_half
+  unfold fourCellEvenSignedMassRegularQuadratic
+  dsimp only [M, R, S] at hregular hS ⊢
+  nlinarith
+
+/-- Exact quadratic expansion of the scalar-mass and smooth-kernel form. -/
+theorem fourCellEvenSignedMassRegularQuadratic_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellEvenSignedMassRegularQuadratic (u + v) =
+      fourCellEvenSignedMassRegularQuadratic u +
+        2 * fourCellEvenSignedMassRegularPolarization u v +
+      fourCellEvenSignedMassRegularQuadratic v := by
+  have hmass := integral_add_sq u v hu hv
+  have hCu : Continuous (centeredEndpointCorrelation u) :=
+    continuous_centeredEndpointCorrelation_of_continuous u hu
+  have hCv : Continuous (centeredEndpointCorrelation v) :=
+    continuous_centeredEndpointCorrelation_of_continuous v hv
+  have hB : Continuous (factorTwoCenteredCorrelationBilinear u v) := by
+    unfold factorTwoCenteredCorrelationBilinear
+    exact ((continuous_factorTwoCenteredCrossCorrelation u v hu hv).add
+      (continuous_factorTwoCenteredCrossCorrelation v u hv hu)).div_const 2
+  have hIu := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (centeredEndpointCorrelation u) hCu
+  have hIv := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (centeredEndpointCorrelation v) hCv
+  have hIb := intervalIntegrable_fourCellRegularKernel_mul_continuous
+    (factorTwoCenteredCorrelationBilinear u v) hB
+  unfold fourCellEvenSignedMassRegularQuadratic
+    fourCellEvenSignedMassRegularPolarization
+  simp only [Pi.add_apply]
+  rw [hmass]
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation (u + v) t) =
+      fun t ↦
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation u t +
+        (2 * (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear u v t) +
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation v t) by
+    funext t
+    rw [centeredEndpointCorrelation_add u v hu hv t]
+    ring,
+    intervalIntegral.integral_add hIu ((hIb.const_mul 2).add hIv),
+    intervalIntegral.integral_add (hIb.const_mul 2) hIv,
+    intervalIntegral.integral_const_mul]
+  ring
+
+/-- Homogeneity of the scalar-mass and smooth-kernel form. -/
+theorem fourCellEvenSignedMassRegularQuadratic_smul
+    (c : ℝ) (w : ℝ → ℝ) :
+    fourCellEvenSignedMassRegularQuadratic (c • w) =
+      c ^ 2 * fourCellEvenSignedMassRegularQuadratic w := by
+  have hmass :
+      (∫ x : ℝ in -1..1, (c • w) x ^ 2) =
+        c ^ 2 * ∫ x : ℝ in -1..1, w x ^ 2 := by
+    rw [show (fun x : ℝ ↦ (c • w) x ^ 2) =
+        fun x ↦ c ^ 2 * w x ^ 2 by
+      funext x
+      simp only [Pi.smul_apply, smul_eq_mul]
+      ring,
+      intervalIntegral.integral_const_mul]
+  have hcorr (t : ℝ) : centeredEndpointCorrelation (c • w) t =
+      c ^ 2 * centeredEndpointCorrelation w t := by
+    rw [← factorTwoCenteredCorrelationBilinear_self,
+      ← factorTwoCenteredCorrelationBilinear_self,
+      factorTwoCenteredCorrelationBilinear_smul_smul]
+    ring
+  unfold fourCellEvenSignedMassRegularQuadratic
+  rw [hmass]
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation (c • w) t) =
+      fun t ↦ c ^ 2 *
+        (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t) by
+    funext t
+    rw [hcorr]
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+/-- Linearity of the scalar-mass and smooth-kernel polarization in its
+second real argument. -/
+theorem fourCellEvenSignedMassRegularPolarization_smul_right
+    (c : ℝ) (u v : ℝ → ℝ) :
+    fourCellEvenSignedMassRegularPolarization u (c • v) =
+      c * fourCellEvenSignedMassRegularPolarization u v := by
+  have hmass :
+      (∫ x : ℝ in -1..1, u x * (c • v) x) =
+        c * ∫ x : ℝ in -1..1, u x * v x := by
+    rw [show (fun x : ℝ ↦ u x * (c • v) x) =
+        fun x ↦ c * (u x * v x) by
+      funext x
+      simp only [Pi.smul_apply, smul_eq_mul]
+      ring,
+      intervalIntegral.integral_const_mul]
+  have hcorr (t : ℝ) :
+      factorTwoCenteredCorrelationBilinear u (c • v) t =
+        c * factorTwoCenteredCorrelationBilinear u v t := by
+    simpa only [one_smul, one_mul] using
+      factorTwoCenteredCorrelationBilinear_smul_smul 1 c u v t
+  unfold fourCellEvenSignedMassRegularPolarization
+  rw [hmass]
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        factorTwoCenteredCorrelationBilinear u (c • v) t) =
+      fun t ↦ c *
+        (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear u v t) by
+    funext t
+    rw [hcorr]
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+/-- Structural Cauchy--Schwarz for the positive scalar-mass and smooth
+regular-kernel form. -/
+theorem fourCellEvenSignedMassRegularPolarization_sq_le_mul
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellEvenSignedMassRegularPolarization u v ^ 2 ≤
+      fourCellEvenSignedMassRegularQuadratic u *
+        fourCellEvenSignedMassRegularQuadratic v := by
+  apply sq_le_mul_of_forall_quadratic_nonneg
+    (fourCellEvenSignedMassRegularQuadratic u)
+    (fourCellEvenSignedMassRegularPolarization u v)
+    (fourCellEvenSignedMassRegularQuadratic v)
+    (fourCellEvenSignedMassRegularQuadratic_nonnegative v hv)
+  intro t
+  have htv : Continuous (t • v) := by
+    change Continuous (fun x ↦ t * v x)
+    exact continuous_const.mul hv
+  have hnonneg := fourCellEvenSignedMassRegularQuadratic_nonnegative
+    (u + t • v) (hu.add htv)
+  rw [fourCellEvenSignedMassRegularQuadratic_add u (t • v) hu htv,
+    fourCellEvenSignedMassRegularPolarization_smul_right,
+    fourCellEvenSignedMassRegularQuadratic_smul] at hnonneg
+  nlinarith only [hnonneg]
+
+/-- The fixed constant row is exactly the difference between the two
+positive endpoint and scalar/regular polarizations. -/
+theorem fourCellEvenZeroCoshConstantRow_eq_capacity_sub_signed
+    (v : ℝ → ℝ) :
+    fourCellEvenZeroCoshConstantRow v =
+      fourCellEvenEndpointCapacityPolarization (fun _ : ℝ ↦ 1) v -
+        fourCellEvenSignedMassRegularPolarization (fun _ : ℝ ↦ 1) v := by
+  unfold fourCellEvenZeroCoshConstantRow
+    fourCellEvenEndpointCapacityPolarization
+    fourCellEvenSignedMassRegularPolarization
+  ring
 
 /-- The singular part of the constant Schur row is exactly the retained
 endpoint-capacity polarization against the unit profile. -/
