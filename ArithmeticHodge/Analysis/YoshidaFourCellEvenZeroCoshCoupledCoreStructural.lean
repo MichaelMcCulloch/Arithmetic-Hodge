@@ -25,6 +25,7 @@ open ShiftedLegendreL2Basis
 open ShiftedLegendreLogEnergyOrthogonalProjection
 open ShiftedLegendreOrthogonality
 open ThreeByThreeRankOneSchur
+open TwoByTwoSchur
 open YoshidaEndpointEvenLowProfile
 open YoshidaEndpointEvenStructuralReduction
 open YoshidaConstantBounds
@@ -1023,6 +1024,98 @@ theorem thirtyThree_div_twenty_mass_le_coupledCore_diagonalSum_P0246_add_tail
   dsimp only [N, R] at habsorb
   nlinarith only [hlowReserve, htail, habsorb]
 
+/-- The exact finite budget available for the cutoff-eight capacity Schur
+complement.  One five-hundredth of the nonconstant low mass is held back to
+pay the constant defect jointly with the tail. -/
+def fourCellEvenP0246CutoffEightLowSchurReserve
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  fourCellEvenZeroCoshCoupledCore
+      (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) -
+    (33 / 20 : ℝ) *
+      (∫ x : ℝ in -1..1,
+        factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x ^ 2) +
+    5 * c0 ^ 2 -
+    (1 / 500 : ℝ) *
+      ((2 / 5 : ℝ) * c2 ^ 2 + (2 / 9 : ℝ) * c4 ^ 2 +
+        (2 / 13 : ℝ) * c6 ^ 2)
+
+/-- The promoted finite block leaves a nonnegative cutoff-eight Schur
+reserve, without any hypothesis on its four coordinates. -/
+theorem fourCellEvenP0246CutoffEightLowSchurReserve_nonnegative
+    (c0 c2 c4 c6 : ℝ) :
+    0 ≤ fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6 := by
+  have h :=
+    three_div_hundred_nonconstantReserve_P0246_le_core_add_constantDefect
+      c0 c2 c4 c6
+  unfold fourCellEvenP0246CutoffEightLowSchurReserve
+  nlinarith only [h, sq_nonneg c2, sq_nonneg c4, sq_nonneg c6]
+
+/-- Exact scalar Schur reduction of the last cutoff-eight capacity border.
+The tail factor `7461 / 7000 = 299 / 280 - 1 / 500` is what remains after
+reserving one five-hundredth of total nonconstant mass for the constant
+coordinate.  Thus the displayed determinant inequality is the sole analytic
+low-to-tail input: no sign or finite-mode exhaustion is assumed. -/
+theorem thirtyThree_div_twenty_mass_le_coupledCore_P0246_add_tail_of_capacitySchur
+    (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8)
+    (hconstant : c0 ^ 2 ≤ (1 / 4000 : ℝ) *
+      (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+        (2 / 9 : ℝ) * c4 ^ 2 + (2 / 13 : ℝ) * c6 ^ 2 +
+        (∫ x : ℝ in -1..1, r x ^ 2)))
+    (hcapacitySchur :
+      fourCellEvenEndpointCapacityPolarization
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r ^ 2 ≤
+        fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6 *
+          ((7461 / 7000 : ℝ) *
+            (∫ x : ℝ in -1..1, r x ^ 2))) :
+    (33 / 20 : ℝ) *
+        (∫ x : ℝ in -1..1,
+          (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x + r x) ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore
+        (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 + r) := by
+  let N : ℝ := (2 / 5 : ℝ) * c2 ^ 2 + (2 / 9 : ℝ) * c4 ^ 2 +
+    (2 / 13 : ℝ) * c6 ^ 2
+  let R : ℝ := ∫ x : ℝ in -1..1, r x ^ 2
+  let L : ℝ := fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6
+  let C : ℝ := fourCellEvenEndpointCapacityPolarization
+    (factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6) r
+  let T : ℝ := (7461 / 7000 : ℝ) * R
+  have hR : 0 ≤ R := by
+    dsimp only [R]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hN : 0 ≤ N := by
+    dsimp only [N]
+    positivity
+  have hL : 0 ≤ L := by
+    simpa only [L] using
+      fourCellEvenP0246CutoffEightLowSchurReserve_nonnegative
+        c0 c2 c4 c6
+  have hT : 0 ≤ T := by
+    dsimp only [T]
+    positivity
+  have hconstant' : 3998 * c0 ^ 2 ≤ N + R := by
+    dsimp only [N, R]
+    nlinarith only [hconstant]
+  have hdefect : 5 * c0 ^ 2 ≤ (1 / 500 : ℝ) * (N + R) := by
+    nlinarith only [hconstant']
+  have hschur : 0 ≤ L + 2 * C + T := by
+    apply scalar_low_tail_nonneg L T C hL hT
+    simpa only [L, T, C, R] using hcapacitySchur
+  have htail :=
+    sevenHundredSixtyOne_div_twoHundredEighty_mass_le_coupledCore_of_even_legendreTail
+      r hr hlocal heven hlow
+  have hmass := integral_intrinsicEvenP0246_add_tail_sq
+    c0 c2 c4 c6 r hr hlow
+  have hcore := fourCellEvenZeroCoshCoupledCore_intrinsicEvenP0246_add_tail
+    c0 c2 c4 c6 r hr hlocal hlow
+  rw [hmass, hcore]
+  dsimp only [L, T, C, N, R] at hschur htail hdefect ⊢
+  unfold fourCellEvenP0246CutoffEightLowSchurReserve at hschur
+  nlinarith only [hschur, htail, hdefect]
+
 private theorem integral_polynomial_ten
     (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ l r : ℝ) :
     (∫ x : ℝ in l..r,
@@ -1524,6 +1617,190 @@ theorem thirtyThree_div_twenty_mass_le_coupledCore_diagonalSum_P024_add_tail
   rw [hmass]
   dsimp only [N, R] at habsorb
   linarith
+
+/-- Canonical arbitrary-profile form of the stronger cutoff-eight diagonal
+closure.  The first four even Legendre coordinates and the complete
+moment-eight tail already clear `33 / 20`; only their endpoint-capacity
+polarization is omitted. -/
+theorem thirtyThree_div_twenty_mass_le_canonicalCoupledCore_cutoffEight_diagonalSum
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore
+          (centeredLegendreLowProjection w hw 8) +
+        fourCellEvenZeroCoshCoupledCore
+          (centeredLegendreHigherResidual w hw 8) := by
+  let c0 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 0
+  let c2 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 2
+  let c4 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 4
+  let c6 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 6
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 8
+  have hpEq : centeredLegendreLowProjection w hw 8 = p := by
+    simpa only [c0, c2, c4, c6, p] using
+      centeredLegendreLowProjection_eight_eq_intrinsicEvenP0246Profile
+        w hw heven
+  have hsum : p + r = w := by
+    rw [← hpEq]
+    simpa only [r] using
+      centeredLegendreLowProjection_add_higherResidual w hw 8
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 8
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 8
+  have hrEven : Function.Even r := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_even w hw heven 8
+  have hrGap : centeredLegendreMomentsVanishBelow r 8 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 8
+  have hc0 : c0 = centeredEvenP0Coefficient w := by
+    simpa only [c0] using
+      factorTwoCanonicalLegendreCoefficient_zero_eq_centeredEvenP0Coefficient
+        w hw
+  have hmassSplit := integral_intrinsicEvenP0246_add_tail_sq
+    c0 c2 c4 c6 r hr hrGap
+  have hmassLow := factorTwoIntrinsicEnergy_intrinsicEvenP0246 c0 c2 c4 c6
+  change (∫ x : ℝ in -1..1, p x ^ 2) = _ at hmassLow
+  have hmassSum :
+      (∫ x : ℝ in -1..1, (p x + r x) ^ 2) =
+        ∫ x : ℝ in -1..1, w x ^ 2 := by
+    have h := congrArg
+      (fun q : ℝ → ℝ ↦ ∫ x : ℝ in -1..1, q x ^ 2) hsum
+    simpa only [Pi.add_apply] using h
+  have htotal :
+      (∫ x : ℝ in -1..1, w x ^ 2) =
+        2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+          (2 / 9 : ℝ) * c4 ^ 2 + (2 / 13 : ℝ) * c6 ^ 2 +
+          (∫ x : ℝ in -1..1, r x ^ 2) := by
+    change (∫ x : ℝ in -1..1, (p x + r x) ^ 2) = _ at hmassSplit
+    rw [hmassLow] at hmassSplit
+    linarith
+  have hcGlobal :=
+    centeredEvenP0Coefficient_sq_le_one_div_fourThousand_mass_of_coshMoment_zero
+      w hw heven hzero
+  have hconstant : c0 ^ 2 ≤ (1 / 4000 : ℝ) *
+      (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+        (2 / 9 : ℝ) * c4 ^ 2 + (2 / 13 : ℝ) * c6 ^ 2 +
+        (∫ x : ℝ in -1..1, r x ^ 2)) := by
+    calc
+      c0 ^ 2 = centeredEvenP0Coefficient w ^ 2 := by rw [hc0]
+      _ ≤ (1 / 4000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) :=
+        hcGlobal
+      _ = (1 / 4000 : ℝ) *
+          (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+            (2 / 9 : ℝ) * c4 ^ 2 + (2 / 13 : ℝ) * c6 ^ 2 +
+            (∫ x : ℝ in -1..1, r x ^ 2)) := by rw [htotal]
+  have hdiag :=
+    thirtyThree_div_twenty_mass_le_coupledCore_diagonalSum_P0246_add_tail
+      c0 c2 c4 c6 r hr hrLocal hrEven hrGap hconstant
+  rw [hpEq]
+  rw [← hmassSum]
+  simpa only [p] using hdiag
+
+/-- Canonical full-core handoff at cutoff eight.  Once the single displayed
+capacity-dual determinant is proved for the canonical low projection and
+moment-eight residual, the complete `33 / 20` coupled-core inequality follows
+with no further mode estimates. -/
+theorem thirtyThree_div_twenty_mass_le_canonicalCoupledCore_cutoffEight_of_capacitySchur
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (hcapacitySchur :
+      fourCellEvenEndpointCapacityPolarization
+          (centeredLegendreLowProjection w hw 8)
+          (centeredLegendreHigherResidual w hw 8) ^ 2 ≤
+        fourCellEvenP0246CutoffEightLowSchurReserve
+            (factorTwoCanonicalLegendreCoefficient w hw 0)
+            (factorTwoCanonicalLegendreCoefficient w hw 2)
+            (factorTwoCanonicalLegendreCoefficient w hw 4)
+            (factorTwoCanonicalLegendreCoefficient w hw 6) *
+          ((7461 / 7000 : ℝ) *
+            (∫ x : ℝ in -1..1,
+              centeredLegendreHigherResidual w hw 8 x ^ 2))) :
+    (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore w := by
+  let c0 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 0
+  let c2 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 2
+  let c4 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 4
+  let c6 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 6
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 8
+  have hpEq : centeredLegendreLowProjection w hw 8 = p := by
+    simpa only [c0, c2, c4, c6, p] using
+      centeredLegendreLowProjection_eight_eq_intrinsicEvenP0246Profile
+        w hw heven
+  have hsum : p + r = w := by
+    rw [← hpEq]
+    simpa only [r] using
+      centeredLegendreLowProjection_add_higherResidual w hw 8
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 8
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 8
+  have hrEven : Function.Even r := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_even w hw heven 8
+  have hrGap : centeredLegendreMomentsVanishBelow r 8 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 8
+  have hc0 : c0 = centeredEvenP0Coefficient w := by
+    simpa only [c0] using
+      factorTwoCanonicalLegendreCoefficient_zero_eq_centeredEvenP0Coefficient
+        w hw
+  have hmassSplit := integral_intrinsicEvenP0246_add_tail_sq
+    c0 c2 c4 c6 r hr hrGap
+  have hmassLow := factorTwoIntrinsicEnergy_intrinsicEvenP0246 c0 c2 c4 c6
+  change (∫ x : ℝ in -1..1, p x ^ 2) = _ at hmassLow
+  have hmassSum :
+      (∫ x : ℝ in -1..1, (p x + r x) ^ 2) =
+        ∫ x : ℝ in -1..1, w x ^ 2 := by
+    have h := congrArg
+      (fun q : ℝ → ℝ ↦ ∫ x : ℝ in -1..1, q x ^ 2) hsum
+    simpa only [Pi.add_apply] using h
+  have htotal :
+      (∫ x : ℝ in -1..1, w x ^ 2) =
+        2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+          (2 / 9 : ℝ) * c4 ^ 2 + (2 / 13 : ℝ) * c6 ^ 2 +
+          (∫ x : ℝ in -1..1, r x ^ 2) := by
+    change (∫ x : ℝ in -1..1, (p x + r x) ^ 2) = _ at hmassSplit
+    rw [hmassLow] at hmassSplit
+    linarith
+  have hcGlobal :=
+    centeredEvenP0Coefficient_sq_le_one_div_fourThousand_mass_of_coshMoment_zero
+      w hw heven hzero
+  have hconstant : c0 ^ 2 ≤ (1 / 4000 : ℝ) *
+      (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+        (2 / 9 : ℝ) * c4 ^ 2 + (2 / 13 : ℝ) * c6 ^ 2 +
+        (∫ x : ℝ in -1..1, r x ^ 2)) := by
+    calc
+      c0 ^ 2 = centeredEvenP0Coefficient w ^ 2 := by rw [hc0]
+      _ ≤ (1 / 4000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) :=
+        hcGlobal
+      _ = (1 / 4000 : ℝ) *
+          (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+            (2 / 9 : ℝ) * c4 ^ 2 + (2 / 13 : ℝ) * c6 ^ 2 +
+            (∫ x : ℝ in -1..1, r x ^ 2)) := by rw [htotal]
+  have hschur :
+      fourCellEvenEndpointCapacityPolarization p r ^ 2 ≤
+        fourCellEvenP0246CutoffEightLowSchurReserve c0 c2 c4 c6 *
+          ((7461 / 7000 : ℝ) *
+            (∫ x : ℝ in -1..1, r x ^ 2)) := by
+    rw [hpEq] at hcapacitySchur
+    simpa only [c0, c2, c4, c6, p, r] using hcapacitySchur
+  have hfull :=
+    thirtyThree_div_twenty_mass_le_coupledCore_P0246_add_tail_of_capacitySchur
+      c0 c2 c4 c6 r hr hrLocal hrEven hrGap hconstant hschur
+  rw [hsum] at hfull
+  rw [← hmassSum]
+  simpa only [p] using hfull
 
 /-- Canonical arbitrary-profile form of the diagonal closure.  On the
 zero-wide-cosh hyperplane the cutoff-six low block and its infinite tail,
