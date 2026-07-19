@@ -1891,6 +1891,33 @@ theorem monotonePrimeAtomCompleteAugmentedGram_posSemidefinite
     (monotonePrimeAtomCompleteHeadSliceCombination_ratioTwo
       parent k S a c)
 
+/-- The two unconditional PSD structures do not by themselves survive the
+sharp mixed mutation `q ↦ p`.  In this one-atom model the complete augmented
+pencil `[H q; q Q]` and the physical augmented pencil `[EH p; p L]` are both
+positive semidefinite, both available `1 / 12000` diagonal comparisons hold,
+and `R = q - p` is exact.  Nevertheless the hybrid `[H p; p Q]` has negative
+determinant.  Hence a proof of the mixed Schur bound must use an additional
+common-parent relation between the two forms, equivalently a signed control
+of the coordinate defect; the currently proved ratio-two and physical Gram
+data do not imply it. -/
+theorem mixedAtomGram_currentData_allow_sharpMutationFailure :
+    ∃ H Q q EH L p R : ℝ,
+      0 ≤ H ∧ 0 ≤ Q ∧ 0 ≤ EH ∧ 0 ≤ L ∧
+      (∀ a c : ℝ, 0 ≤ H * a ^ 2 + 2 * q * a * c + Q * c ^ 2) ∧
+      (∀ a c : ℝ, 0 ≤ EH * a ^ 2 + 2 * p * a * c + L * c ^ 2) ∧
+      (1 / 12000 : ℝ) * EH ≤ H ∧
+      (1 / 12000 : ℝ) * L ≤ Q ∧
+      R = q - p ∧
+      R * (2 * p + R) < 0 ∧
+      H * Q < p ^ 2 := by
+  refine ⟨1, 1, 0, 4, 1, 2, -2,
+    by norm_num, by norm_num, by norm_num, by norm_num, ?_, ?_,
+    by norm_num, by norm_num, by norm_num, by norm_num, by norm_num⟩
+  · intro a c
+    nlinarith [sq_nonneg a, sq_nonneg c]
+  · intro a c
+    nlinarith [sq_nonneg (2 * a + c)]
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
