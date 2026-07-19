@@ -7,6 +7,7 @@ import ArithmeticHodge.Analysis.YoshidaEndpointPullbackLipschitz
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 import ArithmeticHodge.Analysis.UnitIntervalLogEnergyLipschitz
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
 
 set_option autoImplicit false
 
@@ -43,6 +44,8 @@ open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
+open YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
+open YoshidaFactorTwoPhaseIntrinsicOddP5CorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLowSchur
@@ -7514,6 +7517,67 @@ theorem fourCellOddEndpointStripEven_oneThreeFiveLowProfile
     fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
     centeredP1 centeredP3 factorTwoCenteredP5
   ring
+
+/-- Positive-half potential cross of `P₁` and `P₅`. -/
+theorem integral_zero_one_endpointPotential_mul_centeredP1_mul_P5 :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * centeredP1 x *
+        factorTwoCenteredP5 x) = (1 / 28 : ℝ) := by
+  let f : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * centeredP1 x * factorTwoCenteredP5 x
+  have hf : IntervalIntegrable f volume (-1) 1 := by
+    dsimp only [f]
+    simpa only [mul_assoc] using
+      intervalIntegrable_endpointPotential_mul
+        (fun x : ℝ ↦ centeredP1 x * factorTwoCenteredP5 x)
+        (by unfold centeredP1 factorTwoCenteredP5; fun_prop)
+  have hfeven : Function.Even f := by
+    intro x
+    dsimp only [f]
+    unfold yoshidaEndpointPotential centeredP1 factorTwoCenteredP5
+    ring_nf
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even
+    f hf hfeven
+  have hfull := integral_endpointPotential_mul_centeredP1_mul_P5
+  dsimp only [f] at hfold
+  rw [hfull] at hfold
+  linarith
+
+/-- Positive-half potential cross of `P₃` and `P₅`. -/
+theorem integral_zero_one_endpointPotential_mul_centeredP3_mul_P5 :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * centeredP3 x *
+        factorTwoCenteredP5 x) = (1 / 18 : ℝ) := by
+  let f : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * centeredP3 x * factorTwoCenteredP5 x
+  have hf : IntervalIntegrable f volume (-1) 1 := by
+    dsimp only [f]
+    simpa only [mul_assoc] using
+      intervalIntegrable_endpointPotential_mul
+        (fun x : ℝ ↦ centeredP3 x * factorTwoCenteredP5 x)
+        (by unfold centeredP3 factorTwoCenteredP5; fun_prop)
+  have hfeven : Function.Even f := by
+    intro x
+    dsimp only [f]
+    unfold yoshidaEndpointPotential centeredP3 factorTwoCenteredP5
+    ring_nf
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even
+    f hf hfeven
+  have hfull := integral_endpointPotential_mul_centeredP3_mul_P5
+  dsimp only [f] at hfold
+  rw [hfull] at hfold
+  linarith
+
+/-- Positive-half endpoint-potential diagonal of `P₅`. -/
+theorem integral_zero_one_endpointPotential_mul_factorTwoCenteredP5_sq :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * factorTwoCenteredP5 x ^ 2) =
+      19157 / 152460 - (1 / 11 : ℝ) * Real.log 2 := by
+  have hfold := endpointPotential_eq_two_mul_positiveHalf
+    factorTwoCenteredP5 continuous_factorTwoCenteredP5
+      (Or.inr odd_factorTwoCenteredP5)
+  rw [integral_endpointPotential_mul_factorTwoCenteredP5_sq] at hfold
+  linarith
 
 theorem contDiff_fourCellOddOneThreeFiveResidual
     (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
