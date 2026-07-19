@@ -16,11 +16,13 @@ open YoshidaEndpointPotentialBound
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseIntrinsicNineP6EvenProfileCorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicNineP6EvenCleanPolynomialGramStructural
+open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
 open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
+open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFourCellEvenEndpointCapacityCauchyStructural
 open YoshidaFourCellEvenEndpointCoshSchurStructural
@@ -375,6 +377,64 @@ theorem fourCellEvenEndpointSeedRow_P0246_add_tail_eq_low_add_tail
       r hr hlow]
   unfold fourCellEvenEndpointSeedP0246CompleteLowRow
   ring
+
+/-- Canonical cutoff-eight normal form of the endpoint-seed row for an
+arbitrary even zero-cosh profile. -/
+theorem fourCellEvenEndpointSeedRow_eq_canonicalCutoffEightLow_add_tail
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    fourCellEvenEndpointSeedRow w =
+      fourCellEvenEndpointSeedP0246CompleteLowRow
+          (factorTwoCanonicalLegendreCoefficient w hw 0)
+          (factorTwoCanonicalLegendreCoefficient w hw 2)
+          (factorTwoCanonicalLegendreCoefficient w hw 4)
+          (factorTwoCanonicalLegendreCoefficient w hw 6) +
+        fourCellEvenEndpointCapacityPolarization
+          fourCellEvenEndpointCoshSeed
+          (centeredLegendreHigherResidual w hw 8) -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear
+                fourCellEvenEndpointCoshSeed
+                (centeredLegendreHigherResidual w hw 8) t) := by
+  let c0 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 0
+  let c2 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 2
+  let c4 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 4
+  let c6 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 6
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 8
+  have hpEq : centeredLegendreLowProjection w hw 8 = p := by
+    simpa only [c0, c2, c4, c6, p] using
+      centeredLegendreLowProjection_eight_eq_intrinsicEvenP0246Profile
+        w hw heven
+  have hsum : p + r = w := by
+    rw [← hpEq]
+    simpa only [r] using
+      centeredLegendreLowProjection_add_higherResidual w hw 8
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 8
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 8
+  have hrEven : Function.Even r := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_even w hw heven 8
+  have hrGap : centeredLegendreMomentsVanishBelow r 8 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 8
+  have hzeroSplit : fourCellPositiveCoshMoment (p + r)
+      (fourCellOperatorHalfWidth / 2) = 0 := by
+    rw [hsum]
+    exact hzero
+  have hrow :=
+    fourCellEvenEndpointSeedRow_P0246_add_tail_eq_low_add_tail
+      c0 c2 c4 c6 r hr hrLocal hrEven hzeroSplit hrGap
+  rw [hsum] at hrow
+  simpa only [c0, c2, c4, c6, r] using hrow
 
 end
 
