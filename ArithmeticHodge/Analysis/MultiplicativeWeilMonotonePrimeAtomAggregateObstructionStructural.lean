@@ -23,6 +23,8 @@ open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilMonotoneRatioTwoBlockPropagationStructural
 open MultiplicativeWeilQuarterLogLatticePartitionStructural
 open MultiplicativeWeilDirectedCorrelationPhysicalStructural
+open MultiplicativeWeilDirectedCorrelationSmoothStructural
+open MultiplicativeWeilMangoldtDiscrepancyAbelStructural
 open MultiplicativeWeilRealCutPhaseReductionStructural
 open MultiplicativeWeilRealLogKernelStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
@@ -3185,6 +3187,138 @@ theorem normSq_bombieriDirectedCorrelation_le_inv_mul_criticalLogEnergy
   apply (le_div_iff₀ hx).2
   simpa only [mul_comm] using hlagOne
 
+/-- Norm form of the exact multiplicative Hilbert bound. -/
+theorem norm_bombieriDirectedCorrelation_le_inv_sqrt_mul_sqrt_energy
+    (f g : BombieriTest) {x : ℝ} (hx : 0 < x) :
+    ‖bombieriDirectedCorrelation f g x‖ ≤
+      (Real.sqrt x)⁻¹ * Real.sqrt
+        (bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g) := by
+  let E : ℝ := bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g
+  have hE : 0 ≤ E := mul_nonneg
+    (bombieriCriticalLogEnergy_nonnegative f)
+    (bombieriCriticalLogEnergy_nonnegative g)
+  have hbase : 0 ≤ x⁻¹ * E :=
+    mul_nonneg (inv_nonneg.mpr hx.le) hE
+  have hsq :=
+    normSq_bombieriDirectedCorrelation_le_inv_mul_criticalLogEnergy
+      f g hx
+  have hnorm : ‖bombieriDirectedCorrelation f g x‖ ≤
+      Real.sqrt (x⁻¹ * E) := by
+    apply (sq_le_sq₀ (norm_nonneg _) (Real.sqrt_nonneg _)).mp
+    rw [← Complex.normSq_eq_norm_sq, Real.sq_sqrt hbase]
+    simpa only [E, mul_assoc] using hsq
+  rw [Real.sqrt_mul (inv_nonneg.mpr hx.le), Real.sqrt_inv] at hnorm
+  exact hnorm
+
+private theorem separatedChebyshevErrorPairing_one_eq_integral_sub_primeRow
+    (f g : BombieriTest) :
+    separatedChebyshevErrorPairing f g 1 =
+      (∫ x : ℝ in Set.Ioi 0,
+        starRingEnd ℂ (bombieriDirectedCorrelation f g x)) -
+      ∑' n : ℕ,
+        ((ArithmeticFunction.vonMangoldt (n + 1) : ℝ) : ℂ) *
+          starRingEnd ℂ
+            (bombieriDirectedCorrelation f g (n + 1 : ℕ)) := by
+  let H : ℝ → ℂ := fun x ↦
+    starRingEnd ℂ (bombieriDirectedCorrelation f g x)
+  have habel := scaled_integral_sub_tsum_vonMangoldt_eq_integral_chebyshevError
+    H (star_bombieriDirectedCorrelation_contDiff_one f g)
+      (star_bombieriDirectedCorrelation_hasCompactSupport f g)
+      (by norm_num : (0 : ℝ) < 1)
+  simpa only [separatedChebyshevErrorPairing, H, Complex.ofReal_one,
+    one_mul, inv_one] using habel.symm
+
+/-- Finite operator mass of the Mangoldt sampling row through index `N`. -/
+def bombieriLogPrimeAtomPartialMass (N : ℕ) : ℝ :=
+  ∑ k ∈ Finset.range N, bombieriLogPrimeAtomWeight k
+
+/-- Compact support truncates the arithmetic row in the Abel identity at
+any natural cutoff beyond the upper physical support quotient. -/
+theorem separatedPrimeRow_eq_sum_range_of_support
+    (f g : BombieriTest) {af bf ag bg : ℝ}
+    (haf : 0 < af) (hag : 0 < ag) (hbg : 0 < bg)
+    (hfsupport : tsupport f ⊆ Set.Icc af bf)
+    (hgsupport : tsupport g ⊆ Set.Icc ag bg)
+    (N : ℕ) (hN : bf / ag < (N : ℝ)) :
+    (∑' k : ℕ,
+        ((ArithmeticFunction.vonMangoldt (k + 1) : ℝ) : ℂ) *
+          starRingEnd ℂ
+            (bombieriDirectedCorrelation f g (k + 1 : ℕ))) =
+      ∑ k ∈ Finset.range N,
+        ((ArithmeticFunction.vonMangoldt (k + 1) : ℝ) : ℂ) *
+          starRingEnd ℂ
+            (bombieriDirectedCorrelation f g (k + 1 : ℕ)) := by
+  rw [tsum_eq_sum]
+  intro k hk
+  rw [Finset.mem_range] at hk
+  have hNk : N ≤ k := Nat.le_of_not_gt hk
+  have hcast : (N : ℝ) < (k + 1 : ℕ) := by
+    exact_mod_cast hNk.trans_lt (Nat.lt_succ_self k)
+  have hupper : bf / ag < (k + 1 : ℕ) := hN.trans hcast
+  have hout : ((k + 1 : ℕ) : ℝ) ∉
+      Set.Icc (af / bg) (bf / ag) := by
+    intro hmem
+    exact (not_lt_of_ge hmem.2) hupper
+  rw [star_bombieriDirectedCorrelation_eq_zero_outside_supportQuotient
+    f g haf hag hbg hfsupport hgsupport hout, mul_zero]
+
+/-- The finite Mangoldt sampling operator has an exact diagonal `L²`
+reserve.  Each sample pays its sharp multiplicative Jacobian, producing the
+classical half-weight `Λ(m) / sqrt(m)` and no support-length loss. -/
+theorem norm_separatedPrimeRow_sum_range_le_partialMass_mul_sqrtEnergy
+    (f g : BombieriTest) (N : ℕ) :
+    ‖∑ k ∈ Finset.range N,
+        ((ArithmeticFunction.vonMangoldt (k + 1) : ℝ) : ℂ) *
+          starRingEnd ℂ
+            (bombieriDirectedCorrelation f g (k + 1 : ℕ))‖ ≤
+      bombieriLogPrimeAtomPartialMass N *
+        Real.sqrt
+          (bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g) := by
+  calc
+    ‖∑ k ∈ Finset.range N,
+        ((ArithmeticFunction.vonMangoldt (k + 1) : ℝ) : ℂ) *
+          starRingEnd ℂ
+            (bombieriDirectedCorrelation f g (k + 1 : ℕ))‖ ≤
+      ∑ k ∈ Finset.range N,
+        ‖((ArithmeticFunction.vonMangoldt (k + 1) : ℝ) : ℂ) *
+          starRingEnd ℂ
+            (bombieriDirectedCorrelation f g (k + 1 : ℕ))‖ :=
+      norm_sum_le _ _
+    _ ≤ ∑ k ∈ Finset.range N,
+        bombieriLogPrimeAtomWeight k *
+          Real.sqrt
+            (bombieriCriticalLogEnergy f *
+              bombieriCriticalLogEnergy g) := by
+      apply Finset.sum_le_sum
+      intro k _hk
+      have hcorr :=
+        norm_bombieriDirectedCorrelation_le_inv_sqrt_mul_sqrt_energy
+          f g (show (0 : ℝ) < (k + 1 : ℕ) by positivity)
+      rw [norm_mul, Complex.norm_real, Real.norm_eq_abs,
+        starRingEnd_apply, Complex.star_def, Complex.norm_conj,
+        abs_of_nonneg ArithmeticFunction.vonMangoldt_nonneg]
+      calc
+        ArithmeticFunction.vonMangoldt (k + 1) *
+            ‖bombieriDirectedCorrelation f g (k + 1 : ℕ)‖ ≤
+          ArithmeticFunction.vonMangoldt (k + 1) *
+            ((Real.sqrt (((k + 1 : ℕ) : ℝ)))⁻¹ *
+              Real.sqrt
+                (bombieriCriticalLogEnergy f *
+                  bombieriCriticalLogEnergy g)) :=
+          mul_le_mul_of_nonneg_left hcorr
+            ArithmeticFunction.vonMangoldt_nonneg
+        _ = bombieriLogPrimeAtomWeight k *
+            Real.sqrt
+              (bombieriCriticalLogEnergy f *
+                bombieriCriticalLogEnergy g) := by
+          unfold bombieriLogPrimeAtomWeight
+          ring
+    _ = bombieriLogPrimeAtomPartialMass N *
+        Real.sqrt
+          (bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g) := by
+      unfold bombieriLogPrimeAtomPartialMass
+      rw [Finset.sum_mul]
+
 /-- Integrating the preceding pointwise Hilbert bound over the exact support
 quotient gives a finite all-row reserve.  The coefficient depends only on
 the two physical support intervals; the diagonal terms are the actual full
@@ -3285,6 +3419,68 @@ theorem separatedCorrelationNormMass_le_supportGeometryEnergy
         Real.sqrt ((af / bg)⁻¹ *
           bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g) := by
       rfl
+
+/-- Full unconditional all-support bound for the Chebyshev-discrepancy
+pairing.  Its continuous part is paid by support geometry, while its exact
+finite arithmetic sampling row is paid by the partial half-weight mass
+`sum Λ(m) / sqrt(m)`.  Both use the genuine full diagonal energies. -/
+theorem norm_separatedChebyshevErrorPairing_one_le_energyReserve
+    (f g : BombieriTest) {af bf ag bg : ℝ}
+    (haf : 0 < af) (hafbf : af ≤ bf)
+    (hag : 0 < ag) (hagbg : ag ≤ bg) (hbg : 0 < bg)
+    (hfsupport : tsupport f ⊆ Set.Icc af bf)
+    (hgsupport : tsupport g ⊆ Set.Icc ag bg)
+    (N : ℕ) (hN : bf / ag < (N : ℝ)) :
+    ‖separatedChebyshevErrorPairing f g 1‖ ≤
+      (bf / ag - af / bg) *
+          Real.sqrt ((af / bg)⁻¹ *
+            bombieriCriticalLogEnergy f * bombieriCriticalLogEnergy g) +
+        bombieriLogPrimeAtomPartialMass N *
+          Real.sqrt
+            (bombieriCriticalLogEnergy f *
+              bombieriCriticalLogEnergy g) := by
+  have hidentity :=
+    separatedChebyshevErrorPairing_one_eq_integral_sub_primeRow f g
+  have hfinite := separatedPrimeRow_eq_sum_range_of_support
+    f g haf hag hbg hfsupport hgsupport N hN
+  rw [hfinite] at hidentity
+  have hintegral :
+      ‖∫ x : ℝ in Set.Ioi 0,
+          starRingEnd ℂ (bombieriDirectedCorrelation f g x)‖ ≤
+        separatedCorrelationNormMass f g := by
+    exact norm_integral_le_integral_norm _
+  have hmass := separatedCorrelationNormMass_le_supportGeometryEnergy
+    f g haf hafbf hag hagbg hbg hfsupport hgsupport
+  have hprime :=
+    norm_separatedPrimeRow_sum_range_le_partialMass_mul_sqrtEnergy
+      f g N
+  rw [hidentity]
+  exact (norm_sub_le _ _).trans
+    ((add_le_add hintegral hprime).trans
+      (add_le_add hmass le_rfl))
+
+/-- The arithmetic coefficient in the unconditional triangle estimate is
+already much larger than the available `1 / 12000` local coercivity budget
+as soon as the factor-two atom is present.  Thus the Hilbert bound is a true
+diagonal reserve, but coefficient-only absorption cannot close the proof;
+one must retain cancellation between the continuous and Mangoldt rows. -/
+theorem one_over_twelve_thousand_lt_bombieriLogPrimeAtomPartialMass
+    (N : ℕ) (hN : 2 ≤ N) :
+    (1 / 12000 : ℝ) < bombieriLogPrimeAtomPartialMass N := by
+  have hsqrt : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  have hsqrtLt : Real.sqrt 2 < 2 := by
+    nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+  have hweight : (1 / 12000 : ℝ) < bombieriLogPrimeAtomWeight 1 := by
+    rw [bombieriLogPrimeAtomWeight_one]
+    apply (lt_div_iff₀ hsqrt).2
+    nlinarith [Real.log_two_gt_d9]
+  have honeMem : 1 ∈ Finset.range N := Finset.mem_range.mpr (by omega)
+  have honeLe : bombieriLogPrimeAtomWeight 1 ≤
+      bombieriLogPrimeAtomPartialMass N := by
+    unfold bombieriLogPrimeAtomPartialMass
+    exact Finset.single_le_sum
+      (fun k _hk ↦ bombieriLogPrimeAtomWeight_nonneg k) honeMem
+  exact hweight.trans_le honeLe
 
 /-- The nonsingular part of every strictly separated complete cross has a
 true diagonal Hilbert reserve.  Combining the exact kernel denominator with
