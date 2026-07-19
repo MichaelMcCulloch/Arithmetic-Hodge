@@ -26,6 +26,7 @@ open UnitIntervalLogEnergyAffine
 open MultiplicativeWeilFourCellRealRescaleStructural
 open ShiftedLegendreCenteredParity
 open ShiftedLegendreCenteredL2Structural
+open ShiftedLegendreCenteredLowModes
 open ShiftedLegendreFiniteEnergyGap
 open ShiftedLegendreL2Basis
 open ShiftedLegendreLogEnergyOrthogonalProjection
@@ -70,6 +71,7 @@ open YoshidaFourCellEvenZeroCoshRegularStructural
 open YoshidaFourCellEndpointVarianceStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
+open UnitIntervalIntegralBridge
 
 /-!
 # The infinite even tail of the zero-cosh coupled core
@@ -2915,6 +2917,152 @@ theorem hasSum_cutoffEightPotentialTail_P6_P6 :
     · linarith
   · norm_num [Finset.sum_range_succ]
     ring
+
+/-! ## Parseval transport for singular centered profiles -/
+
+/-- A measurable centered `L²(-1,1)` profile pulls back to the canonical
+unit-interval `L²` space under `t ↦ 2t-1`.  This form does not require
+continuity, so it applies to the endpoint logarithm. -/
+private theorem centeredPullback_memLp_two_of_memLp_restrict
+    (w : ℝ → ℝ) (hwmeas : Measurable w)
+    (hw : MemLp w 2 (volume.restrict (Ioc (-1 : ℝ) 1))) :
+    MemLp (fun t : unitInterval ↦ centeredPullback w (t : ℝ)) 2 := by
+  have hmeas : AEStronglyMeasurable
+      (fun t : unitInterval ↦ centeredPullback w (t : ℝ)) := by
+    apply Measurable.aestronglyMeasurable
+    unfold centeredPullback
+    exact hwmeas.comp
+      ((measurable_subtype_coe.const_mul 2).sub_const 1)
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  have hwIoc : IntegrableOn (fun x : ℝ ↦ ‖w x‖ ^ 2)
+      (Ioc (-1 : ℝ) 1) volume := by
+    simpa only [IntegrableOn] using
+      hw.integrable_norm_pow (by norm_num)
+  have hwInterval : IntervalIntegrable (fun x : ℝ ↦ ‖w x‖ ^ 2)
+      volume (-1) 1 :=
+    (intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)).2 hwIoc
+  have hshift : IntervalIntegrable (fun x : ℝ ↦ ‖w (x - 1)‖ ^ 2)
+      volume 0 2 := by
+    convert hwInterval.comp_add_right (-1) using 1 <;>
+      norm_num [sub_eq_add_neg]
+  have hscale : IntervalIntegrable (fun x : ℝ ↦ ‖w (2 * x - 1)‖ ^ 2)
+      volume 0 1 := by
+    convert hshift.comp_mul_left (c := 2) using 1 <;>
+      norm_num [sub_eq_add_neg]
+  have hIcc : IntegrableOn (fun x : ℝ ↦ ‖w (2 * x - 1)‖ ^ 2)
+      (Icc (0 : ℝ) 1) volume :=
+    (intervalIntegrable_iff_integrableOn_Icc_of_le (by norm_num)).1 hscale
+  have hsubtype :=
+    unitInterval.measurePreserving_coe.integrable_comp_of_integrable hIcc
+  simpa only [Function.comp_apply, centeredPullback] using hsubtype
+
+private theorem inner_toLp_eq_integral_mul
+    (f g : unitInterval → ℝ) (hf : MemLp f 2) (hg : MemLp g 2) :
+    inner ℝ (hf.toLp f) (hg.toLp g) =
+      ∫ t : unitInterval, f t * g t := by
+  rw [MeasureTheory.L2.inner_def]
+  apply integral_congr_ae
+  filter_upwards [hf.coeFn_toLp, hg.coeFn_toLp] with t hft hgt
+  rw [hft, hgt]
+  change g t * f t = f t * g t
+  ring
+
+/-- Bilinear Parseval on the centered interval, including the exact affine
+Jacobian `1/2`. -/
+theorem centeredPullback_tsum_repr_mul_repr
+    (w z : ℝ → ℝ)
+    (hw : MemLp (fun t : unitInterval ↦ centeredPullback w (t : ℝ)) 2)
+    (hz : MemLp (fun t : unitInterval ↦ centeredPullback z (t : ℝ)) 2) :
+    (∑' n : ℕ,
+      shiftedLegendreHilbertBasis.repr
+          (hw.toLp (fun t : unitInterval ↦ centeredPullback w (t : ℝ))) n *
+        shiftedLegendreHilbertBasis.repr
+          (hz.toLp (fun t : unitInterval ↦ centeredPullback z (t : ℝ))) n) =
+      (1 / 2 : ℝ) * ∫ x : ℝ in -1..1, w x * z x := by
+  let F := hw.toLp
+    (fun t : unitInterval ↦ centeredPullback w (t : ℝ))
+  let G := hz.toLp
+    (fun t : unitInterval ↦ centeredPullback z (t : ℝ))
+  calc
+    _ = inner ℝ F G := by
+      rw [← shiftedLegendreHilbertBasis.tsum_inner_mul_inner F G]
+      congr 1
+      funext n
+      rw [shiftedLegendreHilbertBasis.repr_apply_apply,
+        shiftedLegendreHilbertBasis.repr_apply_apply,
+        real_inner_comm F]
+    _ = ∫ t : unitInterval,
+        centeredPullback w (t : ℝ) * centeredPullback z (t : ℝ) := by
+      simpa only [F, G] using inner_toLp_eq_integral_mul _ _ hw hz
+    _ = ∫ t : ℝ in 0..1,
+        centeredPullback w t * centeredPullback z t := by
+      exact integral_unitInterval_eq_intervalIntegral
+        (fun t ↦ centeredPullback w t * centeredPullback z t)
+    _ = _ := by
+      simpa only [centeredPullback] using
+        integral_comp_two_mul_sub_one (fun x ↦ w x * z x)
+
+/-- Closed all-degree squared norm of the unnormalized unit-interval
+shifted-Legendre mode. -/
+theorem norm_sq_shiftedLegendreL2_closed (n : ℕ) :
+    ‖shiftedLegendreL2 n‖ ^ 2 = 1 / (2 * (n : ℝ) + 1) := by
+  rw [← real_inner_self_eq_norm_sq]
+  change inner ℝ
+    (ContinuousMap.toLp 2 (volume : Measure unitInterval) ℝ
+      (polynomialToContinuous (shiftedLegendreReal n)))
+    (ContinuousMap.toLp 2 (volume : Measure unitInterval) ℝ
+      (polynomialToContinuous (shiftedLegendreReal n))) = _
+  have hinner := MeasureTheory.ContinuousMap.inner_toLp
+    (𝕜 := ℝ) (volume : Measure unitInterval)
+    (polynomialToContinuous (shiftedLegendreReal n))
+    (polynomialToContinuous (shiftedLegendreReal n))
+  calc
+    _ = ∫ t : unitInterval,
+        (polynomialToContinuous (shiftedLegendreReal n)) t *
+          starRingEnd ℝ
+            ((polynomialToContinuous (shiftedLegendreReal n)) t) := hinner
+    _ = ∫ t : unitInterval,
+        (shiftedLegendreReal n).eval (t : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ) := by rfl
+    _ = ∫ t : ℝ in 0..1,
+        (shiftedLegendreReal n).eval t *
+          (shiftedLegendreReal n).eval t :=
+      integral_unitInterval_eq_intervalIntegral
+        (fun t ↦ (shiftedLegendreReal n).eval t *
+          (shiftedLegendreReal n).eval t)
+    _ = (1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+        (centeredShiftedLegendreReal n).eval x *
+          (centeredShiftedLegendreReal n).eval x := by
+      have hbridge := integral_comp_two_mul_sub_one (fun x ↦
+        (centeredShiftedLegendreReal n).eval x *
+          (centeredShiftedLegendreReal n).eval x)
+      have hpoint : (fun t : ℝ ↦
+          (centeredShiftedLegendreReal n).eval (2 * t - 1) *
+            (centeredShiftedLegendreReal n).eval (2 * t - 1)) =
+          fun t ↦ (shiftedLegendreReal n).eval t *
+            (shiftedLegendreReal n).eval t := by
+        funext t
+        rw [eval_centeredShiftedLegendreReal]
+        congr 1
+        · congr 1
+          ring
+        · congr 1
+          ring
+      rw [hpoint] at hbridge
+      exact hbridge
+    _ = _ := by
+      have hnorm := centeredLegendreL2Diagonal_closed n
+      unfold centeredLegendreL2Diagonal centeredPolynomialPair at hnorm
+      rw [hnorm]
+      ring
+
+/-- Squaring the all-degree normalization inverse contributes the exact
+Legendre weight `2n+1`. -/
+theorem inv_norm_shiftedLegendreL2_sq_closed (n : ℕ) :
+    ‖shiftedLegendreL2 n‖⁻¹ ^ 2 = 2 * (n : ℝ) + 1 := by
+  rw [inv_pow, norm_sq_shiftedLegendreL2_closed]
+  have hden : 2 * (n : ℝ) + 1 ≠ 0 := by positivity
+  field_simp [hden]
 
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
