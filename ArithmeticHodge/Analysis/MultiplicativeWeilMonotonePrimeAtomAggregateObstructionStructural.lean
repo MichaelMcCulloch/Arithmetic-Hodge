@@ -516,6 +516,42 @@ theorem monotonePrimeAtom_innerAggregateMinor_iff_fullResidualPrimeRow_le_archim
     parent k S hT]
   rfl
 
+/-- A genuine failure of the suffix--aggregate minor is already a negative
+Bombieri quadratic for the explicit inner residual test.  Thus constructing
+an admissible parent counterexample here would not merely refute a local
+estimate: it would produce a witness against global Bombieri nonnegativity. -/
+theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_quadratic_negative_of_minor_failure
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S)
+    (hfailure :
+      bombieriRealQuadraticValue
+            (monotoneQuarterCutoff parent (k + 1)) *
+          monotonePrimeAtomAggregateReserve parent k S <
+        monotonePrimeAtomInnerSuffixAggregateCross parent k S ^ 2) :
+    bombieriRealQuadraticValue
+        (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) < 0 := by
+  have hcoordinates :=
+    monotonePrimeAtom_aggregateOrthogonalResidual_coordinates parent k S
+  dsimp only at hcoordinates
+  rw [hcoordinates.2.1]
+  exact mul_neg_of_pos_of_neg hT (sub_neg.mpr hfailure)
+
+/-- Conversely, global nonnegativity of the actual Bombieri quadratic closes
+the suffix--aggregate minor immediately by testing the explicit residual.
+This records precisely why a proof using only that input would be circular
+for an RH proof. -/
+theorem monotonePrimeAtom_innerAggregateMinor_of_global_nonnegative
+    (hglobal : ∀ g : BombieriTest, 0 ≤ bombieriRealQuadraticValue g)
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S) :
+    monotonePrimeAtomInnerSuffixAggregateCross parent k S ^ 2 ≤
+      bombieriRealQuadraticValue
+          (monotoneQuarterCutoff parent (k + 1)) *
+        monotonePrimeAtomAggregateReserve parent k S := by
+  exact (monotonePrimeAtom_innerAggregateMinor_iff_residual_nonnegative
+    parent k S hT).2
+      (hglobal (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S))
+
 /-- With a positive aggregate pivot, the scalar three-way contraction is
 exactly real Cauchy--Schwarz for the two concrete aggregate-orthogonal
 residual tests. -/
@@ -648,6 +684,58 @@ theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_apply_of_upper
     monotoneRatioTwoBlock_apply, monotoneRatioTwoBlockMultiplier]
   rw [hinner, show k - 1 + 3 = k + 2 by ring, hlower, hupper]
   norm_num
+
+/-- Pointwise, the concrete inner residual is the original suffix multiplied
+by the aggregate pivot, minus the full finite von-Mangoldt dilation operator
+multiplied by the suffix--aggregate cross.  This exposes the actual common
+parent at both physical scales; no abstract residual coordinate remains. -/
+theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_apply
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) (x : ℝ) :
+    monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S x =
+      (((monotonePrimeAtomAggregateReserve parent k S *
+          monotoneQuarterStep (k + 1) x : ℝ) : ℂ) * parent x) -
+        (((monotonePrimeAtomInnerSuffixAggregateCross parent k S *
+          monotonePrimeAtomPlateauMultiplier k x : ℝ) : ℂ) *
+          ∑ j ∈ S,
+            ((ArithmeticFunction.vonMangoldt (j + 1) : ℝ) : ℂ) *
+              monotoneQuarterCutoff parent (k + 1)
+                (((j + 1 : ℕ) : ℝ) * x)) := by
+  simp only [monotonePrimeAtomInnerAggregateOrthogonalResidual,
+    TestFunction.coe_add, Pi.add_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul, monotoneQuarterCutoff_apply,
+    monotonePrimeAtomAggregateSlice_apply]
+  push_cast
+  ring
+
+/-- On the diagonal, the same actual parent transfer has exactly the
+archimedean-minus-full-Mangoldt form displayed below.  Both arguments retain
+the original long suffix and the finite aggregate of its normalized
+dilations; there is no ratio-two replacement hidden in this identity. -/
+theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_quadratic_eq_parentTransfer_arch_sub_prime
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    bombieriRealQuadraticValue
+        (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) =
+      bombieriRealLogArchimedeanCross
+          (((monotonePrimeAtomAggregateReserve parent k S : ℝ) : ℂ) •
+              monotoneQuarterCutoff parent (k + 1) +
+            (((-monotonePrimeAtomInnerSuffixAggregateCross parent k S : ℝ) :
+                ℂ) • monotonePrimeAtomAggregateSlice parent k S))
+          (((monotonePrimeAtomAggregateReserve parent k S : ℝ) : ℂ) •
+              monotoneQuarterCutoff parent (k + 1) +
+            (((-monotonePrimeAtomInnerSuffixAggregateCross parent k S : ℝ) :
+                ℂ) • monotonePrimeAtomAggregateSlice parent k S)) -
+        bombieriRealLogPrimeAtomCross
+          (((monotonePrimeAtomAggregateReserve parent k S : ℝ) : ℂ) •
+              monotoneQuarterCutoff parent (k + 1) +
+            (((-monotonePrimeAtomInnerSuffixAggregateCross parent k S : ℝ) :
+                ℂ) • monotonePrimeAtomAggregateSlice parent k S))
+          (((monotonePrimeAtomAggregateReserve parent k S : ℝ) : ℂ) •
+              monotoneQuarterCutoff parent (k + 1) +
+            (((-monotonePrimeAtomInnerSuffixAggregateCross parent k S : ℝ) :
+                ℂ) • monotonePrimeAtomAggregateSlice parent k S)) := by
+  unfold bombieriRealQuadraticValue
+  rw [bombieriFunctional_quadratic_re_eq_completeRealLogKernel]
+  rfl
 
 /-- For a nonzero pivot, the inner residual is the positive-pivot scaling of
 the actual suffix--aggregate Schur pencil.  Thus proving its nonnegativity is
@@ -940,6 +1028,45 @@ theorem bombieriConjugateTest_monotonePrimeAtomAggregateSlice
           (((j + 1 : ℕ) : ℝ) * x) := by
     simpa only [bombieriConjugateTest_apply] using hcut
   rw [hcut']
+
+/-- The concrete inner aggregate-orthogonal residual remains a real
+Bombieri test whenever the common parent is real. -/
+theorem bombieriConjugateTest_monotonePrimeAtomInnerAggregateOrthogonalResidual
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (S : Finset ℕ) :
+    bombieriConjugateTest
+        (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S) =
+      monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S := by
+  have hstar (a : ℝ) : starRingEnd ℂ (a : ℂ) = (a : ℂ) := by
+    rw [starRingEnd_apply, Complex.star_def, Complex.conj_ofReal]
+  unfold monotonePrimeAtomInnerAggregateOrthogonalResidual
+  simp only [bombieriConjugateTest_add,
+    bombieriConjugateTest_smul, hstar,
+    bombieriConjugateTest_monotoneQuarterCutoff parent hparent (k + 1),
+    bombieriConjugateTest_monotonePrimeAtomAggregateSlice parent hparent k S]
+
+/-- Therefore any minor failure for a conjugation-fixed common parent gives
+a genuine conjugation-fixed negative Bombieri test, namely the explicitly
+constructed inner residual itself. -/
+theorem exists_conjugationFixed_negativeBombieriTest_of_innerAggregateMinor_failure
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (S : Finset ℕ)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S)
+    (hfailure :
+      bombieriRealQuadraticValue
+            (monotoneQuarterCutoff parent (k + 1)) *
+          monotonePrimeAtomAggregateReserve parent k S <
+        monotonePrimeAtomInnerSuffixAggregateCross parent k S ^ 2) :
+    ∃ g : BombieriTest,
+      bombieriConjugateTest g = g ∧ bombieriRealQuadraticValue g < 0 := by
+  refine ⟨monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S,
+    bombieriConjugateTest_monotonePrimeAtomInnerAggregateOrthogonalResidual
+      parent hparent k S, ?_⟩
+  exact
+    monotonePrimeAtomInnerAggregateOrthogonalResidual_quadratic_negative_of_minor_failure
+      parent k S hT hfailure
 
 private theorem realRatioTwo_criticalLogEnergy_le_quadraticValue
     (g : BombieriTest)
