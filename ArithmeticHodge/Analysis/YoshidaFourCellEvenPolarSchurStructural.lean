@@ -597,6 +597,98 @@ theorem one_le_fourCellEvenCoshMass : 1 ≤ fourCellEvenCoshMass := by
 theorem fourCellEvenCoshMass_pos : 0 < fourCellEvenCoshMass :=
   lt_of_lt_of_le (by norm_num) one_le_fourCellEvenCoshMass
 
+private theorem one_add_sq_div_two_le_cosh (x : ℝ) :
+    1 + x ^ 2 / 2 ≤ Real.cosh x := by
+  have hnonneg (y : ℝ) (hy : 0 ≤ y) :
+      1 + y ^ 2 / 2 ≤ Real.cosh y := by
+    let q : ℝ → ℝ := fun z ↦ Real.cosh z - 1 - z ^ 2 / 2
+    have hderiv (z : ℝ) : HasDerivAt q (Real.sinh z - z) z := by
+      dsimp only [q]
+      convert ((Real.hasDerivAt_cosh z).sub (hasDerivAt_const z 1)).sub
+        (((hasDerivAt_id z).pow 2).div_const 2) using 1
+      simp only [id_eq, Nat.cast_ofNat]
+      ring
+    have hcont : Continuous q := by
+      dsimp only [q]
+      fun_prop
+    have hmono : MonotoneOn q (Icc 0 y) := by
+      apply monotoneOn_of_deriv_nonneg (convex_Icc 0 y) hcont.continuousOn
+      · intro z _hz
+        exact (hderiv z).differentiableAt.differentiableWithinAt
+      · intro z hz
+        rw [(hderiv z).deriv]
+        exact sub_nonneg.mpr
+          (Real.self_le_sinh_iff.mpr (interior_subset hz).1)
+    have hq := hmono (show (0 : ℝ) ∈ Icc 0 y by exact ⟨le_rfl, hy⟩)
+      (show y ∈ Icc 0 y by exact ⟨hy, le_rfl⟩) hy
+    dsimp only [q] at hq
+    norm_num at hq
+    linarith
+  by_cases hx : 0 ≤ x
+  · exact hnonneg x hx
+  · have h := hnonneg (-x) (by linarith)
+    simpa only [Real.cosh_neg, neg_sq] using h
+
+/-- The wide-cosh mass has a quantitative quadratic Taylor reserve.  This
+is the extra constant-direction margin needed by the exact Schur pivot. -/
+theorem fiveThousandThirtyNine_div_fiveThousand_le_fourCellEvenCoshMass :
+    (5039 / 5000 : ℝ) ≤ fourCellEvenCoshMass := by
+  let a : ℝ := fourCellOperatorHalfWidth
+  have hpoly : IntervalIntegrable
+      (fun x : ℝ ↦ 1 + (a * x / 2) ^ 2 / 2) volume 0 1 := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hcosh : IntervalIntegrable
+      (fun x : ℝ ↦ Real.cosh (a * x / 2)) volume 0 1 := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hle :
+      (∫ x : ℝ in 0..1, 1 + (a * x / 2) ^ 2 / 2) ≤
+        ∫ x : ℝ in 0..1, Real.cosh (a * x / 2) := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hpoly hcosh
+    intro x _hx
+    exact one_add_sq_div_two_le_cosh (a * x / 2)
+  have hpolyExact :
+      (∫ x : ℝ in 0..1, 1 + (a * x / 2) ^ 2 / 2) =
+        1 + a ^ 2 / 24 := by
+    rw [show (fun x : ℝ ↦ 1 + (a * x / 2) ^ 2 / 2) =
+        fun x ↦ 1 + (a ^ 2 / 8) * x ^ 2 by
+      funext x
+      ring,
+      intervalIntegral.integral_add
+        (Continuous.intervalIntegrable continuous_const 0 1)
+        (Continuous.intervalIntegrable (by fun_prop) 0 1),
+      intervalIntegral.integral_const_mul, integral_pow]
+    norm_num
+    ring
+  have ha : (34655 / 80000 : ℝ) < a := by
+    dsimp only [a]
+    unfold fourCellOperatorHalfWidth
+    nlinarith [strict_log_two_bounds.1]
+  have ha0 : 0 ≤ a := by
+    dsimp only [a]
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hsq : (34655 / 80000 : ℝ) ^ 2 ≤ a ^ 2 := by
+    nlinarith [mul_nonneg (sub_nonneg.mpr ha.le)
+      (add_nonneg ha0 (by norm_num : (0 : ℝ) ≤ 34655 / 80000))]
+  have hrational :
+      (5039 / 5000 : ℝ) ≤
+        1 + (34655 / 80000 : ℝ) ^ 2 / 24 := by
+    norm_num
+  have hmassEq :
+      fourCellEvenCoshMass =
+        ∫ x : ℝ in 0..1, Real.cosh (a * x / 2) := by
+    unfold fourCellEvenCoshMass fourCellPositiveCoshMoment
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    dsimp only [a]
+    ring_nf
+  rw [hmassEq]
+  dsimp only [a] at hle hpolyExact hsq ⊢
+  rw [hpolyExact] at hle
+  nlinarith
+
 /-- The canonical constant profile normalized to have wide cosh moment one. -/
 def fourCellEvenCoshUnit (_x : ℝ) : ℝ :=
   (fourCellEvenCoshMass)⁻¹
@@ -872,6 +964,64 @@ theorem one_twentieth_lt_fourCellEvenCompletedParityOperator_one :
   unfold fourCellOperatorHalfWidth at hrowCost hcoshGain hscalar ⊢
   nlinarith
 
+/-- The quadratic Taylor reserve in the wide-cosh mass sharpens the
+constant Schur pivot from `1 / 20` to `3 / 20`. -/
+theorem three_twentieth_lt_fourCellEvenCompletedParityOperator_one :
+    (3 / 20 : ℝ) <
+      fourCellEvenCompletedParityOperator (fun _ : ℝ ↦ 1) := by
+  have hpotentialFold := endpointPotential_eq_two_mul_positiveHalf
+    (fun _ : ℝ ↦ 1) continuous_const (Or.inl (by intro x; rfl))
+  have hpotential :
+      2 * (∫ x : ℝ in 0..1, yoshidaEndpointPotential x) =
+        2 - 2 * Real.log 2 := by
+    calc
+      2 * (∫ x : ℝ in 0..1, yoshidaEndpointPotential x) =
+          ∫ x : ℝ in -1..1, yoshidaEndpointPotential x := by
+        symm
+        simpa using hpotentialFold
+      _ = 2 - 2 * Real.log 2 := integral_endpointPotential_one
+  have hrow := fourCellPositiveHalfRegularRowMass_le_half_mass
+    (fun _ : ℝ ↦ 1) continuous_const
+  norm_num at hrow
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hrowCost :
+      2 * fourCellOperatorHalfWidth *
+          fourCellPositiveHalfRegularRowMass (fun _ : ℝ ↦ 1)
+            fourCellOperatorHalfWidth ≤ fourCellOperatorHalfWidth := by
+    nlinarith
+  have hmass :=
+    fiveThousandThirtyNine_div_fiveThousand_le_fourCellEvenCoshMass
+  have hmass0 : 0 ≤ fourCellEvenCoshMass :=
+    fourCellEvenCoshMass_pos.le
+  have hmassSq :
+      (5039 / 5000 : ℝ) ^ 2 ≤ fourCellEvenCoshMass ^ 2 := by
+    nlinarith [mul_nonneg
+      (sub_nonneg.mpr hmass)
+      (add_nonneg hmass0 (by norm_num : (0 : ℝ) ≤ 5039 / 5000))]
+  have haLower :
+      (34655 / 80000 : ℝ) < fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    nlinarith [strict_log_two_bounds.1]
+  have hcoshGain :
+      8 * (34655 / 80000 : ℝ) * (5039 / 5000 : ℝ) ^ 2 ≤
+        8 * fourCellOperatorHalfWidth * fourCellEvenCoshMass ^ 2 := by
+    calc
+      8 * (34655 / 80000 : ℝ) * (5039 / 5000 : ℝ) ^ 2 ≤
+          8 * fourCellOperatorHalfWidth * (5039 / 5000 : ℝ) ^ 2 := by
+        nlinarith
+      _ ≤ 8 * fourCellOperatorHalfWidth * fourCellEvenCoshMass ^ 2 :=
+        mul_le_mul_of_nonneg_left hmassSq
+          (mul_nonneg (by norm_num) ha0)
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  have hbeta := sqrt_two_mul_log_two_lt_981_div_1000
+  have hlogLower := strict_log_two_bounds.1
+  have hlogUpper := strict_log_two_bounds.2
+  rw [fourCellEvenCompletedParityOperator_one_eq, hpotential]
+  unfold fourCellOperatorHalfWidth at hrowCost hcoshGain hscalar ⊢
+  nlinarith
+
 /-- The positive constant pivot is homogeneous with a uniform quadratic
 margin.  The proof keeps the exact regular row and scales its structural row
 bound, rather than appealing to an unproved quadratic-form interface. -/
@@ -938,8 +1088,21 @@ theorem one_twentieth_mul_sq_le_fourCell_evenBracket_const (c : ℝ) :
   rw [fourCellBracket_eq_evenCompletedParityOperator
     (fun _ : ℝ ↦ c) continuous_const
       (contDiff_const.contDiffOn.locallyLipschitzOn
-        (convex_Icc (-1 : ℝ) 1)) (by intro x; rfl)]
+      (convex_Icc (-1 : ℝ) 1)) (by intro x; rfl)]
   exact one_twentieth_mul_sq_le_fourCellEvenCompletedParityOperator_const c
+
+/-- Complete-bracket form of the sharpened normalized constant pivot. -/
+theorem three_twentieth_lt_fourCell_evenBracket_one :
+    (3 / 20 : ℝ) <
+      centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth
+          (fun _ : ℝ ↦ 1) -
+        Real.sqrt 2 * Real.log 2 *
+          fourCellEndpointPairing (fun _ : ℝ ↦ 1) := by
+  rw [fourCellBracket_eq_evenCompletedParityOperator
+    (fun _ : ℝ ↦ 1) continuous_const
+      (contDiff_const.contDiffOn.locallyLipschitzOn
+        (convex_Icc (-1 : ℝ) 1)) (by intro x; rfl)]
+  exact three_twentieth_lt_fourCellEvenCompletedParityOperator_one
 
 /-- Every canonical cosh-low component therefore has a nonnegative exact
 four-cell diagonal. -/
