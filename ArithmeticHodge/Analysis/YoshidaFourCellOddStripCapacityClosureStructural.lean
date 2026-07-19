@@ -11685,7 +11685,7 @@ private theorem endpointStripOdd_P9_P7_moment :
     (∫ z : ℝ in -1..1,
       fourCellOddEndpointStripOdd factorTwoCenteredP9 z *
         factorTwoCenteredP7 z) = (248 / 1953125 : ℝ) := by
-  simp_rw [fourCellOddEndpointStripOdd_P9]
+  simp_rw [fourCellOddEndpointStripOdd_P9, factorTwoCenteredP7_eq]
   rw [show (fun z : ℝ ↦
       ((2431 / 50000000 : ℝ) * z ^ 9 +
         (317889 / 12500000 : ℝ) * z ^ 7 +
@@ -11705,7 +11705,6 @@ private theorem endpointStripOdd_P9_P7_moment :
           (1042899 / 800000000 : ℝ) * z ^ 16 + 0 * z ^ 17 +
           0 * z ^ 18 + 0 * z ^ 19 by
     funext z
-    rw [factorTwoCenteredP7_eq]
     ring,
     integral_polynomial_nineteen_local]
   norm_num
@@ -11803,10 +11802,14 @@ private theorem centeredRawLogBilinear_endpointStripOdd_P7_P9_eq :
       shiftedLogKernel_shiftedLegendreReal,
       shiftedLogKernel_shiftedLegendreReal,
       shiftedLogKernel_shiftedLegendreReal]
+  have hrbase : Continuous r := by
+    dsimp only [r]
+    exact (contDiff_fourCellOddEndpointStripOdd_local
+      factorTwoCenteredP9 contDiff_factorTwoCenteredP9_local).continuous
   have hrcont : Continuous (fun t : unitInterval ↦
       centeredPullback r (t : ℝ)) := by
-    dsimp only [r, centeredPullback]
-    fun_prop
+    unfold centeredPullback
+    exact hrbase.comp (by fun_prop)
   have hInt (n : ℕ) : Integrable (fun t : unitInterval ↦
       centeredPullback r (t : ℝ) *
         (shiftedLegendreReal n).eval (t : ℝ)) :=
@@ -11829,39 +11832,98 @@ private theorem centeredRawLogBilinear_endpointStripOdd_P7_P9_eq :
             (2 * (harmonic 5 : ℝ) * (shiftedLegendreReal 5).eval (t : ℝ)) +
           (1 / 78125 : ℝ) *
             (2 * (harmonic 7 : ℝ) * (shiftedLegendreReal 7).eval (t : ℝ)))) =
-        fun t ↦
+        fun t : unitInterval ↦
           (19608 / 78125 * (harmonic 1 : ℝ)) *
               (centeredPullback r (t : ℝ) *
                 (shiftedLegendreReal 1).eval (t : ℝ)) +
-          ((-70504 / 78125 : ℝ) * harmonic 3) *
+          (((-70504 / 78125 : ℝ) * harmonic 3) *
               (centeredPullback r (t : ℝ) *
                 (shiftedLegendreReal 3).eval (t : ℝ)) +
-          ((-2024 / 78125 : ℝ) * harmonic 5) *
+          (((-2024 / 78125 : ℝ) * harmonic 5) *
               (centeredPullback r (t : ℝ) *
                 (shiftedLegendreReal 5).eval (t : ℝ)) +
           ((-2 / 78125 : ℝ) * harmonic 7) *
               (centeredPullback r (t : ℝ) *
-                (shiftedLegendreReal 7).eval (t : ℝ)) by
+                (shiftedLegendreReal 7).eval (t : ℝ)))) by
       funext t
       ring]
-    rw [integral_add
-        ((hInt 1).const_mul (19608 / 78125 * (harmonic 1 : ℝ)))
-        (((hInt 3).const_mul ((-70504 / 78125 : ℝ) * harmonic 3)).add
-          (((hInt 5).const_mul ((-2024 / 78125 : ℝ) * harmonic 5)).add
-            ((hInt 7).const_mul ((-2 / 78125 : ℝ) * harmonic 7)))),
-      integral_add
-        ((hInt 3).const_mul ((-70504 / 78125 : ℝ) * harmonic 3))
-        (((hInt 5).const_mul ((-2024 / 78125 : ℝ) * harmonic 5)).add
-          ((hInt 7).const_mul ((-2 / 78125 : ℝ) * harmonic 7))),
-      integral_add
-        ((hInt 5).const_mul ((-2024 / 78125 : ℝ) * harmonic 5))
-        ((hInt 7).const_mul ((-2 / 78125 : ℝ) * harmonic 7))]
-    repeat rw [integral_const_mul]
-    rw [hunitOne, hunitThree, hunitFive, hunitSeven]
-    norm_num [harmonic, Finset.sum_range_succ]
+    calc
+      _ = (∫ t : unitInterval,
+            (19608 / 78125 * (harmonic 1 : ℝ)) *
+              (centeredPullback r (t : ℝ) *
+                (shiftedLegendreReal 1).eval (t : ℝ))) +
+          ∫ t : unitInterval,
+            ((-70504 / 78125 : ℝ) * harmonic 3) *
+                (centeredPullback r (t : ℝ) *
+                  (shiftedLegendreReal 3).eval (t : ℝ)) +
+              (((-2024 / 78125 : ℝ) * harmonic 5) *
+                  (centeredPullback r (t : ℝ) *
+                    (shiftedLegendreReal 5).eval (t : ℝ)) +
+                ((-2 / 78125 : ℝ) * harmonic 7) *
+                  (centeredPullback r (t : ℝ) *
+                    (shiftedLegendreReal 7).eval (t : ℝ))) := by
+            exact integral_add
+              ((hInt 1).const_mul
+                (19608 / 78125 * (harmonic 1 : ℝ)))
+              (((hInt 3).const_mul
+                  ((-70504 / 78125 : ℝ) * harmonic 3)).add
+                (((hInt 5).const_mul
+                    ((-2024 / 78125 : ℝ) * harmonic 5)).add
+                  ((hInt 7).const_mul
+                    ((-2 / 78125 : ℝ) * harmonic 7))))
+      _ = (∫ t : unitInterval,
+            (19608 / 78125 * (harmonic 1 : ℝ)) *
+              (centeredPullback r (t : ℝ) *
+                (shiftedLegendreReal 1).eval (t : ℝ))) +
+          ((∫ t : unitInterval,
+              ((-70504 / 78125 : ℝ) * harmonic 3) *
+                (centeredPullback r (t : ℝ) *
+                  (shiftedLegendreReal 3).eval (t : ℝ))) +
+            ∫ t : unitInterval,
+              ((-2024 / 78125 : ℝ) * harmonic 5) *
+                  (centeredPullback r (t : ℝ) *
+                    (shiftedLegendreReal 5).eval (t : ℝ)) +
+                ((-2 / 78125 : ℝ) * harmonic 7) *
+                  (centeredPullback r (t : ℝ) *
+                    (shiftedLegendreReal 7).eval (t : ℝ))) := by
+            congr 1
+            exact integral_add
+              ((hInt 3).const_mul
+                ((-70504 / 78125 : ℝ) * harmonic 3))
+              (((hInt 5).const_mul
+                  ((-2024 / 78125 : ℝ) * harmonic 5)).add
+                ((hInt 7).const_mul
+                  ((-2 / 78125 : ℝ) * harmonic 7)))
+      _ = (∫ t : unitInterval,
+            (19608 / 78125 * (harmonic 1 : ℝ)) *
+              (centeredPullback r (t : ℝ) *
+                (shiftedLegendreReal 1).eval (t : ℝ))) +
+          ((∫ t : unitInterval,
+              ((-70504 / 78125 : ℝ) * harmonic 3) *
+                (centeredPullback r (t : ℝ) *
+                  (shiftedLegendreReal 3).eval (t : ℝ))) +
+            ((∫ t : unitInterval,
+                ((-2024 / 78125 : ℝ) * harmonic 5) *
+                  (centeredPullback r (t : ℝ) *
+                    (shiftedLegendreReal 5).eval (t : ℝ))) +
+              ∫ t : unitInterval,
+                ((-2 / 78125 : ℝ) * harmonic 7) *
+                  (centeredPullback r (t : ℝ) *
+                    (shiftedLegendreReal 7).eval (t : ℝ)))) := by
+            congr 1
+            congr 1
+            exact integral_add
+              ((hInt 5).const_mul
+                ((-2024 / 78125 : ℝ) * harmonic 5))
+              ((hInt 7).const_mul
+                ((-2 / 78125 : ℝ) * harmonic 7))
+      _ = (800513143858 / 5340576171875 : ℝ) := by
+            repeat rw [integral_const_mul]
+            rw [hunitOne, hunitThree, hunitFive, hunitSeven]
+            norm_num [harmonic, Finset.sum_range_succ]
   have h := centeredRawLogBilinear_polynomialMode_eq_four_mul_pair
     p (fourCellOddEndpointStripOdd factorTwoCenteredP7) r
-      (by dsimp only [r]; fun_prop) hmode
+      hrbase hmode
   rw [hpair] at h
   dsimp only [r] at h ⊢
   linarith
@@ -11875,6 +11937,351 @@ private theorem fourCellOddEndpointStripOddRawPolarization_P7_P9 :
       contDiff_factorTwoCenteredP7_local contDiff_factorTwoCenteredP9_local,
     centeredRawLogBilinear_endpointStripOdd_P7_P9_eq]
   ring
+
+private theorem fourCellOddEndpointStripEvenMassBilinear_P7_P9 :
+    fourCellOddEndpointStripEvenMassBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9 =
+      (2113714048 / 762939453125 : ℝ) := by
+  unfold fourCellOddEndpointStripEvenMassBilinear
+  simp_rw [fourCellOddEndpointStripEven_P7,
+    fourCellOddEndpointStripEven_P9]
+  rw [show (fun z : ℝ ↦
+      ((3003 / 312500 : ℝ) * z ^ 6 +
+          (30723 / 62500 : ℝ) * z ^ 4 +
+          (124929 / 312500 : ℝ) * z ^ 2 - 74891 / 312500) *
+        ((21879 / 12500000 : ℝ) * z ^ 8 +
+          (591591 / 3125000 : ℝ) * z ^ 6 +
+          (8801793 / 6250000 : ℝ) * z ^ 4 -
+          (4094541 / 3125000 : ℝ) * z ^ 2 +
+          2348191 / 12500000)) = fun z ↦
+        (-175858372181 / 3906250000000 : ℝ) * z ^ 0 + 0 * z ^ 1 +
+          (1519934233563 / 3906250000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (-3003740449017 / 3906250000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (-486901016217 / 3906250000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (589796036973 / 781250000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (419105896209 / 3906250000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (10467133677 / 3906250000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          (65702637 / 3906250000000 : ℝ) * z ^ 14 + 0 * z ^ 15 +
+          0 * z ^ 16 + 0 * z ^ 17 + 0 * z ^ 18 + 0 * z ^ 19 by
+    funext z
+    ring,
+    integral_polynomial_nineteen_local]
+  norm_num
+
+private theorem fourCellOddEndpointStripOddMassBilinear_P7_P9 :
+    fourCellOddEndpointStripOddMassBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9 =
+      (13366976792 / 762939453125 : ℝ) := by
+  unfold fourCellOddEndpointStripOddMassBilinear
+  simp_rw [fourCellOddEndpointStripOdd_P7,
+    fourCellOddEndpointStripOdd_P9]
+  rw [show (fun z : ℝ ↦
+      ((429 / 1250000 : ℝ) * z ^ 7 +
+          (126819 / 1250000 : ℝ) * z ^ 5 +
+          (253743 / 250000 : ℝ) * z ^ 3 -
+          (972587 / 1250000 : ℝ) * z) *
+        ((2431 / 50000000 : ℝ) * z ^ 9 +
+          (317889 / 12500000 : ℝ) * z ^ 7 +
+          (18711693 / 25000000 : ℝ) * z ^ 5 +
+          (7297521 / 12500000 : ℝ) * z ^ 3 -
+          (41734881 / 50000000 : ℝ) * z)) = fun z ↦
+        0 * z ^ 0 + 0 * z ^ 1 +
+          (40590802707147 / 62500000000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (-81339565775223 / 62500000000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (-4656377171061 / 62500000000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (9985373066493 / 12500000000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (6369396746713 / 62500000000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (180396339123 / 62500000000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          (853794513 / 62500000000000 : ℝ) * z ^ 14 + 0 * z ^ 15 +
+          (1042899 / 62500000000000 : ℝ) * z ^ 16 + 0 * z ^ 17 +
+          0 * z ^ 18 + 0 * z ^ 19 by
+    funext z
+    ring,
+    integral_polynomial_nineteen_local]
+  norm_num
+
+private theorem integral_zero_one_endpointPotential_mul_P7_mul_P9 :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * factorTwoCenteredP7 x *
+        factorTwoCenteredP9 x) = (1 / 34 : ℝ) := by
+  have h7 : factorTwoCenteredP7 =
+      fun x ↦ -(centeredShiftedLegendreReal 7).eval x := by
+    funext x
+    rw [eval_centeredShiftedLegendreReal]
+    rfl
+  have h9 : factorTwoCenteredP9 =
+      fun x ↦ -(centeredShiftedLegendreReal 9).eval x := by
+    funext x
+    rw [eval_centeredShiftedLegendreReal]
+    rfl
+  have hfull :=
+    YoshidaEndpointPotentialLegendreOffDiagonalStructural.integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+      (m := 7) (n := 9) (by norm_num) (by norm_num)
+  norm_num at hfull
+  have hfullActual : (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x * factorTwoCenteredP7 x *
+        factorTwoCenteredP9 x) = (1 / 17 : ℝ) := by
+    rw [h7, h9]
+    simpa only [mul_neg, neg_mul, neg_neg] using hfull
+  let f : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * factorTwoCenteredP7 x *
+      factorTwoCenteredP9 x
+  have hf : IntervalIntegrable f volume (-1) 1 := by
+    dsimp only [f]
+    simpa only [mul_assoc] using
+      intervalIntegrable_endpointPotential_mul
+        (fun x : ℝ ↦ factorTwoCenteredP7 x * factorTwoCenteredP9 x)
+        (continuous_factorTwoCenteredP7.mul continuous_factorTwoCenteredP9)
+  have hfeven : Function.Even f := by
+    intro x
+    dsimp only [f]
+    have hp : yoshidaEndpointPotential (-x) = yoshidaEndpointPotential x := by
+      unfold yoshidaEndpointPotential
+      congr 2
+      ring
+    rw [hp, odd_factorTwoCenteredP7, odd_factorTwoCenteredP9]
+    ring
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even f hf hfeven
+  dsimp only [f] at hfold
+  rw [hfullActual] at hfold
+  linarith
+
+private theorem centeredRawLogBilinear_P7_P9_eq_zero :
+    centeredRawLogBilinear factorTwoCenteredP7 factorTwoCenteredP9 = 0 := by
+  let p : ℝ[X] := -(shiftedLegendreReal 7)
+  have hmode (t : ℝ) :
+      centeredPullback factorTwoCenteredP7 t = p.eval t := by
+    dsimp only [p]
+    rw [Polynomial.eval_neg, centeredPullback_factorTwoCenteredP7]
+  have horth := factorTwoCenteredP9_momentsVanishBelow 7 (by norm_num)
+  have hpLog : shiftedLogKernel p =
+      -(Polynomial.C (2 * (harmonic 7 : ℝ)) * shiftedLegendreReal 7) := by
+    dsimp only [p]
+    rw [map_neg, shiftedLogKernel_shiftedLegendreReal]
+  have hpair : (∫ t : unitInterval,
+      centeredPullback factorTwoCenteredP9 (t : ℝ) *
+        (shiftedLogKernel p).eval (t : ℝ)) = 0 := by
+    rw [hpLog]
+    simp only [Polynomial.eval_neg, Polynomial.eval_mul,
+      Polynomial.eval_C]
+    rw [show (fun t : unitInterval ↦
+        centeredPullback factorTwoCenteredP9 (t : ℝ) *
+          -(2 * (harmonic 7 : ℝ) *
+            (shiftedLegendreReal 7).eval (t : ℝ))) =
+        fun t : unitInterval ↦ -(2 * (harmonic 7 : ℝ)) *
+          (centeredPullback factorTwoCenteredP9 (t : ℝ) *
+            (shiftedLegendreReal 7).eval (t : ℝ)) by
+      funext t
+      ring,
+      integral_const_mul, horth]
+    ring
+  exact centeredRawLogBilinear_polynomialMode_tail_eq_zero
+    p factorTwoCenteredP7 factorTwoCenteredP9
+      continuous_factorTwoCenteredP9 hmode hpair
+
+private theorem fourCellOddRawStripCancellationPolarization_P7_P9_eq :
+    fourCellOddRawStripCancellationPolarization
+        factorTwoCenteredP7 factorTwoCenteredP9 =
+      -(1 / 2 : ℝ) * (3202052575432 / 26702880859375 : ℝ) := by
+  rw [fourCellOddRawStripCancellationPolarization_eq_centered_sub_strip
+      factorTwoCenteredP7 factorTwoCenteredP9
+      contDiff_factorTwoCenteredP7_local contDiff_factorTwoCenteredP9_local
+      odd_factorTwoCenteredP7 odd_factorTwoCenteredP9,
+    centeredRawLogBilinear_P7_P9_eq_zero,
+    fourCellOddEndpointStripOddRawPolarization_P7_P9]
+  ring
+
+private theorem integral_zero_one_P7_mul_P9_eq_zero :
+    (∫ x : ℝ in 0..1,
+      factorTwoCenteredP7 x * factorTwoCenteredP9 x) = 0 := by
+  have hunit := factorTwoCenteredP9_momentsVanishBelow 7 (by norm_num)
+  rw [integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+      7 factorTwoCenteredP7 factorTwoCenteredP9
+        centeredPullback_factorTwoCenteredP7] at hunit
+  have hfullReverse : (∫ x : ℝ in -1..1,
+      factorTwoCenteredP9 x * factorTwoCenteredP7 x) = 0 := by
+    nlinarith
+  have hfull : (∫ x : ℝ in -1..1,
+      factorTwoCenteredP7 x * factorTwoCenteredP9 x) = 0 := by
+    calc
+      _ = ∫ x : ℝ in -1..1,
+          factorTwoCenteredP9 x * factorTwoCenteredP7 x := by
+        apply intervalIntegral.integral_congr
+        intro x _hx
+        ring
+      _ = 0 := hfullReverse
+  let f : ℝ → ℝ := fun x ↦
+    factorTwoCenteredP7 x * factorTwoCenteredP9 x
+  have hf : IntervalIntegrable f volume (-1) 1 := by
+    dsimp only [f]
+    exact (continuous_factorTwoCenteredP7.mul
+      continuous_factorTwoCenteredP9).intervalIntegrable _ _
+  have hfeven : Function.Even f := by
+    intro x
+    dsimp only [f]
+    rw [odd_factorTwoCenteredP7, odd_factorTwoCenteredP9]
+    ring
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even f hf hfeven
+  dsimp only [f] at hfold
+  rw [hfull] at hfold
+  linarith
+
+private theorem fourCellOddRetainedEndpointBilinear_P7_P9_eq :
+    fourCellOddRetainedEndpointBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9 =
+      -(1 / 2 : ℝ) * (3202052575432 / 26702880859375) +
+        Real.sqrt 2 * Real.log 2 *
+          (2113714048 / 762939453125 : ℝ) +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          (13366976792 / 762939453125 : ℝ) +
+        (93 / 50 : ℝ) * (1 / 34) := by
+  unfold fourCellOddRetainedEndpointBilinear
+    fourCellOddRetainedPrimePotentialBilinear
+  rw [fourCellOddRawStripCancellationPolarization_P7_P9_eq,
+    fourCellOddEndpointStripEvenMassBilinear_P7_P9,
+    fourCellOddEndpointStripOddMassBilinear_P7_P9,
+    integral_zero_one_endpointPotential_mul_P7_mul_P9]
+  ring
+
+private theorem fourCellOddRetainedEndpointBilinear_P7_P9_bounds :
+    0 < fourCellOddRetainedEndpointBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9 ∧
+      fourCellOddRetainedEndpointBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9 < (2 / 125 : ℝ) := by
+  rw [fourCellOddRetainedEndpointBilinear_P7_P9_eq]
+  rcases sqrt_two_mul_log_two_bounds with ⟨hlo, hhi⟩
+  constructor <;> nlinarith
+
+private theorem fourCellOddSignedMassRegularBilinear_sq_le_energy_mul_of_mass_eq_zero
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v)
+    (hmass : (∫ x : ℝ in 0..1, u x * v x) = 0) :
+    fourCellOddSignedMassRegularBilinear u v ^ 2 ≤
+      (fourCellOperatorHalfWidth / 10) ^ 2 *
+        factorTwoIntrinsicEnergy u * factorTwoIntrinsicEnergy v := by
+  let I : ℝ := ∫ t : ℝ in 0..2,
+    |factorTwoCenteredCorrelationBilinear u v t|
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      factorTwoCenteredCorrelationBilinear u v t
+  let Eᵤ : ℝ := factorTwoIntrinsicEnergy u
+  let Eᵥ : ℝ := factorTwoIntrinsicEnergy v
+  have hregular : |R| ≤ (1 / 20 : ℝ) * I := by
+    simpa only [R, I] using
+      abs_fourCellRegularBilinear_le_one_twentieth_integral_abs
+        u v hu hv huodd hvodd
+  have hrow :
+      fourCellOddSignedMassRegularBilinear u v =
+        2 * fourCellOperatorHalfWidth * R := by
+    unfold fourCellOddSignedMassRegularBilinear
+    rw [hmass]
+    dsimp only [R]
+    ring
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hI0 : 0 ≤ I := by
+    dsimp only [I]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _t _ht ↦ abs_nonneg _)
+  have habs :
+      |fourCellOddSignedMassRegularBilinear u v| ≤
+        (fourCellOperatorHalfWidth / 10) * I := by
+    rw [hrow, abs_mul, abs_of_nonneg (by positivity :
+      0 ≤ 2 * fourCellOperatorHalfWidth)]
+    nlinarith
+  have hI : I ^ 2 ≤ Eᵤ * Eᵥ := by
+    dsimp only [I, Eᵤ, Eᵥ]
+    exact
+      ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural.integral_abs_factorTwoCenteredCorrelationBilinear_sq_le_energy_mul
+        u v hu hv
+  calc
+    fourCellOddSignedMassRegularBilinear u v ^ 2 =
+        |fourCellOddSignedMassRegularBilinear u v| ^ 2 := by
+      rw [sq_abs]
+    _ ≤ ((fourCellOperatorHalfWidth / 10) * I) ^ 2 :=
+      (sq_le_sq₀ (abs_nonneg _)
+        (mul_nonneg (div_nonneg ha0 (by norm_num)) hI0)).2 habs
+    _ = (fourCellOperatorHalfWidth / 10) ^ 2 * I ^ 2 := by ring
+    _ ≤ (fourCellOperatorHalfWidth / 10) ^ 2 * (Eᵤ * Eᵥ) :=
+      mul_le_mul_of_nonneg_left hI (sq_nonneg _)
+    _ = (fourCellOperatorHalfWidth / 10) ^ 2 * Eᵤ * Eᵥ := by ring
+
+private theorem abs_fourCellOddSignedMassRegularBilinear_P7_P9_lt_three_five_hundredths :
+    |fourCellOddSignedMassRegularBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9| < (3 / 500 : ℝ) := by
+  have hsigned :=
+    fourCellOddSignedMassRegularBilinear_sq_le_energy_mul_of_mass_eq_zero
+      factorTwoCenteredP7 factorTwoCenteredP9
+        continuous_factorTwoCenteredP7 continuous_factorTwoCenteredP9
+        odd_factorTwoCenteredP7 odd_factorTwoCenteredP9
+        integral_zero_one_P7_mul_P9_eq_zero
+  rw [factorTwoCenteredP7_energy, factorTwoCenteredP9_energy] at hsigned
+  norm_num at hsigned
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha := fourCellOperatorHalfWidth_le_one_half
+  have hsquare :
+      fourCellOddSignedMassRegularBilinear
+          factorTwoCenteredP7 factorTwoCenteredP9 ^ 2 <
+        (3 / 500 : ℝ) ^ 2 := by
+    nlinarith [sq_nonneg (fourCellOperatorHalfWidth - 1 / 2)]
+  rw [← sq_abs] at hsquare
+  nlinarith [abs_nonneg (fourCellOddSignedMassRegularBilinear
+    factorTwoCenteredP7 factorTwoCenteredP9)]
+
+private theorem abs_fourCellOddCoreLocalBilinear_P7_P9_lt_eleven_five_hundredths :
+    |fourCellOddCoreLocalBilinear
+      factorTwoCenteredP7 factorTwoCenteredP9| < (11 / 500 : ℝ) := by
+  rw [fourCellOddCoreLocalBilinear_eq_retained_sub_signed]
+  rcases fourCellOddRetainedEndpointBilinear_P7_P9_bounds with ⟨hlo, hhi⟩
+  have hsigned :=
+    abs_fourCellOddSignedMassRegularBilinear_P7_P9_lt_three_five_hundredths
+  calc
+    |fourCellOddRetainedEndpointBilinear factorTwoCenteredP7
+          factorTwoCenteredP9 -
+        fourCellOddSignedMassRegularBilinear factorTwoCenteredP7
+          factorTwoCenteredP9| ≤
+        |fourCellOddRetainedEndpointBilinear factorTwoCenteredP7
+          factorTwoCenteredP9| +
+        |fourCellOddSignedMassRegularBilinear factorTwoCenteredP7
+          factorTwoCenteredP9| := abs_sub _ _
+    _ = fourCellOddRetainedEndpointBilinear factorTwoCenteredP7
+          factorTwoCenteredP9 +
+        |fourCellOddSignedMassRegularBilinear factorTwoCenteredP7
+          factorTwoCenteredP9| := by rw [abs_of_pos hlo]
+    _ < (2 / 125 : ℝ) + 3 / 500 := add_lt_add hhi hsigned
+    _ = (11 / 500 : ℝ) := by norm_num
+
+/-- The first adjacent tail--tail block also satisfies the complete-form
+Schur inequality.  Its singular endpoint cross is kept exactly throughout. -/
+theorem fourCellOddCoreLocalBilinear_P7_P9_sq_le_mul :
+    fourCellOddCoreLocalBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9 ^ 2 ≤
+      fourCellOddCoreLocalQuadratic factorTwoCenteredP7 *
+        fourCellOddCoreLocalQuadratic factorTwoCenteredP9 := by
+  let B := fourCellOddCoreLocalBilinear
+    factorTwoCenteredP7 factorTwoCenteredP9
+  let Q7 := fourCellOddCoreLocalQuadratic factorTwoCenteredP7
+  let Q9 := fourCellOddCoreLocalQuadratic factorTwoCenteredP9
+  have hQ7 : (1 / 20 : ℝ) < Q7 :=
+    one_twentieth_lt_fourCellOddCoreLocalQuadratic_P7
+  have hQ9 : (1 / 25 : ℝ) < Q9 :=
+    one_twenty_fifth_lt_fourCellOddCoreLocalQuadratic_P9
+  have hB : |B| < (11 / 500 : ℝ) :=
+    abs_fourCellOddCoreLocalBilinear_P7_P9_lt_eleven_five_hundredths
+  have hBsq : B ^ 2 < (11 / 500 : ℝ) ^ 2 := by
+    rw [← sq_abs]
+    exact (sq_lt_sq₀ (abs_nonneg B) (by norm_num)).2 hB
+  have hQ7pos : 0 < Q7 := by linarith
+  have hprod : (1 / 500 : ℝ) < Q7 * Q9 := by
+    calc
+      (1 / 500 : ℝ) = (1 / 20 : ℝ) * (1 / 25) := by norm_num
+      _ < Q7 * (1 / 25 : ℝ) := mul_lt_mul_of_pos_right hQ7 (by norm_num)
+      _ < Q7 * Q9 := mul_lt_mul_of_pos_left hQ9 hQ7pos
+  dsimp only [B, Q7, Q9] at hBsq hprod ⊢
+  nlinarith
 
 theorem fourCellOddCoreLocalQuadratic_add
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
