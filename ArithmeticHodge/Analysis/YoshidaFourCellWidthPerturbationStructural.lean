@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilFourCellParityStructural
 import ArithmeticHodge.Analysis.YoshidaEndpointRegularCorrelation
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseSymmetricCoercivity
 
 set_option autoImplicit false
 
@@ -16,6 +17,7 @@ open YoshidaEndpointHyperbolicBound
 open YoshidaEndpointOddCleanPositive
 open YoshidaEndpointPolarScaling
 open YoshidaEndpointRegularCorrelation
+open YoshidaFactorTwoPhaseSymmetricCoercivity
 open YoshidaGeneralEndpointPhysicalRealQuadraticStructural
 open YoshidaFourCellEndpointVarianceStructural
 open YoshidaRegularKernelBound
@@ -115,6 +117,51 @@ theorem fourCellScalarWidthShift_eq :
   rw [Real.log_mul (by norm_num : (5 / 4 : ℝ) ≠ 0) hlogTwo]
   ring
 
+/-- The two real exponential moments form exactly one even hyperbolic square
+minus one odd hyperbolic square. -/
+theorem centeredPolarMoments_mul_eq_cosh_sq_sub_sinh_sq
+    (w : ℝ → ℝ) (hw : Continuous w) (a : ℝ) :
+    (∫ x : ℝ in -1..1, Real.exp (-a * x / 2) * w x) *
+        (∫ x : ℝ in -1..1, Real.exp (a * x / 2) * w x) =
+      centeredCoshMoment w (a / 2) ^ 2 -
+        centeredSinhMoment w (a / 2) ^ 2 := by
+  have hcosh : IntervalIntegrable
+      (fun x : ℝ ↦ Real.cosh ((a / 2) * x) * w x) volume (-1) 1 :=
+    (by fun_prop : Continuous
+      (fun x : ℝ ↦ Real.cosh ((a / 2) * x) * w x)).intervalIntegrable _ _
+  have hsinh : IntervalIntegrable
+      (fun x : ℝ ↦ Real.sinh ((a / 2) * x) * w x) volume (-1) 1 :=
+    (by fun_prop : Continuous
+      (fun x : ℝ ↦ Real.sinh ((a / 2) * x) * w x)).intervalIntegrable _ _
+  have hminus :
+      (∫ x : ℝ in -1..1, Real.exp (-a * x / 2) * w x) =
+        centeredCoshMoment w (a / 2) -
+          centeredSinhMoment w (a / 2) := by
+    rw [show (fun x : ℝ ↦ Real.exp (-a * x / 2) * w x) =
+        fun x ↦ Real.cosh ((a / 2) * x) * w x -
+          Real.sinh ((a / 2) * x) * w x by
+      funext x
+      rw [show -a * x / 2 = -((a / 2) * x) by ring,
+        ← Real.cosh_sub_sinh]
+      ring]
+    rw [intervalIntegral.integral_sub hcosh hsinh]
+    rfl
+  have hplus :
+      (∫ x : ℝ in -1..1, Real.exp (a * x / 2) * w x) =
+        centeredCoshMoment w (a / 2) +
+          centeredSinhMoment w (a / 2) := by
+    rw [show (fun x : ℝ ↦ Real.exp (a * x / 2) * w x) =
+        fun x ↦ Real.cosh ((a / 2) * x) * w x +
+          Real.sinh ((a / 2) * x) * w x by
+      funext x
+      rw [show a * x / 2 = (a / 2) * x by ring,
+        ← Real.cosh_add_sinh]
+      ring]
+    rw [intervalIntegral.integral_add hcosh hsinh]
+    rfl
+  rw [hminus, hplus]
+  ring
+
 /-- Definition-level expansion of the perturbation.  It records the exact
 scalar, regular-kernel, polar, and prime channels that a coupled Schur bound
 must control. -/
@@ -144,6 +191,90 @@ theorem fourCellWidthPrimePerturbation_eq
   rw [← fourCellScalarWidthShift_eq]
   unfold fourCellWidthPrimePerturbation
   unfold centeredClippedPhysicalQuadratic
+  ring
+
+/-- Rank-square normal form of the exact perturbation.  This is the form used
+by the parity-sector Schur problem. -/
+theorem fourCellWidthPrimePerturbation_eq_rankSquares
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    fourCellWidthPrimePerturbation w =
+      -Real.log (5 / 4 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) -
+      2 * (5 * Real.log 2 / 8) *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel ((5 * Real.log 2 / 8) * t) *
+            centeredEndpointCorrelation w t) +
+      2 * yoshidaEndpointA *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (yoshidaEndpointA * t) *
+            centeredEndpointCorrelation w t) +
+      2 * (5 * Real.log 2 / 8) *
+        (centeredCoshMoment w ((5 * Real.log 2 / 8) / 2) ^ 2 -
+          centeredSinhMoment w ((5 * Real.log 2 / 8) / 2) ^ 2) -
+      2 * yoshidaEndpointA *
+        (centeredCoshMoment w (yoshidaEndpointA / 2) ^ 2 -
+          centeredSinhMoment w (yoshidaEndpointA / 2) ^ 2) -
+      Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w := by
+  rw [fourCellWidthPrimePerturbation_eq]
+  have hwide := centeredPolarMoments_mul_eq_cosh_sq_sub_sinh_sq
+    w hw (5 * Real.log 2 / 8)
+  have hclean := centeredPolarMoments_mul_eq_cosh_sq_sub_sinh_sq
+    w hw yoshidaEndpointA
+  linear_combination
+    2 * (5 * Real.log 2 / 8) * hwide -
+      2 * yoshidaEndpointA * hclean
+
+/-- On an even profile the polar change is the difference of two positive
+cosh ranks, and the prime loss is the matched endpoint fold. -/
+theorem fourCellWidthPrimePerturbation_eq_evenRanks
+    (w : ℝ → ℝ) (hw : Continuous w) (heven : Function.Even w) :
+    fourCellWidthPrimePerturbation w =
+      -Real.log (5 / 4 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) -
+      2 * (5 * Real.log 2 / 8) *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel ((5 * Real.log 2 / 8) * t) *
+            centeredEndpointCorrelation w t) +
+      2 * yoshidaEndpointA *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (yoshidaEndpointA * t) *
+            centeredEndpointCorrelation w t) +
+      2 * (5 * Real.log 2 / 8) *
+        centeredCoshMoment w ((5 * Real.log 2 / 8) / 2) ^ 2 -
+      2 * yoshidaEndpointA *
+        centeredCoshMoment w (yoshidaEndpointA / 2) ^ 2 -
+      Real.sqrt 2 * Real.log 2 * endpointFoldedCorrelation w (2 / 5) := by
+  rw [fourCellWidthPrimePerturbation_eq_rankSquares w hw,
+    centeredSinhMoment_eq_zero_of_even heven,
+    centeredSinhMoment_eq_zero_of_even heven,
+    fourCellEndpointPairing_eq_centeredEndpointCorrelation,
+    show (8 / 5 : ℝ) = 2 - 2 / 5 by norm_num,
+    centeredCorrelation_two_sub_eq_endpointFolded_of_even heven]
+  ring
+
+/-- On an odd profile the polar change is the opposite difference of sinh
+ranks, while the prime channel is the antimatched endpoint fold. -/
+theorem fourCellWidthPrimePerturbation_eq_oddRanks
+    (w : ℝ → ℝ) (hw : Continuous w) (hodd : Function.Odd w) :
+    fourCellWidthPrimePerturbation w =
+      -Real.log (5 / 4 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) -
+      2 * (5 * Real.log 2 / 8) *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel ((5 * Real.log 2 / 8) * t) *
+            centeredEndpointCorrelation w t) +
+      2 * yoshidaEndpointA *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (yoshidaEndpointA * t) *
+            centeredEndpointCorrelation w t) -
+      2 * (5 * Real.log 2 / 8) *
+        centeredSinhMoment w ((5 * Real.log 2 / 8) / 2) ^ 2 +
+      2 * yoshidaEndpointA *
+        centeredSinhMoment w (yoshidaEndpointA / 2) ^ 2 +
+      Real.sqrt 2 * Real.log 2 * endpointFoldedCorrelation w (2 / 5) := by
+  rw [fourCellWidthPrimePerturbation_eq_rankSquares w hw,
+    centeredCoshMoment_eq_zero_of_odd hodd,
+    centeredCoshMoment_eq_zero_of_odd hodd,
+    fourCellEndpointPairing_eq_centeredEndpointCorrelation,
+    show (8 / 5 : ℝ) = 2 - 2 / 5 by norm_num,
+    centeredCorrelation_two_sub_eq_neg_endpointFolded_of_odd hodd]
   ring
 
 end
