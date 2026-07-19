@@ -375,6 +375,43 @@ theorem fourCellEvenPolarFreeOperator_nonnegative_of_coupledCore
   rw [hnormal]
   linarith
 
+/-- Quantitative form of the zero-cosh polar-free closure.  After the exact
+scalar and smooth regular losses, the `33 / 20` coupled-core bound retains
+`553 / 20000` of the centered `L²` mass. -/
+theorem fiveHundredFiftyThree_div_twentyThousand_mass_le_polarFree_of_coupledCore
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (hcore : (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore w) :
+    (553 / 20000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellEvenPolarFreeOperator w := by
+  let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  let S : ℝ := Real.log (2 * fourCellOperatorHalfWidth) +
+    Real.eulerMascheroniConstant + Real.log Real.pi
+  let I : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation w t
+  have hM : 0 ≤ M := by
+    dsimp only [M]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg (w x))
+  have hscalar : S * M ≤ (31577 / 20000 : ℝ) * M :=
+    mul_le_mul_of_nonneg_right fourCellScalar_lt_31577_div_20000.le hM
+  have hregular : 2 * fourCellOperatorHalfWidth * I ≤
+      (87 / 2000 : ℝ) * M := by
+    simpa only [I, M] using
+      two_mul_fourCellWidth_mul_regularCorrelation_le_eightySeven_div_twoThousand_mass_of_coshMoment_zero
+        w hw heven hzero
+  have hnormal :=
+    fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular
+      w hw hlocal heven hzero
+  dsimp only [S, I, M] at hscalar hregular hcore hnormal ⊢
+  rw [hnormal]
+  linarith
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshRegularStructural
