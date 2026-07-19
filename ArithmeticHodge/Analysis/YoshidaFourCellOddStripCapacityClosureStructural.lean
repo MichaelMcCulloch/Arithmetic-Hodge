@@ -3736,6 +3736,30 @@ private theorem fourCellScalar_lt_31577_div_20000 :
     strict_log_log_two_bounds.2, strict_euler_gamma_bounds.2,
     strict_log_pi_bounds.2]
 
+private theorem one_lt_fourCellScalar :
+    (1 : ℝ) < Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi := by
+  have hlogTwo : Real.log 2 ≠ 0 := (Real.log_pos (by norm_num)).ne'
+  have hwidth :
+      Real.log (2 * fourCellOperatorHalfWidth) =
+        Real.log (5 / 4 : ℝ) + Real.log (Real.log 2) := by
+    rw [show 2 * fourCellOperatorHalfWidth =
+        (5 / 4 : ℝ) * Real.log 2 by
+      unfold fourCellOperatorHalfWidth
+      ring,
+      Real.log_mul (by norm_num : (5 / 4 : ℝ) ≠ 0) hlogTwo]
+  have hfive : 0 < Real.log (5 / 4 : ℝ) :=
+    Real.log_pos (by norm_num)
+  rw [hwidth]
+  linarith [strict_log_log_two_bounds.1,
+    strict_euler_gamma_bounds.1, strict_log_pi_bounds.1]
+
+private theorem fourCellOperatorHalfWidth_le_one_half :
+    fourCellOperatorHalfWidth ≤ (1 / 2 : ℝ) := by
+  have hlog := strict_log_two_bounds.2
+  unfold fourCellOperatorHalfWidth
+  nlinarith
+
 private theorem sqrt_two_mul_log_two_bounds :
     (141421 / 100000 : ℝ) * (6931 / 10000) <
         Real.sqrt 2 * Real.log 2 ∧
@@ -4044,6 +4068,50 @@ theorem fourCellOddRetainedEndpointBilinear_sq_le_mul
     fourCellOddRetainedEndpointQuadratic_const_mul v hv hvodd] at hnonneg
   convert hnonneg using 1
   all_goals ring
+
+/-- The isolated scalar-mass plus wide-regular diagonal is itself
+nonnegative on odd profiles.  The regular correlation is a small signed
+perturbation of the strictly positive scalar mass. -/
+theorem fourCellOddSignedMassRegularQuadratic_nonneg_of_odd
+    (w : ℝ → ℝ) (hw : Continuous w) (hodd : Function.Odd w) :
+    0 ≤ fourCellOddSignedMassRegularQuadratic w := by
+  let H : ℝ := ∫ x : ℝ in 0..1, w x ^ 2
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation w t
+  let C : ℝ := 2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+    Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200
+  have hH : 0 ≤ H := by
+    dsimp only [H]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg _)
+  have hcentered : (∫ x : ℝ in -1..1, w x ^ 2) = 2 * H := by
+    simpa only [H] using integral_sq_eq_two_mul_positiveHalf
+      w hw (Or.inr hodd)
+  have hRabs : |R| ≤ (1 / 20 : ℝ) *
+      (∫ x : ℝ in -1..1, w x ^ 2) := by
+    simpa only [R] using
+      abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+        w hw hodd
+  rw [hcentered] at hRabs
+  have hRlower : -(1 / 10 : ℝ) * H ≤ R := by
+    have hneg := neg_abs_le R
+    linarith
+  have ha0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hregular := mul_le_mul_of_nonneg_left hRlower ha0
+  have hC : (2 : ℝ) ≤ C := by
+    dsimp only [C]
+    linarith [one_lt_fourCellScalar]
+  have ha : fourCellOperatorHalfWidth / 5 ≤ (1 / 10 : ℝ) := by
+    linarith [fourCellOperatorHalfWidth_le_one_half]
+  have hac : fourCellOperatorHalfWidth / 5 ≤ C := by
+    linarith [ha, hC]
+  have hmass := mul_le_mul_of_nonneg_right hac hH
+  unfold fourCellOddSignedMassRegularQuadratic
+  dsimp only [H, R, C] at hregular hmass ⊢
+  linarith
 
 /-- The exact strip-prime diagonal dominates `49/50` of the physical
 endpoint mass.  Both parity coefficients are kept; the rational constant is
