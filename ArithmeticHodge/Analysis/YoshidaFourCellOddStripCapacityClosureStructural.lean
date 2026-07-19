@@ -52,6 +52,8 @@ open YoshidaEndpointOddResidualRegularity
 open YoshidaEndpointEvenTailRepresenter
 open YoshidaRegularKernelBound
 open ShiftedLegendreFiniteEnergyGap
+open ShiftedLegendreCenteredLowModeThreeL2
+open ShiftedLegendreCenteredLowModes
 open ShiftedLegendreLogEigen
 open ShiftedLegendreLogKernel
 open ShiftedLegendreOrthogonality
@@ -5497,47 +5499,174 @@ private theorem centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre
   unfold centeredPullback factorTwoCenteredP5
   ring
 
-private theorem integral_centeredPullback_mul_shiftedLegendre_five_eq_neg_half
-    (r : ℝ → ℝ) :
+private theorem centeredPullback_centeredP1_eq_neg_shiftedLegendre_local
+    (t : ℝ) :
+    centeredPullback centeredP1 t =
+      -(shiftedLegendreReal 1).eval t := by
+  unfold centeredPullback centeredP1
+  calc
+    2 * t - 1 =
+        -(centeredShiftedLegendreReal 1).eval (2 * t - 1) := by
+      rw [eval_centeredShiftedLegendreReal_one]
+      ring
+    _ = -(shiftedLegendreReal 1).eval (((2 * t - 1) + 1) / 2) := by
+      rw [eval_centeredShiftedLegendreReal]
+    _ = -(shiftedLegendreReal 1).eval t := by
+      congr 2
+      ring
+
+private theorem centeredPullback_centeredP3_eq_neg_shiftedLegendre_local
+    (t : ℝ) :
+    centeredPullback centeredP3 t =
+      -(shiftedLegendreReal 3).eval t := by
+  unfold centeredPullback centeredP3
+  calc
+    (5 * (2 * t - 1) ^ 3 - 3 * (2 * t - 1)) / 2 =
+        -(centeredShiftedLegendreReal 3).eval (2 * t - 1) := by
+      rw [eval_centeredShiftedLegendreReal_three]
+      ring
+    _ = -(shiftedLegendreReal 3).eval (((2 * t - 1) + 1) / 2) := by
+      rw [eval_centeredShiftedLegendreReal]
+    _ = -(shiftedLegendreReal 3).eval t := by
+      congr 2
+      ring
+
+private theorem integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+    (n : ℕ) (q r : ℝ → ℝ)
+    (hmode : ∀ t : ℝ, centeredPullback q t =
+      -(shiftedLegendreReal n).eval t) :
     (∫ t : unitInterval,
       centeredPullback r (t : ℝ) *
-        (shiftedLegendreReal 5).eval (t : ℝ)) =
+        (shiftedLegendreReal n).eval (t : ℝ)) =
       -(1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
-        r x * factorTwoCenteredP5 x := by
+        r x * q x := by
   calc
     (∫ t : unitInterval,
         centeredPullback r (t : ℝ) *
-          (shiftedLegendreReal 5).eval (t : ℝ)) =
+          (shiftedLegendreReal n).eval (t : ℝ)) =
         ∫ t : ℝ in 0..1,
-          centeredPullback r t * (shiftedLegendreReal 5).eval t := by
+          centeredPullback r t * (shiftedLegendreReal n).eval t := by
       change (∫ t : unitInterval,
         (fun s : ℝ ↦ centeredPullback r s *
-          (shiftedLegendreReal 5).eval s) (t : ℝ)) = _
+          (shiftedLegendreReal n).eval s) (t : ℝ)) = _
       simpa only using integral_unitInterval_eq_intervalIntegral
         (fun s : ℝ ↦ centeredPullback r s *
-          (shiftedLegendreReal 5).eval s)
+          (shiftedLegendreReal n).eval s)
     _ = ∫ t : ℝ in 0..1,
-        -((fun x : ℝ ↦ r x * factorTwoCenteredP5 x) (2 * t - 1)) := by
+        -((fun x : ℝ ↦ r x * q x) (2 * t - 1)) := by
       apply intervalIntegral.integral_congr
       intro t _ht
-      have hpull :=
-        centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre t
+      have hpull := hmode t
       unfold centeredPullback at hpull ⊢
-      have hp : (shiftedLegendreReal 5).eval t =
-          -factorTwoCenteredP5 (2 * t - 1) := by
+      have hp : (shiftedLegendreReal n).eval t =
+          -q (2 * t - 1) := by
         linarith
-      change r (2 * t - 1) * (shiftedLegendreReal 5).eval t =
-        -(r (2 * t - 1) * factorTwoCenteredP5 (2 * t - 1))
+      change r (2 * t - 1) * (shiftedLegendreReal n).eval t =
+        -(r (2 * t - 1) * q (2 * t - 1))
       rw [hp]
       ring
     _ = -(∫ t : ℝ in 0..1,
-        (fun x : ℝ ↦ r x * factorTwoCenteredP5 x) (2 * t - 1)) := by
+        (fun x : ℝ ↦ r x * q x) (2 * t - 1)) := by
       rw [intervalIntegral.integral_neg]
     _ = -((1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
-        r x * factorTwoCenteredP5 x) := by
+        r x * q x) := by
       rw [integral_comp_two_mul_sub_one
-        (fun x : ℝ ↦ r x * factorTwoCenteredP5 x)]
+        (fun x : ℝ ↦ r x * q x)]
     _ = _ := by ring
+
+private theorem centeredRawLogBilinear_polynomialMode_tail_eq_zero
+    (p : ℝ[X]) (q r : ℝ → ℝ) (hr : Continuous r)
+    (hmode : ∀ t : ℝ, centeredPullback q t = p.eval t)
+    (hpair : (∫ t : unitInterval,
+      centeredPullback r (t : ℝ) *
+        (shiftedLogKernel p).eval (t : ℝ)) = 0) :
+    centeredRawLogBilinear q r = 0 := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback r (t : ℝ)
+  let U : unitInterval × unitInterval → ℝ := fun z ↦
+    (f z.1 - f z.2) * unitIntervalRawPolynomialLogKernel p z
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    exact hr.comp (by fun_prop)
+  have hf : Integrable f :=
+    hfcont.integrable_of_hasCompactSupport (HasCompactSupport.of_compactSpace _)
+  have hUInt : Integrable U := by
+    simpa only [U] using
+      integrable_sub_mul_unitIntervalRawPolynomialLogKernel f hf p
+  have hcross :=
+    integral_sub_mul_unitIntervalRawPolynomialLogKernel_eq f hf p
+  have hUzero : (∫ z, U z) = 0 := by
+    rw [show (∫ t : unitInterval,
+        f t * (shiftedLogKernel p).eval (t : ℝ)) = 0 by
+      simpa only [f] using hpair] at hcross
+    norm_num at hcross
+    simpa only [U] using hcross
+  have hiter : (∫ z, U z) =
+      ∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+        (centeredPullback r s - centeredPullback r t) *
+          ((p.eval s - p.eval t) / |s - t|) := by
+    calc
+      (∫ z, U z) = ∫ s : unitInterval, ∫ t : unitInterval, U (s, t) :=
+        MeasureTheory.integral_prod _ hUInt
+      _ = ∫ s : unitInterval, ∫ t : ℝ in 0..1,
+          (centeredPullback r (s : ℝ) - centeredPullback r t) *
+            ((p.eval (s : ℝ) - p.eval t) / |(s : ℝ) - t|) := by
+        apply integral_congr_ae
+        filter_upwards [] with s
+        rw [← integral_unitInterval_eq_intervalIntegral]
+        apply integral_congr_ae
+        filter_upwards [] with t
+        rfl
+      _ = _ := by
+        rw [← integral_unitInterval_eq_intervalIntegral]
+  rw [hiter] at hUzero
+  have hpoint (s t : ℝ) :
+      (centeredPullback r s - centeredPullback r t) *
+          ((p.eval s - p.eval t) / |s - t|) =
+        2 * (((q (2 * s - 1) - q (2 * t - 1)) *
+          (r (2 * s - 1) - r (2 * t - 1))) /
+            |(2 * s - 1) - (2 * t - 1)|) := by
+    have hms := hmode s
+    have hmt := hmode t
+    unfold centeredPullback at hms hmt ⊢
+    rw [← hms, ← hmt,
+      show (2 * s - 1) - (2 * t - 1) = 2 * (s - t) by ring,
+      abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
+    by_cases hst : |s - t| = 0
+    · simp [hst]
+    · field_simp [hst]
+  have hscaled :
+      (∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+        (centeredPullback r s - centeredPullback r t) *
+          ((p.eval s - p.eval t) / |s - t|)) =
+        (1 / 2 : ℝ) * centeredRawLogBilinear q r := by
+    let H : ℝ → ℝ → ℝ := fun x y ↦
+      ((q x - q y) * (r x - r y)) / |x - y|
+    calc
+      _ = ∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+          2 * H (2 * s - 1) (2 * t - 1) := by
+        apply intervalIntegral.integral_congr
+        intro s _hs
+        apply intervalIntegral.integral_congr
+        intro t _ht
+        exact hpoint s t
+      _ = 2 * (∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+          H (2 * s - 1) (2 * t - 1)) := by
+        rw [show (fun s : ℝ ↦ ∫ t : ℝ in 0..1,
+            2 * H (2 * s - 1) (2 * t - 1)) =
+            fun s ↦ 2 * ∫ t : ℝ in 0..1,
+              H (2 * s - 1) (2 * t - 1) by
+          funext s
+          rw [intervalIntegral.integral_const_mul],
+          intervalIntegral.integral_const_mul]
+      _ = 2 * ((1 / 4 : ℝ) *
+          ∫ x : ℝ in -1..1, ∫ y : ℝ in -1..1, H x y) := by
+        rw [integral_integral_comp_two_mul_sub_one H]
+      _ = _ := by
+        unfold centeredRawLogBilinear
+        dsimp only [H]
+        ring
+  rw [hscaled] at hUzero
+  linarith
 
 /-- Exact all-degree raw-log orthogonality of the centered fifth Legendre
 mode and a continuous residual with vanishing fifth coefficient.  This is
@@ -5566,7 +5695,9 @@ theorem centeredRawLogBilinear_factorTwoCenteredP5_tail_eq_zero
         -(1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
           r x * factorTwoCenteredP5 x by
       simpa only [f, p] using
-        integral_centeredPullback_mul_shiftedLegendre_five_eq_neg_half r]
+        integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+          5 factorTwoCenteredP5 r
+            centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre]
     unfold centeredOddP5Coefficient at hfive
     have horth : (∫ x : ℝ in -1..1,
         r x * factorTwoCenteredP5 x) = 0 := by
@@ -5681,6 +5812,166 @@ def fourCellOddP5TailCoefficient (w : ℝ → ℝ) : ℝ :=
 /-- The exact finite odd pivot retained by the endpoint-zero Schur split. -/
 def fourCellOddOneThreeFiveLowProfile (c d e : ℝ) : ℝ → ℝ := fun x ↦
   factorTwoOddStructuralLowProfile c d x + e * factorTwoCenteredP5 x
+
+/-- The complete centered raw-log cross between the exact `P₁/P₃/P₅`
+pivot and an infinite tail orthogonal to those three modes is zero.  The
+three distinct harmonic eigenvalues are retained exactly; this is not a
+finite cutoff estimate. -/
+theorem centeredRawLogBilinear_oneThreeFiveLowProfile_tail_eq_zero
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (c d e : ℝ) :
+    centeredRawLogBilinear
+      (fourCellOddOneThreeFiveLowProfile c d e) r = 0 := by
+  let p : ℝ[X] := -(c • shiftedLegendreReal 1 +
+    d • shiftedLegendreReal 3 + e • shiftedLegendreReal 5)
+  have hmode (t : ℝ) :
+      centeredPullback (fourCellOddOneThreeFiveLowProfile c d e) t =
+        p.eval t := by
+    have h1 := centeredPullback_centeredP1_eq_neg_shiftedLegendre_local t
+    have h3 := centeredPullback_centeredP3_eq_neg_shiftedLegendre_local t
+    have h5 :=
+      centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre t
+    dsimp only [p]
+    simp only [Polynomial.eval_neg, Polynomial.eval_add,
+      Polynomial.eval_smul, smul_eq_mul]
+    unfold centeredPullback at h1 h3 h5 ⊢
+    unfold fourCellOddOneThreeFiveLowProfile
+      factorTwoOddStructuralLowProfile
+    rw [h1, h3, h5]
+    ring
+  have hunitOne : (∫ t : unitInterval,
+      centeredPullback r (t : ℝ) *
+        (shiftedLegendreReal 1).eval (t : ℝ)) = 0 := by
+    rw [integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+      1 centeredP1 r
+        centeredPullback_centeredP1_eq_neg_shiftedLegendre_local,
+      integral_mul_centeredP1_eq, hone]
+    ring
+  have hunitThree : (∫ t : unitInterval,
+      centeredPullback r (t : ℝ) *
+        (shiftedLegendreReal 3).eval (t : ℝ)) = 0 := by
+    rw [integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+      3 centeredP3 r
+        centeredPullback_centeredP3_eq_neg_shiftedLegendre_local,
+      integral_mul_centeredP3_eq, hthree]
+    ring
+  have horthFive : (∫ x : ℝ in -1..1,
+      r x * factorTwoCenteredP5 x) = 0 := by
+    unfold centeredOddP5Coefficient at hfive
+    nlinarith
+  have hunitFive : (∫ t : unitInterval,
+      centeredPullback r (t : ℝ) *
+        (shiftedLegendreReal 5).eval (t : ℝ)) = 0 := by
+    rw [integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+      5 factorTwoCenteredP5 r
+        centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre,
+      horthFive]
+    ring
+  have hpLog : shiftedLogKernel p =
+      -(c • (Polynomial.C (2 * (harmonic 1 : ℝ)) *
+          shiftedLegendreReal 1) +
+        d • (Polynomial.C (2 * (harmonic 3 : ℝ)) *
+          shiftedLegendreReal 3) +
+        e • (Polynomial.C (2 * (harmonic 5 : ℝ)) *
+          shiftedLegendreReal 5)) := by
+    dsimp only [p]
+    rw [map_neg, map_add, map_add, map_smul, map_smul, map_smul,
+      shiftedLogKernel_shiftedLegendreReal,
+      shiftedLogKernel_shiftedLegendreReal,
+      shiftedLogKernel_shiftedLegendreReal]
+  have hfcont : Continuous (fun t : unitInterval ↦
+      centeredPullback r (t : ℝ)) := by
+    unfold centeredPullback
+    fun_prop
+  have hOneInt : Integrable (fun t : unitInterval ↦
+      centeredPullback r (t : ℝ) *
+        (shiftedLegendreReal 1).eval (t : ℝ)) :=
+    (hfcont.mul ((shiftedLegendreReal 1).continuous.comp
+      continuous_subtype_val)).integrable_of_hasCompactSupport
+        (HasCompactSupport.of_compactSpace _)
+  have hThreeInt : Integrable (fun t : unitInterval ↦
+      centeredPullback r (t : ℝ) *
+        (shiftedLegendreReal 3).eval (t : ℝ)) :=
+    (hfcont.mul ((shiftedLegendreReal 3).continuous.comp
+      continuous_subtype_val)).integrable_of_hasCompactSupport
+        (HasCompactSupport.of_compactSpace _)
+  have hFiveInt : Integrable (fun t : unitInterval ↦
+      centeredPullback r (t : ℝ) *
+        (shiftedLegendreReal 5).eval (t : ℝ)) :=
+    (hfcont.mul ((shiftedLegendreReal 5).continuous.comp
+      continuous_subtype_val)).integrable_of_hasCompactSupport
+        (HasCompactSupport.of_compactSpace _)
+  have hpair : (∫ t : unitInterval,
+      centeredPullback r (t : ℝ) *
+        (shiftedLogKernel p).eval (t : ℝ)) = 0 := by
+    rw [hpLog]
+    simp only [Polynomial.eval_neg, Polynomial.eval_add,
+      Polynomial.eval_smul, Polynomial.eval_mul, Polynomial.eval_C,
+      smul_eq_mul]
+    rw [show (fun t : unitInterval ↦ centeredPullback r (t : ℝ) *
+        -(c * (2 * (harmonic 1 : ℝ) *
+            (shiftedLegendreReal 1).eval (t : ℝ)) +
+          d * (2 * (harmonic 3 : ℝ) *
+            (shiftedLegendreReal 3).eval (t : ℝ)) +
+          e * (2 * (harmonic 5 : ℝ) *
+            (shiftedLegendreReal 5).eval (t : ℝ)))) =
+        fun t : unitInterval ↦
+          (-2 * c * (harmonic 1 : ℝ)) *
+              (centeredPullback r (t : ℝ) *
+                (shiftedLegendreReal 1).eval (t : ℝ)) +
+            (-2 * d * (harmonic 3 : ℝ)) *
+              (centeredPullback r (t : ℝ) *
+                (shiftedLegendreReal 3).eval (t : ℝ)) +
+            (-2 * e * (harmonic 5 : ℝ)) *
+              (centeredPullback r (t : ℝ) *
+                (shiftedLegendreReal 5).eval (t : ℝ)) by
+      funext t
+      ring]
+    let gOne : unitInterval → ℝ := fun t ↦
+      (-2 * c * (harmonic 1 : ℝ)) *
+        (centeredPullback r (t : ℝ) *
+          (shiftedLegendreReal 1).eval (t : ℝ))
+    let gThree : unitInterval → ℝ := fun t ↦
+      (-2 * d * (harmonic 3 : ℝ)) *
+        (centeredPullback r (t : ℝ) *
+          (shiftedLegendreReal 3).eval (t : ℝ))
+    let gFive : unitInterval → ℝ := fun t ↦
+      (-2 * e * (harmonic 5 : ℝ)) *
+        (centeredPullback r (t : ℝ) *
+          (shiftedLegendreReal 5).eval (t : ℝ))
+    have hgOne : Integrable gOne := by
+      simpa only [gOne] using
+        hOneInt.const_mul (-2 * c * (harmonic 1 : ℝ))
+    have hgThree : Integrable gThree := by
+      simpa only [gThree] using
+        hThreeInt.const_mul (-2 * d * (harmonic 3 : ℝ))
+    have hgFive : Integrable gFive := by
+      simpa only [gFive] using
+        hFiveInt.const_mul (-2 * e * (harmonic 5 : ℝ))
+    change (∫ t : unitInterval, (gOne + gThree + gFive) t) = 0
+    calc
+      (∫ t : unitInterval, (gOne + gThree + gFive) t) =
+          (∫ t : unitInterval, gOne t) +
+            (∫ t : unitInterval, gThree t) +
+              ∫ t : unitInterval, gFive t := by
+        rw [show (∫ t : unitInterval, (gOne + gThree + gFive) t) =
+            (∫ t : unitInterval, (gOne + gThree) t) +
+              ∫ t : unitInterval, gFive t by
+          simpa only using integral_add (hgOne.add hgThree) hgFive,
+          show (∫ t : unitInterval, (gOne + gThree) t) =
+            (∫ t : unitInterval, gOne t) +
+              ∫ t : unitInterval, gThree t by
+            simpa only using integral_add hgOne hgThree]
+      _ = 0 := by
+        dsimp only [gOne, gThree, gFive]
+        rw [integral_const_mul, integral_const_mul, integral_const_mul,
+          hunitOne, hunitThree, hunitFive]
+        ring
+  exact centeredRawLogBilinear_polynomialMode_tail_eq_zero
+    p (fourCellOddOneThreeFiveLowProfile c d e) r hr hmode hpair
 
 /-- The canonical `P₁/P₃/P₅` part of an arbitrary profile. -/
 def fourCellOddOneThreeFiveLowPart (w : ℝ → ℝ) : ℝ → ℝ :=
