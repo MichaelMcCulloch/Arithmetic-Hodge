@@ -4131,6 +4131,91 @@ theorem fiveCellCommonParentThreeBlockDeterminant_nonnegative_iff_residualCross_
       (fiveCellCommonParentMiddlePivotResidualContraction_iff_residualCross
         parent k hMpos)
 
+/-- A named version of the canonical modified common parent which realizes
+an arbitrary real three-block coefficient vector. -/
+def fiveCellThreeBlockCombinationParent
+    (parent : BombieriTest) (k : ℤ) (alpha beta gamma : ℝ) :
+    BombieriTest :=
+  (beta : ℂ) • parent +
+    ((alpha - beta : ℝ) : ℂ) •
+      (parent - monotoneQuarterCutoff parent (k + 1)) +
+    ((gamma - beta : ℝ) : ℂ) •
+      monotoneQuarterCutoff parent (k + 4)
+
+/-- The canonical three-block realization preserves the real common-parent
+condition. -/
+theorem conjugate_fixed_fiveCellThreeBlockCombinationParent
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (alpha beta gamma : ℝ) :
+    bombieriConjugateTest
+        (fiveCellThreeBlockCombinationParent parent k alpha beta gamma) =
+      fiveCellThreeBlockCombinationParent parent k alpha beta gamma := by
+  unfold fiveCellThreeBlockCombinationParent
+  rw [bombieriConjugateTest_add, bombieriConjugateTest_add,
+    conjugate_fixed_real_smul hparent beta,
+    conjugate_fixed_real_smul
+      (conjugate_fixed_sub hparent
+        (conjugate_fixed_monotoneQuarterCutoff hparent (k + 1)))
+      (alpha - beta),
+    conjugate_fixed_real_smul
+      (conjugate_fixed_monotoneQuarterCutoff hparent (k + 4))
+      (gamma - beta)]
+
+/-- Its five-cell block has exactly the requested endpoint--middle--endpoint
+coefficients. -/
+theorem fiveCellThreeBlockCombinationParent_fiveBlock
+    (parent : BombieriTest) (k : ℤ) (alpha beta gamma : ℝ) :
+    monotoneQuarterFiveBlock
+        (fiveCellThreeBlockCombinationParent parent k alpha beta gamma) k =
+      (alpha : ℂ) • monotoneQuarterCell parent k +
+        (beta : ℂ) • fiveCellMiddleThree parent k +
+        (gamma : ℂ) • monotoneQuarterCell parent (k + 4) := by
+  unfold fiveCellThreeBlockCombinationParent
+  rw [monotoneQuarterFiveBlock_add,
+    monotoneQuarterFiveBlock_add,
+    monotoneQuarterFiveBlock_smul,
+    monotoneQuarterFiveBlock_smul,
+    monotoneQuarterFiveBlock_smul,
+    fiveCell_fiveBlock_eq_threeBlocks,
+    fiveBlock_parent_sub_nextCutoff_eq_leftEndpoint,
+    fiveBlock_rightCutoff_eq_rightEndpoint]
+  module
+
+/-- The same realization does not preserve the three cells separately.  Its
+actual middle is the original middle multiplied pointwise by the displayed
+cutoff leakage factor.  In particular, setting the formal middle coefficient
+`beta` to zero still leaves the two endpoint-transition terms. -/
+theorem fiveCellThreeBlockCombinationParent_middle_apply
+    (parent : BombieriTest) (k : ℤ) (alpha beta gamma : ℝ) (x : ℝ) :
+    fiveCellMiddleThree
+        (fiveCellThreeBlockCombinationParent parent k alpha beta gamma) k x =
+      ((beta + (alpha - beta) * (1 - monotoneQuarterStep (k + 1) x) +
+          (gamma - beta) * monotoneQuarterStep (k + 4) x : ℝ) : ℂ) *
+        fiveCellMiddleThree parent k x := by
+  simp only [fiveCellMiddleThree_apply,
+    fiveCellThreeBlockCombinationParent,
+    TestFunction.coe_add, Pi.add_apply,
+    TestFunction.coe_sub, Pi.sub_apply,
+    TestFunction.coe_smul, Pi.smul_apply,
+    monotoneQuarterCutoff_apply, smul_eq_mul]
+  push_cast
+  ring
+
+/-- Zeroing the formal middle coefficient in the total five-block therefore
+leaves an exact endpoint-transition leakage in the modified parent's own
+middle block. -/
+theorem fiveCellThreeBlockCombinationParent_middle_apply_of_beta_zero
+    (parent : BombieriTest) (k : ℤ) (alpha gamma : ℝ) (x : ℝ) :
+    fiveCellMiddleThree
+        (fiveCellThreeBlockCombinationParent parent k alpha 0 gamma) k x =
+      ((alpha * (1 - monotoneQuarterStep (k + 1) x) +
+          gamma * monotoneQuarterStep (k + 4) x : ℝ) : ℂ) *
+        fiveCellMiddleThree parent k x := by
+  rw [fiveCellThreeBlockCombinationParent_middle_apply]
+  push_cast
+  ring
+
 /-- Exact scalar form of the new common-parent obstruction.  Once the two
 adjacent minors are nonnegative and the middle diagonal is positive, a
 minimal negative configuration must strictly reverse the residual
