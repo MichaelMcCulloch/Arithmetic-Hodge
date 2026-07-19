@@ -3226,6 +3226,56 @@ def fourCellOddStripReducedBilinear (u v : ℝ → ℝ) : ℝ :=
         yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
           factorTwoCenteredCorrelationBilinear u v t)
 
+/-- The full positive prime/potential quadratic form retained before the
+signed scalar-mass and regular rows are treated. -/
+def fourCellOddRetainedPrimePotentialQuadratic (w : ℝ → ℝ) : ℝ :=
+  Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+    (2 - Real.sqrt 2 * Real.log 2) *
+      fourCellOddEndpointStripOddMass w +
+    (93 / 50 : ℝ) *
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2)
+
+/-- Exact bilinear form associated with the retained positive prime and
+endpoint-potential quadratic forms. -/
+def fourCellOddRetainedPrimePotentialBilinear
+    (u v : ℝ → ℝ) : ℝ :=
+  Real.sqrt 2 * Real.log 2 *
+      fourCellOddEndpointStripEvenMassBilinear u v +
+    (2 - Real.sqrt 2 * Real.log 2) *
+      fourCellOddEndpointStripOddMassBilinear u v +
+    (93 / 50 : ℝ) *
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * u x * v x)
+
+theorem fourCellOddStripReducedBilinear_eq_retained_sub_signed
+    (u v : ℝ → ℝ) :
+    fourCellOddStripReducedBilinear u v =
+      fourCellOddRetainedPrimePotentialBilinear u v -
+        (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+          (∫ x : ℝ in 0..1, u x * v x) -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear u v t) := by
+  unfold fourCellOddStripReducedBilinear
+    fourCellOddRetainedPrimePotentialBilinear
+  ring
+
+theorem fourCellOddStripReducedRemainder_eq_retained_sub_signed
+    (w : ℝ → ℝ) :
+    fourCellOddStripReducedRemainder w =
+      fourCellOddRetainedPrimePotentialQuadratic w -
+        (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+          (∫ x : ℝ in 0..1, w x ^ 2) -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation w t) := by
+  unfold fourCellOddStripReducedRemainder
+    fourCellOddRetainedPrimePotentialQuadratic
+  ring
+
 private theorem fourCellOddEndpointStripEvenMass_add
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
     fourCellOddEndpointStripEvenMass (u + v) =
@@ -3714,6 +3764,183 @@ private theorem fourCellOddEndpointStripOddMass_nonneg
   exact mul_nonneg (by norm_num)
     (intervalIntegral.integral_nonneg (by norm_num)
       (fun z _hz ↦ sq_nonneg _))
+
+private theorem fourCellOddEndpointStripEven_const_mul_local
+    (v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddEndpointStripEven (fun x ↦ a * v x) =
+      fun z ↦ a * fourCellOddEndpointStripEven v z := by
+  funext z
+  unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
+  ring
+
+private theorem fourCellOddEndpointStripEvenMass_const_mul
+    (v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddEndpointStripEvenMass (fun x ↦ a * v x) =
+      a ^ 2 * fourCellOddEndpointStripEvenMass v := by
+  unfold fourCellOddEndpointStripEvenMass
+  rw [fourCellOddEndpointStripEven_const_mul_local]
+  rw [show (fun z : ℝ ↦
+      (a * fourCellOddEndpointStripEven v z) ^ 2) =
+      fun z ↦ a ^ 2 * fourCellOddEndpointStripEven v z ^ 2 by
+    funext z
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+private theorem fourCellOddEndpointStripOddMass_const_mul
+    (v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddEndpointStripOddMass (fun x ↦ a * v x) =
+      a ^ 2 * fourCellOddEndpointStripOddMass v := by
+  unfold fourCellOddEndpointStripOddMass
+  rw [fourCellOddEndpointStripOdd_const_mul_local]
+  rw [show (fun z : ℝ ↦
+      (a * fourCellOddEndpointStripOdd v z) ^ 2) =
+      fun z ↦ a ^ 2 * fourCellOddEndpointStripOdd v z ^ 2 by
+    funext z
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+private theorem endpointPotentialEnergy_const_mul
+    (v : ℝ → ℝ) (a : ℝ) :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * (a * v x) ^ 2) =
+      a ^ 2 * ∫ x : ℝ in 0..1,
+        yoshidaEndpointPotential x * v x ^ 2 := by
+  rw [show (fun x : ℝ ↦
+      yoshidaEndpointPotential x * (a * v x) ^ 2) =
+      fun x ↦ a ^ 2 *
+        (yoshidaEndpointPotential x * v x ^ 2) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul]
+
+private theorem fourCellOddRetainedPrimePotentialQuadratic_const_mul
+    (v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddRetainedPrimePotentialQuadratic (fun x ↦ a * v x) =
+      a ^ 2 * fourCellOddRetainedPrimePotentialQuadratic v := by
+  unfold fourCellOddRetainedPrimePotentialQuadratic
+  rw [fourCellOddEndpointStripEvenMass_const_mul,
+    fourCellOddEndpointStripOddMass_const_mul,
+    endpointPotentialEnergy_const_mul]
+  ring
+
+private theorem fourCellOddEndpointStripEvenMassBilinear_const_mul_right
+    (u v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddEndpointStripEvenMassBilinear u (fun x ↦ a * v x) =
+      a * fourCellOddEndpointStripEvenMassBilinear u v := by
+  unfold fourCellOddEndpointStripEvenMassBilinear
+  rw [fourCellOddEndpointStripEven_const_mul_local]
+  rw [show (fun z : ℝ ↦ fourCellOddEndpointStripEven u z *
+      (a * fourCellOddEndpointStripEven v z)) =
+      fun z ↦ a * (fourCellOddEndpointStripEven u z *
+        fourCellOddEndpointStripEven v z) by
+    funext z
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+private theorem fourCellOddEndpointStripOddMassBilinear_const_mul_right
+    (u v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddEndpointStripOddMassBilinear u (fun x ↦ a * v x) =
+      a * fourCellOddEndpointStripOddMassBilinear u v := by
+  unfold fourCellOddEndpointStripOddMassBilinear
+  rw [fourCellOddEndpointStripOdd_const_mul_local]
+  rw [show (fun z : ℝ ↦ fourCellOddEndpointStripOdd u z *
+      (a * fourCellOddEndpointStripOdd v z)) =
+      fun z ↦ a * (fourCellOddEndpointStripOdd u z *
+        fourCellOddEndpointStripOdd v z) by
+    funext z
+    ring,
+    intervalIntegral.integral_const_mul]
+  ring
+
+private theorem endpointPotentialBilinear_const_mul_right
+    (u v : ℝ → ℝ) (a : ℝ) :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * u x * (a * v x)) =
+      a * ∫ x : ℝ in 0..1,
+        yoshidaEndpointPotential x * u x * v x := by
+  rw [show (fun x : ℝ ↦
+      yoshidaEndpointPotential x * u x * (a * v x)) =
+      fun x ↦ a * (yoshidaEndpointPotential x * u x * v x) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul]
+
+private theorem fourCellOddRetainedPrimePotentialBilinear_const_mul_right
+    (u v : ℝ → ℝ) (a : ℝ) :
+    fourCellOddRetainedPrimePotentialBilinear u (fun x ↦ a * v x) =
+      a * fourCellOddRetainedPrimePotentialBilinear u v := by
+  unfold fourCellOddRetainedPrimePotentialBilinear
+  rw [fourCellOddEndpointStripEvenMassBilinear_const_mul_right,
+    fourCellOddEndpointStripOddMassBilinear_const_mul_right,
+    endpointPotentialBilinear_const_mul_right]
+  ring
+
+private theorem fourCellOddRetainedPrimePotentialQuadratic_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddRetainedPrimePotentialQuadratic (u + v) =
+      fourCellOddRetainedPrimePotentialQuadratic u +
+        2 * fourCellOddRetainedPrimePotentialBilinear u v +
+          fourCellOddRetainedPrimePotentialQuadratic v := by
+  unfold fourCellOddRetainedPrimePotentialQuadratic
+    fourCellOddRetainedPrimePotentialBilinear
+  rw [fourCellOddEndpointStripEvenMass_add u v hu hv,
+    fourCellOddEndpointStripOddMass_add u v hu hv]
+  simp only [Pi.add_apply]
+  rw [integral_zero_one_endpointPotential_add_sq u v hu hv]
+  ring
+
+/-- The retained prime and endpoint-potential diagonal is a positive
+quadratic form without replacing any of its densities by a scalar weight. -/
+theorem fourCellOddRetainedPrimePotentialQuadratic_nonneg
+    (w : ℝ → ℝ) :
+    0 ≤ fourCellOddRetainedPrimePotentialQuadratic w := by
+  have heven := fourCellOddEndpointStripEvenMass_nonneg w
+  have hodd := fourCellOddEndpointStripOddMass_nonneg w
+  have hsqrt : 0 ≤ Real.sqrt 2 * Real.log 2 :=
+    mul_nonneg (Real.sqrt_nonneg _) (Real.log_nonneg (by norm_num))
+  have hoddCoeff : 0 ≤ 2 - Real.sqrt 2 * Real.log 2 := by
+    linarith [sqrt_two_mul_log_two_bounds.2]
+  have hpotential : 0 ≤ ∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * w x ^ 2 := by
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro x hx
+    exact mul_nonneg
+      (YoshidaEndpointEvenMeanZeroPositive.yoshidaEndpointPotential_nonneg_on_Icc
+        ⟨by linarith [hx.1], hx.2⟩)
+      (sq_nonneg _)
+  unfold fourCellOddRetainedPrimePotentialQuadratic
+  positivity
+
+/-- Cauchy--Schwarz for the complete retained prime/potential form.  Its
+strip-even, strip-odd, and endpoint-potential channels stay coupled through
+the Schur step. -/
+theorem fourCellOddRetainedPrimePotentialBilinear_sq_le_mul
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddRetainedPrimePotentialBilinear u v ^ 2 ≤
+      fourCellOddRetainedPrimePotentialQuadratic u *
+        fourCellOddRetainedPrimePotentialQuadratic v := by
+  apply sq_le_mul_of_forall_quadratic_nonneg
+    (fourCellOddRetainedPrimePotentialQuadratic u)
+    (fourCellOddRetainedPrimePotentialBilinear u v)
+    (fourCellOddRetainedPrimePotentialQuadratic v)
+    (fourCellOddRetainedPrimePotentialQuadratic_nonneg v)
+  intro t
+  let tv : ℝ → ℝ := fun x ↦ t * v x
+  have htv : Continuous tv := by
+    dsimp only [tv]
+    fun_prop
+  have hnonneg := fourCellOddRetainedPrimePotentialQuadratic_nonneg
+    (u + tv)
+  rw [fourCellOddRetainedPrimePotentialQuadratic_add u tv hu htv]
+    at hnonneg
+  dsimp only [tv] at hnonneg
+  rw [fourCellOddRetainedPrimePotentialBilinear_const_mul_right,
+    fourCellOddRetainedPrimePotentialQuadratic_const_mul] at hnonneg
+  convert hnonneg using 1
+  all_goals ring
 
 /-- The exact strip-prime diagonal dominates `49/50` of the physical
 endpoint mass.  Both parity coefficients are kept; the rational constant is
