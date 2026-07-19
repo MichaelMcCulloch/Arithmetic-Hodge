@@ -1043,14 +1043,154 @@ private theorem digammaGeometricValue_eq_endpointClippedArchCorrelation
     hindexP]
   linarith
 
-/-- The physical endpoint correlation expression produced by the digamma
-distribution, before adding the polar term. -/
-def endpointClippedArchCorrelation (g : ℝ → ℝ) : ℝ :=
-  let C := realEndpointCorrelation yoshidaEndpointA g
-  (∫ u : ℝ in 0..2 * yoshidaEndpointA,
+/-- The physical clipped correlation expression at an arbitrary halfwidth,
+produced by the digamma distribution before adding the polar term. -/
+def clippedArchCorrelation (a : ℝ) (g : ℝ → ℝ) : ℝ :=
+  let C := realEndpointCorrelation a g
+  (∫ u : ℝ in 0..2 * a,
       (C 0 - C u) / u - 2 * yoshidaRegularKernel u * C u) -
-    (Real.log (2 * yoshidaEndpointA) + Real.eulerMascheroniConstant +
+    (Real.log (2 * a) + Real.eulerMascheroniConstant +
       Real.log 2 + Real.log Real.pi) * C 0
+
+/-- The original endpoint-halfwidth specialization of
+`clippedArchCorrelation`. -/
+def endpointClippedArchCorrelation (g : ℝ → ℝ) : ℝ :=
+  clippedArchCorrelation yoshidaEndpointA g
+
+/-- Arbitrary-halfwidth analytic bridge from the spectral clipped
+archimedean energy to its physical autocorrelation formula.  The hypotheses
+state exactly the regularity, reality, and decay used by the digamma
+distribution argument. -/
+theorem clippedArchEnergy_eq_clippedArchCorrelation_of_integrability
+    {a : ℝ} (ha : 0 < a) (f : YoshidaClippedSmooth a)
+    (hfcont : Continuous (f : ℝ → ℂ))
+    (hf_real : ∀ x ∈ Icc (-a) a, f x = ((f x).re : ℂ))
+    (hweighted : Integrable (fun v : ℝ ↦
+      (1 + v ^ 2) *
+        Complex.normSq (yoshidaCriticalSampleLinear a ha v f))) :
+    clippedArchEnergy a ha f =
+      clippedArchCorrelation a (fun x ↦ (f x).re) := by
+  let P : ℝ → ℝ :=
+    realEndpointCorrelation a (fun x ↦ (f x).re)
+  let M : ℝ → ℂ := fun v ↦
+    (Complex.normSq (yoshidaCriticalSampleLinear a ha v f) : ℂ)
+  let A : ℕ → ℂ := fun k ↦
+    (geometricIntegralTerm (2 * a) P k : ℂ)
+  let H0 : ℂ := (P 0 : ℂ)
+  let B : ℕ → ℝ := fun k ↦
+    geometricIntegralTerm (2 * a) P (k + 1) -
+      (((k + 1 : ℕ) : ℝ)⁻¹ * P 0)
+  have hM : Integrable M := by
+    simpa only [M] using
+      (integrable_normSq_yoshidaCriticalSample ha f).ofReal
+  have hW : Integrable (fun v : ℝ ↦ (1 + v ^ 2) * ‖M v‖) := by
+    apply hweighted.congr
+    filter_upwards [] with v
+    dsimp only [M]
+    rw [norm_real, Real.norm_eq_abs,
+      abs_of_nonneg (Complex.normSq_nonneg _)]
+  have hA (k : ℕ) :
+      (((1 / (2 * Real.pi) : ℝ) : ℂ) *
+          ∫ v : ℝ, (bombieriDigammaKernel k v : ℂ) * M v) = A k := by
+    simpa only [M, A, P] using
+      normalized_cauchy_normSq_eq_geometricIntegralTerm
+        ha f hfcont hf_real k
+  have hH0 :
+      (((1 / (2 * Real.pi) : ℝ) : ℂ) * ∫ v : ℝ, M v) = H0 := by
+    simpa only [M, H0, P] using
+      normalized_integral_normSq_eq_correlation_zero
+        ha f hfcont hf_real
+  have hdist := localCriticalKernel_integral_eq_cauchySeries
+    M hM hW A H0 hA hH0
+  have hgeo := digammaGeometricValue_eq_endpointClippedArchCorrelation
+    ha f hfcont hf_real hweighted
+  change Summable B ∧ _ at hgeo
+  obtain ⟨hsB, hvalue⟩ := hgeo
+  have hterm (k : ℕ) :
+      A (k + 1) - (((k + 1 : ℕ) : ℝ)⁻¹ * H0) = (B k : ℂ) := by
+    dsimp only [A, H0, B]
+    push_cast
+    ring
+  have htsum :
+      (∑' k : ℕ, (A (k + 1) -
+        (((k + 1 : ℕ) : ℝ)⁻¹ * H0))) =
+          Complex.ofReal ((∑' k : ℕ, B k) : ℝ) := by
+    calc
+      _ = ∑' k : ℕ, (B k : ℂ) := by
+        apply tsum_congr
+        exact hterm
+      _ = Complex.ofReal ((∑' k : ℕ, B k) : ℝ) :=
+        (Complex.ofRealCLM.map_tsum hsB).symm
+  have hrhs :
+      -(A 0 + (Real.eulerMascheroniConstant : ℂ) * H0 +
+          ∑' k : ℕ, (A (k + 1) -
+            (((k + 1 : ℕ) : ℝ)⁻¹ * H0))) -
+        (Real.log Real.pi : ℂ) * H0 =
+      ((-(geometricIntegralTerm (2 * a) P 0 +
+          Real.eulerMascheroniConstant * P 0 + ∑' k : ℕ, B k) -
+        Real.log Real.pi * P 0 : ℝ) : ℂ) := by
+    rw [htsum]
+    dsimp only [A, H0]
+    push_cast
+    ring
+  have harchCast :
+      (clippedArchEnergy a ha f : ℂ) =
+        (((1 / (2 * Real.pi) : ℝ) : ℂ) *
+          ∫ v : ℝ,
+            (((Complex.digamma
+              ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re -
+                Real.log Real.pi : ℝ) : ℂ) * M v) := by
+    unfold clippedArchEnergy
+    dsimp only [M]
+    calc
+      (((1 / (2 * Real.pi) : ℝ) *
+          ∫ v : ℝ,
+            ((Complex.digamma
+              ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re -
+                Real.log Real.pi) *
+              Complex.normSq
+                (yoshidaCriticalSampleLinear a ha v f) : ℝ) : ℂ) =
+          (((1 / (2 * Real.pi) : ℝ) : ℂ) *
+            (((∫ v : ℝ,
+              ((Complex.digamma
+                ((1 / 4 : ℝ) + (v / 2) * Complex.I)).re -
+                  Real.log Real.pi) *
+                Complex.normSq
+                  (yoshidaCriticalSampleLinear a ha v f)) : ℝ) : ℂ)) := by
+        push_cast
+        rfl
+      _ = _ := by
+        congr 1
+        rw [← integral_complex_ofReal]
+        apply integral_congr_ae
+        filter_upwards [] with v
+        push_cast
+        rfl
+  have harchValue :
+      clippedArchEnergy a ha f =
+        -(geometricIntegralTerm (2 * a) P 0 +
+          Real.eulerMascheroniConstant * P 0 + ∑' k : ℕ, B k) -
+        Real.log Real.pi * P 0 := by
+    apply Complex.ofReal_injective
+    rw [harchCast, hdist]
+    push_cast at hrhs ⊢
+    exact hrhs
+  rw [harchValue, hvalue]
+  rfl
+
+/-- Arbitrary-halfwidth endpoint-zero bridge for a real clipped smooth
+profile.  Endpoint vanishing supplies global continuity and the weighted
+spectral decay needed by the analytic bridge. -/
+theorem clippedArchEnergy_eq_clippedArchCorrelation_of_endpoints_zero
+    {a : ℝ} (ha : 0 < a) (f : YoshidaClippedSmooth a)
+    (hf_real : ∀ x ∈ Icc (-a) a, f x = ((f x).re : ℂ))
+    (hneg : f (-a) = 0) (hpos : f a = 0) :
+    clippedArchEnergy a ha f =
+      clippedArchCorrelation a (fun x ↦ (f x).re) := by
+  exact clippedArchEnergy_eq_clippedArchCorrelation_of_integrability
+    ha f (continuous_clipped_of_endpoints_zero ha f hneg hpos) hf_real
+      (integrable_weighted_normSq_criticalSample_of_endpoints_zero
+        ha f hneg hpos)
 
 /-- Generic clipped archimedean bridge for a real periodic profile whose two
 endpoint traces vanish. -/
@@ -1328,7 +1468,7 @@ theorem endpointClippedArchCorrelation_eq_split_of_endpoints_zero
         intro u _hu
         ring
       _ = _ := by rw [intervalIntegral.integral_const_mul]
-  unfold endpointClippedArchCorrelation
+  unfold endpointClippedArchCorrelation clippedArchCorrelation
   dsimp only
   rw [intervalIntegral.integral_sub hdefect htwice, htwoIntegral]
 
