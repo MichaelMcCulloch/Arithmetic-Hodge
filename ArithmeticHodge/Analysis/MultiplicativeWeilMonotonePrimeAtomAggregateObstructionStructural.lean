@@ -1679,6 +1679,82 @@ theorem monotonePrimeAtom_finset_sum_eq_physicalHeadSliceCoordinates
     Complex.ofReal_im, zero_mul, sub_zero,
     monotonePrimeAtomPhysicalHeadSliceCoordinate]
 
+/-- Arbitrary real linear combination of the transplanted slice family. -/
+def monotonePrimeAtomCompleteSliceCombination
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (c : ℕ → ℝ) : BombieriTest :=
+  ∑ j ∈ S, ((c j : ℝ) : ℂ) •
+    monotonePrimeAtomTransplantedSlice parent k j
+
+private theorem completeSliceCombination_tsupport_subset
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (c : ℕ → ℝ) :
+    tsupport (monotonePrimeAtomCompleteSliceCombination parent k S c) ⊆
+      Set.Icc (quarterLogLatticePoint (k - 1))
+        (quarterLogLatticePoint (k + 3)) := by
+  unfold monotonePrimeAtomCompleteSliceCombination
+  induction S using Finset.induction_on with
+  | empty => simp
+  | @insert j S hj ih =>
+      rw [Finset.sum_insert hj]
+      apply (tsupport_add _ _).trans
+      apply Set.union_subset
+      · exact (tsupport_smul_subset_right
+          (fun _x : ℝ ↦ ((c j : ℝ) : ℂ))
+          (monotonePrimeAtomTransplantedSlice parent k j : ℝ → ℂ)).trans
+          (by
+            simpa only [monotonePrimeAtomTransplantedSlice,
+              show k - 1 + 4 = k + 3 by omega] using
+              (monotoneRatioTwoBlock_tsupport_subset
+                (normalizedDilation ((j + 1 : ℕ) : ℝ) (by positivity)
+                  (monotoneQuarterCutoff parent (k + 1))) (k - 1)))
+      · exact ih
+
+/-- Every real atom combination remains in the common ratio-two plateau. -/
+theorem monotonePrimeAtomCompleteSliceCombination_ratioTwo
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (c : ℕ → ℝ) :
+    BombieriRatioTwoCell
+      (monotonePrimeAtomCompleteSliceCombination parent k S c) := by
+  refine ⟨quarterLogLatticePoint (k - 1),
+    quarterLogLatticePoint (k + 3),
+    quarterLogLatticePoint_pos (k - 1),
+    quarterLogLatticePoint_mono (by omega),
+    completeSliceCombination_tsupport_subset parent k S c, ?_⟩
+  rw [show k + 3 = (k - 1) + 4 by omega,
+    quarterLogLatticePoint_add_four]
+  exact le_of_eq
+    (mul_div_cancel_right₀ 2
+      (quarterLogLatticePoint_pos (k - 1)).ne')
+
+/-- The quadratic of the complete slice Gram is exactly the complete
+Bombieri reserve of the corresponding atom combination. -/
+theorem monotonePrimeAtomCompleteSliceGram_quadratic_eq_reserve
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (c : ℕ → ℝ) :
+    (∑ i ∈ S, ∑ j ∈ S,
+      c i * c j * monotonePrimeAtomCompleteSliceGram parent k i j) =
+        bombieriRealQuadraticValue
+          (monotonePrimeAtomCompleteSliceCombination parent k S c) := by
+  unfold monotonePrimeAtomCompleteSliceCombination
+    bombieriRealQuadraticValue
+  rw [← bombieriTwoBlockGlobalCrossSymbol_self]
+  simpa only [monotonePrimeAtomCompleteSliceGram] using
+    (completeCross_finset_sum_both_re S c
+      (monotonePrimeAtomTransplantedSlice parent k)).symm
+
+/-- Consequently the complete slice Gram is positive semidefinite on every
+finite atom set. -/
+theorem monotonePrimeAtomCompleteSliceGram_posSemidefinite
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (c : ℕ → ℝ) :
+    0 ≤ ∑ i ∈ S, ∑ j ∈ S,
+      c i * c j * monotonePrimeAtomCompleteSliceGram parent k i j := by
+  rw [monotonePrimeAtomCompleteSliceGram_quadratic_eq_reserve]
+  unfold bombieriRealQuadraticValue
+  exact bombieriFunctional_quadratic_re_nonneg_of_ratioTwoCell _
+    (monotonePrimeAtomCompleteSliceCombination_ratioTwo parent k S c)
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
