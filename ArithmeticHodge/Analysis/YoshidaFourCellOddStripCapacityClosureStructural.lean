@@ -8157,6 +8157,223 @@ theorem abs_fourCellWideRegularEnvelopeError55_le :
   have hmass := integral_abs_oddP5Correlation55_le
   nlinarith
 
+/-! ### Exact full-width polynomial moments -/
+
+def fourCellWideRegularPolynomial11 : ℝ :=
+  (1 / 288 : ℝ) * Real.log 2 +
+    (25 / 4608 : ℝ) * Real.log 2 ^ 2 -
+      (5 / 49152 : ℝ) * Real.log 2 ^ 3 -
+        (625 / 1179648 : ℝ) * Real.log 2 ^ 4 +
+          (96875 / 37456183296 : ℝ) * Real.log 2 ^ 5 +
+            (38125 / 704643072 : ℝ) * Real.log 2 ^ 6
+
+def fourCellWideRegularPolynomial13 : ℝ :=
+  -(1 / 4032 : ℝ) * Real.log 2 -
+    (5 / 663552 : ℝ) * Real.log 2 ^ 3 -
+      (625 / 8257536 : ℝ) * Real.log 2 ^ 4 +
+        (96875 / 183119118336 : ℝ) * Real.log 2 ^ 5 +
+          (38125 / 2717908992 : ℝ) * Real.log 2 ^ 6
+
+def fourCellWideRegularPolynomial33 : ℝ :=
+  (1 / 6048 : ℝ) * Real.log 2 +
+    (5 / 4866048 : ℝ) * Real.log 2 ^ 3 +
+      (96875 / 1785411403776 : ℝ) * Real.log 2 ^ 5 +
+        (38125 / 14797504512 : ℝ) * Real.log 2 ^ 6
+
+def fourCellWideRegularPolynomial15 : ℝ :=
+  (5 / 29196288 : ℝ) * Real.log 2 ^ 3 +
+    (19375 / 1190274269184 : ℝ) * Real.log 2 ^ 5 +
+      (190625 / 209278992384 : ℝ) * Real.log 2 ^ 6
+
+def fourCellWideRegularPolynomial35 : ℝ :=
+  -(5 / 133056 : ℝ) * Real.log 2 -
+    (5 / 31629312 : ℝ) * Real.log 2 ^ 3 -
+      (19375 / 7141645615104 : ℝ) * Real.log 2 ^ 5
+
+def fourCellWideRegularPolynomial55 : ℝ :=
+  (5 / 123552 : ℝ) * Real.log 2 +
+    (5 / 63258624 : ℝ) * Real.log 2 ^ 3 +
+      (19375 / 30351993864192 : ℝ) * Real.log 2 ^ 5
+
+theorem integral_fourCellRegularPolynomial_mul_oddStructuralCorrelation11 :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddStructuralCorrelation11 t) =
+      fourCellWideRegularPolynomial11 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddStructuralCorrelation11 fourCellWideRegularPolynomial11
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+theorem integral_fourCellRegularPolynomial_mul_oddStructuralCorrelation13 :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddStructuralCorrelation13 t) =
+      fourCellWideRegularPolynomial13 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddStructuralCorrelation13 fourCellWideRegularPolynomial13
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+theorem integral_fourCellRegularPolynomial_mul_oddStructuralCorrelation33 :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddStructuralCorrelation33 t) =
+      fourCellWideRegularPolynomial33 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddStructuralCorrelation33 fourCellWideRegularPolynomial33
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+theorem integral_fourCellRegularPolynomial_mul_oddP5Correlation15 :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddP5Correlation15 t) =
+      fourCellWideRegularPolynomial15 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddP5Correlation15 fourCellWideRegularPolynomial15
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+theorem integral_fourCellRegularPolynomial_mul_oddP5Correlation35 :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddP5Correlation35 t) =
+      fourCellWideRegularPolynomial35 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddP5Correlation35 fourCellWideRegularPolynomial35
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+set_option maxHeartbeats 800000 in
+theorem integral_fourCellRegularPolynomial_mul_oddP5Correlation55 :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddP5Correlation55 t) =
+      fourCellWideRegularPolynomial55 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddP5Correlation55 fourCellWideRegularPolynomial55
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+private theorem fourCell_log_two_pow_fine_bounds
+    (n : ℕ) (hn : n ≠ 0) :
+    (69314718055 / 100000000000 : ℝ) ^ n < Real.log 2 ^ n ∧
+      Real.log 2 ^ n < (69314718057 / 100000000000 : ℝ) ^ n := by
+  have hL := strict_log_two_fine_bounds
+  constructor
+  · exact pow_lt_pow_left₀ hL.1 (by norm_num) hn
+  · exact pow_lt_pow_left₀ hL.2
+      (Real.log_pos (by norm_num)).le hn
+
+set_option maxHeartbeats 1000000 in
+/-- Tight rational boxes for the six exact polynomial moments.  The
+off-diagonal `P₃/P₅` model is certified negative here, before any
+absolute envelope error is added. -/
+theorem fourCellWideRegularPolynomial_entry_bounds :
+    (48636 / 10000000 : ℝ) < fourCellWideRegularPolynomial11 ∧
+    fourCellWideRegularPolynomial11 < (48637 / 10000000 : ℝ) ∧
+    (-1903 / 10000000 : ℝ) < fourCellWideRegularPolynomial13 ∧
+    fourCellWideRegularPolynomial13 < (-1902 / 10000000 : ℝ) ∧
+    (1152 / 10000000 : ℝ) < fourCellWideRegularPolynomial33 ∧
+    fourCellWideRegularPolynomial33 < (1153 / 10000000 : ℝ) ∧
+    (1 / 10000000 : ℝ) < fourCellWideRegularPolynomial15 ∧
+    fourCellWideRegularPolynomial15 < (2 / 10000000 : ℝ) ∧
+    (-262 / 10000000 : ℝ) < fourCellWideRegularPolynomial35 ∧
+    fourCellWideRegularPolynomial35 < (-260 / 10000000 : ℝ) ∧
+    (280 / 10000000 : ℝ) < fourCellWideRegularPolynomial55 ∧
+    fourCellWideRegularPolynomial55 < (281 / 10000000 : ℝ) := by
+  have h1 := strict_log_two_fine_bounds
+  have h2 := fourCell_log_two_pow_fine_bounds 2 (by norm_num)
+  have h3 := fourCell_log_two_pow_fine_bounds 3 (by norm_num)
+  have h4 := fourCell_log_two_pow_fine_bounds 4 (by norm_num)
+  have h5 := fourCell_log_two_pow_fine_bounds 5 (by norm_num)
+  have h6 := fourCell_log_two_pow_fine_bounds 6 (by norm_num)
+  unfold fourCellWideRegularPolynomial11 fourCellWideRegularPolynomial13
+    fourCellWideRegularPolynomial33 fourCellWideRegularPolynomial15
+    fourCellWideRegularPolynomial35 fourCellWideRegularPolynomial55
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+/-- Wide four-cell regular `P₁/P₁` entry. -/
+def fourCellOddOneThreeFiveRegular11 : ℝ :=
+  ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddStructuralCorrelation11 t
+
+/-- Wide four-cell regular `P₁/P₃` entry. -/
+def fourCellOddOneThreeFiveRegular13 : ℝ :=
+  ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddStructuralCorrelation13 t
+
+/-- Wide four-cell regular `P₃/P₃` entry. -/
+def fourCellOddOneThreeFiveRegular33 : ℝ :=
+  ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      oddStructuralCorrelation33 t
+
 /-- Wide four-cell regular entry coupling `P₁` to `P₅`. -/
 def fourCellOddOneThreeFiveRegular15 : ℝ :=
   ∫ t : ℝ in 0..2,
@@ -8174,6 +8391,111 @@ def fourCellOddOneThreeFiveRegular55 : ℝ :=
   ∫ t : ℝ in 0..2,
     yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
       oddP5Correlation55 t
+
+/-- Each actual full-width regular entry is its exact polynomial moment
+plus one controlled global analytic remainder. -/
+theorem fourCellOddOneThreeFiveRegular_entries_eq :
+    fourCellOddOneThreeFiveRegular11 =
+        fourCellWideRegularPolynomial11 +
+          fourCellWideRegularEnvelopeError oddStructuralCorrelation11 ∧
+    fourCellOddOneThreeFiveRegular13 =
+        fourCellWideRegularPolynomial13 +
+          fourCellWideRegularEnvelopeError oddStructuralCorrelation13 ∧
+    fourCellOddOneThreeFiveRegular33 =
+        fourCellWideRegularPolynomial33 +
+          fourCellWideRegularEnvelopeError oddStructuralCorrelation33 ∧
+    fourCellOddOneThreeFiveRegular15 =
+        fourCellWideRegularPolynomial15 +
+          fourCellWideRegularEnvelopeError oddP5Correlation15 ∧
+    fourCellOddOneThreeFiveRegular35 =
+        fourCellWideRegularPolynomial35 +
+          fourCellWideRegularEnvelopeError oddP5Correlation35 ∧
+    fourCellOddOneThreeFiveRegular55 =
+        fourCellWideRegularPolynomial55 +
+          fourCellWideRegularEnvelopeError oddP5Correlation55 := by
+  constructor
+  · unfold fourCellOddOneThreeFiveRegular11
+    rw [fourCellRegularIntegral_eq_polynomial_add_error
+      oddStructuralCorrelation11
+        (by unfold oddStructuralCorrelation11; fun_prop),
+      integral_fourCellRegularPolynomial_mul_oddStructuralCorrelation11]
+  constructor
+  · unfold fourCellOddOneThreeFiveRegular13
+    rw [fourCellRegularIntegral_eq_polynomial_add_error
+      oddStructuralCorrelation13
+        (by unfold oddStructuralCorrelation13; fun_prop),
+      integral_fourCellRegularPolynomial_mul_oddStructuralCorrelation13]
+  constructor
+  · unfold fourCellOddOneThreeFiveRegular33
+    rw [fourCellRegularIntegral_eq_polynomial_add_error
+      oddStructuralCorrelation33
+        (by unfold oddStructuralCorrelation33; fun_prop),
+      integral_fourCellRegularPolynomial_mul_oddStructuralCorrelation33]
+  constructor
+  · unfold fourCellOddOneThreeFiveRegular15
+    rw [fourCellRegularIntegral_eq_polynomial_add_error oddP5Correlation15
+      (by unfold oddP5Correlation15; fun_prop),
+      integral_fourCellRegularPolynomial_mul_oddP5Correlation15]
+  constructor
+  · unfold fourCellOddOneThreeFiveRegular35
+    rw [fourCellRegularIntegral_eq_polynomial_add_error oddP5Correlation35
+      (by unfold oddP5Correlation35; fun_prop),
+      integral_fourCellRegularPolynomial_mul_oddP5Correlation35]
+  · unfold fourCellOddOneThreeFiveRegular55
+    rw [fourCellRegularIntegral_eq_polynomial_add_error oddP5Correlation55
+      continuous_oddP5Correlation55,
+      integral_fourCellRegularPolynomial_mul_oddP5Correlation55]
+
+set_option maxHeartbeats 1000000 in
+/-- Tight structural intervals for all six actual wide-regular entries.
+In particular `R₁₃` stays strictly negative and the difficult `R₃₅`
+entry is only of order `10⁻⁵`; this is the coupled sign information lost by
+the earlier independent absolute estimates. -/
+theorem fourCellOddOneThreeFiveRegular_entry_bounds :
+    (45 / 10000 : ℝ) < fourCellOddOneThreeFiveRegular11 ∧
+    fourCellOddOneThreeFiveRegular11 < (523 / 100000 : ℝ) ∧
+    (-28 / 100000 : ℝ) < fourCellOddOneThreeFiveRegular13 ∧
+    fourCellOddOneThreeFiveRegular13 < (-1 / 10000 : ℝ) ∧
+    (-1 / 25000 : ℝ) < fourCellOddOneThreeFiveRegular33 ∧
+    fourCellOddOneThreeFiveRegular33 < (27 / 100000 : ℝ) ∧
+    (-43 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular15 ∧
+    fourCellOddOneThreeFiveRegular15 < (43 / 1000000 : ℝ) ∧
+    (-73 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular35 ∧
+    fourCellOddOneThreeFiveRegular35 < (21 / 1000000 : ℝ) ∧
+    (-68 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular55 ∧
+    fourCellOddOneThreeFiveRegular55 < (124 / 1000000 : ℝ) := by
+  rcases fourCellWideRegularPolynomial_entry_bounds with
+    ⟨hP11lo, hP11hi, hP13lo, hP13hi, hP33lo, hP33hi,
+      hP15lo, hP15hi, hP35lo, hP35hi, hP55lo, hP55hi⟩
+  rcases fourCellOddOneThreeFiveRegular_entries_eq with
+    ⟨h11, h13, h33, h15, h35, h55⟩
+  have he11 := abs_le.mp abs_fourCellWideRegularEnvelopeError11_le
+  have he13 := abs_lt.mp abs_fourCellWideRegularEnvelopeError13_lt
+  have he33 := abs_le.mp abs_fourCellWideRegularEnvelopeError33_le
+  have he15 := abs_lt.mp abs_fourCellWideRegularEnvelopeError15_lt
+  have he35 := abs_lt.mp abs_fourCellWideRegularEnvelopeError35_lt
+  have he55 := abs_le.mp abs_fourCellWideRegularEnvelopeError55_le
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
 
 /-- The mean-zero wide-kernel fluctuation and exact correlation `L¹` mass
 give a cutoff-free rational bound for the `P₁`--`P₅` regular entry. -/
