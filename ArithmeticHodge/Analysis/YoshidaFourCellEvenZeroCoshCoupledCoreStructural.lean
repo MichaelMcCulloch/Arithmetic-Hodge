@@ -1,5 +1,7 @@
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicHigherResidual
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4MinusEndpointReduction
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenCapacityStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshRegularStructural
@@ -7,22 +9,31 @@ import ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshRegularStructural
 set_option autoImplicit false
 
 open MeasureTheory Real Set
+open Polynomial
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshCoupledCoreStructural
 
 noncomputable section
 
 open UnitIntervalLogEnergyAffine
+open ShiftedLegendreCenteredParity
+open ShiftedLegendreFiniteEnergyGap
+open ShiftedLegendreL2Basis
+open ShiftedLegendreLogEnergyOrthogonalProjection
+open ShiftedLegendreOrthogonality
 open ThreeByThreeRankOneSchur
 open YoshidaEndpointEvenLowProfile
 open YoshidaEndpointEvenStructuralReduction
 open YoshidaConstantBounds
 open YoshidaEndpointEvenMeanZeroPositive
+open YoshidaEndpointEvenFullPolarization
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialIntegrable
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
+open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
+open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicRetainedSingularGapStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
@@ -31,6 +42,7 @@ open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseLowSchur
+open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseEnvelope
 open YoshidaFactorTwoPhaseSingularWeightedCauchyStructural
 open YoshidaFourCellEvenCapacityStructural
@@ -48,6 +60,151 @@ strictly stronger than the `33 / 20` coupled-core target.  Thus the unresolved
 part of the zero-cosh problem is a finite low block and its cross with this
 infinite tail, rather than the tail itself.
 -/
+
+private theorem shiftedLegendreReal_zero_centered_six (x : ℝ) :
+    (shiftedLegendreReal 0).eval ((x + 1) / 2) = centeredEvenP0 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredEvenP0]
+
+private theorem shiftedLegendreReal_two_centered_six (x : ℝ) :
+    (shiftedLegendreReal 2).eval ((x + 1) / 2) = centeredEvenP2 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredEvenP2]
+  ring
+
+private theorem shiftedLegendreReal_four_centered_six (x : ℝ) :
+    (shiftedLegendreReal 4).eval ((x + 1) / 2) =
+      factorTwoCenteredP4 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, factorTwoCenteredP4]
+  ring
+
+/-- The canonical cutoff-six projection of an even profile is exactly its
+three genuine `P₀/P₂/P₄` coordinates. -/
+theorem centeredLegendreLowProjection_six_eq_intrinsicEvenP024Profile
+    (w : ℝ → ℝ) (hw : Continuous w) (heven : Function.Even w) :
+    centeredLegendreLowProjection w hw 6 =
+      factorTwoIntrinsicEvenP024Profile
+        (factorTwoCanonicalLegendreCoefficient w hw 0)
+        (factorTwoCanonicalLegendreCoefficient w hw 2)
+        (factorTwoCanonicalLegendreCoefficient w hw 4) := by
+  have h1 := centeredPullback_repr_eq_zero_of_even_of_odd
+    w (centeredPullback_memLp_two w hw) heven 1 (by norm_num : Odd 1)
+  have h3 := centeredPullback_repr_eq_zero_of_even_of_odd
+    w (centeredPullback_memLp_two w hw) heven 3 (by norm_num : Odd 3)
+  have h5 := centeredPullback_repr_eq_zero_of_even_of_odd
+    w (centeredPullback_memLp_two w hw) heven 5 (by norm_num : Odd 5)
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 w hw) 1 = 0 at h1
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 w hw) 3 = 0 at h3
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 w hw) 5 = 0 at h5
+  funext x
+  unfold centeredLegendreLowProjection centeredLegendreProjectionPolynomial
+    shiftedLegendrePartialProjectionPolynomial
+  rw [Polynomial.eval_finset_sum]
+  simp only [normalizedShiftedLegendrePolynomial, Polynomial.eval_smul,
+    smul_eq_mul, Finset.sum_range_succ, Finset.sum_range_zero,
+    h1, h3, h5, zero_mul, zero_add, add_zero]
+  rw [shiftedLegendreReal_zero_centered_six,
+    shiftedLegendreReal_two_centered_six,
+    shiftedLegendreReal_four_centered_six]
+  unfold factorTwoIntrinsicEvenP024Profile factorTwoEvenStructuralLowProfile
+    factorTwoIntrinsicSixEvenTail factorTwoCanonicalLegendreCoefficient
+  simp only [Pi.add_apply]
+  ring
+
+/-- Unit-interval polynomial representing the intrinsic even `P₀/P₂/P₄`
+profile. -/
+def factorTwoIntrinsicEvenP024Polynomial
+    (c0 c2 c4 : ℝ) : ℝ[X] :=
+  c0 • shiftedLegendreReal 0 + c2 • shiftedLegendreReal 2 +
+    c4 • shiftedLegendreReal 4
+
+theorem centeredPolynomialLift_intrinsicEvenP024Polynomial
+    (c0 c2 c4 : ℝ) :
+    centeredPolynomialLift
+        (factorTwoIntrinsicEvenP024Polynomial c0 c2 c4) =
+      factorTwoIntrinsicEvenP024Profile c0 c2 c4 := by
+  funext x
+  unfold factorTwoIntrinsicEvenP024Polynomial centeredPolynomialLift
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  rw [shiftedLegendreReal_zero_centered_six,
+    shiftedLegendreReal_two_centered_six,
+    shiftedLegendreReal_four_centered_six]
+  unfold factorTwoIntrinsicEvenP024Profile factorTwoEvenStructuralLowProfile
+    factorTwoIntrinsicSixEvenTail
+  simp only [Pi.add_apply]
+
+theorem natDegree_factorTwoIntrinsicEvenP024Polynomial_lt_six
+    (c0 c2 c4 : ℝ) :
+    (factorTwoIntrinsicEvenP024Polynomial c0 c2 c4).natDegree < 6 := by
+  unfold factorTwoIntrinsicEvenP024Polynomial
+  have hdeg :
+      (c0 • shiftedLegendreReal 0 + c2 • shiftedLegendreReal 2 +
+        c4 • shiftedLegendreReal 4).natDegree ≤ 4 := by
+    compute_degree
+  omega
+
+/-- Shifted-Legendre orthogonality removes the complete raw-energy cross
+between `P₀/P₂/P₄` and every tail above degree five. -/
+theorem centeredRawLogEnergy_intrinsicEvenP024_add_tail
+    (c0 c2 c4 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hlow : centeredLegendreMomentsVanishBelow r 6) :
+    centeredRawLogEnergy
+        (factorTwoIntrinsicEvenP024Profile c0 c2 c4 + r) =
+      centeredRawLogEnergy
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4) +
+        centeredRawLogEnergy r := by
+  let p : ℝ[X] := factorTwoIntrinsicEvenP024Polynomial c0 c2 c4
+  have hpdeg : p.natDegree < 6 := by
+    simpa only [p] using
+      natDegree_factorTwoIntrinsicEvenP024Polynomial_lt_six c0 c2 c4
+  have hsplit := centeredRawLogEnergy_centeredPolynomialLift_add_tail
+    p r hr hlocal hlow hpdeg
+  rw [show centeredPolynomialLift p =
+      factorTwoIntrinsicEvenP024Profile c0 c2 c4 by
+    simpa only [p] using
+      centeredPolynomialLift_intrinsicEvenP024Polynomial c0 c2 c4] at hsplit
+  exact hsplit
+
+/-- The ordinary mass cross between the retained low profile and its
+moment-six tail vanishes exactly. -/
+theorem intervalIntegral_intrinsicEvenP024_mul_tail_eq_zero
+    (c0 c2 c4 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 6) :
+    (∫ x : ℝ in -1..1,
+      factorTwoIntrinsicEvenP024Profile c0 c2 c4 x * r x) = 0 := by
+  let p : ℝ[X] := factorTwoIntrinsicEvenP024Polynomial c0 c2 c4
+  have hpdeg : p.natDegree < 6 := by
+    simpa only [p] using
+      natDegree_factorTwoIntrinsicEvenP024Polynomial_lt_six c0 c2 c4
+  have hzero := intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+    p r hr hlow hpdeg
+  rw [show centeredPolynomialLift p =
+      factorTwoIntrinsicEvenP024Profile c0 c2 c4 by
+    simpa only [p] using
+      centeredPolynomialLift_intrinsicEvenP024Polynomial c0 c2 c4] at hzero
+  exact hzero
+
+/-- Exact Pythagorean mass split for `P₀/P₂/P₄` plus a moment-six
+tail. -/
+theorem integral_intrinsicEvenP024_add_tail_sq
+    (c0 c2 c4 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 6) :
+    (∫ x : ℝ in -1..1,
+      (factorTwoIntrinsicEvenP024Profile c0 c2 c4 x + r x) ^ 2) =
+      (∫ x : ℝ in -1..1,
+        factorTwoIntrinsicEvenP024Profile c0 c2 c4 x ^ 2) +
+        ∫ x : ℝ in -1..1, r x ^ 2 := by
+  have hp := factorTwoIntrinsicEvenP024Profile_continuous c0 c2 c4
+  have hsplit := integral_add_sq
+    (factorTwoIntrinsicEvenP024Profile c0 c2 c4) r hp hr
+  have hcross := intervalIntegral_intrinsicEvenP024_mul_tail_eq_zero
+    c0 c2 c4 r hr hlow
+  simpa only [Pi.add_apply, hcross, mul_zero, zero_add, add_zero] using hsplit
 
 private theorem integral_polynomial_ten
     (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ l r : ℝ) :
