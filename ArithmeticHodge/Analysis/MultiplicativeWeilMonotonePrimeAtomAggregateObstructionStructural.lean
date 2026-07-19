@@ -891,6 +891,30 @@ theorem monotonePrimeAtom_zeroLag_sq_sub_aggregateCross_re_sq
   rw [monotonePrimeAtomAggregateCross_re_eq_zeroLagOverlap_add_remainder]
   ring
 
+/-- Alignment is stronger than necessary when the complete determinant has
+slack.  The exact weakest coefficient-one condition along the Mangoldt
+weight vector is that the signed defect cost fit inside that unused complete
+determinant slack.  This statement is an equivalence, with no analytic
+inequality discarded. -/
+theorem monotonePrimeAtom_finset_sum_sq_le_reserves_iff_remainderCost_le_completeSlack
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    (∑ j ∈ S, monotonePrimeAtomValue parent k j) ^ 2 ≤
+        bombieriRealQuadraticValue (monotoneQuarterCell parent k) *
+          monotonePrimeAtomAggregateReserve parent k S ↔
+      -monotonePrimeAtomAggregateRemainder parent k S *
+          (2 * (∑ j ∈ S, monotonePrimeAtomValue parent k j) +
+            monotonePrimeAtomAggregateRemainder parent k S) ≤
+        bombieriRealQuadraticValue (monotoneQuarterCell parent k) *
+            monotonePrimeAtomAggregateReserve parent k S -
+          (monotonePrimeAtomAggregateCross parent k S).re ^ 2 := by
+  let P : ℝ := ∑ j ∈ S, monotonePrimeAtomValue parent k j
+  let C : ℝ := (monotonePrimeAtomAggregateCross parent k S).re
+  let H : ℝ := bombieriRealQuadraticValue (monotoneQuarterCell parent k)
+  let T : ℝ := monotonePrimeAtomAggregateReserve parent k S
+  change P ^ 2 ≤ H * T ↔
+    -(C - P) * (2 * P + (C - P)) ≤ H * T - C ^ 2
+  constructor <;> intro h <;> nlinarith
+
 /-- Thus the existing complete ratio-two determinant gives the desired
 coefficient-one reserve bound for the whole prime row exactly after a signed
 alignment estimate for the translated-kernel remainder. -/
@@ -2036,6 +2060,66 @@ theorem mixedAtomGram_currentData_allow_sharpMutationFailure :
     nlinarith [sq_nonneg a, sq_nonneg c]
   · intro a c
     nlinarith [sq_nonneg (2 * a + c)]
+
+/-- Even imposing the exact common-parent coordinate decomposition on the
+available scalar data does not turn the two forms into the required
+alignment sign.  This production-shaped one-atom model uses the actual first
+nonzero Mangoldt weight `w₁`, writes the complete
+coordinate as an archimedean row minus a full prime row, writes the defect as
+`q - p`, and forms every aggregate coordinate with the same weight `w₁`.
+Both the complete and physical pencils are positive semidefinite and the two
+available diagonal coercivities hold.  Nevertheless the weighted defect is
+anti-aligned and the coefficient-one hybrid determinant fails.  Therefore
+the coordinate expansion alone cannot close the route: a successful proof
+must establish a new analytic coupling between the archimedean/full-prime
+row and the physical zero-lag form, or abandon this hybrid mutation. -/
+theorem actualMangoldtWeight_productionCoordinateData_allow_alignmentFailure :
+    ∃ w H Q q EH L p A M d P C R T : ℝ,
+      w = bombieriLogPrimeAtomWeight 1 ∧ 0 < w ∧
+      0 ≤ H ∧ 0 ≤ Q ∧ 0 ≤ EH ∧ 0 ≤ L ∧ 0 ≤ A ∧ 0 ≤ M ∧
+      q = A - M ∧ d = q - p ∧
+      P = w * p ∧ C = w * q ∧ R = w * d ∧ T = w ^ 2 * Q ∧
+      C = P + R ∧
+      (∀ a c : ℝ, 0 ≤ H * a ^ 2 + 2 * q * a * c + Q * c ^ 2) ∧
+      (∀ a c : ℝ, 0 ≤ EH * a ^ 2 + 2 * p * a * c + L * c ^ 2) ∧
+      (1 / 12000 : ℝ) * EH ≤ H ∧
+      (1 / 12000 : ℝ) * L ≤ Q ∧
+      R * (2 * P + R) < 0 ∧
+      H * T - C ^ 2 < -R * (2 * P + R) ∧
+      H * T < P ^ 2 := by
+  let w : ℝ := bombieriLogPrimeAtomWeight 1
+  let u : ℝ := w⁻¹
+  have hw : 0 < w := by
+    dsimp only [w]
+    have hneg := neg_bombieriLogPrimeAtomWeight_one_lt_zero
+    linarith
+  have hu : 0 < u := by
+    exact inv_pos.mpr hw
+  have hwu : w * u = 1 := by
+    dsimp only [u]
+    exact mul_inv_cancel₀ hw.ne'
+  refine ⟨w, 1, u ^ 2, 0, 4, u ^ 2, 2 * u, u, u, -2 * u,
+    2, 0, -2, 1, rfl, hw, by norm_num, sq_nonneg u, by norm_num,
+    sq_nonneg u, hu.le, hu.le, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_,
+    ?_, ?_, ?_, ?_, ?_⟩
+  · ring
+  · ring
+  · nlinarith
+  · ring
+  · nlinarith
+  · calc
+      (1 : ℝ) = (w * u) ^ 2 := by rw [hwu]; norm_num
+      _ = w ^ 2 * u ^ 2 := by ring
+  · norm_num
+  · intro a c
+    nlinarith [sq_nonneg a, sq_nonneg (u * c)]
+  · intro a c
+    nlinarith [sq_nonneg (2 * a + u * c)]
+  · norm_num
+  · nlinarith [sq_nonneg u]
+  · norm_num
+  · norm_num
+  · norm_num
 
 end
 
