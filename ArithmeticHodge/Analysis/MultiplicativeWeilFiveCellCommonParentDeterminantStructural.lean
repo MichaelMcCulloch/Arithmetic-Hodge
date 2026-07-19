@@ -1153,6 +1153,92 @@ private theorem parent_eq_zero_of_middle_zero_of_right
   exact (mul_eq_zero.mp hpoint').resolve_left
     (Complex.ofReal_ne_zero.mpr hstepPos.ne')
 
+private theorem parent_eq_zero_of_middle_zero_of_upper_transition
+    (parent : BombieriTest) (k : ℤ)
+    (hmiddle :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k = 0)
+    {x : ℝ}
+    (hxleft : quarterLogLatticePoint (k + 4) < x)
+    (hxright : x < quarterLogLatticePoint (k + 5)) :
+    parent x = 0 := by
+  have hpoint := congrArg (fun g : BombieriTest ↦ g x) hmiddle
+  have hpoint' :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+          parent k x = 0 := by
+    simpa only [TestFunction.coe_zero, Pi.zero_apply] using hpoint
+  rw [fiveCellMiddleThree_apply] at hpoint'
+  have hstepOne : monotoneQuarterStep (k + 1) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    simpa only [show k + 1 + 1 = k + 2 by ring] using
+      (quarterLogLatticePoint_mono (m := k + 2) (n := k + 4)
+        (by omega)).trans hxleft.le
+  have hstepLt : monotoneQuarterStep (k + 4) x < 1 :=
+    monotoneQuarterStep_lt_one_of_lt_succ (k + 4) (by
+      simpa only [show k + 4 + 1 = k + 5 by ring] using hxright)
+  rw [hstepOne] at hpoint'
+  exact (mul_eq_zero.mp hpoint').resolve_left
+    (Complex.ofReal_ne_zero.mpr (sub_pos.mpr hstepLt).ne')
+
+/-- If the middle three-cell block vanishes, the two surviving endpoint
+cells collapse to the outer quarter-step transitions.  Their closed supports
+are separated by an exact factor-two gap. -/
+theorem fiveCell_endpoint_tsupports_collapse_of_middle_zero
+    (parent : BombieriTest) (k : ℤ)
+    (hmiddle :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k = 0) :
+    tsupport (monotoneQuarterCell parent k : ℝ → ℂ) ⊆
+        Set.Icc (quarterLogLatticePoint k)
+          (quarterLogLatticePoint (k + 1)) ∧
+      tsupport (monotoneQuarterCell parent (k + 4) : ℝ → ℂ) ⊆
+        Set.Icc (quarterLogLatticePoint (k + 5))
+          (quarterLogLatticePoint (k + 6)) := by
+  constructor
+  · rw [tsupport]
+    apply closure_minimal _ isClosed_Icc
+    intro x hx
+    have hxne : monotoneQuarterCell parent k x ≠ 0 :=
+      Function.mem_support.mp hx
+    have hwide := monotoneQuarterCell_tsupport_subset parent k
+      (subset_tsupport _ hx)
+    refine ⟨hwide.1, ?_⟩
+    by_contra hnot
+    have hxleft : quarterLogLatticePoint (k + 1) < x :=
+      lt_of_not_ge hnot
+    by_cases hxright : quarterLogLatticePoint (k + 2) ≤ x
+    · apply hxne
+      rw [monotoneQuarterCell_apply,
+        monotoneQuarterWeight_eq_zero_of_le_left k hxright]
+      simp
+    · have hparent : parent x = 0 :=
+        parent_eq_zero_of_middle_zero_of_right parent k hmiddle
+          hxleft (lt_of_not_ge hxright)
+      apply hxne
+      rw [monotoneQuarterCell_apply, hparent, mul_zero]
+  · rw [tsupport]
+    apply closure_minimal _ isClosed_Icc
+    intro x hx
+    have hxne : monotoneQuarterCell parent (k + 4) x ≠ 0 :=
+      Function.mem_support.mp hx
+    have hwide := monotoneQuarterCell_tsupport_subset parent (k + 4)
+      (subset_tsupport _ hx)
+    refine ⟨?_, by
+      simpa only [show k + 4 + 2 = k + 6 by ring] using hwide.2⟩
+    by_contra hnot
+    have hxright : x < quarterLogLatticePoint (k + 5) :=
+      lt_of_not_ge hnot
+    by_cases hxleft : x ≤ quarterLogLatticePoint (k + 4)
+    · apply hxne
+      rw [monotoneQuarterCell_apply,
+        monotoneQuarterWeight_eq_zero_of_le (k + 4) hxleft]
+      simp
+    · have hparent : parent x = 0 :=
+        parent_eq_zero_of_middle_zero_of_upper_transition parent k hmiddle
+          (lt_of_not_ge hxleft) hxright
+      apply hxne
+      rw [monotoneQuarterCell_apply, hparent, mul_zero]
+
 /-- A zero middle-three block annihilates the only factor-two prime atom of
 the sparse endpoint pair.  The possible common-parent value at the shared
 lattice boundary is a singleton and therefore does not contribute to the
