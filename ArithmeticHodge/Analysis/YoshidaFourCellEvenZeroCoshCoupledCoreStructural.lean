@@ -8,12 +8,15 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP4MinusEndpoint
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenCapacityStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointCapacityCauchyStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshRegularStructural
+import ArithmeticHodge.Analysis.ShiftedLegendreCenteredL2Structural
 import Mathlib.Analysis.SpecialFunctions.Integrability.Basic
+import Mathlib.NumberTheory.ZetaValues
 
 set_option autoImplicit false
 
-open MeasureTheory Real Set
+open MeasureTheory Real Set Filter
 open Polynomial
+open scoped BigOperators unitInterval
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenZeroCoshCoupledCoreStructural
 
@@ -22,6 +25,7 @@ noncomputable section
 open UnitIntervalLogEnergyAffine
 open MultiplicativeWeilFourCellRealRescaleStructural
 open ShiftedLegendreCenteredParity
+open ShiftedLegendreCenteredL2Structural
 open ShiftedLegendreFiniteEnergyGap
 open ShiftedLegendreL2Basis
 open ShiftedLegendreLogEnergyOrthogonalProjection
@@ -35,6 +39,7 @@ open YoshidaEndpointEvenMeanZeroPositive
 open YoshidaEndpointEvenFullPolarization
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialIntegrable
+open YoshidaEndpointPotentialLegendreOffDiagonalStructural
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicElevenRetainedP024Structural
@@ -2575,6 +2580,200 @@ theorem integral_cutoffEightProjectedFixedLagRepresenter_sq_eq_projectedGram
       fourCellEvenP0246CutoffEightProjectedFixedLagGram c0 c2 c4 c6 := by
   rw [integral_cutoffEightProjectedFixedLagRepresenter_sq_eq,
     fixedLagFullGram_sub_lowProjectionEnergy_eq_projectedGram]
+
+/-! ## Exact endpoint-potential tail series
+
+The all-degree endpoint-potential formula turns the cutoff-eight tail Gram
+into rational stride-two series (off diagonal) and shifted reciprocal-square
+series (diagonal).  The first lemma is the structural telescope used by all
+six off-diagonal entries. -/
+
+private theorem hasSum_strideTwo_reciprocalDifference
+    (a : ℝ) (ha : 0 < a) :
+    HasSum (fun r : ℕ ↦
+      1 / (2 * (r : ℝ) + a) -
+        1 / (2 * (r : ℝ) + a + 2)) (1 / a) := by
+  have hnonneg : ∀ r : ℕ,
+      0 ≤ 1 / (2 * (r : ℝ) + a) -
+        1 / (2 * (r : ℝ) + a + 2) := by
+    intro r
+    apply sub_nonneg.mpr
+    apply one_div_le_one_div_of_le
+    · positivity
+    · linarith
+  apply (hasSum_iff_tendsto_nat_of_nonneg hnonneg (1 / a)).2
+  have hsum (n : ℕ) :
+      (∑ r ∈ Finset.range n,
+        (1 / (2 * (r : ℝ) + a) -
+          1 / (2 * (r : ℝ) + a + 2))) =
+        1 / a - 1 / (2 * (n : ℝ) + a) := by
+    induction n with
+    | zero => norm_num
+    | succ n ih =>
+        rw [Finset.sum_range_succ, ih]
+        push_cast
+        ring
+  simp_rw [hsum]
+  have hmul : Tendsto (fun n : ℕ ↦ 2 * (n : ℝ)) atTop atTop :=
+    tendsto_natCast_atTop_atTop.const_mul_atTop
+      (by norm_num : (0 : ℝ) < 2)
+  have hden : Tendsto (fun n : ℕ ↦ 2 * (n : ℝ) + a) atTop atTop :=
+    hmul.atTop_add tendsto_const_nhds
+  have hinv : Tendsto (fun n : ℕ ↦
+      1 / (2 * (n : ℝ) + a)) atTop (nhds 0) := by
+    simpa only [one_div] using tendsto_inv_atTop_zero.comp hden
+  simpa using
+    ((tendsto_const_nhds : Tendsto (fun _ : ℕ ↦ 1 / a)
+      atTop (nhds (1 / a))).sub hinv)
+
+/-- Centered Parseval summand of the endpoint-potential tails sourced in
+Legendre degrees `m` and `k`, with target degree `2r+8`. -/
+def cutoffEightPotentialTailSummand (m k r : ℕ) : ℝ :=
+  let n : ℝ := 2 * (r : ℝ) + 8
+  2 * (2 * n + 1) /
+    ((n - (m : ℝ)) * (n + (m : ℝ) + 1) *
+      (n - (k : ℝ)) * (n + (k : ℝ) + 1))
+
+theorem hasSum_cutoffEightPotentialTail_P0_P2 :
+    HasSum (cutoffEightPotentialTailSummand 0 2) (1 / 54 : ℝ) := by
+  have h6 := hasSum_strideTwo_reciprocalDifference 6 (by norm_num)
+  have h9 := hasSum_strideTwo_reciprocalDifference 9 (by norm_num)
+  have h := HasSum.mul_left (1 / 3 : ℝ) (h6.sub h9)
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h6' : 2 * (r : ℝ) + 6 ≠ 0 := by linarith
+    have h8' : 2 * (r : ℝ) + 8 ≠ 0 := by linarith
+    have h9' : 2 * (r : ℝ) + 9 ≠ 0 := by linarith
+    have h11' : 2 * (r : ℝ) + 11 ≠ 0 := by linarith
+    have hm2 : 2 * (r : ℝ) + 8 - 2 ≠ 0 := by linarith
+    have hp1 : 2 * (r : ℝ) + 8 + 1 ≠ 0 := by linarith
+    have hp3 : 2 * (r : ℝ) + 8 + 3 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    (field_simp [h6', h8', h9', h11', hm2, hp1, hp3] ; ring_nf)
+  · norm_num
+
+theorem hasSum_cutoffEightPotentialTail_P0_P4 :
+    HasSum (cutoffEightPotentialTailSummand 0 4) (17 / 792 : ℝ) := by
+  have h4 := hasSum_strideTwo_reciprocalDifference 4 (by norm_num)
+  have h6 := hasSum_strideTwo_reciprocalDifference 6 (by norm_num)
+  have h9 := hasSum_strideTwo_reciprocalDifference 9 (by norm_num)
+  have h11 := hasSum_strideTwo_reciprocalDifference 11 (by norm_num)
+  have h := HasSum.mul_left (1 / 10 : ℝ)
+    ((h4.add h6).sub (h9.add h11))
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h4' : 2 * (r : ℝ) + 4 ≠ 0 := by linarith
+    have h6' : 2 * (r : ℝ) + 6 ≠ 0 := by linarith
+    have h8' : 2 * (r : ℝ) + 8 ≠ 0 := by linarith
+    have h9' : 2 * (r : ℝ) + 9 ≠ 0 := by linarith
+    have h11' : 2 * (r : ℝ) + 11 ≠ 0 := by linarith
+    have h13' : 2 * (r : ℝ) + 13 ≠ 0 := by linarith
+    have hm4 : 2 * (r : ℝ) + 8 - 4 ≠ 0 := by linarith
+    have hp1 : 2 * (r : ℝ) + 8 + 1 ≠ 0 := by linarith
+    have hp5 : 2 * (r : ℝ) + 8 + 5 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    (field_simp [h4', h6', h8', h9', h11', h13', hm4, hp1, hp5] ;
+      ring_nf)
+  · norm_num
+
+theorem hasSum_cutoffEightPotentialTail_P0_P6 :
+    HasSum (cutoffEightPotentialTailSummand 0 6) (469 / 15444 : ℝ) := by
+  have h2 := hasSum_strideTwo_reciprocalDifference 2 (by norm_num)
+  have h4 := hasSum_strideTwo_reciprocalDifference 4 (by norm_num)
+  have h6 := hasSum_strideTwo_reciprocalDifference 6 (by norm_num)
+  have h9 := hasSum_strideTwo_reciprocalDifference 9 (by norm_num)
+  have h11 := hasSum_strideTwo_reciprocalDifference 11 (by norm_num)
+  have h13 := hasSum_strideTwo_reciprocalDifference 13 (by norm_num)
+  have h := HasSum.mul_left (1 / 21 : ℝ)
+    (((h2.add h4).add h6).sub ((h9.add h11).add h13))
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h2' : 2 * (r : ℝ) + 2 ≠ 0 := by linarith
+    have h4' : 2 * (r : ℝ) + 4 ≠ 0 := by linarith
+    have h6' : 2 * (r : ℝ) + 6 ≠ 0 := by linarith
+    have h8' : 2 * (r : ℝ) + 8 ≠ 0 := by linarith
+    have h9' : 2 * (r : ℝ) + 9 ≠ 0 := by linarith
+    have h11' : 2 * (r : ℝ) + 11 ≠ 0 := by linarith
+    have h13' : 2 * (r : ℝ) + 13 ≠ 0 := by linarith
+    have h15' : 2 * (r : ℝ) + 15 ≠ 0 := by linarith
+    have hm6 : 2 * (r : ℝ) + 8 - 6 ≠ 0 := by linarith
+    have hp1 : 2 * (r : ℝ) + 8 + 1 ≠ 0 := by linarith
+    have hp7 : 2 * (r : ℝ) + 8 + 7 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    (field_simp [h2', h4', h6', h8', h9', h11', h13', h15',
+        hm6, hp1, hp7] ; ring_nf)
+  · norm_num
+
+theorem hasSum_cutoffEightPotentialTail_P2_P4 :
+    HasSum (cutoffEightPotentialTailSummand 2 4) (1 / 44 : ℝ) := by
+  have h4 := hasSum_strideTwo_reciprocalDifference 4 (by norm_num)
+  have h11 := hasSum_strideTwo_reciprocalDifference 11 (by norm_num)
+  have h := HasSum.mul_left (1 / 7 : ℝ) (h4.sub h11)
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h4' : 2 * (r : ℝ) + 4 ≠ 0 := by linarith
+    have h6' : 2 * (r : ℝ) + 6 ≠ 0 := by linarith
+    have h11' : 2 * (r : ℝ) + 11 ≠ 0 := by linarith
+    have h13' : 2 * (r : ℝ) + 13 ≠ 0 := by linarith
+    have hm2 : 2 * (r : ℝ) + 8 - 2 ≠ 0 := by linarith
+    have hm4 : 2 * (r : ℝ) + 8 - 4 ≠ 0 := by linarith
+    have hp3 : 2 * (r : ℝ) + 8 + 3 ≠ 0 := by linarith
+    have hp5 : 2 * (r : ℝ) + 8 + 5 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    (field_simp [h4', h6', h11', h13', hm2, hm4, hp3, hp5] ;
+      ring_nf)
+  · norm_num
+
+theorem hasSum_cutoffEightPotentialTail_P2_P6 :
+    HasSum (cutoffEightPotentialTailSummand 2 6) (37 / 1144 : ℝ) := by
+  have h2 := hasSum_strideTwo_reciprocalDifference 2 (by norm_num)
+  have h4 := hasSum_strideTwo_reciprocalDifference 4 (by norm_num)
+  have h11 := hasSum_strideTwo_reciprocalDifference 11 (by norm_num)
+  have h13 := hasSum_strideTwo_reciprocalDifference 13 (by norm_num)
+  have h := HasSum.mul_left (1 / 18 : ℝ)
+    ((h2.add h4).sub (h11.add h13))
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h2' : 2 * (r : ℝ) + 2 ≠ 0 := by linarith
+    have h4' : 2 * (r : ℝ) + 4 ≠ 0 := by linarith
+    have h6' : 2 * (r : ℝ) + 6 ≠ 0 := by linarith
+    have h11' : 2 * (r : ℝ) + 11 ≠ 0 := by linarith
+    have h13' : 2 * (r : ℝ) + 13 ≠ 0 := by linarith
+    have h15' : 2 * (r : ℝ) + 15 ≠ 0 := by linarith
+    have hm2 : 2 * (r : ℝ) + 8 - 2 ≠ 0 := by linarith
+    have hm6 : 2 * (r : ℝ) + 8 - 6 ≠ 0 := by linarith
+    have hp3 : 2 * (r : ℝ) + 8 + 3 ≠ 0 := by linarith
+    have hp7 : 2 * (r : ℝ) + 8 + 7 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    (field_simp [h2', h4', h6', h11', h13', h15', hm2, hm6,
+        hp3, hp7] ; ring_nf)
+  · norm_num
+
+theorem hasSum_cutoffEightPotentialTail_P4_P6 :
+    HasSum (cutoffEightPotentialTailSummand 4 6) (1 / 26 : ℝ) := by
+  have h2 := hasSum_strideTwo_reciprocalDifference 2 (by norm_num)
+  have h13 := hasSum_strideTwo_reciprocalDifference 13 (by norm_num)
+  have h := HasSum.mul_left (1 / 11 : ℝ) (h2.sub h13)
+  convert h using 1
+  · funext r
+    have hr : 0 ≤ (r : ℝ) := Nat.cast_nonneg r
+    have h2' : 2 * (r : ℝ) + 2 ≠ 0 := by linarith
+    have h4' : 2 * (r : ℝ) + 4 ≠ 0 := by linarith
+    have h13' : 2 * (r : ℝ) + 13 ≠ 0 := by linarith
+    have h15' : 2 * (r : ℝ) + 15 ≠ 0 := by linarith
+    have hm4 : 2 * (r : ℝ) + 8 - 4 ≠ 0 := by linarith
+    have hm6 : 2 * (r : ℝ) + 8 - 6 ≠ 0 := by linarith
+    have hp5 : 2 * (r : ℝ) + 8 + 5 ≠ 0 := by linarith
+    have hp7 : 2 * (r : ℝ) + 8 + 7 ≠ 0 := by linarith
+    dsimp [cutoffEightPotentialTailSummand]
+    (field_simp [h2', h4', h13', h15', hm4, hm6, hp5, hp7] ;
+      ring_nf)
+  · norm_num
 
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
