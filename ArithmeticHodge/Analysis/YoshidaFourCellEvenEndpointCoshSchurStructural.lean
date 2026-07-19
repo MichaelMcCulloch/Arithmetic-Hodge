@@ -46,6 +46,22 @@ def fourCellEvenExactBracket (w : ℝ → ℝ) : ℝ :=
   centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth w -
     Real.sqrt 2 * Real.log 2 * fourCellEndpointPairing w
 
+/-- The one fixed mixed row left after normalizing the endpoint-cosh low
+coordinate to the endpoint-zero seed. -/
+def fourCellEvenEndpointSeedRow (v : ℝ → ℝ) : ℝ :=
+  fourCellExactBracketPolarization fourCellEvenEndpointCoshSeed v
+
+private theorem fourCellPositiveCoshMoment_const_mul
+    (c lambda : ℝ) (w : ℝ → ℝ) :
+    fourCellPositiveCoshMoment (fun x ↦ c * w x) lambda =
+      c * fourCellPositiveCoshMoment w lambda := by
+  unfold fourCellPositiveCoshMoment
+  rw [show (fun x : ℝ ↦ Real.cosh (lambda * x) * (c * w x)) =
+      fun x ↦ c * (Real.cosh (lambda * x) * w x) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul]
+
 private theorem centeredEndpointCorrelation_const_mul
     (c : ℝ) (w : ℝ → ℝ) (t : ℝ) :
     centeredEndpointCorrelation (fun x ↦ c * w x) t =
@@ -609,6 +625,138 @@ theorem fourCell_evenBracket_nonnegative_of_endpointCoshCoreSchur
   exact fourCell_evenBracket_nonnegative_of_endpointCoshSchur
     w hw hweven hend fourCellEvenExactBracket_endpointCoshSeed_pos.le
       hcore hdet
+
+/-- Universal fixed-row closure for the endpoint-preserving cosh split.
+
+The variable low coefficient is removed by normalizing the *whole* profile,
+not by separately polarizing every kernel term.  If the coefficient vanishes,
+the profile is already a zero-cosh residual.  Otherwise quadratic homogeneity
+reduces it to `seed + residual / coefficient`, so the only mixed functional
+that ever occurs is `fourCellEvenEndpointSeedRow`. -/
+theorem fourCell_evenBracket_nonnegative_of_endpointSeedUniversalSchur
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w)
+    (hweven : Function.Even w) (hend : w (-1) = 0 ∧ w 1 = 0)
+    (hcore : ∀ v : ℝ → ℝ,
+      ContDiff ℝ 1 v → Function.Even v →
+      v (-1) = 0 ∧ v 1 = 0 →
+      fourCellPositiveCoshMoment v
+          (fourCellOperatorHalfWidth / 2) = 0 →
+      (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, v x ^ 2) ≤
+        fourCellEvenZeroCoshCoupledCore v)
+    (hrow : ∀ v : ℝ → ℝ,
+      ContDiff ℝ 1 v → Function.Even v →
+      v (-1) = 0 ∧ v 1 = 0 →
+      fourCellPositiveCoshMoment v
+          (fourCellOperatorHalfWidth / 2) = 0 →
+      fourCellEvenEndpointSeedRow v ^ 2 ≤
+        fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          fourCellEvenPolarFreeOperator v) :
+    0 ≤ fourCellEvenExactBracket w := by
+  let c : ℝ :=
+    fourCellPositiveCoshMoment w (fourCellOperatorHalfWidth / 2) *
+      (fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+        (fourCellOperatorHalfWidth / 2))⁻¹
+  let v : ℝ → ℝ :=
+    fourCellEvenCoshResidual w fourCellEvenEndpointCoshUnit
+  have hvConstraints :=
+    fourCellEvenEndpointCoshResidual_constraints
+      w hw.continuous hweven hend
+  have hv : Continuous v := by
+    simpa only [v] using hvConstraints.1
+  have hveven : Function.Even v := by
+    simpa only [v] using hvConstraints.2.1
+  have hvend : v (-1) = 0 ∧ v 1 = 0 := by
+    simpa only [v] using hvConstraints.2.2.1
+  have hvzero : fourCellPositiveCoshMoment v
+      (fourCellOperatorHalfWidth / 2) = 0 := by
+    simpa only [v] using hvConstraints.2.2.2
+  have hvDiff : ContDiff ℝ 1 v := by
+    dsimp only [v]
+    unfold fourCellEvenCoshResidual fourCellEvenCoshLow
+      fourCellEvenEndpointCoshUnit fourCellEvenEndpointCoshSeed
+    fun_prop
+  have hvLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v :=
+    hvDiff.contDiffOn.locallyLipschitzOn (convex_Icc (-1 : ℝ) 1)
+  have hlow : fourCellEvenCoshLow w fourCellEvenEndpointCoshUnit =
+      fun x ↦ c * fourCellEvenEndpointCoshSeed x := by
+    simpa only [c] using fourCellEvenEndpointCoshLow_eq_const_mul_seed w
+  by_cases hc : c = 0
+  · have hvw : v = w := by
+      funext x
+      dsimp only [v]
+      unfold fourCellEvenCoshResidual
+      rw [hlow]
+      simp only [hc, zero_mul, sub_zero]
+    have htail : 0 ≤ fourCellEvenPolarFreeOperator v := by
+      apply fourCellEvenPolarFreeOperator_nonnegative_of_coupledCore
+        v hv hvLocal hveven hvzero
+      exact hcore v hvDiff hveven hvend hvzero
+    have hdiag := fourCell_evenBracket_eq_polarFree_add_coshRank
+      v hv hvLocal hveven
+    rw [hvzero] at hdiag
+    norm_num at hdiag
+    rw [← hvw]
+    simpa only [fourCellEvenExactBracket, hdiag] using htail
+  · let r : ℝ → ℝ := fun x ↦ c⁻¹ * v x
+    have hrDiff : ContDiff ℝ 1 r := by
+      dsimp only [r]
+      fun_prop
+    have hr : Continuous r := hrDiff.continuous
+    have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r :=
+      hrDiff.contDiffOn.locallyLipschitzOn (convex_Icc (-1 : ℝ) 1)
+    have hreven : Function.Even r := by
+      intro x
+      dsimp only [r]
+      rw [hveven x]
+    have hrend : r (-1) = 0 ∧ r 1 = 0 := by
+      dsimp only [r]
+      rw [hvend.1, hvend.2]
+      simp
+    have hrzero : fourCellPositiveCoshMoment r
+        (fourCellOperatorHalfWidth / 2) = 0 := by
+      dsimp only [r]
+      rw [fourCellPositiveCoshMoment_const_mul, hvzero]
+      ring
+    have htail : 0 ≤ fourCellEvenPolarFreeOperator r := by
+      apply fourCellEvenPolarFreeOperator_nonnegative_of_coupledCore
+        r hr hrLocal hreven hrzero
+      exact hcore r hrDiff hreven hrend hrzero
+    have hdiag := fourCell_evenBracket_eq_polarFree_add_coshRank
+      r hr hrLocal hreven
+    rw [hrzero] at hdiag
+    norm_num at hdiag
+    have htailBracket : 0 ≤ fourCellEvenExactBracket r := by
+      simpa only [fourCellEvenExactBracket, hdiag] using htail
+    have hdet := hrow r hrDiff hreven hrend hrzero
+    have hdetBracket : fourCellExactBracketPolarization
+          fourCellEvenEndpointCoshSeed r ^ 2 ≤
+        fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          fourCellEvenExactBracket r := by
+      simpa only [fourCellEvenEndpointSeedRow, fourCellEvenExactBracket,
+        hdiag] using hdet
+    have hseedPlus : 0 ≤ fourCellEvenExactBracket
+        (fourCellEvenEndpointCoshSeed + r) := by
+      apply fourCell_evenBracket_add_nonnegative_of_exactSchur
+        fourCellEvenEndpointCoshSeed r
+          fourCellEvenEndpointCoshSeed_continuous hr
+      · exact fourCellEvenExactBracket_endpointCoshSeed_pos.le
+      · exact htailBracket
+      · simpa only [fourCellEvenExactBracket] using hdetBracket
+    have hwScale : w = fun x ↦
+        c * (fourCellEvenEndpointCoshSeed + r) x := by
+      funext x
+      have hdecomp := congrFun
+        (fourCellEvenCoshResidual_decomposition
+          w fourCellEvenEndpointCoshUnit) x
+      rw [hlow] at hdecomp
+      simp only [Pi.add_apply] at hdecomp ⊢
+      dsimp only [r]
+      calc
+        w x = c * fourCellEvenEndpointCoshSeed x + v x := hdecomp.symm
+        _ = c * (fourCellEvenEndpointCoshSeed x + c⁻¹ * v x) := by
+          field_simp [hc]
+    rw [hwScale, fourCellEvenExactBracket_const_mul]
+    exact mul_nonneg (sq_nonneg c) hseedPlus
 
 end
 
