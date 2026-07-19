@@ -3863,6 +3863,127 @@ theorem supportMinimalNegativeMonotoneBlock_rightEndpoint_absorption_strictly_fa
     not_le_of_gt hright.cross_strictly_below_arithmeticMean,
     not_le_of_gt hright.determinant_strictly_reversed⟩
 
+/-- Scalar coordinates of the terminal remote-row split
+`left + middle + right`.  Here `X`, `Y`, and `Z` are respectively the
+left--middle, middle--right, and genuinely remote left--right real crosses.
+The five nonnegative quantities are precisely the three pieces and the two
+proper adjacent unions; the last field is the full-block negativity. -/
+structure MinimalNegativeTerminalRemoteScalarConstraints
+    (A B C X Y Z : ℝ) : Prop where
+  left_nonnegative : 0 ≤ A
+  middle_nonnegative : 0 ≤ B
+  right_nonnegative : 0 ≤ C
+  leftMiddle_nonnegative : 0 ≤ A + B + 2 * X
+  middleRight_nonnegative : 0 ≤ B + C + 2 * Y
+  full_negative : A + B + C + 2 * (X + Y + Z) < 0
+
+/-- The terminal three-piece coordinates of every support-minimal negative
+block satisfy the exact scalar remote-row constraints.  This is the
+endpoint-telescope specialization of the complete interval package, with no
+estimate applied to any cross. -/
+theorem supportMinimalNegativeMonotoneBlock_terminalRemoteScalarConstraints
+    {parent : BombieriTest} {lo : ℤ} {N start len n : ℕ}
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len)
+    (hlen : len = n + 3) :
+    let leftBlock := monotoneQuarterFiniteBlock parent lo start n
+    let middleBlock := monotoneQuarterFiniteBlock parent lo (start + n) 2
+    let rightBlock := monotoneQuarterFiniteBlock parent lo
+      (start + n + 2) 1
+    MinimalNegativeTerminalRemoteScalarConstraints
+      (bombieriRealQuadraticValue leftBlock)
+      (bombieriRealQuadraticValue middleBlock)
+      (bombieriRealQuadraticValue rightBlock)
+      (bombieriTwoBlockGlobalCrossSymbol leftBlock middleBlock).re
+      (bombieriTwoBlockGlobalCrossSymbol middleBlock rightBlock).re
+      (bombieriTwoBlockGlobalCrossSymbol leftBlock rightBlock).re := by
+  dsimp only
+  let leftBlock := monotoneQuarterFiniteBlock parent lo start n
+  let middleBlock := monotoneQuarterFiniteBlock parent lo (start + n) 2
+  let rightBlock := monotoneQuarterFiniteBlock parent lo
+    (start + n + 2) 1
+  have hlenFour := four_le_length_of_supportMinimalNegativeMonotoneBlock hmin
+  have hn : 1 ≤ n := by omega
+  have hleft : 0 ≤ bombieriRealQuadraticValue leftBlock := by
+    dsimp only [leftBlock]
+    apply supportMinimalNegativeMonotoneBlock_properSubblock_nonnegative
+      hmin 0 n <;> omega
+  have hmiddle : 0 ≤ bombieriRealQuadraticValue middleBlock := by
+    dsimp only [middleBlock]
+    apply supportMinimalNegativeMonotoneBlock_properSubblock_nonnegative
+      hmin n 2 <;> omega
+  have hright : 0 ≤ bombieriRealQuadraticValue rightBlock := by
+    dsimp only [rightBlock]
+    apply supportMinimalNegativeMonotoneBlock_properSubblock_nonnegative
+      hmin (n + 2) 1 <;> omega
+  have hleftMiddleSplit := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo start (n + 2) n (by omega)
+  have hleftMiddle : leftBlock + middleBlock =
+      monotoneQuarterFiniteBlock parent lo start (n + 2) := by
+    simpa only [leftBlock, middleBlock, Nat.add_sub_cancel_left] using
+      hleftMiddleSplit.symm
+  have hmiddleRightSplit := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo (start + n) 3 2 (by omega)
+  have hmiddleRight : middleBlock + rightBlock =
+      monotoneQuarterFiniteBlock parent lo (start + n) 3 := by
+    simpa only [middleBlock, rightBlock, Nat.add_assoc,
+      show 3 - 2 = 1 by omega] using hmiddleRightSplit.symm
+  have hleftMiddleNonnegative :
+      0 ≤ bombieriRealQuadraticValue leftBlock +
+          bombieriRealQuadraticValue middleBlock +
+        2 * (bombieriTwoBlockGlobalCrossSymbol leftBlock middleBlock).re := by
+    rw [← bombieriRealQuadraticValue_add, hleftMiddle]
+    apply supportMinimalNegativeMonotoneBlock_properSubblock_nonnegative
+      hmin 0 (n + 2) <;> omega
+  have hmiddleRightNonnegative :
+      0 ≤ bombieriRealQuadraticValue middleBlock +
+          bombieriRealQuadraticValue rightBlock +
+        2 * (bombieriTwoBlockGlobalCrossSymbol middleBlock rightBlock).re := by
+    rw [← bombieriRealQuadraticValue_add, hmiddleRight]
+    apply supportMinimalNegativeMonotoneBlock_properSubblock_nonnegative
+      hmin n 3 <;> omega
+  have hwholeSplit := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo start (n + 3) (n + 2) (by omega)
+  have hwholeN : monotoneQuarterFiniteBlock parent lo start (n + 3) =
+      (leftBlock + middleBlock) + rightBlock := by
+    rw [hwholeSplit, ← hleftMiddle]
+    simp only [rightBlock, Nat.add_assoc,
+      show n + 3 - (n + 2) = 1 by omega]
+  have hwhole : monotoneQuarterFiniteBlock parent lo start len =
+      (leftBlock + middleBlock) + rightBlock := by
+    rw [hlen]
+    exact hwholeN
+  have hfull : bombieriRealQuadraticValue
+      ((leftBlock + middleBlock) + rightBlock) < 0 := by
+    rw [← hwhole]
+    exact hmin.negative
+  refine ⟨hleft, hmiddle, hright, hleftMiddleNonnegative,
+    hmiddleRightNonnegative, ?_⟩
+  rw [bombieriRealQuadraticValue_add,
+    bombieriRealQuadraticValue_add,
+    bombieriTwoBlockGlobalCrossSymbol_add_left] at hfull
+  simp only [Complex.add_re] at hfull
+  linarith
+
+/-- The terminal scalar system itself forces the endpoint-versus-prefix
+arithmetic-mean and Schur inequalities in the wrong direction.  In
+particular, retaining every adjacent nonnegativity constraint does not absorb
+the remote row `Z`; it only says that `Y + Z` must defeat the full preceding
+prefix. -/
+theorem minimalNegativeTerminalRemoteScalarConstraints_endpointAbsorption_reversed
+    {A B C X Y Z : ℝ}
+    (h : MinimalNegativeTerminalRemoteScalarConstraints A B C X Y Z) :
+    Y + Z < -(A + B + 2 * X + C) / 2 ∧
+      (A + B + 2 * X) * C < (Y + Z) ^ 2 := by
+  have hnegative :
+      (A + B + 2 * X) + C + 2 * (Y + Z) < 0 := by
+    linarith [h.full_negative]
+  constructor
+  · linarith
+  · nlinarith [h.leftMiddle_nonnegative, h.right_nonnegative,
+      sq_nonneg ((A + B + 2 * X) - C),
+      sq_nonneg ((A + B + 2 * X) + C + 2 * (Y + Z))]
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
