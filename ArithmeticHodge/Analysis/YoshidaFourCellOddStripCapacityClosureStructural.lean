@@ -4500,6 +4500,87 @@ theorem four_mul_lowerIntervalMass_le_lowerSquare_coupledRaw
   have hsetIntegral := setIntegral_congr_set (f := K) hsets
   simpa only [A, K] using hgapK.trans_eq hsetIntegral.symm
 
+/-- Set-integral form of the lower P₁ spectral surplus, ready to be kept
+alongside both orientations of the strengthened cross rectangle. -/
+theorem lowerIntervalP1Surplus_le_half_lowerSquare_coupledRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (11 / 3 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) -
+        (625 / 27 : ℝ) * (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2 ≤
+      (1 / 2 : ℝ) *
+        ∫ p : ℝ × ℝ in
+          Ico (0 : ℝ) (3 / 5) ×ˢ Ico (0 : ℝ) (3 / 5),
+            fourCellOddCoupledRawPair w p
+              ∂((volume : Measure ℝ).prod volume) := by
+  let A : Set ℝ := Icc (0 : ℝ) (3 / 5)
+  let S : ℝ × ℝ → ℝ := fun p ↦ centeredLogDifferenceKernel w p.1 p.2
+  let J : ℝ × ℝ → ℝ := fun p ↦
+    (w p.1 + w p.2) ^ 2 / (p.1 + p.2)
+  let K : ℝ × ℝ → ℝ := fourCellOddCoupledRawPair w
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hC⟩ := hlocal.exists_lipschitzOnWith_of_compact isCompact_Icc
+  have hAsub : A ⊆ Icc (-1 : ℝ) 1 := by
+    intro x hx
+    exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  have hsame : IntegrableOn S (A ×ˢ A)
+      ((volume : Measure ℝ).prod volume) := by
+    exact (integrableOn_centeredLogDifferenceKernel_prod_of_lipschitzOnWith
+      w hC).mono_set (Set.prod_mono hAsub hAsub)
+  have hJsub : A ⊆ Icc (0 : ℝ) 1 := by
+    intro x hx
+    exact ⟨hx.1, hx.2.trans (by norm_num)⟩
+  have hJ : IntegrableOn J (A ×ˢ A)
+      ((volume : Measure ℝ).prod volume) := by
+    exact (integrableOn_reflectedRawKernel_of_lipschitzOnWith_odd
+      w hw.continuous hC hodd).mono_set (Set.prod_mono hJsub hJsub)
+  have hSbridge := intervalIntegral_integral_eq_setIntegral_square
+    S 0 (3 / 5) (by norm_num) hsame
+  have hJbridge := intervalIntegral_integral_eq_setIntegral_square
+    J 0 (3 / 5) (by norm_num) hJ
+  have hgap := lowerIntervalP1Surplus_le_half_lowerNestedCoupledRaw w hw hodd
+  change (11 / 3 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) -
+      (625 / 27 : ℝ) * (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2 ≤
+    (1 / 2 : ℝ) *
+      ((∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5, S (x, y)) +
+        ∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5, J (x, y))
+    at hgap
+  rw [hSbridge, hJbridge] at hgap
+  have hsum :
+      (∫ p : ℝ × ℝ in A ×ˢ A, S p
+          ∂((volume : Measure ℝ).prod volume)) +
+        (∫ p : ℝ × ℝ in A ×ˢ A, J p
+          ∂((volume : Measure ℝ).prod volume)) =
+      ∫ p : ℝ × ℝ in A ×ˢ A, K p
+        ∂((volume : Measure ℝ).prod volume) := by
+    calc
+      _ = ∫ p : ℝ × ℝ in A ×ˢ A, S p + J p
+          ∂((volume : Measure ℝ).prod volume) :=
+        (MeasureTheory.integral_add hsame hJ).symm
+      _ = _ := by
+        apply setIntegral_congr_fun (measurableSet_Icc.prod measurableSet_Icc)
+        intro p _hp
+        dsimp only [K, S, J, fourCellOddCoupledRawPair]
+        rfl
+  have hsum' := hsum
+  dsimp only [A] at hsum'
+  have hgapK :
+      (11 / 3 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) -
+          (625 / 27 : ℝ) * (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2 ≤
+        (1 / 2 : ℝ) *
+          ∫ p : ℝ × ℝ in
+            Icc (0 : ℝ) (3 / 5) ×ˢ Icc (0 : ℝ) (3 / 5), K p
+              ∂((volume : Measure ℝ).prod volume) := by
+    rw [← hsum']
+    exact hgap
+  have hsets :
+      Ico (0 : ℝ) (3 / 5) ×ˢ Ico (0 : ℝ) (3 / 5) =ᵐ[
+        (volume : Measure ℝ).prod volume]
+      A ×ˢ A := by
+    exact Measure.set_prod_ae_eq Ico_ae_eq_Icc Ico_ae_eq_Icc
+  have hsetIntegral := setIntegral_congr_set (f := K) hsets
+  simpa only [A, K] using hgapK.trans_eq (congrArg ((1 / 2 : ℝ) * ·)
+    hsetIntegral.symm)
+
 /-- The exact square partition retains the sharp lower-square payment and
 both orientations of the weighted lower/upper cross rectangle. -/
 theorem lowerMass_add_cross_le_fullRaw_sub_stripRaw
@@ -4515,6 +4596,42 @@ theorem lowerMass_add_cross_le_fullRaw_sub_stripRaw
   exact lowerSquareBudget_add_two_mul_cross_le_fullRaw_sub_stripRaw
     w hw hodd _
       (four_mul_lowerIntervalMass_le_lowerSquare_coupledRaw w hw hodd)
+
+/-- Full raw reserve with the lower P₁ spectral surplus and the cross P₁
+square simultaneously retained. -/
+theorem lowerP1Surplus_add_weightedUpperMass_add_crossP1Square_le_rawReserve
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (11 / 3 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) -
+        (625 / 27 : ℝ) * (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2 +
+      (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) +
+        fourCellOddCrossP1Square w ≤
+      fourCellOddRawStripCancellationReserve w := by
+  let T : ℝ :=
+    (11 / 3 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) -
+      (625 / 27 : ℝ) * (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2
+  let I : ℝ := ∫ p : ℝ × ℝ in
+    Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
+      fourCellOddCoupledRawPair w p
+        ∂((volume : Measure ℝ).prod volume)
+  have hlower := lowerIntervalP1Surplus_le_half_lowerSquare_coupledRaw
+    w hw hodd
+  have hlower' : 2 * T ≤
+      ∫ p : ℝ × ℝ in
+        Ico (0 : ℝ) (3 / 5) ×ˢ Ico (0 : ℝ) (3 / 5),
+          fourCellOddCoupledRawPair w p
+            ∂((volume : Measure ℝ).prod volume) := by
+    dsimp only [T]
+    linarith
+  have hpartition := lowerSquareBudget_add_two_mul_cross_le_fullRaw_sub_stripRaw
+    w hw hodd (2 * T) hlower'
+  have hcross :=
+    six_fifths_upperStripWeightedMass_add_crossP1Square_le_cross_coupledRaw
+      w hw
+  have hparity := fourCellOddEndpointStrip_rawEnergy_eq_even_add_odd w hw
+  have heven := fourCellOddEndpointStripEvenRawEnergy_nonneg w
+  unfold fourCellOddRawStripCancellationReserve
+  dsimp only [T, I] at hpartition hcross ⊢
+  linarith
 
 /-- Full quantitative raw reserve with no discarded physical square: it pays
 twice the lower mass and keeps the exact `1/x` endpoint payment. -/
