@@ -66,6 +66,90 @@ theorem CoherentQuarterCell.directedCorrelation_eq_weighted_parent
   push_cast
   ring
 
+private theorem coherentDirectedIntegrand_integrableOn
+    (f h : BombieriTest) (x : ℝ) :
+    IntegrableOn
+      (fun y : ℝ ↦ f (x * y) * starRingEnd ℂ (h y))
+      (Set.Ioi 0) := by
+  have hcont : Continuous
+      (fun y : ℝ ↦ f (x * y) * starRingEnd ℂ (h y)) := by
+    fun_prop
+  have hhcompact : HasCompactSupport
+      (fun y : ℝ ↦ starRingEnd ℂ (h y)) := by
+    exact h.hasCompactSupport.comp_left (by simp)
+  have hcompact : HasCompactSupport
+      (fun y : ℝ ↦ f (x * y) * starRingEnd ℂ (h y)) := by
+    simpa only [Pi.mul_apply] using
+      hhcompact.mul_left (f := fun y : ℝ ↦ f (x * y))
+  exact (hcont.integrable_of_hasCompactSupport hcompact).integrableOn
+
+/-- Any finite lag-weighted family of coherent directed correlations is one
+parent correlation integral with a real scalar two-point mask. -/
+theorem finite_lagWeighted_directedCorrelation_eq_parentMask
+    {I : Type*} [DecidableEq I]
+    (g : BombieriTest) (cells : I → CoherentQuarterCell)
+    (hparent : ∀ i : I, ∀ z : ℝ,
+      (cells i).physical z = ((cells i).weight z : ℂ) * g z)
+    (pairs : Finset (I × I)) (lagWeight : ℤ → ℝ) (x : ℝ) :
+    (∑ ij ∈ pairs,
+      ((lagWeight ((cells ij.2).index - (cells ij.1).index) : ℝ) : ℂ) *
+        bombieriDirectedCorrelation
+          (cells ij.1).physical (cells ij.2).physical x) =
+      ∫ y : ℝ in Set.Ioi 0,
+        (∑ ij ∈ pairs,
+          ((lagWeight ((cells ij.2).index - (cells ij.1).index) *
+              (cells ij.1).weight (x * y) *
+              (cells ij.2).weight y : ℝ) : ℂ)) *
+          (g (x * y) * starRingEnd ℂ (g y)) := by
+  unfold bombieriDirectedCorrelation
+  calc
+    (∑ ij ∈ pairs,
+        ((lagWeight ((cells ij.2).index - (cells ij.1).index) : ℝ) : ℂ) *
+          ∫ y : ℝ in Set.Ioi 0,
+            (cells ij.1).physical (x * y) *
+              starRingEnd ℂ ((cells ij.2).physical y)) =
+      ∑ ij ∈ pairs,
+        ∫ y : ℝ in Set.Ioi 0,
+          ((lagWeight ((cells ij.2).index - (cells ij.1).index) : ℝ) : ℂ) *
+            ((cells ij.1).physical (x * y) *
+              starRingEnd ℂ ((cells ij.2).physical y)) := by
+        apply Finset.sum_congr rfl
+        intro ij hij
+        exact (MeasureTheory.integral_const_mul _ _).symm
+    _ = ∫ y : ℝ in Set.Ioi 0,
+        ∑ ij ∈ pairs,
+          ((lagWeight ((cells ij.2).index - (cells ij.1).index) : ℝ) : ℂ) *
+            ((cells ij.1).physical (x * y) *
+              starRingEnd ℂ ((cells ij.2).physical y)) := by
+        rw [MeasureTheory.integral_finset_sum]
+        intro ij hij
+        exact (coherentDirectedIntegrand_integrableOn
+          (cells ij.1).physical (cells ij.2).physical x).const_mul _
+    _ = _ := by
+      apply setIntegral_congr_fun measurableSet_Ioi
+      intro y _hy
+      change (∑ ij ∈ pairs,
+          ((lagWeight ((cells ij.2).index - (cells ij.1).index) : ℝ) : ℂ) *
+            ((cells ij.1).physical (x * y) *
+              starRingEnd ℂ ((cells ij.2).physical y))) =
+        (∑ ij ∈ pairs,
+          ((lagWeight ((cells ij.2).index - (cells ij.1).index) *
+              (cells ij.1).weight (x * y) *
+              (cells ij.2).weight y : ℝ) : ℂ)) *
+          (g (x * y) * starRingEnd ℂ (g y))
+      rw [Finset.sum_mul]
+      apply Finset.sum_congr rfl
+      intro ij hij
+      rw [hparent ij.1 (x * y), hparent ij.2 y]
+      have hstar :
+          starRingEnd ℂ (((cells ij.2).weight y : ℂ) * g y) =
+            ((cells ij.2).weight y : ℂ) * starRingEnd ℂ (g y) := by
+        rw [map_mul, starRingEnd_apply, Complex.star_def,
+          Complex.conj_ofReal]
+      rw [hstar]
+      push_cast
+      ring
+
 /-- The actual partition-of-unity construction retains substantially more
 than support and total sum: every physical cell is a nonnegative real
 pointwise multiple of one common parent, the weights sum to one on the
