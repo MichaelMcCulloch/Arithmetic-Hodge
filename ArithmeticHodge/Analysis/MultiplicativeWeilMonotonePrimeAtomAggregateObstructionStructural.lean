@@ -1202,6 +1202,157 @@ theorem aggregate_headWindow_knownData_allow_coefficientOne_failure :
   refine ⟨1, 1, 0, 2, -2, 12000, 12000, 1 / 3000, ?_⟩
   norm_num
 
+/-! ## The rational-dilation Gram matrix -/
+
+/-- The real local Gram entry between the `m`- and `n`-dilates of the parent
+on the head window.  The indices here are the actual positive dilation
+factors, rather than the zero-based Mangoldt indices. -/
+def monotonePrimeAtomLocalDilationGram
+    (parent : BombieriTest) (k : ℤ) (m n : ℕ) : ℝ :=
+  ∫ x : ℝ in Set.Icc (quarterLogLatticePoint k)
+      (quarterLogLatticePoint (k + 2)),
+    (starRingEnd ℂ (parent ((m : ℝ) * x)) *
+      parent ((n : ℝ) * x)).re
+
+/-- The local dilation Gram matrix is symmetric. -/
+theorem monotonePrimeAtomLocalDilationGram_comm
+    (parent : BombieriTest) (k : ℤ) (m n : ℕ) :
+    monotonePrimeAtomLocalDilationGram parent k m n =
+      monotonePrimeAtomLocalDilationGram parent k n m := by
+  unfold monotonePrimeAtomLocalDilationGram
+  apply setIntegral_congr_fun measurableSet_Icc
+  intro x _hx
+  change
+    (starRingEnd ℂ (parent ((m : ℝ) * x)) *
+      parent ((n : ℝ) * x)).re =
+    (starRingEnd ℂ (parent ((n : ℝ) * x)) *
+      parent ((m : ℝ) * x)).re
+  rw [starRingEnd_apply, Complex.star_def,
+    starRingEnd_apply, Complex.star_def]
+  simp only [Complex.mul_re, Complex.conj_re, Complex.conj_im]
+  ring
+
+private theorem norm_sq_finset_realCombination_eq_gram
+    (S : Finset ℕ) (c : ℕ → ℝ) (z : ℕ → ℂ) :
+    ‖∑ j ∈ S, ((c j : ℝ) : ℂ) * z j‖ ^ 2 =
+      ∑ i ∈ S, ∑ j ∈ S,
+        c i * c j * (starRingEnd ℂ (z i) * z j).re := by
+  let w : ℂ := ∑ j ∈ S, ((c j : ℝ) : ℂ) * z j
+  have hcomplex :
+      ((Complex.normSq w : ℝ) : ℂ) =
+        ∑ i ∈ S, ∑ j ∈ S,
+          (((c j * c i : ℝ) : ℂ) *
+            (starRingEnd ℂ (z j) * z i)) := by
+    rw [Complex.normSq_eq_conj_mul_self]
+    dsimp only [w]
+    simp only [map_sum, map_mul, Complex.conj_ofReal,
+      Finset.sum_mul, Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro i _hi
+    apply Finset.sum_congr rfl
+    intro j _hj
+    push_cast
+    ring
+  have hre := congrArg Complex.reCLM hcomplex
+  have hre' :
+      Complex.normSq w =
+        ∑ i ∈ S, ∑ j ∈ S,
+          c j * c i * (starRingEnd ℂ (z j) * z i).re := by
+    simpa only [map_sum Complex.reCLM, Complex.reCLM_apply,
+      Complex.ofReal_re, Complex.mul_re, Complex.ofReal_im,
+      zero_mul, sub_zero] using hre
+  rw [Complex.normSq_eq_norm_sq] at hre'
+  change ‖w‖ ^ 2 = _
+  calc
+    ‖w‖ ^ 2 = ∑ i ∈ S, ∑ j ∈ S,
+        c j * c i * (starRingEnd ℂ (z j) * z i).re := hre'
+    _ = ∑ i ∈ S, ∑ j ∈ S,
+        c i * c j * (starRingEnd ℂ (z i) * z j).re := by
+      apply Finset.sum_congr rfl
+      intro i _hi
+      apply Finset.sum_congr rfl
+      intro j _hj
+      have hsym :
+          (starRingEnd ℂ (z j) * z i).re =
+            (starRingEnd ℂ (z i) * z j).re := by
+        rw [starRingEnd_apply, Complex.star_def,
+          starRingEnd_apply, Complex.star_def]
+        simp only [Complex.mul_re, Complex.conj_re, Complex.conj_im]
+        ring
+      rw [hsym]
+      ring
+
+private theorem monotonePrimeAtomLocalDilationGram_integrable
+    (parent : BombieriTest) (k : ℤ) (m n : ℕ) :
+    IntegrableOn
+      (fun x : ℝ ↦
+        (starRingEnd ℂ (parent ((m : ℝ) * x)) *
+          parent ((n : ℝ) * x)).re)
+      (Set.Icc (quarterLogLatticePoint k)
+        (quarterLogLatticePoint (k + 2))) := by
+  have hcont : Continuous (fun x : ℝ ↦
+      (starRingEnd ℂ (parent ((m : ℝ) * x)) *
+        parent ((n : ℝ) * x)).re) := by
+    fun_prop
+  exact hcont.continuousOn.integrableOn_compact isCompact_Icc
+
+/-- Exact Gram expansion of the localized Mangoldt operator.  All
+off-diagonal interactions are retained as rational-dilation overlaps; no
+absolute values or atom-count estimate has been introduced. -/
+theorem monotonePrimeAtomAggregateHeadWindowEnergy_eq_dilationGram
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    monotonePrimeAtomAggregateHeadWindowEnergy parent k S =
+      ∑ i ∈ S, ∑ j ∈ S,
+        (ArithmeticFunction.vonMangoldt (i + 1) : ℝ) *
+          (ArithmeticFunction.vonMangoldt (j + 1) : ℝ) *
+            monotonePrimeAtomLocalDilationGram parent k (i + 1) (j + 1) := by
+  rw [monotonePrimeAtomAggregateHeadWindowEnergy_eq_vonMangoldtDilates]
+  let I : Set ℝ := Set.Icc (quarterLogLatticePoint k)
+    (quarterLogLatticePoint (k + 2))
+  let c : ℕ → ℝ := fun j ↦ ArithmeticFunction.vonMangoldt (j + 1)
+  let z : ℕ → ℝ → ℂ := fun j x ↦ parent (((j + 1 : ℕ) : ℝ) * x)
+  have hpoint (x : ℝ) :
+      ‖∑ j ∈ S, ((c j : ℝ) : ℂ) * z j x‖ ^ 2 =
+        ∑ i ∈ S, ∑ j ∈ S,
+          c i * c j * (starRingEnd ℂ (z i x) * z j x).re :=
+    norm_sq_finset_realCombination_eq_gram S c (fun j ↦ z j x)
+  have hbase (i : ℕ) (_hi : i ∈ S) (j : ℕ) (_hj : j ∈ S) :
+      IntegrableOn
+        (fun x : ℝ ↦ c i * c j *
+          (starRingEnd ℂ (z i x) * z j x).re) I := by
+    exact (monotonePrimeAtomLocalDilationGram_integrable
+      parent k (i + 1) (j + 1)).const_mul (c i * c j)
+  calc
+    (∫ x : ℝ in I,
+        ‖∑ j ∈ S, ((c j : ℝ) : ℂ) * z j x‖ ^ 2) =
+        ∫ x : ℝ in I, ∑ i ∈ S, ∑ j ∈ S,
+          c i * c j * (starRingEnd ℂ (z i x) * z j x).re := by
+      apply setIntegral_congr_fun measurableSet_Icc
+      intro x _hx
+      exact hpoint x
+    _ = ∑ i ∈ S, ∑ j ∈ S,
+        ∫ x : ℝ in I, c i * c j *
+          (starRingEnd ℂ (z i x) * z j x).re := by
+      rw [MeasureTheory.integral_finset_sum]
+      · apply Finset.sum_congr rfl
+        intro i hi
+        rw [MeasureTheory.integral_finset_sum]
+        intro j hj
+        exact hbase i hi j hj
+      · intro i hi
+        exact integrable_finset_sum S fun j hj ↦ hbase i hi j hj
+    _ = ∑ i ∈ S, ∑ j ∈ S,
+        c i * c j * monotonePrimeAtomLocalDilationGram
+          parent k (i + 1) (j + 1) := by
+      apply Finset.sum_congr rfl
+      intro i _hi
+      apply Finset.sum_congr rfl
+      intro j _hj
+      rw [MeasureTheory.integral_const_mul]
+      rfl
+    _ = _ := by
+      rfl
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
