@@ -1,0 +1,882 @@
+import ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityAssemblyStructural
+import ArithmeticHodge.Analysis.YoshidaFourCellOddPolarPotentialStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicRankResidualBound
+
+set_option autoImplicit false
+
+open MeasureTheory Real Set
+
+namespace ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityClosureStructural
+
+noncomputable section
+
+open YoshidaEndpointPotentialBound
+open YoshidaConstantBounds
+open YoshidaEndpointPotentialIntegrable
+open YoshidaEndpointWeightedCauchy
+open YoshidaFourCellOddPolarPotentialStructural
+open YoshidaFourCellOddStripCapacityAssemblyStructural
+open YoshidaFourCellOddEndpointStripCoercivityStructural
+open YoshidaFourCellRawParityFoldStructural
+open YoshidaFourCellRegularParityFoldStructural
+open YoshidaFourCellParityHalfFoldStructural
+open YoshidaFourCellParityOperatorStructural
+open YoshidaFactorTwoPhaseIntrinsicRankResidualBound
+
+/-!
+# Sharp rank control for the odd four-cell strip operator
+
+The previous pointwise polar payment used the deliberately loose estimate
+`sinh (a x / 2) <= x / 3`.  At the production halfwidth one instead has the
+rational bound `sinh (a x / 2) <= 7 x / 25`.  Combined with the quadratic
+part of the endpoint potential, this lowers the cost of the complete odd
+rank from `8 / 9` to `343 / 625` of one positive-half potential copy.
+-/
+
+/-- The exact positive base of the strip operator before subtracting its one
+negative hyperbolic rank.  No regular-row, prime, or raw-energy term has been
+estimated in this definition. -/
+def fourCellOddStripCapacityBase (w : ℝ → ℝ) : ℝ :=
+  (1 / 2 : ℝ) * fourCellOddEndpointStripEvenRawEnergy w +
+    Real.sqrt 2 * Real.log 2 * fourCellOddEndpointStripEvenMass w +
+    (2 - Real.sqrt 2 * Real.log 2) *
+      fourCellOddEndpointStripOddMass w +
+    (1 / 2 : ℝ) *
+      (fourCellPositiveHalfRawSameSignEnergy w -
+        fourCellOddEndpointStripRawEnergy w) +
+    (1 / 2 : ℝ) * fourCellPositiveHalfRawReflectedEnergy w (-1) +
+    2 * (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * w x ^ 2) -
+    2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) *
+      (∫ x : ℝ in 0..1, w x ^ 2) +
+    fourCellOperatorHalfWidth *
+      (fourCellPositiveHalfRegularSameSignSquare w
+          fourCellOperatorHalfWidth +
+        fourCellPositiveHalfRegularReflectedSquare w
+          fourCellOperatorHalfWidth (-1)) -
+    2 * fourCellOperatorHalfWidth *
+      fourCellPositiveHalfRegularRowMass w fourCellOperatorHalfWidth
+
+/-- Exact rank-one normal form of the retained strip operator. -/
+theorem fourCellOddStripCapacityLowerOperator_eq_base_sub_rank
+    (w : ℝ → ℝ) :
+    fourCellOddStripCapacityLowerOperator w =
+      fourCellOddStripCapacityBase w -
+        8 * fourCellOperatorHalfWidth *
+          fourCellPositiveSinhMoment w
+            (fourCellOperatorHalfWidth / 2) ^ 2 := by
+  unfold fourCellOddStripCapacityLowerOperator
+    fourCellOddStripCapacityBase
+  ring
+
+/-- The rational diagonal allocation selected by the exact-row Schur
+problem: a small scalar mass plus `7 / 50` of the endpoint potential. -/
+def fourCellOddStripBlendedAllocation (w : ℝ → ℝ) : ℝ :=
+  (3 / 200 : ℝ) * (∫ x : ℝ in 0..1, w x ^ 2) +
+    (7 / 50 : ℝ) *
+      (∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2)
+
+/-- Pointwise multiplication weight behind the blended allocation. -/
+def fourCellOddStripSchurWeight (x : ℝ) : ℝ :=
+  (3 / 200 : ℝ) + (7 / 50 : ℝ) * yoshidaEndpointPotential x
+
+/-- A low-degree rational majorant for the dual Schur density. -/
+def fourCellOddStripSchurPolynomial (x : ℝ) : ℝ :=
+  (1 / 10 : ℝ) * x + (10 / 3 : ℝ) * x ^ 2 -
+    (11 / 2 : ℝ) * x ^ 3 + (249 / 100 : ℝ) * x ^ 4
+
+private def fourCellOddStripSchurQuarticDenominator (x : ℝ) : ℝ :=
+  (3 / 200 : ℝ) + (7 / 100 : ℝ) * x ^ 2 +
+    (7 / 200 : ℝ) * x ^ 4
+
+private def fourCellOddStripSchurProductGapQuotient (x : ℝ) : ℝ :=
+  (167328 * x ^ 7 - 369600 * x ^ 6 + 558656 * x ^ 5 -
+      732480 * x ^ 4 + 519712 * x ^ 3 - 144960 * x ^ 2 +
+      4125 * x + 2880) / 1920000
+
+private theorem fourCellOddStripSchurProductGapQuotient_nonneg
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    0 ≤ fourCellOddStripSchurProductGapQuotient x := by
+  rcases le_total x (1 / 3 : ℝ) with hx | hx
+  · let t : ℝ := 3 * x
+    have ht0 : 0 ≤ t := by dsimp only [t]; positivity
+    have ht1 : t ≤ 1 := by dsimp only [t]; linarith
+    have htcomp : 0 ≤ 1 - t := by linarith
+    have hbern : fourCellOddStripSchurProductGapQuotient x =
+        (3 / 2000 : ℝ) * (1 - t) ^ 7 +
+        (4307 / 384000 : ℝ) * t * (1 - t) ^ 6 +
+        (15787 / 576000 : ℝ) * t ^ 2 * (1 - t) ^ 5 +
+        (1623787 / 51840000 : ℝ) * t ^ 3 * (1 - t) ^ 4 +
+        (237497 / 12960000 : ℝ) * t ^ 4 * (1 - t) ^ 3 +
+        (2600099 / 466560000 : ℝ) * t ^ 5 * (1 - t) ^ 2 +
+        (222727 / 233280000 : ℝ) * t ^ 6 * (1 - t) +
+        (54061 / 466560000 : ℝ) * t ^ 7 := by
+      unfold fourCellOddStripSchurProductGapQuotient
+      dsimp only [t]
+      ring
+    rw [hbern]
+    positivity
+  · rcases le_total x (2 / 3 : ℝ) with hx' | hx'
+    · let t : ℝ := 3 * x - 1
+      have ht0 : 0 ≤ t := by dsimp only [t]; linarith
+      have ht1 : t ≤ 1 := by dsimp only [t]; linarith
+      have htcomp : 0 ≤ 1 - t := by linarith
+      have hbern : fourCellOddStripSchurProductGapQuotient x =
+          (54061 / 466560000 : ℝ) * (1 - t) ^ 7 +
+          (173 / 259200 : ℝ) * t * (1 - t) ^ 6 +
+          (71831 / 18662400 : ℝ) * t ^ 2 * (1 - t) ^ 5 +
+          (976823 / 77760000 : ℝ) * t ^ 3 * (1 - t) ^ 4 +
+          (9220427 / 466560000 : ℝ) * t ^ 4 * (1 - t) ^ 3 +
+          (1781893 / 116640000 : ℝ) * t ^ 5 * (1 - t) ^ 2 +
+          (2555657 / 466560000 : ℝ) * t ^ 6 * (1 - t) +
+          (172301 / 233280000 : ℝ) * t ^ 7 := by
+        unfold fourCellOddStripSchurProductGapQuotient
+        dsimp only [t]
+        ring
+      rw [hbern]
+      positivity
+    · let t : ℝ := 3 * x - 2
+      have ht0 : 0 ≤ t := by dsimp only [t]; linarith
+      have ht1 : t ≤ 1 := by dsimp only [t]; linarith
+      have htcomp : 0 ≤ 1 - t := by linarith
+      have hbern : fourCellOddStripSchurProductGapQuotient x =
+          (172301 / 233280000 : ℝ) * (1 - t) ^ 7 +
+          (756257 / 155520000 : ℝ) * t * (1 - t) ^ 6 +
+          (337891 / 29160000 : ℝ) * t ^ 2 * (1 - t) ^ 5 +
+          (1734811 / 155520000 : ℝ) * t ^ 3 * (1 - t) ^ 4 +
+          (23563 / 8640000 : ℝ) * t ^ 4 * (1 - t) ^ 3 +
+          (18527 / 17280000 : ℝ) * t ^ 5 * (1 - t) ^ 2 +
+          (7121 / 1440000 : ℝ) * t ^ 6 * (1 - t) +
+          (1887 / 640000 : ℝ) * t ^ 7 := by
+        unfold fourCellOddStripSchurProductGapQuotient
+        dsimp only [t]
+        ring
+      rw [hbern]
+      positivity
+
+private theorem fourCellOddStripSchur_productGap_nonneg
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    0 ≤ fourCellOddStripSchurPolynomial x *
+        fourCellOddStripSchurQuarticDenominator x -
+      (49 / 1024 : ℝ) * x ^ 2 := by
+  have hq := fourCellOddStripSchurProductGapQuotient_nonneg hx0 hx1
+  have hid : fourCellOddStripSchurPolynomial x *
+        fourCellOddStripSchurQuarticDenominator x -
+      (49 / 1024 : ℝ) * x ^ 2 =
+        x * fourCellOddStripSchurProductGapQuotient x := by
+    unfold fourCellOddStripSchurPolynomial
+      fourCellOddStripSchurQuarticDenominator
+      fourCellOddStripSchurProductGapQuotient
+    ring
+  rw [hid]
+  exact mul_nonneg hx0 hq
+
+private theorem fourCellOddStripSchurQuarticDenominator_pos
+    (x : ℝ) : 0 < fourCellOddStripSchurQuarticDenominator x := by
+  unfold fourCellOddStripSchurQuarticDenominator
+  positivity
+
+/-- The rational density forced by the Taylor and quartic envelopes is
+bounded pointwise by the explicit Schur polynomial. -/
+theorem fourCellOddStripSchur_rationalDensity_le_polynomial
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    (49 / 1024 : ℝ) * x ^ 2 /
+        fourCellOddStripSchurQuarticDenominator x ≤
+      fourCellOddStripSchurPolynomial x := by
+  rw [div_le_iff₀ (fourCellOddStripSchurQuarticDenominator_pos x)]
+  have hgap := fourCellOddStripSchur_productGap_nonneg hx0 hx1
+  linarith
+
+theorem integral_fourCellOddStripSchurPolynomial :
+    (∫ x : ℝ in 0..1, fourCellOddStripSchurPolynomial x) =
+      2557 / 9000 := by
+  unfold fourCellOddStripSchurPolynomial
+  have h1 : IntervalIntegrable (fun x : ℝ ↦ (1 / 10 : ℝ) * x)
+      volume 0 1 :=
+    (by fun_prop : Continuous (fun x : ℝ ↦ (1 / 10 : ℝ) * x))
+      |>.intervalIntegrable _ _
+  have h2 : IntervalIntegrable (fun x : ℝ ↦ (10 / 3 : ℝ) * x ^ 2)
+      volume 0 1 :=
+    (by fun_prop : Continuous (fun x : ℝ ↦ (10 / 3 : ℝ) * x ^ 2))
+      |>.intervalIntegrable _ _
+  have h3 : IntervalIntegrable (fun x : ℝ ↦ (11 / 2 : ℝ) * x ^ 3)
+      volume 0 1 :=
+    (by fun_prop : Continuous (fun x : ℝ ↦ (11 / 2 : ℝ) * x ^ 3))
+      |>.intervalIntegrable _ _
+  have h4 : IntervalIntegrable (fun x : ℝ ↦ (249 / 100 : ℝ) * x ^ 4)
+      volume 0 1 :=
+    (by fun_prop : Continuous (fun x : ℝ ↦ (249 / 100 : ℝ) * x ^ 4))
+      |>.intervalIntegrable _ _
+  have hi1 : (∫ x : ℝ in 0..1, (1 / 10 : ℝ) * x) = 1 / 20 := by
+    rw [show (fun x : ℝ ↦ (1 / 10 : ℝ) * x) =
+        fun x ↦ (1 / 10 : ℝ) * x ^ 1 by
+      funext x
+      ring,
+      intervalIntegral.integral_const_mul, integral_pow]
+    norm_num
+  rw [intervalIntegral.integral_add ((h1.add h2).sub h3) h4,
+    intervalIntegral.integral_sub (h1.add h2) h3,
+    intervalIntegral.integral_add h1 h2]
+  simp only [intervalIntegral.integral_const_mul, integral_pow]
+  rw [hi1]
+  norm_num
+
+theorem integral_fourCellOddStripSchurPolynomial_lt_two_sevenths :
+    (∫ x : ℝ in 0..1, fourCellOddStripSchurPolynomial x) <
+      (2 / 7 : ℝ) := by
+  rw [integral_fourCellOddStripSchurPolynomial]
+  norm_num
+
+private theorem fourCellOddStripSchurQuarticDenominator_le_weight
+    {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
+    fourCellOddStripSchurQuarticDenominator x ≤
+      fourCellOddStripSchurWeight x := by
+  have hquartic := quartic_le_endpointPotential
+    (show |x| < 1 by
+      rw [abs_lt]
+      constructor <;> linarith [hx.1, hx.2])
+  unfold fourCellOddStripSchurQuarticDenominator
+    fourCellOddStripSchurWeight yoshidaEndpointQuartic at *
+  nlinarith
+
+private theorem fourCellOddStripSchurWeight_pos_of_mem_Ioo
+    {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
+    0 < fourCellOddStripSchurWeight x := by
+  exact (fourCellOddStripSchurQuarticDenominator_pos x).trans_le
+    (fourCellOddStripSchurQuarticDenominator_le_weight hx)
+
+/-- The integral of the pointwise Schur weight against a profile square is
+exactly the blended allocation. -/
+theorem integral_fourCellOddStripSchurWeight_mul_sq
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ x : ℝ in 0..1, fourCellOddStripSchurWeight x * w x ^ 2) =
+      fourCellOddStripBlendedAllocation w := by
+  have hmass : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2) volume 0 1 :=
+    (hw.pow 2).intervalIntegrable _ _
+  have hpotentialFull := intervalIntegrable_endpointPotential_mul_sq w hw
+  have hpotential : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * w x ^ 2)
+      volume 0 1 := hpotentialFull.mono_set (by
+    intro x hx
+    norm_num at hx ⊢
+    constructor <;> linarith : uIcc (0 : ℝ) 1 ⊆ uIcc (-1 : ℝ) 1)
+  rw [show (fun x : ℝ ↦ fourCellOddStripSchurWeight x * w x ^ 2) =
+      fun x ↦ (3 / 200 : ℝ) * (w x ^ 2) +
+        (7 / 50 : ℝ) *
+          (yoshidaEndpointPotential x * w x ^ 2) by
+    funext x
+    unfold fourCellOddStripSchurWeight
+    ring]
+  rw [intervalIntegral.integral_add
+      (hmass.const_mul (3 / 200)) (hpotential.const_mul (7 / 50)),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul]
+  rfl
+
+/-- Exact two-obligation Schur closure.  This is stronger than merely
+replacing the rank by a multiple of the potential: the scalar and potential
+pieces must remain coupled in both hypotheses. -/
+theorem fourCellOddStripCapacityLowerOperator_nonneg_of_blendedSchur
+    (w : ℝ → ℝ)
+    (hbase : fourCellOddStripBlendedAllocation w ≤
+      fourCellOddStripCapacityBase w)
+    (hrank : 8 * fourCellOperatorHalfWidth *
+        fourCellPositiveSinhMoment w
+          (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+      fourCellOddStripBlendedAllocation w) :
+    0 ≤ fourCellOddStripCapacityLowerOperator w := by
+  rw [fourCellOddStripCapacityLowerOperator_eq_base_sub_rank]
+  linarith
+
+private theorem sinh_le_mul_exp_self {z : ℝ} :
+    Real.sinh z ≤ z * Real.exp z := by
+  have hbase := Real.add_one_le_exp (-2 * z)
+  have hmul := mul_le_mul_of_nonneg_left hbase (Real.exp_pos z).le
+  have hprod : Real.exp z * (1 - 2 * z) ≤ Real.exp (-z) := by
+    calc
+      Real.exp z * (1 - 2 * z) = Real.exp z * (-2 * z + 1) := by ring
+      _ ≤ Real.exp z * Real.exp (-2 * z) := hmul
+      _ = Real.exp (-z) := by
+        rw [← Real.exp_add]
+        congr 1
+        ring
+  rw [Real.sinh_eq]
+  nlinarith [Real.exp_pos z]
+
+private theorem fourCellOperatorHalfWidth_lt_seven_sixteenths :
+    fourCellOperatorHalfWidth < (7 / 16 : ℝ) := by
+  have hlog := strict_log_two_bounds.2
+  unfold fourCellOperatorHalfWidth
+  norm_num at hlog ⊢
+  linarith
+
+/-- Rational pointwise envelope for the production odd representer. -/
+theorem fourCell_sinh_weight_le_seven_twenty_fifths
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    Real.sinh (fourCellOperatorHalfWidth * x / 2) ≤ (7 / 25 : ℝ) * x := by
+  let z := fourCellOperatorHalfWidth * x / 2
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hz0 : 0 ≤ z := by
+    dsimp only [z]
+    positivity
+  have hz : z ≤ (7 / 32 : ℝ) := by
+    dsimp only [z]
+    nlinarith [fourCellOperatorHalfWidth_lt_seven_sixteenths]
+  have hzOne : z < 1 := lt_of_le_of_lt hz (by norm_num)
+  have hexp := Real.exp_bound_div_one_sub_of_interval hz0 hzOne
+  have hden : 1 / (1 - z) ≤ (32 / 25 : ℝ) := by
+    rw [div_le_iff₀ (by linarith : 0 < 1 - z)]
+    nlinarith
+  have hexpBound : Real.exp z ≤ (32 / 25 : ℝ) := hexp.trans hden
+  have hsinh := sinh_le_mul_exp_self (z := z)
+  have hzLinear : z ≤ (7 / 32 : ℝ) * x := by
+    dsimp only [z]
+    nlinarith [fourCellOperatorHalfWidth_lt_seven_sixteenths]
+  calc
+    Real.sinh z ≤ z * Real.exp z := hsinh
+    _ ≤ z * (32 / 25 : ℝ) :=
+      mul_le_mul_of_nonneg_left hexpBound hz0
+    _ ≤ ((7 / 32 : ℝ) * x) * (32 / 25 : ℝ) :=
+      mul_le_mul_of_nonneg_right hzLinear (by norm_num)
+    _ = (7 / 25 : ℝ) * x := by ring
+
+/-- Taylor-sharp linear envelope needed by the blended mass--potential
+Schur weight.  Unlike the potential-only estimate, its constant is within
+one percent of the exact production slope. -/
+theorem fourCell_sinh_weight_le_seven_thirty_seconds
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    Real.sinh (fourCellOperatorHalfWidth * x / 2) ≤ (7 / 32 : ℝ) * x := by
+  let lambda : ℝ := fourCellOperatorHalfWidth / 2
+  let c : ℝ := 1733 / 8000
+  let z : ℝ := lambda * x
+  have hlog := strict_log_two_bounds.2
+  have hlambda : 0 ≤ lambda := by
+    dsimp only [lambda]
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hlambda_lt : lambda < c := by
+    dsimp only [lambda, c]
+    unfold fourCellOperatorHalfWidth
+    norm_num at hlog ⊢
+    linarith
+  have hc0 : 0 ≤ c := by norm_num [c]
+  have hz0 : 0 ≤ z := by
+    dsimp only [z]
+    positivity
+  have hzLinear : z ≤ c * x := by
+    dsimp only [z]
+    exact mul_le_mul_of_nonneg_right hlambda_lt.le hx0
+  have hcx : c * x ≤ c := by
+    simpa only [mul_one] using mul_le_mul_of_nonneg_left hx1 hc0
+  have hzc : z ≤ c := hzLinear.trans hcx
+  have hzone : z < 1 := hzc.trans_lt (by norm_num [c])
+  have hexp := Real.exp_bound_div_one_sub_of_interval hz0 hzone
+  have hden : 1 / (1 - z) ≤ (32 / 25 : ℝ) := by
+    rw [div_le_iff₀ (by linarith : 0 < 1 - z)]
+    dsimp only [c] at hzc
+    norm_num at hzc ⊢
+    linarith
+  have hexpBound : Real.exp z ≤ (32 / 25 : ℝ) := hexp.trans hden
+  have hcoshExp : Real.cosh z ≤ Real.exp z := by
+    rw [Real.cosh_eq]
+    have hneg : Real.exp (-z) ≤ Real.exp z := by
+      rw [Real.exp_le_exp]
+      linarith
+    linarith
+  have hcosh : Real.cosh z ≤ (32 / 25 : ℝ) := hcoshExp.trans hexpBound
+  have htaylor := abs_sinh_sub_cubic_le z
+  have htaylorUpper :
+      Real.sinh z ≤ z + z ^ 3 / 6 + Real.cosh z * z ^ 5 / 120 := by
+    have hle := (le_abs_self (Real.sinh z - z - z ^ 3 / 6)).trans htaylor
+    have hle' : Real.sinh z - z - z ^ 3 / 6 ≤
+        Real.cosh z * z ^ 5 / 120 := by
+      simpa [abs_of_nonneg hz0] using hle
+    linarith
+  have hzsq : z ^ 2 ≤ c ^ 2 :=
+    (sq_le_sq₀ hz0 hc0).2 hzc
+  have hzfour : z ^ 4 ≤ c ^ 4 := by
+    nlinarith [sq_nonneg (z ^ 2), sq_nonneg (c ^ 2)]
+  have hzthree : z ^ 3 ≤ c ^ 2 * z := by
+    nlinarith
+  have hzfive : z ^ 5 ≤ c ^ 4 * z := by
+    nlinarith
+  have hzfactor :
+      Real.sinh z ≤ z *
+        (1 + c ^ 2 / 6 + (32 / 25 : ℝ) * c ^ 4 / 120) := by
+    calc
+      Real.sinh z ≤ z + z ^ 3 / 6 + Real.cosh z * z ^ 5 / 120 :=
+        htaylorUpper
+      _ ≤ z + (c ^ 2 * z) / 6 + (32 / 25 : ℝ) *
+          (c ^ 4 * z) / 120 := by
+        gcongr
+      _ = z *
+          (1 + c ^ 2 / 6 + (32 / 25 : ℝ) * c ^ 4 / 120) := by ring
+  have hfactor0 : 0 ≤
+      1 + c ^ 2 / 6 + (32 / 25 : ℝ) * c ^ 4 / 120 := by positivity
+  have hrat : c *
+      (1 + c ^ 2 / 6 + (32 / 25 : ℝ) * c ^ 4 / 120) <
+        (7 / 32 : ℝ) := by
+    norm_num [c]
+  rw [show fourCellOperatorHalfWidth * x / 2 = z by
+    dsimp only [z, lambda]
+    ring]
+  calc
+    Real.sinh z ≤ z *
+        (1 + c ^ 2 / 6 + (32 / 25 : ℝ) * c ^ 4 / 120) := hzfactor
+    _ ≤ (c * x) *
+        (1 + c ^ 2 / 6 + (32 / 25 : ℝ) * c ^ 4 / 120) :=
+      mul_le_mul_of_nonneg_right hzLinear hfactor0
+    _ ≤ (7 / 32 : ℝ) * x := by
+      nlinarith
+
+/-- Pointwise dual-density domination for the blended Schur weight. -/
+theorem fourCellOddStripSchur_sinhDensity_le_polynomial
+    {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
+    Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+        fourCellOddStripSchurWeight x ≤
+      fourCellOddStripSchurPolynomial x := by
+  have hsinh0 : 0 ≤ Real.sinh (fourCellOperatorHalfWidth * x / 2) := by
+    rw [Real.sinh_nonneg_iff]
+    have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+      unfold fourCellOperatorHalfWidth
+      positivity
+    exact div_nonneg (mul_nonneg ha0 hx.1.le) (by norm_num)
+  have hsinh := fourCell_sinh_weight_le_seven_thirty_seconds
+    hx.1.le hx.2.le
+  have hsinhSq :
+      Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 ≤
+        (49 / 1024 : ℝ) * x ^ 2 := by
+    have hsquare :=
+      (sq_le_sq₀ hsinh0 (mul_nonneg (by norm_num) hx.1.le)).2 hsinh
+    nlinarith
+  have hden := fourCellOddStripSchurQuarticDenominator_le_weight hx
+  have hden0 := fourCellOddStripSchurQuarticDenominator_pos x
+  have hweight0 := fourCellOddStripSchurWeight_pos_of_mem_Ioo hx
+  calc
+    Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+        fourCellOddStripSchurWeight x ≤
+      ((49 / 1024 : ℝ) * x ^ 2) /
+        fourCellOddStripSchurWeight x :=
+      div_le_div_of_nonneg_right hsinhSq hweight0.le
+    _ ≤ ((49 / 1024 : ℝ) * x ^ 2) /
+        fourCellOddStripSchurQuarticDenominator x := by
+      exact div_le_div_of_nonneg_left (by positivity) hden0 hden
+    _ ≤ fourCellOddStripSchurPolynomial x :=
+      fourCellOddStripSchur_rationalDensity_le_polynomial hx.1.le hx.2.le
+
+/-- The exact dual norm of the sinh representer in the blended weight is
+strictly smaller than `2 / 7`. -/
+theorem integral_fourCellOddStripSchur_sinhDensity_lt_two_sevenths :
+    (∫ x : ℝ in 0..1,
+      Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+        fourCellOddStripSchurWeight x) < (2 / 7 : ℝ) := by
+  let F : ℝ → ℝ := fun x ↦
+    Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+      fourCellOddStripSchurWeight x
+  let P : ℝ → ℝ := fourCellOddStripSchurPolynomial
+  have hPint : IntervalIntegrable P volume 0 1 := by
+    exact (by
+      dsimp only [P]
+      unfold fourCellOddStripSchurPolynomial
+      fun_prop : Continuous P) |>.intervalIntegrable _ _
+  have hFmeas : AEStronglyMeasurable F
+      (volume.restrict (Ioc (0 : ℝ) 1)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [F]
+    unfold fourCellOddStripSchurWeight yoshidaEndpointPotential
+    fun_prop
+  have hPset : IntegrableOn P (Ioc (0 : ℝ) 1) :=
+    (intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)).1 hPint
+  have hFset : IntegrableOn F (Ioc (0 : ℝ) 1) := by
+    apply hPset.mono' hFmeas
+    filter_upwards [ae_restrict_mem measurableSet_Ioc,
+        MeasureTheory.Measure.ae_ne
+          (volume.restrict (Ioc (0 : ℝ) 1)) (1 : ℝ)] with x hx hx1
+    have hxoo : x ∈ Ioo (0 : ℝ) 1 := ⟨hx.1, lt_of_le_of_ne hx.2 hx1⟩
+    have hle := fourCellOddStripSchur_sinhDensity_le_polynomial hxoo
+    have hF0 : 0 ≤ F x := by
+      dsimp only [F]
+      exact div_nonneg (sq_nonneg _)
+        (fourCellOddStripSchurWeight_pos_of_mem_Ioo hxoo).le
+    rw [Real.norm_eq_abs, abs_of_nonneg hF0]
+    simpa only [F, P] using hle
+  have hFint : IntervalIntegrable F volume 0 1 :=
+    (intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)).2 hFset
+  have hmono : (∫ x : ℝ in 0..1, F x) ≤ ∫ x : ℝ in 0..1, P x := by
+    apply intervalIntegral.integral_mono_on_of_le_Ioo
+      (by norm_num) hFint hPint
+    intro x hx
+    exact fourCellOddStripSchur_sinhDensity_le_polynomial hx
+  dsimp only [F, P] at hmono ⊢
+  exact hmono.trans_lt
+    integral_fourCellOddStripSchurPolynomial_lt_two_sevenths
+
+private theorem intervalIntegrable_fourCellOddStripSchur_sinhDensity :
+    IntervalIntegrable
+      (fun x : ℝ ↦
+        Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+          fourCellOddStripSchurWeight x) volume 0 1 := by
+  let F : ℝ → ℝ := fun x ↦
+    Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+      fourCellOddStripSchurWeight x
+  let P : ℝ → ℝ := fourCellOddStripSchurPolynomial
+  have hPint : IntervalIntegrable P volume 0 1 := by
+    exact (by
+      dsimp only [P]
+      unfold fourCellOddStripSchurPolynomial
+      fun_prop : Continuous P) |>.intervalIntegrable _ _
+  have hFmeas : AEStronglyMeasurable F
+      (volume.restrict (Ioc (0 : ℝ) 1)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [F]
+    unfold fourCellOddStripSchurWeight yoshidaEndpointPotential
+    fun_prop
+  have hPset : IntegrableOn P (Ioc (0 : ℝ) 1) :=
+    (intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)).1 hPint
+  have hFset : IntegrableOn F (Ioc (0 : ℝ) 1) := by
+    apply hPset.mono' hFmeas
+    filter_upwards [ae_restrict_mem measurableSet_Ioc,
+        MeasureTheory.Measure.ae_ne
+          (volume.restrict (Ioc (0 : ℝ) 1)) (1 : ℝ)] with x hx hx1
+    have hxoo : x ∈ Ioo (0 : ℝ) 1 := ⟨hx.1, lt_of_le_of_ne hx.2 hx1⟩
+    have hle := fourCellOddStripSchur_sinhDensity_le_polynomial hxoo
+    have hF0 : 0 ≤ F x := by
+      dsimp only [F]
+      exact div_nonneg (sq_nonneg _)
+        (fourCellOddStripSchurWeight_pos_of_mem_Ioo hxoo).le
+    rw [Real.norm_eq_abs, abs_of_nonneg hF0]
+    simpa only [F, P] using hle
+  exact (intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)).2 hFset
+
+private theorem intervalIntegrable_fourCellOddStripSchurWeight_mul_sq
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    IntervalIntegrable
+      (fun x : ℝ ↦ fourCellOddStripSchurWeight x * w x ^ 2)
+      volume 0 1 := by
+  have hmass : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2) volume 0 1 :=
+    (hw.pow 2).intervalIntegrable _ _
+  have hpotentialFull := intervalIntegrable_endpointPotential_mul_sq w hw
+  have hpotential : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * w x ^ 2)
+      volume 0 1 := hpotentialFull.mono_set (by
+    intro x hx
+    norm_num at hx ⊢
+    constructor <;> linarith : uIcc (0 : ℝ) 1 ⊆ uIcc (-1 : ℝ) 1)
+  apply (hmass.const_mul (3 / 200)).add
+    (hpotential.const_mul (7 / 50)) |>.congr
+  intro x _hx
+  unfold fourCellOddStripSchurWeight
+  ring
+
+/-- Weighted Cauchy--Schwarz with the exact blended diagonal allocation. -/
+theorem fourCellPositiveSinhMoment_sq_le_blendedDual_mul_allocation
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    fourCellPositiveSinhMoment w
+        (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+      (∫ x : ℝ in 0..1,
+        Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+          fourCellOddStripSchurWeight x) *
+        fourCellOddStripBlendedAllocation w := by
+  let μ : Measure ℝ := volume.restrict (Ioc (0 : ℝ) 1)
+  let W : ℝ → ℝ := fourCellOddStripSchurWeight
+  let G : ℝ → ℝ := fun x ↦
+    Real.sinh (fourCellOperatorHalfWidth * x / 2)
+  have hW : ∀ᵐ x ∂μ, 0 < W x := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc,
+        MeasureTheory.Measure.ae_ne μ (1 : ℝ)] with x hx hx1
+    exact fourCellOddStripSchurWeight_pos_of_mem_Ioo
+      ⟨hx.1, lt_of_le_of_ne hx.2 hx1⟩
+  have hdualMeas : AEStronglyMeasurable
+      (fun x ↦ G x / Real.sqrt (W x)) μ := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [G, W, μ]
+    unfold fourCellOddStripSchurWeight yoshidaEndpointPotential
+    fun_prop
+  have hdual : MemLp (fun x ↦ G x / Real.sqrt (W x)) 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hdualMeas]
+    have hset : IntegrableOn
+        (fun x : ℝ ↦
+          Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+            fourCellOddStripSchurWeight x) (Ioc (0 : ℝ) 1) :=
+      (intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)).1
+        intervalIntegrable_fourCellOddStripSchur_sinhDensity
+    have hset' : Integrable
+        (fun x : ℝ ↦ G x ^ 2 / W x) μ := by
+      simpa only [μ, G, W] using hset
+    apply hset'.congr
+    filter_upwards [hW] with x hx
+    rw [Real.norm_eq_abs, sq_abs, div_pow, Real.sq_sqrt hx.le]
+  have hprimalMeas : AEStronglyMeasurable
+      (fun x ↦ Real.sqrt (W x) * w x) μ := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [W, μ]
+    unfold fourCellOddStripSchurWeight yoshidaEndpointPotential
+    fun_prop
+  have hprimal : MemLp (fun x ↦ Real.sqrt (W x) * w x) 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hprimalMeas]
+    have hset : IntegrableOn
+        (fun x : ℝ ↦ fourCellOddStripSchurWeight x * w x ^ 2)
+        (Ioc (0 : ℝ) 1) :=
+      (intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)).1
+        (intervalIntegrable_fourCellOddStripSchurWeight_mul_sq w hw)
+    have hset' : Integrable (fun x : ℝ ↦ W x * w x ^ 2) μ := by
+      simpa only [μ, W] using hset
+    apply hset'.congr
+    filter_upwards [hW] with x hx
+    rw [Real.norm_eq_abs, sq_abs, mul_pow, Real.sq_sqrt hx.le]
+  have hcauchy := sq_integral_mul_le_weighted μ W G w
+    hW hdual hprimal
+  dsimp only [μ] at hcauchy
+  repeat rw [← intervalIntegral.integral_of_le (by norm_num)] at hcauchy
+  have hmomentEq : (∫ x : ℝ in 0..1, G x * w x) =
+      fourCellPositiveSinhMoment w
+        (fourCellOperatorHalfWidth / 2) := by
+    unfold fourCellPositiveSinhMoment
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    dsimp only [G]
+    congr 2
+    ring
+  have hweightEq : (∫ x : ℝ in 0..1, W x * w x ^ 2) =
+      fourCellOddStripBlendedAllocation w := by
+    simpa only [W] using integral_fourCellOddStripSchurWeight_mul_sq w hw
+  rw [hmomentEq, hweightEq] at hcauchy
+  simpa only [G, W] using hcauchy
+
+/-- The complete negative sinh rank is dominated by the blended allocation,
+with strict slack in the scalar dual norm. -/
+theorem eight_mul_fourCell_sinhMoment_sq_le_blendedAllocation
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    8 * fourCellOperatorHalfWidth *
+        fourCellPositiveSinhMoment w
+          (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+      fourCellOddStripBlendedAllocation w := by
+  let I : ℝ := ∫ x : ℝ in 0..1,
+    Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 /
+      fourCellOddStripSchurWeight x
+  let D : ℝ := fourCellOddStripBlendedAllocation w
+  have hmoment :=
+    fourCellPositiveSinhMoment_sq_le_blendedDual_mul_allocation w hw
+  change fourCellPositiveSinhMoment w
+    (fourCellOperatorHalfWidth / 2) ^ 2 ≤ I * D at hmoment
+  have hI : I < (2 / 7 : ℝ) := by
+    simpa only [I] using
+      integral_fourCellOddStripSchur_sinhDensity_lt_two_sevenths
+  have ha : 8 * fourCellOperatorHalfWidth < (7 / 2 : ℝ) := by
+    nlinarith [fourCellOperatorHalfWidth_lt_seven_sixteenths]
+  have hD : 0 ≤ D := by
+    dsimp only [D, fourCellOddStripBlendedAllocation]
+    have hm : 0 ≤ ∫ x : ℝ in 0..1, w x ^ 2 :=
+      intervalIntegral.integral_nonneg (by norm_num)
+        (fun x _hx ↦ sq_nonneg (w x))
+    have hp : 0 ≤
+        ∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2 := by
+      apply intervalIntegral.integral_nonneg (by norm_num)
+      intro x hx
+      by_cases hx1 : x = 1
+      · simp [hx1, yoshidaEndpointPotential]
+      · have hquartic := quartic_le_endpointPotential
+            (show |x| < 1 by
+              rw [abs_lt]
+              constructor
+              · linarith [hx.1]
+              · exact lt_of_le_of_ne hx.2 hx1)
+        have hV : 0 ≤ yoshidaEndpointPotential x := by
+          unfold yoshidaEndpointQuartic at hquartic
+          nlinarith [sq_nonneg x, sq_nonneg (x ^ 2)]
+        exact mul_nonneg hV (sq_nonneg _)
+    positivity
+  have hI0 : 0 ≤ I := by
+    dsimp only [I]
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro x hx
+    by_cases hx0 : x = 0
+    · simp [hx0]
+    by_cases hx1 : x = 1
+    · rw [hx1]
+      unfold fourCellOddStripSchurWeight yoshidaEndpointPotential
+      norm_num
+      exact div_nonneg (sq_nonneg _) (by norm_num)
+    · exact div_nonneg (sq_nonneg _)
+        (fourCellOddStripSchurWeight_pos_of_mem_Ioo
+          ⟨lt_of_le_of_ne hx.1 (Ne.symm hx0), lt_of_le_of_ne hx.2 hx1⟩).le
+  have hcoef : 8 * fourCellOperatorHalfWidth * I ≤ 1 := by
+    nlinarith
+  have ha0 : 0 ≤ 8 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  calc
+    8 * fourCellOperatorHalfWidth *
+        fourCellPositiveSinhMoment w
+          (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+      8 * fourCellOperatorHalfWidth * (I * D) :=
+        mul_le_mul_of_nonneg_left hmoment ha0
+    _ = (8 * fourCellOperatorHalfWidth * I) * D := by ring
+    _ ≤ 1 * D := mul_le_mul_of_nonneg_right hcoef hD
+    _ = D := one_mul D
+
+/-- After the rank is discharged structurally, odd strip positivity has one
+remaining obligation: the exact non-rank base must dominate the fixed
+blended diagonal allocation. -/
+theorem fourCellOddStripCapacityLowerOperator_nonneg_of_base_ge_blended
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hbase : fourCellOddStripBlendedAllocation w ≤
+      fourCellOddStripCapacityBase w) :
+    0 ≤ fourCellOddStripCapacityLowerOperator w := by
+  exact fourCellOddStripCapacityLowerOperator_nonneg_of_blendedSchur
+    w hbase (eight_mul_fourCell_sinhMoment_sq_le_blendedAllocation w hw)
+
+private theorem fourCell_sinh_sq_le_ninety_eight_six_twenty_fifths_potential
+    {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
+    Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 ≤
+      (98 / 625 : ℝ) * yoshidaEndpointPotential x := by
+  have hsinh0 : 0 ≤ Real.sinh (fourCellOperatorHalfWidth * x / 2) := by
+    rw [Real.sinh_nonneg_iff]
+    have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+      unfold fourCellOperatorHalfWidth
+      positivity
+    exact div_nonneg (mul_nonneg ha0 hx.1.le) (by norm_num)
+  have hsinh := fourCell_sinh_weight_le_seven_twenty_fifths hx.1.le hx.2.le
+  have hsinhSq :
+      Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 ≤
+        ((7 / 25 : ℝ) * x) ^ 2 :=
+    (sq_le_sq₀ hsinh0 (mul_nonneg (by norm_num) hx.1.le)).2 hsinh
+  have hquartic := quartic_le_endpointPotential
+    (show |x| < 1 by rw [abs_lt]; constructor <;> linarith [hx.1, hx.2])
+  unfold yoshidaEndpointQuartic at hquartic
+  nlinarith [sq_nonneg x, sq_nonneg (x ^ 2)]
+
+private theorem sq_intervalIntegral_zero_one_le_integral_sq
+    (f : ℝ → ℝ) (hf : Continuous f) :
+    (∫ x : ℝ in 0..1, f x) ^ 2 ≤ ∫ x : ℝ in 0..1, f x ^ 2 := by
+  let μ : Measure ℝ := volume.restrict (Ioc (0 : ℝ) 1)
+  have honeMeas : AEStronglyMeasurable (fun _x : ℝ ↦ (1 : ℝ)) μ := by
+    fun_prop
+  have hfMeas : AEStronglyMeasurable f μ :=
+    hf.aestronglyMeasurable.restrict
+  have honeLp : MemLp (fun _x : ℝ ↦ (1 : ℝ)) 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm honeMeas]
+    have hcompact : IntegrableOn (fun _x : ℝ ↦ ‖(1 : ℝ)‖ ^ 2)
+        (Icc (0 : ℝ) 1) :=
+      (by fun_prop : Continuous (fun _x : ℝ ↦ ‖(1 : ℝ)‖ ^ 2))
+        |>.continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hfLp : MemLp f 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hfMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖f x‖ ^ 2)
+        (Icc (0 : ℝ) 1) :=
+      (hf.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have h := sq_integral_mul_le_weighted μ
+    (fun _x : ℝ ↦ (1 : ℝ)) (fun _x : ℝ ↦ (1 : ℝ)) f
+    (by simp) (by simpa using honeLp) (by simpa using hfLp)
+  repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+  simpa [μ] using h
+
+/-- The squared representer, including the profile, costs at most
+`98 / 625` of the endpoint potential. -/
+theorem integral_fourCell_sinh_sq_mul_le_ninety_eight_six_twenty_fifths_potential
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ x : ℝ in 0..1,
+        (Real.sinh (fourCellOperatorHalfWidth * x / 2) * w x) ^ 2) ≤
+      (98 / 625 : ℝ) *
+        ∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2 := by
+  have hleft : IntervalIntegrable
+      (fun x : ℝ ↦
+        (Real.sinh (fourCellOperatorHalfWidth * x / 2) * w x) ^ 2)
+      volume 0 1 := by
+    exact (by fun_prop : Continuous (fun x : ℝ ↦
+      (Real.sinh (fourCellOperatorHalfWidth * x / 2) * w x) ^ 2))
+        |>.intervalIntegrable _ _
+  have hpotentialFull := intervalIntegrable_endpointPotential_mul_sq w hw
+  have hpotential : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * w x ^ 2)
+      volume 0 1 := hpotentialFull.mono_set (by
+    intro x hx
+    norm_num at hx ⊢
+    constructor <;> linarith : uIcc (0 : ℝ) 1 ⊆ uIcc (-1 : ℝ) 1)
+  have hright : IntervalIntegrable
+      (fun x : ℝ ↦ (98 / 625 : ℝ) *
+        (yoshidaEndpointPotential x * w x ^ 2)) volume 0 1 :=
+    hpotential.const_mul (98 / 625)
+  have hmono :
+      (∫ x : ℝ in 0..1,
+        (Real.sinh (fourCellOperatorHalfWidth * x / 2) * w x) ^ 2) ≤
+      ∫ x : ℝ in 0..1,
+        (98 / 625 : ℝ) * (yoshidaEndpointPotential x * w x ^ 2) := by
+    apply intervalIntegral.integral_mono_on_of_le_Ioo
+      (by norm_num) hleft hright
+    intro x hx
+    have hweight :=
+      fourCell_sinh_sq_le_ninety_eight_six_twenty_fifths_potential hx
+    have hmul := mul_le_mul_of_nonneg_right hweight (sq_nonneg (w x))
+    calc
+      (Real.sinh (fourCellOperatorHalfWidth * x / 2) * w x) ^ 2 =
+          Real.sinh (fourCellOperatorHalfWidth * x / 2) ^ 2 * w x ^ 2 := by
+            ring
+      _ ≤ ((98 / 625 : ℝ) * yoshidaEndpointPotential x) * w x ^ 2 := hmul
+      _ = (98 / 625 : ℝ) * (yoshidaEndpointPotential x * w x ^ 2) := by ring
+  rw [intervalIntegral.integral_const_mul] at hmono
+  exact hmono
+
+/-- Sharp rational structural payment of the complete odd hyperbolic rank.
+This retains `907 / 625` of the two positive-half potential copies. -/
+theorem eight_mul_fourCell_sinhMoment_sq_le_three_hundred_forty_three_six_twenty_fifths_potential
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    8 * fourCellOperatorHalfWidth *
+        fourCellPositiveSinhMoment w
+          (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+      (343 / 625 : ℝ) *
+        ∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2 := by
+  have hcauchy := sq_intervalIntegral_zero_one_le_integral_sq
+    (fun x : ℝ ↦
+      Real.sinh (fourCellOperatorHalfWidth * x / 2) * w x) (by fun_prop)
+  have hweighted :=
+    integral_fourCell_sinh_sq_mul_le_ninety_eight_six_twenty_fifths_potential
+      w hw
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha : 8 * fourCellOperatorHalfWidth ≤ (7 / 2 : ℝ) := by
+    nlinarith [fourCellOperatorHalfWidth_lt_seven_sixteenths]
+  unfold fourCellPositiveSinhMoment at hcauchy ⊢
+  calc
+    8 * fourCellOperatorHalfWidth *
+        (∫ x : ℝ in 0..1,
+          Real.sinh (fourCellOperatorHalfWidth / 2 * x) * w x) ^ 2 ≤
+      8 * fourCellOperatorHalfWidth *
+        (∫ x : ℝ in 0..1,
+          (Real.sinh (fourCellOperatorHalfWidth * x / 2) * w x) ^ 2) := by
+            apply mul_le_mul_of_nonneg_left _ (by positivity)
+            convert hcauchy using 1
+            all_goals ring
+    _ ≤ 8 * fourCellOperatorHalfWidth *
+        ((98 / 625 : ℝ) *
+          ∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2) :=
+      mul_le_mul_of_nonneg_left hweighted (by positivity)
+    _ ≤ (343 / 625 : ℝ) *
+        ∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2 := by
+      have hpotentialNonneg : 0 ≤
+          ∫ x : ℝ in 0..1, yoshidaEndpointPotential x * w x ^ 2 := by
+        apply intervalIntegral.integral_nonneg (by norm_num)
+        intro x hx
+        have hV : 0 ≤ yoshidaEndpointPotential x := by
+          by_cases hx1 : x = 1
+          · simp [hx1, yoshidaEndpointPotential]
+          · have hquartic := quartic_le_endpointPotential
+                (show |x| < 1 by
+                  rw [abs_lt]
+                  constructor
+                  · linarith [hx.1]
+                  · exact lt_of_le_of_ne hx.2 hx1)
+            unfold yoshidaEndpointQuartic at hquartic
+            nlinarith [sq_nonneg x, sq_nonneg (x ^ 2)]
+        exact mul_nonneg hV (sq_nonneg _)
+      nlinarith
+
+end
+
+end ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityClosureStructural
