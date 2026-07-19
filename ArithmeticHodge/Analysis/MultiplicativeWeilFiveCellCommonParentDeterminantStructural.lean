@@ -13,6 +13,7 @@ open MultiplicativeWeil
 open MultiplicativeWeilAllLengthEndpointReserveStructural
 open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
 open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural
+open MultiplicativeWeilBelowThreePrimeReductionStructural
 open MultiplicativeWeilFourCellEnergyAbsorptionStructural
 open MultiplicativeWeilMinimalBlockEndpointEliminationStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
@@ -809,6 +810,28 @@ theorem bombieriFunctional_remoteEndpointPair_re_eq_local_of_middle_zero
   rw [bombieriFunctional_remoteEndpointPair_re_eq_localEnergyBalance,
     fiveCell_remoteEndpointCross_eq_zero_of_middle_zero parent k hmiddle]
   simp
+
+/-- With a zero middle block, the sparse endpoint production value is exactly
+the diagonal of the local critical form on the endpoint sum.  This identity
+does not replace that signed local form by the physical logarithmic energy;
+any nonnegativity argument must still provide the corresponding local
+coercivity. -/
+theorem bombieriFunctional_remoteEndpointPair_re_eq_localCriticalForm_self_of_middle_zero
+    (parent : BombieriTest) (k : ℤ)
+    (hmiddle :
+      _root_.ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural.fiveCellMiddleThree
+        parent k = 0) :
+    (bombieriFunctional (bombieriQuadraticTest
+      (monotoneQuarterCell parent k +
+        monotoneQuarterCell parent (k + 4)))).re =
+      (bombieriLocalCriticalForm
+        (monotoneQuarterCell parent k +
+          monotoneQuarterCell parent (k + 4))
+        (monotoneQuarterCell parent k +
+          monotoneQuarterCell parent (k + 4))).re := by
+  rw [bombieriFunctional_remoteEndpointPair_re_eq_local_of_middle_zero
+      parent k hmiddle,
+    bombieriLocalCriticalForm_add_self_re]
 
 /-- Exact scalar form of the new common-parent obstruction.  Once the two
 adjacent minors are nonnegative and the middle diagonal is positive, a
