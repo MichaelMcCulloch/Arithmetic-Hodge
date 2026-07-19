@@ -1508,6 +1508,65 @@ theorem monotonePrimeAtom_gcdReducedDilation_coprime
   exact Nat.coprime_div_gcd_div_gcd
     (Nat.gcd_pos_of_pos_left n hm)
 
+/-- Every two rational-dilation coordinates satisfy the sharp principal
+minor inequality of the local Gram matrix. -/
+theorem monotonePrimeAtomLocalDilationGram_sq_le_diagonal_mul
+    (parent : BombieriTest) (k : ℤ) (m n : ℕ) :
+    monotonePrimeAtomLocalDilationGram parent k m n ^ 2 ≤
+      monotonePrimeAtomLocalDilationGram parent k m m *
+        monotonePrimeAtomLocalDilationGram parent k n n := by
+  let I : Set ℝ := Set.Icc (quarterLogLatticePoint k)
+    (quarterLogLatticePoint (k + 2))
+  let mu : Measure ℝ := volume.restrict I
+  let F : ℝ → ℂ := fun x ↦ parent ((m : ℝ) * x)
+  let G : ℝ → ℂ := fun x ↦ parent ((n : ℝ) * x)
+  have hFcont : Continuous F := by
+    dsimp only [F]
+    fun_prop
+  have hGcont : Continuous G := by
+    dsimp only [G]
+    fun_prop
+  have hFmeas : AEStronglyMeasurable F mu :=
+    hFcont.aestronglyMeasurable.restrict
+  have hGmeas : AEStronglyMeasurable G mu :=
+    hGcont.aestronglyMeasurable.restrict
+  have hFsq : Integrable (fun x : ℝ ↦ ‖F x‖ ^ 2) mu :=
+    (hFcont.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  have hGsq : Integrable (fun x : ℝ ↦ ‖G x‖ ^ 2) mu :=
+    (hGcont.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  have hcrossInt :
+      Integrable (fun x : ℝ ↦ starRingEnd ℂ (F x) * G x) mu := by
+    have hcont : Continuous
+        (fun x : ℝ ↦ starRingEnd ℂ (F x) * G x) := by
+      fun_prop
+    exact hcont.continuousOn.integrableOn_compact isCompact_Icc
+  have hcauchy :
+      Complex.normSq
+          (∫ x : ℝ in I, starRingEnd ℂ (F x) * G x) ≤
+        (∫ x : ℝ in I, ‖F x‖ ^ 2) *
+          ∫ x : ℝ in I, ‖G x‖ ^ 2 := by
+    simpa only [mu] using
+      aggregateWindow_normSq_integral_star_mul_le
+        mu F G hFmeas hGmeas hFsq hGsq
+  have hre :
+      (∫ x : ℝ in I,
+          (starRingEnd ℂ (F x) * G x).re) =
+        (∫ x : ℝ in I, starRingEnd ℂ (F x) * G x).re := by
+    simpa only [mu] using integral_re hcrossInt
+  have hrealSq :
+      (∫ x : ℝ in I,
+          (starRingEnd ℂ (F x) * G x).re) ^ 2 ≤
+        Complex.normSq
+          (∫ x : ℝ in I, starRingEnd ℂ (F x) * G x) := by
+    rw [hre]
+    simp only [Complex.normSq_apply]
+    nlinarith [sq_nonneg
+      (∫ x : ℝ in I, starRingEnd ℂ (F x) * G x).im]
+  rw [monotonePrimeAtomLocalDilationGram_self,
+    monotonePrimeAtomLocalDilationGram_self]
+  unfold monotonePrimeAtomLocalDilationGram
+  simpa only [I, F, G] using hrealSq.trans hcauchy
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
