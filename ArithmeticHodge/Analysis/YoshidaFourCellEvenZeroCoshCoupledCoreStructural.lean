@@ -46,9 +46,11 @@ open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseEnvelope
 open YoshidaFactorTwoPhaseSingularWeightedCauchyStructural
 open YoshidaFourCellEvenCapacityStructural
+open YoshidaFourCellEvenPolarSchurStructural
 open YoshidaFourCellEvenZeroCoshRegularStructural
 open YoshidaFourCellEndpointVarianceStructural
 open YoshidaFourCellParityHalfFoldStructural
+open YoshidaFourCellParityOperatorStructural
 
 /-!
 # The infinite even tail of the zero-cosh coupled core
@@ -114,6 +116,17 @@ theorem centeredLegendreLowProjection_six_eq_intrinsicEvenP024Profile
     factorTwoIntrinsicSixEvenTail factorTwoCanonicalLegendreCoefficient
   simp only [Pi.add_apply]
   ring
+
+/-- The canonical degree-zero Hilbert coordinate is exactly the ordinary
+centered constant coefficient. -/
+theorem factorTwoCanonicalLegendreCoefficient_zero_eq_centeredEvenP0Coefficient
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    factorTwoCanonicalLegendreCoefficient w hw 0 =
+      centeredEvenP0Coefficient w := by
+  unfold factorTwoCanonicalLegendreCoefficient centeredPullbackL2
+  rw [repr_centeredPullback_zero_eq_coefficient w
+    (centeredPullback_memLp_two w hw), norm_shiftedLegendreL2_zero]
+  norm_num
 
 /-- Unit-interval polynomial representing the intrinsic even `P₀/P₂/P₄`
 profile. -/
@@ -634,16 +647,15 @@ theorem endpointPotential_sub_dyadicPairing_nonnegative
   change 0 ≤ V - P
   nlinarith
 
-/-- The complete infinite even tail above `P₄` satisfies the actual
-`33 / 20` coupled-core inequality.  The proof uses the sixth harmonic gap
-for all higher modes at once and retains the prime/potential pair as the
-exact positive endpoint-capacity block. -/
-theorem thirtyThree_div_twenty_mass_le_coupledCore_of_even_legendreTail
+/-- The complete infinite even tail above `P₄` retains the full sixth
+harmonic coefficient `49 / 20`.  The prime/potential pair remains the exact
+positive endpoint-capacity block. -/
+theorem fortyNine_div_twenty_mass_le_coupledCore_of_even_legendreTail
     (w : ℝ → ℝ) (hw : Continuous w)
     (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
     (heven : Function.Even w)
     (hlow : centeredLegendreMomentsVanishBelow w 6) :
-    (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+    (49 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
       fourCellEvenZeroCoshCoupledCore w := by
   let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
   let B : ℝ := (∫ x : ℝ in -1..1,
@@ -664,6 +676,148 @@ theorem thirtyThree_div_twenty_mass_le_coupledCore_of_even_legendreTail
   unfold fourCellEvenZeroCoshCoupledCore
   dsimp only [M, B] at hgap hB ⊢
   linarith
+
+/-- The low and tail diagonal blocks already clear the full `33 / 20`
+target under the global constant-coordinate bound.  The low nonconstant
+reserve and the tail's `4 / 5` surplus jointly absorb the entire constant
+defect.  Consequently, only the genuine coupled-core polarization remains
+in the canonical cutoff-six decomposition. -/
+theorem thirtyThree_div_twenty_mass_le_coupledCore_diagonalSum_P024_add_tail
+    (c0 c2 c4 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 6)
+    (hconstant : c0 ^ 2 ≤ (1 / 4000 : ℝ) *
+      (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+        (2 / 9 : ℝ) * c4 ^ 2 +
+        (∫ x : ℝ in -1..1, r x ^ 2))) :
+    (33 / 20 : ℝ) *
+        (∫ x : ℝ in -1..1,
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4 x + r x) ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore
+          (factorTwoIntrinsicEvenP024Profile c0 c2 c4) +
+        fourCellEvenZeroCoshCoupledCore r := by
+  let N : ℝ := (2 / 5 : ℝ) * c2 ^ 2 + (2 / 9 : ℝ) * c4 ^ 2
+  let R : ℝ := ∫ x : ℝ in -1..1, r x ^ 2
+  have hR : 0 ≤ R := by
+    dsimp only [R]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hconstant' : 3998 * c0 ^ 2 ≤ N + R := by
+    dsimp only [N, R]
+    nlinarith only [hconstant]
+  have habsorb : (451 / 10 : ℝ) * c0 ^ 2 ≤
+      (3 / 100 : ℝ) * N + (4 / 5 : ℝ) * R := by
+    nlinarith only [hconstant', hR, sq_nonneg c2, sq_nonneg c4]
+  have hlowReserve :=
+    three_div_hundred_nonconstantReserve_le_coupledCore_add_constantDefect
+      c0 c2 c4
+  have htail :=
+    fortyNine_div_twenty_mass_le_coupledCore_of_even_legendreTail
+      r hr hlocal heven hlow
+  have hmass := integral_intrinsicEvenP024_add_tail_sq
+    c0 c2 c4 r hr hlow
+  rw [hmass]
+  dsimp only [N, R] at habsorb
+  linarith
+
+/-- Canonical arbitrary-profile form of the diagonal closure.  On the
+zero-wide-cosh hyperplane the cutoff-six low block and its infinite tail,
+before their one surviving polarization is inserted, already clear the
+complete `33 / 20` target. -/
+theorem thirtyThree_div_twenty_mass_le_canonicalCoupledCore_diagonalSum
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore
+          (centeredLegendreLowProjection w hw 6) +
+        fourCellEvenZeroCoshCoupledCore
+          (centeredLegendreHigherResidual w hw 6) := by
+  let c0 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 0
+  let c2 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 2
+  let c4 : ℝ := factorTwoCanonicalLegendreCoefficient w hw 4
+  let p : ℝ → ℝ := factorTwoIntrinsicEvenP024Profile c0 c2 c4
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 6
+  have hpEq : centeredLegendreLowProjection w hw 6 = p := by
+    simpa only [c0, c2, c4, p] using
+      centeredLegendreLowProjection_six_eq_intrinsicEvenP024Profile
+        w hw heven
+  have hsum : p + r = w := by
+    rw [← hpEq]
+    simpa only [r] using
+      centeredLegendreLowProjection_add_higherResidual w hw 6
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 6
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 6
+  have hrEven : Function.Even r := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_even w hw heven 6
+  have hrGap : centeredLegendreMomentsVanishBelow r 6 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 6
+  have hc0 : c0 = centeredEvenP0Coefficient w := by
+    simpa only [c0] using
+      factorTwoCanonicalLegendreCoefficient_zero_eq_centeredEvenP0Coefficient
+        w hw
+  have hmassSplit := integral_intrinsicEvenP024_add_tail_sq
+    c0 c2 c4 r hr hrGap
+  have hmassLow := integral_factorTwoIntrinsicEvenP024Profile_sq c0 c2 c4
+  have hmassSum :
+      (∫ x : ℝ in -1..1, (p x + r x) ^ 2) =
+        ∫ x : ℝ in -1..1, w x ^ 2 := by
+    have h := congrArg
+      (fun q : ℝ → ℝ ↦ ∫ x : ℝ in -1..1, q x ^ 2) hsum
+    simpa only [Pi.add_apply] using h
+  have htotal :
+      (∫ x : ℝ in -1..1, w x ^ 2) =
+        2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+          (2 / 9 : ℝ) * c4 ^ 2 +
+          (∫ x : ℝ in -1..1, r x ^ 2) := by
+    dsimp only [p] at hmassSplit hmassSum
+    rw [hmassLow] at hmassSplit
+    linarith
+  have hcGlobal :=
+    centeredEvenP0Coefficient_sq_le_one_div_fourThousand_mass_of_coshMoment_zero
+      w hw heven hzero
+  have hconstant : c0 ^ 2 ≤ (1 / 4000 : ℝ) *
+      (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+        (2 / 9 : ℝ) * c4 ^ 2 +
+        (∫ x : ℝ in -1..1, r x ^ 2)) := by
+    calc
+      c0 ^ 2 = centeredEvenP0Coefficient w ^ 2 := by rw [hc0]
+      _ ≤ (1 / 4000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) :=
+        hcGlobal
+      _ = (1 / 4000 : ℝ) *
+          (2 * c0 ^ 2 + (2 / 5 : ℝ) * c2 ^ 2 +
+            (2 / 9 : ℝ) * c4 ^ 2 +
+            (∫ x : ℝ in -1..1, r x ^ 2)) := by rw [htotal]
+  have hdiag :=
+    thirtyThree_div_twenty_mass_le_coupledCore_diagonalSum_P024_add_tail
+      c0 c2 c4 r hr hrLocal hrEven hrGap hconstant
+  rw [hpEq]
+  rw [← hmassSum]
+  simpa only [p] using hdiag
+
+/-- In particular, the infinite even tail clears the actual `33 / 20`
+coupled-core target with an `4 / 5` mass reserve. -/
+theorem thirtyThree_div_twenty_mass_le_coupledCore_of_even_legendreTail
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hlow : centeredLegendreMomentsVanishBelow w 6) :
+    (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore w := by
+  have hstrong :=
+    fortyNine_div_twenty_mass_le_coupledCore_of_even_legendreTail
+      w hw hlocal heven hlow
+  have hmass : 0 ≤ ∫ x : ℝ in -1..1, w x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num) (fun _ _ ↦ sq_nonneg _)
+  nlinarith
 
 end
 
