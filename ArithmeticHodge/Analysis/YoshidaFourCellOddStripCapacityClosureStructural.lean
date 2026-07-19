@@ -8398,6 +8398,54 @@ theorem fourCellOddStripLocalWidthDefect_oneThreeFiveLowProfile_eq
     integral_zero_one_endpointPotential_oneThreeFiveLowProfile]
   ring
 
+/-- Polarized `(1,5)` entry after adding the exact core reserve to the
+local algebraic block. -/
+def fourCellOddOneThreeFiveCombined15 : ℝ :=
+  1 / 14 + fourCellOddOneThreeFiveLocalAlgebraic15
+
+/-- Polarized `(3,5)` entry of the exact combined P135 algebraic block. -/
+def fourCellOddOneThreeFiveCombined35 : ℝ :=
+  1 / 9 + fourCellOddOneThreeFiveLocalAlgebraic35
+
+/-- `(5,5)` entry of the exact combined P135 algebraic block. -/
+def fourCellOddOneThreeFiveCombined55 : ℝ :=
+  3140 / 7623 - (2 / 11 : ℝ) * Real.log 2 +
+    fourCellOddOneThreeFiveLocalAlgebraic55
+
+/-- Exact finite algebraic P135 block before the wide regular quadratic is
+subtracted. -/
+def fourCellOddOneThreeFiveCombinedQuadratic (c d e : ℝ) : ℝ :=
+  fourCellOddLowCombined11 * c ^ 2 +
+    2 * fourCellOddLowCombined13 * c * d +
+    fourCellOddLowCombined33 * d ^ 2 +
+    2 * fourCellOddOneThreeFiveCombined15 * c * e +
+    2 * fourCellOddOneThreeFiveCombined35 * d * e +
+    fourCellOddOneThreeFiveCombined55 * e ^ 2
+
+/-- Exact P135 diagonal of the complete core-plus-local target.  This is
+the finite `3 × 3` block minus one fully expanded wide regular form. -/
+theorem fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_eq
+    (c d e : ℝ) :
+    fourCellOddHalfCoreReserve
+        (fourCellOddOneThreeFiveLowProfile c d e) +
+      fourCellOddStripLocalWidthDefect
+        (fourCellOddOneThreeFiveLowProfile c d e) =
+      fourCellOddOneThreeFiveCombinedQuadratic c d e -
+        2 * fourCellOperatorHalfWidth *
+          fourCellOddOneThreeFiveRegularQuadratic c d e := by
+  rw [fourCellOddHalfCoreReserve_oneThreeFiveLowProfile,
+    fourCellOddStripLocalWidthDefect_oneThreeFiveLowProfile_eq]
+  unfold fourCellOddOneThreeFiveCombinedQuadratic
+    fourCellOddOneThreeFiveCombined15
+    fourCellOddOneThreeFiveCombined35
+    fourCellOddOneThreeFiveCombined55
+    fourCellOddOneThreeFiveLocalAlgebraicQuadratic
+    fourCellOddLowLocalAlgebraicQuadratic
+    fourCellOddLowCombined11 fourCellOddLowCombined13
+    fourCellOddLowCombined33
+    fourCellOddOneThreeFiveRegularQuadratic
+  ring
+
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
 theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
