@@ -43,6 +43,52 @@ def monotonePrimeAtomAggregateSlice
   monotoneRatioTwoBlock
     (monotonePrimeAtomAggregateSource parent k S) (k - 1)
 
+private theorem bombieriTest_finset_sum_apply
+    {J : Type*} [DecidableEq J] (S : Finset J)
+    (f : J → BombieriTest) (x : ℝ) :
+    (∑ j ∈ S, f j) x = ∑ j ∈ S, f j x := by
+  induction S using Finset.induction_on with
+  | empty => simp
+  | @insert j S hj ih =>
+      rw [Finset.sum_insert hj, Finset.sum_insert hj]
+      simp only [TestFunction.coe_add, Pi.add_apply, ih]
+
+/-- Pointwise, the square-root normalization cancels the logarithmic atom
+weight.  The aggregate source is therefore the finite von-Mangoldt transfer
+operator applied to the inner suffix. -/
+theorem monotonePrimeAtomAggregateSource_apply
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) (x : ℝ) :
+    monotonePrimeAtomAggregateSource parent k S x =
+      ∑ j ∈ S,
+        ((ArithmeticFunction.vonMangoldt (j + 1) : ℝ) : ℂ) *
+          monotoneQuarterCutoff parent (k + 1)
+            (((j + 1 : ℕ) : ℝ) * x) := by
+  rw [monotonePrimeAtomAggregateSource,
+    bombieriTest_finset_sum_apply]
+  apply Finset.sum_congr rfl
+  intro j hj
+  simp only [TestFunction.coe_smul, Pi.smul_apply, smul_eq_mul,
+    normalizedDilation_apply]
+  unfold bombieriLogPrimeAtomWeight
+  have hsqrt : Real.sqrt (((j + 1 : ℕ) : ℝ)) ≠ 0 := by
+    positivity
+  push_cast
+  field_simp [hsqrt]
+
+/-- The common plateau is the only additional mask on the explicit
+von-Mangoldt transfer operator. -/
+theorem monotonePrimeAtomAggregateSlice_apply
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) (x : ℝ) :
+    monotonePrimeAtomAggregateSlice parent k S x =
+      ((monotonePrimeAtomPlateauMultiplier k x : ℝ) : ℂ) *
+        ∑ j ∈ S,
+          ((ArithmeticFunction.vonMangoldt (j + 1) : ℝ) : ℂ) *
+            monotoneQuarterCutoff parent (k + 1)
+              (((j + 1 : ℕ) : ℝ) * x) := by
+  rw [monotonePrimeAtomAggregateSlice, monotoneRatioTwoBlock_apply,
+    monotonePrimeAtomAggregateSource_apply]
+  rfl
+
 private theorem monotoneRatioTwoBlock_add
     (f g : BombieriTest) (k : ℤ) :
     monotoneRatioTwoBlock (f + g) k =
