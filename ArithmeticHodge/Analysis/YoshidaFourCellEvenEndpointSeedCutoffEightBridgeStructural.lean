@@ -94,6 +94,172 @@ def fourCellEvenEndpointSeedProjectedTailRowRepresenter
     fourCellOperatorHalfWidth *
       fourCellEvenEndpointSeedRegularTailRepresenter x
 
+/-! ## Polynomial removal from the smooth regular row -/
+
+/-- The degree-four part of the regular-kernel Taylor model.  Stopping before
+the fifth power is deliberate: convolution with the quadratic endpoint seed
+then has degree at most six and is annihilated by every genuine `P8+` tail. -/
+def fourCellRegularKernelPolynomial4 (t : ℝ) : ℝ :=
+  (1 / 4 : ℝ) - t / 48 - t ^ 2 / 32 + 7 * t ^ 3 / 11520 +
+    5 * t ^ 4 / 1536
+
+private def fourCellEndpointSeedRegularPolynomialC0 : ℝ :=
+  (1 / 3 : ℝ) - fourCellOperatorHalfWidth / 60 -
+    fourCellOperatorHalfWidth ^ 2 / 45 +
+    fourCellOperatorHalfWidth ^ 3 / 2160 +
+    fourCellOperatorHalfWidth ^ 4 / 336
+
+private def fourCellEndpointSeedRegularPolynomialC2 : ℝ :=
+  -fourCellOperatorHalfWidth / 84 -
+    fourCellOperatorHalfWidth ^ 2 / 36 +
+    fourCellOperatorHalfWidth ^ 3 / 1296 +
+    fourCellOperatorHalfWidth ^ 4 / 168
+
+private def fourCellEndpointSeedRegularPolynomialC4 : ℝ :=
+  fourCellOperatorHalfWidth / 1260 +
+    fourCellOperatorHalfWidth ^ 3 / 15840 +
+    fourCellOperatorHalfWidth ^ 4 / 1008
+
+private def fourCellEndpointSeedRegularPolynomialC6 : ℝ :=
+  -fourCellOperatorHalfWidth ^ 3 / 712800
+
+/-- Exact degree-six selector obtained by convolving the degree-four regular
+kernel model with the endpoint seed. -/
+def fourCellEndpointSeedRegularPolynomialSelector : ℝ[X] :=
+  factorTwoIntrinsicEvenP0246Polynomial
+    fourCellEndpointSeedRegularPolynomialC0
+    fourCellEndpointSeedRegularPolynomialC2
+    fourCellEndpointSeedRegularPolynomialC4
+    fourCellEndpointSeedRegularPolynomialC6
+
+theorem natDegree_fourCellEndpointSeedRegularPolynomialSelector_lt_eight :
+    fourCellEndpointSeedRegularPolynomialSelector.natDegree < 8 := by
+  unfold fourCellEndpointSeedRegularPolynomialSelector
+  exact natDegree_factorTwoIntrinsicEvenP0246Polynomial_lt_eight _ _ _ _
+
+private theorem integral_polynomial_six_local
+    (a0 a1 a2 a3 a4 a5 a6 l r : ℝ) :
+    (∫ y : ℝ in l..r,
+      a0 * y ^ 0 + a1 * y ^ 1 + a2 * y ^ 2 + a3 * y ^ 3 +
+        a4 * y ^ 4 + a5 * y ^ 5 + a6 * y ^ 6) =
+      a0 * (r - l) + a1 * (r ^ 2 - l ^ 2) / 2 +
+        a2 * (r ^ 3 - l ^ 3) / 3 + a3 * (r ^ 4 - l ^ 4) / 4 +
+        a4 * (r ^ 5 - l ^ 5) / 5 + a5 * (r ^ 6 - l ^ 6) / 6 +
+        a6 * (r ^ 7 - l ^ 7) / 7 := by
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) l r)
+    (Continuous.intervalIntegrable (by fun_prop) l r)]
+  repeat rw [intervalIntegral.integral_const_mul, integral_pow]
+  norm_num
+  ring
+
+/-- Convolving the degree-four kernel model with `1 - x^2` is exactly the
+displayed degree-six selector.  This is an identity of genuine interval
+integrals, not a formal power-series calculation. -/
+theorem factorTwoContinuousLagK_regularPolynomial4_endpointSeed_eq_selector
+    (x : ℝ) :
+    factorTwoContinuousLagK
+        (fun t : ℝ ↦ fourCellRegularKernelPolynomial4
+          (fourCellOperatorHalfWidth * t))
+        fourCellEvenEndpointCoshSeed x =
+      centeredPolynomialLift
+        fourCellEndpointSeedRegularPolynomialSelector x := by
+  rw [show centeredPolynomialLift
+      fourCellEndpointSeedRegularPolynomialSelector =
+        factorTwoIntrinsicEvenP0246Profile
+          fourCellEndpointSeedRegularPolynomialC0
+          fourCellEndpointSeedRegularPolynomialC2
+          fourCellEndpointSeedRegularPolynomialC4
+          fourCellEndpointSeedRegularPolynomialC6 by
+    unfold fourCellEndpointSeedRegularPolynomialSelector
+    exact centeredPolynomialLift_intrinsicEvenP0246Polynomial _ _ _ _]
+  unfold factorTwoContinuousLagK factorTwoContinuousLagRightRepresenter
+    factorTwoContinuousLagLeftRepresenter
+  rw [show (fun y : ℝ ↦
+      fourCellRegularKernelPolynomial4
+          (fourCellOperatorHalfWidth * (y - x)) *
+        fourCellEvenEndpointCoshSeed y) =
+      fun y ↦
+        ((1 / 4 : ℝ) + fourCellOperatorHalfWidth * x / 48 -
+            fourCellOperatorHalfWidth ^ 2 * x ^ 2 / 32 -
+            7 * fourCellOperatorHalfWidth ^ 3 * x ^ 3 / 11520 +
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 4 / 1536) * y ^ 0 +
+        ((-fourCellOperatorHalfWidth / 48 +
+            fourCellOperatorHalfWidth ^ 2 * x / 16 +
+            7 * fourCellOperatorHalfWidth ^ 3 * x ^ 2 / 3840 -
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 3 / 384) * y ^ 1) +
+        ((-(1 / 4 : ℝ) - fourCellOperatorHalfWidth * x / 48 -
+            fourCellOperatorHalfWidth ^ 2 / 32 +
+            fourCellOperatorHalfWidth ^ 2 * x ^ 2 / 32 -
+            7 * fourCellOperatorHalfWidth ^ 3 * x / 3840 +
+            7 * fourCellOperatorHalfWidth ^ 3 * x ^ 3 / 11520 +
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 2 / 256 -
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 4 / 1536) * y ^ 2) +
+        ((fourCellOperatorHalfWidth / 48 -
+            fourCellOperatorHalfWidth ^ 2 * x / 16 +
+            7 * fourCellOperatorHalfWidth ^ 3 / 11520 -
+            7 * fourCellOperatorHalfWidth ^ 3 * x ^ 2 / 3840 -
+            5 * fourCellOperatorHalfWidth ^ 4 * x / 384 +
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 3 / 384) * y ^ 3) +
+        ((fourCellOperatorHalfWidth ^ 2 / 32 +
+            7 * fourCellOperatorHalfWidth ^ 3 * x / 3840 +
+            5 * fourCellOperatorHalfWidth ^ 4 / 1536 -
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 2 / 256) * y ^ 4) +
+        ((-7 * fourCellOperatorHalfWidth ^ 3 / 11520 +
+            5 * fourCellOperatorHalfWidth ^ 4 * x / 384) * y ^ 5) +
+        (-5 * fourCellOperatorHalfWidth ^ 4 / 1536) * y ^ 6 by
+    funext y
+    unfold fourCellRegularKernelPolynomial4 fourCellEvenEndpointCoshSeed
+    ring,
+    integral_polynomial_six_local]
+  rw [show (fun y : ℝ ↦
+      fourCellRegularKernelPolynomial4
+          (fourCellOperatorHalfWidth * (x - y)) *
+        fourCellEvenEndpointCoshSeed y) =
+      fun y ↦
+        ((1 / 4 : ℝ) - fourCellOperatorHalfWidth * x / 48 -
+            fourCellOperatorHalfWidth ^ 2 * x ^ 2 / 32 +
+            7 * fourCellOperatorHalfWidth ^ 3 * x ^ 3 / 11520 +
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 4 / 1536) * y ^ 0 +
+        ((fourCellOperatorHalfWidth / 48 +
+            fourCellOperatorHalfWidth ^ 2 * x / 16 -
+            7 * fourCellOperatorHalfWidth ^ 3 * x ^ 2 / 3840 -
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 3 / 384) * y ^ 1) +
+        ((-(1 / 4 : ℝ) + fourCellOperatorHalfWidth * x / 48 -
+            fourCellOperatorHalfWidth ^ 2 / 32 +
+            fourCellOperatorHalfWidth ^ 2 * x ^ 2 / 32 +
+            7 * fourCellOperatorHalfWidth ^ 3 * x / 3840 -
+            7 * fourCellOperatorHalfWidth ^ 3 * x ^ 3 / 11520 +
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 2 / 256 -
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 4 / 1536) * y ^ 2) +
+        ((-fourCellOperatorHalfWidth / 48 -
+            fourCellOperatorHalfWidth ^ 2 * x / 16 -
+            7 * fourCellOperatorHalfWidth ^ 3 / 11520 +
+            7 * fourCellOperatorHalfWidth ^ 3 * x ^ 2 / 3840 -
+            5 * fourCellOperatorHalfWidth ^ 4 * x / 384 +
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 3 / 384) * y ^ 3) +
+        ((fourCellOperatorHalfWidth ^ 2 / 32 -
+            7 * fourCellOperatorHalfWidth ^ 3 * x / 3840 +
+            5 * fourCellOperatorHalfWidth ^ 4 / 1536 -
+            5 * fourCellOperatorHalfWidth ^ 4 * x ^ 2 / 256) * y ^ 4) +
+        ((7 * fourCellOperatorHalfWidth ^ 3 / 11520 +
+            5 * fourCellOperatorHalfWidth ^ 4 * x / 384) * y ^ 5) +
+        (-5 * fourCellOperatorHalfWidth ^ 4 / 1536) * y ^ 6 by
+    funext y
+    unfold fourCellRegularKernelPolynomial4 fourCellEvenEndpointCoshSeed
+    ring,
+    integral_polynomial_six_local]
+  unfold fourCellEndpointSeedRegularPolynomialC0
+    fourCellEndpointSeedRegularPolynomialC2
+    fourCellEndpointSeedRegularPolynomialC4
+    fourCellEndpointSeedRegularPolynomialC6
+    factorTwoIntrinsicEvenP0246Profile factorTwoIntrinsicEvenP024Profile
+    factorTwoEvenStructuralLowProfile factorTwoIntrinsicSixEvenTail
+    centeredEvenP0 centeredEvenP2 factorTwoCenteredP4
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+  rw [factorTwoCenteredP6_eq]
+  ring
+
 private theorem fourCellRegularLag_abs_le_quarter
     (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 2) :
     |yoshidaRegularKernel (fourCellOperatorHalfWidth * t)| ≤ 1 / 4 := by
