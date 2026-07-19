@@ -10,6 +10,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseCenteredP9Structural
 
 set_option autoImplicit false
 
@@ -56,6 +57,7 @@ open YoshidaFactorTwoPhaseIntrinsicSixP4WeightedMass
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
+open YoshidaFactorTwoPhaseCenteredP9Structural
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFactorTwoEndpointBilinear
@@ -10590,6 +10592,39 @@ private theorem integral_polynomial_fifteen_local
   norm_num
   ring
 
+private theorem integral_polynomial_nineteen_local
+    (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ a₁₁ a₁₂ a₁₃ a₁₄ a₁₅ a₁₆ a₁₇ a₁₈ a₁₉
+      l r : ℝ) :
+    (∫ x : ℝ in l..r,
+      a₀ * x ^ 0 + a₁ * x ^ 1 + a₂ * x ^ 2 + a₃ * x ^ 3 +
+        a₄ * x ^ 4 + a₅ * x ^ 5 + a₆ * x ^ 6 + a₇ * x ^ 7 +
+          a₈ * x ^ 8 + a₉ * x ^ 9 + a₁₀ * x ^ 10 +
+            a₁₁ * x ^ 11 + a₁₂ * x ^ 12 + a₁₃ * x ^ 13 +
+              a₁₄ * x ^ 14 + a₁₅ * x ^ 15 + a₁₆ * x ^ 16 +
+                a₁₇ * x ^ 17 + a₁₈ * x ^ 18 + a₁₉ * x ^ 19) =
+      a₀ * (r - l) + a₁ * (r ^ 2 - l ^ 2) / 2 +
+        a₂ * (r ^ 3 - l ^ 3) / 3 + a₃ * (r ^ 4 - l ^ 4) / 4 +
+          a₄ * (r ^ 5 - l ^ 5) / 5 + a₅ * (r ^ 6 - l ^ 6) / 6 +
+            a₆ * (r ^ 7 - l ^ 7) / 7 + a₇ * (r ^ 8 - l ^ 8) / 8 +
+              a₈ * (r ^ 9 - l ^ 9) / 9 +
+                a₉ * (r ^ 10 - l ^ 10) / 10 +
+                  a₁₀ * (r ^ 11 - l ^ 11) / 11 +
+                    a₁₁ * (r ^ 12 - l ^ 12) / 12 +
+                      a₁₂ * (r ^ 13 - l ^ 13) / 13 +
+                        a₁₃ * (r ^ 14 - l ^ 14) / 14 +
+                          a₁₄ * (r ^ 15 - l ^ 15) / 15 +
+                            a₁₅ * (r ^ 16 - l ^ 16) / 16 +
+                              a₁₆ * (r ^ 17 - l ^ 17) / 17 +
+                                a₁₇ * (r ^ 18 - l ^ 18) / 18 +
+                                  a₁₈ * (r ^ 19 - l ^ 19) / 19 +
+                                    a₁₉ * (r ^ 20 - l ^ 20) / 20 := by
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) l r)
+    (Continuous.intervalIntegrable (by fun_prop) l r)]
+  repeat rw [intervalIntegral.integral_const_mul, integral_pow]
+  norm_num
+  ring
+
 /-- The adjacent odd Legendre modes have a rational endpoint-potential
 cross.  All logarithmic moments cancel in the Legendre combination. -/
 private theorem integral_zero_one_endpointPotential_mul_P5_mul_P7 :
@@ -11171,6 +11206,479 @@ theorem fourCellOddCoreLocalBilinear_P5_P7_sq_le_mul :
       _ < Q5 * (1 / 20 : ℝ) := mul_lt_mul_of_pos_right hQ5 (by norm_num)
       _ < Q5 * Q7 := mul_lt_mul_of_pos_left hQ7 hQ5pos
   dsimp only [B, Q5, Q7] at hBsq hprod ⊢
+  nlinarith
+
+/-! ### The adjacent `P₉` tail direction -/
+
+private theorem contDiff_factorTwoCenteredP9_local :
+    ContDiff ℝ 1 factorTwoCenteredP9 := by
+  rw [show factorTwoCenteredP9 = fun x ↦
+      (12155 * x ^ 9 - 25740 * x ^ 7 + 18018 * x ^ 5 -
+        4620 * x ^ 3 + 315 * x) / 128 by
+    funext x
+    exact factorTwoCenteredP9_eq x]
+  fun_prop
+
+private theorem centeredOddCoefficients_P9_eq_zero :
+    centeredOddP1Coefficient factorTwoCenteredP9 = 0 ∧
+      centeredOddP3Coefficient factorTwoCenteredP9 = 0 ∧
+        centeredOddP5Coefficient factorTwoCenteredP9 = 0 := by
+  have h1 := factorTwoCenteredP9_momentsVanishBelow 1 (by norm_num)
+  have h3 := factorTwoCenteredP9_momentsVanishBelow 3 (by norm_num)
+  have h5 := factorTwoCenteredP9_momentsVanishBelow 5 (by norm_num)
+  rw [integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+      1 centeredP1 factorTwoCenteredP9
+        centeredPullback_centeredP1_eq_neg_shiftedLegendre_local] at h1
+  rw [integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+      3 centeredP3 factorTwoCenteredP9
+        centeredPullback_centeredP3_eq_neg_shiftedLegendre_local] at h3
+  rw [integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+      5 factorTwoCenteredP5 factorTwoCenteredP9
+        centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre] at h5
+  unfold centeredOddP1Coefficient centeredOddP3Coefficient
+    centeredOddP5Coefficient
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+private theorem integral_zero_three_fifths_P9_sq_eq :
+    (∫ x : ℝ in 0..3 / 5, factorTwoCenteredP9 x ^ 2) =
+      (320073185043 / 14495849609375 : ℝ) := by
+  rw [show (fun x : ℝ ↦ factorTwoCenteredP9 x ^ 2) = fun x ↦
+      0 * x ^ 0 + 0 * x ^ 1 + (99225 / 16384 : ℝ) * x ^ 2 +
+        0 * x ^ 3 + (-363825 / 2048 : ℝ) * x ^ 4 + 0 * x ^ 5 +
+          (8173935 / 4096 : ℝ) * x ^ 6 + 0 * x ^ 7 +
+            (-22837815 / 2048 : ℝ) * x ^ 8 + 0 * x ^ 9 +
+              (285071787 / 8192 : ℝ) * x ^ 10 + 0 * x ^ 11 +
+                (-129984855 / 2048 : ℝ) * x ^ 12 + 0 * x ^ 13 +
+                  (275141295 / 4096 : ℝ) * x ^ 14 + 0 * x ^ 15 +
+                    (-78217425 / 2048 : ℝ) * x ^ 16 + 0 * x ^ 17 +
+                      (147744025 / 16384 : ℝ) * x ^ 18 + 0 * x ^ 19 by
+    funext x
+    rw [factorTwoCenteredP9_eq]
+    ring,
+    integral_polynomial_nineteen_local]
+  norm_num
+
+private theorem integral_three_fifths_one_P9_sq_eq :
+    (∫ x : ℝ in 3 / 5..1, factorTwoCenteredP9 x ^ 2) =
+      (442866268082 / 14495849609375 : ℝ) := by
+  rw [show (fun x : ℝ ↦ factorTwoCenteredP9 x ^ 2) = fun x ↦
+      0 * x ^ 0 + 0 * x ^ 1 + (99225 / 16384 : ℝ) * x ^ 2 +
+        0 * x ^ 3 + (-363825 / 2048 : ℝ) * x ^ 4 + 0 * x ^ 5 +
+          (8173935 / 4096 : ℝ) * x ^ 6 + 0 * x ^ 7 +
+            (-22837815 / 2048 : ℝ) * x ^ 8 + 0 * x ^ 9 +
+              (285071787 / 8192 : ℝ) * x ^ 10 + 0 * x ^ 11 +
+                (-129984855 / 2048 : ℝ) * x ^ 12 + 0 * x ^ 13 +
+                  (275141295 / 4096 : ℝ) * x ^ 14 + 0 * x ^ 15 +
+                    (-78217425 / 2048 : ℝ) * x ^ 16 + 0 * x ^ 17 +
+                      (147744025 / 16384 : ℝ) * x ^ 18 + 0 * x ^ 19 by
+    funext x
+    rw [factorTwoCenteredP9_eq]
+    ring,
+    integral_polynomial_nineteen_local]
+  norm_num
+
+private theorem integral_three_fifths_one_P9_sq_div_x_eq :
+    (∫ x : ℝ in 3 / 5..1, factorTwoCenteredP9 x ^ 2 / x) =
+      (343361778104 / 9613037109375 : ℝ) := by
+  rw [show (fun x : ℝ ↦ factorTwoCenteredP9 x ^ 2 / x) = fun x ↦
+      0 * x ^ 0 + (99225 / 16384 : ℝ) * x ^ 1 + 0 * x ^ 2 +
+        (-363825 / 2048 : ℝ) * x ^ 3 + 0 * x ^ 4 +
+          (8173935 / 4096 : ℝ) * x ^ 5 + 0 * x ^ 6 +
+            (-22837815 / 2048 : ℝ) * x ^ 7 + 0 * x ^ 8 +
+              (285071787 / 8192 : ℝ) * x ^ 9 + 0 * x ^ 10 +
+                (-129984855 / 2048 : ℝ) * x ^ 11 + 0 * x ^ 12 +
+                  (275141295 / 4096 : ℝ) * x ^ 13 + 0 * x ^ 14 +
+                    (-78217425 / 2048 : ℝ) * x ^ 15 + 0 * x ^ 16 +
+                      (147744025 / 16384 : ℝ) * x ^ 17 + 0 * x ^ 18 +
+                        0 * x ^ 19 by
+    funext x
+    rw [factorTwoCenteredP9_eq]
+    by_cases hx : x = 0
+    · simp [hx]
+    · field_simp [hx]
+      ring,
+    integral_polynomial_nineteen_local]
+  norm_num
+
+private theorem integral_zero_one_endpointPotential_mul_P9_sq_eq :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * factorTwoCenteredP9 x ^ 2) =
+      32239703 / 442305864 - (1 / 19 : ℝ) * Real.log 2 := by
+  let f : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * factorTwoCenteredP9 x ^ 2
+  have hf : IntervalIntegrable f volume (-1) 1 := by
+    dsimp only [f]
+    exact intervalIntegrable_endpointPotential_mul_sq
+      factorTwoCenteredP9 continuous_factorTwoCenteredP9
+  have hfeven : Function.Even f := by
+    intro x
+    dsimp only [f]
+    have hp : yoshidaEndpointPotential (-x) = yoshidaEndpointPotential x := by
+      unfold yoshidaEndpointPotential
+      congr 2
+      ring
+    rw [hp, odd_factorTwoCenteredP9]
+    ring
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even f hf hfeven
+  have hfull := factorTwoCenteredP9_potential_exact
+  unfold factorTwoIntrinsicPotentialEnergy at hfull
+  dsimp only [f] at hfold
+  rw [hfull] at hfold
+  linarith
+
+private theorem one_twenty_fifth_lt_fourCellOddCoreLocalQuadratic_P9 :
+    (1 / 25 : ℝ) < fourCellOddCoreLocalQuadratic factorTwoCenteredP9 := by
+  have htail := rawPrimeExactPotentialTailWeight_le_core_add_localWidthDefect_of_P1
+    factorTwoCenteredP9 contDiff_factorTwoCenteredP9_local
+      odd_factorTwoCenteredP9 centeredOddCoefficients_P9_eq_zero.1
+  rw [integral_zero_three_fifths_P9_sq_eq,
+    integral_three_fifths_one_P9_sq_eq,
+    integral_three_fifths_one_P9_sq_div_x_eq,
+    integral_zero_one_endpointPotential_mul_P9_sq_eq] at htail
+  change _ ≤ fourCellOddCoreLocalQuadratic factorTwoCenteredP9 at htail
+  have hlog := strict_log_two_bounds.2
+  nlinarith
+
+private theorem fourCellOddEndpointStripEven_P9 (z : ℝ) :
+    fourCellOddEndpointStripEven factorTwoCenteredP9 z =
+      (21879 / 12500000 : ℝ) * z ^ 8 +
+        (591591 / 3125000 : ℝ) * z ^ 6 +
+          (8801793 / 6250000 : ℝ) * z ^ 4 -
+            (4094541 / 3125000 : ℝ) * z ^ 2 +
+              2348191 / 12500000 := by
+  unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
+  rw [factorTwoCenteredP9_eq, factorTwoCenteredP9_eq]
+  ring
+
+private theorem fourCellOddEndpointStripOdd_P9 (z : ℝ) :
+    fourCellOddEndpointStripOdd factorTwoCenteredP9 z =
+      (2431 / 50000000 : ℝ) * z ^ 9 +
+        (317889 / 12500000 : ℝ) * z ^ 7 +
+          (18711693 / 25000000 : ℝ) * z ^ 5 +
+            (7297521 / 12500000 : ℝ) * z ^ 3 -
+              (41734881 / 50000000 : ℝ) * z := by
+  unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+  rw [factorTwoCenteredP9_eq, factorTwoCenteredP9_eq]
+  ring
+
+private theorem fourCellOddEndpointStripEvenMassBilinear_P5_P9 :
+    fourCellOddEndpointStripEvenMassBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9 =
+      (-61266976 / 30517578125 : ℝ) := by
+  unfold fourCellOddEndpointStripEvenMassBilinear
+  simp_rw [fourCellOddEndpointStripEven_P5,
+    fourCellOddEndpointStripEven_P9]
+  rw [show (fun z : ℝ ↦
+      ((63 / 1250 : ℝ) * z ^ 4 + (483 / 625 : ℝ) * z ^ 2 -
+          2497 / 6250) *
+        ((21879 / 12500000 : ℝ) * z ^ 8 +
+          (591591 / 3125000 : ℝ) * z ^ 6 +
+          (8801793 / 6250000 : ℝ) * z ^ 4 -
+          (4094541 / 3125000 : ℝ) * z ^ 2 +
+          2348191 / 12500000)) = fun z ↦
+        (-5863432927 / 78125000000 : ℝ) * z ^ 0 + 0 * z ^ 1 +
+          (26119019019 / 39062500000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (-122323006197 / 78125000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (18489346953 / 19531250000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (16920035847 / 78125000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (85108023 / 7812500000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (1378377 / 15625000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          0 * z ^ 14 + 0 * z ^ 15 by
+    funext z
+    ring,
+    integral_polynomial_fifteen_local]
+  norm_num
+
+private theorem fourCellOddEndpointStripOddMassBilinear_P5_P9 :
+    fourCellOddEndpointStripOddMassBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9 =
+      (-143527592 / 30517578125 : ℝ) := by
+  unfold fourCellOddEndpointStripOddMassBilinear
+  simp_rw [fourCellOddEndpointStripOdd_P5,
+    fourCellOddEndpointStripOdd_P9]
+  rw [show (fun z : ℝ ↦
+      ((63 / 25000 : ℝ) * z ^ 5 + (833 / 2500 : ℝ) * z ^ 3 +
+          (1203 / 5000 : ℝ) * z) *
+        ((2431 / 50000000 : ℝ) * z ^ 9 +
+          (317889 / 12500000 : ℝ) * z ^ 7 +
+          (18711693 / 25000000 : ℝ) * z ^ 5 +
+          (7297521 / 12500000 : ℝ) * z ^ 3 -
+          (41734881 / 50000000 : ℝ) * z)) = fun z ↦
+        0 * z ^ 0 + 0 * z ^ 1 +
+          (-50207061843 / 250000000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (-17207320347 / 125000000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (465625769007 / 1250000000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (80306047503 / 312500000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (12964357263 / 1250000000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (50179129 / 625000000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          (153153 / 1250000000000 : ℝ) * z ^ 14 + 0 * z ^ 15 by
+    funext z
+    ring,
+    integral_polynomial_fifteen_local]
+  norm_num
+
+private theorem endpointStripOdd_P9_moments :
+    (∫ z : ℝ in -1..1,
+        fourCellOddEndpointStripOdd factorTwoCenteredP9 z * centeredP1 z) =
+        (-202024 / 1953125 : ℝ) ∧
+      (∫ z : ℝ in -1..1,
+        fourCellOddEndpointStripOdd factorTwoCenteredP9 z * centeredP3 z) =
+        (321976 / 1953125 : ℝ) ∧
+      (∫ z : ℝ in -1..1,
+        fourCellOddEndpointStripOdd factorTwoCenteredP9 z *
+          factorTwoCenteredP5 z) = (35608 / 1953125 : ℝ) := by
+  constructor
+  · simp_rw [fourCellOddEndpointStripOdd_P9]
+    unfold centeredP1
+    rw [show (fun z : ℝ ↦
+        ((2431 / 50000000 : ℝ) * z ^ 9 +
+          (317889 / 12500000 : ℝ) * z ^ 7 +
+          (18711693 / 25000000 : ℝ) * z ^ 5 +
+          (7297521 / 12500000 : ℝ) * z ^ 3 -
+          (41734881 / 50000000 : ℝ) * z) * z) = fun z ↦
+        0 * z ^ 0 + 0 * z ^ 1 +
+          (-41734881 / 50000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (7297521 / 12500000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (18711693 / 25000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (317889 / 12500000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (2431 / 50000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          0 * z ^ 12 + 0 * z ^ 13 + 0 * z ^ 14 + 0 * z ^ 15 by
+      funext z
+      ring,
+      integral_polynomial_fifteen_local]
+    norm_num
+  constructor
+  · simp_rw [fourCellOddEndpointStripOdd_P9]
+    unfold centeredP3
+    rw [show (fun z : ℝ ↦
+        ((2431 / 50000000 : ℝ) * z ^ 9 +
+          (317889 / 12500000 : ℝ) * z ^ 7 +
+          (18711693 / 25000000 : ℝ) * z ^ 5 +
+          (7297521 / 12500000 : ℝ) * z ^ 3 -
+          (41734881 / 50000000 : ℝ) * z) *
+            ((5 * z ^ 3 - 3 * z) / 2)) = fun z ↦
+        0 * z ^ 0 + 0 * z ^ 1 +
+          (125204643 / 100000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (-296244657 / 100000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (16840131 / 50000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (91651131 / 50000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (6350487 / 100000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (2431 / 20000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          0 * z ^ 14 + 0 * z ^ 15 by
+      funext z
+      ring,
+      integral_polynomial_fifteen_local]
+    norm_num
+  · simp_rw [fourCellOddEndpointStripOdd_P9]
+    unfold factorTwoCenteredP5
+    rw [show (fun z : ℝ ↦
+        ((2431 / 50000000 : ℝ) * z ^ 9 +
+          (317889 / 12500000 : ℝ) * z ^ 7 +
+          (18711693 / 25000000 : ℝ) * z ^ 5 +
+          (7297521 / 12500000 : ℝ) * z ^ 3 -
+          (41734881 / 50000000 : ℝ) * z) *
+            ((63 * z ^ 5 - 70 * z ^ 3 + 15 * z) / 8)) = fun z ↦
+        0 * z ^ 0 + 0 * z ^ 1 +
+          (-125204643 / 80000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (335929293 / 40000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (-4111252593 / 400000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (-190397097 / 100000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (2268700863 / 400000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (39968929 / 200000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          (153153 / 400000000 : ℝ) * z ^ 14 + 0 * z ^ 15 by
+      funext z
+      ring,
+      integral_polynomial_fifteen_local]
+    norm_num
+
+private theorem fourCellOddEndpointStripOddRawPolarization_P5_P9 :
+    fourCellOddEndpointStripOddRawPolarization
+        factorTwoCenteredP5 factorTwoCenteredP9 =
+      (-1847417704 / 457763671875 : ℝ) := by
+  have h :=
+    fourCellOddEndpointStripOddRawPolarization_oneThreeFive_eq_moments
+      factorTwoCenteredP9 contDiff_factorTwoCenteredP9_local 0 0 1
+  have hp : fourCellOddOneThreeFiveLowProfile 0 0 1 =
+      factorTwoCenteredP5 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile
+      factorTwoOddStructuralLowProfile centeredP1 centeredP3
+    simp
+  rw [hp] at h
+  rcases endpointStripOdd_P9_moments with ⟨h1, h3, h5⟩
+  rw [h1, h3, h5] at h
+  norm_num at h ⊢
+  exact h
+
+private theorem integral_zero_one_endpointPotential_mul_P5_mul_P9 :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * factorTwoCenteredP5 x *
+        factorTwoCenteredP9 x) = (1 / 60 : ℝ) := by
+  have h5 : factorTwoCenteredP5 =
+      fun x ↦ -(centeredShiftedLegendreReal 5).eval x := by
+    funext x
+    rw [eval_centeredShiftedLegendreReal]
+    have h := centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre
+      ((x + 1) / 2)
+    unfold centeredPullback at h
+    convert h using 1
+    all_goals ring
+  have h9 : factorTwoCenteredP9 =
+      fun x ↦ -(centeredShiftedLegendreReal 9).eval x := by
+    funext x
+    rw [eval_centeredShiftedLegendreReal]
+    rfl
+  have hfull :=
+    YoshidaEndpointPotentialLegendreOffDiagonalStructural.integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+    (m := 5) (n := 9) (by norm_num) (by norm_num)
+  norm_num at hfull
+  have hfullActual : (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x * factorTwoCenteredP5 x *
+        factorTwoCenteredP9 x) = (1 / 30 : ℝ) := by
+    rw [h5, h9]
+    simpa only [mul_neg, neg_mul, neg_neg] using hfull
+  let f : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * factorTwoCenteredP5 x *
+      factorTwoCenteredP9 x
+  have hf : IntervalIntegrable f volume (-1) 1 := by
+    dsimp only [f]
+    simpa only [mul_assoc] using
+      intervalIntegrable_endpointPotential_mul
+        (fun x : ℝ ↦ factorTwoCenteredP5 x * factorTwoCenteredP9 x)
+        (continuous_factorTwoCenteredP5.mul continuous_factorTwoCenteredP9)
+  have hfeven : Function.Even f := by
+    intro x
+    dsimp only [f]
+    have hp : yoshidaEndpointPotential (-x) = yoshidaEndpointPotential x := by
+      unfold yoshidaEndpointPotential
+      congr 2
+      ring
+    rw [hp, odd_factorTwoCenteredP5, odd_factorTwoCenteredP9]
+    ring
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even f hf hfeven
+  dsimp only [f] at hfold
+  rw [hfullActual] at hfold
+  linarith
+
+private theorem fourCellOddRetainedEndpointBilinear_P5_P9_eq :
+    fourCellOddRetainedEndpointBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9 =
+      -(1 / 2 : ℝ) * (-1847417704 / 457763671875) +
+        Real.sqrt 2 * Real.log 2 * (-61266976 / 30517578125 : ℝ) +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          (-143527592 / 30517578125 : ℝ) +
+        (93 / 50 : ℝ) * (1 / 60) := by
+  rcases centeredOddCoefficients_P9_eq_zero with ⟨h1, h3, h5⟩
+  have hraw :=
+    fourCellOddRawStripCancellationPolarization_oneThreeFive_tail_eq
+      factorTwoCenteredP9 contDiff_factorTwoCenteredP9_local
+        odd_factorTwoCenteredP9 h1 h3 h5 0 0 1
+  have hp : fourCellOddOneThreeFiveLowProfile 0 0 1 =
+      factorTwoCenteredP5 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile
+      factorTwoOddStructuralLowProfile centeredP1 centeredP3
+    simp
+  rw [hp] at hraw
+  unfold fourCellOddRetainedEndpointBilinear
+    fourCellOddRetainedPrimePotentialBilinear
+  rw [hraw, fourCellOddEndpointStripOddRawPolarization_P5_P9,
+    fourCellOddEndpointStripEvenMassBilinear_P5_P9,
+    fourCellOddEndpointStripOddMassBilinear_P5_P9,
+    integral_zero_one_endpointPotential_mul_P5_mul_P9]
+  ring
+
+private theorem fourCellOddRetainedEndpointBilinear_P5_P9_bounds :
+    0 < fourCellOddRetainedEndpointBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9 ∧
+      fourCellOddRetainedEndpointBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9 < (7 / 250 : ℝ) := by
+  rw [fourCellOddRetainedEndpointBilinear_P5_P9_eq]
+  rcases sqrt_two_mul_log_two_bounds with ⟨hlo, hhi⟩
+  constructor <;> nlinarith
+
+private theorem abs_fourCellOddSignedMassRegularBilinear_P5_P9_lt_seven_thousandths :
+    |fourCellOddSignedMassRegularBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9| < (7 / 1000 : ℝ) := by
+  rcases centeredOddCoefficients_P9_eq_zero with ⟨h1, h3, h5⟩
+  have hsigned :=
+    fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
+      factorTwoCenteredP9 continuous_factorTwoCenteredP9
+        odd_factorTwoCenteredP9 h1 h3 h5 0 0 1
+  have hp : fourCellOddOneThreeFiveLowProfile 0 0 1 =
+      factorTwoCenteredP5 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile
+      factorTwoOddStructuralLowProfile centeredP1 centeredP3
+    simp
+  rw [factorTwoIntrinsicEnergy_oneThreeFiveLowProfile, hp,
+    factorTwoCenteredP9_energy] at hsigned
+  norm_num at hsigned
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha := fourCellOperatorHalfWidth_le_one_half
+  have hsquare :
+      fourCellOddSignedMassRegularBilinear
+          factorTwoCenteredP5 factorTwoCenteredP9 ^ 2 <
+        (7 / 1000 : ℝ) ^ 2 := by
+    nlinarith [sq_nonneg (fourCellOperatorHalfWidth - 1 / 2)]
+  rw [← sq_abs] at hsquare
+  nlinarith [abs_nonneg (fourCellOddSignedMassRegularBilinear
+    factorTwoCenteredP5 factorTwoCenteredP9)]
+
+private theorem abs_fourCellOddCoreLocalBilinear_P5_P9_lt_seven_two_hundredths :
+    |fourCellOddCoreLocalBilinear
+      factorTwoCenteredP5 factorTwoCenteredP9| < (7 / 200 : ℝ) := by
+  rw [fourCellOddCoreLocalBilinear_eq_retained_sub_signed]
+  rcases fourCellOddRetainedEndpointBilinear_P5_P9_bounds with ⟨hlo, hhi⟩
+  have hsigned :=
+    abs_fourCellOddSignedMassRegularBilinear_P5_P9_lt_seven_thousandths
+  calc
+    |fourCellOddRetainedEndpointBilinear factorTwoCenteredP5
+          factorTwoCenteredP9 -
+        fourCellOddSignedMassRegularBilinear factorTwoCenteredP5
+          factorTwoCenteredP9| ≤
+        |fourCellOddRetainedEndpointBilinear factorTwoCenteredP5
+          factorTwoCenteredP9| +
+        |fourCellOddSignedMassRegularBilinear factorTwoCenteredP5
+          factorTwoCenteredP9| := abs_sub _ _
+    _ = fourCellOddRetainedEndpointBilinear factorTwoCenteredP5
+          factorTwoCenteredP9 +
+        |fourCellOddSignedMassRegularBilinear factorTwoCenteredP5
+          factorTwoCenteredP9| := by rw [abs_of_pos hlo]
+    _ < (7 / 250 : ℝ) + 7 / 1000 := add_lt_add hhi hsigned
+    _ = (7 / 200 : ℝ) := by norm_num
+
+/-- The farther adjacent tail mode also satisfies the honest complete-form
+Schur inequality against the retained `P₅` pivot. -/
+theorem fourCellOddCoreLocalBilinear_P5_P9_sq_le_mul :
+    fourCellOddCoreLocalBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9 ^ 2 ≤
+      fourCellOddCoreLocalQuadratic factorTwoCenteredP5 *
+        fourCellOddCoreLocalQuadratic factorTwoCenteredP9 := by
+  let B := fourCellOddCoreLocalBilinear
+    factorTwoCenteredP5 factorTwoCenteredP9
+  let Q5 := fourCellOddCoreLocalQuadratic factorTwoCenteredP5
+  let Q9 := fourCellOddCoreLocalQuadratic factorTwoCenteredP9
+  have hQ5 : (6 / 25 : ℝ) < Q5 :=
+    six_twenty_fifths_lt_fourCellOddCoreLocalQuadratic_P5
+  have hQ9 : (1 / 25 : ℝ) < Q9 :=
+    one_twenty_fifth_lt_fourCellOddCoreLocalQuadratic_P9
+  have hB : |B| < (7 / 200 : ℝ) :=
+    abs_fourCellOddCoreLocalBilinear_P5_P9_lt_seven_two_hundredths
+  have hBsq : B ^ 2 < (7 / 200 : ℝ) ^ 2 := by
+    rw [← sq_abs]
+    exact (sq_lt_sq₀ (abs_nonneg B) (by norm_num)).2 hB
+  have hQ5pos : 0 < Q5 := by linarith
+  have hprod : (6 / 625 : ℝ) < Q5 * Q9 := by
+    calc
+      (6 / 625 : ℝ) = (6 / 25 : ℝ) * (1 / 25) := by norm_num
+      _ < Q5 * (1 / 25 : ℝ) := mul_lt_mul_of_pos_right hQ5 (by norm_num)
+      _ < Q5 * Q9 := mul_lt_mul_of_pos_left hQ9 hQ5pos
+  dsimp only [B, Q5, Q9] at hBsq hprod ⊢
   nlinarith
 
 theorem fourCellOddCoreLocalQuadratic_add
