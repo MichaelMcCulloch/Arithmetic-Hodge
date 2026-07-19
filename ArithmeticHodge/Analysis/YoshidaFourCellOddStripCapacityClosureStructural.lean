@@ -3888,6 +3888,329 @@ theorem lowerIntervalP1Surplus_le_half_lowerNestedCoupledRaw
   dsimp only [A] at htail ⊢
   nlinarith
 
+private theorem sq_intervalIntegral_mul_le_zero_three_fifths
+    (f g : ℝ → ℝ) (hf : Continuous f) (hg : Continuous g) :
+    (∫ x : ℝ in 0..3 / 5, f x * g x) ^ 2 ≤
+      (∫ x : ℝ in 0..3 / 5, f x ^ 2) *
+        (∫ x : ℝ in 0..3 / 5, g x ^ 2) := by
+  let μ : Measure ℝ := volume.restrict (Ioc (0 : ℝ) (3 / 5))
+  have hfMeas : AEStronglyMeasurable f μ :=
+    hf.aestronglyMeasurable.restrict
+  have hgMeas : AEStronglyMeasurable g μ :=
+    hg.aestronglyMeasurable.restrict
+  have hfLp : MemLp f 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hfMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖f x‖ ^ 2)
+        (Icc (0 : ℝ) (3 / 5)) :=
+      (hf.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hgLp : MemLp g 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hgMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖g x‖ ^ 2)
+        (Icc (0 : ℝ) (3 / 5)) :=
+      (hg.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have h := sq_integral_mul_le_weighted μ (fun _ : ℝ ↦ 1) f g
+    (by simp) (by simpa using hfLp) (by simpa using hgLp)
+  repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+  simpa only [μ, div_one, one_mul] using h
+
+/-- Explicit positive square left by the cross-rectangle odd ground-state
+transform after its sharp `6/(5x)` endpoint diagonal is removed. -/
+def fourCellOddCrossP1Square (w : ℝ → ℝ) : ℝ :=
+  ∫ x : ℝ in 3 / 5..1, ∫ y : ℝ in 0..3 / 5,
+    2 * (y * w x - x * w y) ^ 2 / x ^ 3
+
+private theorem sq_upperP1Moment_le_invCubeMass
+    (h : ℝ → ℝ) (hh : Continuous h) :
+    (∫ x : ℝ in 3 / 5..1, x * h x) ^ 2 ≤
+      (7448 / 46875 : ℝ) *
+        ∫ x : ℝ in 3 / 5..1, h x ^ 2 / x ^ 3 := by
+  let μ : Measure ℝ := volume.restrict (Ioc (3 / 5 : ℝ) 1)
+  let W : ℝ → ℝ := fun x ↦ 1 / x ^ 3
+  let G : ℝ → ℝ := fun x ↦ x
+  have hW : ∀ᵐ x ∂μ, 0 < W x := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+    dsimp only [W]
+    exact one_div_pos.mpr (pow_pos (by linarith [hx.1] : 0 < x) 3)
+  have hdualMeas : AEStronglyMeasurable
+      (fun x ↦ G x / Real.sqrt (W x)) μ := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [G, W, μ]
+    fun_prop
+  have hdualDensity : IntegrableOn (fun x : ℝ ↦ x ^ 5)
+      (Ioc (3 / 5 : ℝ) 1) := by
+    exact ((by fun_prop : Continuous (fun x : ℝ ↦ x ^ 5))
+      |>.continuousOn.integrableOn_compact isCompact_Icc).mono_set
+        Ioc_subset_Icc_self
+  have hdual : MemLp (fun x ↦ G x / Real.sqrt (W x)) 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hdualMeas]
+    have hInt : Integrable (fun x : ℝ ↦ x ^ 5) μ := by
+      simpa only [μ] using hdualDensity
+    apply hInt.congr
+    filter_upwards [hW] with x hx
+    have hx0 : 0 < x := by
+      dsimp only [W] at hx
+      have hx3 : 0 < x ^ 3 := one_div_pos.mp hx
+      nlinarith [sq_nonneg x]
+    rw [Real.norm_eq_abs, sq_abs, div_pow, Real.sq_sqrt hx.le]
+    dsimp only [G, W]
+    field_simp [hx0.ne']
+  have hprimalMeas : AEStronglyMeasurable
+      (fun x ↦ Real.sqrt (W x) * h x) μ := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [W, μ]
+    fun_prop
+  have hprimalDensity : IntegrableOn
+      (fun x : ℝ ↦ h x ^ 2 / x ^ 3) (Ioc (3 / 5 : ℝ) 1) := by
+    have hcont : ContinuousOn (fun x : ℝ ↦ h x ^ 2 / x ^ 3)
+        (Icc (3 / 5 : ℝ) 1) := by
+      apply ContinuousOn.div (hh.pow 2).continuousOn
+        (by fun_prop : Continuous (fun x : ℝ ↦ x ^ 3)).continuousOn
+      intro x hx
+      exact pow_ne_zero 3 (by linarith [hx.1] : x ≠ 0)
+    exact (hcont.integrableOn_compact isCompact_Icc).mono_set
+      Ioc_subset_Icc_self
+  have hprimal : MemLp (fun x ↦ Real.sqrt (W x) * h x) 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hprimalMeas]
+    have hInt : Integrable (fun x : ℝ ↦ h x ^ 2 / x ^ 3) μ := by
+      simpa only [μ] using hprimalDensity
+    apply hInt.congr
+    filter_upwards [hW] with x hx
+    rw [Real.norm_eq_abs, sq_abs, mul_pow, Real.sq_sqrt hx.le]
+    dsimp only [W]
+    ring
+  have hcauchy := sq_integral_mul_le_weighted μ W G h
+    hW hdual hprimal
+  dsimp only [μ] at hcauchy
+  repeat rw [← intervalIntegral.integral_of_le (by norm_num)] at hcauchy
+  have hdualValue :
+      (∫ x : ℝ in 3 / 5..1, G x ^ 2 / W x) =
+        (7448 / 46875 : ℝ) := by
+    rw [show (fun x : ℝ ↦ G x ^ 2 / W x) = fun x ↦ x ^ 5 by
+      funext x
+      dsimp only [G, W]
+      by_cases hx : x = 0
+      · simp [hx]
+      · field_simp [hx]
+    , integral_pow]
+    norm_num
+  have hprimalValue :
+      (∫ x : ℝ in 3 / 5..1, W x * h x ^ 2) =
+        ∫ x : ℝ in 3 / 5..1, h x ^ 2 / x ^ 3 := by
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    dsimp only [W]
+    ring
+  dsimp only [G] at hcauchy
+  rw [hdualValue, hprimalValue] at hcauchy
+  exact hcauchy
+
+private theorem integral_lower_crossP1Difference_sq
+    (w : ℝ → ℝ) (hw : Continuous w) (x : ℝ) :
+    (∫ y : ℝ in 0..3 / 5, (y * w x - x * w y) ^ 2) =
+      (9 / 125 : ℝ) * w x ^ 2 -
+        2 * x * w x * (∫ y : ℝ in 0..3 / 5, y * w y) +
+          x ^ 2 * (∫ y : ℝ in 0..3 / 5, w y ^ 2) := by
+  have h2 : IntervalIntegrable (fun y : ℝ ↦ y ^ 2 * w x ^ 2)
+      volume 0 (3 / 5) := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hcross : IntervalIntegrable
+      (fun y : ℝ ↦ 2 * x * w x * (y * w y)) volume 0 (3 / 5) := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  have hw2 : IntervalIntegrable (fun y : ℝ ↦ x ^ 2 * w y ^ 2)
+      volume 0 (3 / 5) := by
+    apply Continuous.intervalIntegrable
+    fun_prop
+  rw [show (fun y : ℝ ↦ (y * w x - x * w y) ^ 2) =
+      fun y ↦ y ^ 2 * w x ^ 2 - 2 * x * w x * (y * w y) +
+        x ^ 2 * w y ^ 2 by
+    funext y
+    ring,
+    intervalIntegral.integral_add (h2.sub hcross) hw2,
+    intervalIntegral.integral_sub h2 hcross]
+  rw [show (∫ y : ℝ in 0..3 / 5, y ^ 2 * w x ^ 2) =
+      w x ^ 2 * ∫ y : ℝ in 0..3 / 5, y ^ 2 by
+    rw [← intervalIntegral.integral_const_mul]
+    apply intervalIntegral.integral_congr
+    intro y _hy
+    ring,
+    show (∫ y : ℝ in 0..3 / 5, 2 * x * w x * (y * w y)) =
+      (2 * x * w x) * ∫ y : ℝ in 0..3 / 5, y * w y by
+    rw [intervalIntegral.integral_const_mul],
+    show (∫ y : ℝ in 0..3 / 5, x ^ 2 * w y ^ 2) =
+      x ^ 2 * ∫ y : ℝ in 0..3 / 5, w y ^ 2 by
+    rw [intervalIntegral.integral_const_mul],
+    integral_pow]
+  norm_num
+  ring
+
+/-- Global P₁ orthogonality forces the upper/lower raw cross rectangle to
+pay the linear component left invisible by the lower-square spectral gap.
+The rational constant `19` is below the exact weighted-Cauchy value
+`1953125/100548`; no mode cutoff is involved. -/
+theorem nineteen_mul_lowerP1Moment_sq_le_crossP1Square
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
+    (hone : centeredOddP1Coefficient w = 0) :
+    19 * (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2 ≤
+      fourCellOddCrossP1Square w := by
+  let A : ℝ := ∫ x : ℝ in 0..3 / 5, x * w x
+  let L : ℝ := ∫ x : ℝ in 0..3 / 5, w x ^ 2
+  let k : ℝ := (125 / 9 : ℝ) * A
+  let h : ℝ → ℝ := fun x ↦ w x - k * x
+  have hwcont : Continuous w := hw.continuous
+  have hh : Continuous h := by
+    dsimp only [h, k]
+    fun_prop
+  have hinner (x : ℝ) :
+      (9 / 125 : ℝ) * h x ^ 2 ≤
+        ∫ y : ℝ in 0..3 / 5, (y * w x - x * w y) ^ 2 := by
+    have hcauchy := sq_intervalIntegral_mul_le_zero_three_fifths
+      (fun y : ℝ ↦ y) (fun y ↦ y * w x - x * w y)
+      (by fun_prop) (by fun_prop)
+    have hmoment :
+        (∫ y : ℝ in 0..3 / 5, y * (y * w x - x * w y)) =
+          (9 / 125 : ℝ) * h x := by
+      have hpow : (∫ y : ℝ in 0..3 / 5, y ^ 2) = 9 / 125 := by
+        rw [integral_pow]
+        norm_num
+      rw [show (fun y : ℝ ↦ y * (y * w x - x * w y)) =
+          fun y ↦ w x * y ^ 2 - x * (y * w y) by
+        funext y
+        ring,
+        intervalIntegral.integral_sub
+          (Continuous.intervalIntegrable (by fun_prop) 0 (3 / 5))
+          (Continuous.intervalIntegrable (by fun_prop) 0 (3 / 5)),
+        intervalIntegral.integral_const_mul,
+        intervalIntegral.integral_const_mul, hpow]
+      dsimp only [h, k, A]
+      ring
+    have hy2 : (∫ y : ℝ in 0..3 / 5, y ^ 2) = 9 / 125 := by
+      rw [integral_pow]
+      norm_num
+    rw [hmoment, hy2] at hcauchy
+    nlinarith
+  have hcenterMoment :
+      (∫ x : ℝ in -1..1, w x * centeredP1 x) = 0 := by
+    rw [integral_mul_centeredP1_eq, hone]
+    ring
+  have heven : Function.Even (fun x : ℝ ↦ w x * centeredP1 x) := by
+    intro x
+    unfold centeredP1
+    change w (-x) * (-x) = w x * x
+    rw [hodd]
+    ring
+  have hcenterInt : IntervalIntegrable (fun x : ℝ ↦ w x * centeredP1 x)
+      volume (-1) 1 := by
+    exact (hwcont.mul (by unfold centeredP1; fun_prop)).intervalIntegrable _ _
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even
+    (fun x : ℝ ↦ w x * centeredP1 x) hcenterInt heven
+  have hpositiveMoment : (∫ x : ℝ in 0..1, x * w x) = 0 := by
+    unfold centeredP1 at hcenterMoment hfold
+    rw [show (fun x : ℝ ↦ w x * x) = fun x ↦ x * w x by
+      funext x
+      ring] at hcenterMoment hfold
+    linarith
+  have hlowerInt : IntervalIntegrable (fun x : ℝ ↦ x * w x)
+      volume 0 (3 / 5) := (by fun_prop : Continuous (fun x : ℝ ↦ x * w x))
+        |>.intervalIntegrable _ _
+  have hupperInt : IntervalIntegrable (fun x : ℝ ↦ x * w x)
+      volume (3 / 5) 1 := (by fun_prop : Continuous (fun x : ℝ ↦ x * w x))
+        |>.intervalIntegrable _ _
+  have hsplit := intervalIntegral.integral_add_adjacent_intervals
+    hlowerInt hupperInt
+  have hupperMoment :
+      (∫ x : ℝ in 3 / 5..1, x * w x) = -A := by
+    dsimp only [A]
+    linarith
+  have hx2 : (∫ x : ℝ in 3 / 5..1, x ^ 2) = 98 / 375 := by
+    rw [integral_pow]
+    norm_num
+  have hhMoment :
+      (∫ x : ℝ in 3 / 5..1, x * h x) =
+        -(125 / 27 : ℝ) * A := by
+    rw [show (fun x : ℝ ↦ x * h x) =
+        fun x ↦ x * w x - k * x ^ 2 by
+      funext x
+      dsimp only [h]
+      ring,
+      intervalIntegral.integral_sub hupperInt
+        ((Continuous.const_mul (by fun_prop : Continuous (fun x : ℝ ↦ x ^ 2)) k)
+          |>.intervalIntegrable _ _),
+      intervalIntegral.integral_const_mul, hupperMoment, hx2]
+    dsimp only [k]
+    ring
+  have houter := sq_upperP1Moment_le_invCubeMass h hh
+  rw [hhMoment] at houter
+  have hintegrated :
+      (18 / 125 : ℝ) *
+          (∫ x : ℝ in 3 / 5..1, h x ^ 2 / x ^ 3) ≤
+        fourCellOddCrossP1Square w := by
+    have hleftInt : IntervalIntegrable
+        (fun x : ℝ ↦ (18 / 125 : ℝ) * (h x ^ 2 / x ^ 3))
+        volume (3 / 5) 1 := by
+      apply ContinuousOn.intervalIntegrable
+      apply ContinuousOn.const_mul
+      apply ContinuousOn.div (hh.pow 2).continuousOn
+        (by fun_prop : Continuous (fun x : ℝ ↦ x ^ 3)).continuousOn
+      intro x hx
+      rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+      exact pow_ne_zero 3 (by linarith [hx.1] : x ≠ 0)
+    have hrightEq : fourCellOddCrossP1Square w =
+        ∫ x : ℝ in 3 / 5..1,
+          (2 / x ^ 3) *
+            (∫ y : ℝ in 0..3 / 5, (y * w x - x * w y) ^ 2) := by
+      unfold fourCellOddCrossP1Square
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      change (∫ y : ℝ in 0..3 / 5,
+          2 * (y * w x - x * w y) ^ 2 / x ^ 3) =
+        (2 / x ^ 3) *
+          ∫ y : ℝ in 0..3 / 5, (y * w x - x * w y) ^ 2
+      rw [show (fun y : ℝ ↦ 2 * (y * w x - x * w y) ^ 2 / x ^ 3) =
+          fun y ↦ (2 / x ^ 3) * (y * w x - x * w y) ^ 2 by
+        funext y
+        ring,
+        intervalIntegral.integral_const_mul]
+    rw [hrightEq]
+    rw [← intervalIntegral.integral_const_mul]
+    apply intervalIntegral.integral_mono_on_of_le_Ioo
+      (by norm_num) hleftInt
+    · apply ContinuousOn.intervalIntegrable
+      rw [show (fun x : ℝ ↦ (2 / x ^ 3) *
+          (∫ y : ℝ in 0..3 / 5, (y * w x - x * w y) ^ 2)) =
+        fun x ↦ (2 / x ^ 3) *
+          ((9 / 125 : ℝ) * w x ^ 2 - 2 * x * w x * A + x ^ 2 * L) by
+        funext x
+        rw [integral_lower_crossP1Difference_sq w hwcont x]]
+      apply ContinuousOn.mul
+      · apply ContinuousOn.div continuousOn_const
+          (by fun_prop : Continuous (fun x : ℝ ↦ x ^ 3)).continuousOn
+        intro x hx
+        rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+        exact pow_ne_zero 3 (by linarith [hx.1] : x ≠ 0)
+      · dsimp only [A, L]
+        fun_prop
+    · intro x hx
+      have hx0 : 0 < x := by linarith [hx.1]
+      have hmul := mul_le_mul_of_nonneg_left (hinner x)
+        (div_nonneg (by norm_num : (0 : ℝ) ≤ 2)
+          (pow_nonneg hx0.le 3))
+      calc
+        (18 / 125 : ℝ) * (h x ^ 2 / x ^ 3) =
+            (2 / x ^ 3) * ((9 / 125 : ℝ) * h x ^ 2) := by ring
+        _ ≤ (2 / x ^ 3) *
+            (∫ y : ℝ in 0..3 / 5, (y * w x - x * w y) ^ 2) := hmul
+  dsimp only [fourCellOddCrossP1Square] at hintegrated ⊢
+  have hcoefficient :
+      (19 : ℝ) * A ^ 2 ≤
+        (18 / 125 : ℝ) *
+          (∫ x : ℝ in 3 / 5..1, h x ^ 2 / x ^ 3) := by
+    nlinarith
+  exact hcoefficient.trans hintegrated
+
 /-- Set-integral form of the sharp lower-square raw gap, ready for the exact
 `[0,3/5] ∪ [3/5,1]` partition of the retained reserve. -/
 theorem four_mul_lowerIntervalMass_le_lowerSquare_coupledRaw
