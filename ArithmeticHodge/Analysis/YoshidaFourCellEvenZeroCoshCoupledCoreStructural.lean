@@ -3495,6 +3495,246 @@ theorem integral_cutoffEightProjectedPotentialLegendreSource_mul_eq_of_hasSum
               cutoffEightProjectedPotentialLegendreSource k x)
   linarith
 
+/-- Linear cutoff-eight selector for the complete `P₀/P₂/P₄/P₆`
+endpoint-potential representer. -/
+def fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
+    (c0 c2 c4 c6 : ℝ) : ℝ[X] :=
+  c0 • cutoffEightPotentialLegendreSelectorPolynomial 0 +
+    c2 • cutoffEightPotentialLegendreSelectorPolynomial 2 +
+    c4 • cutoffEightPotentialLegendreSelectorPolynomial 4 +
+    c6 • cutoffEightPotentialLegendreSelectorPolynomial 6
+
+/-- Endpoint-potential representer after removing its first eight Hilbert
+coordinates. -/
+def fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+    (c0 c2 c4 c6 : ℝ) : ℝ → ℝ :=
+  c0 • cutoffEightProjectedPotentialLegendreSource 0 +
+    c2 • cutoffEightProjectedPotentialLegendreSource 2 +
+    c4 • cutoffEightProjectedPotentialLegendreSource 4 +
+    c6 • cutoffEightProjectedPotentialLegendreSource 6
+
+theorem projectedPotentialRepresenter_eq_potential_sub_selector
+    (c0 c2 c4 c6 x : ℝ) :
+    fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+        c0 c2 c4 c6 x =
+      yoshidaEndpointPotential x *
+          factorTwoIntrinsicEvenP0246Profile c0 c2 c4 c6 x -
+        centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
+            c0 c2 c4 c6) x := by
+  rw [← centeredPolynomialLift_intrinsicEvenP0246Polynomial]
+  unfold fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+    fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
+    cutoffEightProjectedPotentialLegendreSource
+    cutoffEightPotentialLegendreSource centeredPolynomialLift
+    factorTwoIntrinsicEvenP0246Polynomial
+    factorTwoIntrinsicEvenP024Polynomial
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul,
+    Polynomial.eval_add, Polynomial.eval_smul]
+  simp_rw [eval_centeredShiftedLegendreReal]
+  ring
+
+/-- Exact projected endpoint-potential Gram.  Its diagonal entries carry
+the structural `ζ(2)` contribution; every off-diagonal entry is rational. -/
+def fourCellEvenP0246CutoffEightProjectedPotentialGram
+    (c0 c2 c4 c6 : ℝ) : ℝ :=
+  (48877 / 29400 - Real.pi ^ 2 / 6 : ℝ) * c0 ^ 2 +
+    2 * (1 / 54 : ℝ) * c0 * c2 +
+    2 * (17 / 792 : ℝ) * c0 * c4 +
+    2 * (469 / 15444 : ℝ) * c0 * c6 +
+    (1383379 / 3969000 - Real.pi ^ 2 / 30 : ℝ) * c2 ^ 2 +
+    2 * (1 / 44 : ℝ) * c2 * c4 +
+    2 * (37 / 1144 : ℝ) * c2 * c6 +
+    (45245671 / 216112050 - Real.pi ^ 2 / 54 : ℝ) * c4 ^ 2 +
+    2 * (1 / 26 : ℝ) * c4 * c6 +
+    (4861797662 / 26377676325 - Real.pi ^ 2 / 78 : ℝ) * c6 ^ 2
+
+/-- Abstract Hilbert realization of the projected potential representer. -/
+def fourCellEvenP0246CutoffEightProjectedPotentialL2
+    (c0 c2 c4 c6 : ℝ) : UnitIntervalL2 :=
+  c0 • cutoffEightPotentialLegendreResidualL2 0 +
+    c2 • cutoffEightPotentialLegendreResidualL2 2 +
+    c4 • cutoffEightPotentialLegendreResidualL2 4 +
+    c6 • cutoffEightPotentialLegendreResidualL2 6
+
+set_option maxHeartbeats 800000 in
+theorem norm_sq_fourCellEvenP0246CutoffEightProjectedPotentialL2
+    (c0 c2 c4 c6 : ℝ) :
+    ‖fourCellEvenP0246CutoffEightProjectedPotentialL2 c0 c2 c4 c6‖ ^ 2 =
+      (1 / 2 : ℝ) *
+        fourCellEvenP0246CutoffEightProjectedPotentialGram c0 c2 c4 c6 := by
+  let R0 := cutoffEightPotentialLegendreResidualL2 0
+  let R2 := cutoffEightPotentialLegendreResidualL2 2
+  let R4 := cutoffEightPotentialLegendreResidualL2 4
+  let R6 := cutoffEightPotentialLegendreResidualL2 6
+  have h00 : inner ℝ R0 R0 =
+      (48877 / 29400 - Real.pi ^ 2 / 6 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P0_P0
+  have h02 : inner ℝ R0 R2 = (1 / 54 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P0_P2
+  have h04 : inner ℝ R0 R4 = (17 / 792 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P0_P4
+  have h06 : inner ℝ R0 R6 = (469 / 15444 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P0_P6
+  have h22 : inner ℝ R2 R2 =
+      (1383379 / 3969000 - Real.pi ^ 2 / 30 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P2_P2
+  have h24 : inner ℝ R2 R4 = (1 / 44 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P2_P4
+  have h26 : inner ℝ R2 R6 = (37 / 1144 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P2_P6
+  have h44 : inner ℝ R4 R4 =
+      (45245671 / 216112050 - Real.pi ^ 2 / 54 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P4_P4
+  have h46 : inner ℝ R4 R6 = (1 / 26 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P4_P6
+  have h66 : inner ℝ R6 R6 =
+      (4861797662 / 26377676325 - Real.pi ^ 2 / 78 : ℝ) / 2 :=
+    inner_cutoffEightPotentialLegendreResidualL2_eq_half_of_hasSum
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num) _
+        hasSum_cutoffEightPotentialTail_P6_P6
+  unfold fourCellEvenP0246CutoffEightProjectedPotentialL2
+  change ‖c0 • R0 + c2 • R2 + c4 • R4 + c6 • R6‖ ^ 2 = _
+  rw [← real_inner_self_eq_norm_sq]
+  simp only [inner_add_left, inner_add_right, real_inner_smul_left,
+    real_inner_smul_right]
+  rw [real_inner_comm R0 R2, real_inner_comm R0 R4,
+    real_inner_comm R0 R6, real_inner_comm R2 R4,
+    real_inner_comm R2 R6, real_inner_comm R4 R6,
+    h00, h02, h04, h06, h22, h24, h26, h44, h46, h66]
+  unfold fourCellEvenP0246CutoffEightProjectedPotentialGram
+  ring
+
+private theorem memLp_centeredPullback_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+    (c0 c2 c4 c6 : ℝ) :
+    MemLp (fun t : unitInterval ↦ centeredPullback
+      (fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+        c0 c2 c4 c6) (t : ℝ)) 2 := by
+  have h0 :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 0
+  have h2 :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 2
+  have h4 :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 4
+  have h6 :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 6
+  simpa only [fourCellEvenP0246CutoffEightProjectedPotentialRepresenter,
+    centeredPullback, Pi.add_apply, Pi.smul_apply] using
+    (((h0.const_smul c0).add (h2.const_smul c2)).add
+      (h4.const_smul c4)).add (h6.const_smul c6)
+
+private theorem toLp_centeredPullback_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+    (c0 c2 c4 c6 : ℝ) :
+    (memLp_centeredPullback_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+      c0 c2 c4 c6).toLp
+        (fun t : unitInterval ↦ centeredPullback
+          (fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+            c0 c2 c4 c6) (t : ℝ)) =
+      fourCellEvenP0246CutoffEightProjectedPotentialL2 c0 c2 c4 c6 := by
+  let f0 : unitInterval → ℝ := fun t ↦ centeredPullback
+    (cutoffEightProjectedPotentialLegendreSource 0) (t : ℝ)
+  let f2 : unitInterval → ℝ := fun t ↦ centeredPullback
+    (cutoffEightProjectedPotentialLegendreSource 2) (t : ℝ)
+  let f4 : unitInterval → ℝ := fun t ↦ centeredPullback
+    (cutoffEightProjectedPotentialLegendreSource 4) (t : ℝ)
+  let f6 : unitInterval → ℝ := fun t ↦ centeredPullback
+    (cutoffEightProjectedPotentialLegendreSource 6) (t : ℝ)
+  let h0 : MemLp f0 2 :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 0
+  let h2 : MemLp f2 2 :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 2
+  let h4 : MemLp f4 2 :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 4
+  let h6 : MemLp f6 2 :=
+    memLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 6
+  have hsum : MemLp (c0 • f0 + c2 • f2 + c4 • f4 + c6 • f6) 2 :=
+    (((h0.const_smul c0).add (h2.const_smul c2)).add
+      (h4.const_smul c4)).add (h6.const_smul c6)
+  have hto : hsum.toLp
+        (c0 • f0 + c2 • f2 + c4 • f4 + c6 • f6) =
+      c0 • cutoffEightPotentialLegendreResidualL2 0 +
+        c2 • cutoffEightPotentialLegendreResidualL2 2 +
+        c4 • cutoffEightPotentialLegendreResidualL2 4 +
+        c6 • cutoffEightPotentialLegendreResidualL2 6 := by
+    calc
+      _ = c0 • h0.toLp f0 + c2 • h2.toLp f2 +
+          c4 • h4.toLp f4 + c6 • h6.toLp f6 := by rfl
+      _ = _ := by
+        rw [show h0.toLp f0 = cutoffEightPotentialLegendreResidualL2 0 by
+            exact
+              toLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 0,
+          show h2.toLp f2 = cutoffEightPotentialLegendreResidualL2 2 by
+            exact
+              toLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 2,
+          show h4.toLp f4 = cutoffEightPotentialLegendreResidualL2 4 by
+            exact
+              toLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 4,
+          show h6.toLp f6 = cutoffEightPotentialLegendreResidualL2 6 by
+            exact
+              toLp_centeredPullback_cutoffEightProjectedPotentialLegendreSource 6]
+  unfold fourCellEvenP0246CutoffEightProjectedPotentialL2
+  simpa only [fourCellEvenP0246CutoffEightProjectedPotentialRepresenter,
+    centeredPullback, f0, f2, f4, f6, Pi.add_apply, Pi.smul_apply,
+    smul_eq_mul] using hto
+
+/-- The exact closed potential-tail Gram is the actual centered squared norm
+of the degree-eight projected endpoint-potential representer. -/
+theorem integral_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter_sq_eq_gram
+    (c0 c2 c4 c6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+        c0 c2 c4 c6 x ^ 2) =
+      fourCellEvenP0246CutoffEightProjectedPotentialGram
+        c0 c2 c4 c6 := by
+  let V : ℝ → ℝ :=
+    fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+      c0 c2 c4 c6
+  let hV : MemLp (fun t : unitInterval ↦ centeredPullback V (t : ℝ)) 2 :=
+    memLp_centeredPullback_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+      c0 c2 c4 c6
+  have hto : hV.toLp
+      (fun t : unitInterval ↦ centeredPullback V (t : ℝ)) =
+      fourCellEvenP0246CutoffEightProjectedPotentialL2 c0 c2 c4 c6 := by
+    exact
+      toLp_centeredPullback_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+        c0 c2 c4 c6
+  have hinner := inner_toLp_eq_integral_mul
+    (fun t : unitInterval ↦ centeredPullback V (t : ℝ))
+    (fun t : unitInterval ↦ centeredPullback V (t : ℝ)) hV hV
+  rw [hto, real_inner_self_eq_norm_sq,
+    norm_sq_fourCellEvenP0246CutoffEightProjectedPotentialL2] at hinner
+  have hbridge := integral_unitInterval_centeredPullback_sq V
+  have hmulSq :
+      (∫ t : unitInterval,
+        centeredPullback V (t : ℝ) * centeredPullback V (t : ℝ)) =
+      ∫ t : unitInterval, centeredPullback V (t : ℝ) ^ 2 := by
+    apply integral_congr_ae
+    filter_upwards [] with t
+    ring
+  rw [hmulSq, hbridge] at hinner
+  simpa only [V] using (by
+    nlinarith only [hinner] :
+      (∫ x : ℝ in -1..1, V x ^ 2) =
+        fourCellEvenP0246CutoffEightProjectedPotentialGram c0 c2 c4 c6)
+
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
     (hlow : centeredLegendreMomentsVanishBelow r 8)
