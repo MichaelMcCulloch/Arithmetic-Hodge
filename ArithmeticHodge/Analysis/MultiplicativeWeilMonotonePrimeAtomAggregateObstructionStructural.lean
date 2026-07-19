@@ -737,6 +737,483 @@ theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_quadratic_eq_parentTra
   rw [bombieriFunctional_quadratic_re_eq_completeRealLogKernel]
   rfl
 
+private theorem monotonePrimeAtomAggregateSlice_add
+    (f g : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    monotonePrimeAtomAggregateSlice (f + g) k S =
+      monotonePrimeAtomAggregateSlice f k S +
+        monotonePrimeAtomAggregateSlice g k S := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotonePrimeAtomAggregateSlice_apply,
+    monotoneQuarterCutoff_apply, TestFunction.coe_add, Pi.add_apply]
+  simp_rw [mul_add]
+  rw [Finset.sum_add_distrib]
+  ring
+
+private theorem monotoneQuarterCutoff_add_for_aggregateVariation
+    (f g : BombieriTest) (k : ℤ) :
+    monotoneQuarterCutoff (f + g) k =
+      monotoneQuarterCutoff f k + monotoneQuarterCutoff g k := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotoneQuarterCutoff_apply, TestFunction.coe_add, Pi.add_apply]
+  ring
+
+private theorem monotoneQuarterCutoff_real_smul_for_aggregateVariation
+    (a : ℝ) (g : BombieriTest) (k : ℤ) :
+    monotoneQuarterCutoff ((a : ℂ) • g) k =
+      (a : ℂ) • monotoneQuarterCutoff g k := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotoneQuarterCutoff_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul]
+  ring
+
+private theorem monotonePrimeAtomAggregateSlice_real_smul
+    (a : ℝ) (g : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    monotonePrimeAtomAggregateSlice ((a : ℂ) • g) k S =
+      (a : ℂ) • monotonePrimeAtomAggregateSlice g k S := by
+  apply TestFunction.ext
+  intro x
+  simp only [monotonePrimeAtomAggregateSlice_apply,
+    monotoneQuarterCutoff_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul]
+  rw [Finset.mul_sum, Finset.mul_sum, Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro j _hj
+  push_cast
+  ring
+
+/-- A variation invisible to the finite aggregate transfer leaves the
+aggregate slice exactly fixed along the whole real parent line. -/
+theorem monotonePrimeAtomAggregateSlice_add_real_smul_eq_of_transfer_zero
+    (parent variation : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hzero : monotonePrimeAtomAggregateSlice variation k S = 0)
+    (a : ℝ) :
+    monotonePrimeAtomAggregateSlice (parent + (a : ℂ) • variation) k S =
+      monotonePrimeAtomAggregateSlice parent k S := by
+  rw [monotonePrimeAtomAggregateSlice_add,
+    monotonePrimeAtomAggregateSlice_real_smul, hzero]
+  simp
+
+/-- A sufficiently far-right variation is invisible to the finite aggregate
+transfer.  The explicit threshold depends only on the largest selected
+dilation and the upper endpoint of the aggregate plateau. -/
+theorem monotonePrimeAtomAggregateSlice_eq_zero_of_vanishes_below
+    (variation : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hfar : ∀ y : ℝ,
+      y < (((S.sup id + 2 : ℕ) : ℝ) *
+        quarterLogLatticePoint (k + 3)) → variation y = 0) :
+    monotonePrimeAtomAggregateSlice variation k S = 0 := by
+  apply TestFunction.ext
+  intro x
+  rw [monotonePrimeAtomAggregateSlice_apply]
+  by_cases hx : x ≤ quarterLogLatticePoint (k + 3)
+  · have hsum :
+        (∑ j ∈ S,
+          ((ArithmeticFunction.vonMangoldt (j + 1) : ℝ) : ℂ) *
+            monotoneQuarterCutoff variation (k + 1)
+              (((j + 1 : ℕ) : ℝ) * x)) = 0 := by
+      apply Finset.sum_eq_zero
+      intro j hj
+      have hjle : j ≤ S.sup id := Finset.le_sup (f := id) hj
+      have hjlt : j + 1 < S.sup id + 2 := by omega
+      have hscaled :
+          (((j + 1 : ℕ) : ℝ) * x) <
+            (((S.sup id + 2 : ℕ) : ℝ) *
+              quarterLogLatticePoint (k + 3)) := by
+        calc
+          (((j + 1 : ℕ) : ℝ) * x) ≤
+              ((j + 1 : ℕ) : ℝ) *
+                quarterLogLatticePoint (k + 3) :=
+            mul_le_mul_of_nonneg_left hx (by positivity)
+          _ < (((S.sup id + 2 : ℕ) : ℝ) *
+                quarterLogLatticePoint (k + 3)) := by
+            apply mul_lt_mul_of_pos_right _
+              (quarterLogLatticePoint_pos (k + 3))
+            exact_mod_cast hjlt
+      rw [monotoneQuarterCutoff_apply, hfar _ hscaled, mul_zero, mul_zero]
+    rw [hsum, mul_zero]
+    rfl
+  · have hxlower : quarterLogLatticePoint (k + 3) ≤ x :=
+      (lt_of_not_ge hx).le
+    have hlower : monotoneQuarterStep (k - 1) x = 1 := by
+      apply monotoneQuarterStep_eq_one_of_le
+      rw [show k - 1 + 1 = k by ring]
+      exact (quarterLogLatticePoint_mono (by omega)).trans hxlower
+    have hupper : monotoneQuarterStep (k + 2) x = 1 := by
+      apply monotoneQuarterStep_eq_one_of_le
+      simpa only [show k + 2 + 1 = k + 3 by ring] using hxlower
+    unfold monotonePrimeAtomPlateauMultiplier
+      monotoneRatioTwoBlockMultiplier
+    rw [show k - 1 + 3 = k + 2 by ring, hlower, hupper]
+    norm_num
+
+/-- Every nonzero Bombieri test can be moved, by a common normalized
+dilation that preserves its complete quadratic, into the blind region of the
+finite aggregate transfer.  At that location the next monotone cutoff is the
+test itself. -/
+theorem exists_transferInvisible_normalizedDilation
+    (g : BombieriTest) (hg : g ≠ 0) (k : ℤ) (S : Finset ℕ) :
+    ∃ variation : BombieriTest,
+      monotonePrimeAtomAggregateSlice variation k S = 0 ∧
+      monotoneQuarterCutoff variation (k + 1) = variation ∧
+      bombieriRealQuadraticValue variation = bombieriRealQuadraticValue g := by
+  have hsupportNonempty : (tsupport (g : ℝ → ℂ)).Nonempty := by
+    by_contra hempty
+    apply hg
+    apply TestFunction.ext
+    intro x
+    by_contra hx
+    have hxmem : x ∈ tsupport (g : ℝ → ℂ) :=
+      subset_tsupport (g : ℝ → ℂ) (Function.mem_support.mpr hx)
+    exact hempty ⟨x, hxmem⟩
+  let l : ℝ := sInf (tsupport (g : ℝ → ℂ))
+  have hlmem : l ∈ tsupport (g : ℝ → ℂ) :=
+    g.hasCompactSupport.isCompact.sInf_mem hsupportNonempty
+  have hlpos : 0 < l := by
+    simpa only [l, positiveHalfLine, mem_Ioi] using g.tsupport_subset hlmem
+  have hleast : ∀ x ∈ tsupport (g : ℝ → ℂ), l ≤ x :=
+    (g.hasCompactSupport.isCompact.isGLB_sInf hsupportNonempty).1
+  let Y : ℝ := ((S.sup id + 2 : ℕ) : ℝ) *
+    quarterLogLatticePoint (k + 3)
+  have hYpos : 0 < Y := by
+    dsimp only [Y]
+    have hfactorpos : (0 : ℝ) < ((S.sup id + 2 : ℕ) : ℝ) := by
+      exact_mod_cast (show 0 < S.sup id + 2 by omega)
+    exact mul_pos hfactorpos (quarterLogLatticePoint_pos (k + 3))
+  let lambda : ℝ := l / (2 * Y)
+  have hlambda : 0 < lambda := by
+    dsimp only [lambda]
+    positivity
+  let variation : BombieriTest := normalizedDilation lambda hlambda g
+  have hfar : ∀ y : ℝ, y < Y → variation y = 0 := by
+    intro y hy
+    rw [show variation y =
+      ((Real.sqrt lambda : ℝ) : ℂ) * g (lambda * y) by
+        rfl]
+    have harg : lambda * y < l := by
+      calc
+        lambda * y < lambda * Y := mul_lt_mul_of_pos_left hy hlambda
+        _ = l / 2 := by
+          dsimp only [lambda]
+          field_simp [hYpos.ne']
+        _ < l := by linarith
+    have hzero : g (lambda * y) = 0 := by
+      by_contra hne
+      have hmem : lambda * y ∈ tsupport (g : ℝ → ℂ) :=
+        subset_tsupport (g : ℝ → ℂ) (Function.mem_support.mpr hne)
+      exact (not_lt_of_ge (hleast _ hmem)) harg
+    rw [hzero, mul_zero]
+  have htransfer : monotonePrimeAtomAggregateSlice variation k S = 0 := by
+    apply monotonePrimeAtomAggregateSlice_eq_zero_of_vanishes_below
+    simpa only [Y] using hfar
+  have hlambdaLower : l / lambda = 2 * Y := by
+    dsimp only [lambda]
+    field_simp [hlpos.ne', hYpos.ne']
+  have hYlower : quarterLogLatticePoint (k + 2) ≤ Y := by
+    have hstep : quarterLogLatticePoint (k + 2) ≤
+        quarterLogLatticePoint (k + 3) :=
+      quarterLogLatticePoint_mono (by omega)
+    have hfactor : (1 : ℝ) ≤ ((S.sup id + 2 : ℕ) : ℝ) := by
+      exact_mod_cast (show 1 ≤ S.sup id + 2 by omega)
+    dsimp only [Y]
+    calc
+      quarterLogLatticePoint (k + 2) ≤
+          quarterLogLatticePoint (k + 3) := hstep
+      _ ≤ ((S.sup id + 2 : ℕ) : ℝ) *
+          quarterLogLatticePoint (k + 3) := by
+        nlinarith [quarterLogLatticePoint_pos (k + 3)]
+  have hcutoff : monotoneQuarterCutoff variation (k + 1) = variation := by
+    apply monotoneQuarterCutoff_eq_parent_of_lattice_le_tsupport
+    intro x hx
+    have hxpre : lambda * x ∈ tsupport (g : ℝ → ℂ) := by
+      have hx' := hx
+      rw [show tsupport (variation : ℝ → ℂ) =
+        (Homeomorph.mulLeft₀ lambda hlambda.ne') ⁻¹'
+          tsupport (g : ℝ → ℂ) by
+            exact normalizedDilation_tsupport lambda hlambda g] at hx'
+      exact hx'
+    have hlx : l / lambda ≤ x := by
+      rw [div_le_iff₀ hlambda]
+      simpa only [mul_comm] using hleast _ hxpre
+    rw [hlambdaLower] at hlx
+    have hxlower : quarterLogLatticePoint (k + 2) ≤ x :=
+      hYlower.trans (by linarith)
+    simpa only [show k + 1 + 1 = k + 2 by ring] using hxlower
+  refine ⟨variation, htransfer, hcutoff, ?_⟩
+  dsimp only [variation]
+  unfold bombieriRealQuadraticValue
+  rw [bombieriFunctional_quadratic_normalizedDilation]
+
+/-- The direction induced in the inner residual by a transfer-invisible
+parent variation: the far variation with its complete projection onto the
+fixed aggregate slice removed. -/
+def monotonePrimeAtomInnerAggregateVariationDirection
+    (parent variation : BombieriTest) (k : ℤ) (S : Finset ℕ) : BombieriTest :=
+  let T := monotonePrimeAtomAggregateReserve parent k S
+  let L := (bombieriTwoBlockGlobalCrossSymbol
+    (monotoneQuarterCutoff variation (k + 1))
+    (monotonePrimeAtomAggregateSlice parent k S)).re
+  (T : ℂ) • monotoneQuarterCutoff variation (k + 1) +
+    ((-L : ℝ) : ℂ) • monotonePrimeAtomAggregateSlice parent k S
+
+/-- Along a transfer-invisible parent line, the actual inner residual varies
+affinely in the projected far-tail direction above.  In particular, the
+finite aggregate slice and its reserve do not change with the parameter. -/
+theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_add_real_smul_eq
+    (parent variation : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hzero : monotonePrimeAtomAggregateSlice variation k S = 0)
+    (a : ℝ) :
+    monotonePrimeAtomInnerAggregateOrthogonalResidual
+        (parent + (a : ℂ) • variation) k S =
+      monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S +
+        (a : ℂ) • monotonePrimeAtomInnerAggregateVariationDirection
+          parent variation k S := by
+  have hslice :=
+    monotonePrimeAtomAggregateSlice_add_real_smul_eq_of_transfer_zero
+      parent variation k S hzero a
+  have hcutoff :
+      monotoneQuarterCutoff (parent + (a : ℂ) • variation) (k + 1) =
+        monotoneQuarterCutoff parent (k + 1) +
+          (a : ℂ) • monotoneQuarterCutoff variation (k + 1) := by
+    rw [monotoneQuarterCutoff_add_for_aggregateVariation,
+      monotoneQuarterCutoff_real_smul_for_aggregateVariation]
+  have hreserve :
+      monotonePrimeAtomAggregateReserve
+          (parent + (a : ℂ) • variation) k S =
+        monotonePrimeAtomAggregateReserve parent k S := by
+    unfold monotonePrimeAtomAggregateReserve
+    rw [hslice]
+  let L : ℝ := (bombieriTwoBlockGlobalCrossSymbol
+    (monotoneQuarterCutoff variation (k + 1))
+    (monotonePrimeAtomAggregateSlice parent k S)).re
+  have hcross :
+      monotonePrimeAtomInnerSuffixAggregateCross
+          (parent + (a : ℂ) • variation) k S =
+        monotonePrimeAtomInnerSuffixAggregateCross parent k S + a * L := by
+    unfold monotonePrimeAtomInnerSuffixAggregateCross
+    rw [hslice, hcutoff,
+      bombieriTwoBlockGlobalCrossSymbol_add_left,
+      bombieriTwoBlockGlobalCrossSymbol_smul_left, Complex.add_re]
+    dsimp only [L]
+    rw [starRingEnd_apply, Complex.star_def, Complex.conj_ofReal]
+    simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+      zero_mul, sub_zero]
+  apply TestFunction.ext
+  intro x
+  simp only [monotonePrimeAtomInnerAggregateOrthogonalResidual,
+    monotonePrimeAtomInnerAggregateVariationDirection,
+    TestFunction.coe_add, Pi.add_apply, TestFunction.coe_smul,
+    Pi.smul_apply, smul_eq_mul]
+  rw [hreserve, hcross, hslice, hcutoff]
+  dsimp only [L]
+  simp only [TestFunction.coe_add, Pi.add_apply,
+    TestFunction.coe_smul, Pi.smul_apply, smul_eq_mul]
+  push_cast
+  ring
+
+/-- The projected variation direction has the exact Schur-complement
+quadratic.  Hence its nonnegativity forces nonnegativity of the original far
+variation and even the sharp determinant against the fixed aggregate slice. -/
+theorem monotonePrimeAtomInnerAggregateVariationDirection_quadratic
+    (parent variation : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    let T := monotonePrimeAtomAggregateReserve parent k S
+    let L := (bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterCutoff variation (k + 1))
+      (monotonePrimeAtomAggregateSlice parent k S)).re
+    bombieriRealQuadraticValue
+        (monotonePrimeAtomInnerAggregateVariationDirection
+          parent variation k S) =
+      T * (T * bombieriRealQuadraticValue
+        (monotoneQuarterCutoff variation (k + 1)) - L ^ 2) := by
+  dsimp only
+  let g : BombieriTest := monotoneQuarterCutoff variation (k + 1)
+  let t : BombieriTest := monotonePrimeAtomAggregateSlice parent k S
+  let T : ℝ := bombieriRealQuadraticValue t
+  let L : ℝ := (bombieriTwoBlockGlobalCrossSymbol g t).re
+  have hquad := aggregateQuadratic_real_linearCombination g t T (-L)
+  have ht : bombieriRealQuadraticValue t = T := rfl
+  change bombieriRealQuadraticValue ((T : ℂ) • g + ((-L : ℝ) : ℂ) • t) =
+    T * (T * bombieriRealQuadraticValue g - L ^ 2)
+  rw [hquad, ht]
+  ring
+
+private theorem quadratic_leading_nonnegative_of_forall_nonnegative
+    (A B C : ℝ)
+    (hall : ∀ a : ℝ, 0 ≤ A + 2 * a * B + a ^ 2 * C) :
+    0 ≤ C := by
+  by_contra hC
+  have hCneg : C < 0 := lt_of_not_ge hC
+  let d : ℝ := -C
+  have hd : 0 < d := by dsimp only [d]; linarith
+  let a : ℝ := (2 * |B| + |A| + d) / d
+  have ha : 1 ≤ a := by
+    dsimp only [a]
+    rw [le_div_iff₀ hd]
+    nlinarith [abs_nonneg A, abs_nonneg B]
+  have had : a * d = 2 * |B| + |A| + d := by
+    dsimp only [a]
+    field_simp [hd.ne']
+  have hdom : |A| + 2 * a * |B| < a ^ 2 * d := by
+    have hnonneg : 0 ≤ (a - 1) * |A| :=
+      mul_nonneg (sub_nonneg.mpr ha) (abs_nonneg A)
+    have hpos : 0 < a * d := mul_pos (lt_of_lt_of_le zero_lt_one ha) hd
+    have hid :
+        a ^ 2 * d - (|A| + 2 * a * |B|) =
+          (a - 1) * |A| + a * d := by
+      calc
+        a ^ 2 * d - (|A| + 2 * a * |B|) =
+            a * (a * d) - (|A| + 2 * a * |B|) := by ring
+        _ = a * (2 * |B| + |A| + d) -
+            (|A| + 2 * a * |B|) := by rw [had]
+        _ = (a - 1) * |A| + a * d := by ring
+    nlinarith
+  have hBbound : 2 * a * B ≤ 2 * a * |B| := by
+    exact mul_le_mul_of_nonneg_left (le_abs_self B)
+      (mul_nonneg (by norm_num) (le_trans (by norm_num) ha))
+  have hpoly : A + 2 * a * B + a ^ 2 * C < 0 := by
+    have hAabs := le_abs_self A
+    dsimp only [d] at hdom
+    nlinarith
+  exact (not_lt_of_ge (hall a)) hpoly
+
+/-- If the suffix--aggregate minor were valid along every point of a parent
+line invisible to the finite transfer, then its leading coefficient forces
+the sharp complete determinant between that arbitrary variation and the
+fixed aggregate slice.  This is the expressivity step: the local residual
+family tests a whole far-tail Bombieri direction, not merely the base
+parent. -/
+theorem innerAggregateMinor_family_forces_transferInvisibleVariation_determinant
+    (parent variation : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hzero : monotonePrimeAtomAggregateSlice variation k S = 0)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S)
+    (hminor : ∀ a : ℝ,
+      monotonePrimeAtomInnerSuffixAggregateCross
+            (parent + (a : ℂ) • variation) k S ^ 2 ≤
+        bombieriRealQuadraticValue
+            (monotoneQuarterCutoff
+              (parent + (a : ℂ) • variation) (k + 1)) *
+          monotonePrimeAtomAggregateReserve
+            (parent + (a : ℂ) • variation) k S) :
+    (bombieriTwoBlockGlobalCrossSymbol
+        (monotoneQuarterCutoff variation (k + 1))
+        (monotonePrimeAtomAggregateSlice parent k S)).re ^ 2 ≤
+      monotonePrimeAtomAggregateReserve parent k S *
+        bombieriRealQuadraticValue
+          (monotoneQuarterCutoff variation (k + 1)) := by
+  let R₀ : BombieriTest :=
+    monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S
+  let D : BombieriTest :=
+    monotonePrimeAtomInnerAggregateVariationDirection parent variation k S
+  let A : ℝ := bombieriRealQuadraticValue R₀
+  let B : ℝ := (bombieriTwoBlockGlobalCrossSymbol R₀ D).re
+  let C : ℝ := bombieriRealQuadraticValue D
+  have hall : ∀ a : ℝ, 0 ≤ A + 2 * a * B + a ^ 2 * C := by
+    intro a
+    have hslice :=
+      monotonePrimeAtomAggregateSlice_add_real_smul_eq_of_transfer_zero
+        parent variation k S hzero a
+    have hreserve :
+        monotonePrimeAtomAggregateReserve
+            (parent + (a : ℂ) • variation) k S =
+          monotonePrimeAtomAggregateReserve parent k S := by
+      unfold monotonePrimeAtomAggregateReserve
+      rw [hslice]
+    have hTa :
+        0 < monotonePrimeAtomAggregateReserve
+          (parent + (a : ℂ) • variation) k S := by
+      rw [hreserve]
+      exact hT
+    have hresidual :=
+      (monotonePrimeAtom_innerAggregateMinor_iff_residual_nonnegative
+        (parent + (a : ℂ) • variation) k S hTa).1 (hminor a)
+    rw [monotonePrimeAtomInnerAggregateOrthogonalResidual_add_real_smul_eq
+      parent variation k S hzero a] at hresidual
+    have hquad := aggregateQuadratic_real_linearCombination R₀ D 1 a
+    norm_num at hquad
+    change bombieriRealQuadraticValue (R₀ + (a : ℂ) • D) =
+      A + a ^ 2 * C + 2 * a * B at hquad
+    rw [hquad] at hresidual
+    nlinarith
+  have hC : 0 ≤ C :=
+    quadratic_leading_nonnegative_of_forall_nonnegative A B C hall
+  have hdirection :=
+    monotonePrimeAtomInnerAggregateVariationDirection_quadratic
+      parent variation k S
+  change C =
+    monotonePrimeAtomAggregateReserve parent k S *
+      (monotonePrimeAtomAggregateReserve parent k S *
+          bombieriRealQuadraticValue
+            (monotoneQuarterCutoff variation (k + 1)) -
+        (bombieriTwoBlockGlobalCrossSymbol
+          (monotoneQuarterCutoff variation (k + 1))
+          (monotonePrimeAtomAggregateSlice parent k S)).re ^ 2) at hdirection
+  rw [hdirection] at hC
+  exact sub_nonneg.mp ((mul_nonneg_iff_of_pos_left hT).mp hC)
+
+/-- In particular, validity of the residual minor on every transfer-blind
+far-tail variation forces the original variation itself to have nonnegative
+complete Bombieri quadratic value. -/
+theorem innerAggregateMinor_family_forces_transferInvisibleVariation_nonnegative
+    (parent variation : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hzero : monotonePrimeAtomAggregateSlice variation k S = 0)
+    (hT : 0 < monotonePrimeAtomAggregateReserve parent k S)
+    (hminor : ∀ a : ℝ,
+      monotonePrimeAtomInnerSuffixAggregateCross
+            (parent + (a : ℂ) • variation) k S ^ 2 ≤
+        bombieriRealQuadraticValue
+            (monotoneQuarterCutoff
+              (parent + (a : ℂ) • variation) (k + 1)) *
+          monotonePrimeAtomAggregateReserve
+            (parent + (a : ℂ) • variation) k S) :
+    0 ≤ bombieriRealQuadraticValue
+      (monotoneQuarterCutoff variation (k + 1)) := by
+  have hdet :=
+    innerAggregateMinor_family_forces_transferInvisibleVariation_determinant
+      parent variation k S hzero hT hminor
+  have hsq : 0 ≤
+      (bombieriTwoBlockGlobalCrossSymbol
+        (monotoneQuarterCutoff variation (k + 1))
+        (monotonePrimeAtomAggregateSlice parent k S)).re ^ 2 := sq_nonneg _
+  nlinarith
+
+private theorem bombieriRealQuadraticValue_zero_for_aggregateExpressivity :
+    bombieriRealQuadraticValue (0 : BombieriTest) = 0 := by
+  unfold bombieriRealQuadraticValue
+  have h := bombieriFunctional_quadratic_smul
+    (0 : ℂ) (0 : BombieriTest)
+  simpa only [zero_smul, Complex.normSq_zero, Complex.ofReal_zero,
+    zero_mul, Complex.zero_re] using congrArg Complex.re h
+
+/-- A universal proof of the inner suffix--aggregate minor at one fixed
+positive aggregate pivot would already prove the complete Bombieri
+quadratic nonnegative on every test.  Indeed, normalized dilation moves an
+arbitrary nonzero test into the transfer-blind region without changing its
+quadratic, and the parent-line leading coefficient recovers that quadratic.
+
+Thus this residual-minor route is globally expressive rather than a
+strictly simpler local induction step. -/
+theorem innerAggregateMinor_for_all_parents_forces_global_nonnegative
+    (base : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hT : 0 < monotonePrimeAtomAggregateReserve base k S)
+    (hminor : ∀ parent : BombieriTest,
+      monotonePrimeAtomInnerSuffixAggregateCross parent k S ^ 2 ≤
+        bombieriRealQuadraticValue
+            (monotoneQuarterCutoff parent (k + 1)) *
+          monotonePrimeAtomAggregateReserve parent k S) :
+    ∀ g : BombieriTest, 0 ≤ bombieriRealQuadraticValue g := by
+  intro g
+  by_cases hg : g = 0
+  · rw [hg, bombieriRealQuadraticValue_zero_for_aggregateExpressivity]
+  · obtain ⟨variation, hzero, hcutoff, hquadratic⟩ :=
+      exists_transferInvisible_normalizedDilation g hg k S
+    have hvariation :=
+      innerAggregateMinor_family_forces_transferInvisibleVariation_nonnegative
+        base variation k S hzero hT (fun a => hminor _)
+    rw [hcutoff, hquadratic] at hvariation
+    exact hvariation
+
 /-- For a nonzero pivot, the inner residual is the positive-pivot scaling of
 the actual suffix--aggregate Schur pencil.  Thus proving its nonnegativity is
 precisely a production pencil problem, not a new abstract scalar form. -/
