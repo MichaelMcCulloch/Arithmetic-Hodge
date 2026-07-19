@@ -3543,6 +3543,48 @@ theorem neg_lowerIntervalScalarMass_le_core_add_localWidthDefect
   dsimp only [L, U, H, C, E] at hendpoint hhalfSplit hbudget ⊢
   linarith
 
+/-- Universal positive-half raw gap in the odd sector.  This is the centered
+mean-zero logarithmic gap transported through the exact parity fold; it is
+the scale-invariant input for the remaining lower-square reserve. -/
+theorem four_mul_positiveHalfMass_le_coupledRawEnergy
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    4 * (∫ x : ℝ in 0..1, w x ^ 2) ≤
+      fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1) := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback w (t : ℝ)
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hLip⟩ := exists_lipschitzWith_centeredPullback w hlocal
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    fun_prop
+  have hfmem : MemLp f 2 :=
+    hfcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f
+      (by simpa only [f] using hLip)
+  have hreflect := intervalIntegral.integral_comp_neg
+    (f := w) (a := (-1 : ℝ)) (b := 1)
+  have hneg : (∫ x : ℝ in -1..1, w (-x)) =
+      -(∫ x : ℝ in -1..1, w x) := by
+    rw [show (fun x : ℝ ↦ w (-x)) = fun x ↦ -w x by
+      funext x
+      exact hodd x]
+    exact intervalIntegral.integral_neg
+  have hmean : (∫ x : ℝ in -1..1, w x) = 0 := by
+    rw [hneg] at hreflect
+    norm_num at hreflect
+    linarith
+  have hgap :=
+    CenteredLogEnergyGap.four_mul_integral_sq_le_centeredRawLogEnergy
+      w (by simpa only [f] using hfmem)
+        (by simpa only [f] using henergy) hmean
+  have hraw := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    w hlocal hodd
+  have hmass := integral_sq_eq_two_mul_positiveHalf
+    w hw.continuous (Or.inr hodd)
+  linarith
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
