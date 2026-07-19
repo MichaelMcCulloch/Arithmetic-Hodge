@@ -9306,6 +9306,188 @@ def fourCellOddOneThreeFiveCombinedQuadratic (c d e : ℝ) : ℝ :=
     2 * fourCellOddOneThreeFiveCombined35 * d * e +
     fourCellOddOneThreeFiveCombined55 * e ^ 2
 
+private theorem fourCell_sqrt_two_fine_bounds :
+    (1414213562 / 1000000000 : ℝ) < Real.sqrt 2 ∧
+      Real.sqrt 2 < (1414213563 / 1000000000 : ℝ) := by
+  have hs0 : 0 ≤ Real.sqrt 2 := Real.sqrt_nonneg 2
+  have hs2 : Real.sqrt 2 ^ 2 = 2 := by
+    simpa only using Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)
+  constructor
+  · have hrat : (1414213562 / 1000000000 : ℝ) ^ 2 < 2 := by
+      norm_num
+    nlinarith
+  · have hrat : (2 : ℝ) <
+        (1414213563 / 1000000000 : ℝ) ^ 2 := by
+      norm_num
+    nlinarith
+
+private theorem fourCell_sqrt_two_mul_log_two_fine_bounds :
+    (1414213562 / 1000000000 : ℝ) *
+        (69314718055 / 100000000000 : ℝ) <
+          Real.sqrt 2 * Real.log 2 ∧
+      Real.sqrt 2 * Real.log 2 <
+        (1414213563 / 1000000000 : ℝ) *
+          (69314718057 / 100000000000 : ℝ) := by
+  have hs := fourCell_sqrt_two_fine_bounds
+  have hL := strict_log_two_fine_bounds
+  have hs0 : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  have hL0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  constructor
+  · calc
+      (1414213562 / 1000000000 : ℝ) *
+          (69314718055 / 100000000000 : ℝ) <
+          Real.sqrt 2 * (69314718055 / 100000000000 : ℝ) :=
+        mul_lt_mul_of_pos_right hs.1 (by norm_num)
+      _ < Real.sqrt 2 * Real.log 2 :=
+        mul_lt_mul_of_pos_left hL.1 hs0
+  · calc
+      Real.sqrt 2 * Real.log 2 <
+          (1414213563 / 1000000000 : ℝ) * Real.log 2 :=
+        mul_lt_mul_of_pos_right hs.2 hL0
+      _ < (1414213563 / 1000000000 : ℝ) *
+          (69314718057 / 100000000000 : ℝ) :=
+        mul_lt_mul_of_pos_left hL.2 (by norm_num)
+
+private theorem fourCell_log_five_four_fine_bounds :
+    (223143 / 1000000 : ℝ) < Real.log (5 / 4 : ℝ) ∧
+      Real.log (5 / 4 : ℝ) < (223144 / 1000000 : ℝ) := by
+  have hlo := Real.sum_range_le_log_div (x := (1 / 9 : ℝ))
+    (by norm_num) (by norm_num) 4
+  have hup := Real.log_div_le_sum_range_add (x := (1 / 9 : ℝ))
+    (by norm_num) (by norm_num) 4
+  norm_num [Finset.sum_range_succ] at hlo hup ⊢
+  constructor <;> linarith
+
+private theorem fourCell_log_inv_log_two_lower_model_upper :
+    Real.log (100000000000 / 69314718055 : ℝ) <
+      (36652 / 100000 : ℝ) := by
+  have h := Real.log_div_le_sum_range_add
+    (x := (30685281945 / 169314718055 : ℝ))
+      (by norm_num) (by norm_num) 6
+  norm_num [Finset.sum_range_succ] at h ⊢
+  linarith
+
+private theorem fourCell_log_inv_log_two_upper_model_lower :
+    (36651 / 100000 : ℝ) <
+      Real.log (100000000000 / 69314718057 : ℝ) := by
+  have h := Real.sum_range_le_log_div
+    (x := (30685281943 / 169314718057 : ℝ))
+      (by norm_num) (by norm_num) 6
+  norm_num [Finset.sum_range_succ] at h ⊢
+  linarith
+
+private theorem fourCell_log_log_two_fine_bounds :
+    (-36652 / 100000 : ℝ) < Real.log (Real.log 2) ∧
+      Real.log (Real.log 2) < (-36651 / 100000 : ℝ) := by
+  have hL := strict_log_two_fine_bounds
+  have hLpos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hloRat :
+      (-36652 / 100000 : ℝ) <
+        Real.log (69314718055 / 100000000000 : ℝ) := by
+    rw [show (69314718055 / 100000000000 : ℝ) =
+        (100000000000 / 69314718055 : ℝ)⁻¹ by norm_num,
+      Real.log_inv]
+    linarith [fourCell_log_inv_log_two_lower_model_upper]
+  have hhiRat :
+      Real.log (69314718057 / 100000000000 : ℝ) <
+        (-36651 / 100000 : ℝ) := by
+    rw [show (69314718057 / 100000000000 : ℝ) =
+        (100000000000 / 69314718057 : ℝ)⁻¹ by norm_num,
+      Real.log_inv]
+    linarith [fourCell_log_inv_log_two_upper_model_lower]
+  constructor
+  · exact hloRat.trans (Real.log_lt_log (by norm_num) hL.1)
+  · exact (Real.log_lt_log hLpos hL.2).trans hhiRat
+
+private theorem fourCell_log_four_hundred_fine_bounds :
+    (59914645469 / 10000000000 : ℝ) < Real.log 400 ∧
+      Real.log 400 < (59914645474 / 10000000000 : ℝ) := by
+  have htwo := strict_log_two_fine_bounds
+  have hhundred := strict_log_one_hundred_bounds
+  have hid : Real.log (400 : ℝ) =
+      2 * Real.log 2 + Real.log 100 := by
+    calc
+      Real.log (400 : ℝ) = Real.log ((2 : ℝ) ^ 2 * 100) := by
+        norm_num
+      _ = Real.log ((2 : ℝ) ^ 2) + Real.log 100 := by
+        rw [Real.log_mul (by norm_num) (by norm_num)]
+      _ = 2 * Real.log 2 + Real.log 100 := by
+        rw [Real.log_pow]
+        norm_num
+  rw [hid]
+  constructor <;> linarith
+
+set_option maxRecDepth 100000 in
+private theorem fourCell_euler_gamma_fine_bounds :
+    (577215 / 1000000 : ℝ) < Real.eulerMascheroniConstant ∧
+      Real.eulerMascheroniConstant < (577216 / 1000000 : ℝ) := by
+  have hlower := gammaLowerApprox_le_eulerGamma 399
+  have hupper := eulerGamma_le_gammaUpperApprox 399
+  have hlog := fourCell_log_four_hundred_fine_bounds
+  constructor
+  · apply lt_of_lt_of_le ?_ hlower
+    simp only [gammaLowerApprox]
+    norm_num [harmonic, Finset.sum_range_succ] at ⊢
+    linarith [hlog.2]
+  · apply lt_of_le_of_lt hupper
+    simp only [gammaUpperApprox, gammaLowerApprox]
+    norm_num [harmonic, Finset.sum_range_succ] at ⊢
+    linarith [hlog.1]
+
+private theorem fourCell_log_pi_rational_fine_lower :
+    (1144729 / 1000000 : ℝ) <
+      Real.log (3141592 / 1000000 : ℝ) := by
+  have h := Real.sum_range_le_log_div
+    (x := (267699 / 517699 : ℝ)) (by norm_num) (by norm_num) 14
+  norm_num [Finset.sum_range_succ] at h ⊢
+  linarith
+
+private theorem fourCell_log_pi_rational_fine_upper :
+    Real.log (3141593 / 1000000 : ℝ) <
+      (1144730 / 1000000 : ℝ) := by
+  have h := Real.log_div_le_sum_range_add
+    (x := (2141593 / 4141593 : ℝ)) (by norm_num) (by norm_num) 16
+  norm_num [Finset.sum_range_succ] at h ⊢
+  linarith
+
+private theorem fourCell_log_pi_fine_bounds :
+    (1144729 / 1000000 : ℝ) < Real.log Real.pi ∧
+      Real.log Real.pi < (1144730 / 1000000 : ℝ) := by
+  constructor
+  · have hpi := Real.pi_gt_d6
+    have hlog := fourCell_log_pi_rational_fine_lower
+    norm_num at hpi hlog ⊢
+    exact hlog.trans (Real.log_lt_log (by norm_num) hpi)
+  · have hpi := Real.pi_lt_d6
+    have hlog := fourCell_log_pi_rational_fine_upper
+    norm_num at hpi hlog ⊢
+    exact (Real.log_lt_log Real.pi_pos hpi).trans hlog
+
+/-- Fine enclosure of the one shared transcendental scalar occurring in
+the three diagonal algebraic entries. -/
+theorem fourCellScalar_fine_bounds :
+    (1578567 / 1000000 : ℝ) <
+        Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi ∧
+      Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi <
+        (1578580 / 1000000 : ℝ) := by
+  have hlogTwo : Real.log 2 ≠ 0 := (Real.log_pos (by norm_num)).ne'
+  have hwidth :
+      Real.log (2 * fourCellOperatorHalfWidth) =
+        Real.log (5 / 4 : ℝ) + Real.log (Real.log 2) := by
+    rw [show 2 * fourCellOperatorHalfWidth =
+        (5 / 4 : ℝ) * Real.log 2 by
+      unfold fourCellOperatorHalfWidth
+      ring,
+      Real.log_mul (by norm_num : (5 / 4 : ℝ) ≠ 0) hlogTwo]
+  rw [hwidth]
+  rcases fourCell_log_five_four_fine_bounds with ⟨h54lo, h54hi⟩
+  rcases fourCell_log_log_two_fine_bounds with ⟨hLlo, hLhi⟩
+  rcases fourCell_euler_gamma_fine_bounds with ⟨hγlo, hγhi⟩
+  rcases fourCell_log_pi_fine_bounds with ⟨hπlo, hπhi⟩
+  constructor <;> linarith
+
 private theorem log_five_four_gt_2231_div_10000_oneThreeFive :
     (2231 / 10000 : ℝ) < Real.log (5 / 4 : ℝ) := by
   have h := Real.sum_range_le_log_div (x := (1 / 9 : ℝ))
@@ -9350,6 +9532,93 @@ theorem fourCellOddOneThreeFiveCombined_entry_bounds :
   have hS := sqrt_two_mul_log_two_bounds
   have hTlo := fourCellScalar_gt_15783_div_10000_oneThreeFive
   have hThi := fourCellScalar_lt_31577_div_20000
+  have h11 : fourCellOddLowCombined11 =
+      893 / 600 - (31 / 50 : ℝ) * Real.log 2 +
+        (94 / 375 : ℝ) * (Real.sqrt 2 * Real.log 2) -
+          (2 / 3 : ℝ) *
+            (Real.log (2 * fourCellOperatorHalfWidth) +
+              Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddLowCombined11 fourCellOddLowLocalAlgebraic11
+    ring
+  have h13 : fourCellOddLowCombined13 =
+      93 / 500 + (104 / 3125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddLowCombined13 fourCellOddLowLocalAlgebraic13
+    ring
+  have h33 : fourCellOddLowCombined33 =
+      5434921 / 6125000 - (5242 / 109375 : ℝ) *
+          (Real.sqrt 2 * Real.log 2) -
+        (93 / 350 : ℝ) * Real.log 2 -
+        (2 / 7 : ℝ) *
+          (Real.log (2 * fourCellOperatorHalfWidth) +
+            Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddLowCombined33 fourCellOddLowLocalAlgebraic33
+    ring
+  have h15 : fourCellOddOneThreeFiveCombined15 =
+      93 / 1400 - (4216 / 78125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddOneThreeFiveCombined15
+      fourCellOddOneThreeFiveLocalAlgebraic15
+    ring
+  have h35 : fourCellOddOneThreeFiveCombined35 =
+      96779 / 937500 - (16056 / 390625 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddOneThreeFiveCombined35
+      fourCellOddOneThreeFiveLocalAlgebraic35
+    ring
+  have h55 : fourCellOddOneThreeFiveCombined55 =
+      1602471330659 / 2481445312500 +
+        (1933534 / 537109375 : ℝ) *
+          (Real.sqrt 2 * Real.log 2) -
+        (93 / 550 : ℝ) * Real.log 2 -
+        (2 / 11 : ℝ) *
+          (Real.log (2 * fourCellOperatorHalfWidth) +
+            Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddOneThreeFiveCombined55
+      fourCellOddOneThreeFiveLocalAlgebraic55
+    ring
+  rw [h11, h13, h33, h15, h35, h55]
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+/-- Fine algebraic entry box used for the perturbed determinant.  The
+shared scalar is enclosed once, so the later determinant estimate does not
+discard its structural correlation across the three diagonal entries. -/
+theorem fourCellOddOneThreeFiveCombined_entry_fine_bounds :
+    (2519 / 10000 : ℝ) < fourCellOddLowCombined11 ∧
+    fourCellOddLowCombined11 < (2520 / 10000 : ℝ) ∧
+    (21862 / 100000 : ℝ) < fourCellOddLowCombined13 ∧
+    fourCellOddLowCombined13 < (21863 / 100000 : ℝ) ∧
+    (20515 / 100000 : ℝ) < fourCellOddLowCombined33 ∧
+    fourCellOddLowCombined33 < (20516 / 100000 : ℝ) ∧
+    (13529 / 1000000 : ℝ) < fourCellOddOneThreeFiveCombined15 ∧
+    fourCellOddOneThreeFiveCombined15 < (13530 / 1000000 : ℝ) ∧
+    (62939 / 1000000 : ℝ) < fourCellOddOneThreeFiveCombined35 ∧
+    fourCellOddOneThreeFiveCombined35 < (62940 / 1000000 : ℝ) ∧
+    (24509 / 100000 : ℝ) < fourCellOddOneThreeFiveCombined55 ∧
+    fourCellOddOneThreeFiveCombined55 < (24510 / 100000 : ℝ) := by
+  have hL := strict_log_two_fine_bounds
+  have hP := fourCell_sqrt_two_mul_log_two_fine_bounds
+  have hT := fourCellScalar_fine_bounds
   have h11 : fourCellOddLowCombined11 =
       893 / 600 - (31 / 50 : ℝ) * Real.log 2 +
         (94 / 375 : ℝ) * (Real.sqrt 2 * Real.log 2) -
