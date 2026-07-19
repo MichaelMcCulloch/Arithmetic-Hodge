@@ -1353,6 +1353,83 @@ theorem monotonePrimeAtomAggregateHeadWindowEnergy_eq_dilationGram
     _ = _ := by
       rfl
 
+/-- Every finite real quadratic form of the local dilation Gram is exactly
+the squared `L²` norm of the corresponding coherent dilation sum. -/
+theorem monotonePrimeAtomLocalDilationGram_quadratic_eq_integral
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) (c : ℕ → ℝ) :
+    (∑ i ∈ S, ∑ j ∈ S,
+        c i * c j * monotonePrimeAtomLocalDilationGram parent k i j) =
+      ∫ x : ℝ in Set.Icc (quarterLogLatticePoint k)
+          (quarterLogLatticePoint (k + 2)),
+        ‖∑ j ∈ S, ((c j : ℝ) : ℂ) * parent ((j : ℝ) * x)‖ ^ 2 := by
+  let I : Set ℝ := Set.Icc (quarterLogLatticePoint k)
+    (quarterLogLatticePoint (k + 2))
+  let z : ℕ → ℝ → ℂ := fun j x ↦ parent ((j : ℝ) * x)
+  have hpoint (x : ℝ) :
+      ‖∑ j ∈ S, ((c j : ℝ) : ℂ) * z j x‖ ^ 2 =
+        ∑ i ∈ S, ∑ j ∈ S,
+          c i * c j * (starRingEnd ℂ (z i x) * z j x).re :=
+    norm_sq_finset_realCombination_eq_gram S c (fun j ↦ z j x)
+  have hbase (i : ℕ) (_hi : i ∈ S) (j : ℕ) (_hj : j ∈ S) :
+      IntegrableOn
+        (fun x : ℝ ↦ c i * c j *
+          (starRingEnd ℂ (z i x) * z j x).re) I := by
+    exact (monotonePrimeAtomLocalDilationGram_integrable
+      parent k i j).const_mul (c i * c j)
+  calc
+    (∑ i ∈ S, ∑ j ∈ S,
+        c i * c j * monotonePrimeAtomLocalDilationGram parent k i j) =
+        ∑ i ∈ S, ∑ j ∈ S,
+          ∫ x : ℝ in I, c i * c j *
+            (starRingEnd ℂ (z i x) * z j x).re := by
+      apply Finset.sum_congr rfl
+      intro i _hi
+      apply Finset.sum_congr rfl
+      intro j _hj
+      rw [MeasureTheory.integral_const_mul]
+      rfl
+    _ = ∫ x : ℝ in I, ∑ i ∈ S, ∑ j ∈ S,
+        c i * c j * (starRingEnd ℂ (z i x) * z j x).re := by
+      rw [MeasureTheory.integral_finset_sum]
+      · apply Finset.sum_congr rfl
+        intro i hi
+        rw [MeasureTheory.integral_finset_sum]
+        intro j hj
+        exact hbase i hi j hj
+      · intro i hi
+        exact integrable_finset_sum S fun j hj ↦ hbase i hi j hj
+    _ = ∫ x : ℝ in I,
+        ‖∑ j ∈ S, ((c j : ℝ) : ℂ) * z j x‖ ^ 2 := by
+      apply setIntegral_congr_fun measurableSet_Icc
+      intro x _hx
+      exact (hpoint x).symm
+    _ = _ := rfl
+
+/-- In particular, every finite principal Gram quadratic is nonnegative. -/
+theorem monotonePrimeAtomLocalDilationGram_posSemidefinite
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) (c : ℕ → ℝ) :
+    0 ≤ ∑ i ∈ S, ∑ j ∈ S,
+      c i * c j * monotonePrimeAtomLocalDilationGram parent k i j := by
+  rw [monotonePrimeAtomLocalDilationGram_quadratic_eq_integral]
+  exact integral_nonneg fun _x ↦ sq_nonneg _
+
+/-- A diagonal Gram entry is the local mass of the corresponding dilation. -/
+theorem monotonePrimeAtomLocalDilationGram_self
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) :
+    monotonePrimeAtomLocalDilationGram parent k n n =
+      ∫ x : ℝ in Set.Icc (quarterLogLatticePoint k)
+          (quarterLogLatticePoint (k + 2)),
+        ‖parent ((n : ℝ) * x)‖ ^ 2 := by
+  unfold monotonePrimeAtomLocalDilationGram
+  apply setIntegral_congr_fun measurableSet_Icc
+  intro x _hx
+  change (starRingEnd ℂ (parent ((n : ℝ) * x)) *
+    parent ((n : ℝ) * x)).re = ‖parent ((n : ℝ) * x)‖ ^ 2
+  rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply,
+    starRingEnd_apply, Complex.star_def]
+  simp only [Complex.mul_re, Complex.conj_re, Complex.conj_im]
+  ring
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
