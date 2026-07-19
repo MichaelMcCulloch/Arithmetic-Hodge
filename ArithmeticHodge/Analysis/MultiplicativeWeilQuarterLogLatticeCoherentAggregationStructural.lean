@@ -4,7 +4,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilQuarterLogLatticeAggregationSt
 set_option autoImplicit false
 
 open Complex Real Set
-open scoped BigOperators
+open scoped BigOperators ContDiff
 
 namespace ArithmeticHodge.Analysis.MultiplicativeWeilQuarterLogLatticeCoherentAggregationStructural
 
@@ -66,6 +66,23 @@ theorem aggregatedWeight_nonnegative
           exact hnonneg p List.mem_cons_self x
         · rw [if_neg hp]
       · exact ih fun q hq y ↦ hnonneg q (List.mem_cons_of_mem p hq) y
+
+theorem aggregatedWeight_contDiff
+    (cells : List CoherentQuarterCell) (k : ℤ) :
+    ContDiff ℝ ∞ (aggregatedWeight cells k) := by
+  induction cells with
+  | nil =>
+      change ContDiff ℝ ∞ (fun _x : ℝ ↦ 0)
+      fun_prop
+  | cons p cells ih =>
+      change ContDiff ℝ ∞ (fun x : ℝ ↦
+        (if p.index = k then p.weight x else 0) +
+          aggregatedWeight cells k x)
+      by_cases hp : p.index = k
+      · simp only [if_pos hp]
+        exact p.weight_contDiff.add ih
+      · simp only [if_neg hp, zero_add]
+        exact ih
 
 theorem aggregatedPhysical_tsupport_subset
     (cells : List CoherentQuarterCell)
@@ -187,6 +204,7 @@ theorem exists_consecutive_coherent_quarterLogLattice_decomposition
         (quarterLogLatticePoint k) (quarterLogLatticePoint (k + 2))) ∧
       (∀ k : ℤ, ∀ x : ℝ,
         A k x = (eta k x : ℂ) * g x) ∧
+      (∀ k : ℤ, ContDiff ℝ ∞ (eta k)) ∧
       (∀ k : ℤ, ∀ x : ℝ, 0 ≤ eta k x) ∧
       (∀ x ∈ tsupport g,
         (∑ k ∈ Finset.Icc lo hi, eta k x) = 1) ∧
@@ -231,7 +249,7 @@ theorem exists_consecutive_coherent_quarterLogLattice_decomposition
       rcases List.mem_map.mp hr with ⟨p, hp, rfl⟩
       rw [if_neg (hne p hp)]
   refine ⟨lo, hi, A, eta, lowerIndex_le_upperIndex pairs,
-    houtside, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    houtside, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · have hgroup := sum_Icc_indicator_fibers lo hi pairs
       (fun p : ℤ × BombieriTest ↦ p.2)
       (fun p hp ↦ lowerIndex_le_of_mem hp)
@@ -245,6 +263,8 @@ theorem exists_consecutive_coherent_quarterLogLattice_decomposition
     exact aggregatedPhysical_tsupport_subset cells hsupport k
   · intro k x
     exact aggregatedPhysical_apply_eq g cells hcommon k x
+  · intro k
+    exact aggregatedWeight_contDiff cells k
   · intro k x
     exact aggregatedWeight_nonnegative cells hnonneg k x
   · intro x hx

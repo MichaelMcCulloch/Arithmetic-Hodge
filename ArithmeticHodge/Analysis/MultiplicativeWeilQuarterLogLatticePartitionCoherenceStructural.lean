@@ -18,6 +18,7 @@ structure CoherentQuarterCell where
   index : ℤ
   seed : BombieriTest
   weight : ℝ → ℝ
+  weight_contDiff : ContDiff ℝ ∞ weight
 
 def CoherentQuarterCell.physical (p : CoherentQuarterCell) : BombieriTest :=
   quarterLogLatticeRescale p.index p.seed
@@ -243,7 +244,8 @@ theorem exists_coherent_quarterLogLattice_decomposition (g : BombieriTest) :
   let coherent : t → CoherentQuarterCell := fun i ↦
     { index := quarterLogLatticeIndex i.1
       seed := quarterLogLatticeNormalize (quarterLogLatticeIndex i.1) (cell i)
-      weight := rho i }
+      weight := rho i
+      weight_contDiff := (rho i).contMDiff.contDiff }
   let cells : List CoherentQuarterCell :=
     (Finset.univ : Finset t).toList.map coherent
   have hmem (p : CoherentQuarterCell) (hp : p ∈ cells) :
