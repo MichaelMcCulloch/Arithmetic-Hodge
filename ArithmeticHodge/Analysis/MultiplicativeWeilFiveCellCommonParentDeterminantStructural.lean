@@ -34,9 +34,11 @@ open MultiplicativeWeilMinimalBlockEndpointEliminationStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
 open MultiplicativeWeilMonotoneFourCellPrimeGeometryStructural
 open MultiplicativeWeilMonotoneCellEnergyFrameStructural
+open MultiplicativeWeilMonotoneLocalFullCoercivityStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilMonotoneNullSuffixVariationStructural
 open MultiplicativeWeilQuarterLogLatticePartitionStructural
+open MultiplicativeWeilRealCutPhaseReductionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 open MultiplicativeWeilRealMonotoneTailConeCriterionStructural
 open YoshidaBombieriCrossDistribution
@@ -50,6 +52,7 @@ open YoshidaEndpointPotentialBound
 open YoshidaEndpointPositiveDistanceFold
 open YoshidaEndpointTriangleFoldLipschitz
 open YoshidaFactorTwoEndpointClean
+open YoshidaOddHomogeneousCoercivity
 open YoshidaPinnedHalfLogEnergyStructural
 open YoshidaRegularKernelBound
 open YoshidaRegularKernelSchur
@@ -3262,6 +3265,219 @@ theorem twenty_seven_hundredths_energy_le_yoshidaEndpointClean_of_centeredQuarte
   dsimp only [yoshidaEndpointOddCleanQuadratic]
   unfold yoshidaEndpointScalarMassLoss at hscalarScaled
   nlinarith
+
+private theorem bombieriLocalCriticalForm_self_normalizedDilation_fiveCell
+    (lambda : ℝ) (hlambda : 0 < lambda) (g : BombieriTest) :
+    bombieriLocalCriticalForm (normalizedDilation lambda hlambda g)
+        (normalizedDilation lambda hlambda g) =
+      bombieriLocalCriticalForm g g := by
+  have hd := bombieriFunctional_quadratic_eq_localCritical_sub_prime
+    (normalizedDilation lambda hlambda g)
+  have hg := bombieriFunctional_quadratic_eq_localCritical_sub_prime g
+  rw [bombieriQuadraticTest_normalizedDilation] at hd
+  have h := hd.symm.trans hg
+  simpa only [sub_left_inj] using h
+
+private theorem logarithmicPullbackSchwartz_im_eq_zero_of_conjugateFixed
+    (g : BombieriTest) (hg : bombieriConjugateTest g = g) (u : ℝ) :
+    (g.logarithmicPullbackSchwartz (1 / 2) u).im = 0 := by
+  have hvalue : (g (Real.exp (-u))).im = 0 := by
+    have h := congrArg (fun q : BombieriTest ↦ q (Real.exp (-u))) hg
+    have him := congrArg Complex.im h
+    change -(g (Real.exp (-u))).im = (g (Real.exp (-u))).im at him
+    linarith
+  simp only [BombieriTest.logarithmicPullbackSchwartz_apply,
+    BombieriTest.logarithmicPullback, Complex.mul_im,
+    Complex.ofReal_re, Complex.ofReal_im, zero_mul, add_zero, hvalue,
+    mul_zero]
+
+private theorem bombieriCenteredCropEnergy_eq_endpoint_mul_profileEnergy
+    (g : BombieriTest) {l r : ℝ}
+    (hsupported : YoshidaCriticalPullbackSupported yoshidaEndpointA
+      (normalizedDilation (logarithmicCenter l r)
+        (logarithmicCenter_pos l r) g))
+    (hreal : ∀ u : ℝ,
+      ((normalizedDilation (logarithmicCenter l r)
+        (logarithmicCenter_pos l r) g).logarithmicPullbackSchwartz
+          (1 / 2) u).im = 0) :
+    bombieriCenteredCropEnergy g l r =
+      yoshidaEndpointA *
+        ∫ x : ℝ in -1..1,
+          factorTwoCenteredProfile
+            (normalizedDilation (logarithmicCenter l r)
+              (logarithmicCenter_pos l r) g) x ^ 2 := by
+  let gc : BombieriTest :=
+    normalizedDilation (logarithmicCenter l r)
+      (logarithmicCenter_pos l r) g
+  let F : ℝ → ℂ := gc.logarithmicPullbackSchwartz (1 / 2)
+  let q : ℝ → ℝ := fun u ↦ ‖F u‖ ^ 2
+  have hcrop :
+      (yoshidaCriticalPullbackCropLinear yoshidaEndpointA gc : ℝ → ℂ) =
+        F := by
+    simpa only [F] using
+      yoshidaCriticalPullbackCrop_eq_logarithmicPullbackSchwartz hsupported
+  have hsubst := intervalIntegral.smul_integral_comp_mul_add
+    (a := (-1 : ℝ)) (b := 1) q yoshidaEndpointA 0
+  have hscale :
+      (∫ u : ℝ in -yoshidaEndpointA..yoshidaEndpointA, q u) =
+        yoshidaEndpointA *
+          ∫ x : ℝ in -1..1, q (yoshidaEndpointA * x) := by
+    simpa only [smul_eq_mul, mul_neg, mul_one, add_zero, mul_zero,
+      zero_add] using hsubst.symm
+  unfold bombieriCenteredCropEnergy clippedIntervalEnergy
+  rw [hcrop]
+  change (∫ u : ℝ in -yoshidaEndpointA..yoshidaEndpointA, q u) = _
+  rw [hscale]
+  congr 1
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  dsimp only [q, F, gc, factorTwoCenteredProfile]
+  rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, hreal]
+  ring
+
+/-- A real Bombieri test whose centered critical pullback occupies only the
+central quarter of the endpoint interval has a uniform `27/100` local gap.
+This transports the clean profile estimate back to the intrinsic critical
+logarithmic energy without changing scale. -/
+theorem twenty_seven_hundredths_criticalLogEnergy_le_localCritical_self_of_narrowSupport
+    (g : BombieriTest) {l r : ℝ}
+    (hl : 0 < l) (hlr : l ≤ r)
+    (hsupport : tsupport g ⊆ Icc l r)
+    (hratio : r / l ≤ 2)
+    (hwidth : logarithmicHalfWidth l r ≤ yoshidaEndpointA / 4)
+    (hfixed : bombieriConjugateTest g = g) :
+    (27 / 100 : ℝ) * bombieriCriticalLogEnergy g ≤
+      (bombieriLocalCriticalForm g g).re := by
+  let lambda : ℝ := logarithmicCenter l r
+  have hlambda : 0 < lambda := logarithmicCenter_pos l r
+  let gc : BombieriTest := normalizedDilation lambda hlambda g
+  let w : ℝ → ℝ := factorTwoCenteredProfile gc
+  have hsupported : YoshidaCriticalPullbackSupported yoshidaEndpointA gc := by
+    exact logCenteredNormalizedDilation_criticalPullbackSupported_yoshidaEndpointA
+      g hl hlr hsupport hratio
+  have hreal (u : ℝ) :
+      (gc.logarithmicPullbackSchwartz (1 / 2) u).im = 0 := by
+    dsimp only [gc]
+    rw [normalizedDilation_logarithmicPullbackSchwartz_critical]
+    exact logarithmicPullbackSchwartz_im_eq_zero_of_conjugateFixed
+      g hfixed (u - Real.log lambda)
+  have hwContinuous : Continuous w := by
+    dsimp only [w, factorTwoCenteredProfile]
+    exact Complex.continuous_re.comp
+      ((gc.logarithmicPullbackSchwartz (1 / 2)).continuous.comp
+        (continuous_const.mul continuous_id))
+  have hwLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w := by
+    have hscale : ContDiff ℝ 1
+        (fun x : ℝ ↦ yoshidaEndpointA * x) := by
+      fun_prop
+    have hpullback : ContDiff ℝ 1
+        (fun x : ℝ ↦
+          gc.logarithmicPullbackSchwartz (1 / 2)
+            (yoshidaEndpointA * x)) :=
+      (gc.logarithmicPullbackSchwartz (1 / 2)).smooth 1 |>.comp hscale
+    have hprofile : ContDiff ℝ 1 w := by
+      exact Complex.reCLM.contDiff.comp hpullback
+    exact hprofile.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hwSupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0 := by
+    intro x hx
+    have huOutside : yoshidaEndpointA * x ∉
+        Icc (-logarithmicHalfWidth l r) (logarithmicHalfWidth l r) := by
+      intro hu
+      apply hx
+      constructor <;> nlinarith [hu.1, hu.2, hwidth,
+        yoshidaEndpointA_pos]
+    have hzero :=
+      logCenteredNormalizedDilation_logarithmicPullback_eq_zero_outside
+        g hl hlr hsupport huOutside
+    dsimp only [w, factorTwoCenteredProfile, gc, lambda]
+    rw [hzero]
+    norm_num
+  have hclean :=
+    twenty_seven_hundredths_energy_le_yoshidaEndpointClean_of_centeredQuarterSupport
+      w hwContinuous hwLocal hwSupport
+  have henergyProfile :=
+    bombieriCenteredCropEnergy_eq_endpoint_mul_profileEnergy
+      g hsupported hreal
+  have henergy :=
+    bombieriCenteredCropEnergy_eq_criticalLogEnergy_of_ratio_le_two
+      g hl hlr hsupport hratio
+  have hform :=
+    bombieriLocalCriticalForm_re_eq_endpoint_mul_clean gc hsupported hreal
+  have hA0 : 0 ≤ yoshidaEndpointA := yoshidaEndpointA_pos.le
+  have hscaled := mul_le_mul_of_nonneg_left hclean hA0
+  have hdilation :=
+    bombieriLocalCriticalForm_self_normalizedDilation_fiveCell
+      lambda hlambda g
+  dsimp only [w, gc, lambda] at henergyProfile hform hdilation
+  rw [henergy] at henergyProfile
+  rw [← hdilation]
+  rw [hform]
+  nlinarith [hscaled, henergyProfile]
+
+private theorem quarterCellCollapsed_logarithmicHalfWidth (j : ℤ) :
+    logarithmicHalfWidth (quarterLogLatticePoint j)
+        (quarterLogLatticePoint (j + 1)) =
+      yoshidaEndpointA / 4 := by
+  unfold logarithmicHalfWidth quarterLogLatticePoint yoshidaEndpointA
+  rw [Real.log_exp, Real.log_exp]
+  push_cast
+  ring
+
+private theorem quarterCellCollapsed_ratio_le_two (j : ℤ) :
+    quarterLogLatticePoint (j + 1) / quarterLogLatticePoint j ≤ 2 := by
+  apply (div_le_iff₀ (quarterLogLatticePoint_pos j)).2
+  calc
+    quarterLogLatticePoint (j + 1) ≤
+        quarterLogLatticePoint (j + 4) :=
+      quarterLogLatticePoint_mono (by omega)
+    _ = 2 * quarterLogLatticePoint j :=
+      quarterLogLatticePoint_add_four j
+
+/-- Under a zero middle block, both surviving endpoint cells inherit the
+support-sharp `27/100` diagonal coercivity. -/
+theorem fiveCell_endpointLocalCritical_diagonal_coercivity_of_middle_zero
+    (parent : BombieriTest) (k : ℤ)
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmiddle : fiveCellMiddleThree parent k = 0) :
+    (27 / 100 : ℝ) *
+          bombieriCriticalLogEnergy (monotoneQuarterCell parent k) ≤
+        (bombieriLocalCriticalForm
+          (monotoneQuarterCell parent k)
+          (monotoneQuarterCell parent k)).re ∧
+      (27 / 100 : ℝ) *
+          bombieriCriticalLogEnergy (monotoneQuarterCell parent (k + 4)) ≤
+        (bombieriLocalCriticalForm
+          (monotoneQuarterCell parent (k + 4))
+          (monotoneQuarterCell parent (k + 4))).re := by
+  have hcollapse :=
+    fiveCell_endpoint_tsupports_collapse_of_middle_zero parent k hmiddle
+  have hrightRatio :
+      quarterLogLatticePoint (k + 6) /
+          quarterLogLatticePoint (k + 5) ≤ 2 := by
+    simpa only [show k + 5 + 1 = k + 6 by ring] using
+      quarterCellCollapsed_ratio_le_two (k + 5)
+  have hrightWidth :
+      logarithmicHalfWidth (quarterLogLatticePoint (k + 5))
+          (quarterLogLatticePoint (k + 6)) ≤
+        yoshidaEndpointA / 4 := by
+    rw [← show k + 5 + 1 = k + 6 by ring,
+      quarterCellCollapsed_logarithmicHalfWidth]
+  constructor
+  · apply
+      twenty_seven_hundredths_criticalLogEnergy_le_localCritical_self_of_narrowSupport
+        (monotoneQuarterCell parent k)
+        (quarterLogLatticePoint_pos k)
+        (quarterLogLatticePoint_mono (by omega)) hcollapse.1
+        (quarterCellCollapsed_ratio_le_two k)
+        (quarterCellCollapsed_logarithmicHalfWidth k).le
+    exact bombieriConjugateTest_monotoneQuarterCell parent hparent k
+  · apply
+      twenty_seven_hundredths_criticalLogEnergy_le_localCritical_self_of_narrowSupport
+        (monotoneQuarterCell parent (k + 4))
+        (quarterLogLatticePoint_pos (k + 5))
+        (quarterLogLatticePoint_mono (by omega)) hcollapse.2
+        hrightRatio hrightWidth
+    exact bombieriConjugateTest_monotoneQuarterCell parent hparent (k + 4)
 
 /-- Exact scalar form of the new common-parent obstruction.  Once the two
 adjacent minors are nonnegative and the middle diagonal is positive, a
