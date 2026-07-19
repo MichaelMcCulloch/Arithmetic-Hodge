@@ -295,6 +295,115 @@ theorem fourCellEvenEndpointSeedTailRow_eq_projectedRepresenterPairing
     intervalIntegral.integral_const_mul]
   ring
 
+/-- Cauchy handoff for the complete projected endpoint-seed tail row.  Unlike
+the capacity-only estimate, the dual density already contains the opposing
+smooth regular row. -/
+theorem fourCellEvenEndpointSeedTailRow_sq_le_mass_of_projectedRepresenterNorm
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8)
+    (q : ℝ[X]) (hq : q.natDegree < 8)
+    (hG : MemLp
+      (fourCellEvenEndpointSeedProjectedTailRowRepresenter q) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)))
+    (C : ℝ)
+    (hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedProjectedTailRowRepresenter q x ^ 2) ≤ C) :
+    (fourCellEvenEndpointCapacityPolarization
+          fourCellEvenEndpointCoshSeed r -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear
+                fourCellEvenEndpointCoshSeed r t)) ^ 2 ≤
+      C * (∫ x : ℝ in -1..1, r x ^ 2) := by
+  let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  let G : ℝ → ℝ := fourCellEvenEndpointSeedProjectedTailRowRepresenter q
+  have hrMeas : AEStronglyMeasurable r μ :=
+    hr.aestronglyMeasurable.restrict
+  have hrLp : MemLp r 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hrMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖r x‖ ^ 2)
+        (Icc (-1 : ℝ) 1) :=
+      (hr.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hcauchy :=
+    YoshidaEndpointWeightedCauchy.sq_integral_mul_le_weighted
+      μ (fun _ : ℝ ↦ 1) G r (by simp)
+        (by simpa only [G, div_one, Real.sqrt_one] using hG)
+        (by simpa only [Real.sqrt_one, one_mul] using hrLp)
+  have hcauchy' :
+      (∫ x : ℝ in -1..1, G x * r x) ^ 2 ≤
+        (∫ x : ℝ in -1..1, G x ^ 2) *
+          (∫ x : ℝ in -1..1, r x ^ 2) := by
+    repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+    simpa only [μ, div_one, one_mul] using hcauchy
+  have hR : 0 ≤ ∫ x : ℝ in -1..1, r x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num) (fun _ _ ↦ sq_nonneg _)
+  have hscaled := mul_le_mul_of_nonneg_right hdual hR
+  rw [fourCellEvenEndpointSeedTailRow_eq_projectedRepresenterPairing
+    r hr hlow q hq]
+  change (∫ x : ℝ in -1..1, G x * r x) ^ 2 ≤ _
+  exact hcauchy'.trans hscaled
+
+/-- The single combined-representer norm which closes the endpoint-seed
+Schur determinant on a genuine `P8+` tail.  The tail diagonal uses the exact
+`553 / 20000` reserve left by the coupled-core estimate. -/
+theorem fourCellEvenEndpointSeedRow_tail_sq_le_seed_mul_polarFree_of_norm
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hzero : fourCellPositiveCoshMoment r
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (hlow : centeredLegendreMomentsVanishBelow r 8)
+    (hcore : (33 / 20 : ℝ) * (∫ x : ℝ in -1..1, r x ^ 2) ≤
+      fourCellEvenZeroCoshCoupledCore r)
+    (q : ℝ[X]) (hq : q.natDegree < 8)
+    (hG : MemLp
+      (fourCellEvenEndpointSeedProjectedTailRowRepresenter q) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)))
+    (hdual :
+      (∫ x : ℝ in -1..1,
+          fourCellEvenEndpointSeedProjectedTailRowRepresenter q x ^ 2) ≤
+        fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          (553 / 20000 : ℝ)) :
+    fourCellEvenEndpointSeedRow r ^ 2 ≤
+      fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+        fourCellEvenPolarFreeOperator r := by
+  have hrow :=
+    fourCellEvenEndpointSeedTailRow_sq_le_mass_of_projectedRepresenterNorm
+      r hr hlow q hq hG
+        (fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          (553 / 20000 : ℝ)) hdual
+  have hreserve :=
+    fiveHundredFiftyThree_div_twentyThousand_mass_le_polarFree_of_coupledCore
+      r hr hlocal heven hzero hcore
+  have hseed : 0 ≤ fourCellEvenExactBracket fourCellEvenEndpointCoshSeed :=
+    fourCellEvenExactBracket_endpointCoshSeed_pos.le
+  have hscaled := mul_le_mul_of_nonneg_left hreserve hseed
+  rw [fourCellEvenEndpointSeedRow_eq_core_sub_signed
+      r hr hlocal heven hzero,
+    fourCellEvenZeroCoshCoupledCorePolarization_endpointSeed_tail_eq_capacity
+      r hr hlocal hlow,
+    fourCellEvenSignedMassRegularPolarization_endpointSeed_tail_eq_regular
+      r hr hlow]
+  calc
+    (fourCellEvenEndpointCapacityPolarization
+          fourCellEvenEndpointCoshSeed r -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear
+                fourCellEvenEndpointCoshSeed r t)) ^ 2 ≤
+        (fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          (553 / 20000 : ℝ)) *
+            (∫ x : ℝ in -1..1, r x ^ 2) := hrow
+    _ = fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          ((553 / 20000 : ℝ) *
+            (∫ x : ℝ in -1..1, r x ^ 2)) := by ring
+    _ ≤ fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          fourCellEvenPolarFreeOperator r := hscaled
+
 /-- Exact mixed-row decomposition for the complete cutoff-eight split.  The
 seed-to-low term is finite-dimensional, while the seed-to-tail term is the
 single retained endpoint-capacity row. -/
