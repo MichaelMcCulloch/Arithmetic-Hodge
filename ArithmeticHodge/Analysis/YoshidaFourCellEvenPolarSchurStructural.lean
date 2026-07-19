@@ -1316,6 +1316,48 @@ theorem thirteen_div_eighty_lt_fourCellEvenCompletedParityOperator_one :
   unfold fourCellOperatorHalfWidth at hrowCost hcoshGain hscalar ⊢
   nlinarith
 
+/-- The positive-half regular row mass is exactly quadratic on constant
+profiles. -/
+theorem fourCellPositiveHalfRegularRowMass_const_eq
+    (c a : ℝ) :
+    fourCellPositiveHalfRegularRowMass (fun _ : ℝ ↦ c) a =
+      c ^ 2 *
+        fourCellPositiveHalfRegularRowMass (fun _ : ℝ ↦ 1) a := by
+  unfold fourCellPositiveHalfRegularRowMass
+  rw [show (fun p : ℝ × ℝ ↦
+      (yoshidaRegularKernel (a * |p.1 - p.2|) +
+          yoshidaRegularKernel (a * (p.1 + p.2))) *
+        ((c ^ 2 + c ^ 2) / 2)) =
+      fun p : ℝ × ℝ ↦ c ^ 2 *
+        ((yoshidaRegularKernel (a * |p.1 - p.2|) +
+            yoshidaRegularKernel (a * (p.1 + p.2))) *
+          ((1 ^ 2 + 1 ^ 2) / 2)) by
+    funext p
+    ring]
+  rw [MeasureTheory.integral_const_mul]
+
+/-- Exact homogeneity of the complete even constant pivot. -/
+theorem fourCellEvenCompletedParityOperator_const_eq_sq_mul_one
+    (c : ℝ) :
+    fourCellEvenCompletedParityOperator (fun _ : ℝ ↦ c) =
+      c ^ 2 *
+        fourCellEvenCompletedParityOperator (fun _ : ℝ ↦ 1) := by
+  rw [fourCellEvenCompletedParityOperator_const_eq,
+    fourCellEvenCompletedParityOperator_one_eq,
+    fourCellPositiveHalfRegularRowMass_const_eq]
+  ring
+
+/-- Homogeneous form of the sharpened `13 / 80` constant pivot. -/
+theorem thirteen_div_eighty_mul_sq_le_fourCellEvenCompletedParityOperator_const
+    (c : ℝ) :
+    (13 / 80 : ℝ) * c ^ 2 ≤
+      fourCellEvenCompletedParityOperator (fun _ : ℝ ↦ c) := by
+  have hpivot :=
+    thirteen_div_eighty_lt_fourCellEvenCompletedParityOperator_one
+  have hscaled := mul_le_mul_of_nonneg_left hpivot.le (sq_nonneg c)
+  rw [fourCellEvenCompletedParityOperator_const_eq_sq_mul_one]
+  nlinarith
+
 /-- The positive constant pivot is homogeneous with a uniform quadratic
 margin.  The proof keeps the exact regular row and scales its structural row
 bound, rather than appealing to an unproved quadratic-form interface. -/
@@ -1384,6 +1426,20 @@ theorem one_twentieth_mul_sq_le_fourCell_evenBracket_const (c : ℝ) :
       (contDiff_const.contDiffOn.locallyLipschitzOn
       (convex_Icc (-1 : ℝ) 1)) (by intro x; rfl)]
   exact one_twentieth_mul_sq_le_fourCellEvenCompletedParityOperator_const c
+
+/-- Complete-bracket form of the sharpened homogeneous constant pivot. -/
+theorem thirteen_div_eighty_mul_sq_le_fourCell_evenBracket_const (c : ℝ) :
+    (13 / 80 : ℝ) * c ^ 2 ≤
+      centeredClippedPhysicalQuadratic fourCellOperatorHalfWidth
+          (fun _ : ℝ ↦ c) -
+        Real.sqrt 2 * Real.log 2 *
+          fourCellEndpointPairing (fun _ : ℝ ↦ c) := by
+  rw [fourCellBracket_eq_evenCompletedParityOperator
+    (fun _ : ℝ ↦ c) continuous_const
+      (contDiff_const.contDiffOn.locallyLipschitzOn
+        (convex_Icc (-1 : ℝ) 1)) (by intro x; rfl)]
+  exact
+    thirteen_div_eighty_mul_sq_le_fourCellEvenCompletedParityOperator_const c
 
 /-- Complete-bracket form of the sharpened normalized constant pivot. -/
 theorem three_twentieth_lt_fourCell_evenBracket_one :
