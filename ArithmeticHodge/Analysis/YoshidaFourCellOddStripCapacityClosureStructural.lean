@@ -36,6 +36,7 @@ open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaFactorTwoPhaseIntrinsicRankResidualBound
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
+open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaEndpointOddOneThreeRawPolarization
@@ -1975,6 +1976,259 @@ theorem fourCellOddStripLocalWidthDefect_oddStructuralLow_eq
     integral_zero_one_endpointPotential_oddStructuralLow]
   simp_rw [centeredEndpointCorrelation_oddStructuralLow]
   ring
+
+/-! ## Closure of the intrinsic odd low block -/
+
+private theorem log_five_four_lt_4463_div_20000 :
+    Real.log (5 / 4 : ℝ) < 4463 / 20000 := by
+  have h := Real.log_div_le_sum_range_add (x := (1 / 9 : ℝ))
+    (by norm_num) (by norm_num) 4
+  norm_num [Finset.sum_range_succ] at h ⊢
+  linarith
+
+private theorem fourCellScalar_lt_31577_div_20000 :
+    Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi <
+      (31577 / 20000 : ℝ) := by
+  have hlogTwo : Real.log 2 ≠ 0 := (Real.log_pos (by norm_num)).ne'
+  have hwidth :
+      Real.log (2 * fourCellOperatorHalfWidth) =
+        Real.log (5 / 4 : ℝ) + Real.log (Real.log 2) := by
+    rw [show 2 * fourCellOperatorHalfWidth =
+        (5 / 4 : ℝ) * Real.log 2 by
+      unfold fourCellOperatorHalfWidth
+      ring,
+      Real.log_mul (by norm_num : (5 / 4 : ℝ) ≠ 0) hlogTwo]
+  rw [hwidth]
+  linarith [log_five_four_lt_4463_div_20000,
+    strict_log_log_two_bounds.2, strict_euler_gamma_bounds.2,
+    strict_log_pi_bounds.2]
+
+private theorem sqrt_two_mul_log_two_bounds :
+    (141421 / 100000 : ℝ) * (6931 / 10000) <
+        Real.sqrt 2 * Real.log 2 ∧
+      Real.sqrt 2 * Real.log 2 <
+        (70711 / 50000 : ℝ) * (6932 / 10000) := by
+  have hs := sqrt_two_kernel_bounds
+  have hl := strict_log_two_bounds
+  have hspos : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  have hlpos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  constructor
+  · calc
+      (141421 / 100000 : ℝ) * (6931 / 10000) <
+          Real.sqrt 2 * (6931 / 10000) :=
+        mul_lt_mul_of_pos_right hs.1 (by norm_num)
+      _ < Real.sqrt 2 * Real.log 2 :=
+        mul_lt_mul_of_pos_left hl.1 hspos
+  · calc
+      Real.sqrt 2 * Real.log 2 <
+          (70711 / 50000 : ℝ) * Real.log 2 :=
+        mul_lt_mul_of_pos_right hs.2 hlpos
+      _ < (70711 / 50000 : ℝ) * (6932 / 10000) :=
+        mul_lt_mul_of_pos_left hl.2 (by norm_num)
+
+theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
+    fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
+      (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
+        (2 / 5 : ℝ) * c * d +
+          (76 / 147 - (2 / 7 : ℝ) * Real.log 2) * d ^ 2 := by
+  let w : ℝ → ℝ := factorTwoOddStructuralLowProfile c d
+  have hw : ContDiff ℝ 1 w := by
+    dsimp only [w]
+    unfold factorTwoOddStructuralLowProfile centeredP1 centeredP3
+    fun_prop
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hraw := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    w hlocal (by simpa only [w] using odd_factorTwoOddStructuralLowProfile c d)
+  unfold fourCellOddHalfCoreReserve
+  rw [← hraw]
+  dsimp only [w]
+  rw [centeredRawLogEnergy_factorTwoOddStructuralLowProfile,
+    integral_zero_one_endpointPotential_oddStructuralLow,
+    integral_zero_one_oddStructuralLow_sq]
+  ring
+
+/-- `(1,1)` entry of the exact core plus local algebraic block. -/
+def fourCellOddLowCombined11 : ℝ :=
+  28 / 45 - (2 / 3 : ℝ) * Real.log 2 +
+    fourCellOddLowLocalAlgebraic11
+
+/-- Polarized `(1,3)` entry of the exact core plus local algebraic block. -/
+def fourCellOddLowCombined13 : ℝ :=
+  1 / 5 + fourCellOddLowLocalAlgebraic13
+
+/-- `(3,3)` entry of the exact core plus local algebraic block. -/
+def fourCellOddLowCombined33 : ℝ :=
+  76 / 147 - (2 / 7 : ℝ) * Real.log 2 +
+    fourCellOddLowLocalAlgebraic33
+
+private theorem one_fourth_le_fourCellOddLowCombined11 :
+    (1 / 4 : ℝ) ≤ fourCellOddLowCombined11 := by
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  have hp := sqrt_two_mul_log_two_bounds.1
+  have hl := strict_log_two_bounds.2
+  rw [show fourCellOddLowCombined11 =
+      893 / 600 - (31 / 50 : ℝ) * Real.log 2 +
+        (94 / 375 : ℝ) * (Real.sqrt 2 * Real.log 2) -
+          (2 / 3 : ℝ) *
+            (Real.log (2 * fourCellOperatorHalfWidth) +
+              Real.eulerMascheroniConstant + Real.log Real.pi) by
+    unfold fourCellOddLowCombined11 fourCellOddLowLocalAlgebraic11
+    ring]
+  nlinarith
+
+private theorem fourCellOddLowCombined13_nonneg :
+    0 ≤ fourCellOddLowCombined13 := by
+  rw [show fourCellOddLowCombined13 =
+      93 / 500 + (104 / 3125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) by
+    unfold fourCellOddLowCombined13 fourCellOddLowLocalAlgebraic13
+    ring]
+  positivity
+
+private theorem fourCellOddLowCombined13_le_eleven_fiftieths :
+    fourCellOddLowCombined13 ≤ (11 / 50 : ℝ) := by
+  have hp := sqrt_two_mul_log_two_bounds.2
+  rw [show fourCellOddLowCombined13 =
+      93 / 500 + (104 / 3125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) by
+    unfold fourCellOddLowCombined13 fourCellOddLowLocalAlgebraic13
+    ring]
+  nlinarith
+
+private theorem one_fifth_le_fourCellOddLowCombined33 :
+    (1 / 5 : ℝ) ≤ fourCellOddLowCombined33 := by
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  have hp := sqrt_two_mul_log_two_bounds.2
+  have hl := strict_log_two_bounds.2
+  rw [show fourCellOddLowCombined33 =
+      5434921 / 6125000 - (5242 / 109375 : ℝ) *
+          (Real.sqrt 2 * Real.log 2) -
+        (93 / 350 : ℝ) * Real.log 2 -
+          (2 / 7 : ℝ) *
+            (Real.log (2 * fourCellOperatorHalfWidth) +
+              Real.eulerMascheroniConstant + Real.log Real.pi) by
+    unfold fourCellOddLowCombined33 fourCellOddLowLocalAlgebraic33
+    ring]
+  nlinarith
+
+theorem fourCellOddHalfCoreReserve_add_lowAlgebraic_eq (c d : ℝ) :
+    fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) +
+        fourCellOddLowLocalAlgebraicQuadratic c d =
+      fourCellOddLowCombined11 * c ^ 2 +
+        2 * fourCellOddLowCombined13 * c * d +
+          fourCellOddLowCombined33 * d ^ 2 := by
+  rw [fourCellOddHalfCoreReserve_oddStructuralLow]
+  unfold fourCellOddLowLocalAlgebraicQuadratic
+    fourCellOddLowCombined11 fourCellOddLowCombined13
+    fourCellOddLowCombined33
+  ring
+
+/-- The exact combined low block dominates the complete regular budget.  A
+single weighted square with ratio `277 / 250` certifies the residual
+determinant after the absolute cross term is retained. -/
+theorem fourCellOddLowRegularBudget_le_combined (c d : ℝ) :
+    (13 / 2500 : ℝ) * c ^ 2 +
+        (91 / 50000 : ℝ) * |c * d| +
+          (61 / 100000 : ℝ) * d ^ 2 ≤
+      fourCellOddLowCombined11 * c ^ 2 +
+        2 * fourCellOddLowCombined13 * c * d +
+          fourCellOddLowCombined33 * d ^ 2 := by
+  let A : ℝ := fourCellOddLowCombined11
+  let B : ℝ := fourCellOddLowCombined13
+  let D : ℝ := fourCellOddLowCombined33
+  have hA : (1 / 4 : ℝ) ≤ A := by
+    simpa only [A] using one_fourth_le_fourCellOddLowCombined11
+  have hB0 : 0 ≤ B := by
+    simpa only [B] using fourCellOddLowCombined13_nonneg
+  have hB1 : B ≤ (11 / 50 : ℝ) := by
+    simpa only [B] using fourCellOddLowCombined13_le_eleven_fiftieths
+  have hD : (1 / 5 : ℝ) ≤ D := by
+    simpa only [D] using one_fifth_le_fourCellOddLowCombined33
+  have hBabs : |B| ≤ (11 / 50 : ℝ) := by
+    apply abs_le.mpr
+    constructor <;> linarith
+  have hAcross : |2 * B * c * d| ≤ (11 / 25 : ℝ) * |c * d| := by
+    calc
+      |2 * B * c * d| = 2 * |B| * |c * d| := by
+        rw [show 2 * B * c * d = 2 * B * (c * d) by ring,
+          abs_mul, abs_mul]
+        norm_num
+      _ ≤ 2 * (11 / 50 : ℝ) * |c * d| := by gcongr
+      _ = (11 / 25 : ℝ) * |c * d| := by ring
+  have hcross : -(11 / 25 : ℝ) * |c * d| ≤ 2 * B * c * d := by
+    have h := (abs_le.mp hAcross).1
+    linarith
+  have hAmul : (1 / 4 : ℝ) * c ^ 2 ≤ A * c ^ 2 :=
+    mul_le_mul_of_nonneg_right hA (sq_nonneg c)
+  have hDmul : (1 / 5 : ℝ) * d ^ 2 ≤ D * d ^ 2 :=
+    mul_le_mul_of_nonneg_right hD (sq_nonneg d)
+  let A₀ : ℝ := 1 / 4 - 13 / 2500
+  let D₀ : ℝ := 1 / 5 - 61 / 100000
+  let K₀ : ℝ := 22091 / 50000
+  have hreduce :
+      A₀ * c ^ 2 + D₀ * d ^ 2 - K₀ * |c * d| ≤
+        A * c ^ 2 + 2 * B * c * d + D * d ^ 2 -
+          ((13 / 2500 : ℝ) * c ^ 2 +
+            (91 / 50000 : ℝ) * |c * d| +
+              (61 / 100000 : ℝ) * d ^ 2) := by
+    dsimp only [A₀, D₀, K₀]
+    linarith
+  have hsquare : 0 ≤ (277 * |c| - 250 * |d|) ^ 2 := sq_nonneg _
+  have hyoung :
+      2 * |c * d| ≤ (277 / 250 : ℝ) * c ^ 2 +
+        (250 / 277 : ℝ) * d ^ 2 := by
+    rw [abs_mul]
+    have hc : |c| ^ 2 = c ^ 2 := sq_abs c
+    have hd : |d| ^ 2 = d ^ 2 := sq_abs d
+    nlinarith
+  have hweighted := mul_le_mul_of_nonneg_left hyoung
+    (by norm_num : (0 : ℝ) ≤ 22091 / 100000)
+  have hcCoeff :
+      (22091 / 100000 : ℝ) * (277 / 250) ≤ A₀ := by
+    norm_num [A₀]
+  have hdCoeff :
+      (22091 / 100000 : ℝ) * (250 / 277) ≤ D₀ := by
+    norm_num [D₀]
+  have hcMul := mul_le_mul_of_nonneg_right hcCoeff (sq_nonneg c)
+  have hdMul := mul_le_mul_of_nonneg_right hdCoeff (sq_nonneg d)
+  have hpositive : 0 ≤
+      A₀ * c ^ 2 + D₀ * d ^ 2 - K₀ * |c * d| := by
+    dsimp only [K₀] at hweighted ⊢
+    linarith
+  have hfinal := hpositive.trans hreduce
+  dsimp only [A, B, D] at hfinal
+  linarith
+
+/-- Complete closure of the outstanding defect on `span(P₁,P₃)`.
+This is the first exact nontrivial block of the desired universal absorption
+inequality. -/
+theorem fourCellOddHalfCoreReserve_add_localWidthDefect_low_nonneg
+    (c d : ℝ) :
+    0 ≤ fourCellOddHalfCoreReserve
+          (factorTwoOddStructuralLowProfile c d) +
+        fourCellOddStripLocalWidthDefect
+          (factorTwoOddStructuralLowProfile c d) := by
+  rw [fourCellOddStripLocalWidthDefect_oddStructuralLow_eq]
+  change 0 ≤
+    fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) +
+      (fourCellOddLowLocalAlgebraicQuadratic c d -
+        2 * fourCellOperatorHalfWidth *
+          fourCellOddLowRegularQuadratic c d)
+  have hcore := fourCellOddHalfCoreReserve_add_lowAlgebraic_eq c d
+  have hregular :=
+    two_mul_width_mul_fourCellOddLowRegularQuadratic_le c d
+  have hbudget := fourCellOddLowRegularBudget_le_combined c d
+  linarith
+
+theorem neg_fourCellOddStripLocalWidthDefect_low_le_core
+    (c d : ℝ) :
+    -fourCellOddStripLocalWidthDefect
+        (factorTwoOddStructuralLowProfile c d) ≤
+      fourCellOddHalfCoreReserve
+        (factorTwoOddStructuralLowProfile c d) := by
+  linarith [fourCellOddHalfCoreReserve_add_localWidthDefect_low_nonneg c d]
 
 /-- The endpoint-strip parity split cancels every nonlocal raw term outside
 the strip from the core defect. -/
