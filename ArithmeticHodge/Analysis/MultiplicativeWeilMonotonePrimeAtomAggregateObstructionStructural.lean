@@ -13,6 +13,7 @@ noncomputable section
 
 open MultiplicativeWeil
 open MultiplicativeWeilFourCellEnergyAbsorptionStructural
+open MultiplicativeWeilMinimalNegativeBlockStructural
 open MultiplicativeWeilMonotoneCellEnergyFrameStructural
 open MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
 open MultiplicativeWeilMonotonePrimeAtomAbsorptionStructural
@@ -2847,6 +2848,93 @@ theorem actualMangoldtWeight_productionCoordinateData_allow_alignmentFailure :
   · norm_num
   · norm_num
   · norm_num
+
+/-! ## Adjacent ratio-two telescope and its remote-row obstruction -/
+
+private theorem bombieriRealQuadraticValue_threeTerm_overlap_for_telescope
+    (left middle right : BombieriTest) :
+    bombieriRealQuadraticValue ((left + middle) + right) =
+      bombieriRealQuadraticValue (left + middle) +
+        bombieriRealQuadraticValue (middle + right) -
+          bombieriRealQuadraticValue middle +
+        2 * (bombieriTwoBlockGlobalCrossSymbol left right).re := by
+  rw [bombieriRealQuadraticValue_add,
+    bombieriRealQuadraticValue_add middle right,
+    bombieriTwoBlockGlobalCrossSymbol_add_left]
+  simp only [Complex.add_re]
+  ring
+
+/-- Exact one-step attempt to telescope a finite monotone block through its
+adjacent three-cell (hence ratio-two) terminal window.  Besides the previous
+prefix, the new local terms are the three-cell window minus its two-cell
+overlap.  The sole remaining term is the complete global cross between the
+entire remote prefix and the new endpoint cell.
+
+Thus adjacent ratio-two positivity does not close under telescoping: every
+extension creates a genuinely nonlocal row rather than a positive overlap
+correction. -/
+theorem bombieriRealQuadraticValue_finiteBlock_succ_three_eq_adjacentWindow_add_remote
+    (parent : BombieriTest) (lo : ℤ) (start n : ℕ) :
+    bombieriRealQuadraticValue
+        (monotoneQuarterFiniteBlock parent lo start (n + 3)) =
+      bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo start (n + 2)) +
+        bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo (start + n) 3) -
+        bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo (start + n) 2) +
+        2 * (bombieriTwoBlockGlobalCrossSymbol
+          (monotoneQuarterFiniteBlock parent lo start n)
+          (monotoneQuarterFiniteBlock parent lo (start + n + 2) 1)).re := by
+  let left := monotoneQuarterFiniteBlock parent lo start n
+  let middle := monotoneQuarterFiniteBlock parent lo (start + n) 2
+  let right := monotoneQuarterFiniteBlock parent lo (start + n + 2) 1
+  have hprefix := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo start (n + 2) n (by omega)
+  have hwhole := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo start (n + 3) (n + 2) (by omega)
+  have hwindow := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent lo (start + n) 3 2 (by omega)
+  have hleftMiddle : left + middle =
+      monotoneQuarterFiniteBlock parent lo start (n + 2) := by
+    simpa only [left, middle, Nat.add_sub_cancel_left] using hprefix.symm
+  have hmiddleRight : middle + right =
+      monotoneQuarterFiniteBlock parent lo (start + n) 3 := by
+    simpa only [middle, right, Nat.add_assoc] using hwindow.symm
+  have hwhole' : monotoneQuarterFiniteBlock parent lo start (n + 3) =
+      (left + middle) + right := by
+    rw [hwhole, ← hleftMiddle]
+    simp only [right, Nat.add_assoc,
+      show n + 3 - (n + 2) = 1 by omega]
+  rw [hwhole',
+    bombieriRealQuadraticValue_threeTerm_overlap_for_telescope,
+    hleftMiddle, hmiddleRight]
+
+/-- Consequently, if a support-minimal negative block has length `n + 3`,
+the nonlocal cross created at the last adjacent-window extension must strictly
+overcome the previous prefix and terminal three-cell reserves relative to
+their two-cell overlap.  This is the exact structural obstruction to a
+positive adjacent-block telescope. -/
+theorem supportMinimalNegativeMonotoneBlock_terminalRemoteRow_deficit
+    {parent : BombieriTest} {lo : ℤ} {total start len n : ℕ}
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo total start len)
+    (hlen : len = n + 3) :
+    bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo start (n + 2)) +
+        bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent lo (start + n) 3) +
+        2 * (bombieriTwoBlockGlobalCrossSymbol
+          (monotoneQuarterFiniteBlock parent lo start n)
+          (monotoneQuarterFiniteBlock parent lo (start + n + 2) 1)).re <
+      bombieriRealQuadraticValue
+        (monotoneQuarterFiniteBlock parent lo (start + n) 2) := by
+  have hnegative : bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent lo start (n + 3)) < 0 := by
+    simpa only [hlen] using hmin.negative
+  rw [bombieriRealQuadraticValue_finiteBlock_succ_three_eq_adjacentWindow_add_remote]
+    at hnegative
+  linarith
 
 end
 
