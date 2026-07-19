@@ -2,7 +2,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilQuarterLogLatticePartitionStru
 
 set_option autoImplicit false
 
-open Complex Filter Real Set
+open Complex Filter MeasureTheory Real Set
 open scoped ContDiff Distributions Manifold Topology BigOperators
 
 namespace ArithmeticHodge.Analysis.MultiplicativeWeilQuarterLogLatticePartitionCoherenceStructural
@@ -41,6 +41,30 @@ theorem CoherentQuarterCell.pointwiseGram_eq
       ((p.weight x * q.weight x : ℝ) : ℂ) *
         ((starRingEnd ℂ) (g x) * g x) := by push_cast; ring
     _ = _ := by rw [hg]; push_cast; ring
+
+/-- Every directed correlation between coherent cells is the parent
+correlation integrand multiplied by a nonnegative real two-point mask. -/
+theorem CoherentQuarterCell.directedCorrelation_eq_weighted_parent
+    (p q : CoherentQuarterCell) (g : BombieriTest)
+    (hp : ∀ z : ℝ, p.physical z = (p.weight z : ℂ) * g z)
+    (hq : ∀ z : ℝ, q.physical z = (q.weight z : ℂ) * g z)
+    (x : ℝ) :
+    bombieriDirectedCorrelation p.physical q.physical x =
+      ∫ y : ℝ in Set.Ioi 0,
+        ((p.weight (x * y) * q.weight y : ℝ) : ℂ) *
+          (g (x * y) * starRingEnd ℂ (g y)) := by
+  unfold bombieriDirectedCorrelation
+  apply setIntegral_congr_fun measurableSet_Ioi
+  intro y _hy
+  change p.physical (x * y) * starRingEnd ℂ (q.physical y) = _
+  rw [hp (x * y), hq y]
+  have hstar :
+      starRingEnd ℂ ((q.weight y : ℂ) * g y) =
+        (q.weight y : ℂ) * starRingEnd ℂ (g y) := by
+    rw [map_mul, starRingEnd_apply, Complex.star_def, Complex.conj_ofReal]
+  rw [hstar]
+  push_cast
+  ring
 
 /-- The actual partition-of-unity construction retains substantially more
 than support and total sum: every physical cell is a nonnegative real
