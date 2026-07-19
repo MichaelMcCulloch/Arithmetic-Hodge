@@ -2918,6 +2918,37 @@ theorem six_fifths_upperStripMass_le_rawStripCancellationReserve
   unfold fourCellOddRawStripCancellationReserve
   linarith
 
+/-- Coupling the preceding raw reserve to the centered regular-row estimate
+leaves an explicit upper-strip payment and charges only `a/10` of the
+centered mass. -/
+theorem upperStripMass_sub_regularCharge_le_rawReserve_sub_regular
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) -
+        (fourCellOperatorHalfWidth / 10) *
+          (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      fourCellOddRawStripCancellationReserve w -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation w t) := by
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation w t
+  let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  have hraw := six_fifths_upperStripMass_le_rawStripCancellationReserve
+    w hw hodd
+  have hR : |R| ≤ (1 / 20 : ℝ) * M := by
+    simpa only [R, M] using
+      abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+        w hw.continuous hodd
+  have ha0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hRle : R ≤ |R| := le_abs_self R
+  have hmul := mul_le_mul_of_nonneg_left (hRle.trans hR) ha0
+  dsimp only [R, M] at hmul ⊢
+  linarith
+
 /-- Exact singular/nonsingular split of the universal absorption target.
 All high-frequency growth is retained in the nonnegative raw-strip reserve;
 the second summand is a regular-kernel and diagonal problem. -/
