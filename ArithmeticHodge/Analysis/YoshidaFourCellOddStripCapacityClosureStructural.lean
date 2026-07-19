@@ -3285,6 +3285,117 @@ theorem forty_nine_fiftieths_upperStripMass_le_primeDiagonal
   rw [fourCellEndpointHalfMass_eq_upperStripMass w hw] at hsplit
   linarith
 
+private theorem endpointStripOcticDensity_gap_nonneg
+    {x : ℝ} (hx0 : (3 / 5 : ℝ) ≤ x) (hx1 : x ≤ 1) :
+    0 ≤ (6 / 5 : ℝ) - (57 / 25) * x +
+      (93 / 50) * x * yoshidaEndpointOctic x := by
+  let t : ℝ := (5 * x - 3) / 2
+  have ht0 : 0 ≤ t := by
+    dsimp only [t]
+    linarith
+  have ht1 : t ≤ 1 := by
+    dsimp only [t]
+    linarith
+  have hcomp : 0 ≤ 1 - t := sub_nonneg.mpr ht1
+  rw [show
+      (6 / 5 : ℝ) - (57 / 25) * x +
+          (93 / 50) * x * yoshidaEndpointOctic x =
+        (62546469 / 781250000 : ℝ) * (1 - t) ^ 9 +
+        (60215487 / 156250000 : ℝ) * t * (1 - t) ^ 8 +
+        (5843121 / 7812500 : ℝ) * t ^ 2 * (1 - t) ^ 7 +
+        (92799 / 62500 : ℝ) * t ^ 3 * (1 - t) ^ 6 +
+        (3031347 / 625000 : ℝ) * t ^ 4 * (1 - t) ^ 5 +
+        (1416849 / 125000 : ℝ) * t ^ 5 * (1 - t) ^ 4 +
+        (190437 / 12500 : ℝ) * t ^ 6 * (1 - t) ^ 3 +
+        (29323 / 2500 : ℝ) * t ^ 7 * (1 - t) ^ 2 +
+        (9757 / 2000 : ℝ) * t ^ 8 * (1 - t) +
+        (343 / 400 : ℝ) * t ^ 9 by
+    dsimp only [t]
+    unfold yoshidaEndpointOctic
+    ring]
+  positivity
+
+/-- Pointwise endpoint diagonal certificate.  The weighted raw density,
+the common prime density, and the octic part of the endpoint potential
+together dominate the complete rational scalar budget on the open strip. -/
+private theorem one_hundred_sixty_three_fiftieths_le_endpointStripDensity
+    {x : ℝ} (hx0 : (3 / 5 : ℝ) < x) (hx1 : x < 1) :
+    (163 / 50 : ℝ) ≤
+      6 / (5 * x) + 49 / 50 +
+        (93 / 50) * yoshidaEndpointPotential x := by
+  have hxpos : 0 < x := by linarith
+  have hpoly := endpointStripOcticDensity_gap_nonneg hx0.le hx1.le
+  have hoctic : yoshidaEndpointOctic x ≤ yoshidaEndpointPotential x := by
+    apply octic_le_endpointPotential
+    rw [abs_lt]
+    constructor <;> linarith
+  have hpotential := mul_le_mul_of_nonneg_left hoctic
+    (by positivity : 0 ≤ (93 / 50 : ℝ) * x)
+  apply le_of_mul_le_mul_right ?_ hxpos
+  rw [show
+      (6 / (5 * x) + 49 / 50 +
+          (93 / 50) * yoshidaEndpointPotential x) * x =
+        6 / 5 + (49 / 50) * x +
+          ((93 / 50) * x) * yoshidaEndpointPotential x by
+    field_simp [hxpos.ne']]
+  nlinarith
+
+/-- Integrated endpoint certificate.  This is a single interval inequality:
+the `1/x` raw gain and the increasing endpoint potential are never minimized
+separately. -/
+theorem endpointStripScalarMass_le_weightedRaw_prime_potential
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (163 / 50 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) ≤
+      (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) +
+        (49 / 50 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2) +
+          (93 / 50 : ℝ) *
+            (∫ x : ℝ in 3 / 5..1,
+              yoshidaEndpointPotential x * w x ^ 2) := by
+  have hmass : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2)
+      volume (3 / 5) 1 := by
+    exact (hw.pow 2).intervalIntegrable _ _
+  have hweighted : IntervalIntegrable (fun x : ℝ ↦ w x ^ 2 / x)
+      volume (3 / 5) 1 := by
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.div (hw.pow 2).continuousOn continuous_id.continuousOn
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    simpa only [id_eq] using (by linarith [hx.1] : x ≠ 0)
+  have hpotential : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * w x ^ 2)
+      volume (3 / 5) 1 := by
+    apply (intervalIntegrable_endpointPotential_mul_sq w hw).mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hmono :
+      (∫ x : ℝ in 3 / 5..1, (163 / 50 : ℝ) * w x ^ 2) ≤
+        ∫ x : ℝ in 3 / 5..1,
+          ((6 / 5 : ℝ) * (w x ^ 2 / x) +
+            (49 / 50 : ℝ) * w x ^ 2) +
+              (93 / 50 : ℝ) *
+                (yoshidaEndpointPotential x * w x ^ 2) := by
+    apply intervalIntegral.integral_mono_on_of_le_Ioo (by norm_num)
+      (hmass.const_mul _) ((hweighted.const_mul _).add
+        (hmass.const_mul _) |>.add (hpotential.const_mul _))
+    intro x hx
+    have hdensity :=
+      one_hundred_sixty_three_fiftieths_le_endpointStripDensity hx.1 hx.2
+    have hmul := mul_le_mul_of_nonneg_right hdensity (sq_nonneg (w x))
+    convert hmul using 1
+    field_simp [ne_of_gt (by linarith [hx.1] : 0 < x)]
+  rw [intervalIntegral.integral_const_mul] at hmono
+  rw [intervalIntegral.integral_add
+      ((hweighted.const_mul _).add (hmass.const_mul _))
+      (hpotential.const_mul _),
+    intervalIntegral.integral_add (hweighted.const_mul _)
+      (hmass.const_mul _),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul] at hmono
+  exact hmono
+
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
       (28 / 45 - (2 / 3 : ℝ) * Real.log 2) * c ^ 2 +
