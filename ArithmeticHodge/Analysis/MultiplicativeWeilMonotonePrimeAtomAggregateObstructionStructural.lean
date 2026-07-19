@@ -1783,6 +1783,78 @@ def monotonePrimeAtomHeadCoordinateDefect
   monotonePrimeAtomCompleteHeadSliceCoordinate parent k j -
     monotonePrimeAtomPhysicalHeadSliceCoordinate parent k j
 
+/-- The coordinate defect is not an abstract error term: it is exactly the
+common-parent archimedean head--slice row, minus the full symmetric Mangoldt
+head--slice row, minus the selected physical zero-lag overlap. -/
+theorem monotonePrimeAtomHeadCoordinateDefect_eq_arch_sub_prime_sub_zeroLag
+    (parent : BombieriTest) (k : ℤ) (j : ℕ) :
+    monotonePrimeAtomHeadCoordinateDefect parent k j =
+      bombieriRealLogArchimedeanCross
+          (monotoneQuarterCell parent k)
+          (monotonePrimeAtomTransplantedSlice parent k j) -
+        bombieriRealLogPrimeAtomCross
+          (monotoneQuarterCell parent k)
+          (monotonePrimeAtomTransplantedSlice parent k j) -
+        (bombieriDirectedCorrelation
+          (monotonePrimeAtomTransplantedSlice parent k j)
+          (monotoneQuarterCell parent k) 1).re := by
+  unfold monotonePrimeAtomHeadCoordinateDefect
+    monotonePrimeAtomCompleteHeadSliceCoordinate
+    monotonePrimeAtomPhysicalHeadSliceCoordinate
+  rw [← bombieriCompleteRealLogKernelCross_eq_globalCross_re]
+  rfl
+
+/-- Expanding the preceding identity exposes the entire translated Mangoldt
+row.  Thus the defect coordinate retains every logarithmic lag; it is not a
+finite correction supported on the selected atom index. -/
+theorem monotonePrimeAtomHeadCoordinateDefect_eq_arch_sub_fullPrimeRow_sub_zeroLag
+    (parent : BombieriTest) (k : ℤ) (j : ℕ) :
+    monotonePrimeAtomHeadCoordinateDefect parent k j =
+      bombieriRealLogArchimedeanCross
+          (monotoneQuarterCell parent k)
+          (monotonePrimeAtomTransplantedSlice parent k j) -
+        (∑' n : ℕ, bombieriLogPrimeAtomWeight n *
+          (bombieriRealLogCorrelation
+              (monotoneQuarterCell parent k)
+              (monotonePrimeAtomTransplantedSlice parent k j)
+              (-Real.log (((n + 1 : ℕ) : ℝ))) +
+            bombieriRealLogCorrelation
+              (monotoneQuarterCell parent k)
+              (monotonePrimeAtomTransplantedSlice parent k j)
+              (Real.log (((n + 1 : ℕ) : ℝ))))) -
+        (bombieriDirectedCorrelation
+          (monotonePrimeAtomTransplantedSlice parent k j)
+          (monotoneQuarterCell parent k) 1).re := by
+  rw [monotonePrimeAtomHeadCoordinateDefect_eq_arch_sub_prime_sub_zeroLag]
+  rfl
+
+/-- After multiplication by its Mangoldt weight, the common-parent
+coordinate defect is exactly the atom-level translated-kernel remainder.
+This includes the zero-weight index, where both sides vanish. -/
+theorem monotonePrimeAtom_weight_mul_headCoordinateDefect_eq_transportRemainder
+    (parent : BombieriTest) (k : ℤ) (j : ℕ) :
+    bombieriLogPrimeAtomWeight j *
+        monotonePrimeAtomHeadCoordinateDefect parent k j =
+      monotonePrimeAtomTransportRemainder parent k j := by
+  unfold monotonePrimeAtomTransportRemainder
+  rcases Nat.eq_zero_or_pos j with rfl | hj
+  · have hw : bombieriLogPrimeAtomWeight 0 = 0 := by
+      simp [bombieriLogPrimeAtomWeight,
+        ArithmeticFunction.vonMangoldt_apply_one]
+    have hatom : monotonePrimeAtomValue parent k 0 = 0 := by
+      unfold monotonePrimeAtomValue bombieriLogPrimeAtomCrossSummand
+      rw [hw]
+      norm_num
+    rw [hw, hatom]
+    ring
+  · rw [monotonePrimeAtomValue_eq_weight_mul_transplantedOverlap
+      parent k j hj]
+    unfold monotonePrimeAtomHeadCoordinateDefect
+      monotonePrimeAtomCompleteHeadSliceCoordinate
+      monotonePrimeAtomPhysicalHeadSliceCoordinate
+      monotonePrimeAtomTransportedCross
+    ring
+
 /-- The aggregate translated-kernel remainder is exactly the Mangoldt
 weight vector paired with the atom-level head-coordinate defect. -/
 theorem monotonePrimeAtomAggregateRemainder_eq_headCoordinateDefects
@@ -1798,6 +1870,53 @@ theorem monotonePrimeAtomAggregateRemainder_eq_headCoordinateDefects
   apply Finset.sum_congr rfl
   intro j _hj
   ring
+
+/-- Summing the exact common-parent coordinates gives the aggregate defect
+as one weighted archimedean row minus one weighted full Mangoldt row minus
+the selected finite physical prime row. -/
+theorem monotonePrimeAtomAggregateRemainder_eq_arch_sub_prime_sub_physical
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    monotonePrimeAtomAggregateRemainder parent k S =
+      (∑ j ∈ S, bombieriLogPrimeAtomWeight j *
+        bombieriRealLogArchimedeanCross
+          (monotoneQuarterCell parent k)
+          (monotonePrimeAtomTransplantedSlice parent k j)) -
+      (∑ j ∈ S, bombieriLogPrimeAtomWeight j *
+        bombieriRealLogPrimeAtomCross
+          (monotoneQuarterCell parent k)
+          (monotonePrimeAtomTransplantedSlice parent k j)) -
+      ∑ j ∈ S, monotonePrimeAtomValue parent k j := by
+  rw [monotonePrimeAtomAggregateRemainder_eq_headCoordinateDefects]
+  simp_rw [monotonePrimeAtomHeadCoordinateDefect_eq_arch_sub_prime_sub_zeroLag]
+  rw [monotonePrimeAtom_finset_sum_eq_physicalHeadSliceCoordinates]
+  calc
+    (∑ j ∈ S, bombieriLogPrimeAtomWeight j *
+      (bombieriRealLogArchimedeanCross
+          (monotoneQuarterCell parent k)
+          (monotonePrimeAtomTransplantedSlice parent k j) -
+        bombieriRealLogPrimeAtomCross
+          (monotoneQuarterCell parent k)
+          (monotonePrimeAtomTransplantedSlice parent k j) -
+        (bombieriDirectedCorrelation
+          (monotonePrimeAtomTransplantedSlice parent k j)
+          (monotoneQuarterCell parent k) 1).re)) =
+        ∑ j ∈ S,
+          (bombieriLogPrimeAtomWeight j *
+              bombieriRealLogArchimedeanCross
+                (monotoneQuarterCell parent k)
+                (monotonePrimeAtomTransplantedSlice parent k j) -
+            bombieriLogPrimeAtomWeight j *
+              bombieriRealLogPrimeAtomCross
+                (monotoneQuarterCell parent k)
+                (monotonePrimeAtomTransplantedSlice parent k j) -
+            bombieriLogPrimeAtomWeight j *
+              monotonePrimeAtomPhysicalHeadSliceCoordinate parent k j) := by
+          apply Finset.sum_congr rfl
+          intro j _hj
+          unfold monotonePrimeAtomPhysicalHeadSliceCoordinate
+          ring
+    _ = _ := by
+      rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib]
 
 /-- The head adjoined to an arbitrary real complete-slice combination. -/
 def monotonePrimeAtomCompleteHeadSliceCombination
