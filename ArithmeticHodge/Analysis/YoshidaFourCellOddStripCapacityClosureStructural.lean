@@ -2768,6 +2768,15 @@ def fourCellOddRawStripCancellationPolarization
       fourCellOddRawStripCancellationReserve u -
       fourCellOddRawStripCancellationReserve v) / 2
 
+/-- The exact polarization of the adverse reflection-odd endpoint-strip raw
+energy.  It remains a singular positive-form bilinear object; no scalar
+weight or pointwise estimate is inserted. -/
+def fourCellOddEndpointStripOddRawPolarization
+    (u v : ℝ → ℝ) : ℝ :=
+  (fourCellOddEndpointStripOddRawEnergy (u + v) -
+      fourCellOddEndpointStripOddRawEnergy u -
+      fourCellOddEndpointStripOddRawEnergy v) / 2
+
 theorem fourCellOddRawStripCancellationReserve_add
     (u v : ℝ → ℝ) :
     fourCellOddRawStripCancellationReserve (u + v) =
@@ -2776,6 +2785,195 @@ theorem fourCellOddRawStripCancellationReserve_add
           fourCellOddRawStripCancellationReserve v := by
   unfold fourCellOddRawStripCancellationPolarization
   ring
+
+private def fourCellUnitIntervalRawLogCrossIntegrand
+    (f g : unitInterval → ℝ) (z : unitInterval × unitInterval) : ℝ :=
+  ((f z.1 - f z.2) * (g z.1 - g z.2)) /
+    |(z.1 : ℝ) - (z.2 : ℝ)|
+
+private theorem integrable_fourCellUnitIntervalRawLogCrossIntegrand
+    (f g : unitInterval → ℝ) {C D : NNReal}
+    (hf : LipschitzWith C f) (hg : LipschitzWith D g) :
+    Integrable (fourCellUnitIntervalRawLogCrossIntegrand f g) := by
+  have hfE := integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f hf
+  have hgE := integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith g hg
+  have hfgE := integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith
+    (f + g) (hf.add hg)
+  have hcombo : Integrable (fun z : unitInterval × unitInterval ↦
+      (1 / 2 : ℝ) *
+        (unitIntervalRawLogEnergyIntegrand (f + g) z -
+          unitIntervalRawLogEnergyIntegrand f z -
+          unitIntervalRawLogEnergyIntegrand g z)) :=
+    ((hfgE.sub hfE).sub hgE).const_mul (1 / 2 : ℝ)
+  apply hcombo.congr
+  filter_upwards [] with z
+  unfold fourCellUnitIntervalRawLogCrossIntegrand
+    unitIntervalRawLogEnergyIntegrand
+  simp only [Pi.add_apply]
+  ring
+
+private theorem centeredRawLogBilinear_eq_two_mul_unitCross_local
+    (u v : ℝ → ℝ)
+    (hu : LocallyLipschitzOn (Icc (-1 : ℝ) 1) u)
+    (hv : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v) :
+    centeredRawLogBilinear u v =
+      2 * ∫ z : unitInterval × unitInterval,
+        fourCellUnitIntervalRawLogCrossIntegrand
+          (fun t ↦ centeredPullback u (t : ℝ))
+          (fun t ↦ centeredPullback v (t : ℝ)) z := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback u (t : ℝ)
+  let g : unitInterval → ℝ := fun t ↦ centeredPullback v (t : ℝ)
+  let H : ℝ → ℝ → ℝ := fun x y ↦
+    ((u x - u y) * (v x - v y)) / |x - y|
+  obtain ⟨C, hf⟩ := exists_lipschitzWith_centeredPullback u hu
+  obtain ⟨D, hg⟩ := exists_lipschitzWith_centeredPullback v hv
+  have hInt : Integrable (fourCellUnitIntervalRawLogCrossIntegrand f g) :=
+    integrable_fourCellUnitIntervalRawLogCrossIntegrand f g hf hg
+  have hprod :
+      (∫ z : unitInterval × unitInterval,
+          fourCellUnitIntervalRawLogCrossIntegrand f g z) =
+        ∫ s : unitInterval, ∫ t : unitInterval,
+          fourCellUnitIntervalRawLogCrossIntegrand f g (s, t) :=
+    MeasureTheory.integral_prod _ hInt
+  have hpoint (s t : ℝ) :
+      ((centeredPullback u s - centeredPullback u t) *
+          (centeredPullback v s - centeredPullback v t)) / |s - t| =
+        2 * H (2 * s - 1) (2 * t - 1) := by
+    unfold H centeredPullback
+    rw [show (2 * s - 1) - (2 * t - 1) = 2 * (s - t) by ring,
+      abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
+    by_cases hst : |s - t| = 0
+    · simp [hst]
+    · field_simp [hst]
+  have hiter :
+      (∫ z : unitInterval × unitInterval,
+          fourCellUnitIntervalRawLogCrossIntegrand f g z) =
+        ∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+          2 * H (2 * s - 1) (2 * t - 1) := by
+    calc
+      _ = ∫ s : unitInterval, ∫ t : ℝ in 0..1,
+          ((centeredPullback u (s : ℝ) - centeredPullback u t) *
+            (centeredPullback v (s : ℝ) - centeredPullback v t)) /
+              |(s : ℝ) - t| := by
+        rw [hprod]
+        apply integral_congr_ae
+        filter_upwards [] with s
+        rw [← integral_unitInterval_eq_intervalIntegral]
+        apply integral_congr_ae
+        filter_upwards [] with t
+        rfl
+      _ = ∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+          ((centeredPullback u s - centeredPullback u t) *
+            (centeredPullback v s - centeredPullback v t)) / |s - t| := by
+        rw [← integral_unitInterval_eq_intervalIntegral]
+      _ = _ := by
+        apply intervalIntegral.integral_congr
+        intro s _hs
+        apply intervalIntegral.integral_congr
+        intro t _ht
+        exact hpoint s t
+  have hscale :
+      (∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+          2 * H (2 * s - 1) (2 * t - 1)) =
+        (1 / 2 : ℝ) * centeredRawLogBilinear u v := by
+    calc
+      _ = 2 * (∫ s : ℝ in 0..1, ∫ t : ℝ in 0..1,
+          H (2 * s - 1) (2 * t - 1)) := by
+        rw [show (fun s : ℝ ↦ ∫ t : ℝ in 0..1,
+            2 * H (2 * s - 1) (2 * t - 1)) =
+            fun s ↦ 2 * ∫ t : ℝ in 0..1,
+              H (2 * s - 1) (2 * t - 1) by
+          funext s
+          rw [intervalIntegral.integral_const_mul],
+          intervalIntegral.integral_const_mul]
+      _ = 2 * ((1 / 4 : ℝ) *
+          ∫ x : ℝ in -1..1, ∫ y : ℝ in -1..1, H x y) := by
+        rw [integral_integral_comp_two_mul_sub_one H]
+      _ = _ := by
+        unfold centeredRawLogBilinear
+        dsimp only [H]
+        ring
+  rw [hiter, hscale]
+  ring
+
+private theorem centeredRawLogEnergy_add_eq_add_add_two_bilinear
+    (u v : ℝ → ℝ)
+    (hu : LocallyLipschitzOn (Icc (-1 : ℝ) 1) u)
+    (hv : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v) :
+    centeredRawLogEnergy (u + v) =
+      centeredRawLogEnergy u + centeredRawLogEnergy v +
+        2 * centeredRawLogBilinear u v := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback u (t : ℝ)
+  let g : unitInterval → ℝ := fun t ↦ centeredPullback v (t : ℝ)
+  obtain ⟨C, hf⟩ := exists_lipschitzWith_centeredPullback u hu
+  obtain ⟨D, hg⟩ := exists_lipschitzWith_centeredPullback v hv
+  have hfE : Integrable (unitIntervalRawLogEnergyIntegrand f) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f hf
+  have hgE : Integrable (unitIntervalRawLogEnergyIntegrand g) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith g hg
+  have hfgE : Integrable (unitIntervalRawLogEnergyIntegrand (f + g)) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith
+      (f + g) (hf.add hg)
+  have hcross : Integrable
+      (fourCellUnitIntervalRawLogCrossIntegrand f g) :=
+    integrable_fourCellUnitIntervalRawLogCrossIntegrand f g hf hg
+  have hpoint (z : unitInterval × unitInterval) :
+      unitIntervalRawLogEnergyIntegrand (f + g) z =
+        unitIntervalRawLogEnergyIntegrand f z +
+          unitIntervalRawLogEnergyIntegrand g z +
+            2 * fourCellUnitIntervalRawLogCrossIntegrand f g z := by
+    unfold unitIntervalRawLogEnergyIntegrand
+      fourCellUnitIntervalRawLogCrossIntegrand
+    simp only [Pi.add_apply]
+    ring
+  have hrawExpand :
+      (∫ z, unitIntervalRawLogEnergyIntegrand (f + g) z) =
+        (∫ z, unitIntervalRawLogEnergyIntegrand f z) +
+          (∫ z, unitIntervalRawLogEnergyIntegrand g z) +
+            2 * ∫ z, fourCellUnitIntervalRawLogCrossIntegrand f g z := by
+    calc
+      _ = ∫ z, unitIntervalRawLogEnergyIntegrand f z +
+          unitIntervalRawLogEnergyIntegrand g z +
+            2 * fourCellUnitIntervalRawLogCrossIntegrand f g z := by
+        apply integral_congr_ae
+        filter_upwards [] with z
+        exact hpoint z
+      _ = (∫ z, unitIntervalRawLogEnergyIntegrand f z +
+            unitIntervalRawLogEnergyIntegrand g z) +
+          ∫ z, 2 * fourCellUnitIntervalRawLogCrossIntegrand f g z := by
+        exact integral_add (hfE.add hgE) (hcross.const_mul 2)
+      _ = _ := by
+        rw [integral_add hfE hgE, integral_const_mul]
+  have hunitExpand : unitIntervalLogEnergy (f + g) =
+      unitIntervalLogEnergy f + unitIntervalLogEnergy g +
+        ∫ z, fourCellUnitIntervalRawLogCrossIntegrand f g z := by
+    unfold unitIntervalLogEnergy
+    rw [hrawExpand]
+    ring
+  have hfgPullback : f + g = fun t : unitInterval ↦
+      centeredPullback (u + v) (t : ℝ) := by
+    funext t
+    dsimp only [f, g, centeredPullback]
+    simp only [Pi.add_apply]
+  have hbridgeFG : unitIntervalLogEnergy (f + g) =
+      (1 / 4 : ℝ) * centeredRawLogEnergy (u + v) := by
+    rw [hfgPullback]
+    exact unitIntervalLogEnergy_centeredPullback (u + v) (by
+      rw [← hfgPullback]
+      exact hfgE)
+  have hbridgeF : unitIntervalLogEnergy f =
+      (1 / 4 : ℝ) * centeredRawLogEnergy u := by
+    simpa only [f] using unitIntervalLogEnergy_centeredPullback u hfE
+  have hbridgeG : unitIntervalLogEnergy g =
+      (1 / 4 : ℝ) * centeredRawLogEnergy v := by
+    simpa only [g] using unitIntervalLogEnergy_centeredPullback v hgE
+  have hcrossBridge := centeredRawLogBilinear_eq_two_mul_unitCross_local
+    u v hu hv
+  change centeredRawLogBilinear u v =
+    2 * ∫ z : unitInterval × unitInterval,
+      fourCellUnitIntervalRawLogCrossIntegrand f g z at hcrossBridge
+  rw [hbridgeFG, hbridgeF, hbridgeG] at hunitExpand
+  linarith
 
 /-- The canonical intrinsic low part of an arbitrary profile. -/
 def fourCellOddOneThreeLowPart (w : ℝ → ℝ) : ℝ → ℝ :=
@@ -6102,6 +6300,52 @@ theorem centeredOddP5Coefficient_oneThreeFiveResidual_eq_zero
     simpa only [pow_two] using integral_factorTwoCenteredP5_sq
   rw [hsplit, hnorm]
   unfold fourCellOddP5TailCoefficient centeredOddP5Coefficient
+  ring
+
+/-- After the exact `P₁/P₃/P₅` raw-log orthogonality is used, the global
+same-sign/reflected raw polarization vanishes.  The raw part of the Schur
+mixed row is therefore exactly minus one half of the adverse endpoint-strip
+raw polarization, with that singular form still retained intact. -/
+theorem fourCellOddRawStripCancellationPolarization_oneThreeFive_tail_eq
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (c d e : ℝ) :
+    fourCellOddRawStripCancellationPolarization
+        (fourCellOddOneThreeFiveLowProfile c d e) r =
+      -(1 / 2 : ℝ) *
+        fourCellOddEndpointStripOddRawPolarization
+          (fourCellOddOneThreeFiveLowProfile c d e) r := by
+  let p : ℝ → ℝ := fourCellOddOneThreeFiveLowProfile c d e
+  have hpDiff : ContDiff ℝ 1 p := by
+    simpa only [p] using contDiff_fourCellOddOneThreeFiveLowProfile c d e
+  have hpLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) p :=
+    hpDiff.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r :=
+    hr.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hpOdd : Function.Odd p := by
+    simpa only [p] using odd_fourCellOddOneThreeFiveLowProfile c d e
+  have hcross : centeredRawLogBilinear p r = 0 := by
+    simpa only [p] using
+      centeredRawLogBilinear_oneThreeFiveLowProfile_tail_eq_zero
+        r hr.continuous hone hthree hfive c d e
+  have henergy := centeredRawLogEnergy_add_eq_add_add_two_bilinear
+    p r hpLocal hrLocal
+  rw [hcross] at henergy
+  norm_num at henergy
+  have hfoldP := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    p hpLocal hpOdd
+  have hfoldR := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    r hrLocal hodd
+  have hfoldAdd := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    (p + r) (hpLocal.add hrLocal) (hpOdd.add hodd)
+  change fourCellOddRawStripCancellationPolarization p r =
+    -(1 / 2 : ℝ) * fourCellOddEndpointStripOddRawPolarization p r
+  unfold fourCellOddRawStripCancellationPolarization
+    fourCellOddRawStripCancellationReserve
+    fourCellOddEndpointStripOddRawPolarization
+  rw [← hfoldAdd, ← hfoldP, ← hfoldR, henergy]
   ring
 
 theorem fourCellOddOneThreeFiveLowProfile_one (c d e : ℝ) :
