@@ -791,13 +791,17 @@ private theorem integrableOn_reflectedRawKernel_of_lipschitzOnWith_odd
       nlinarith
   exact hD.mono' hJmeas hdom
 
-/-- After the endpoint-strip same-sign square is removed, the complete raw
-form still contains both orientations of the lower/upper cross rectangle.
-The reflected square is essential here and is kept inside the coupled
-kernel throughout the proof. -/
-theorem two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw
-    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
-    2 * (∫ p : ℝ × ℝ in
+/-- Abstract square-partition budget.  Any certified lower bound for the
+lower/lower coupled square can be retained alongside both orientations of
+the lower/upper cross rectangle. -/
+private theorem lowerSquareBudget_add_two_mul_cross_le_fullRaw_sub_stripRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
+    (m : ℝ)
+    (hm : m ≤
+      ∫ p : ℝ × ℝ in Ico (0 : ℝ) (3 / 5) ×ˢ Ico (0 : ℝ) (3 / 5),
+        fourCellOddCoupledRawPair w p
+          ∂((volume : Measure ℝ).prod volume)) :
+    m + 2 * (∫ p : ℝ × ℝ in
         Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
           fourCellOddCoupledRawPair w p
             ∂((volume : Measure ℝ).prod volume)) ≤
@@ -845,6 +849,11 @@ theorem two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw
   have hBB := hK.mono_set (Set.prod_mono hBsub hBsub)
   have hSBB := hS.mono_set (Set.prod_mono hBsub hBsub)
   have hJBB := hJ.mono_set (Set.prod_mono hBsub hBsub)
+  have hm' : m ≤
+      ∫ p : ℝ × ℝ in A ×ˢ A, K p
+        ∂((volume : Measure ℝ).prod volume) := by
+    simpa only [A, K, S, J, fourCellOddCoupledRawPair,
+      centeredLogDifferenceKernel] using hm
   have hAmeas : MeasurableSet A := measurableSet_Ico
   have hBmeas : MeasurableSet B := measurableSet_Icc
   have hUmeas : MeasurableSet U := measurableSet_Icc
@@ -932,23 +941,11 @@ theorem two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw
     change (∫ p : ℝ × ℝ in B ×ˢ B, S p + J p
         ∂((volume : Measure ℝ).prod volume)) = _
     exact MeasureTheory.integral_add hSBB hJBB
-  have hKnonneg : ∀ p ∈ A ×ˢ A, 0 ≤ K p := by
-    intro p hp
-    dsimp only [K, S, J]
-    unfold centeredLogDifferenceKernel
-    exact add_nonneg (div_nonneg (sq_nonneg _) (abs_nonneg _))
-      (div_nonneg (sq_nonneg _) (add_nonneg hp.1.1 hp.2.1))
   have hJnonneg : ∀ p ∈ B ×ˢ B, 0 ≤ J p := by
     intro p hp
     dsimp only [J]
     exact div_nonneg (sq_nonneg _) (add_nonneg
       (by linarith [hp.1.1]) (by linarith [hp.2.1]))
-  have hAA0 : 0 ≤
-      ∫ p : ℝ × ℝ in A ×ˢ A, K p
-        ∂((volume : Measure ℝ).prod volume) := by
-    apply integral_nonneg_of_ae
-    filter_upwards [ae_restrict_mem (hAmeas.prod hAmeas)] with p hp
-    exact hKnonneg p hp
   have hJBB0 : 0 ≤
       ∫ p : ℝ × ℝ in B ×ˢ B, J p
         ∂((volume : Measure ℝ).prod volume) := by
@@ -956,7 +953,7 @@ theorem two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw
     filter_upwards [ae_restrict_mem (hBmeas.prod hBmeas)] with p hp
     exact hJnonneg p hp
   have hset :
-      2 * (∫ p : ℝ × ℝ in P, K p
+      m + 2 * (∫ p : ℝ × ℝ in P, K p
         ∂((volume : Measure ℝ).prod volume)) ≤
       (∫ p : ℝ × ℝ in U ×ˢ U, K p
         ∂((volume : Measure ℝ).prod volume)) -
@@ -1002,6 +999,34 @@ theorem two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw
   rw [hKfull, hSBBvalue] at hset
   simpa only [P, K, B, A, fourCellOddCoupledRawPair, S, J,
     centeredLogDifferenceKernel] using hset
+
+/-- After the endpoint-strip same-sign square is removed, the complete raw
+form still contains both orientations of the lower/upper cross rectangle.
+The reflected square is essential here and is kept inside the coupled
+kernel throughout the proof. -/
+theorem two_mul_cross_coupledRaw_le_fullRaw_sub_stripRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    2 * (∫ p : ℝ × ℝ in
+        Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
+          fourCellOddCoupledRawPair w p
+            ∂((volume : Measure ℝ).prod volume)) ≤
+      fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1) -
+          fourCellOddEndpointStripRawEnergy w := by
+  have hlowerNonneg : 0 ≤
+      ∫ p : ℝ × ℝ in Ico (0 : ℝ) (3 / 5) ×ˢ Ico (0 : ℝ) (3 / 5),
+        fourCellOddCoupledRawPair w p
+          ∂((volume : Measure ℝ).prod volume) := by
+    apply integral_nonneg_of_ae
+    filter_upwards [ae_restrict_mem
+      (measurableSet_Ico.prod measurableSet_Ico)] with p hp
+    unfold fourCellOddCoupledRawPair
+    exact add_nonneg (div_nonneg (sq_nonneg _) (abs_nonneg _))
+      (div_nonneg (sq_nonneg _) (add_nonneg hp.1.1 hp.2.1))
+  have hpartition :=
+    lowerSquareBudget_add_two_mul_cross_le_fullRaw_sub_stripRaw
+      w hw hodd 0 hlowerNonneg
+  simpa only [zero_add] using hpartition
 
 /-! ## A signed regular-kernel reserve on the wider four-cell range -/
 
@@ -3821,6 +3846,49 @@ theorem four_mul_lowerIntervalMass_le_lowerSquare_coupledRaw
     exact Measure.set_prod_ae_eq Ico_ae_eq_Icc Ico_ae_eq_Icc
   have hsetIntegral := setIntegral_congr_set (f := K) hsets
   simpa only [A, K] using hgapK.trans_eq hsetIntegral.symm
+
+/-- The exact square partition retains the sharp lower-square payment and
+both orientations of the weighted lower/upper cross rectangle. -/
+theorem lowerMass_add_cross_le_fullRaw_sub_stripRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    4 * (∫ x : ℝ in 0..3 / 5, w x ^ 2) +
+        2 * (∫ p : ℝ × ℝ in
+          Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
+            fourCellOddCoupledRawPair w p
+              ∂((volume : Measure ℝ).prod volume)) ≤
+      fourCellPositiveHalfRawSameSignEnergy w +
+        fourCellPositiveHalfRawReflectedEnergy w (-1) -
+          fourCellOddEndpointStripRawEnergy w := by
+  exact lowerSquareBudget_add_two_mul_cross_le_fullRaw_sub_stripRaw
+    w hw hodd _
+      (four_mul_lowerIntervalMass_le_lowerSquare_coupledRaw w hw hodd)
+
+/-- Full quantitative raw reserve with no discarded physical square: it pays
+twice the lower mass and keeps the exact `1/x` endpoint payment. -/
+theorem lowerMass_add_weightedUpperMass_le_rawStripCancellationReserve
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    2 * (∫ x : ℝ in 0..3 / 5, w x ^ 2) +
+        (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) ≤
+      fourCellOddRawStripCancellationReserve w := by
+  let I : ℝ := ∫ p : ℝ × ℝ in
+    Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
+      fourCellOddCoupledRawPair w p
+        ∂((volume : Measure ℝ).prod volume)
+  have hmass :
+      (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) ≤ I := by
+    simpa only [I] using
+      six_fifths_upperStripWeightedMass_le_cross_coupledRaw w hw
+  have hpartition :
+      4 * (∫ x : ℝ in 0..3 / 5, w x ^ 2) + 2 * I ≤
+        fourCellPositiveHalfRawSameSignEnergy w +
+          fourCellPositiveHalfRawReflectedEnergy w (-1) -
+            fourCellOddEndpointStripRawEnergy w := by
+    simpa only [I] using lowerMass_add_cross_le_fullRaw_sub_stripRaw
+      w hw hodd
+  have hparity := fourCellOddEndpointStrip_rawEnergy_eq_even_add_odd w hw
+  have heven := fourCellOddEndpointStripEvenRawEnergy_nonneg w
+  unfold fourCellOddRawStripCancellationReserve
+  linarith
 
 theorem fourCellOddHalfCoreReserve_oddStructuralLow (c d : ℝ) :
     fourCellOddHalfCoreReserve (factorTwoOddStructuralLowProfile c d) =
