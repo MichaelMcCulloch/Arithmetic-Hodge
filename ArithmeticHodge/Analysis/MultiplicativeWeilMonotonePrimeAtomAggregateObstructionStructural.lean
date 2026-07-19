@@ -1093,6 +1093,94 @@ theorem monotonePrimeAtom_finset_sum_sq_le_headWindowEnergy
   simpa only [A, H, I, monotonePrimeAtomAggregateHeadWindowEnergy,
     mul_comm] using hbound
 
+/-! ## The exact operator on the interaction window -/
+
+/-- The common ratio-two plateau is identically one throughout the physical
+support window of the head, not merely after multiplication by the head
+weight. -/
+theorem monotonePrimeAtomPlateauMultiplier_eq_one_of_mem_headWindow
+    (k : ℤ) {x : ℝ}
+    (hx : x ∈ Set.Icc (quarterLogLatticePoint k)
+      (quarterLogLatticePoint (k + 2))) :
+    monotonePrimeAtomPlateauMultiplier k x = 1 := by
+  unfold monotonePrimeAtomPlateauMultiplier
+    monotoneRatioTwoBlockMultiplier
+  rw [show k - 1 + 3 = k + 2 by omega,
+    monotoneQuarterStep_eq_one_of_le (k - 1) (by
+      simpa only [show k - 1 + 1 = k by omega] using hx.1),
+    monotoneQuarterStep_eq_zero_of_le (k + 2) hx.2]
+  ring
+
+private theorem monotoneQuarterCutoff_dilate_eq_parent_of_mem_headWindow
+    (parent : BombieriTest) (k : ℤ) {x : ℝ}
+    (hx : x ∈ Set.Icc (quarterLogLatticePoint k)
+      (quarterLogLatticePoint (k + 2)))
+    (j : ℕ) (hj : 1 ≤ j) :
+    monotoneQuarterCutoff parent (k + 1)
+        (((j + 1 : ℕ) : ℝ) * x) =
+      parent (((j + 1 : ℕ) : ℝ) * x) := by
+  have hxnonneg : 0 ≤ x :=
+    (quarterLogLatticePoint_pos k).le.trans hx.1
+  have hjcast : (2 : ℝ) ≤ ((j + 1 : ℕ) : ℝ) := by
+    exact_mod_cast (show 2 ≤ j + 1 by omega)
+  have hscale :
+      quarterLogLatticePoint (k + 2) ≤
+        ((j + 1 : ℕ) : ℝ) * x := by
+    calc
+      quarterLogLatticePoint (k + 2) ≤
+          quarterLogLatticePoint (k + 4) :=
+        quarterLogLatticePoint_mono (by omega)
+      _ = 2 * quarterLogLatticePoint k := by
+        rw [quarterLogLatticePoint_add_four]
+      _ ≤ 2 * x := mul_le_mul_of_nonneg_left hx.1 (by norm_num)
+      _ ≤ ((j + 1 : ℕ) : ℝ) * x :=
+        mul_le_mul_of_nonneg_right hjcast hxnonneg
+  rw [monotoneQuarterCutoff_apply,
+    monotoneQuarterStep_eq_one_of_le (k + 1) (by
+      simpa only [show k + 1 + 1 = k + 2 by omega] using hscale)]
+  simp
+
+/-- On the head interaction window all auxiliary masks disappear.  The
+aggregate slice is exactly the finite von-Mangoldt dilation operator applied
+to the original parent. -/
+theorem monotonePrimeAtomAggregateSlice_apply_of_mem_headWindow
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) {x : ℝ}
+    (hx : x ∈ Set.Icc (quarterLogLatticePoint k)
+      (quarterLogLatticePoint (k + 2))) :
+    monotonePrimeAtomAggregateSlice parent k S x =
+      ∑ j ∈ S,
+        ((ArithmeticFunction.vonMangoldt (j + 1) : ℝ) : ℂ) *
+          parent (((j + 1 : ℕ) : ℝ) * x) := by
+  rw [monotonePrimeAtomAggregateSlice_apply,
+    monotonePrimeAtomPlateauMultiplier_eq_one_of_mem_headWindow k hx]
+  simp only [Complex.ofReal_one, one_mul]
+  apply Finset.sum_congr rfl
+  intro j _hj
+  rcases Nat.eq_zero_or_pos j with rfl | hjpos
+  · simp only [Nat.zero_add, ArithmeticFunction.vonMangoldt_apply_one,
+      Complex.ofReal_zero, zero_mul]
+  · rw [monotoneQuarterCutoff_dilate_eq_parent_of_mem_headWindow
+      parent k hx j hjpos]
+
+/-- Hence the localized energy is precisely the `L²` mass, on the head
+window, of the finite von-Mangoldt dilation operator.  The remaining transfer
+problem is an operator/reserve estimate for this expression; no cutoff or
+plateau loss remains hidden in it. -/
+theorem monotonePrimeAtomAggregateHeadWindowEnergy_eq_vonMangoldtDilates
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    monotonePrimeAtomAggregateHeadWindowEnergy parent k S =
+      ∫ x : ℝ in Set.Icc (quarterLogLatticePoint k)
+          (quarterLogLatticePoint (k + 2)),
+        ‖∑ j ∈ S,
+          ((ArithmeticFunction.vonMangoldt (j + 1) : ℝ) : ℂ) *
+            parent (((j + 1 : ℕ) : ℝ) * x)‖ ^ 2 := by
+  unfold monotonePrimeAtomAggregateHeadWindowEnergy
+  apply setIntegral_congr_fun measurableSet_Icc
+  intro x hx
+  change ‖monotonePrimeAtomAggregateSlice parent k S x‖ ^ 2 = _
+  rw [monotonePrimeAtomAggregateSlice_apply_of_mem_headWindow
+    parent k S hx]
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
