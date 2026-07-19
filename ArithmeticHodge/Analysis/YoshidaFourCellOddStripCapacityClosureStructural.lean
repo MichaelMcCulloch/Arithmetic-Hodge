@@ -1,6 +1,7 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityAssemblyStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellOddPolarPotentialStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicRankResidualBound
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseLegendreFourFiveStructural
 import ArithmeticHodge.Analysis.YoshidaEndpointPotentialOddCoercivity
 import ArithmeticHodge.Analysis.YoshidaEndpointPullbackLipschitz
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
@@ -42,6 +43,7 @@ open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
+open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointClean
@@ -5234,6 +5236,332 @@ theorem neg_fourCellOddStripLocalWidthDefect_le_core_of_lowTail_nonneg
     (centeredOddP1Coefficient w) (centeredOddP3Coefficient w)
   have hdecomp := fourCellOddCoreLocal_lowTail_decomposition w hw.continuous
   unfold fourCellOddOneThreeLowPart at hdecomp htail
+  linarith
+
+/-! ## Exact `P₁/P₃/P₅`--`P₇+` Schur reduction
+
+The endpoint-zero production profile has one more exceptional odd direction
+than the preceding two-mode reduction can absorb.  We therefore extract the
+exact `P₅` coefficient from the `P₁/P₃` residual.  What remains is genuinely
+orthogonal to all three odd Legendre modes.  The theorem at the end of this
+section reduces universal endpoint-zero positivity to a finite three-mode
+block and one weighted dual-norm inequality on this infinite tail.
+-/
+
+/-- The normalized centered `P₅` coefficient. -/
+def centeredOddP5Coefficient (w : ℝ → ℝ) : ℝ :=
+  (11 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+    w x * factorTwoCenteredP5 x
+
+/-- The `P₅` coefficient left after the exact `P₁/P₃` projection. -/
+def fourCellOddP5TailCoefficient (w : ℝ → ℝ) : ℝ :=
+  centeredOddP5Coefficient (centeredOddOneThreeResidual w)
+
+/-- The exact finite odd pivot retained by the endpoint-zero Schur split. -/
+def fourCellOddOneThreeFiveLowProfile (c d e : ℝ) : ℝ → ℝ := fun x ↦
+  factorTwoOddStructuralLowProfile c d x + e * factorTwoCenteredP5 x
+
+/-- The canonical `P₁/P₃/P₅` part of an arbitrary profile. -/
+def fourCellOddOneThreeFiveLowPart (w : ℝ → ℝ) : ℝ → ℝ :=
+  fourCellOddOneThreeFiveLowProfile
+    (centeredOddP1Coefficient w) (centeredOddP3Coefficient w)
+      (fourCellOddP5TailCoefficient w)
+
+/-- The infinite odd tail after the exact `P₁/P₃/P₅` projection. -/
+def fourCellOddOneThreeFiveResidual (w : ℝ → ℝ) : ℝ → ℝ := fun x ↦
+  centeredOddOneThreeResidual w x -
+    fourCellOddP5TailCoefficient w * factorTwoCenteredP5 x
+
+theorem fourCellOddOneThreeFiveLowPart_add_residual (w : ℝ → ℝ) :
+    fourCellOddOneThreeFiveLowPart w +
+        fourCellOddOneThreeFiveResidual w = w := by
+  funext x
+  unfold fourCellOddOneThreeFiveLowPart
+    fourCellOddOneThreeFiveLowProfile
+    fourCellOddOneThreeFiveResidual centeredOddOneThreeResidual
+    factorTwoOddStructuralLowProfile
+  simp only [Pi.add_apply]
+  ring
+
+theorem contDiff_fourCellOddOneThreeFiveLowProfile (c d e : ℝ) :
+    ContDiff ℝ 1 (fourCellOddOneThreeFiveLowProfile c d e) := by
+  unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  fun_prop
+
+theorem odd_fourCellOddOneThreeFiveLowProfile (c d e : ℝ) :
+    Function.Odd (fourCellOddOneThreeFiveLowProfile c d e) := by
+  intro x
+  unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  ring
+
+theorem contDiff_fourCellOddOneThreeFiveResidual
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    ContDiff ℝ 1 (fourCellOddOneThreeFiveResidual w) := by
+  unfold fourCellOddOneThreeFiveResidual centeredOddOneThreeResidual
+    centeredP1 centeredP3 factorTwoCenteredP5
+  fun_prop
+
+theorem odd_fourCellOddOneThreeFiveResidual
+    (w : ℝ → ℝ) (hodd : Function.Odd w) :
+    Function.Odd (fourCellOddOneThreeFiveResidual w) := by
+  intro x
+  unfold fourCellOddOneThreeFiveResidual centeredOddOneThreeResidual
+    centeredP1 centeredP3 factorTwoCenteredP5
+  rw [hodd]
+  ring
+
+private theorem intervalIntegral_sub_const_mul_mul
+    (u v p : ℝ → ℝ) (a l r : ℝ)
+    (hu : Continuous u) (hv : Continuous v) (hp : Continuous p) :
+    (∫ x : ℝ in l..r, (u x - a * v x) * p x) =
+      (∫ x : ℝ in l..r, u x * p x) -
+        a * ∫ x : ℝ in l..r, v x * p x := by
+  have hup : IntervalIntegrable (fun x : ℝ ↦ u x * p x)
+      volume l r := (hu.mul hp).intervalIntegrable l r
+  have havp : IntervalIntegrable (fun x : ℝ ↦ a * (v x * p x))
+      volume l r := (continuous_const.mul (hv.mul hp)).intervalIntegrable l r
+  rw [show (fun x : ℝ ↦ (u x - a * v x) * p x) =
+      fun x ↦ u x * p x - a * (v x * p x) by
+    funext x
+    ring,
+    intervalIntegral.integral_sub hup havp,
+    intervalIntegral.integral_const_mul]
+
+theorem centeredOddP1Coefficient_oneThreeFiveResidual_eq_zero
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    centeredOddP1Coefficient (fourCellOddOneThreeFiveResidual w) = 0 := by
+  have hsplit := intervalIntegral_sub_const_mul_mul
+    (centeredOddOneThreeResidual w) factorTwoCenteredP5 centeredP1
+    (fourCellOddP5TailCoefficient w) (-1) 1
+    (continuous_centeredOddOneThreeResidual w hw)
+    continuous_factorTwoCenteredP5 (by unfold centeredP1; fun_prop)
+  have htail := centeredOddP1Coefficient_oneThreeResidual_eq_zero w hw
+  have hp5 := factorTwoCenteredP5_intrinsic_coefficients_zero.1
+  unfold centeredOddP1Coefficient fourCellOddOneThreeFiveResidual
+  unfold centeredOddP1Coefficient at htail hp5
+  rw [hsplit]
+  have htail' : (∫ x : ℝ in -1..1,
+      centeredOddOneThreeResidual w x * centeredP1 x) = 0 := by
+    nlinarith
+  have hp5' : (∫ x : ℝ in -1..1,
+      factorTwoCenteredP5 x * centeredP1 x) = 0 := by
+    nlinarith
+  rw [htail', hp5']
+  ring
+
+theorem centeredOddP3Coefficient_oneThreeFiveResidual_eq_zero
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    centeredOddP3Coefficient (fourCellOddOneThreeFiveResidual w) = 0 := by
+  have hsplit := intervalIntegral_sub_const_mul_mul
+    (centeredOddOneThreeResidual w) factorTwoCenteredP5 centeredP3
+    (fourCellOddP5TailCoefficient w) (-1) 1
+    (continuous_centeredOddOneThreeResidual w hw)
+    continuous_factorTwoCenteredP5 (by unfold centeredP3; fun_prop)
+  have htail := centeredOddP3Coefficient_oneThreeResidual_eq_zero w hw
+  have hp5 := factorTwoCenteredP5_intrinsic_coefficients_zero.2
+  unfold centeredOddP3Coefficient fourCellOddOneThreeFiveResidual
+  unfold centeredOddP3Coefficient at htail hp5
+  rw [hsplit]
+  have htail' : (∫ x : ℝ in -1..1,
+      centeredOddOneThreeResidual w x * centeredP3 x) = 0 := by
+    nlinarith
+  have hp5' : (∫ x : ℝ in -1..1,
+      factorTwoCenteredP5 x * centeredP3 x) = 0 := by
+    nlinarith
+  rw [htail', hp5']
+  ring
+
+theorem centeredOddP5Coefficient_oneThreeFiveResidual_eq_zero
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    centeredOddP5Coefficient (fourCellOddOneThreeFiveResidual w) = 0 := by
+  have hsplit := intervalIntegral_sub_const_mul_mul
+    (centeredOddOneThreeResidual w) factorTwoCenteredP5
+    factorTwoCenteredP5 (fourCellOddP5TailCoefficient w) (-1) 1
+    (continuous_centeredOddOneThreeResidual w hw)
+    continuous_factorTwoCenteredP5 continuous_factorTwoCenteredP5
+  change (11 / 2 : ℝ) * (∫ x : ℝ in -1..1,
+    (centeredOddOneThreeResidual w x -
+      fourCellOddP5TailCoefficient w * factorTwoCenteredP5 x) *
+        factorTwoCenteredP5 x) = 0
+  have hnorm : (∫ x : ℝ in -1..1,
+      factorTwoCenteredP5 x * factorTwoCenteredP5 x) = 2 / 11 := by
+    simpa only [pow_two] using integral_factorTwoCenteredP5_sq
+  rw [hsplit, hnorm]
+  unfold fourCellOddP5TailCoefficient centeredOddP5Coefficient
+  ring
+
+theorem fourCellOddOneThreeFiveLowProfile_one (c d e : ℝ) :
+    fourCellOddOneThreeFiveLowProfile c d e 1 = c + d + e := by
+  unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  norm_num
+
+theorem fourCellOddOneThreeFiveResidual_one_of_endpoint_zero
+    (w : ℝ → ℝ) (hendpoint : w 1 = 0) :
+    fourCellOddOneThreeFiveResidual w 1 =
+      -(centeredOddP1Coefficient w + centeredOddP3Coefficient w +
+        fourCellOddP5TailCoefficient w) := by
+  have hreconstruct := congrFun (fourCellOddOneThreeFiveLowPart_add_residual w) 1
+  rw [hendpoint] at hreconstruct
+  unfold fourCellOddOneThreeFiveLowPart at hreconstruct
+  change fourCellOddOneThreeFiveLowProfile
+      (centeredOddP1Coefficient w) (centeredOddP3Coefficient w)
+        (fourCellOddP5TailCoefficient w) 1 +
+      fourCellOddOneThreeFiveResidual w 1 = 0 at hreconstruct
+  rw [fourCellOddOneThreeFiveLowProfile_one] at hreconstruct
+  linarith
+
+/-- The complete quadratic target and its exact symmetric polarization. -/
+def fourCellOddCoreLocalQuadratic (w : ℝ → ℝ) : ℝ :=
+  fourCellOddHalfCoreReserve w + fourCellOddStripLocalWidthDefect w
+
+def fourCellOddCoreLocalBilinear (u v : ℝ → ℝ) : ℝ :=
+  fourCellOddRawStripCancellationPolarization u v +
+    fourCellOddStripReducedBilinear u v
+
+theorem fourCellOddCoreLocalQuadratic_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddCoreLocalQuadratic (u + v) =
+      fourCellOddCoreLocalQuadratic u +
+        2 * fourCellOddCoreLocalBilinear u v +
+          fourCellOddCoreLocalQuadratic v := by
+  unfold fourCellOddCoreLocalQuadratic fourCellOddCoreLocalBilinear
+  rw [fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced,
+    fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced,
+    fourCellOddHalfCoreReserve_add_localWidthDefect_eq_raw_add_reduced,
+    fourCellOddRawStripCancellationReserve_add,
+    fourCellOddStripReducedRemainder_add u v hu hv]
+  ring
+
+theorem fourCellOddCoreLocal_oneThreeFive_decomposition
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    fourCellOddCoreLocalQuadratic w =
+      fourCellOddCoreLocalQuadratic (fourCellOddOneThreeFiveLowPart w) +
+        2 * fourCellOddCoreLocalBilinear
+          (fourCellOddOneThreeFiveLowPart w)
+          (fourCellOddOneThreeFiveResidual w) +
+        fourCellOddCoreLocalQuadratic
+          (fourCellOddOneThreeFiveResidual w) := by
+  let p := fourCellOddOneThreeFiveLowPart w
+  let v := fourCellOddOneThreeFiveResidual w
+  have hp : Continuous p := by
+    dsimp only [p, fourCellOddOneThreeFiveLowPart]
+    exact (contDiff_fourCellOddOneThreeFiveLowProfile _ _ _).continuous
+  have hv : Continuous v := by
+    dsimp only [v]
+    unfold fourCellOddOneThreeFiveResidual centeredOddOneThreeResidual
+      centeredP1 centeredP3 factorTwoCenteredP5
+    fun_prop
+  have hadd := fourCellOddCoreLocalQuadratic_add p v hp hv
+  have hreconstruct : p + v = w := by
+    dsimp only [p, v]
+    exact fourCellOddOneThreeFiveLowPart_add_residual w
+  rw [hreconstruct] at hadd
+  exact hadd
+
+/-- The positive tail weight supplied by the structural `P₁`-orthogonal
+raw-square argument.  This is a genuine integral weight, not a cutoff norm. -/
+def fourCellOddP7TailWeight (v : ℝ → ℝ) : ℝ :=
+  (27 / 250 : ℝ) * ∫ x : ℝ in 0..3 / 5, v x ^ 2
+
+theorem fourCellOddP7TailWeight_nonneg
+    (v : ℝ → ℝ) :
+    0 ≤ fourCellOddP7TailWeight v := by
+  unfold fourCellOddP7TailWeight
+  exact mul_nonneg (by norm_num) (intervalIntegral.integral_nonneg
+    (by norm_num) (fun x _hx ↦ sq_nonneg (v x)))
+
+/-- The sole infinite-dimensional Schur obligation after retaining
+`P₁/P₃/P₅`.  Endpoint zero appears as the exact affine trace condition on
+the `P₇+` residual.  The square inequality is precisely the weighted Riesz
+dual-norm bound; no finite sampling or numerical enclosure is hidden here. -/
+def fourCellOddOneThreeFiveEndpointWeightedDualBound : Prop :=
+  ∀ (c d e : ℝ) (v : ℝ → ℝ),
+    ContDiff ℝ 1 v → Function.Odd v →
+    centeredOddP1Coefficient v = 0 →
+    centeredOddP3Coefficient v = 0 →
+    centeredOddP5Coefficient v = 0 →
+    v 1 = -(c + d + e) →
+    fourCellOddCoreLocalBilinear
+        (fourCellOddOneThreeFiveLowProfile c d e) v ^ 2 ≤
+      fourCellOddCoreLocalQuadratic
+          (fourCellOddOneThreeFiveLowProfile c d e) *
+        fourCellOddP7TailWeight v
+
+private theorem add_two_mul_add_nonneg_of_sq_le_mul
+    (a b m : ℝ) (ha : 0 ≤ a) (hm : 0 ≤ m)
+    (hschur : b ^ 2 ≤ a * m) :
+    0 ≤ a + 2 * b + m := by
+  by_cases hb : 0 ≤ b
+  · linarith
+  · have hmb : 0 ≤ -2 * b := by linarith
+    have ham : 0 ≤ a + m := add_nonneg ha hm
+    have hsquares : (-2 * b) ^ 2 ≤ (a + m) ^ 2 := by
+      nlinarith [sq_nonneg (a - m)]
+    have hlinear := (sq_le_sq₀ hmb ham).mp hsquares
+    linarith
+
+/-- Exact endpoint-zero closure after the `P₁/P₃/P₅` split.  The finite
+block is stated independently, and the only tail premise is the weighted
+Riesz bound above.  The already proved `27/250` structural tail margin then
+performs the Schur completion with no spectral exhaustion. -/
+theorem fourCellOddCoreLocalQuadratic_nonneg_of_endpointZero_threeMode_dual
+    (hfinite : ∀ c d e : ℝ,
+      0 ≤ fourCellOddCoreLocalQuadratic
+        (fourCellOddOneThreeFiveLowProfile c d e))
+    (hdual : fourCellOddOneThreeFiveEndpointWeightedDualBound)
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
+    (hendpoint : w (-1) = 0 ∧ w 1 = 0) :
+    0 ≤ fourCellOddCoreLocalQuadratic w := by
+  let c := centeredOddP1Coefficient w
+  let d := centeredOddP3Coefficient w
+  let e := fourCellOddP5TailCoefficient w
+  let p := fourCellOddOneThreeFiveLowPart w
+  let v := fourCellOddOneThreeFiveResidual w
+  have hv : ContDiff ℝ 1 v := by
+    dsimp only [v]
+    exact contDiff_fourCellOddOneThreeFiveResidual w hw
+  have hvodd : Function.Odd v := by
+    dsimp only [v]
+    exact odd_fourCellOddOneThreeFiveResidual w hodd
+  have hvone : centeredOddP1Coefficient v = 0 := by
+    dsimp only [v]
+    exact centeredOddP1Coefficient_oneThreeFiveResidual_eq_zero w hw.continuous
+  have hvthree : centeredOddP3Coefficient v = 0 := by
+    dsimp only [v]
+    exact centeredOddP3Coefficient_oneThreeFiveResidual_eq_zero w hw.continuous
+  have hvfive : centeredOddP5Coefficient v = 0 := by
+    dsimp only [v]
+    exact centeredOddP5Coefficient_oneThreeFiveResidual_eq_zero w hw.continuous
+  have hvendpoint : v 1 = -(c + d + e) := by
+    dsimp only [v, c, d, e]
+    exact fourCellOddOneThreeFiveResidual_one_of_endpoint_zero w hendpoint.2
+  have hp : p = fourCellOddOneThreeFiveLowProfile c d e := by
+    rfl
+  have hlow : 0 ≤ fourCellOddCoreLocalQuadratic p := by
+    rw [hp]
+    exact hfinite c d e
+  have hmargin : fourCellOddP7TailWeight v ≤
+      fourCellOddCoreLocalQuadratic v := by
+    have htail :=
+      twenty_seven_two_fiftieths_lowerMass_le_core_add_localWidthDefect_of_P1
+        v hv hvodd hvone
+    simpa only [fourCellOddP7TailWeight, fourCellOddCoreLocalQuadratic]
+      using htail
+  have hmargin0 : 0 ≤ fourCellOddP7TailWeight v :=
+    fourCellOddP7TailWeight_nonneg v
+  have hschur : fourCellOddCoreLocalBilinear p v ^ 2 ≤
+      fourCellOddCoreLocalQuadratic p * fourCellOddP7TailWeight v := by
+    rw [hp]
+    exact hdual c d e v hv hvodd hvone hvthree hvfive hvendpoint
+  have hcompleted : 0 ≤
+      fourCellOddCoreLocalQuadratic p +
+        2 * fourCellOddCoreLocalBilinear p v +
+          fourCellOddP7TailWeight v :=
+    add_two_mul_add_nonneg_of_sq_le_mul _ _ _ hlow hmargin0 hschur
+  have hdecomp := fourCellOddCoreLocal_oneThreeFive_decomposition w hw.continuous
   linarith
 
 /-! The low block of the retained octic core model. -/
