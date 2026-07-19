@@ -3921,6 +3921,221 @@ def fourCellOddCrossP1Square (w : ℝ → ℝ) : ℝ :=
   ∫ x : ℝ in 3 / 5..1, ∫ y : ℝ in 0..3 / 5,
     2 * (y * w x - x * w y) ^ 2 / x ^ 3
 
+/-- Pointwise form of the strengthened cross ground-state payment.  The
+exact remainder has denominator `x (x-y) (x+y) ≤ x³`, so the simpler
+inverse-cube square is retained together with the full `2 a²/x` diagonal. -/
+theorem two_mul_sq_div_add_crossP1Square_le_coupledRawKernel
+    {x y a b : ℝ} (hy : 0 ≤ y) (hxy : y < x) :
+    2 * a ^ 2 / x + 2 * (y * a - x * b) ^ 2 / x ^ 3 ≤
+      (a - b) ^ 2 / (x - y) + (a + b) ^ 2 / (x + y) := by
+  have hx : 0 < x := hy.trans_lt hxy
+  have hsub : 0 < x - y := sub_pos.mpr hxy
+  have hsum : 0 < x + y := add_pos_of_pos_of_nonneg hx hy
+  have hden : 0 < x * (x - y) * (x + y) := by positivity
+  have hx3 : 0 < x ^ 3 := pow_pos hx 3
+  have hdenle : x * (x - y) * (x + y) ≤ x ^ 3 := by
+    have hxy2 : 0 ≤ x * y ^ 2 := mul_nonneg hx.le (sq_nonneg y)
+    nlinarith
+  have hrem :
+      2 * (y * a - x * b) ^ 2 / x ^ 3 ≤
+        2 * (y * a - x * b) ^ 2 /
+          (x * (x - y) * (x + y)) :=
+    div_le_div_of_nonneg_left (by positivity) hden hdenle
+  rw [show
+      (a - b) ^ 2 / (x - y) + (a + b) ^ 2 / (x + y) =
+        2 * a ^ 2 / x +
+          2 * (y * a - x * b) ^ 2 /
+            (x * (x - y) * (x + y)) by
+    field_simp [hx.ne', hsub.ne', hsum.ne']
+    ring]
+  linarith
+
+private theorem intervalIntegral_integral_eq_setIntegral_rectangle
+    (F : ℝ × ℝ → ℝ) (a b c d : ℝ) (hab : a ≤ b) (hcd : c ≤ d)
+    (hF : IntegrableOn F (Icc a b ×ˢ Icc c d)
+      ((volume : Measure ℝ).prod volume)) :
+    (∫ x : ℝ in a..b, ∫ y : ℝ in c..d, F (x, y)) =
+      ∫ p : ℝ × ℝ in Icc a b ×ˢ Icc c d, F p
+        ∂((volume : Measure ℝ).prod volume) := by
+  calc
+    (∫ x : ℝ in a..b, ∫ y : ℝ in c..d, F (x, y)) =
+        ∫ x : ℝ in Icc a b, ∫ y : ℝ in Icc c d, F (x, y) := by
+      rw [intervalIntegral.integral_of_le hab,
+        ← integral_Icc_eq_integral_Ioc]
+      apply setIntegral_congr_fun measurableSet_Icc
+      intro x _hx
+      change (∫ y : ℝ in c..d, F (x, y)) =
+        ∫ y : ℝ in Icc c d, F (x, y)
+      rw [intervalIntegral.integral_of_le hcd,
+        ← integral_Icc_eq_integral_Ioc]
+    _ = ∫ p : ℝ × ℝ in Icc a b ×ˢ Icc c d, F p
+          ∂((volume : Measure ℝ).prod volume) := by
+      exact (setIntegral_prod F hF).symm
+
+/-- The cross rectangle retains both the sharp weighted endpoint diagonal
+and the complete inverse-cube P₁ ground-state square. -/
+theorem six_fifths_upperStripWeightedMass_add_crossP1Square_le_cross_coupledRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) +
+        fourCellOddCrossP1Square w ≤
+      ∫ p : ℝ × ℝ in
+        Icc (3 / 5 : ℝ) 1 ×ˢ Ico (0 : ℝ) (3 / 5),
+          fourCellOddCoupledRawPair w p
+            ∂((volume : Measure ℝ).prod volume) := by
+  let A : Set ℝ := Ico (0 : ℝ) (3 / 5)
+  let A' : Set ℝ := Icc (0 : ℝ) (3 / 5)
+  let B : Set ℝ := Icc (3 / 5 : ℝ) 1
+  let P : Set (ℝ × ℝ) := B ×ˢ A
+  let P' : Set (ℝ × ℝ) := B ×ˢ A'
+  let K : ℝ × ℝ → ℝ := fourCellOddCoupledRawPair w
+  let D : ℝ × ℝ → ℝ := fun p ↦ 2 * w p.1 ^ 2 / p.1
+  let S : ℝ × ℝ → ℝ := fun p ↦
+    2 * (p.2 * w p.1 - p.1 * w p.2) ^ 2 / p.1 ^ 3
+  let L : ℝ × ℝ → ℝ := fun p ↦ D p + S p
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hC⟩ := hlocal.exists_lipschitzOnWith_of_compact isCompact_Icc
+  have hfull :=
+    integrableOn_centeredLogDifferenceKernel_prod_of_lipschitzOnWith w hC
+  have hBsub : B ⊆ Icc (-1 : ℝ) 1 := by
+    intro x hx
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hAsub : A ⊆ Icc (-1 : ℝ) 1 := by
+    intro x hx
+    exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  have hsame : IntegrableOn
+      (fun p : ℝ × ℝ ↦ centeredLogDifferenceKernel w p.1 p.2) P
+      ((volume : Measure ℝ).prod volume) :=
+    hfull.mono_set (Set.prod_mono hBsub hAsub)
+  let J : ℝ × ℝ → ℝ := fun p ↦
+    (w p.1 + w p.2) ^ 2 / (p.1 + p.2)
+  have hJcont : ContinuousOn J P' := by
+    dsimp only [J, P', B, A']
+    apply ContinuousOn.div
+    · exact ((hw.continuous.comp continuous_fst).add
+        (hw.continuous.comp continuous_snd)).pow 2 |>.continuousOn
+    · exact (continuous_fst.add continuous_snd).continuousOn
+    · intro p hp
+      dsimp only
+      linarith [hp.1.1, hp.2.1]
+  have hPsub : P ⊆ P' := by
+    intro p hp
+    exact ⟨hp.1, ⟨hp.2.1, hp.2.2.le⟩⟩
+  have hP'compact : IsCompact P' := by
+    dsimp only [P', B, A']
+    exact isCompact_Icc.prod isCompact_Icc
+  have hJ : IntegrableOn J P ((volume : Measure ℝ).prod volume) :=
+    (hJcont.integrableOn_compact hP'compact).mono_set hPsub
+  have hK : IntegrableOn K P ((volume : Measure ℝ).prod volume) := by
+    apply hsame.add hJ |>.congr
+    filter_upwards [ae_restrict_mem
+      (measurableSet_Icc.prod measurableSet_Ico)] with p hp
+    dsimp only [K, J, P, B, A, fourCellOddCoupledRawPair]
+    unfold centeredLogDifferenceKernel
+    rfl
+  have hDcont : ContinuousOn D P' := by
+    dsimp only [D, P', B, A']
+    apply ContinuousOn.div
+    · exact (continuous_const.mul
+        ((hw.continuous.comp continuous_fst).pow 2)).continuousOn
+    · exact continuous_fst.continuousOn
+    · intro p hp
+      dsimp only
+      linarith [hp.1.1]
+  have hScont : ContinuousOn S P' := by
+    dsimp only [S, P', B, A']
+    apply ContinuousOn.div
+    · exact (continuous_const.mul
+        (((continuous_snd.mul (hw.continuous.comp continuous_fst)).sub
+          (continuous_fst.mul (hw.continuous.comp continuous_snd))).pow 2))
+            |>.continuousOn
+    · exact ((continuous_fst.pow 3).continuousOn)
+    · intro p hp
+      exact pow_ne_zero 3 (by linarith [hp.1.1] : p.1 ≠ 0)
+  have hDlarge : IntegrableOn D P' ((volume : Measure ℝ).prod volume) :=
+    hDcont.integrableOn_compact hP'compact
+  have hSlarge : IntegrableOn S P' ((volume : Measure ℝ).prod volume) :=
+    hScont.integrableOn_compact hP'compact
+  have hD : IntegrableOn D P ((volume : Measure ℝ).prod volume) :=
+    hDlarge.mono_set hPsub
+  have hS : IntegrableOn S P ((volume : Measure ℝ).prod volume) :=
+    hSlarge.mono_set hPsub
+  have hL : IntegrableOn L P ((volume : Measure ℝ).prod volume) := by
+    dsimp only [L]
+    exact hD.add hS
+  have hPmeas : MeasurableSet P := by
+    dsimp only [P, B, A]
+    exact measurableSet_Icc.prod measurableSet_Ico
+  have hpoint : ∀ p ∈ P, L p ≤ K p := by
+    intro p hp
+    have hy : 0 ≤ p.2 := hp.2.1
+    have hxy : p.2 < p.1 := by linarith [hp.1.1, hp.2.2]
+    dsimp only [L, D, S, K, fourCellOddCoupledRawPair]
+    rw [abs_of_pos (sub_pos.mpr hxy)]
+    exact two_mul_sq_div_add_crossP1Square_le_coupledRawKernel hy hxy
+  have hmono :
+      (∫ p : ℝ × ℝ in P, L p
+        ∂((volume : Measure ℝ).prod volume)) ≤
+      ∫ p : ℝ × ℝ in P, K p
+        ∂((volume : Measure ℝ).prod volume) :=
+    setIntegral_mono_on hL hK hPmeas hpoint
+  have hBmass : (∫ x : ℝ in B, w x ^ 2 / x) =
+      ∫ x : ℝ in 3 / 5..1, w x ^ 2 / x := by
+    dsimp only [B]
+    rw [intervalIntegral.integral_of_le (by norm_num),
+      ← integral_Icc_eq_integral_Ioc]
+  have hDvalue :
+      (∫ p : ℝ × ℝ in P, D p
+        ∂((volume : Measure ℝ).prod volume)) =
+      (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) := by
+    dsimp only [P, D, B, A]
+    rw [show (fun p : ℝ × ℝ ↦ 2 * w p.1 ^ 2 / p.1) =
+        fun p ↦ (2 * (w p.1 ^ 2 / p.1)) * (1 : ℝ) by
+      funext p
+      rw [mul_one]
+      exact mul_div_assoc _ _ _,
+      setIntegral_prod_mul
+        (μ := (volume : Measure ℝ)) (ν := (volume : Measure ℝ))
+        (fun x : ℝ ↦ 2 * (w x ^ 2 / x)) (fun _x : ℝ ↦ (1 : ℝ))
+        (Icc (3 / 5 : ℝ) 1) (Ico (0 : ℝ) (3 / 5)),
+      integral_const_mul, hBmass, setIntegral_const]
+    have hmeasure :
+        (volume : Measure ℝ).real (Ico (0 : ℝ) (3 / 5)) = 3 / 5 := by
+      norm_num
+    rw [hmeasure, smul_eq_mul, mul_one]
+    ring
+  have hsets : P =ᵐ[((volume : Measure ℝ).prod volume)] P' := by
+    dsimp only [P, P', B, A, A']
+    exact Measure.set_prod_ae_eq (Filter.EventuallyEq.rfl) Ico_ae_eq_Icc
+  have hSset :
+      (∫ p : ℝ × ℝ in P, S p
+          ∂((volume : Measure ℝ).prod volume)) =
+        ∫ p : ℝ × ℝ in P', S p
+          ∂((volume : Measure ℝ).prod volume) :=
+    setIntegral_congr_set hsets
+  have hSbridge := intervalIntegral_integral_eq_setIntegral_rectangle
+    S (3 / 5) 1 0 (3 / 5) (by norm_num) (by norm_num) hSlarge
+  have hSvalue :
+      (∫ p : ℝ × ℝ in P, S p
+        ∂((volume : Measure ℝ).prod volume)) =
+      fourCellOddCrossP1Square w := by
+    rw [hSset]
+    change (∫ p : ℝ × ℝ in
+        Icc (3 / 5 : ℝ) 1 ×ˢ Icc (0 : ℝ) (3 / 5), S p
+          ∂((volume : Measure ℝ).prod volume)) =
+      fourCellOddCrossP1Square w
+    rw [← hSbridge]
+    unfold fourCellOddCrossP1Square S
+    rfl
+  have hLvalue :
+      (∫ p : ℝ × ℝ in P, L p
+        ∂((volume : Measure ℝ).prod volume)) =
+      (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, w x ^ 2 / x) +
+        fourCellOddCrossP1Square w := by
+    dsimp only [L]
+    rw [MeasureTheory.integral_add hD hS, hDvalue, hSvalue]
+  simpa only [P, K, B, A] using hLvalue.symm.trans_le hmono
+
 private theorem sq_upperP1Moment_le_invCubeMass
     (h : ℝ → ℝ) (hh : Continuous h) :
     (∫ x : ℝ in 3 / 5..1, x * h x) ^ 2 ≤
