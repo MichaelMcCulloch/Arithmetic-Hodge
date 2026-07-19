@@ -7413,6 +7413,72 @@ theorem integral_zero_one_oneThreeFiveLowProfile_mul_tail_eq_zero
       (fun x : ℝ ↦ p x * r x) hproductInt hproductEven
   linarith
 
+/-- Exact `L²` energy of the three retained odd Legendre modes. -/
+theorem factorTwoIntrinsicEnergy_oneThreeFiveLowProfile
+    (c d e : ℝ) :
+    factorTwoIntrinsicEnergy (fourCellOddOneThreeFiveLowProfile c d e) =
+      (2 / 3 : ℝ) * c ^ 2 + (2 / 7 : ℝ) * d ^ 2 +
+        (2 / 11 : ℝ) * e ^ 2 := by
+  let q : ℝ → ℝ := factorTwoOddStructuralLowProfile c d
+  have hq : Continuous q := by
+    dsimp only [q]
+    exact continuous_factorTwoOddStructuralLowProfile c d
+  have hqSq : IntervalIntegrable (fun x : ℝ ↦ q x ^ 2)
+      volume (-1) 1 := (hq.pow 2).intervalIntegrable _ _
+  have hcrossInt : IntervalIntegrable
+      (fun x : ℝ ↦ q x * factorTwoCenteredP5 x) volume (-1) 1 :=
+    (hq.mul continuous_factorTwoCenteredP5).intervalIntegrable _ _
+  have hp5Sq : IntervalIntegrable
+      (fun x : ℝ ↦ factorTwoCenteredP5 x ^ 2) volume (-1) 1 :=
+    (continuous_factorTwoCenteredP5.pow 2).intervalIntegrable _ _
+  have hcross :
+      (∫ x : ℝ in -1..1, q x * factorTwoCenteredP5 x) = 0 := by
+    have h15 : IntervalIntegrable
+        (fun x : ℝ ↦ factorTwoCenteredP5 x * centeredP1 x)
+        volume (-1) 1 :=
+      (continuous_factorTwoCenteredP5.mul
+        (by unfold centeredP1; fun_prop)).intervalIntegrable _ _
+    have h35 : IntervalIntegrable
+        (fun x : ℝ ↦ factorTwoCenteredP5 x * centeredP3 x)
+        volume (-1) 1 :=
+      (continuous_factorTwoCenteredP5.mul
+        (by unfold centeredP3; fun_prop)).intervalIntegrable _ _
+    rw [show (fun x : ℝ ↦ q x * factorTwoCenteredP5 x) =
+        fun x ↦ c * (factorTwoCenteredP5 x * centeredP1 x) +
+          d * (factorTwoCenteredP5 x * centeredP3 x) by
+      funext x
+      dsimp only [q]
+      unfold factorTwoOddStructuralLowProfile
+      ring,
+      intervalIntegral.integral_add
+        (h15.const_mul c) (h35.const_mul d),
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_const_mul,
+      integral_factorTwoCenteredP5_mul_centeredP1,
+      integral_factorTwoCenteredP5_mul_centeredP3]
+    ring
+  unfold factorTwoIntrinsicEnergy fourCellOddOneThreeFiveLowProfile
+  rw [show (fun x : ℝ ↦
+      (factorTwoOddStructuralLowProfile c d x +
+        e * factorTwoCenteredP5 x) ^ 2) =
+      fun x ↦ q x ^ 2 +
+        2 * e * (q x * factorTwoCenteredP5 x) +
+          e ^ 2 * factorTwoCenteredP5 x ^ 2 by
+    funext x
+    dsimp only [q]
+    ring,
+    intervalIntegral.integral_add
+      (hqSq.add (hcrossInt.const_mul (2 * e)))
+      (hp5Sq.const_mul (e ^ 2)),
+    intervalIntegral.integral_add
+      hqSq (hcrossInt.const_mul (2 * e)),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul]
+  dsimp only [q]
+  rw [integral_oddStructuralLow_sq, hcross,
+    integral_factorTwoCenteredP5_sq]
+  ring
+
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
 theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
