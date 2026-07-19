@@ -3,6 +3,12 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstruct
 import ArithmeticHodge.Analysis.MultiplicativeWeilDirectedCorrelationSmoothStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilFarPhysicalKernelStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilGlobalCrossSesquilinearStructural
+import ArithmeticHodge.Analysis.YoshidaEndpointEvenSharpScalar
+import ArithmeticHodge.Analysis.YoshidaEndpointOddLowModePositive
+import ArithmeticHodge.Analysis.YoshidaEndpointWeightedCauchy
+import ArithmeticHodge.Analysis.YoshidaFactorTwoEndpointClean
+import ArithmeticHodge.Analysis.YoshidaPinnedHalfLogEnergyStructural
+import ArithmeticHodge.Analysis.YoshidaEndpointTriangleFoldLipschitz
 
 set_option autoImplicit false
 
@@ -34,6 +40,19 @@ open MultiplicativeWeilQuarterLogLatticePartitionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 open MultiplicativeWeilRealMonotoneTailConeCriterionStructural
 open YoshidaBombieriCrossDistribution
+open UnitIntervalLogEnergyAffine
+open YoshidaConstantBounds
+open YoshidaEndpointEvenSharpScalar
+open YoshidaEndpointHyperbolicBound
+open YoshidaEndpointOddCleanPositive
+open YoshidaEndpointOddLowModePositive
+open YoshidaEndpointPotentialBound
+open YoshidaEndpointPositiveDistanceFold
+open YoshidaEndpointTriangleFoldLipschitz
+open YoshidaFactorTwoEndpointClean
+open YoshidaPinnedHalfLogEnergyStructural
+open YoshidaRegularKernelBound
+open YoshidaRegularKernelSchur
 
 /-!
 # The sharp common-parent determinant at five cells
@@ -2064,6 +2083,1185 @@ theorem bombieriFunctional_remoteEndpointPair_re_eq_localCriticalForm_self_of_mi
   rw [bombieriFunctional_remoteEndpointPair_re_eq_local_of_middle_zero
       parent k hmiddle,
     bombieriLocalCriticalForm_add_self_re]
+
+/-! ## Short-support coercivity for the degenerate endpoint cells
+
+The zero-middle geometry collapses each endpoint cell to one quarter of the
+normalized critical interval.  The next lemmas retain the positive `cosh`
+rank in the clean endpoint form; discarding it is too wasteful for the sharp
+remote-endpoint determinant.
+-/
+
+/-- The standard hyperbolic estimate with its positive `cosh` rank retained.
+This is an exact functional inequality, not a finite-dimensional estimate. -/
+theorem yoshidaEndpointHyperbolicQuadratic_lower_with_coshRank
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    Real.log 2 * Complex.normSq
+          (∫ x : ℝ in -1..1,
+            (Real.cosh (yoshidaEndpointA * x / 2) : ℂ) * (w x : ℂ)) -
+        (1 / Real.sqrt 2 - Real.log 2) *
+          (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      yoshidaEndpointHyperbolicQuadratic (fun x ↦ (w x : ℂ)) := by
+  let E : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  let C : ℝ := Complex.normSq
+    (∫ x : ℝ in -1..1,
+      (Real.cosh (yoshidaEndpointA * x / 2) : ℂ) * (w x : ℂ))
+  let S : ℝ := Complex.normSq
+    (∫ x : ℝ in -1..1,
+      (Real.sinh (yoshidaEndpointA * x / 2) : ℂ) * (w x : ℂ))
+  have hf : Continuous (fun x : ℝ ↦ (w x : ℂ)) :=
+    Complex.continuous_ofReal.comp hw
+  have hS : S ≤
+      ((Real.sinh yoshidaEndpointA - yoshidaEndpointA) /
+        yoshidaEndpointA) * E := by
+    have h := normSq_integral_sinh_scaled_le
+      yoshidaEndpointA_pos (fun x : ℝ ↦ (w x : ℂ)) hf
+    simpa only [Complex.norm_real, Real.norm_eq_abs, sq_abs, S, E] using h
+  have hscale :
+      2 * yoshidaEndpointA *
+          ((Real.sinh yoshidaEndpointA - yoshidaEndpointA) /
+            yoshidaEndpointA) =
+        1 / Real.sqrt 2 - Real.log 2 := by
+    calc
+      _ = 2 * (Real.sinh yoshidaEndpointA - yoshidaEndpointA) := by
+        field_simp [yoshidaEndpointA_pos.ne']
+      _ = _ := two_mul_sinh_yoshidaEndpointA_sub_eq
+  have hA : 0 ≤ 2 * yoshidaEndpointA :=
+    mul_nonneg (by norm_num) yoshidaEndpointA_pos.le
+  have hscaledS :
+      2 * yoshidaEndpointA * S ≤
+        (1 / Real.sqrt 2 - Real.log 2) * E := by
+    calc
+      2 * yoshidaEndpointA * S ≤
+          2 * yoshidaEndpointA *
+            (((Real.sinh yoshidaEndpointA - yoshidaEndpointA) /
+              yoshidaEndpointA) * E) :=
+        mul_le_mul_of_nonneg_left hS hA
+      _ = _ := by rw [← mul_assoc, hscale]
+  have htwoA : 2 * yoshidaEndpointA = Real.log 2 := by
+    unfold yoshidaEndpointA
+    ring
+  unfold yoshidaEndpointHyperbolicQuadratic
+  change Real.log 2 * C -
+      (1 / Real.sqrt 2 - Real.log 2) * E ≤
+    2 * yoshidaEndpointA * (C - S)
+  rw [htwoA] at hscaledS ⊢
+  linarith
+
+private theorem sq_setIntegral_mul_le_of_continuous
+    {a b : ℝ} (f g : ℝ → ℝ)
+    (hf : Continuous f) (hg : Continuous g) :
+    (∫ x : ℝ in Icc a b, f x * g x) ^ 2 ≤
+      (∫ x : ℝ in Icc a b, f x ^ 2) *
+        (∫ x : ℝ in Icc a b, g x ^ 2) := by
+  let μ : Measure ℝ := volume.restrict (Icc a b)
+  have hfMeas : AEStronglyMeasurable f μ :=
+    hf.aestronglyMeasurable.restrict
+  have hgMeas : AEStronglyMeasurable g μ :=
+    hg.aestronglyMeasurable.restrict
+  have hfLp : MemLp f 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hfMeas]
+    exact (hf.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  have hgLp : MemLp g 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hgMeas]
+    exact (hg.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  have h :=
+    YoshidaEndpointWeightedCauchy.sq_integral_mul_le_weighted
+      μ (fun _ : ℝ ↦ 1) f g (by simp)
+        (by simpa using hfLp) (by simpa using hgLp)
+  simpa only [μ, div_one, one_mul, Real.norm_eq_abs, sq_abs] using h
+
+private theorem cosh_endpoint_quarter_lt_sixty_one_div_sixty
+    {x : ℝ} (hx : x ∈ Icc (-(1 / 4 : ℝ)) (1 / 4)) :
+    Real.cosh (yoshidaEndpointA * x / 2) < (61 / 60 : ℝ) := by
+  let t : ℝ := yoshidaEndpointA * x / 2
+  have hlog := strict_log_two_bounds.2
+  have hA : yoshidaEndpointA < (7 / 20 : ℝ) := by
+    unfold yoshidaEndpointA
+    linarith
+  have habsx : |x| ≤ (1 / 4 : ℝ) := by
+    rw [abs_le]
+    constructor <;> nlinarith [hx.1, hx.2]
+  have htAbs : |t| < (7 / 160 : ℝ) := by
+    dsimp only [t]
+    rw [abs_div, abs_mul, abs_of_nonneg yoshidaEndpointA_pos.le]
+    norm_num
+    have hmul := mul_le_mul_of_nonneg_left habsx yoshidaEndpointA_pos.le
+    nlinarith
+  let u : ℝ := t ^ 2 / 2
+  have hu0 : 0 ≤ u := by
+    dsimp only [u]
+    positivity
+  have hu61 : u < (1 / 61 : ℝ) := by
+    dsimp only [u]
+    have htSq : t ^ 2 < (7 / 160 : ℝ) ^ 2 := by
+      have hprod : 0 < ((7 / 160 : ℝ) - |t|) *
+          ((7 / 160 : ℝ) + |t|) := by
+        apply mul_pos
+        · linarith
+        · positivity
+      nlinarith [sq_abs t]
+    nlinarith
+  have hu1 : u < 1 := hu61.trans (by norm_num)
+  have hexp : Real.exp u ≤ 1 / (1 - u) :=
+    Real.exp_bound_div_one_sub_of_interval hu0 hu1
+  have hfrac : 1 / (1 - u) < (61 / 60 : ℝ) := by
+    rw [div_lt_iff₀ (sub_pos.mpr hu1)]
+    nlinarith
+  have hcosh : Real.cosh t ≤ Real.exp u := by
+    dsimp only [u]
+    exact Real.cosh_le_exp_half_sq t
+  exact hcosh.trans_lt (hexp.trans_lt hfrac)
+
+/-- On a profile supported in the centered quarter interval, the retained
+`cosh` rank differs from the ordinary mass rank by at most the exact
+Cauchy--Schwarz error needed in the five-cell determinant. -/
+theorem coshRank_lower_of_centeredQuarterSupport
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    (9 / 10 : ℝ) * (∫ x : ℝ in -1..1, w x) ^ 2 -
+        (1 / 800 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      Complex.normSq
+        (∫ x : ℝ in -1..1,
+          (Real.cosh (yoshidaEndpointA * x / 2) : ℂ) * (w x : ℂ)) := by
+  let J : Set ℝ := Icc (-(1 / 4 : ℝ)) (1 / 4)
+  let M : ℝ := ∫ x : ℝ in -1..1, w x
+  let E : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  let d : ℝ := ∫ x : ℝ in -1..1,
+    (Real.cosh (yoshidaEndpointA * x / 2) - 1) * w x
+  have hJsub : J ⊆ Ioc (-1 : ℝ) 1 := by
+    intro x hx
+    exact ⟨by dsimp only [J] at hx; linarith [hx.1],
+      by dsimp only [J] at hx; linarith [hx.2]⟩
+  have hMset : M = ∫ x : ℝ in J, w x := by
+    dsimp only [M]
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc hJsub
+    intro x hx
+    exact hsupport x hx.2
+  have hEset : E = ∫ x : ℝ in J, w x ^ 2 := by
+    dsimp only [E]
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc hJsub
+    intro x hx
+    rw [hsupport x hx.2]
+    norm_num
+  have hdset : d = ∫ x : ℝ in J,
+      (Real.cosh (yoshidaEndpointA * x / 2) - 1) * w x := by
+    dsimp only [d]
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc hJsub
+    intro x hx
+    rw [hsupport x hx.2]
+    ring
+  have hweightContinuous : Continuous
+      (fun x : ℝ ↦ Real.cosh (yoshidaEndpointA * x / 2) - 1) := by
+    fun_prop
+  have hdCauchy : d ^ 2 ≤
+      (∫ x : ℝ in J,
+          (Real.cosh (yoshidaEndpointA * x / 2) - 1) ^ 2) * E := by
+    rw [hdset, hEset]
+    exact sq_setIntegral_mul_le_of_continuous
+      (fun x : ℝ ↦ Real.cosh (yoshidaEndpointA * x / 2) - 1)
+      w hweightContinuous hw
+  have hweightSq :
+      (∫ x : ℝ in J,
+          (Real.cosh (yoshidaEndpointA * x / 2) - 1) ^ 2) ≤
+        (1 / 7200 : ℝ) := by
+    have hcont : Continuous
+        (fun x : ℝ ↦
+          (Real.cosh (yoshidaEndpointA * x / 2) - 1) ^ 2) := by
+      fun_prop
+    have hleftInt : IntegrableOn
+        (fun x : ℝ ↦
+          (Real.cosh (yoshidaEndpointA * x / 2) - 1) ^ 2) J := by
+      exact hcont.continuousOn.integrableOn_compact (by
+        simpa only [J] using (isCompact_Icc : IsCompact
+          (Icc (-(1 / 4 : ℝ)) (1 / 4))))
+    have hrightInt : IntegrableOn (fun _x : ℝ ↦ (1 / 60 : ℝ) ^ 2) J := by
+      exact integrableOn_const (measure_Icc_lt_top.ne)
+    calc
+      (∫ x : ℝ in J,
+          (Real.cosh (yoshidaEndpointA * x / 2) - 1) ^ 2) ≤
+          ∫ _x : ℝ in J, (1 / 60 : ℝ) ^ 2 := by
+        apply setIntegral_mono_on hleftInt hrightInt
+          (by simpa only [J] using (measurableSet_Icc :
+            MeasurableSet (Icc (-(1 / 4 : ℝ)) (1 / 4))))
+        intro x hx
+        have hupper := cosh_endpoint_quarter_lt_sixty_one_div_sixty
+          (by simpa only [J] using hx)
+        have hlower : 1 ≤ Real.cosh (yoshidaEndpointA * x / 2) :=
+          Real.one_le_cosh _
+        nlinarith
+      _ = (1 / 7200 : ℝ) := by
+        norm_num [J, Real.volume_real_Icc_of_le]
+  have hE0 : 0 ≤ E := by
+    dsimp only [E]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg (w x))
+  have hdSq : d ^ 2 ≤ (1 / 7200 : ℝ) * E :=
+    hdCauchy.trans (mul_le_mul_of_nonneg_right hweightSq hE0)
+  have hCeq :
+      (∫ x : ℝ in -1..1,
+          (Real.cosh (yoshidaEndpointA * x / 2) : ℂ) * (w x : ℂ)) =
+        ((M + d : ℝ) : ℂ) := by
+    have hrealC :
+        (∫ x : ℝ in -1..1,
+          Real.cosh (yoshidaEndpointA * x / 2) * w x) = M + d := by
+      dsimp only [M, d]
+      calc
+        (∫ x : ℝ in -1..1,
+            Real.cosh (yoshidaEndpointA * x / 2) * w x) =
+            ∫ x : ℝ in -1..1,
+              w x + (Real.cosh (yoshidaEndpointA * x / 2) - 1) * w x := by
+          apply intervalIntegral.integral_congr
+          intro x _hx
+          ring
+        _ = (∫ x : ℝ in -1..1, w x) +
+            ∫ x : ℝ in -1..1,
+              (Real.cosh (yoshidaEndpointA * x / 2) - 1) * w x := by
+          have hq : IntervalIntegrable
+              (fun x : ℝ ↦
+                (Real.cosh (yoshidaEndpointA * x / 2) - 1) * w x)
+              volume (-1) 1 :=
+            (hweightContinuous.mul hw).intervalIntegrable (-1) 1
+          exact intervalIntegral.integral_add
+            (hw.intervalIntegrable (-1) 1) hq
+    calc
+      (∫ x : ℝ in -1..1,
+          (Real.cosh (yoshidaEndpointA * x / 2) : ℂ) * (w x : ℂ)) =
+          ((∫ x : ℝ in -1..1,
+            Real.cosh (yoshidaEndpointA * x / 2) * w x : ℝ) : ℂ) := by
+        rw [← intervalIntegral.integral_ofReal]
+        apply intervalIntegral.integral_congr
+        intro x _hx
+        push_cast
+        ring
+      _ = ((M + d : ℝ) : ℂ) := by rw [hrealC]
+  rw [hCeq]
+  simp only [Complex.normSq_apply, Complex.ofReal_re,
+    Complex.ofReal_im, mul_zero, add_zero]
+  have hyoung : (9 / 10 : ℝ) * M ^ 2 - 9 * d ^ 2 ≤ (M + d) ^ 2 := by
+    nlinarith [sq_nonneg (M + 10 * d)]
+  dsimp only [M, E] at hyoung hdSq ⊢
+  nlinarith
+
+/-- The retained hyperbolic rank estimate specialized to the collapsed
+quarter support. -/
+theorem yoshidaEndpointHyperbolicQuadratic_lower_of_centeredQuarterSupport
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    Real.log 2 *
+          ((9 / 10 : ℝ) * (∫ x : ℝ in -1..1, w x) ^ 2 -
+            (1 / 800 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2)) -
+        (1 / Real.sqrt 2 - Real.log 2) *
+          (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      yoshidaEndpointHyperbolicQuadratic (fun x ↦ (w x : ℂ)) := by
+  have hcosh := coshRank_lower_of_centeredQuarterSupport w hw hsupport
+  have hlog : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have hscaled := mul_le_mul_of_nonneg_left hcosh hlog
+  have hrank := yoshidaEndpointHyperbolicQuadratic_lower_with_coshRank w hw
+  linarith
+
+/-- A quarter-supported profile has at most half a unit of squared mass
+rank. -/
+theorem centeredQuarterSupport_mass_sq_le_half_energy
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    (∫ x : ℝ in -1..1, w x) ^ 2 ≤
+      (1 / 2 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let J : Set ℝ := Icc (-(1 / 4 : ℝ)) (1 / 4)
+  have hJsub : J ⊆ Ioc (-1 : ℝ) 1 := by
+    intro x hx
+    dsimp only [J] at hx
+    exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  have hMset : (∫ x : ℝ in -1..1, w x) = ∫ x : ℝ in J, w x := by
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc hJsub
+    intro x hx
+    exact hsupport x hx.2
+  have hEset : (∫ x : ℝ in -1..1, w x ^ 2) =
+      ∫ x : ℝ in J, w x ^ 2 := by
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc hJsub
+    intro x hx
+    rw [hsupport x hx.2]
+    norm_num
+  have hcs := sq_setIntegral_mul_le_of_continuous
+      (fun _x : ℝ ↦ (1 : ℝ)) w continuous_const hw
+      (a := (-(1 / 4 : ℝ))) (b := (1 / 4 : ℝ))
+  norm_num at hcs
+  rw [hMset, hEset]
+  norm_num at hcs ⊢
+  simpa only [J] using hcs
+
+/-- The regular endpoint kernel costs only one eighth of the energy on a
+quarter-supported profile.  The proof is the continuous Schur estimate on
+the actual support, so no discretization is involved. -/
+theorem norm_yoshidaEndpointRegularQuadratic_le_one_eighth_of_centeredQuarterSupport
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    ‖yoshidaEndpointRegularQuadratic (fun x ↦ (w x : ℂ))‖ ≤
+      (1 / 8 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let I : Set ℝ := Icc (-1 : ℝ) 1
+  let J : Set ℝ := Icc (-(1 / 4 : ℝ)) (1 / 4)
+  let μ : Measure ℝ := volume.restrict I
+  let K : ℝ × ℝ → ℂ := fun p ↦
+    (yoshidaRegularKernel ((Real.log 2 / 2) * |p.1 - p.2|) : ℂ)
+  let G : ℝ × ℝ → ℂ := fun p ↦
+    K p * (w p.2 : ℂ) * star (w p.1 : ℂ)
+  have hregularMeas : Measurable yoshidaRegularKernel := by
+    unfold yoshidaRegularKernel
+    apply Measurable.ite (measurableSet_singleton 0) <;> fun_prop
+  have hKMeas : Measurable K := by
+    dsimp only [K]
+    fun_prop
+  have hwInt : Integrable (fun x : ℝ ↦ (w x : ℂ)) μ := by
+    simpa only [μ, I] using
+      (Complex.continuous_ofReal.comp hw).continuousOn.integrableOn_compact
+        isCompact_Icc
+  have hprodNorm : Integrable
+      (fun p : ℝ × ℝ ↦ |w p.1| * |w p.2|) (μ.prod μ) := by
+    simpa only [Complex.norm_real, Real.norm_eq_abs] using
+      hwInt.norm.mul_prod hwInt.norm
+  have hdomInt : Integrable
+      (fun p : ℝ × ℝ ↦ (1 / 4 : ℝ) * (|w p.1| * |w p.2|))
+      (μ.prod μ) := hprodNorm.const_mul (1 / 4 : ℝ)
+  have hpMem : ∀ᵐ p ∂μ.prod μ, p ∈ I ×ˢ I := by
+    dsimp only [μ]
+    rw [Measure.prod_restrict]
+    exact ae_restrict_mem (measurableSet_Icc.prod measurableSet_Icc)
+  have hKBound : ∀ᵐ p ∂μ.prod μ, ‖K p‖ ≤ (1 / 4 : ℝ) := by
+    filter_upwards [hpMem] with p hp
+    have habs : |p.1 - p.2| ≤ 2 := by
+      rw [abs_le]
+      constructor <;> linarith [hp.1.1, hp.1.2, hp.2.1, hp.2.2]
+    have harg0 : 0 ≤ (Real.log 2 / 2) * |p.1 - p.2| :=
+      mul_nonneg (by positivity) (abs_nonneg _)
+    have harg2 : (Real.log 2 / 2) * |p.1 - p.2| ≤ Real.log 2 := by
+      have h := mul_le_mul_of_nonneg_left habs
+        (by positivity : 0 ≤ Real.log 2 / 2)
+      nlinarith
+    have hreg := yoshidaRegularKernel_mem_Icc harg0 harg2
+    dsimp only [K]
+    rw [Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hreg.1]
+    exact hreg.2
+  have hGMeas : AEStronglyMeasurable G (μ.prod μ) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [G]
+    fun_prop
+  have hGInt : Integrable G (μ.prod μ) := by
+    refine hdomInt.mono' hGMeas ?_
+    filter_upwards [hKBound] with p hp
+    dsimp only [G]
+    rw [norm_mul, norm_mul, norm_star, Complex.norm_real,
+      Real.norm_eq_abs]
+    rw [show ‖(w p.2 : ℂ)‖ = |w p.2| by simp,
+      show ‖(w p.1 : ℂ)‖ = |w p.1| by simp]
+    have hp' : |yoshidaRegularKernel
+        ((Real.log 2 / 2) * |p.1 - p.2|)| ≤ (1 / 4 : ℝ) := by
+      simpa only [K, Complex.norm_real, Real.norm_eq_abs] using hp
+    have hmul := mul_le_mul_of_nonneg_right hp'
+      (mul_nonneg (abs_nonneg (w p.1)) (abs_nonneg (w p.2)))
+    simpa only [mul_comm, mul_left_comm, mul_assoc] using hmul
+  have hquad :
+      ‖∫ p : ℝ × ℝ, G p ∂μ.prod μ‖ ≤
+        (1 / 4 : ℝ) * (∫ x : ℝ, |w x| ∂μ) ^ 2 := by
+    calc
+      ‖∫ p : ℝ × ℝ, G p ∂μ.prod μ‖ ≤
+          ∫ p : ℝ × ℝ, ‖G p‖ ∂μ.prod μ :=
+        norm_integral_le_integral_norm _
+      _ ≤ ∫ p : ℝ × ℝ,
+          (1 / 4 : ℝ) * (|w p.1| * |w p.2|) ∂μ.prod μ := by
+        apply integral_mono_ae hGInt.norm hdomInt
+        filter_upwards [hKBound] with p hp
+        dsimp only [G]
+        rw [norm_mul, norm_mul, norm_star, Complex.norm_real,
+          Real.norm_eq_abs]
+        rw [show ‖(w p.2 : ℂ)‖ = |w p.2| by simp,
+          show ‖(w p.1 : ℂ)‖ = |w p.1| by simp]
+        have hp' : |yoshidaRegularKernel
+            ((Real.log 2 / 2) * |p.1 - p.2|)| ≤ (1 / 4 : ℝ) := by
+          simpa only [K, Complex.norm_real, Real.norm_eq_abs] using hp
+        have hmul := mul_le_mul_of_nonneg_right hp'
+          (mul_nonneg (abs_nonneg (w p.1)) (abs_nonneg (w p.2)))
+        simpa only [mul_comm, mul_left_comm, mul_assoc] using hmul
+      _ = (1 / 4 : ℝ) * (∫ x : ℝ, |w x| ∂μ) ^ 2 := by
+        rw [MeasureTheory.integral_const_mul,
+          integral_prod_mul (fun x : ℝ ↦ |w x|) (fun x : ℝ ↦ |w x|)]
+        ring
+  have hJsubI : J ⊆ I := by
+    intro x hx
+    dsimp only [J, I] at hx ⊢
+    constructor <;> linarith [hx.1, hx.2]
+  have hL1set : (∫ x : ℝ, |w x| ∂μ) = ∫ x : ℝ in J, |w x| := by
+    change (∫ x : ℝ in I, |w x|) = _
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      (by simpa only [I] using (measurableSet_Icc :
+        MeasurableSet (Icc (-1 : ℝ) 1))) hJsubI
+    intro x hx
+    rw [hsupport x hx.2, abs_zero]
+  have hJsubInterval : J ⊆ Ioc (-1 : ℝ) 1 := by
+    intro x hx
+    dsimp only [J] at hx
+    exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  have hEset : (∫ x : ℝ in -1..1, w x ^ 2) =
+      ∫ x : ℝ in J, w x ^ 2 := by
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc hJsubInterval
+    intro x hx
+    rw [hsupport x hx.2]
+    norm_num
+  have hL1sqRaw := sq_setIntegral_mul_le_of_continuous
+      (fun _x : ℝ ↦ (1 : ℝ)) (fun x : ℝ ↦ |w x|)
+      continuous_const hw.abs
+      (a := (-(1 / 4 : ℝ))) (b := (1 / 4 : ℝ))
+  have habsSq : (fun x : ℝ ↦ |w x| ^ 2) = fun x : ℝ ↦ w x ^ 2 := by
+    funext x
+    exact sq_abs (w x)
+  rw [habsSq] at hL1sqRaw
+  norm_num at hL1sqRaw
+  have hL1sq : (∫ x : ℝ in J, |w x|) ^ 2 ≤
+      (1 / 2 : ℝ) * ∫ x : ℝ in J, w x ^ 2 := by
+    simpa only [J] using hL1sqRaw
+  unfold yoshidaEndpointRegularQuadratic
+  change ‖∫ p : ℝ × ℝ, G p ∂μ.prod μ‖ ≤ _
+  rw [hL1set] at hquad
+  calc
+    ‖∫ p : ℝ × ℝ, G p ∂μ.prod μ‖ ≤
+        (1 / 4 : ℝ) * (∫ x : ℝ in J, |w x|) ^ 2 := hquad
+    _ ≤ (1 / 4 : ℝ) *
+        ((1 / 2 : ℝ) * ∫ x : ℝ in J, w x ^ 2) :=
+      mul_le_mul_of_nonneg_left hL1sq (by norm_num)
+    _ = (1 / 8 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+      rw [hEset]
+      ring
+
+private theorem centeredRawLogEnergy_eq_setIntegral_fiveCell
+    (w : ℝ → ℝ)
+    (henergy : IntegrableOn
+      (fun p : ℝ × ℝ ↦ centeredLogDifferenceKernel w p.1 p.2)
+      (Icc (-1 : ℝ) 1 ×ˢ Icc (-1 : ℝ) 1)
+      ((volume : Measure ℝ).prod volume)) :
+    centeredRawLogEnergy w =
+      ∫ p : ℝ × ℝ in Icc (-1 : ℝ) 1 ×ˢ Icc (-1 : ℝ) 1,
+        centeredLogDifferenceKernel w p.1 p.2
+          ∂((volume : Measure ℝ).prod volume) := by
+  unfold centeredRawLogEnergy centeredLogDifferenceKernel
+  calc
+    (∫ x : ℝ in -1..1, ∫ y : ℝ in -1..1,
+        (w x - w y) ^ 2 / |x - y|) =
+        ∫ x : ℝ in Icc (-1) 1,
+          ∫ y : ℝ in Icc (-1) 1,
+            (w x - w y) ^ 2 / |x - y| := by
+      rw [intervalIntegral.integral_of_le (by norm_num),
+        ← integral_Icc_eq_integral_Ioc]
+      apply setIntegral_congr_fun measurableSet_Icc
+      intro x _hx
+      change (∫ y : ℝ in -1..1,
+          (w x - w y) ^ 2 / |x - y|) =
+        ∫ y : ℝ in Icc (-1) 1,
+          (w x - w y) ^ 2 / |x - y|
+      rw [intervalIntegral.integral_of_le (by norm_num),
+        ← integral_Icc_eq_integral_Ioc]
+    _ = ∫ p : ℝ × ℝ in Icc (-1 : ℝ) 1 ×ˢ Icc (-1 : ℝ) 1,
+          (w p.1 - w p.2) ^ 2 / |p.1 - p.2| := by
+      exact (setIntegral_prod _ henergy).symm
+
+private theorem integral_two_div_on_quarter_one :
+    (∫ x : ℝ in (1 / 4)..1, 2 / x) = 4 * Real.log 2 := by
+  rw [show (fun x : ℝ ↦ 2 / x) = fun x ↦ 2 * x⁻¹ by
+    funext x
+    rw [div_eq_mul_inv],
+    intervalIntegral.integral_const_mul,
+    integral_inv_of_pos (by norm_num) (by norm_num)]
+  have hfour : Real.log 4 = 2 * Real.log 2 := by
+    rw [show (4 : ℝ) = 2 * 2 by norm_num,
+      Real.log_mul (by norm_num : (2 : ℝ) ≠ 0)
+        (by norm_num : (2 : ℝ) ≠ 0)]
+    ring
+  rw [show (1 : ℝ) / (1 / 4) = 4 by norm_num, hfour]
+  ring
+
+private theorem centeredQuarterSupport_boundary_zero
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    w (-(1 / 4 : ℝ)) = 0 ∧ w (1 / 4 : ℝ) = 0 := by
+  have hnegEq : Set.EqOn w (fun _x : ℝ ↦ 0) (Iio (-(1 / 4 : ℝ))) := by
+    intro x hx
+    exact hsupport x (by
+      simp only [mem_Icc, not_and_or]
+      exact Or.inl (not_le.mpr hx))
+  have hposEq : Set.EqOn w (fun _x : ℝ ↦ 0) (Ioi (1 / 4 : ℝ)) := by
+    intro x hx
+    exact hsupport x (by
+      simp only [mem_Icc, not_and_or]
+      exact Or.inr (not_le.mpr hx))
+  constructor
+  · exact hnegEq.closure hw continuous_const (by simp)
+  · exact hposEq.closure hw continuous_const (by simp)
+
+private theorem four_log_two_mul_energy_le_centeredQuarter_externalCross
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    4 * Real.log 2 * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      (∫ p : ℝ × ℝ in
+          Icc (-(1 / 4 : ℝ)) (1 / 4) ×ˢ Ioc (1 / 4 : ℝ) 1,
+        centeredLogDifferenceKernel w p.1 p.2
+          ∂((volume : Measure ℝ).prod volume)) +
+      ∫ p : ℝ × ℝ in
+          Icc (-(1 / 4 : ℝ)) (1 / 4) ×ˢ Ico (-1 : ℝ) (-(1 / 4)),
+        centeredLogDifferenceKernel w p.1 p.2
+          ∂((volume : Measure ℝ).prod volume) := by
+  let S : Set ℝ := Icc (-1 : ℝ) 1
+  let J : Set ℝ := Icc (-(1 / 4 : ℝ)) (1 / 4)
+  let P : Set ℝ := Ioc (1 / 4 : ℝ) 1
+  let N : Set ℝ := Ico (-1 : ℝ) (-(1 / 4))
+  let K : ℝ × ℝ → ℝ := fun p ↦
+    centeredLogDifferenceKernel w p.1 p.2
+  let negSnd : ℝ × ℝ → ℝ × ℝ := fun p ↦ (p.1, -p.2)
+  let F : ℝ × ℝ → ℝ := fun p ↦ K p + K (negSnd p)
+  let L : ℝ × ℝ → ℝ := fun p ↦ w p.1 ^ 2 * (2 / p.2)
+  obtain ⟨C, hC⟩ :=
+    hlocal.exists_lipschitzOnWith_of_compact isCompact_Icc
+  have henergy : IntegrableOn K (S ×ˢ S)
+      ((volume : Measure ℝ).prod volume) := by
+    simpa only [K, S] using
+      integrableOn_centeredLogDifferenceKernel_prod_of_lipschitzOnWith w hC
+  have hJsub : J ⊆ S := by
+    intro x hx
+    dsimp only [J, S] at hx ⊢
+    constructor <;> linarith [hx.1, hx.2]
+  have hPsub : P ⊆ S := by
+    intro x hx
+    dsimp only [P, S] at hx ⊢
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hNsub : N ⊆ S := by
+    intro x hx
+    dsimp only [N, S] at hx ⊢
+    exact ⟨hx.1, by linarith [hx.2]⟩
+  have hJP : IntegrableOn K (J ×ˢ P)
+      ((volume : Measure ℝ).prod volume) :=
+    henergy.mono_set (Set.prod_mono hJsub hPsub)
+  have hJN : IntegrableOn K (J ×ˢ N)
+      ((volume : Measure ℝ).prod volume) :=
+    henergy.mono_set (Set.prod_mono hJsub hNsub)
+  have hnegSndMP : MeasurePreserving negSnd
+      ((volume : Measure ℝ).prod volume)
+      ((volume : Measure ℝ).prod volume) := by
+    simpa only [negSnd, Prod.map_apply, id_eq] using
+      (MeasurePreserving.id (volume : Measure ℝ)).prod
+        (Measure.measurePreserving_neg (volume : Measure ℝ))
+  have hnegSndEmb : MeasurableEmbedding negSnd := by
+    simpa only [negSnd, Prod.map_apply, id_eq] using
+      (MeasurableEquiv.prodCongr (MeasurableEquiv.refl ℝ)
+        (MeasurableEquiv.neg ℝ)).measurableEmbedding
+  have hnegSndPre : negSnd ⁻¹' (J ×ˢ N) = J ×ˢ P := by
+    ext p
+    simp only [negSnd, preimage, mem_prod]
+    constructor
+    · rintro ⟨hx, hy1, hy2⟩
+      exact ⟨hx, by linarith, by linarith⟩
+    · rintro ⟨hx, hy1, hy2⟩
+      exact ⟨hx, by linarith, by linarith⟩
+  have hKneg : IntegrableOn (fun p ↦ K (negSnd p)) (J ×ˢ P)
+      ((volume : Measure ℝ).prod volume) := by
+    have h := (hnegSndMP.integrableOn_comp_preimage hnegSndEmb
+      (f := K) (s := J ×ˢ N)).2 hJN
+    rw [hnegSndPre] at h
+    simpa only [Function.comp_apply] using h
+  have hreflect :
+      (∫ p : ℝ × ℝ in J ×ˢ P, K (negSnd p)
+          ∂((volume : Measure ℝ).prod volume)) =
+        ∫ p : ℝ × ℝ in J ×ˢ N, K p
+          ∂((volume : Measure ℝ).prod volume) := by
+    rw [← hnegSndPre]
+    exact hnegSndMP.setIntegral_preimage_emb
+      hnegSndEmb K (J ×ˢ N)
+  have hFInt : IntegrableOn F (J ×ˢ P)
+      ((volume : Measure ℝ).prod volume) := hJP.add hKneg
+  have hpoint : ∀ p ∈ J ×ˢ P, L p ≤ F p := by
+    intro p hp
+    have hx := hp.1
+    have hs := hp.2
+    have hsPos : 0 < p.2 := by
+      dsimp only [P] at hs
+      linarith [hs.1]
+    have hminus : 0 < p.2 - p.1 := by
+      dsimp only [J, P] at hx hs
+      linarith [hx.2, hs.1]
+    have hplus : 0 < p.2 + p.1 := by
+      dsimp only [J, P] at hx hs
+      linarith [hx.1, hs.1]
+    have hws : w p.2 = 0 := by
+      apply hsupport
+      dsimp only [J, P] at hx hs
+      simp only [mem_Icc, not_and_or]
+      exact Or.inr (not_le.mpr hs.1)
+    have hwneg : w (-p.2) = 0 := by
+      apply hsupport
+      dsimp only [J, P] at hx hs
+      simp only [mem_Icc, not_and_or]
+      exact Or.inl (not_le.mpr (by linarith [hs.1]))
+    have habsMinus : |p.1 - p.2| = p.2 - p.1 := by
+      rw [abs_of_nonpos]
+      · ring
+      · linarith
+    have habsPlus : |p.1 - -p.2| = p.2 + p.1 := by
+      rw [abs_of_nonneg]
+      · ring
+      · linarith
+    have hid :
+        w p.1 ^ 2 / (p.2 - p.1) +
+            w p.1 ^ 2 / (p.2 + p.1) -
+              (2 / p.2) * w p.1 ^ 2 =
+          2 * p.1 ^ 2 * w p.1 ^ 2 /
+            (p.2 * (p.2 - p.1) * (p.2 + p.1)) := by
+      field_simp [hsPos.ne', hminus.ne', hplus.ne']
+      ring
+    have hden : 0 < p.2 * (p.2 - p.1) * (p.2 + p.1) :=
+      mul_pos (mul_pos hsPos hminus) hplus
+    have hrhs : 0 ≤
+        2 * p.1 ^ 2 * w p.1 ^ 2 /
+          (p.2 * (p.2 - p.1) * (p.2 + p.1)) := by
+      exact div_nonneg
+        (mul_nonneg (mul_nonneg (by norm_num) (sq_nonneg _)) (sq_nonneg _))
+        hden.le
+    dsimp only [L, F, K, negSnd]
+    unfold centeredLogDifferenceKernel
+    rw [hws, hwneg, sub_zero, habsMinus, habsPlus]
+    linarith
+  have hwSqInt : IntegrableOn (fun x : ℝ ↦ w x ^ 2) J := by
+    exact (hw.pow 2).continuousOn.integrableOn_compact (by
+      simpa only [J] using (isCompact_Icc : IsCompact
+        (Icc (-(1 / 4 : ℝ)) (1 / 4))))
+  have hinvInt : IntegrableOn (fun x : ℝ ↦ 2 / x) P := by
+    have hcont : ContinuousOn (fun x : ℝ ↦ 2 / x)
+        (Icc (1 / 4 : ℝ) 1) := by
+      intro x hx
+      have hx0 : id x ≠ 0 := by
+        simpa only [id_eq] using (show x ≠ 0 by linarith [hx.1])
+      exact (continuousAt_const.div continuousAt_id hx0).continuousWithinAt
+    exact (hcont.integrableOn_compact isCompact_Icc).mono_set (by
+      intro x hx
+      dsimp only [P] at hx
+      exact ⟨hx.1.le, hx.2⟩)
+  have hLInt : IntegrableOn L (J ×ˢ P)
+      ((volume : Measure ℝ).prod volume) := by
+    rw [IntegrableOn, ← Measure.prod_restrict]
+    simpa only [L] using hwSqInt.mul_prod hinvInt
+  have hmono :
+      (∫ p : ℝ × ℝ in J ×ˢ P, L p
+          ∂((volume : Measure ℝ).prod volume)) ≤
+        ∫ p : ℝ × ℝ in J ×ˢ P, F p
+          ∂((volume : Measure ℝ).prod volume) :=
+    setIntegral_mono_on hLInt hFInt
+      ((measurableSet_Icc : MeasurableSet J).prod measurableSet_Ioc)
+      hpoint
+  have hEset : (∫ x : ℝ in -1..1, w x ^ 2) =
+      ∫ x : ℝ in J, w x ^ 2 := by
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc (by
+        intro x hx
+        dsimp only [J] at hx
+        exact ⟨by linarith [hx.1], by linarith [hx.2]⟩)
+    intro x hx
+    rw [hsupport x hx.2]
+    norm_num
+  have hinvValue : (∫ x : ℝ in P, 2 / x) = 4 * Real.log 2 := by
+    dsimp only [P]
+    rw [← intervalIntegral.integral_of_le (by norm_num)]
+    exact integral_two_div_on_quarter_one
+  have hLValue :
+      (∫ p : ℝ × ℝ in J ×ˢ P, L p
+          ∂((volume : Measure ℝ).prod volume)) =
+        4 * Real.log 2 * (∫ x : ℝ in -1..1, w x ^ 2) := by
+    dsimp only [L]
+    rw [setIntegral_prod_mul
+      (fun x : ℝ ↦ w x ^ 2) (fun x : ℝ ↦ 2 / x) J P,
+      hinvValue, hEset]
+    ring
+  have hFValue :
+      (∫ p : ℝ × ℝ in J ×ˢ P, F p
+          ∂((volume : Measure ℝ).prod volume)) =
+        (∫ p : ℝ × ℝ in J ×ˢ P, K p
+          ∂((volume : Measure ℝ).prod volume)) +
+        ∫ p : ℝ × ℝ in J ×ˢ N, K p
+          ∂((volume : Measure ℝ).prod volume) := by
+    change (∫ p : ℝ × ℝ,
+        (K p + K (negSnd p))
+          ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ P)) = _
+    rw [integral_add hJP hKneg, hreflect]
+  rw [hLValue, hFValue] at hmono
+  simpa only [J, P, N, K] using hmono
+
+private theorem centeredQuarter_internalVariance_le_rawSquare
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    2 * (∫ x : ℝ in -1..1, w x ^ 2) -
+        4 * (∫ x : ℝ in -1..1, w x) ^ 2 ≤
+      ∫ p : ℝ × ℝ in
+          Icc (-(1 / 4 : ℝ)) (1 / 4) ×ˢ
+            Icc (-(1 / 4 : ℝ)) (1 / 4),
+        centeredLogDifferenceKernel w p.1 p.2
+          ∂((volume : Measure ℝ).prod volume) := by
+  let S : Set ℝ := Icc (-1 : ℝ) 1
+  let J : Set ℝ := Icc (-(1 / 4 : ℝ)) (1 / 4)
+  let K : ℝ × ℝ → ℝ := fun p ↦
+    centeredLogDifferenceKernel w p.1 p.2
+  let L : ℝ × ℝ → ℝ := fun p ↦ 2 * (w p.1 - w p.2) ^ 2
+  obtain ⟨C, hC⟩ :=
+    hlocal.exists_lipschitzOnWith_of_compact isCompact_Icc
+  have henergy : IntegrableOn K (S ×ˢ S)
+      ((volume : Measure ℝ).prod volume) := by
+    simpa only [K, S] using
+      integrableOn_centeredLogDifferenceKernel_prod_of_lipschitzOnWith w hC
+  have hJsub : J ⊆ S := by
+    intro x hx
+    dsimp only [J, S] at hx ⊢
+    constructor <;> linarith [hx.1, hx.2]
+  have hKInt : IntegrableOn K (J ×ˢ J)
+      ((volume : Measure ℝ).prod volume) :=
+    henergy.mono_set (Set.prod_mono hJsub hJsub)
+  have hLInt : IntegrableOn L (J ×ˢ J)
+      ((volume : Measure ℝ).prod volume) := by
+    exact (by fun_prop : Continuous L).continuousOn.integrableOn_compact
+      (by simpa only [J] using
+        ((isCompact_Icc : IsCompact
+          (Icc (-(1 / 4 : ℝ)) (1 / 4))).prod isCompact_Icc))
+  have hpoint : ∀ p ∈ J ×ˢ J, L p ≤ K p := by
+    intro p hp
+    have hdist : |p.1 - p.2| ≤ (1 / 2 : ℝ) := by
+      rw [abs_le]
+      dsimp only [J] at hp
+      constructor <;> linarith [hp.1.1, hp.1.2, hp.2.1, hp.2.2]
+    dsimp only [L, K]
+    unfold centeredLogDifferenceKernel
+    by_cases hzero : |p.1 - p.2| = 0
+    · have heq : p.1 = p.2 := sub_eq_zero.mp (abs_eq_zero.mp hzero)
+      simp [heq]
+    · have hpos : 0 < |p.1 - p.2| :=
+        lt_of_le_of_ne (abs_nonneg _) (Ne.symm hzero)
+      rw [le_div_iff₀ hpos]
+      nlinarith [sq_nonneg (w p.1 - w p.2)]
+  have hmono :
+      (∫ p : ℝ × ℝ in J ×ˢ J, L p
+          ∂((volume : Measure ℝ).prod volume)) ≤
+        ∫ p : ℝ × ℝ in J ×ˢ J, K p
+          ∂((volume : Measure ℝ).prod volume) :=
+    setIntegral_mono_on hLInt hKInt
+      ((measurableSet_Icc : MeasurableSet J).prod measurableSet_Icc)
+      hpoint
+  let A : ℝ × ℝ → ℝ := fun p ↦ 2 * w p.1 ^ 2
+  let B : ℝ × ℝ → ℝ := fun p ↦ 2 * w p.2 ^ 2
+  let D : ℝ × ℝ → ℝ := fun p ↦ 4 * w p.1 * w p.2
+  have hAInt : IntegrableOn A (J ×ˢ J)
+      ((volume : Measure ℝ).prod volume) := by
+    exact (by fun_prop : Continuous A).continuousOn.integrableOn_compact
+      (by simpa only [J] using
+        ((isCompact_Icc : IsCompact
+          (Icc (-(1 / 4 : ℝ)) (1 / 4))).prod isCompact_Icc))
+  have hBInt : IntegrableOn B (J ×ˢ J)
+      ((volume : Measure ℝ).prod volume) := by
+    exact (by fun_prop : Continuous B).continuousOn.integrableOn_compact
+      (by simpa only [J] using
+        ((isCompact_Icc : IsCompact
+          (Icc (-(1 / 4 : ℝ)) (1 / 4))).prod isCompact_Icc))
+  have hDInt : IntegrableOn D (J ×ˢ J)
+      ((volume : Measure ℝ).prod volume) := by
+    exact (by fun_prop : Continuous D).continuousOn.integrableOn_compact
+      (by simpa only [J] using
+        ((isCompact_Icc : IsCompact
+          (Icc (-(1 / 4 : ℝ)) (1 / 4))).prod isCompact_Icc))
+  have hLExpand :
+      (∫ p : ℝ × ℝ in J ×ˢ J, L p
+          ∂((volume : Measure ℝ).prod volume)) =
+        (∫ p : ℝ × ℝ in J ×ˢ J, A p
+          ∂((volume : Measure ℝ).prod volume)) +
+        (∫ p : ℝ × ℝ in J ×ˢ J, B p
+          ∂((volume : Measure ℝ).prod volume)) -
+        ∫ p : ℝ × ℝ in J ×ˢ J, D p
+          ∂((volume : Measure ℝ).prod volume) := by
+    change (∫ p : ℝ × ℝ, L p
+        ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J)) = _
+    rw [show L = fun p ↦ A p + B p - D p by
+      funext p
+      dsimp only [L, A, B, D]
+      ring]
+    change (∫ p : ℝ × ℝ, ((A + B) - D) p
+        ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J)) = _
+    have hAB :
+        (∫ p : ℝ × ℝ, (A + B) p
+          ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J)) =
+          (∫ p : ℝ × ℝ, A p
+            ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J)) +
+          ∫ p : ℝ × ℝ, B p
+            ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J) := by
+      change (∫ p : ℝ × ℝ, A p + B p
+          ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J)) = _
+      exact integral_add hAInt hBInt
+    calc
+      (∫ p : ℝ × ℝ, ((A + B) - D) p
+          ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J)) =
+          (∫ p : ℝ × ℝ, (A + B) p
+            ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J)) -
+          ∫ p : ℝ × ℝ, D p
+            ∂((volume : Measure ℝ).prod volume).restrict (J ×ˢ J) :=
+        integral_sub (hAInt.add hBInt) hDInt
+      _ = _ := by rw [hAB]
+  have hvol : volume.real J = (1 / 2 : ℝ) := by
+    norm_num [J, Real.volume_real_Icc_of_le]
+  have hAValue :
+      (∫ p : ℝ × ℝ in J ×ˢ J, A p
+          ∂((volume : Measure ℝ).prod volume)) =
+        ∫ x : ℝ in J, w x ^ 2 := by
+    rw [show A = fun p : ℝ × ℝ ↦ (2 * w p.1 ^ 2) * (1 : ℝ) by
+      funext p
+      dsimp only [A]
+      ring,
+      setIntegral_prod_mul
+        (fun x : ℝ ↦ 2 * w x ^ 2) (fun _x : ℝ ↦ (1 : ℝ)) J J,
+      setIntegral_const, integral_const_mul, hvol]
+    simp only [smul_eq_mul]
+    ring
+  have hBValue :
+      (∫ p : ℝ × ℝ in J ×ˢ J, B p
+          ∂((volume : Measure ℝ).prod volume)) =
+        ∫ x : ℝ in J, w x ^ 2 := by
+    rw [show B = fun p : ℝ × ℝ ↦ (1 : ℝ) * (2 * w p.2 ^ 2) by
+      funext p
+      dsimp only [B]
+      ring,
+      setIntegral_prod_mul
+        (fun _x : ℝ ↦ (1 : ℝ)) (fun x : ℝ ↦ 2 * w x ^ 2) J J,
+      setIntegral_const, integral_const_mul, hvol]
+    simp only [smul_eq_mul]
+    ring
+  have hDValue :
+      (∫ p : ℝ × ℝ in J ×ˢ J, D p
+          ∂((volume : Measure ℝ).prod volume)) =
+        4 * (∫ x : ℝ in J, w x) ^ 2 := by
+    rw [show D = fun p : ℝ × ℝ ↦ (4 * w p.1) * w p.2 by rfl,
+      setIntegral_prod_mul
+        (fun x : ℝ ↦ 4 * w x) w J J,
+      integral_const_mul]
+    ring
+  have hMset : (∫ x : ℝ in -1..1, w x) = ∫ x : ℝ in J, w x := by
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc (by
+        intro x hx
+        dsimp only [J] at hx
+        exact ⟨by linarith [hx.1], by linarith [hx.2]⟩)
+    intro x hx
+    exact hsupport x hx.2
+  have hEset : (∫ x : ℝ in -1..1, w x ^ 2) =
+      ∫ x : ℝ in J, w x ^ 2 := by
+    rw [intervalIntegral.integral_of_le (by norm_num)]
+    apply setIntegral_eq_of_subset_of_forall_diff_eq_zero
+      measurableSet_Ioc (by
+        intro x hx
+        dsimp only [J] at hx
+        exact ⟨by linarith [hx.1], by linarith [hx.2]⟩)
+    intro x hx
+    rw [hsupport x hx.2]
+    norm_num
+  rw [hLExpand, hAValue, hBValue, hDValue] at hmono
+  rw [hMset, hEset]
+  simpa only [J, K, two_mul] using hmono
+
+/-- The central quarter support forces the precise raw logarithmic reserve
+needed by the degenerate five-cell endpoint.  The two terms are structural:
+the exterior zero region contributes `2 log 2`, while the internal square
+contributes the exact variance `1/2 E - M^2`. -/
+theorem centeredQuarterSupport_rawLogEnergy_gap
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    2 * Real.log 2 * (∫ x : ℝ in -1..1, w x ^ 2) +
+        (1 / 2 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) -
+        (∫ x : ℝ in -1..1, w x) ^ 2 ≤
+      centeredRawLogEnergy w / 4 := by
+  let S : Set ℝ := Icc (-1 : ℝ) 1
+  let J : Set ℝ := Icc (-(1 / 4 : ℝ)) (1 / 4)
+  let P : Set ℝ := Ioc (1 / 4 : ℝ) 1
+  let N : Set ℝ := Ico (-1 : ℝ) (-(1 / 4))
+  let O : Set ℝ := P ∪ N
+  let K : ℝ × ℝ → ℝ := fun p ↦
+    centeredLogDifferenceKernel w p.1 p.2
+  let JJ : Set (ℝ × ℝ) := J ×ˢ J
+  let JO : Set (ℝ × ℝ) := J ×ˢ O
+  let OJ : Set (ℝ × ℝ) := O ×ˢ J
+  let R : Set (ℝ × ℝ) := (JJ ∪ JO) ∪ OJ
+  obtain ⟨C, hC⟩ :=
+    hlocal.exists_lipschitzOnWith_of_compact isCompact_Icc
+  have henergy : IntegrableOn K (S ×ˢ S)
+      ((volume : Measure ℝ).prod volume) := by
+    simpa only [K, S] using
+      integrableOn_centeredLogDifferenceKernel_prod_of_lipschitzOnWith w hC
+  have hJsub : J ⊆ S := by
+    intro x hx
+    dsimp only [J, S] at hx ⊢
+    constructor <;> linarith [hx.1, hx.2]
+  have hPsub : P ⊆ S := by
+    intro x hx
+    dsimp only [P, S] at hx ⊢
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hNsub : N ⊆ S := by
+    intro x hx
+    dsimp only [N, S] at hx ⊢
+    exact ⟨hx.1, by linarith [hx.2]⟩
+  have hOsub : O ⊆ S := union_subset hPsub hNsub
+  have hJOdisjoint : Disjoint J O := by
+    rw [Set.disjoint_left]
+    intro x hxJ hxO
+    rcases hxO with hxP | hxN
+    · dsimp only [J, O, P] at hxJ hxP
+      linarith [hxJ.2, hxP.1]
+    · dsimp only [J, O, N] at hxJ hxN
+      linarith [hxJ.1, hxN.2]
+  have hPNdisjoint : Disjoint P N := by
+    rw [Set.disjoint_left]
+    intro x hxP hxN
+    dsimp only [P, N] at hxP hxN
+    linarith [hxP.1, hxN.2]
+  have hJmeas : MeasurableSet J := measurableSet_Icc
+  have hPmeas : MeasurableSet P := measurableSet_Ioc
+  have hNmeas : MeasurableSet N := measurableSet_Ico
+  have hOmeas : MeasurableSet O := hPmeas.union hNmeas
+  have hJJInt : IntegrableOn K JJ
+      ((volume : Measure ℝ).prod volume) :=
+    henergy.mono_set (Set.prod_mono hJsub hJsub)
+  have hJOInt : IntegrableOn K JO
+      ((volume : Measure ℝ).prod volume) :=
+    henergy.mono_set (Set.prod_mono hJsub hOsub)
+  have hOJInt : IntegrableOn K OJ
+      ((volume : Measure ℝ).prod volume) :=
+    henergy.mono_set (Set.prod_mono hOsub hJsub)
+  have hJJJOdisjoint : Disjoint JJ JO := by
+    exact hJOdisjoint.set_prod_right J J
+  have hfirstDisjoint : Disjoint (JJ ∪ JO) OJ := by
+    rw [Set.disjoint_left]
+    intro p hp hOJ
+    rcases hp with hJJ | hJO
+    · exact (hJOdisjoint.notMem_of_mem_left hJJ.1) hOJ.1
+    · exact (hJOdisjoint.notMem_of_mem_left hJO.1) hOJ.1
+  have hRsub : R ⊆ S ×ˢ S := by
+    intro p hp
+    rcases hp with (hJJ | hJO) | hOJ
+    · exact ⟨hJsub hJJ.1, hJsub hJJ.2⟩
+    · exact ⟨hJsub hJO.1, hOsub hJO.2⟩
+    · exact ⟨hOsub hOJ.1, hJsub hOJ.2⟩
+  have hselectedEq :
+      (∫ p : ℝ × ℝ in R, K p
+          ∂((volume : Measure ℝ).prod volume)) =
+        ((∫ p : ℝ × ℝ in JJ, K p
+          ∂((volume : Measure ℝ).prod volume)) +
+        (∫ p : ℝ × ℝ in JO, K p
+          ∂((volume : Measure ℝ).prod volume))) +
+        ∫ p : ℝ × ℝ in OJ, K p
+          ∂((volume : Measure ℝ).prod volume) := by
+    dsimp only [R]
+    rw [setIntegral_union hfirstDisjoint (hOmeas.prod hJmeas)
+        (hJJInt.union hJOInt) hOJInt,
+      setIntegral_union hJJJOdisjoint (hJmeas.prod hOmeas)
+        hJJInt hJOInt]
+  have hKnonneg : ∀ p : ℝ × ℝ, 0 ≤ K p := by
+    intro p
+    dsimp only [K]
+    unfold centeredLogDifferenceKernel
+    exact div_nonneg (sq_nonneg _) (abs_nonneg _)
+  have hselectedLe :
+      (∫ p : ℝ × ℝ in R, K p
+          ∂((volume : Measure ℝ).prod volume)) ≤
+        ∫ p : ℝ × ℝ in S ×ˢ S, K p
+          ∂((volume : Measure ℝ).prod volume) :=
+    setIntegral_mono_set henergy
+      (Filter.Eventually.of_forall hKnonneg)
+      (Filter.Eventually.of_forall hRsub)
+  have hKswap (p : ℝ × ℝ) : K p.swap = K p := by
+    rcases p with ⟨x, y⟩
+    dsimp only [K]
+    unfold centeredLogDifferenceKernel
+    simp only [Prod.swap_prod_mk]
+    rw [abs_sub_comm]
+    ring
+  have hOJ_eq_JO :
+      (∫ p : ℝ × ℝ in OJ, K p
+          ∂((volume : Measure ℝ).prod volume)) =
+        ∫ p : ℝ × ℝ in JO, K p
+          ∂((volume : Measure ℝ).prod volume) := by
+    have hswap := MeasureTheory.setIntegral_prod_swap
+      (μ := (volume : Measure ℝ)) (ν := (volume : Measure ℝ)) J O K
+    calc
+      (∫ p : ℝ × ℝ in OJ, K p
+          ∂((volume : Measure ℝ).prod volume)) =
+          ∫ p : ℝ × ℝ in O ×ˢ J, K p.swap
+            ∂((volume : Measure ℝ).prod volume) := by
+        apply setIntegral_congr_fun (hOmeas.prod hJmeas)
+        intro p _hp
+        exact (hKswap p).symm
+      _ = ∫ p : ℝ × ℝ in J ×ˢ O, K p
+          ∂((volume : Measure ℝ).prod volume) := hswap
+      _ = _ := by rfl
+  have hJOsplit :
+      (∫ p : ℝ × ℝ in JO, K p
+          ∂((volume : Measure ℝ).prod volume)) =
+        (∫ p : ℝ × ℝ in J ×ˢ P, K p
+          ∂((volume : Measure ℝ).prod volume)) +
+        ∫ p : ℝ × ℝ in J ×ˢ N, K p
+          ∂((volume : Measure ℝ).prod volume) := by
+    have hJPInt : IntegrableOn K (J ×ˢ P)
+        ((volume : Measure ℝ).prod volume) :=
+      henergy.mono_set (Set.prod_mono hJsub hPsub)
+    have hJNInt : IntegrableOn K (J ×ˢ N)
+        ((volume : Measure ℝ).prod volume) :=
+      henergy.mono_set (Set.prod_mono hJsub hNsub)
+    dsimp only [JO, O]
+    rw [prod_union]
+    exact setIntegral_union (hPNdisjoint.set_prod_right J J)
+      (hJmeas.prod hNmeas) hJPInt hJNInt
+  have hext :=
+    four_log_two_mul_energy_le_centeredQuarter_externalCross
+      w hw hlocal hsupport
+  have hextJO :
+      4 * Real.log 2 * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+        ∫ p : ℝ × ℝ in JO, K p
+          ∂((volume : Measure ℝ).prod volume) := by
+    rw [hJOsplit]
+    simpa only [J, P, N, K] using hext
+  have hint := centeredQuarter_internalVariance_le_rawSquare
+    w hw hlocal hsupport
+  have hintJJ :
+      2 * (∫ x : ℝ in -1..1, w x ^ 2) -
+          4 * (∫ x : ℝ in -1..1, w x) ^ 2 ≤
+        ∫ p : ℝ × ℝ in JJ, K p
+          ∂((volume : Measure ℝ).prod volume) := by
+    simpa only [JJ, J, K] using hint
+  have hraw := centeredRawLogEnergy_eq_setIntegral_fiveCell w henergy
+  rw [hselectedEq, hOJ_eq_JO, ← hraw] at hselectedLe
+  nlinarith
+
+/-- A collapsed endpoint cell retains a uniform `27/100` clean local gap.
+This is the quantitative diagonal input needed to compare the two remote
+endpoint cells in the zero-middle five-cell geometry. -/
+theorem twenty_seven_hundredths_energy_le_yoshidaEndpointClean_of_centeredQuarterSupport
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (hsupport : ∀ x ∉ Icc (-(1 / 4 : ℝ)) (1 / 4), w x = 0) :
+    (27 / 100 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      yoshidaEndpointOddCleanQuadratic w := by
+  let E : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  let M : ℝ := ∫ x : ℝ in -1..1, w x
+  let R : ℂ := yoshidaEndpointRegularQuadratic (fun x ↦ (w x : ℂ))
+  let H : ℝ := yoshidaEndpointHyperbolicQuadratic (fun x ↦ (w x : ℂ))
+  have hE0 : 0 ≤ E := by
+    dsimp only [E]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg (w x))
+  have hraw := centeredQuarterSupport_rawLogEnergy_gap
+    w hw hlocal hsupport
+  have hpotential : 0 ≤
+      ∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2 := by
+    apply intervalIntegral.integral_nonneg (by norm_num)
+    intro x hx
+    have hxIcc : x ∈ Icc (-1 : ℝ) 1 := by
+      simpa [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] using hx
+    have harg0 : 0 ≤ 1 - x ^ 2 := by
+      nlinarith [mul_nonneg (sub_nonneg.mpr hxIcc.1)
+        (sub_nonneg.mpr hxIcc.2)]
+    have harg1 : 1 - x ^ 2 ≤ 1 := by nlinarith [sq_nonneg x]
+    have hV : 0 ≤ yoshidaEndpointPotential x := by
+      unfold yoshidaEndpointPotential
+      have hlog := Real.log_nonpos harg0 harg1
+      linarith
+    exact mul_nonneg hV (sq_nonneg _)
+  have hregNorm :=
+    norm_yoshidaEndpointRegularQuadratic_le_one_eighth_of_centeredQuarterSupport
+      w hw hsupport
+  have hregRe : R.re ≤ ‖R‖ := re_le_norm R
+  have hreg : R.re ≤ (1 / 8 : ℝ) * E := by
+    exact hregRe.trans (by simpa only [R, E] using hregNorm)
+  have hhyper :=
+    yoshidaEndpointHyperbolicQuadratic_lower_of_centeredQuarterSupport
+      w hw hsupport
+  have hmass := centeredQuarterSupport_mass_sq_le_half_energy
+    w hw hsupport
+  have hlog := strict_log_two_bounds
+  have hgamma :=
+    eulerMascheroniConstant_lt_twenty_eight_thousand_eight_hundred_sixty_one_div_fifty_thousand
+  have hlogpi :=
+    log_pi_mul_log_two_lt_seven_thousand_seven_hundred_eighty_three_div_ten_thousand
+  have hsqrt := inv_sqrt_two_lt_seventy_one_div_hundred
+  have hscalar : yoshidaEndpointScalarMassLoss <
+      (67776 / 50000 : ℝ) := by
+    unfold yoshidaEndpointScalarMassLoss
+    linarith
+  have hsqrtLoss : 1 / Real.sqrt 2 - Real.log 2 <
+      (169 / 10000 : ℝ) := by
+    linarith
+  have hcoef : (9 / 10 : ℝ) * Real.log 2 - 1 ≤ 0 := by
+    linarith [hlog.2]
+  have hmassScaled :
+      ((9 / 10 : ℝ) * Real.log 2 - 1) * ((1 / 2 : ℝ) * E) ≤
+        ((9 / 10 : ℝ) * Real.log 2 - 1) * M ^ 2 := by
+    have hm : M ^ 2 ≤ (1 / 2 : ℝ) * E := by
+      simpa only [M, E] using hmass
+    exact mul_le_mul_of_nonpos_left hm hcoef
+  have hmainLog :
+      (1959 / 800 : ℝ) * (6931 / 10000 : ℝ) * E ≤
+        (1959 / 800 : ℝ) * Real.log 2 * E := by
+    have hc : 0 ≤ (1959 / 800 : ℝ) * E :=
+      mul_nonneg (by norm_num) hE0
+    nlinarith [mul_le_mul_of_nonneg_right hlog.1.le hc]
+  have hscalarScaled :
+      yoshidaEndpointScalarMassLoss * E ≤
+        (67776 / 50000 : ℝ) * E :=
+    mul_le_mul_of_nonneg_right hscalar.le hE0
+  have hregScaled :
+      yoshidaEndpointA * R.re ≤
+        (6932 / 10000 : ℝ) / 16 * E := by
+    have hA0 : 0 ≤ yoshidaEndpointA := yoshidaEndpointA_pos.le
+    have hmul := mul_le_mul_of_nonneg_left hreg hA0
+    have hAupper : yoshidaEndpointA < (6932 / 10000 : ℝ) / 2 := by
+      unfold yoshidaEndpointA
+      linarith [hlog.2]
+    have hupperScaled :
+        yoshidaEndpointA * ((1 / 8 : ℝ) * E) ≤
+          ((6932 / 10000 : ℝ) / 2) * ((1 / 8 : ℝ) * E) :=
+      mul_le_mul_of_nonneg_right hAupper.le
+        (mul_nonneg (by norm_num) hE0)
+    calc
+      yoshidaEndpointA * R.re ≤
+          yoshidaEndpointA * ((1 / 8 : ℝ) * E) := hmul
+      _ ≤ ((6932 / 10000 : ℝ) / 2) *
+          ((1 / 8 : ℝ) * E) := hupperScaled
+      _ = (6932 / 10000 : ℝ) / 16 * E := by ring
+  have hsqrtScaled :
+      (1 / Real.sqrt 2 - Real.log 2) * E ≤
+        (169 / 10000 : ℝ) * E :=
+    mul_le_mul_of_nonneg_right hsqrtLoss.le hE0
+  have hmargin :
+      (27 / 100 : ℝ) <
+        (1959 / 800 : ℝ) * (6931 / 10000 : ℝ) -
+          (67776 / 50000 : ℝ) -
+          (6932 / 10000 : ℝ) / 16 -
+          (169 / 10000 : ℝ) := by
+    norm_num
+  dsimp only [E, M, H] at hraw hhyper hmassScaled hmainLog
+  dsimp only [E, R] at hscalarScaled hregScaled hsqrtScaled
+  dsimp only [yoshidaEndpointOddCleanQuadratic]
+  unfold yoshidaEndpointScalarMassLoss at hscalarScaled
+  nlinarith
 
 /-- Exact scalar form of the new common-parent obstruction.  Once the two
 adjacent minors are nonnegative and the middle diagonal is positive, a
