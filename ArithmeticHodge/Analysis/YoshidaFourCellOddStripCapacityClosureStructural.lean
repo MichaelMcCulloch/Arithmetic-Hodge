@@ -8012,6 +8012,27 @@ theorem fourCellOddEndpointStripOddRawEnergy_oneThreeFiveLowProfile
     centeredRawLogEnergy_oneThreeFiveLowProfile]
   ring
 
+/-- Exact `L²` mass matrix of the reflection-odd affine strip channel on
+the retained `P₁/P₃/P₅` pivot. -/
+theorem fourCellOddEndpointStripOddMass_oneThreeFiveLowProfile
+    (c d e : ℝ) :
+    fourCellOddEndpointStripOddMass
+        (fourCellOddOneThreeFiveLowProfile c d e) =
+      (2 / 375 : ℝ) * c ^ 2 +
+        2 * (56 / 3125 : ℝ) * c * d +
+        2 * (184 / 15625 : ℝ) * c * e +
+        (6586 / 109375 : ℝ) * d ^ 2 +
+        2 * (3096 / 78125 : ℝ) * d * e +
+        (14520002 / 537109375 : ℝ) * e ^ 2 := by
+  unfold fourCellOddEndpointStripOddMass
+  rw [fourCellOddEndpointStripOdd_oneThreeFiveLowProfile_eq_lowProfile]
+  change (1 / 5 : ℝ) * factorTwoIntrinsicEnergy
+      (fourCellOddOneThreeFiveLowProfile
+        (c / 5 + 84 * d / 125 + 276 * e / 625)
+        (d / 125 + 84 * e / 625) (e / 3125)) = _
+  rw [factorTwoIntrinsicEnergy_oneThreeFiveLowProfile]
+  ring
+
 /-- The signed `P₁/P₃/P₅`--tail row has no scalar-mass contribution and its
 remaining wide-regular term is controlled by the product `L²` energy. -/
 theorem fourCellOddSignedMassRegularBilinear_oneThreeFive_tail_sq_le_energy_mul
