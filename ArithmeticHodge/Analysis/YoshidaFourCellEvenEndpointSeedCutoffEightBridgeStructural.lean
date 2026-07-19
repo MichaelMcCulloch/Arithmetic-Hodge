@@ -30,6 +30,7 @@ open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaFourCellEvenZeroCoshCoupledCoreStructural
 open YoshidaFourCellEvenZeroCoshRegularStructural
+open YoshidaRegularKernelBound
 
 /-!
 # The endpoint seed in the cutoff-eight coordinates
@@ -135,6 +136,25 @@ theorem
     (2 / 3) (-2 / 3) 0 0 r hr hlocal hlow]
   ring
 
+/-- Orthogonality removes the scalar-mass part of the signed endpoint-seed
+row on a `P8+` tail.  Only the smooth regular-kernel row survives. -/
+theorem fourCellEvenSignedMassRegularPolarization_endpointSeed_tail_eq_regular
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    fourCellEvenSignedMassRegularPolarization
+        fourCellEvenEndpointCoshSeed r =
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              fourCellEvenEndpointCoshSeed r t) := by
+  rw [fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile]
+  have hmass := intervalIntegral_intrinsicEvenP0246_mul_tail_eq_zero
+    (2 / 3) (-2 / 3) 0 0 r hr hlow
+  unfold fourCellEvenSignedMassRegularPolarization
+  rw [hmass]
+  ring
+
 /-- Exact mixed-row decomposition for the complete cutoff-eight split.  The
 seed-to-low term is finite-dimensional, while the seed-to-tail term is the
 single retained endpoint-capacity row. -/
@@ -211,6 +231,29 @@ theorem fourCellEvenEndpointSeedRow_tail_eq_capacity_sub_signed
   rw [fourCellEvenEndpointSeedRow_eq_core_sub_signed r hr hlocal heven hzero,
     fourCellEvenZeroCoshCoupledCorePolarization_endpointSeed_tail_eq_capacity
       r hr hlocal hlow]
+
+/-- On the cutoff-eight tail the complete fixed row contains exactly two
+opposing terms: the endpoint-capacity row and the smooth regular-kernel row.
+Both singular raw energy and scalar mass vanish by Legendre orthogonality. -/
+theorem fourCellEvenEndpointSeedRow_tail_eq_capacity_sub_regular
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hzero : fourCellPositiveCoshMoment r
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    fourCellEvenEndpointSeedRow r =
+      fourCellEvenEndpointCapacityPolarization
+          fourCellEvenEndpointCoshSeed r -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear
+                fourCellEvenEndpointCoshSeed r t) := by
+  rw [fourCellEvenEndpointSeedRow_tail_eq_capacity_sub_signed
+      r hr hlocal heven hzero hlow,
+    fourCellEvenSignedMassRegularPolarization_endpointSeed_tail_eq_regular
+      r hr hlow]
 
 /-- Full fixed-row normal form after the canonical cutoff-eight split.  This
 is the exact outer determinant row: one finite `P0246` core entry, one
