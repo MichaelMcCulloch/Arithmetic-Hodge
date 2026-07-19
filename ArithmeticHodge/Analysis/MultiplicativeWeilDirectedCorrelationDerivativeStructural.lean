@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilDirectedCorrelationSmoothStructural
 import Mathlib.Analysis.Calculus.Deriv.CompMul
+import Mathlib.Analysis.Calculus.Deriv.Star
 import Mathlib.Analysis.Complex.RealDeriv
 
 set_option autoImplicit false
@@ -151,6 +152,62 @@ theorem bombieriDirectedCorrelation_hasDerivAt_coherentWeights
     rw [map_mul, starRingEnd_apply, Complex.star_def, Complex.conj_ofReal]
   rw [deriv_eq_of_eq_realWeight_mul f g eta heta hf (x * y), hh y,
     hstar]
+  push_cast
+  ring
+
+/-- Conjugating the directed correlation conjugates its derivative.  This is
+the orientation used by the separated Chebyshev-potential formula. -/
+theorem star_bombieriDirectedCorrelation_hasDerivAt_integral
+    (f h : BombieriTest) (x : ℝ) :
+    HasDerivAt
+      (fun z : ℝ ↦ starRingEnd ℂ (bombieriDirectedCorrelation f h z))
+      (∫ y : ℝ in Set.Ioi 0,
+        ((y : ℂ) * starRingEnd ℂ (deriv f (x * y))) * h y) x := by
+  have H := (bombieriDirectedCorrelation_hasDerivAt_integral f h x).star
+  convert H using 1
+  change (∫ y : ℝ in Set.Ioi 0,
+      ((y : ℂ) * starRingEnd ℂ (deriv f (x * y))) * h y) =
+    Complex.conjCLE (∫ y : ℝ in Set.Ioi 0,
+      ((y : ℂ) * deriv f (x * y)) * starRingEnd ℂ (h y))
+  rw [← Complex.conjCLE.integral_comp_comm]
+  apply setIntegral_congr_fun measurableSet_Ioi
+  intro y _hy
+  simp only [Complex.conjCLE_apply, starRingEnd_apply, map_mul, star_star]
+  rw [RCLike.star_def, Complex.conj_ofReal]
+
+/-- Rewriting form of the conjugated derivative formula. -/
+theorem deriv_star_bombieriDirectedCorrelation_eq_integral
+    (f h : BombieriTest) (x : ℝ) :
+    deriv (fun z : ℝ ↦
+      starRingEnd ℂ (bombieriDirectedCorrelation f h z)) x =
+      ∫ y : ℝ in Set.Ioi 0,
+        ((y : ℂ) * starRingEnd ℂ (deriv f (x * y))) * h y :=
+  (star_bombieriDirectedCorrelation_hasDerivAt_integral f h x).deriv
+
+/-- In the conjugated orientation, coherence separates the same partition
+boundary term and parent-derivative term used by the corrected-potential
+pairing. -/
+theorem star_bombieriDirectedCorrelation_hasDerivAt_coherentWeights
+    (f h g : BombieriTest) (eta theta : ℝ → ℝ)
+    (heta : ContDiff ℝ ∞ eta) (_htheta : ContDiff ℝ ∞ theta)
+    (hf : ∀ z : ℝ, f z = (eta z : ℂ) * g z)
+    (hh : ∀ z : ℝ, h z = (theta z : ℂ) * g z)
+    (x : ℝ) :
+    HasDerivAt
+      (fun z : ℝ ↦ starRingEnd ℂ (bombieriDirectedCorrelation f h z))
+      (∫ y : ℝ in Set.Ioi 0,
+        (((y * deriv eta (x * y) * theta y : ℝ) : ℂ) *
+            (starRingEnd ℂ (g (x * y)) * g y) +
+          ((y * eta (x * y) * theta y : ℝ) : ℂ) *
+            (starRingEnd ℂ (deriv g (x * y)) * g y))) x := by
+  have H := star_bombieriDirectedCorrelation_hasDerivAt_integral f h x
+  convert H using 1
+  apply setIntegral_congr_fun measurableSet_Ioi
+  intro y _hy
+  dsimp only
+  rw [deriv_eq_of_eq_realWeight_mul f g eta heta hf (x * y), hh y]
+  simp only [map_add, map_mul, starRingEnd_apply]
+  simp only [RCLike.star_def, Complex.conj_ofReal]
   push_cast
   ring
 
