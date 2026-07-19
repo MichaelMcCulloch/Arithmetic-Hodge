@@ -12,6 +12,7 @@ open MultiplicativeWeil
 open MultiplicativeWeilAllLengthEndpointReserveStructural
 open MultiplicativeWeilMinimalBlockEndpointEliminationStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
+open MultiplicativeWeilMonotoneCutChebyshevFrontierStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 
@@ -57,6 +58,77 @@ theorem fiveCell_remoteEndpointGlobalCross_re_eq_balance
   unfold fiveCellRemoteEndpointBalance
   linarith
 
+/-- The physical middle three cells of a five-cell block. -/
+def fiveCellMiddleThree (parent : BombieriTest) (k : ℤ) : BombieriTest :=
+  monotoneQuarterCell parent (k + 1) +
+    monotoneQuarterCell parent (k + 2) +
+      monotoneQuarterCell parent (k + 3)
+
+/-- The two near entries in the left endpoint row. -/
+def fiveCellLeftNearCross (parent : BombieriTest) (k : ℤ) : ℝ :=
+  (bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterCell parent k)
+      (monotoneQuarterCell parent (k + 1))).re +
+    (bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterCell parent k)
+      (monotoneQuarterCell parent (k + 2))).re
+
+/-- The two near entries in the right endpoint row. -/
+def fiveCellRightNearCross (parent : BombieriTest) (k : ℤ) : ℝ :=
+  (bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterCell parent (k + 2))
+      (monotoneQuarterCell parent (k + 4))).re +
+    (bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterCell parent (k + 3))
+      (monotoneQuarterCell parent (k + 4))).re
+
+/-- Exact common-parent row at the left endpoint: two near Gram entries and
+the lag-three corrected-Chebyshev contribution. -/
+theorem fiveCell_leftEndpointMiddleCross_re_eq_near_add_chebyshev
+    (parent : BombieriTest) (k : ℤ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterCell parent k)
+      (fiveCellMiddleThree parent k)).re =
+        fiveCellLeftNearCross parent k +
+          monotoneQuarterFarChebyshevContribution parent k 3 := by
+  rw [fiveCellMiddleThree,
+    bombieriTwoBlockGlobalCrossSymbol_add_right,
+    bombieriTwoBlockGlobalCrossSymbol_add_right,
+    Complex.add_re, Complex.add_re,
+    monotoneQuarterCell_far_globalCross_re_eq_contribution
+      parent k 3 (by omega)]
+  rfl
+
+/-- Exact common-parent row at the right endpoint.  Its far entry begins one
+cell later, while the remaining two entries are the reversed near row. -/
+theorem fiveCell_middleRightEndpointCross_re_eq_chebyshev_add_near
+    (parent : BombieriTest) (k : ℤ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      (fiveCellMiddleThree parent k)
+      (monotoneQuarterCell parent (k + 4))).re =
+        monotoneQuarterFarChebyshevContribution parent (k + 1) 3 +
+          fiveCellRightNearCross parent k := by
+  rw [fiveCellMiddleThree,
+    bombieriTwoBlockGlobalCrossSymbol_add_left,
+    bombieriTwoBlockGlobalCrossSymbol_add_left,
+    Complex.add_re, Complex.add_re]
+  have hfar := monotoneQuarterCell_far_globalCross_re_eq_contribution
+    parent (k + 1) 3 (by omega)
+  rw [show k + 1 + 3 = k + 4 by ring] at hfar
+  rw [hfar]
+  unfold fiveCellRightNearCross
+  ring
+
+/-- The same local-minus-prime remote balance is exactly the lag-four
+corrected-Chebyshev contribution. -/
+theorem fiveCellRemoteEndpointBalance_eq_farChebyshevContribution
+    (parent : BombieriTest) (k : ℤ) :
+    fiveCellRemoteEndpointBalance parent k =
+      monotoneQuarterFarChebyshevContribution parent k 4 := by
+  rw [← fiveCell_remoteEndpointGlobalCross_re_eq_balance]
+  exact monotoneQuarterCell_far_globalCross_re_eq_contribution
+    parent k 4 (by omega)
+
 private theorem finiteBlock_one_eq_cell
     (parent : BombieriTest) (lo : ℤ) (start offset : ℕ) :
     monotoneQuarterFiniteBlock parent lo (start + offset) 1 =
@@ -100,6 +172,135 @@ def FiveCellCoupledEndpointSchurConstraints
     V + X < -((A + M + 2 * U) + E) / 2 ∧
     (A + M + 2 * U) * E < (V + X) ^ 2 ∧
     A + M + E + 2 * (U + V + X) < 0
+
+/-- Determinant of the exact real three-block matrix on
+`(left endpoint, middle three cells, right endpoint)`. -/
+def fiveCellThreeBlockDeterminant (A M E U V X : ℝ) : ℝ :=
+  A * M * E + 2 * U * V * X - A * V ^ 2 - M * X ^ 2 - E * U ^ 2
+
+/-- The actual three-block determinant cut from one five-cell common parent. -/
+def fiveCellCommonParentThreeBlockDeterminant
+    (parent : BombieriTest) (k : ℤ) : ℝ :=
+  fiveCellThreeBlockDeterminant
+    (bombieriRealQuadraticValue (monotoneQuarterCell parent k))
+    (bombieriRealQuadraticValue (fiveCellMiddleThree parent k))
+    (bombieriRealQuadraticValue (monotoneQuarterCell parent (k + 4)))
+    ((bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterCell parent k)
+      (fiveCellMiddleThree parent k)).re)
+    ((bombieriTwoBlockGlobalCrossSymbol
+      (fiveCellMiddleThree parent k)
+      (monotoneQuarterCell parent (k + 4))).re)
+    ((bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterCell parent k)
+      (monotoneQuarterCell parent (k + 4))).re)
+
+/-- Lossless arithmetic expansion of the genuine common-parent determinant.
+Only four signed ingredients remain beyond the three diagonals: two near
+rows and the corrected-Chebyshev contributions at lags three, three, and
+four. -/
+theorem fiveCellCommonParentThreeBlockDeterminant_eq_near_chebyshev
+    (parent : BombieriTest) (k : ℤ) :
+    fiveCellCommonParentThreeBlockDeterminant parent k =
+      fiveCellThreeBlockDeterminant
+        (bombieriRealQuadraticValue (monotoneQuarterCell parent k))
+        (bombieriRealQuadraticValue (fiveCellMiddleThree parent k))
+        (bombieriRealQuadraticValue (monotoneQuarterCell parent (k + 4)))
+        (fiveCellLeftNearCross parent k +
+          monotoneQuarterFarChebyshevContribution parent k 3)
+        (monotoneQuarterFarChebyshevContribution parent (k + 1) 3 +
+          fiveCellRightNearCross parent k)
+        (monotoneQuarterFarChebyshevContribution parent k 4) := by
+  unfold fiveCellCommonParentThreeBlockDeterminant
+  rw [fiveCell_leftEndpointMiddleCross_re_eq_near_add_chebyshev,
+    fiveCell_middleRightEndpointCross_re_eq_chebyshev_add_near,
+    fiveCell_remoteEndpointGlobalCross_re_eq_balance,
+    fiveCellRemoteEndpointBalance_eq_farChebyshevContribution]
+
+private theorem middlePivot_determinant_identity
+    (A M E U V X : ℝ) :
+    (A * M - U ^ 2) * (M * E - V ^ 2) - (M * X - U * V) ^ 2 =
+      M * fiveCellThreeBlockDeterminant A M E U V X := by
+  unfold fiveCellThreeBlockDeterminant
+  ring
+
+private theorem middlePivot_quadratic_identity
+    (A M E U V X : ℝ) :
+    M * (A + M + E + 2 * (U + V + X)) =
+      (M + U + V) ^ 2 +
+        (A * M - U ^ 2) + (M * E - V ^ 2) +
+          2 * (M * X - U * V) := by
+  ring
+
+private theorem two_by_two_quadratic_nonnegative
+    {A E X : ℝ} (hA : 0 ≤ A) (hE : 0 ≤ E)
+    (hdet : X ^ 2 ≤ A * E) :
+    0 ≤ A + E + 2 * X := by
+  nlinarith [sq_nonneg (A - E), sq_nonneg (A + E + 2 * X)]
+
+/-- All principal minors, including the full determinant, make the exact
+three-block quadratic nonnegative.  This is the pivot-free semidefinite
+closure needed at five cells; the proof also handles a zero middle diagonal.
+-/
+theorem threeBlockQuadratic_nonnegative_of_principalMinors_and_determinant
+    {A M E U V X : ℝ}
+    (hA : 0 ≤ A) (hM : 0 ≤ M) (hE : 0 ≤ E)
+    (hAM : U ^ 2 ≤ A * M)
+    (hME : V ^ 2 ≤ M * E)
+    (hAE : X ^ 2 ≤ A * E)
+    (hdet : 0 ≤ fiveCellThreeBlockDeterminant A M E U V X) :
+    0 ≤ A + M + E + 2 * (U + V + X) := by
+  by_cases hMzero : M = 0
+  · have hU : U = 0 := by
+      rw [hMzero, mul_zero] at hAM
+      nlinarith [sq_nonneg U]
+    have hV : V = 0 := by
+      rw [hMzero, zero_mul] at hME
+      nlinarith [sq_nonneg V]
+    rw [hMzero, hU, hV]
+    simpa only [add_zero, zero_add] using
+      two_by_two_quadratic_nonnegative hA hE hAE
+  · have hMpos : 0 < M := lt_of_le_of_ne hM (Ne.symm hMzero)
+    let alpha : ℝ := A * M - U ^ 2
+    let beta : ℝ := M * E - V ^ 2
+    let delta : ℝ := M * X - U * V
+    have halpha : 0 ≤ alpha := by
+      dsimp only [alpha]
+      linarith
+    have hbeta : 0 ≤ beta := by
+      dsimp only [beta]
+      linarith
+    have hdelta : delta ^ 2 ≤ alpha * beta := by
+      have hid := middlePivot_determinant_identity A M E U V X
+      dsimp only [alpha, beta, delta]
+      nlinarith [mul_nonneg hM hdet]
+    have hschur : 0 ≤ alpha + beta + 2 * delta := by
+      nlinarith [sq_nonneg (alpha - beta),
+        sq_nonneg (alpha + beta + 2 * delta)]
+    have hidentity := middlePivot_quadratic_identity A M E U V X
+    dsimp only [alpha, beta, delta] at hschur
+    nlinarith [sq_nonneg (M + U + V)]
+
+/-- If all three pairwise Schur bounds hold in a minimal five-cell scalar
+configuration, then the genuinely three-way determinant must be strictly
+negative.  This isolates the next analytic common-parent relation exactly. -/
+theorem FiveCellCoupledEndpointSchurConstraints.threeBlockDeterminant_neg_of_pairwise
+    {A M E U V X : ℝ}
+    (h : FiveCellCoupledEndpointSchurConstraints A M E U V X)
+    (hAM : U ^ 2 ≤ A * M)
+    (hME : V ^ 2 ≤ M * E)
+    (hAE : X ^ 2 ≤ A * E) :
+    fiveCellThreeBlockDeterminant A M E U V X < 0 := by
+  rcases h with
+    ⟨hA, hM, hE, _hL, _hR, _hleftMean, _hleftDet,
+      _hrightMean, _hrightDet, hwhole⟩
+  by_contra hnot
+  have hdet : 0 ≤ fiveCellThreeBlockDeterminant A M E U V X :=
+    le_of_not_gt hnot
+  have hnonnegative :=
+    threeBlockQuadratic_nonnegative_of_principalMinors_and_determinant
+      hA hM hE hAM hME hAE hdet
+  exact (not_lt_of_ge hnonnegative) hwhole
 
 /-- Geometric-mean form of the two strict Schur reversals.  This extracts the
 sharp signed information from the squared determinant inequalities: the
@@ -317,6 +518,20 @@ theorem coupledEndpointSchurConstraints_allow_positive_remote :
       FiveCellCoupledEndpointSchurConstraints A M E U V X ∧ 0 < X := by
   refine ⟨1, 4, 1, -(11 / 5), -(11 / 5), 1, ?_, by norm_num⟩
   unfold FiveCellCoupledEndpointSchurConstraints
+  norm_num
+
+/-- Even all three pairwise determinant bounds are compatible with the full
+minimal five-cell deficit and a positive remote corner.  In this exact model
+the two adjacent minors vanish, the endpoint minor is positive, and only the
+genuinely three-way determinant detects negativity. -/
+theorem coupledEndpointSchurConstraints_allow_all_pairwiseSchur_but_not_threeBlock :
+    ∃ A M E U V X : ℝ,
+      FiveCellCoupledEndpointSchurConstraints A M E U V X ∧
+        U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E ∧ X ^ 2 ≤ A * E ∧
+        0 < X ∧ fiveCellThreeBlockDeterminant A M E U V X < 0 := by
+  refine ⟨1, 1, 1, -1, -1, (2 / 5 : ℝ), ?_⟩
+  unfold FiveCellCoupledEndpointSchurConstraints
+    fiveCellThreeBlockDeterminant
   norm_num
 
 end
