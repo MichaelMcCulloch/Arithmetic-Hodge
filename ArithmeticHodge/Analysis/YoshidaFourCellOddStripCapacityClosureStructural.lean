@@ -9850,6 +9850,159 @@ theorem fourCellOddOneThreeFiveCombinedQuadratic_nonneg
     linarith
   exact hQ
 
+/-! ### The actual finite block after the wide-regular perturbation -/
+
+def fourCellOddOneThreeFivePerturbed11 : ℝ :=
+  fourCellOddLowCombined11 -
+    2 * fourCellOperatorHalfWidth * fourCellOddOneThreeFiveRegular11
+
+def fourCellOddOneThreeFivePerturbed13 : ℝ :=
+  fourCellOddLowCombined13 -
+    2 * fourCellOperatorHalfWidth * fourCellOddOneThreeFiveRegular13
+
+def fourCellOddOneThreeFivePerturbed33 : ℝ :=
+  fourCellOddLowCombined33 -
+    2 * fourCellOperatorHalfWidth * fourCellOddOneThreeFiveRegular33
+
+def fourCellOddOneThreeFivePerturbed15 : ℝ :=
+  fourCellOddOneThreeFiveCombined15 -
+    2 * fourCellOperatorHalfWidth * fourCellOddOneThreeFiveRegular15
+
+def fourCellOddOneThreeFivePerturbed35 : ℝ :=
+  fourCellOddOneThreeFiveCombined35 -
+    2 * fourCellOperatorHalfWidth * fourCellOddOneThreeFiveRegular35
+
+def fourCellOddOneThreeFivePerturbed55 : ℝ :=
+  fourCellOddOneThreeFiveCombined55 -
+    2 * fourCellOperatorHalfWidth * fourCellOddOneThreeFiveRegular55
+
+/-- Exact actual `P₁/P₃/P₅` quadratic after the full wide regular
+form is subtracted. -/
+def fourCellOddOneThreeFivePerturbedQuadratic (c d e : ℝ) : ℝ :=
+  fourCellOddOneThreeFivePerturbed11 * c ^ 2 +
+    2 * fourCellOddOneThreeFivePerturbed13 * c * d +
+    fourCellOddOneThreeFivePerturbed33 * d ^ 2 +
+    2 * fourCellOddOneThreeFivePerturbed15 * c * e +
+    2 * fourCellOddOneThreeFivePerturbed35 * d * e +
+    fourCellOddOneThreeFivePerturbed55 * e ^ 2
+
+private theorem two_mul_fourCellOperatorHalfWidth_fine_bounds :
+    (8664 / 10000 : ℝ) < 2 * fourCellOperatorHalfWidth ∧
+      2 * fourCellOperatorHalfWidth < (8665 / 10000 : ℝ) := by
+  have hL := strict_log_two_fine_bounds
+  unfold fourCellOperatorHalfWidth
+  constructor <;> nlinarith
+
+set_option maxHeartbeats 1000000 in
+/-- Tight rational box for the six entries of the actual perturbed block.
+The positive `P₁/P₃` cross is strengthened by the certified negative
+sign of `R₁₃`; the `P₃/P₅` entry is retained one-sided. -/
+theorem fourCellOddOneThreeFivePerturbed_entry_bounds :
+    (247368 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed11 ∧
+    fourCellOddOneThreeFivePerturbed11 < (248102 / 1000000 : ℝ) ∧
+    (218706 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed13 ∧
+    fourCellOddOneThreeFivePerturbed13 < (218873 / 1000000 : ℝ) ∧
+    (204916 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed33 ∧
+    fourCellOddOneThreeFivePerturbed33 < (205195 / 1000000 : ℝ) ∧
+    (134917 / 10000000 : ℝ) < fourCellOddOneThreeFivePerturbed15 ∧
+    fourCellOddOneThreeFivePerturbed15 < (135673 / 10000000 : ℝ) ∧
+    (629208 / 10000000 : ℝ) < fourCellOddOneThreeFivePerturbed35 ∧
+    fourCellOddOneThreeFivePerturbed35 < (630033 / 10000000 : ℝ) ∧
+    (2449825 / 10000000 : ℝ) < fourCellOddOneThreeFivePerturbed55 ∧
+    fourCellOddOneThreeFivePerturbed55 < (245159 / 1000000 : ℝ) := by
+  let W : ℝ := 2 * fourCellOperatorHalfWidth
+  rcases two_mul_fourCellOperatorHalfWidth_fine_bounds with ⟨hWlo, hWhi⟩
+  change (8664 / 10000 : ℝ) < W at hWlo
+  change W < (8665 / 10000 : ℝ) at hWhi
+  have hW0 : 0 < W := hWlo.trans' (by norm_num)
+  rcases fourCellOddOneThreeFiveCombined_entry_fine_bounds with
+    ⟨hAlo, hAhi, hBlo, hBhi, hDlo, hDhi,
+      hElo, hEhi, hFlo, hFhi, hGlo, hGhi⟩
+  rcases fourCellOddOneThreeFiveRegular_entry_bounds with
+    ⟨h11lo, h11hi, h13lo, h13hi, h33lo, h33hi,
+      h15lo, h15hi, h35lo, h35hi, h55lo, h55hi⟩
+  have hW11lo :
+      (8664 / 10000 : ℝ) * (45 / 10000) <
+        W * fourCellOddOneThreeFiveRegular11 := by
+    calc
+      (8664 / 10000 : ℝ) * (45 / 10000) < W * (45 / 10000) :=
+        mul_lt_mul_of_pos_right hWlo (by norm_num)
+      _ < W * fourCellOddOneThreeFiveRegular11 :=
+        mul_lt_mul_of_pos_left h11lo hW0
+  have hW11hi :
+      W * fourCellOddOneThreeFiveRegular11 <
+        (8665 / 10000 : ℝ) * (523 / 100000) := by
+    calc
+      W * fourCellOddOneThreeFiveRegular11 < W * (523 / 100000) :=
+        mul_lt_mul_of_pos_left h11hi hW0
+      _ < (8665 / 10000 : ℝ) * (523 / 100000) :=
+        mul_lt_mul_of_pos_right hWhi (by norm_num)
+  have hW13lo :
+      (8665 / 10000 : ℝ) * (-28 / 100000) <
+        W * fourCellOddOneThreeFiveRegular13 := by
+    calc
+      (8665 / 10000 : ℝ) * (-28 / 100000) <
+          W * (-28 / 100000) :=
+        mul_lt_mul_of_neg_right hWhi (by norm_num)
+      _ < W * fourCellOddOneThreeFiveRegular13 :=
+        mul_lt_mul_of_pos_left h13lo hW0
+  have hW13hi :
+      W * fourCellOddOneThreeFiveRegular13 <
+        (8664 / 10000 : ℝ) * (-1 / 10000) := by
+    calc
+      W * fourCellOddOneThreeFiveRegular13 < W * (-1 / 10000) :=
+        mul_lt_mul_of_pos_left h13hi hW0
+      _ < (8664 / 10000 : ℝ) * (-1 / 10000) :=
+        mul_lt_mul_of_neg_right hWlo (by norm_num)
+  have hcrossProduct
+      {R lo hi : ℝ} (hlo : lo < R) (hhi : R < hi)
+      (hlo0 : lo < 0) (hhi0 : 0 < hi) :
+      (8665 / 10000 : ℝ) * lo < W * R ∧
+        W * R < (8665 / 10000 : ℝ) * hi := by
+    constructor
+    · calc
+        (8665 / 10000 : ℝ) * lo < W * lo :=
+          mul_lt_mul_of_neg_right hWhi hlo0
+        _ < W * R := mul_lt_mul_of_pos_left hlo hW0
+    · calc
+        W * R < W * hi := mul_lt_mul_of_pos_left hhi hW0
+        _ < (8665 / 10000 : ℝ) * hi :=
+          mul_lt_mul_of_pos_right hWhi hhi0
+  have hW33 := hcrossProduct h33lo h33hi (by norm_num) (by norm_num)
+  have hW15 := hcrossProduct h15lo h15hi (by norm_num) (by norm_num)
+  have hW35 := hcrossProduct h35lo h35hi (by norm_num) (by norm_num)
+  have hW55 := hcrossProduct h55lo h55hi (by norm_num) (by norm_num)
+  unfold fourCellOddOneThreeFivePerturbed11
+    fourCellOddOneThreeFivePerturbed13
+    fourCellOddOneThreeFivePerturbed33
+    fourCellOddOneThreeFivePerturbed15
+    fourCellOddOneThreeFivePerturbed35
+    fourCellOddOneThreeFivePerturbed55
+  change
+    (247368 / 1000000 : ℝ) <
+        fourCellOddLowCombined11 - W * fourCellOddOneThreeFiveRegular11 ∧ _
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
 /-- Exact P135 diagonal of the complete core-plus-local target.  This is
 the finite `3 × 3` block minus one fully expanded wide regular form. -/
 theorem fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_eq
