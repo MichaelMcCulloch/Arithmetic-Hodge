@@ -3773,6 +3773,121 @@ theorem four_mul_lowerIntervalMass_le_lowerNestedCoupledRaw
       simpa only [r] using lowerRescale_reflectedEnergy w] at hgap
   linarith
 
+/-- The lower-square raw gap has a quantitative surplus away from its
+linear odd ground state.  The coefficient is obtained from the exact
+degree-one/odd-tail spectral split after rescaling `[0,3/5]` to `[0,1]`;
+all odd degrees at least three retain their `11/6` harmonic weight. -/
+theorem lowerIntervalP1Surplus_le_half_lowerNestedCoupledRaw
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    (11 / 3 : ℝ) * (∫ x : ℝ in 0..3 / 5, w x ^ 2) -
+        (625 / 27 : ℝ) *
+          (∫ x : ℝ in 0..3 / 5, x * w x) ^ 2 ≤
+      (1 / 2 : ℝ) *
+        ((∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+            (w x - w y) ^ 2 / |x - y|) +
+          ∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+            (w x + w y) ^ 2 / (x + y)) := by
+  let r : ℝ → ℝ := fun x ↦ w ((3 / 5 : ℝ) * x)
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback r (t : ℝ)
+  let A : ℝ := ∫ x : ℝ in 0..3 / 5, x * w x
+  have hr : ContDiff ℝ 1 r := by
+    dsimp only [r]
+    fun_prop
+  have hrodd : Function.Odd r := by
+    intro x
+    dsimp only [r]
+    rw [show (3 / 5 : ℝ) * -x = -((3 / 5 : ℝ) * x) by ring, hodd]
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r :=
+    hr.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hLip⟩ := exists_lipschitzWith_centeredPullback r hlocal
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    fun_prop
+  have hfmem : MemLp f 2 :=
+    hfcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f
+      (by simpa only [f] using hLip)
+  have hspectral := centered_odd_one_three_tail_energy_le
+    r hr.continuous (by simpa only [f] using hfmem)
+      (by simpa only [f] using henergy) hrodd
+  have hmass0 := integral_centeredOddOneThreeResidual_sq r hr.continuous
+  have hmassFold := integral_sq_eq_two_mul_positiveHalf
+    r hr.continuous (Or.inr hrodd)
+  have hmassScale :
+      (∫ x : ℝ in 0..1, r x ^ 2) =
+        (5 / 3 : ℝ) * ∫ x : ℝ in 0..3 / 5, w x ^ 2 := by
+    simpa only [r] using integral_lowerRescale_sq w
+  have hrxEven : Function.Even (fun x : ℝ ↦ r x * centeredP1 x) := by
+    intro x
+    unfold centeredP1
+    change r (-x) * (-x) = r x * x
+    rw [hrodd]
+    ring
+  have hrxInt : IntervalIntegrable (fun x : ℝ ↦ r x * centeredP1 x)
+      volume (-1) 1 := by
+    exact (hr.continuous.mul (by
+      unfold centeredP1
+      fun_prop)).intervalIntegrable _ _
+  have hmomentFold :
+      (∫ x : ℝ in -1..1, r x * centeredP1 x) =
+        2 * ∫ x : ℝ in 0..1, r x * centeredP1 x :=
+    integral_neg_one_one_eq_two_mul_zero_one_of_even
+      (fun x : ℝ ↦ r x * centeredP1 x) hrxInt hrxEven
+  have hmomentScale :
+      (∫ x : ℝ in 0..1, r x * centeredP1 x) =
+        (25 / 9 : ℝ) * A := by
+    have hscale := intervalIntegral.integral_comp_mul_left
+      (a := (0 : ℝ)) (b := 1) (c := (3 / 5 : ℝ))
+      (fun x : ℝ ↦ x * w x) (by norm_num)
+    norm_num at hscale ⊢
+    dsimp only [r, A]
+    unfold centeredP1
+    rw [show (fun x : ℝ ↦ w ((3 / 5 : ℝ) * x) * x) =
+        fun x ↦ (5 / 3 : ℝ) *
+          (((3 / 5 : ℝ) * x) * w ((3 / 5 : ℝ) * x)) by
+      funext x
+      ring,
+      intervalIntegral.integral_const_mul, hscale]
+    ring
+  have hcoeff : centeredOddP1Coefficient r = (25 / 3 : ℝ) * A := by
+    unfold centeredOddP1Coefficient
+    rw [hmomentFold, hmomentScale]
+    ring
+  have hmass :
+      (∫ x : ℝ in -1..1, r x ^ 2) =
+        (2 / 3 : ℝ) * centeredOddP1Coefficient r ^ 2 +
+          (2 / 7 : ℝ) * centeredOddP3Coefficient r ^ 2 +
+            ∫ x : ℝ in -1..1,
+              centeredOddOneThreeResidual r x ^ 2 := by
+    linarith
+  have htail :
+      (11 / 6 : ℝ) * (∫ x : ℝ in -1..1, r x ^ 2) -
+          (5 / 9 : ℝ) * centeredOddP1Coefficient r ^ 2 ≤
+        centeredRawLogEnergy r / 4 := by
+    have hres0 : 0 ≤ ∫ x : ℝ in -1..1,
+        centeredOddOneThreeResidual r x ^ 2 :=
+      intervalIntegral.integral_nonneg (by norm_num)
+        (fun x _hx ↦ sq_nonneg _)
+    nlinarith
+  have hraw := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    r hlocal hrodd
+  have hsame := lowerRescale_sameSignEnergy w
+  have hreflected := lowerRescale_reflectedEnergy w
+  rw [hraw, hmassFold, hmassScale, hcoeff] at htail
+  rw [show fourCellPositiveHalfRawSameSignEnergy r =
+        (5 / 3 : ℝ) *
+          (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+            (w x - w y) ^ 2 / |x - y|) by
+      simpa only [r] using hsame,
+    show fourCellPositiveHalfRawReflectedEnergy r (-1) =
+        (5 / 3 : ℝ) *
+          (∫ x : ℝ in 0..3 / 5, ∫ y : ℝ in 0..3 / 5,
+            (w x + w y) ^ 2 / (x + y)) by
+      simpa only [r] using hreflected] at htail
+  dsimp only [A] at htail ⊢
+  nlinarith
+
 /-- Set-integral form of the sharp lower-square raw gap, ready for the exact
 `[0,3/5] ∪ [3/5,1]` partition of the retained reserve. -/
 theorem four_mul_lowerIntervalMass_le_lowerSquare_coupledRaw
