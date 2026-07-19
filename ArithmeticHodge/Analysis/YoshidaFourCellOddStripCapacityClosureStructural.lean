@@ -287,6 +287,124 @@ theorem oddOneThreeSchurQuadratic_le_fourCellOddHalfCoreReserve
   unfold fourCellOddHalfCoreReserve
   linarith
 
+/-! ## The uncompleted low--tail core reserve -/
+
+/-- Exact octic lower model before spending the infinite-tail reserve in a
+Schur complement.  This form keeps the residual mass, the low--tail octic
+coupling, and the residual octic square available for the four-cell defect.
+-/
+def fourCellOddCoupledOcticCoreLower (w : ℝ → ℝ) : ℝ :=
+  rawLowQ11 * centeredOddP1Coefficient w ^ 2 +
+    2 * rawLowQ13 * centeredOddP1Coefficient w *
+      centeredOddP3Coefficient w +
+    rawLowQ33 * centeredOddP3Coefficient w ^ 2 +
+    tailReserve *
+      (∫ x : ℝ in -1..1, centeredOddOneThreeResidual w x ^ 2) +
+    2 * (∫ x : ℝ in -1..1,
+      centeredOddOneThreeResidual w x *
+        centeredOddCombinedOcticResidual w x) +
+    ∫ x : ℝ in -1..1,
+      yoshidaEndpointOctic x * centeredOddOneThreeResidual w x ^ 2
+
+/-- The centered odd core dominates the exact coupled octic model without
+performing the residual Schur completion. -/
+theorem fourCellOddCoupledOcticCoreLower_le_centeredCore
+    (w : ℝ → ℝ) (hwcont : Continuous w)
+    (hf : MemLp (fun t : unitInterval ↦ centeredPullback w (t : ℝ)) 2)
+    (henergy : Integrable (unitIntervalRawLogEnergyIntegrand
+      (fun t : unitInterval ↦ centeredPullback w (t : ℝ))))
+    (hwodd : Function.Odd w)
+    (hpotential : IntervalIntegrable
+      (fun x ↦ yoshidaEndpointPotential x * w x ^ 2) volume (-1) 1) :
+    fourCellOddCoupledOcticCoreLower w ≤
+      centeredRawLogEnergy w / 4 +
+        (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2) -
+        (7 / 5 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let a := centeredOddP1Coefficient w
+  let b := centeredOddP3Coefficient w
+  let v := centeredOddOneThreeResidual w
+  let r := centeredOddCombinedOcticResidual w
+  have hlog := centered_odd_one_three_tail_energy_le
+    w hwcont hf henergy hwodd
+  have hmass0 := integral_centeredOddOneThreeResidual_sq w hwcont
+  have hmass :
+      (∫ x : ℝ in -1..1, w x ^ 2) =
+        (2 / 3 : ℝ) * a ^ 2 + (2 / 7 : ℝ) * b ^ 2 +
+          ∫ x : ℝ in -1..1, v x ^ 2 := by
+    dsimp only [a, b, v]
+    linarith
+  have hpot := integral_octic_mul_sq_decomposition w hwcont
+  have hQ11 : rawLowQ11 =
+      (1 - 7 / 5 : ℝ) * (2 / 3 : ℝ) + 13771 / 41580 := by
+    norm_num [rawLowQ11]
+  have hQ33 : rawLowQ33 =
+      (11 / 6 - 7 / 5 : ℝ) * (2 / 7 : ℝ) + 23161 / 180180 := by
+    norm_num [rawLowQ33]
+  have hQ13 : rawLowQ13 = (8 / 65 : ℝ) := by
+    rfl
+  have hdelta : tailReserve = 137 / 60 - 7 / 5 := by
+    norm_num [tailReserve]
+  have hfirst :
+      rawLowQ11 * a ^ 2 + 2 * rawLowQ13 * a * b +
+          rawLowQ33 * b ^ 2 +
+          tailReserve * (∫ x : ℝ in -1..1, v x ^ 2) +
+          2 * (∫ x : ℝ in -1..1, v x * r x) +
+          ∫ x : ℝ in -1..1, yoshidaEndpointOctic x * v x ^ 2 ≤
+        centeredRawLogEnergy w / 4 +
+          (∫ x : ℝ in -1..1, yoshidaEndpointOctic x * w x ^ 2) -
+          (7 / 5 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+    dsimp only [a, b, v, r] at hlog hmass hpot ⊢
+    rw [hQ11, hQ13, hQ33, hdelta]
+    linarith
+  have hocticInt : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointOctic x * w x ^ 2) volume (-1) 1 := by
+    apply Continuous.intervalIntegrable
+    unfold yoshidaEndpointOctic
+    fun_prop
+  have hmono :
+      (∫ x : ℝ in -1..1, yoshidaEndpointOctic x * w x ^ 2) ≤
+        ∫ x : ℝ in -1..1, yoshidaEndpointPotential x * w x ^ 2 := by
+    apply intervalIntegral.integral_mono_on_of_le_Ioo
+      (by norm_num : (-1 : ℝ) ≤ 1) hocticInt hpotential
+    intro x hx
+    apply mul_le_mul_of_nonneg_right _ (sq_nonneg _)
+    apply octic_le_endpointPotential
+    rw [abs_lt]
+    exact hx
+  unfold fourCellOddCoupledOcticCoreLower
+  dsimp only [a, b, v, r] at hfirst ⊢
+  linarith
+
+/-- Positive-half form of the same uncompleted coupled reserve. -/
+theorem fourCellOddCoupledOcticCoreLower_le_fourCellOddHalfCoreReserve
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    fourCellOddCoupledOcticCoreLower w ≤ fourCellOddHalfCoreReserve w := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback w (t : ℝ)
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  obtain ⟨C, hLip⟩ := exists_lipschitzWith_centeredPullback w hlocal
+  have hfcont : Continuous f := by
+    dsimp only [f, centeredPullback]
+    fun_prop
+  have hfmem : MemLp f 2 :=
+    hfcont.memLp_of_hasCompactSupport (HasCompactSupport.of_compactSpace f)
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) :=
+    integrable_unitIntervalRawLogEnergyIntegrand_of_lipschitzWith f
+      (by simpa only [f] using hLip)
+  have hcenter := fourCellOddCoupledOcticCoreLower_le_centeredCore
+    w hw.continuous (by simpa only [f] using hfmem)
+      (by simpa only [f] using henergy) hodd
+      (intervalIntegrable_endpointPotential_mul_sq w hw.continuous)
+  have hraw := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    w hlocal hodd
+  have hpotential := endpointPotential_eq_two_mul_positiveHalf
+    w hw.continuous (Or.inr hodd)
+  have hmass := integral_sq_eq_two_mul_positiveHalf
+    w hw.continuous (Or.inr hodd)
+  rw [hraw, hpotential, hmass] at hcenter
+  unfold fourCellOddHalfCoreReserve
+  linarith
+
 /-! ## Odd ground-state transform for the coupled raw kernels -/
 
 /-- After writing an odd profile as `w x = x * u x`, the same-sign and
