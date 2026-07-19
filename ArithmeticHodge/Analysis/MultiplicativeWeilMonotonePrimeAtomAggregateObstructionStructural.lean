@@ -3,6 +3,7 @@ import ArithmeticHodge.Analysis.MultiplicativeWeilMonotoneCutoffEnergyMonotonici
 import ArithmeticHodge.Analysis.MultiplicativeWeilFourCellEnergyAbsorptionStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilSeparatedCellCrossStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellCommonParentDeterminantStructural
 
 set_option autoImplicit false
 
@@ -34,6 +35,9 @@ open MultiplicativeWeilRealMonotonePropagationLogDefectStructural
 open MultiplicativeWeilSeparatedCellCrossStructural
 open MultiplicativeWeilFourCellMixedSignObstructionStructural
 open MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
+open MultiplicativeWeilAllLengthEndpointReserveStructural
+open MultiplicativeWeilFiveCellCommonParentDeterminantStructural
+open MultiplicativeWeilFiveCellMinimalBlockReserveStructural
 
 /-!
 # The missing cross in aggregate prime Schur absorption
@@ -4029,6 +4033,103 @@ theorem allProperContiguousSubspacesPSD_allow_allInternalCutReversals :
     rw [remoteCornerFourCoordinateQuadratic_rightTriple]
     nlinarith [sq_nonneg b, sq_nonneg c, sq_nonneg d]
   all_goals norm_num [remoteCornerFourCoordinateQuadratic]
+
+/-! ## First common-parent constraint absent from the scalar model -/
+
+/-- In the actual five-cell monotone geometry, a vanishing middle-three
+block does not leave a free remote corner.  Exact support collapse annihilates
+the endpoint prime atom, while the shortened endpoint supports give a local
+critical determinant.  Consequently the sparse endpoint pair is
+nonnegative.
+
+This conclusion genuinely uses the common parent and its monotone weights;
+it is false for the unconstrained scalar remote-corner model above. -/
+theorem bombieriRealQuadraticValue_fiveCellSparseEndpointPair_nonnegative_of_middle_zero
+    (parent : BombieriTest) (k : ℤ)
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmiddle : fiveCellMiddleThree parent k = 0) :
+    0 ≤ bombieriRealQuadraticValue
+      (monotoneQuarterCell parent k +
+        monotoneQuarterCell parent (k + 4)) := by
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let A : ℝ := (bombieriLocalCriticalForm a a).re
+  let E : ℝ := (bombieriLocalCriticalForm e e).re
+  let X : ℂ := bombieriLocalCriticalForm a e
+  have hdiag :=
+    fiveCell_endpointLocalCritical_diagonal_coercivity_of_middle_zero
+      parent k hparent hmiddle
+  have hdet :=
+    fiveCell_remoteEndpointLocalCritical_determinant_of_middle_zero
+      parent k hparent hmiddle
+  have hEa0 : 0 ≤ bombieriCriticalLogEnergy a :=
+    bombieriCriticalLogEnergy_nonnegative a
+  have hEe0 : 0 ≤ bombieriCriticalLogEnergy e :=
+    bombieriCriticalLogEnergy_nonnegative e
+  have hc0 : 0 ≤ (27 / 100 : ℝ) := by norm_num
+  have hA0 : 0 ≤ A := by
+    dsimp only [A, a]
+    exact (mul_nonneg hc0 hEa0).trans hdiag.1
+  have hE0 : 0 ≤ E := by
+    dsimp only [E, e]
+    exact (mul_nonneg hc0 hEe0).trans hdiag.2
+  have hReSq : X.re ^ 2 ≤ Complex.normSq X := by
+    rw [Complex.normSq_apply]
+    nlinarith [sq_nonneg X.im]
+  have hSchur : X.re ^ 2 ≤ A * E := by
+    exact hReSq.trans (by simpa only [X, A, E, a, e] using hdet)
+  have hsum : 0 ≤ A + E + 2 * X.re := by
+    nlinarith [sq_nonneg (A - E), sq_nonneg (A + E + 2 * X.re)]
+  unfold bombieriRealQuadraticValue
+  rw [bombieriFunctional_remoteEndpointPair_re_eq_local_of_middle_zero
+    parent k hmiddle]
+  simpa only [A, E, X, a, e] using hsum
+
+private theorem monotoneQuarterFiniteBlock_five_eq_fiveBlock
+    (parent : BombieriTest) (lo : ℤ) (start : ℕ) :
+    monotoneQuarterFiniteBlock parent lo start 5 =
+      monotoneQuarterFiveBlock parent (lo + (start : ℤ)) := by
+  classical
+  unfold monotoneQuarterFiveBlock monotoneQuarterFiniteBlock
+  apply Finset.sum_congr rfl
+  intro i _hi
+  congr 1
+  push_cast
+  ring
+
+private theorem monotoneQuarterFiveBlock_eq_endpoint_middle_endpoint
+    (parent : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiveBlock parent k =
+      (monotoneQuarterCell parent k + fiveCellMiddleThree parent k) +
+        monotoneQuarterCell parent (k + 4) := by
+  classical
+  simp [monotoneQuarterFiveBlock, monotoneQuarterFiniteBlock,
+    fiveCellMiddleThree, Finset.sum_range_succ]
+  module
+
+/-- Therefore a support-minimal negative five-cell block has a nonzero
+middle-three block.  The degenerate branch of the three-block determinant is
+not an actual minimal counterexample: exact common-parent support geometry
+excludes it before any four-cell positivity assumption is used. -/
+theorem supportMinimalNegativeMonotoneBlock_length_five_middle_ne_zero
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len)
+    (hlen : len = 5) :
+    fiveCellMiddleThree parent (lo + (start : ℤ)) ≠ 0 := by
+  intro hmiddle
+  let k : ℤ := lo + (start : ℤ)
+  have hpair :=
+    bombieriRealQuadraticValue_fiveCellSparseEndpointPair_nonnegative_of_middle_zero
+      parent k hparent hmiddle
+  have hnegative : bombieriRealQuadraticValue
+      (monotoneQuarterFiveBlock parent k) < 0 := by
+    rw [← monotoneQuarterFiniteBlock_five_eq_fiveBlock]
+    simpa only [hlen] using hmin.negative
+  rw [monotoneQuarterFiveBlock_eq_endpoint_middle_endpoint,
+    hmiddle, add_zero] at hnegative
+  exact (not_lt_of_ge hpair) hnegative
 
 end
 
