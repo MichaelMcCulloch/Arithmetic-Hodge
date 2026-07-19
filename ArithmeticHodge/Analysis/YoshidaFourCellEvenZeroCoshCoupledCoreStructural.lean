@@ -28,6 +28,7 @@ open ShiftedLegendreCenteredParity
 open ShiftedLegendreCenteredL2Structural
 open ShiftedLegendreCenteredLowModes
 open ShiftedLegendreFiniteEnergyGap
+open ShiftedLegendreL2SpectralGap
 open ShiftedLegendreL2Basis
 open ShiftedLegendreLogEnergyOrthogonalProjection
 open ShiftedLegendreOrthogonality
@@ -3149,6 +3150,125 @@ theorem repr_cutoffEightPotentialLegendreSourceL2 (m n : ℕ) :
           (centeredShiftedLegendreReal m).eval x *
           (centeredShiftedLegendreReal n).eval x)
     _ = _ := by ring
+
+/-- Above the four retained modes, the product of two endpoint-potential
+Hilbert coefficients is exactly half of the closed Parseval summand. -/
+theorem two_mul_repr_cutoffEightPotentialLegendreSourceL2
+    {m k r : ℕ} (hm : m < 2 * r + 8) (hk : k < 2 * r + 8)
+    (hmeven : Even (m + (2 * r + 8)))
+    (hkeven : Even (k + (2 * r + 8))) :
+    2 * shiftedLegendreHilbertBasis.repr
+          (cutoffEightPotentialLegendreSourceL2 m) (2 * r + 8) *
+        shiftedLegendreHilbertBasis.repr
+          (cutoffEightPotentialLegendreSourceL2 k) (2 * r + 8) =
+      cutoffEightPotentialTailSummand m k r := by
+  rw [repr_cutoffEightPotentialLegendreSourceL2,
+    repr_cutoffEightPotentialLegendreSourceL2,
+    integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+      hm hmeven,
+    integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+      hk hkeven]
+  have hmR : (m : ℝ) < ((2 * r + 8 : ℕ) : ℝ) := by
+    exact_mod_cast hm
+  have hkR : (k : ℝ) < ((2 * r + 8 : ℕ) : ℝ) := by
+    exact_mod_cast hk
+  have hmlo : ((2 * r + 8 : ℕ) : ℝ) - m ≠ 0 :=
+    ne_of_gt (sub_pos.mpr hmR)
+  have hmhi : ((2 * r + 8 : ℕ) : ℝ) + m + 1 ≠ 0 := by
+    positivity
+  have hklo : ((2 * r + 8 : ℕ) : ℝ) - k ≠ 0 :=
+    ne_of_gt (sub_pos.mpr hkR)
+  have hkhi : ((2 * r + 8 : ℕ) : ℝ) + k + 1 ≠ 0 := by
+    positivity
+  have hnorm := inv_norm_shiftedLegendreL2_sq_closed (2 * r + 8)
+  have hnorm' : 1 / ‖shiftedLegendreL2 (2 * r + 8)‖ ^ 2 =
+      2 * ((2 * r + 8 : ℕ) : ℝ) + 1 := by
+    simpa only [one_div, inv_pow] using hnorm
+  unfold cutoffEightPotentialTailSummand
+  push_cast at hmlo hmhi hklo hkhi hnorm' ⊢
+  field_simp [hmlo, hmhi, hklo, hkhi]
+  nlinarith only [hnorm']
+
+private theorem repr_shiftedLegendrePartialProjection
+    (F : UnitIntervalL2) (N n : ℕ) :
+    shiftedLegendreHilbertBasis.repr
+        (shiftedLegendrePartialProjection F N) n =
+      if n < N then shiftedLegendreHilbertBasis.repr F n else 0 := by
+  rw [shiftedLegendreHilbertBasis.repr_apply_apply]
+  unfold shiftedLegendrePartialProjection
+  rw [inner_sum]
+  by_cases hn : n < N
+  · rw [if_pos hn]
+    have hnmem : n ∈ Finset.range N := Finset.mem_range.mpr hn
+    rw [Finset.sum_eq_single n]
+    · rw [inner_smul_right,
+        (orthonormal_iff_ite.mp
+          shiftedLegendreHilbertBasis.orthonormal n n)]
+      simp
+    · intro b hb hbn
+      rw [inner_smul_right,
+        (orthonormal_iff_ite.mp
+          shiftedLegendreHilbertBasis.orthonormal n b),
+        if_neg (Ne.symm hbn)]
+      simp
+    · exact fun hnnot ↦ (hnnot hnmem).elim
+  · rw [if_neg hn]
+    apply Finset.sum_eq_zero
+    intro b hb
+    rw [inner_smul_right,
+      (orthonormal_iff_ite.mp
+        shiftedLegendreHilbertBasis.orthonormal n b)]
+    rw [if_neg]
+    · simp
+    · intro hnb
+      subst b
+      exact hn (Finset.mem_range.mp hb)
+
+/-- Abstract cutoff-eight Hilbert residual of one endpoint-potential source. -/
+def cutoffEightPotentialLegendreResidualL2 (m : ℕ) : UnitIntervalL2 :=
+  cutoffEightPotentialLegendreSourceL2 m -
+    shiftedLegendrePartialProjection
+      (cutoffEightPotentialLegendreSourceL2 m) 8
+
+theorem repr_cutoffEightPotentialLegendreResidualL2 (m n : ℕ) :
+    shiftedLegendreHilbertBasis.repr
+        (cutoffEightPotentialLegendreResidualL2 m) n =
+      if n < 8 then 0
+      else shiftedLegendreHilbertBasis.repr
+        (cutoffEightPotentialLegendreSourceL2 m) n := by
+  unfold cutoffEightPotentialLegendreResidualL2
+  rw [shiftedLegendreHilbertBasis.repr_apply_apply, inner_sub_right,
+    ← shiftedLegendreHilbertBasis.repr_apply_apply,
+    ← shiftedLegendreHilbertBasis.repr_apply_apply,
+    repr_shiftedLegendrePartialProjection]
+  by_cases hn : n < 8 <;> simp [hn]
+
+private theorem even_cutoffEightPotentialLegendreSource
+    {m : ℕ} (hm : Even m) :
+    Function.Even (cutoffEightPotentialLegendreSource m) := by
+  intro x
+  unfold cutoffEightPotentialLegendreSource yoshidaEndpointPotential
+  rw [eval_centeredShiftedLegendreReal_neg, hm.neg_one_pow]
+  ring_nf
+
+theorem repr_cutoffEightPotentialLegendreSourceL2_eq_zero_of_odd
+    {m n : ℕ} (hm : Even m) (hn : Odd n) :
+    shiftedLegendreHilbertBasis.repr
+        (cutoffEightPotentialLegendreSourceL2 m) n = 0 := by
+  unfold cutoffEightPotentialLegendreSourceL2
+  exact centeredPullback_repr_eq_zero_of_even_of_odd
+    (cutoffEightPotentialLegendreSource m)
+    (memLp_centeredPullback_cutoffEightPotentialLegendreSource m)
+    (even_cutoffEightPotentialLegendreSource hm) n hn
+
+theorem repr_cutoffEightPotentialLegendreResidualL2_eq_zero_of_odd
+    {m n : ℕ} (hm : Even m) (hn : Odd n) :
+    shiftedLegendreHilbertBasis.repr
+        (cutoffEightPotentialLegendreResidualL2 m) n = 0 := by
+  rw [repr_cutoffEightPotentialLegendreResidualL2]
+  split_ifs
+  · rfl
+  · exact repr_cutoffEightPotentialLegendreSourceL2_eq_zero_of_odd hm hn
 
 theorem fourCellEvenEndpointCapacityPolarization_P0246_eq_projectedRepresenterPairing
     (c0 c2 c4 c6 : ℝ) (r : ℝ → ℝ) (hr : Continuous r)
