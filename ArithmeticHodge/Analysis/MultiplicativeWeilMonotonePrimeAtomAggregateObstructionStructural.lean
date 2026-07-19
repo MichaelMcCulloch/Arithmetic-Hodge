@@ -11,11 +11,14 @@ noncomputable section
 
 open MultiplicativeWeil
 open MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
+open MultiplicativeWeilMonotonePrimeAtomAbsorptionStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilMonotoneRatioTwoBlockPropagationStructural
 open MultiplicativeWeilQuarterLogLatticePartitionStructural
+open MultiplicativeWeilRealLogKernelStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
+open MultiplicativeWeilRealMonotonePropagationLogDefectStructural
 
 /-!
 # The missing cross in aggregate prime Schur absorption
@@ -561,6 +564,109 @@ theorem monotonePrimeAtomInnerAggregateOrthogonalResidual_apply_of_upper
     monotoneRatioTwoBlock_apply, monotoneRatioTwoBlockMultiplier]
   rw [hinner, show k - 1 + 3 = k + 2 by ring, hlower, hupper]
   norm_num
+
+/-! ## The surviving Mangoldt row after residualization -/
+
+/-- Archimedean part of the aggregate-pivot residual cross. -/
+def monotonePrimeAtomAggregateResidualArchimedeanCross
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) : ℝ :=
+  monotonePrimeAtomAggregateReserve parent k S *
+      monotoneQuarterHeadSuffixRealArchimedeanCross parent k -
+    (monotonePrimeAtomAggregateCross parent k S).re *
+      bombieriRealLogArchimedeanCross
+        (monotoneQuarterCutoff parent (k + 1))
+        (monotonePrimeAtomAggregateSlice parent k S)
+
+/-- The new full Mangoldt cross between the unchanged inner suffix and the
+aggregate slice. -/
+def monotonePrimeAtomInnerSuffixAggregatePrimeCross
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) : ℝ :=
+  bombieriRealLogPrimeAtomCross
+    (monotoneQuarterCutoff parent (k + 1))
+    (monotonePrimeAtomAggregateSlice parent k S)
+
+/-- Prime part of the aggregate-pivot residual cross. -/
+def monotonePrimeAtomAggregateResidualPrimeCross
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) : ℝ :=
+  monotonePrimeAtomAggregateReserve parent k S *
+      monotoneQuarterHeadSuffixRealPrimeCross parent k -
+    (monotonePrimeAtomAggregateCross parent k S).re *
+      monotonePrimeAtomInnerSuffixAggregatePrimeCross parent k S
+
+/-- The cross of the two aggregate-orthogonal residuals is exactly the
+archimedean residual minus the surviving Mangoldt residual, scaled by the
+aggregate pivot. -/
+theorem monotonePrimeAtom_aggregateOrthogonalResidual_cross_eq_arch_sub_prime
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      (monotonePrimeAtomHeadAggregateOrthogonalResidual parent k S)
+      (monotonePrimeAtomInnerAggregateOrthogonalResidual parent k S)).re =
+        monotonePrimeAtomAggregateReserve parent k S *
+          (monotonePrimeAtomAggregateResidualArchimedeanCross parent k S -
+            monotonePrimeAtomAggregateResidualPrimeCross parent k S) := by
+  have hcoordinates :=
+    monotonePrimeAtom_aggregateOrthogonalResidual_coordinates parent k S
+  rw [hcoordinates.2.2]
+  unfold monotonePrimeAtomHeadSuffixGlobalCross
+    monotonePrimeAtomInnerSuffixAggregateCross
+    monotonePrimeAtomAggregateResidualArchimedeanCross
+    monotonePrimeAtomAggregateResidualPrimeCross
+    monotonePrimeAtomInnerSuffixAggregatePrimeCross
+  rw [← bombieriCompleteRealLogKernelCross_eq_globalCross_re,
+    ← bombieriCompleteRealLogKernelCross_eq_globalCross_re,
+    bombieriCompleteRealLogKernelCross,
+    bombieriCompleteRealLogKernelCross,
+    bombieriRealLogArchimedeanCross_cell_cutoff_eq_explicit,
+    bombieriRealLogPrimeAtomCross_cell_cutoff_eq_explicit]
+  ring
+
+/-- The new suffix--aggregate prime cross is still the complete symmetric
+Mangoldt row.  No atom-count or lag truncation is created by the aggregate
+pivot. -/
+theorem monotonePrimeAtomInnerSuffixAggregatePrimeCross_eq_tsum
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    monotonePrimeAtomInnerSuffixAggregatePrimeCross parent k S =
+      ∑' j : ℕ, bombieriLogPrimeAtomWeight j *
+        (bombieriRealLogCorrelation
+            (monotoneQuarterCutoff parent (k + 1))
+            (monotonePrimeAtomAggregateSlice parent k S)
+            (-Real.log (((j + 1 : ℕ) : ℝ))) +
+          bombieriRealLogCorrelation
+            (monotoneQuarterCutoff parent (k + 1))
+            (monotonePrimeAtomAggregateSlice parent k S)
+            (Real.log (((j + 1 : ℕ) : ℝ)))) := by
+  rfl
+
+/-- If `S` captures the original head--suffix prime row, residualization
+replaces that finite row by the same weighted finite sum minus the new full
+suffix--aggregate Mangoldt row. -/
+theorem monotonePrimeAtomAggregateResidualPrimeCross_eq_finset_sub_full
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hout : ∀ j ∉ S, monotonePrimeAtomValue parent k j = 0) :
+    monotonePrimeAtomAggregateResidualPrimeCross parent k S =
+      monotonePrimeAtomAggregateReserve parent k S *
+          (∑ j ∈ S, monotonePrimeAtomValue parent k j) -
+        (monotonePrimeAtomAggregateCross parent k S).re *
+          monotonePrimeAtomInnerSuffixAggregatePrimeCross parent k S := by
+  unfold monotonePrimeAtomAggregateResidualPrimeCross
+  rw [← monotoneQuarterHeadSuffixRealPrimeCross_eq_finset parent k S hout]
+
+/-- Equivalently, after using the aggregate remainder identity, the surviving
+prime obstruction is a full suffix--aggregate Mangoldt row plus the exact
+translated-kernel remainder.  It does not cancel structurally. -/
+theorem monotonePrimeAtomAggregateResidualPrimeCross_eq_survivingRow
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (hout : ∀ j ∉ S, monotonePrimeAtomValue parent k j = 0) :
+    monotonePrimeAtomAggregateResidualPrimeCross parent k S =
+      (monotonePrimeAtomAggregateCross parent k S).re *
+          (monotonePrimeAtomAggregateReserve parent k S -
+            monotonePrimeAtomInnerSuffixAggregatePrimeCross parent k S) -
+        monotonePrimeAtomAggregateReserve parent k S *
+          monotonePrimeAtomAggregateRemainder parent k S := by
+  rw [monotonePrimeAtomAggregateResidualPrimeCross_eq_finset_sub_full
+    parent k S hout]
+  unfold monotonePrimeAtomAggregateRemainder
+  ring
 
 end
 
