@@ -19,6 +19,7 @@ open MultiplicativeWeilMonotonePrimeAtomAggregateStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilMonotoneRatioTwoBlockPropagationStructural
 open MultiplicativeWeilQuarterLogLatticePartitionStructural
+open MultiplicativeWeilRealCutPhaseReductionStructural
 open MultiplicativeWeilRealLogKernelStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 open MultiplicativeWeilRealMonotonePropagationLogDefectStructural
@@ -780,6 +781,167 @@ theorem monotonePrimeAtom_finset_sum_sq_le_criticalLogEnergy
     (normSq_bombieriDirectedCorrelation_one_le_criticalLogEnergy_mul
       (monotonePrimeAtomAggregateSlice parent k S)
       (monotoneQuarterCell parent k))
+
+/-! ## The remaining norm-transfer deficit -/
+
+/-- For a conjugation-fixed parent, the aggregate slice is still
+conjugation-fixed.  Thus both tests in the zero-lag representation lie in the
+real ratio-two coercivity class. -/
+theorem bombieriConjugateTest_monotonePrimeAtomAggregateSlice
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (S : Finset ℕ) :
+    bombieriConjugateTest
+        (monotonePrimeAtomAggregateSlice parent k S) =
+      monotonePrimeAtomAggregateSlice parent k S := by
+  apply TestFunction.ext
+  intro x
+  simp only [bombieriConjugateTest_apply]
+  rw [monotonePrimeAtomAggregateSlice_apply,
+    map_mul, Complex.conj_ofReal,
+    map_sum]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro j _hj
+  rw [map_mul, Complex.conj_ofReal]
+  have hcut := congrArg
+    (fun f : BombieriTest ↦ f (((j + 1 : ℕ) : ℝ) * x))
+    (bombieriConjugateTest_monotoneQuarterCutoff
+      parent hparent (k + 1))
+  have hcut' :
+      starRingEnd ℂ
+          (monotoneQuarterCutoff parent (k + 1)
+            (((j + 1 : ℕ) : ℝ) * x)) =
+        monotoneQuarterCutoff parent (k + 1)
+          (((j + 1 : ℕ) : ℝ) * x) := by
+    simpa only [bombieriConjugateTest_apply] using hcut
+  rw [hcut']
+
+private theorem realRatioTwo_criticalLogEnergy_le_quadraticValue
+    (g : BombieriTest)
+    (hcell : BombieriRatioTwoCell g)
+    (hreal : bombieriConjugateTest g = g) :
+    (1 / 12000 : ℝ) * bombieriCriticalLogEnergy g ≤
+      bombieriRealQuadraticValue g := by
+  have hcoercive :=
+    real_ratioTwo_localCriticalForm_re_ge_criticalLogEnergy g hcell hreal
+  obtain ⟨a, b, ha, hab, hsupport, hratio⟩ := hcell
+  have heq := bombieriFunctional_quadratic_eq_bombieriLocalCriticalForm_le_two
+    g ha hab hsupport hratio
+  unfold bombieriRealQuadraticValue
+  rw [heq]
+  exact hcoercive
+
+/-- The presently available separate ratio-two coercivity bounds pay the
+head and aggregate critical energies into their complete reserves only with
+coefficient `1 / 12000`. -/
+theorem monotonePrimeAtom_head_aggregate_criticalLogEnergy_le_reserves
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (S : Finset ℕ) :
+    (1 / 12000 : ℝ) *
+          bombieriCriticalLogEnergy (monotoneQuarterCell parent k) ≤
+        bombieriRealQuadraticValue (monotoneQuarterCell parent k) ∧
+      (1 / 12000 : ℝ) *
+          bombieriCriticalLogEnergy
+            (monotonePrimeAtomAggregateSlice parent k S) ≤
+        monotonePrimeAtomAggregateReserve parent k S := by
+  constructor
+  · exact realRatioTwo_criticalLogEnergy_le_quadraticValue
+      (monotoneQuarterCell parent k)
+      (monotoneQuarterCell_ratioTwo parent k)
+      (bombieriConjugateTest_monotoneQuarterCell parent hparent k)
+  · unfold monotonePrimeAtomAggregateReserve
+    exact realRatioTwo_criticalLogEnergy_le_quadraticValue
+      (monotonePrimeAtomAggregateSlice parent k S)
+      (monotoneRatioTwoBlock_ratioTwo _ (k - 1))
+      (bombieriConjugateTest_monotonePrimeAtomAggregateSlice
+        parent hparent k S)
+
+/-- The complete aggregate cross is the new physical zero-lag prime-row
+coordinate plus exactly the already-defined translated-kernel remainder. -/
+theorem monotonePrimeAtomAggregateCross_re_eq_zeroLagOverlap_add_remainder
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    (monotonePrimeAtomAggregateCross parent k S).re =
+      (bombieriDirectedCorrelation
+        (monotonePrimeAtomAggregateSlice parent k S)
+        (monotoneQuarterCell parent k) 1).re +
+      monotonePrimeAtomAggregateRemainder parent k S := by
+  rw [← monotonePrimeAtom_finset_sum_eq_aggregate_zeroLagOverlap]
+  unfold monotonePrimeAtomAggregateRemainder
+  ring
+
+/-- Exact coefficient-one defect between the physical prime-row coordinate
+and the complete cross controlled by the ratio-two determinant.  No norm
+inequality is lost here: the whole deficit is the signed remainder-alignment
+product on the right. -/
+theorem monotonePrimeAtom_zeroLag_sq_sub_aggregateCross_re_sq
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ) :
+    (bombieriDirectedCorrelation
+        (monotonePrimeAtomAggregateSlice parent k S)
+        (monotoneQuarterCell parent k) 1).re ^ 2 -
+      (monotonePrimeAtomAggregateCross parent k S).re ^ 2 =
+        -monotonePrimeAtomAggregateRemainder parent k S *
+          (2 *
+              (bombieriDirectedCorrelation
+                (monotonePrimeAtomAggregateSlice parent k S)
+                (monotoneQuarterCell parent k) 1).re +
+            monotonePrimeAtomAggregateRemainder parent k S) := by
+  rw [monotonePrimeAtomAggregateCross_re_eq_zeroLagOverlap_add_remainder]
+  ring
+
+/-- Thus the existing complete ratio-two determinant gives the desired
+coefficient-one reserve bound for the whole prime row exactly after a signed
+alignment estimate for the translated-kernel remainder. -/
+theorem monotonePrimeAtom_finset_sum_sq_le_reserves_of_remainderAlignment
+    (parent : BombieriTest) (k : ℤ) (S : Finset ℕ)
+    (halign :
+      0 ≤ monotonePrimeAtomAggregateRemainder parent k S *
+        (2 * (∑ j ∈ S, monotonePrimeAtomValue parent k j) +
+          monotonePrimeAtomAggregateRemainder parent k S)) :
+    (∑ j ∈ S, monotonePrimeAtomValue parent k j) ^ 2 ≤
+      bombieriRealQuadraticValue (monotoneQuarterCell parent k) *
+        monotonePrimeAtomAggregateReserve parent k S := by
+  have hcrossRe :
+      (monotonePrimeAtomAggregateCross parent k S).re ^ 2 ≤
+        Complex.normSq (monotonePrimeAtomAggregateCross parent k S) := by
+    simp only [Complex.normSq_apply]
+    nlinarith [sq_nonneg
+      (monotonePrimeAtomAggregateCross parent k S).im]
+  have hdet := monotonePrimeAtom_aggregateCross_determinant parent k S
+  have hcomplete :
+      (monotonePrimeAtomAggregateCross parent k S).re ^ 2 ≤
+        bombieriRealQuadraticValue (monotoneQuarterCell parent k) *
+          monotonePrimeAtomAggregateReserve parent k S :=
+    hcrossRe.trans hdet
+  have hdefect :
+      (∑ j ∈ S, monotonePrimeAtomValue parent k j) ^ 2 -
+          (monotonePrimeAtomAggregateCross parent k S).re ^ 2 =
+        -monotonePrimeAtomAggregateRemainder parent k S *
+          (2 * (∑ j ∈ S, monotonePrimeAtomValue parent k j) +
+            monotonePrimeAtomAggregateRemainder parent k S) := by
+    rw [monotonePrimeAtom_finset_sum_eq_aggregate_zeroLagOverlap]
+    exact monotonePrimeAtom_zeroLag_sq_sub_aggregateCross_re_sq
+      parent k S
+  nlinarith
+
+/-- The determinant, physical Cauchy bound, exact cross decomposition, and
+both currently available `1 / 12000` reserve coercivities do not force the
+remainder-alignment sign.  This fixed scalar model also violates the desired
+coefficient-one reserve bound, so a proof must control the remainder jointly
+or introduce another coordinate; separate energy coercivity cannot close it. -/
+theorem aggregate_zeroLag_knownData_allow_remainder_misalignment :
+    ∃ H T C P R EH ET : ℝ,
+      0 ≤ H ∧ 0 ≤ T ∧ 0 ≤ EH ∧ 0 ≤ ET ∧
+      C = P + R ∧
+      C ^ 2 ≤ H * T ∧
+      P ^ 2 ≤ EH * ET ∧
+      (1 / 12000 : ℝ) * EH ≤ H ∧
+      (1 / 12000 : ℝ) * ET ≤ T ∧
+      R * (2 * P + R) < 0 ∧
+      H * T < P ^ 2 := by
+  refine ⟨1, 1, 0, 2, -2, 2, 2, ?_⟩
+  norm_num
 
 end
 
