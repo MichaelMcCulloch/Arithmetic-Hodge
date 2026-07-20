@@ -10,6 +10,19 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedFiniteSevenEnt
 noncomputable section
 
 open YoshidaRegularKernelBound
+open CenteredEndpointCorrelation
+open ShiftedLegendreCenteredL2Structural
+open ShiftedLegendreCenteredLowModes
+open ShiftedLegendreLogEnergyOrthogonalProjection
+open YoshidaConstantBounds
+open YoshidaFactorTwoEndpointClean
+open YoshidaFactorTwoIntegrableLagRepresenterStructural
+open YoshidaFactorTwoPhaseSymmetricCarleman
+open YoshidaFourCellEvenEndpointCoshSchurStructural
+open YoshidaFourCellEvenEndpointSeedFiniteSevenClosureStructural
+open YoshidaFourCellEvenPolarSchurStructural
+open YoshidaFourCellParityHalfFoldStructural
+open YoshidaFourCellParityOperatorStructural
 
 /-!
 # Degree-eighteen regular-kernel entry enclosures
@@ -553,6 +566,506 @@ theorem fourCellEvenFiniteSevenRegularKernelPolynomial18_sevenEighths_envelope
                   finiteSevenCschError17 (7 / 16 : ℝ)) := by
           nlinarith
         exact this.trans_lt finiteSeven_endpoint_kernel_error_lt
+
+/-! ## Uniform control of the six quotient coordinates -/
+
+private theorem finiteSeven_centeredMode_eq_centeredLegendre
+    (n : ℕ) (x : ℝ) :
+    fourCellEvenFiniteSevenCenteredMode n x =
+      (centeredShiftedLegendreReal n).eval x := by
+  unfold fourCellEvenFiniteSevenCenteredMode centeredPolynomialLift
+  exact (eval_centeredShiftedLegendreReal n x).symm
+
+private theorem finiteSeven_centeredMode_continuous (n : ℕ) :
+    Continuous (fourCellEvenFiniteSevenCenteredMode n) := by
+  unfold fourCellEvenFiniteSevenCenteredMode centeredPolynomialLift
+  fun_prop
+
+private theorem finiteSeven_centeredMode_even (k : ℕ) :
+    Function.Even (fourCellEvenFiniteSevenCenteredMode (2 * k)) := by
+  intro x
+  rw [finiteSeven_centeredMode_eq_centeredLegendre,
+    finiteSeven_centeredMode_eq_centeredLegendre]
+  exact even_eval_centeredShiftedLegendreReal k x
+
+private theorem finiteSeven_centeredMode_sq_integral (n : ℕ) :
+    (∫ x : ℝ in -1..1, fourCellEvenFiniteSevenCenteredMode n x ^ 2) =
+      2 / (2 * (n : ℝ) + 1) := by
+  have h := centeredLegendreL2Diagonal_closed n
+  unfold centeredLegendreL2Diagonal centeredPolynomialPair at h
+  simpa only [finiteSeven_centeredMode_eq_centeredLegendre, pow_two] using h
+
+private theorem finiteSeven_centeredMode_sq_integral_zero_one_le_one
+    (k : ℕ) :
+    (∫ x : ℝ in 0..1,
+      fourCellEvenFiniteSevenCenteredMode (2 * k) x ^ 2) ≤ 1 := by
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even
+    (fun x : ℝ ↦ fourCellEvenFiniteSevenCenteredMode (2 * k) x ^ 2)
+    ((finiteSeven_centeredMode_continuous (2 * k)).pow 2
+      |>.intervalIntegrable (-1) 1)
+    (by
+      intro x
+      change fourCellEvenFiniteSevenCenteredMode (2 * k) (-x) ^ 2 =
+        fourCellEvenFiniteSevenCenteredMode (2 * k) x ^ 2
+      rw [finiteSeven_centeredMode_even k x])
+  have hfull := finiteSeven_centeredMode_sq_integral (2 * k)
+  have hden : (1 : ℝ) ≤ 2 * ((2 * k : ℕ) : ℝ) + 1 := by
+    norm_num only [Nat.cast_mul, Nat.cast_ofNat]
+    have hk : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+    linarith
+  have hfullLe :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenFiniteSevenCenteredMode (2 * k) x ^ 2) ≤ 2 := by
+    rw [hfull]
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < 2 * ((2 * k : ℕ) : ℝ) + 1)]
+    nlinarith
+  nlinarith
+
+private theorem finiteSeven_coshCoordinate_zero_one_le :
+    (1 : ℝ) ≤ fourCellEvenFiniteSevenCoshCoordinate 0 := by
+  unfold fourCellEvenFiniteSevenCoshCoordinate fourCellPositiveCoshMoment
+  simp_rw [finiteSeven_centeredMode_eq_centeredLegendre,
+    eval_centeredShiftedLegendreReal_zero, mul_one]
+  calc
+    (1 : ℝ) = ∫ _x : ℝ in 0..1, (1 : ℝ) := by norm_num
+    _ ≤ ∫ x : ℝ in 0..1,
+        Real.cosh ((fourCellOperatorHalfWidth / 2) * x) := by
+      apply intervalIntegral.integral_mono_on (by norm_num)
+        (Continuous.intervalIntegrable continuous_const 0 1)
+        (Continuous.intervalIntegrable (by fun_prop) 0 1)
+      intro x _hx
+      exact Real.one_le_cosh _
+
+private theorem finiteSeven_cosh_sq_integral_le :
+    (∫ x : ℝ in 0..1,
+      Real.cosh ((fourCellOperatorHalfWidth / 2) * x) ^ 2) ≤
+        (16 / 9 : ℝ) := by
+  have hlog : Real.log 2 < (1 : ℝ) :=
+    strict_log_two_bounds.2.trans (by norm_num)
+  calc
+    _ ≤ ∫ _x : ℝ in 0..1, (16 / 9 : ℝ) := by
+      apply intervalIntegral.integral_mono_on (by norm_num)
+        (Continuous.intervalIntegrable (by fun_prop) 0 1)
+        (Continuous.intervalIntegrable continuous_const 0 1)
+      intro x hx
+      have hu0 : 0 ≤ (fourCellOperatorHalfWidth / 2) * x := by
+        exact mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) hx.1
+      have hu : (fourCellOperatorHalfWidth / 2) * x < (7 / 10 : ℝ) := by
+        unfold fourCellOperatorHalfWidth
+        norm_num at hx ⊢
+        nlinarith [Real.log_pos (by norm_num : (1 : ℝ) < 2)]
+      have hc := finiteSeven_cosh_lt_four_thirds hu0 hu
+      have hc0 := Real.cosh_pos ((fourCellOperatorHalfWidth / 2) * x)
+      nlinarith
+    _ = (16 / 9 : ℝ) := by norm_num
+
+private theorem finiteSeven_coshCoordinate_evenMode_sq_lt_two (k : ℕ) :
+    fourCellEvenFiniteSevenCoshCoordinate (2 * k) ^ 2 < 2 := by
+  let f : ℝ → ℝ := fun x ↦
+    Real.cosh ((fourCellOperatorHalfWidth / 2) * x)
+  let g : ℝ → ℝ := fourCellEvenFiniteSevenCenteredMode (2 * k)
+  have hf : Continuous f := by
+    dsimp only [f]
+    fun_prop
+  have hg : Continuous g := finiteSeven_centeredMode_continuous (2 * k)
+  have habs :
+      |∫ x : ℝ in 0..1, f x * g x| ≤
+        ∫ x : ℝ in 0..1, |f x * g x| :=
+    intervalIntegral.abs_integral_le_integral_abs (by norm_num)
+  have hyoung :
+      (∫ x : ℝ in 0..1, |f x * g x|) ≤
+        ∫ x : ℝ in 0..1, (f x ^ 2 + g x ^ 2) / 2 := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      ((hf.mul hg).abs.intervalIntegrable 0 1)
+      (((hf.pow 2).add (hg.pow 2)).div_const 2 |>.intervalIntegrable 0 1)
+    intro x _hx
+    change |f x * g x| ≤ (f x ^ 2 + g x ^ 2) / 2
+    rw [abs_mul]
+    nlinarith [sq_nonneg (|f x| - |g x|), sq_abs (f x), sq_abs (g x)]
+  have hsplit :
+      (∫ x : ℝ in 0..1, (f x ^ 2 + g x ^ 2) / 2) =
+        ((∫ x : ℝ in 0..1, f x ^ 2) +
+          (∫ x : ℝ in 0..1, g x ^ 2)) / 2 := by
+    rw [show (fun x : ℝ ↦ (f x ^ 2 + g x ^ 2) / 2) =
+        fun x ↦ (1 / 2 : ℝ) * (f x ^ 2 + g x ^ 2) by
+      funext x
+      ring,
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_add
+        ((hf.pow 2).intervalIntegrable 0 1)
+        ((hg.pow 2).intervalIntegrable 0 1)]
+    ring
+  have hfSq : (∫ x : ℝ in 0..1, f x ^ 2) ≤ (16 / 9 : ℝ) := by
+    simpa only [f] using finiteSeven_cosh_sq_integral_le
+  have hgSq : (∫ x : ℝ in 0..1, g x ^ 2) ≤ 1 := by
+    simpa only [g] using
+      finiteSeven_centeredMode_sq_integral_zero_one_le_one k
+  have hcoordAbs :
+      |fourCellEvenFiniteSevenCoshCoordinate (2 * k)| ≤ (25 / 18 : ℝ) := by
+    unfold fourCellEvenFiniteSevenCoshCoordinate fourCellPositiveCoshMoment
+    change |∫ x : ℝ in 0..1, f x * g x| ≤ _
+    calc
+      _ ≤ ∫ x : ℝ in 0..1, |f x * g x| := habs
+      _ ≤ ∫ x : ℝ in 0..1, (f x ^ 2 + g x ^ 2) / 2 := hyoung
+      _ = ((∫ x : ℝ in 0..1, f x ^ 2) +
+          (∫ x : ℝ in 0..1, g x ^ 2)) / 2 := hsplit
+      _ ≤ (25 / 18 : ℝ) := by nlinarith
+  have hsq := pow_le_pow_left₀
+    (abs_nonneg (fourCellEvenFiniteSevenCoshCoordinate (2 * k)))
+    hcoordAbs 2
+  rw [sq_abs] at hsq
+  norm_num at hsq ⊢
+  linarith
+
+private theorem finiteSeven_coshQuotient_evenMode_sq_lt_two (k : ℕ) :
+    (fourCellEvenFiniteSevenCoshCoordinate (2 * k) /
+        fourCellEvenFiniteSevenCoshCoordinate 0) ^ 2 < 2 := by
+  have hnum := finiteSeven_coshCoordinate_evenMode_sq_lt_two k
+  have hden := finiteSeven_coshCoordinate_zero_one_le
+  have hdenPos : 0 < fourCellEvenFiniteSevenCoshCoordinate 0 :=
+    lt_of_lt_of_le (by norm_num) hden
+  rw [div_pow, div_lt_iff₀ (sq_pos_of_pos hdenPos)]
+  nlinarith [sq_nonneg (fourCellEvenFiniteSevenCoshCoordinate 0 - 1)]
+
+private theorem finiteSeven_quotientMode_continuous (n : ℕ) :
+    Continuous (fourCellEvenFiniteSevenQuotientMode n) := by
+  unfold fourCellEvenFiniteSevenQuotientMode
+  exact (finiteSeven_centeredMode_continuous n).sub
+    (continuous_const.mul (finiteSeven_centeredMode_continuous 0))
+
+private theorem finiteSeven_quotientMode_sq_integral_lt_twelve (k : ℕ) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenFiniteSevenQuotientMode (2 * k) x ^ 2) < 12 := by
+  let c : ℝ := fourCellEvenFiniteSevenCoshCoordinate (2 * k) /
+    fourCellEvenFiniteSevenCoshCoordinate 0
+  let p : ℝ → ℝ := fourCellEvenFiniteSevenCenteredMode (2 * k)
+  let p₀ : ℝ → ℝ := fourCellEvenFiniteSevenCenteredMode 0
+  have hp : Continuous p := finiteSeven_centeredMode_continuous (2 * k)
+  have hp₀ : Continuous p₀ := finiteSeven_centeredMode_continuous 0
+  have hq : Continuous (fourCellEvenFiniteSevenQuotientMode (2 * k)) :=
+    finiteSeven_quotientMode_continuous (2 * k)
+  have hpoint (x : ℝ) :
+      fourCellEvenFiniteSevenQuotientMode (2 * k) x ^ 2 ≤
+        2 * p x ^ 2 + 2 * c ^ 2 * p₀ x ^ 2 := by
+    unfold fourCellEvenFiniteSevenQuotientMode
+    dsimp only [c, p, p₀]
+    nlinarith [sq_nonneg
+      (fourCellEvenFiniteSevenCenteredMode (2 * k) x +
+        (fourCellEvenFiniteSevenCoshCoordinate (2 * k) /
+          fourCellEvenFiniteSevenCoshCoordinate 0) *
+            fourCellEvenFiniteSevenCenteredMode 0 x)]
+  have hmono :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenFiniteSevenQuotientMode (2 * k) x ^ 2) ≤
+      ∫ x : ℝ in -1..1, 2 * p x ^ 2 + 2 * c ^ 2 * p₀ x ^ 2 := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      ((hq.pow 2).intervalIntegrable (-1) 1)
+      (((hp.pow 2).const_mul 2).add
+        ((hp₀.pow 2).const_mul (2 * c ^ 2)) |>.intervalIntegrable (-1) 1)
+    intro x _hx
+    exact hpoint x
+  have hsplit :
+      (∫ x : ℝ in -1..1, 2 * p x ^ 2 + 2 * c ^ 2 * p₀ x ^ 2) =
+        2 * (∫ x : ℝ in -1..1, p x ^ 2) +
+          2 * c ^ 2 * (∫ x : ℝ in -1..1, p₀ x ^ 2) := by
+    rw [intervalIntegral.integral_add
+        ((hp.pow 2).const_mul 2 |>.intervalIntegrable (-1) 1)
+        ((hp₀.pow 2).const_mul (2 * c ^ 2) |>.intervalIntegrable (-1) 1),
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_const_mul]
+  have hpSq : (∫ x : ℝ in -1..1, p x ^ 2) ≤ 2 := by
+    dsimp only [p]
+    rw [finiteSeven_centeredMode_sq_integral]
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < 2 * ((2 * k : ℕ) : ℝ) + 1)]
+    nlinarith
+  have hp₀Sq : (∫ x : ℝ in -1..1, p₀ x ^ 2) = 2 := by
+    dsimp only [p₀]
+    simpa using finiteSeven_centeredMode_sq_integral 0
+  have hcSq : c ^ 2 < 2 := by
+    simpa only [c] using finiteSeven_coshQuotient_evenMode_sq_lt_two k
+  calc
+    _ ≤ ∫ x : ℝ in -1..1,
+        2 * p x ^ 2 + 2 * c ^ 2 * p₀ x ^ 2 := hmono
+    _ = 2 * (∫ x : ℝ in -1..1, p x ^ 2) +
+        2 * c ^ 2 * (∫ x : ℝ in -1..1, p₀ x ^ 2) := hsplit
+    _ < 12 := by nlinarith [sq_nonneg c]
+
+private theorem finiteSeven_quotientMode_abs_integral_lt_five (k : ℕ) :
+    (∫ x : ℝ in -1..1,
+      |fourCellEvenFiniteSevenQuotientMode (2 * k) x|) < 5 := by
+  let q : ℝ → ℝ := fourCellEvenFiniteSevenQuotientMode (2 * k)
+  have hq : Continuous q := finiteSeven_quotientMode_continuous (2 * k)
+  have hpoint (x : ℝ) : |q x| ≤ q x ^ 2 / 6 + (3 / 2 : ℝ) := by
+    nlinarith [sq_nonneg (|q x| - 3), sq_abs (q x)]
+  have hmono :
+      (∫ x : ℝ in -1..1, |q x|) ≤
+        ∫ x : ℝ in -1..1, q x ^ 2 / 6 + (3 / 2 : ℝ) := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      (hq.abs.intervalIntegrable (-1) 1)
+      (((hq.pow 2).div_const 6).add continuous_const
+        |>.intervalIntegrable (-1) 1)
+    intro x _hx
+    exact hpoint x
+  have hsplit :
+      (∫ x : ℝ in -1..1, q x ^ 2 / 6 + (3 / 2 : ℝ)) =
+        (1 / 6 : ℝ) * (∫ x : ℝ in -1..1, q x ^ 2) + 3 := by
+    rw [intervalIntegral.integral_add
+        ((hq.pow 2).div_const 6 |>.intervalIntegrable (-1) 1)
+        (Continuous.intervalIntegrable continuous_const (-1) 1),
+      show (fun x : ℝ ↦ q x ^ 2 / 6) =
+        fun x ↦ (1 / 6 : ℝ) * q x ^ 2 by
+        funext x
+        ring,
+      intervalIntegral.integral_const_mul]
+    norm_num
+  have hsq : (∫ x : ℝ in -1..1, q x ^ 2) < 12 := by
+    simpa only [q] using finiteSeven_quotientMode_sq_integral_lt_twelve k
+  calc
+    _ ≤ ∫ x : ℝ in -1..1, q x ^ 2 / 6 + (3 / 2 : ℝ) := hmono
+    _ = (1 / 6 : ℝ) * (∫ x : ℝ in -1..1, q x ^ 2) + 3 := hsplit
+    _ < 5 := by linarith
+
+/-! ## The genuine regular row versus its polynomial replacement -/
+
+private theorem finiteSeven_regularKernelEnvelope_pointwise
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+        fourCellEvenFiniteSevenRegularKernelPolynomial18
+          (fourCellOperatorHalfWidth * t) ∧
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+          fourCellEvenFiniteSevenRegularKernelPolynomial18
+            (fourCellOperatorHalfWidth * t) <
+        (1 / 380000000000 : ℝ) := by
+  apply fourCellEvenFiniteSevenRegularKernelPolynomial18_sevenEighths_envelope
+  · exact mul_nonneg
+      (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+  · have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+    have hlog := strict_log_two_bounds.2
+    calc
+      fourCellOperatorHalfWidth * t ≤
+          fourCellOperatorHalfWidth * 2 := hmul
+      _ = 5 * Real.log 2 / 4 := by
+        unfold fourCellOperatorHalfWidth
+        ring
+      _ ≤ (7 / 8 : ℝ) := by linarith
+
+/-- Signed error in one complete regular autocorrelation row after replacing
+the Yoshida kernel by the degree-eighteen envelope center. -/
+def fourCellEvenFiniteSevenRegularEnvelopeQuadratic (w : ℝ → ℝ) : ℝ :=
+  ∫ t : ℝ in 0..2,
+    (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+      fourCellEvenFiniteSevenRegularKernelPolynomial18
+        (fourCellOperatorHalfWidth * t)) *
+      centeredEndpointCorrelation w t
+
+private theorem finiteSeven_regularEnvelopeQuadratic_intervalIntegrable
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    IntervalIntegrable
+      (fun t : ℝ ↦
+        (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+          fourCellEvenFiniteSevenRegularKernelPolynomial18
+            (fourCellOperatorHalfWidth * t)) *
+          centeredEndpointCorrelation w t)
+      volume 0 2 := by
+  let f : ℝ → ℝ := fun t ↦
+    (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+      fourCellEvenFiniteSevenRegularKernelPolynomial18
+        (fourCellOperatorHalfWidth * t)) *
+      centeredEndpointCorrelation w t
+  let g : ℝ → ℝ := fun t ↦
+    (1 / 380000000000 : ℝ) * |centeredEndpointCorrelation w t|
+  have hcorr : Continuous (centeredEndpointCorrelation w) :=
+    continuous_centeredEndpointCorrelation_of_continuous w hw
+  have hgIcc : IntegrableOn g (Icc (0 : ℝ) 2) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact (continuous_const.mul hcorr.abs).continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (0 : ℝ) 2)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (0 : ℝ) 2)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact ((measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)).sub
+        (by
+          unfold fourCellEvenFiniteSevenRegularKernelPolynomial18
+            finiteSevenSechPolynomial18 finiteSevenCschRegularPolynomial17
+          fun_prop)).mul hcorr.measurable
+  have hfg : ∀ᵐ t : ℝ ∂(volume.restrict (Ioc (0 : ℝ) 2)),
+      ‖f t‖ ≤ g t := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have htIcc : t ∈ Icc (0 : ℝ) 2 := ⟨ht.1.le, ht.2⟩
+    have henv := finiteSeven_regularKernelEnvelope_pointwise htIcc
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg henv.1]
+    exact mul_le_mul_of_nonneg_right henv.2.le
+      (abs_nonneg (centeredEndpointCorrelation w t))
+  constructor
+  · exact Integrable.mono' hg hfmeas hfg
+  · simp
+
+private theorem finiteSeven_abs_regularEnvelopeQuadratic_le_energy
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    |fourCellEvenFiniteSevenRegularEnvelopeQuadratic w| ≤
+      (1 / 380000000000 : ℝ) *
+        (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let f : ℝ → ℝ := fun t ↦
+    (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+      fourCellEvenFiniteSevenRegularKernelPolynomial18
+        (fourCellOperatorHalfWidth * t)) *
+      centeredEndpointCorrelation w t
+  let g : ℝ → ℝ := fun t ↦
+    (1 / 380000000000 : ℝ) * |centeredEndpointCorrelation w t|
+  have hf : IntervalIntegrable f volume 0 2 := by
+    dsimp only [f]
+    exact finiteSeven_regularEnvelopeQuadratic_intervalIntegrable w hw
+  have hcorr : Continuous (centeredEndpointCorrelation w) :=
+    continuous_centeredEndpointCorrelation_of_continuous w hw
+  have hg : IntervalIntegrable g volume 0 2 := by
+    dsimp only [g]
+    exact (hcorr.abs.const_mul (1 / 380000000000 : ℝ))
+      |>.intervalIntegrable 0 2
+  have hmono :
+      (∫ t : ℝ in 0..2, |f t|) ≤ ∫ t : ℝ in 0..2, g t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hf.abs hg
+    intro t ht
+    have henv := finiteSeven_regularKernelEnvelope_pointwise ht
+    dsimp only [f, g]
+    rw [abs_mul, abs_of_nonneg henv.1]
+    exact mul_le_mul_of_nonneg_right henv.2.le
+      (abs_nonneg (centeredEndpointCorrelation w t))
+  have habs :
+      |fourCellEvenFiniteSevenRegularEnvelopeQuadratic w| ≤
+        (1 / 380000000000 : ℝ) *
+          (∫ t : ℝ in 0..2, |centeredEndpointCorrelation w t|) := by
+    calc
+      _ = |∫ t : ℝ in 0..2, f t| := by
+        unfold fourCellEvenFiniteSevenRegularEnvelopeQuadratic
+        rfl
+      _ ≤ ∫ t : ℝ in 0..2, |f t| :=
+        intervalIntegral.abs_integral_le_integral_abs (by norm_num)
+      _ ≤ ∫ t : ℝ in 0..2, g t := hmono
+      _ = (1 / 380000000000 : ℝ) *
+          (∫ t : ℝ in 0..2, |centeredEndpointCorrelation w t|) := by
+        dsimp only [g]
+        rw [intervalIntegral.integral_const_mul]
+  exact habs.trans <| mul_le_mul_of_nonneg_left
+    (integral_abs_centeredEndpointCorrelation_le_energy w hw) (by norm_num)
+
+/-- Polarized regular-kernel error.  This is the only analytic remainder
+introduced by replacing the genuine regular row with the degree-eighteen
+polynomial row. -/
+def fourCellEvenFiniteSevenRegularEnvelopePolarization
+    (u v : ℝ → ℝ) : ℝ :=
+  (fourCellEvenFiniteSevenRegularEnvelopeQuadratic (u + v) -
+      fourCellEvenFiniteSevenRegularEnvelopeQuadratic u -
+      fourCellEvenFiniteSevenRegularEnvelopeQuadratic v) / 2
+
+private theorem finiteSeven_sum_quotientMode_sq_integral_lt_fortyEight
+    (k l : ℕ) :
+    (∫ x : ℝ in -1..1,
+      (fourCellEvenFiniteSevenQuotientMode (2 * k) x +
+        fourCellEvenFiniteSevenQuotientMode (2 * l) x) ^ 2) < 48 := by
+  let u : ℝ → ℝ := fourCellEvenFiniteSevenQuotientMode (2 * k)
+  let v : ℝ → ℝ := fourCellEvenFiniteSevenQuotientMode (2 * l)
+  have hu : Continuous u := finiteSeven_quotientMode_continuous (2 * k)
+  have hv : Continuous v := finiteSeven_quotientMode_continuous (2 * l)
+  have hmono :
+      (∫ x : ℝ in -1..1, (u x + v x) ^ 2) ≤
+        ∫ x : ℝ in -1..1, 2 * u x ^ 2 + 2 * v x ^ 2 := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      (((hu.add hv).pow 2).intervalIntegrable (-1) 1)
+      ((((hu.pow 2).const_mul 2).add ((hv.pow 2).const_mul 2))
+        |>.intervalIntegrable (-1) 1)
+    intro x _hx
+    change (u x + v x) ^ 2 ≤ 2 * u x ^ 2 + 2 * v x ^ 2
+    nlinarith [sq_nonneg (u x - v x)]
+  have hsplit :
+      (∫ x : ℝ in -1..1, 2 * u x ^ 2 + 2 * v x ^ 2) =
+        2 * (∫ x : ℝ in -1..1, u x ^ 2) +
+          2 * (∫ x : ℝ in -1..1, v x ^ 2) := by
+    rw [intervalIntegral.integral_add
+        ((hu.pow 2).const_mul 2 |>.intervalIntegrable (-1) 1)
+        ((hv.pow 2).const_mul 2 |>.intervalIntegrable (-1) 1),
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_const_mul]
+  have huSq : (∫ x : ℝ in -1..1, u x ^ 2) < 12 := by
+    simpa only [u] using finiteSeven_quotientMode_sq_integral_lt_twelve k
+  have hvSq : (∫ x : ℝ in -1..1, v x ^ 2) < 12 := by
+    simpa only [v] using finiteSeven_quotientMode_sq_integral_lt_twelve l
+  calc
+    _ ≤ ∫ x : ℝ in -1..1, 2 * u x ^ 2 + 2 * v x ^ 2 := hmono
+    _ = 2 * (∫ x : ℝ in -1..1, u x ^ 2) +
+        2 * (∫ x : ℝ in -1..1, v x ^ 2) := hsplit
+    _ < 48 := by linarith
+
+/-- Every one of the twenty-one regular-row quotient entries changes by
+less than `10⁻¹⁰` when the genuine kernel is replaced by the checked
+degree-eighteen polynomial.  The indices are all even and the proof is
+uniform in them; no finite mode enumeration occurs. -/
+theorem abs_fourCellEvenFiniteSevenRegularEnvelopePolarization_lt
+    (k l : ℕ) :
+    |fourCellEvenFiniteSevenRegularEnvelopePolarization
+      (fourCellEvenFiniteSevenQuotientMode (2 * k))
+      (fourCellEvenFiniteSevenQuotientMode (2 * l))| <
+        (1 / 10000000000 : ℝ) := by
+  let u : ℝ → ℝ := fourCellEvenFiniteSevenQuotientMode (2 * k)
+  let v : ℝ → ℝ := fourCellEvenFiniteSevenQuotientMode (2 * l)
+  let A : ℝ := fourCellEvenFiniteSevenRegularEnvelopeQuadratic (u + v)
+  let B : ℝ := fourCellEvenFiniteSevenRegularEnvelopeQuadratic u
+  let C : ℝ := fourCellEvenFiniteSevenRegularEnvelopeQuadratic v
+  have hu : Continuous u := finiteSeven_quotientMode_continuous (2 * k)
+  have hv : Continuous v := finiteSeven_quotientMode_continuous (2 * l)
+  have hAraw := finiteSeven_abs_regularEnvelopeQuadratic_le_energy
+    (u + v) (hu.add hv)
+  have hBraw := finiteSeven_abs_regularEnvelopeQuadratic_le_energy u hu
+  have hCraw := finiteSeven_abs_regularEnvelopeQuadratic_le_energy v hv
+  have hsumEnergy :
+      (∫ x : ℝ in -1..1, (u x + v x) ^ 2) < 48 := by
+    simpa only [u, v] using
+      finiteSeven_sum_quotientMode_sq_integral_lt_fortyEight k l
+  have huEnergy : (∫ x : ℝ in -1..1, u x ^ 2) < 12 := by
+    simpa only [u] using finiteSeven_quotientMode_sq_integral_lt_twelve k
+  have hvEnergy : (∫ x : ℝ in -1..1, v x ^ 2) < 12 := by
+    simpa only [v] using finiteSeven_quotientMode_sq_integral_lt_twelve l
+  have hdelta : (0 : ℝ) < 1 / 380000000000 := by norm_num
+  have hA : |A| < (48 / 380000000000 : ℝ) := by
+    calc
+      |A| ≤ (1 / 380000000000 : ℝ) *
+          (∫ x : ℝ in -1..1, (u + v) x ^ 2) := by
+        simpa only [A] using hAraw
+      _ < (1 / 380000000000 : ℝ) * 48 :=
+        mul_lt_mul_of_pos_left hsumEnergy hdelta
+      _ = (48 / 380000000000 : ℝ) := by ring
+  have hB : |B| < (12 / 380000000000 : ℝ) := by
+    calc
+      |B| ≤ (1 / 380000000000 : ℝ) *
+          (∫ x : ℝ in -1..1, u x ^ 2) := by
+        simpa only [B] using hBraw
+      _ < (1 / 380000000000 : ℝ) * 12 :=
+        mul_lt_mul_of_pos_left huEnergy hdelta
+      _ = (12 / 380000000000 : ℝ) := by ring
+  have hC : |C| < (12 / 380000000000 : ℝ) := by
+    calc
+      |C| ≤ (1 / 380000000000 : ℝ) *
+          (∫ x : ℝ in -1..1, v x ^ 2) := by
+        simpa only [C] using hCraw
+      _ < (1 / 380000000000 : ℝ) * 12 :=
+        mul_lt_mul_of_pos_left hvEnergy hdelta
+      _ = (12 / 380000000000 : ℝ) := by ring
+  have habc : |A - B - C| ≤ |A| + |B| + |C| := by
+    calc
+      |A - B - C| ≤ |A - B| + |C| := abs_sub _ _
+      _ ≤ (|A| + |B|) + |C| := by
+        linarith [abs_sub A B]
+  have htotal : |A - B - C| < (72 / 380000000000 : ℝ) := by
+    exact habc.trans_lt (by linarith)
+  change |(A - B - C) / 2| < _
+  rw [abs_div, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
+  norm_num at htotal ⊢
+  linarith
 
 end
 
