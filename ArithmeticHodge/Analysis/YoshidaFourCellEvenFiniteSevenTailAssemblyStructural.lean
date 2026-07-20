@@ -19,6 +19,8 @@ open UnitIntervalLogEnergyAffine
 open YoshidaConstantBounds
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoContinuousLagRepresenterStructural
+open YoshidaFactorTwoFixedLagRepresenterStructural
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
@@ -32,6 +34,8 @@ open YoshidaFourCellEvenZeroCoshRegularStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaFourCellRegularKernelLowerStructural
+open YoshidaEndpointPotentialIntegrable
+open YoshidaEndpointPotentialBound
 open YoshidaRegularKernelBound
 
 /-!
@@ -431,6 +435,180 @@ theorem fourCellEvenFiniteSevenExactBorderMixed_eq_nonsingular
   unfold fourCellEvenFiniteSevenExactBorderMixed
   rw [finiteSevenPolarFreePolarization_eq_capacity_sub_regular
     w hw hlocal heven]
+
+/-! ## One explicit representer for the surviving mixed entry -/
+
+/-- The physical regular-lag weight, named so the remaining mixed
+functional can be written as one one-variable Riesz representer. -/
+def fourCellEvenFiniteSevenRegularLagWeight (t : ℝ) : ℝ :=
+  yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+
+/-- The exact nonsingular representer of the polar-free low--tail
+polarization.  Its three terms are respectively the endpoint potential, the
+retained `p = 3` translate, and the complete smooth regular correlation. -/
+def fourCellEvenFiniteSevenNonsingularOperatorRepresenter
+    (u : ℝ → ℝ) (x : ℝ) : ℝ :=
+  yoshidaEndpointPotential x * u x -
+    (Real.sqrt 2 * Real.log 2 / 2) *
+      factorTwoFixedLagK (8 / 5) u x -
+    fourCellOperatorHalfWidth *
+      factorTwoContinuousLagK fourCellEvenFiniteSevenRegularLagWeight u x
+
+/-- The complete bordered mixed representer before removing any additional
+degree-`<14` selector. -/
+def fourCellEvenFiniteSevenExactBorderRepresenter
+    (w : ℝ → ℝ) (hw : Continuous w) (x : ℝ) : ℝ :=
+  fourCellEvenFiniteSevenSeedDiagonal *
+      fourCellEvenFiniteSevenNonsingularOperatorRepresenter
+        (fourCellEvenFiniteSevenCanonicalLow w hw) x -
+    fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw *
+      fourCellEvenEndpointSeedTailFourteenRepresenter 0 x
+
+/-- The same representer in the genuine `P14+` quotient.  Every selector
+of degree below fourteen has zero pairing with the canonical tail, so `q`
+is free and can be chosen to minimize the exact dual norm. -/
+def fourCellEvenFiniteSevenProjectedBorderRepresenter
+    (w : ℝ → ℝ) (hw : Continuous w) (q : ℝ[X]) (x : ℝ) : ℝ :=
+  fourCellEvenFiniteSevenExactBorderRepresenter w hw x -
+    centeredPolynomialLift q x
+
+private theorem finiteSeven_regularLagWeight_measurable :
+    Measurable fourCellEvenFiniteSevenRegularLagWeight := by
+  unfold fourCellEvenFiniteSevenRegularLagWeight
+  exact measurable_yoshidaRegularKernel.comp
+    (measurable_const.mul measurable_id)
+
+private theorem finiteSeven_regularLagWeight_abs_le_quarter
+    (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 2) :
+    |fourCellEvenFiniteSevenRegularLagWeight t| ≤ (1 / 4 : ℝ) := by
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+    mul_nonneg ha0 ht.1
+  have harg4 : fourCellOperatorHalfWidth * t ≤
+      5 * Real.log 2 / 4 := by
+    calc
+      fourCellOperatorHalfWidth * t ≤ fourCellOperatorHalfWidth * 2 :=
+        mul_le_mul_of_nonneg_left ht.2 ha0
+      _ = 5 * Real.log 2 / 4 := by
+        unfold fourCellOperatorHalfWidth
+        ring
+  have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 harg4
+  unfold fourCellEvenFiniteSevenRegularLagWeight
+  rw [abs_of_nonneg hk0]
+  exact yoshidaRegularKernel_le_quarter harg0
+
+/-- Fubini turns both surviving correlation channels into the displayed
+single tail pairing.  This identity is exact; no norm or triangle estimate
+is used. -/
+theorem finiteSevenNonsingularPolarization_eq_representerPairing
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    fourCellEvenEndpointCapacityPolarization
+          (fourCellEvenFiniteSevenCanonicalLow w hw)
+          (fourCellEvenFiniteSevenCanonicalTail w hw) -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear
+                (fourCellEvenFiniteSevenCanonicalLow w hw)
+                (fourCellEvenFiniteSevenCanonicalTail w hw) t) =
+      ∫ x : ℝ in -1..1,
+        fourCellEvenFiniteSevenNonsingularOperatorRepresenter
+            (fourCellEvenFiniteSevenCanonicalLow w hw) x *
+          fourCellEvenFiniteSevenCanonicalTail w hw x := by
+  let u : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalLow w hw
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  let k : ℝ → ℝ := fourCellEvenFiniteSevenRegularLagWeight
+  have hu : Continuous u := by
+    simpa only [u, fourCellEvenFiniteSevenCanonicalLow] using
+      continuous_centeredLegendreLowProjection w hw 14
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have hkMeas : Measurable k := by
+    simpa only [k] using finiteSeven_regularLagWeight_measurable
+  have hkBound : ∀ t ∈ Icc (0 : ℝ) 2, |k t| ≤ (1 / 4 : ℝ) := by
+    intro t ht
+    simpa only [k] using
+      finiteSeven_regularLagWeight_abs_le_quarter t ht
+  have hfixed := correlationBilinear_eq_fixedLagK
+    (8 / 5 : ℝ) u r hu hr (by norm_num)
+  have hregular := integral_boundedLag_mul_correlationBilinear_eq_K
+    k u r hkMeas hu hr (1 / 4) hkBound
+  have hV : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * u x * r x)
+      volume (-1) 1 := by
+    have h := intervalIntegrable_endpointPotential_mul
+      (fun x : ℝ ↦ u x * r x) (hu.mul hr)
+    exact h.congr (fun x _hx ↦ by ring)
+  have hfixedRight :=
+    intervalIntegrable_mul_factorTwoFixedLagRightRepresenter
+      (8 / 5 : ℝ) u r hu hr
+  have hfixedLeft :=
+    intervalIntegrable_mul_factorTwoFixedLagLeftRepresenter
+      (8 / 5 : ℝ) r u hr hu
+  have hfixedI : IntervalIntegrable
+      (fun x : ℝ ↦ factorTwoFixedLagK (8 / 5) u x * r x)
+      volume (-1) 1 := by
+    apply (hfixedRight.add hfixedLeft).congr
+    intro x _hx
+    unfold factorTwoFixedLagK
+    ring
+  have hregularRight :=
+    intervalIntegrable_mul_factorTwoContinuousLagRightRepresenter_of_bounded
+      k u r hkMeas hu hr (1 / 4) hkBound
+  have hregularLeft :=
+    intervalIntegrable_mul_factorTwoContinuousLagLeftRepresenter_of_bounded
+      k r u hkMeas hr hu (1 / 4) hkBound
+  have hregularI : IntervalIntegrable
+      (fun x : ℝ ↦ factorTwoContinuousLagK k u x * r x)
+      volume (-1) 1 := by
+    apply (hregularRight.add hregularLeft).congr
+    intro x _hx
+    unfold factorTwoContinuousLagK
+    ring
+  unfold fourCellEvenEndpointCapacityPolarization
+  rw [show factorTwoCenteredCorrelationBilinear u r (8 / 5) =
+      (1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+        factorTwoFixedLagK (8 / 5) u x * r x by
+        simpa only using hfixed,
+    show (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear u r t) =
+      (1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+        r x * factorTwoContinuousLagK k u x by
+          simpa only [k, fourCellEvenFiniteSevenRegularLagWeight] using hregular]
+  rw [show (fun x : ℝ ↦
+      fourCellEvenFiniteSevenNonsingularOperatorRepresenter u x * r x) =
+      fun x ↦
+        yoshidaEndpointPotential x * u x * r x -
+          (Real.sqrt 2 * Real.log 2 / 2) *
+            (factorTwoFixedLagK (8 / 5) u x * r x) -
+          fourCellOperatorHalfWidth *
+            (factorTwoContinuousLagK k u x * r x) by
+      funext x
+      unfold fourCellEvenFiniteSevenNonsingularOperatorRepresenter
+      dsimp only [k]
+      ring,
+    intervalIntegral.integral_sub
+      (hV.sub (hfixedI.const_mul (Real.sqrt 2 * Real.log 2 / 2)))
+      (hregularI.const_mul fourCellOperatorHalfWidth),
+    intervalIntegral.integral_sub hV
+      (hfixedI.const_mul (Real.sqrt 2 * Real.log 2 / 2)),
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul]
+  have hregularComm :
+      (∫ x : ℝ in -1..1,
+        r x * factorTwoContinuousLagK k u x) =
+        ∫ x : ℝ in -1..1,
+          factorTwoContinuousLagK k u x * r x := by
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    ring
+  rw [hregularComm]
+  dsimp only [u, r, k]
+  ring
 
 /-- Exact bordered determinant decomposition with no separate tail
 allocation.  The `1/16` obstruction disappears: the tail keeps its true row
