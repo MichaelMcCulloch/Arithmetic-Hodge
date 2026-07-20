@@ -213,6 +213,99 @@ theorem norm_fourCellOddP11P1RegularRemainderRepresenter_le
   dsimp only [E] at hright' hleft' ⊢
   exact (norm_add_le _ _).trans (by linarith)
 
+/-- Closed polynomial formula for the degree-four smooth-kernel model. -/
+theorem fourCellOddP11P1RegularPolynomialRepresenter_eq (x : ℝ) :
+    fourCellOddP11P1RegularPolynomialRepresenter x =
+      7 * fourCellOperatorHalfWidth ^ 3 * x ^ 5 / 115200 +
+      (-(5 * fourCellOperatorHalfWidth ^ 4 / 576) -
+          7 * fourCellOperatorHalfWidth ^ 3 / 11520 -
+          fourCellOperatorHalfWidth / 144) * x ^ 3 +
+      (-(fourCellOperatorHalfWidth ^ 4 / 192) -
+          7 * fourCellOperatorHalfWidth ^ 3 / 7680 +
+          fourCellOperatorHalfWidth ^ 2 / 24 +
+          fourCellOperatorHalfWidth / 48) * x := by
+  let a := fourCellOperatorHalfWidth
+  let r1 :=
+    (75 * a ^ 4 * x ^ 4 - 14 * a ^ 3 * x ^ 3 -
+      720 * a ^ 2 * x ^ 2 + 480 * a * x + 5760) / 23040
+  let r2 :=
+    -a * (50 * a ^ 3 * x ^ 3 - 7 * a ^ 2 * x ^ 2 -
+      240 * a * x + 80) / 3840
+  let r3 := a ^ 2 *
+    (75 * a ^ 2 * x ^ 2 - 7 * a * x - 120) / 3840
+  let r4 := -a ^ 3 * (150 * a * x - 7) / 11520
+  let r5 := 5 * a ^ 4 / 1536
+  let l1 :=
+    (75 * a ^ 4 * x ^ 4 + 14 * a ^ 3 * x ^ 3 -
+      720 * a ^ 2 * x ^ 2 - 480 * a * x + 5760) / 23040
+  let l2 :=
+    -a * (50 * a ^ 3 * x ^ 3 + 7 * a ^ 2 * x ^ 2 -
+      240 * a * x - 80) / 3840
+  let l3 := a ^ 2 *
+    (75 * a ^ 2 * x ^ 2 + 7 * a * x - 120) / 3840
+  let l4 := -a ^ 3 * (150 * a * x + 7) / 11520
+  let l5 := 5 * a ^ 4 / 1536
+  have hpoly (c1 c2 c3 c4 c5 l u : ℝ) :
+      (∫ y : ℝ in l..u,
+        c1 * y + c2 * y ^ 2 + c3 * y ^ 3 + c4 * y ^ 4 + c5 * y ^ 5) =
+        c1 * (u ^ 2 - l ^ 2) / 2 +
+        c2 * (u ^ 3 - l ^ 3) / 3 +
+        c3 * (u ^ 4 - l ^ 4) / 4 +
+        c4 * (u ^ 5 - l ^ 5) / 5 +
+        c5 * (u ^ 6 - l ^ 6) / 6 := by
+    repeat rw [intervalIntegral.integral_add
+      (Continuous.intervalIntegrable (by fun_prop) _ _)
+      (Continuous.intervalIntegrable (by fun_prop) _ _)]
+    repeat rw [intervalIntegral.integral_const_mul]
+    rw [integral_id]
+    repeat rw [integral_pow]
+    ring
+  have hright :
+      (∫ y : ℝ in x..1,
+        fourCellRegularKernelPolynomial4 (a * (y - x)) * centeredP1 y) =
+      r1 * (1 ^ 2 - x ^ 2) / 2 +
+        r2 * (1 ^ 3 - x ^ 3) / 3 +
+        r3 * (1 ^ 4 - x ^ 4) / 4 +
+        r4 * (1 ^ 5 - x ^ 5) / 5 +
+        r5 * (1 ^ 6 - x ^ 6) / 6 := by
+    rw [show (fun y : ℝ ↦
+        fourCellRegularKernelPolynomial4 (a * (y - x)) * centeredP1 y) =
+      fun y ↦ r1 * y + r2 * y ^ 2 + r3 * y ^ 3 + r4 * y ^ 4 +
+        r5 * y ^ 5 by
+      funext y
+      unfold fourCellRegularKernelPolynomial4 centeredP1
+      dsimp only [r1, r2, r3, r4, r5]
+      ring]
+    exact hpoly r1 r2 r3 r4 r5 x 1
+  have hleft :
+      (∫ y : ℝ in -1..x,
+        fourCellRegularKernelPolynomial4 (a * (x - y)) * centeredP1 y) =
+      l1 * (x ^ 2 - (-1) ^ 2) / 2 +
+        l2 * (x ^ 3 - (-1) ^ 3) / 3 +
+        l3 * (x ^ 4 - (-1) ^ 4) / 4 +
+        l4 * (x ^ 5 - (-1) ^ 5) / 5 +
+        l5 * (x ^ 6 - (-1) ^ 6) / 6 := by
+    rw [show (fun y : ℝ ↦
+        fourCellRegularKernelPolynomial4 (a * (x - y)) * centeredP1 y) =
+      fun y ↦ l1 * y + l2 * y ^ 2 + l3 * y ^ 3 + l4 * y ^ 4 +
+        l5 * y ^ 5 by
+      funext y
+      unfold fourCellRegularKernelPolynomial4 centeredP1
+      dsimp only [l1, l2, l3, l4, l5]
+      ring]
+    exact hpoly l1 l2 l3 l4 l5 (-1) x
+  unfold fourCellOddP11P1RegularPolynomialRepresenter
+    factorTwoContinuousLagK factorTwoContinuousLagRightRepresenter
+    factorTwoContinuousLagLeftRepresenter
+  change
+    (∫ y : ℝ in x..1,
+        fourCellRegularKernelPolynomial4 (a * (y - x)) * centeredP1 y) +
+      (∫ y : ℝ in -1..x,
+        fourCellRegularKernelPolynomial4 (a * (x - y)) * centeredP1 y) = _
+  rw [hright, hleft]
+  dsimp only [a, r1, r2, r3, r4, r5, l1, l2, l3, l4, l5]
+  ring
+
 theorem odd_fourCellOddP11P1RegularRepresenter :
     Function.Odd fourCellOddP11P1RegularRepresenter := by
   have hp :
