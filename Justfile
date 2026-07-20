@@ -48,10 +48,9 @@ guarded *command:
 
         while kill -0 "$job" 2>/dev/null; do
           memory_current=$(<"$cgroup/memory.current")
-          rss_kib=$(ps -eo pid=,ppid=,rss= | awk -v root="$job" '"'"'
+          tree_pids=$(ps -eo pid=,ppid= | awk -v root="$job" '"'"'
             {
               parent[$1] = $2
-              rss[$1] = $3
               pids[++count] = $1
             }
             END {
@@ -60,14 +59,22 @@ guarded *command:
                 for (i = 1; i <= count; i++)
                   if (keep[parent[pids[i]]])
                     keep[pids[i]] = 1
-              for (pid in keep)
-                total += rss[pid]
-              print total + 0
+              for (i = 1; i <= count; i++)
+                if (keep[pids[i]])
+                  print pids[i]
             }
           '"'"')
+          # Sum Pss, not Rss: parallel lean workers mmap the same olean
+          # files, and Rss counts those shared pages once per process.
+          pss_kib=0
+          for pid in ${(f)tree_pids}; do
+            [[ -n "$pid" && -r /proc/$pid/smaps_rollup ]] || continue
+            pss=$(awk '"'"'/^Pss:/ { print $2; exit }'"'"' /proc/$pid/smaps_rollup 2>/dev/null)
+            (( pss_kib += ${pss:-0} )) || true
+          done
 
-          if (( memory_current >= soft_limit_bytes || rss_kib >= soft_limit_kib )); then
-            print -u2 "resource guard: stopping pid $job (cgroup=${memory_current}B rss=${rss_kib}KiB)"
+          if (( memory_current >= soft_limit_bytes || pss_kib >= soft_limit_kib )); then
+            print -u2 "resource guard: stopping pid $job (cgroup=${memory_current}B pss=${pss_kib}KiB)"
             terminate_job
             sleep 1
             kill -KILL -- "-$job" 2>/dev/null || true

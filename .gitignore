@@ -1,5 +1,6 @@
 .lake/
 build/
+__pycache__/
 lake-packages/
 *.olean
 *.ilean
