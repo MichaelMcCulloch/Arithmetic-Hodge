@@ -14654,6 +14654,214 @@ private theorem fourCellOddHighCrossRegularIntegral_bounds :
   · nlinarith
   constructor <;> nlinarith
 
+private theorem fourCellOddHighCrossRetained_certificate_bounds :
+    (935611 / 10000000 : ℝ) <
+        fourCellOddRetainedEndpointBilinear
+          factorTwoCenteredP5 factorTwoCenteredP7 ∧
+      fourCellOddRetainedEndpointBilinear
+          factorTwoCenteredP5 factorTwoCenteredP7 <
+        (935612 / 10000000 : ℝ) ∧
+      (262539 / 10000000 : ℝ) <
+        fourCellOddRetainedEndpointBilinear
+          factorTwoCenteredP5 factorTwoCenteredP9 ∧
+      fourCellOddRetainedEndpointBilinear
+          factorTwoCenteredP5 factorTwoCenteredP9 <
+        (262540 / 10000000 : ℝ) ∧
+      (153308 / 10000000 : ℝ) <
+        fourCellOddRetainedEndpointBilinear
+          factorTwoCenteredP7 factorTwoCenteredP9 ∧
+      fourCellOddRetainedEndpointBilinear
+          factorTwoCenteredP7 factorTwoCenteredP9 <
+        (153310 / 10000000 : ℝ) := by
+  rw [fourCellOddRetainedEndpointBilinear_P5_P7_eq,
+    fourCellOddRetainedEndpointBilinear_P5_P9_eq,
+    fourCellOddRetainedEndpointBilinear_P7_P9_eq]
+  have hP := fourCell_sqrt_two_mul_log_two_fine_bounds
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+private theorem integral_zero_one_P5_mul_P7_tight :
+    (∫ x : ℝ in 0..1,
+      factorTwoCenteredP5 x * factorTwoCenteredP7 x) = 0 := by
+  rcases centeredOddCoefficients_P7_eq_zero with ⟨h1, h3, h5⟩
+  have h := integral_zero_one_oneThreeFiveLowProfile_mul_tail_eq_zero
+    factorTwoCenteredP7 continuous_factorTwoCenteredP7
+      odd_factorTwoCenteredP7 h1 h3 h5 0 0 1
+  have hp : fourCellOddOneThreeFiveLowProfile 0 0 1 =
+      factorTwoCenteredP5 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile
+      factorTwoOddStructuralLowProfile centeredP1 centeredP3
+    simp
+  simpa only [hp] using h
+
+private theorem integral_zero_one_P5_mul_P9_tight :
+    (∫ x : ℝ in 0..1,
+      factorTwoCenteredP5 x * factorTwoCenteredP9 x) = 0 := by
+  rcases centeredOddCoefficients_P9_eq_zero with ⟨h1, h3, h5⟩
+  have h := integral_zero_one_oneThreeFiveLowProfile_mul_tail_eq_zero
+    factorTwoCenteredP9 continuous_factorTwoCenteredP9
+      odd_factorTwoCenteredP9 h1 h3 h5 0 0 1
+  have hp : fourCellOddOneThreeFiveLowProfile 0 0 1 =
+      factorTwoCenteredP5 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile
+      factorTwoOddStructuralLowProfile centeredP1 centeredP3
+    simp
+  simpa only [hp] using h
+
+private theorem fourCellOddSignedMassRegularBilinear_eq_width_integral_of_mass_zero
+    (u v : ℝ → ℝ)
+    (hmass : (∫ x : ℝ in 0..1, u x * v x) = 0) :
+    fourCellOddSignedMassRegularBilinear u v =
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear u v t) := by
+  unfold fourCellOddSignedMassRegularBilinear
+  rw [hmass]
+  ring
+
+private theorem abs_fourCellOddSignedMassRegularBilinear_highCross_bounds :
+    |fourCellOddSignedMassRegularBilinear
+        factorTwoCenteredP5 factorTwoCenteredP7| <
+        (11 / 1000000 : ℝ) ∧
+      |fourCellOddSignedMassRegularBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9| <
+        (3 / 1000000 : ℝ) ∧
+      |fourCellOddSignedMassRegularBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9| <
+        (6 / 1000000 : ℝ) := by
+  rcases fourCellOddHighCrossRegularIntegral_bounds with
+    ⟨h57lo, h57hi, h59lo, h59hi, h79lo, h79hi⟩
+  let R57 : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      factorTwoCenteredCorrelationBilinear
+        factorTwoCenteredP5 factorTwoCenteredP7 t
+  let R59 : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      factorTwoCenteredCorrelationBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9 t
+  let R79 : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      factorTwoCenteredCorrelationBilinear
+        factorTwoCenteredP7 factorTwoCenteredP9 t
+  change (-11 / 1000000 : ℝ) < R57 at h57lo
+  change R57 < (-6 / 1000000 : ℝ) at h57hi
+  change (-3 / 1000000 : ℝ) < R59 at h59lo
+  change R59 < (3 / 1000000 : ℝ) at h59hi
+  change (-6 / 1000000 : ℝ) < R79 at h79lo
+  change R79 < (-2 / 1000000 : ℝ) at h79hi
+  have hR57 : |R57| < (11 / 1000000 : ℝ) := by
+    rw [abs_of_neg (h57hi.trans (by norm_num))]
+    linarith
+  have hR59 : |R59| < (3 / 1000000 : ℝ) := by
+    rw [abs_lt]
+    constructor <;> nlinarith
+  have hR79 : |R79| < (6 / 1000000 : ℝ) := by
+    rw [abs_of_neg (h79hi.trans (by norm_num))]
+    linarith
+  have hW0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hW : 2 * fourCellOperatorHalfWidth ≤ (1 : ℝ) := by
+    linarith [fourCellOperatorHalfWidth_le_one_half]
+  rw [fourCellOddSignedMassRegularBilinear_eq_width_integral_of_mass_zero
+      factorTwoCenteredP5 factorTwoCenteredP7
+        integral_zero_one_P5_mul_P7_tight,
+    fourCellOddSignedMassRegularBilinear_eq_width_integral_of_mass_zero
+      factorTwoCenteredP5 factorTwoCenteredP9
+        integral_zero_one_P5_mul_P9_tight,
+    fourCellOddSignedMassRegularBilinear_eq_width_integral_of_mass_zero
+      factorTwoCenteredP7 factorTwoCenteredP9
+        integral_zero_one_P7_mul_P9_eq_zero]
+  change |2 * fourCellOperatorHalfWidth * R57| < _ ∧
+    |2 * fourCellOperatorHalfWidth * R59| < _ ∧
+    |2 * fourCellOperatorHalfWidth * R79| < _
+  simp only [abs_mul, abs_of_nonneg hW0]
+  constructor
+  · calc
+      2 * fourCellOperatorHalfWidth * |R57| ≤ 1 * |R57| :=
+        mul_le_mul_of_nonneg_right hW (abs_nonneg R57)
+      _ < 1 * (11 / 1000000 : ℝ) :=
+        mul_lt_mul_of_pos_left hR57 (by norm_num)
+      _ = (11 / 1000000 : ℝ) := one_mul _
+  constructor
+  · calc
+      2 * fourCellOperatorHalfWidth * |R59| ≤ 1 * |R59| :=
+        mul_le_mul_of_nonneg_right hW (abs_nonneg R59)
+      _ < 1 * (3 / 1000000 : ℝ) :=
+        mul_lt_mul_of_pos_left hR59 (by norm_num)
+      _ = (3 / 1000000 : ℝ) := one_mul _
+  · calc
+      2 * fourCellOperatorHalfWidth * |R79| ≤ 1 * |R79| :=
+        mul_le_mul_of_nonneg_right hW (abs_nonneg R79)
+      _ < 1 * (6 / 1000000 : ℝ) :=
+        mul_lt_mul_of_pos_left hR79 (by norm_num)
+      _ = (6 / 1000000 : ℝ) := one_mul _
+
+/-- Exact complete-core boxes for the three cross entries inside the
+`P₅/P₇/P₉` corner.  The widths come from exact Legendre moments plus the
+common analytic kernel envelope, not from evaluating the matrix. -/
+theorem fourCellOddCoreLocal_highCross_certificate_bounds :
+    (93550 / 1000000 : ℝ) <
+        fourCellOddCoreLocalBilinear
+          factorTwoCenteredP5 factorTwoCenteredP7 ∧
+      fourCellOddCoreLocalBilinear
+          factorTwoCenteredP5 factorTwoCenteredP7 <
+        (93573 / 1000000 : ℝ) ∧
+      (26250 / 1000000 : ℝ) <
+        fourCellOddCoreLocalBilinear
+          factorTwoCenteredP5 factorTwoCenteredP9 ∧
+      fourCellOddCoreLocalBilinear
+          factorTwoCenteredP5 factorTwoCenteredP9 <
+        (26258 / 1000000 : ℝ) ∧
+      (15324 / 1000000 : ℝ) <
+        fourCellOddCoreLocalBilinear
+          factorTwoCenteredP7 factorTwoCenteredP9 ∧
+      fourCellOddCoreLocalBilinear
+          factorTwoCenteredP7 factorTwoCenteredP9 <
+        (15338 / 1000000 : ℝ) := by
+  rcases fourCellOddHighCrossRetained_certificate_bounds with
+    ⟨h57retlo, h57rethi, h59retlo, h59rethi, h79retlo, h79rethi⟩
+  rcases abs_fourCellOddSignedMassRegularBilinear_highCross_bounds with
+    ⟨h57signed, h59signed, h79signed⟩
+  have h57signedlo := neg_abs_le
+    (fourCellOddSignedMassRegularBilinear
+      factorTwoCenteredP5 factorTwoCenteredP7)
+  have h57signedhi := le_abs_self
+    (fourCellOddSignedMassRegularBilinear
+      factorTwoCenteredP5 factorTwoCenteredP7)
+  have h59signedlo := neg_abs_le
+    (fourCellOddSignedMassRegularBilinear
+      factorTwoCenteredP5 factorTwoCenteredP9)
+  have h59signedhi := le_abs_self
+    (fourCellOddSignedMassRegularBilinear
+      factorTwoCenteredP5 factorTwoCenteredP9)
+  have h79signedlo := neg_abs_le
+    (fourCellOddSignedMassRegularBilinear
+      factorTwoCenteredP7 factorTwoCenteredP9)
+  have h79signedhi := le_abs_self
+    (fourCellOddSignedMassRegularBilinear
+      factorTwoCenteredP7 factorTwoCenteredP9)
+  simp only [fourCellOddCoreLocalBilinear_eq_retained_sub_signed]
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
 /-! ### Exact `P₁₁+` Riesz endpoint -/
 
 /-- Normalized centered `P₇` coefficient. -/
