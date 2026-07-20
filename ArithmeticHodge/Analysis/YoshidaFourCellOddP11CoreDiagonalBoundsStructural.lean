@@ -21,6 +21,7 @@ open UnitIntervalIntegralBridge
 open UnitIntervalLogEnergyAffine
 open YoshidaConstantBounds
 open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoPhaseIntrinsicEvenLowKernelPositive
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointPotentialBound
@@ -527,6 +528,108 @@ theorem fourCellOddRawStripCancellationReserve_P11_eq :
     centeredRawLogEnergy_fourCellOddP11DirectTail_eq,
     fourCellOddEndpointStripOddRawEnergy_P11_eq]
   ring
+
+/-! ## Complete exact diagonal -/
+
+/-- Every explicitly evaluated part of the `P₁₁` core diagonal.  The
+only omitted summand is the smooth regular-kernel correction. -/
+def fourCellOddP11CoreDiagonalAlgebraicPart : ℝ :=
+  (16063548470776166525119823 /
+      44485751152038574218750000 : ℝ) +
+    (3419392193194654 / 274181365966796875 : ℝ) *
+      (Real.sqrt 2 * Real.log 2) -
+    (93 / 1150 : ℝ) * Real.log 2 -
+    (2 / 23 : ℝ) *
+      (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi)
+
+/-- Exact structural normal form for the augmented diagonal.  All singular,
+prime, mass, and endpoint-potential pieces are evaluated; one smooth moment
+remains intact. -/
+theorem fourCellOddCoreLocalQuadratic_P11_eq_algebraic_sub_regular :
+    fourCellOddCoreLocalQuadratic fourCellOddP11DirectTail =
+      fourCellOddP11CoreDiagonalAlgebraicPart -
+        2 * fourCellOperatorHalfWidth *
+          fourCellOddP11CoreDiagonalRegularMoment := by
+  rw [fourCellOddCoreLocalQuadratic_eq_retained_sub_signed]
+  unfold fourCellOddRetainedEndpointQuadratic
+    fourCellOddRetainedPrimePotentialQuadratic
+    fourCellOddSignedMassRegularQuadratic
+  rw [fourCellOddRawStripCancellationReserve_P11_eq,
+    fourCellOddEndpointStripEvenMass_P11_eq,
+    fourCellOddEndpointStripOddMass_P11_eq,
+    integral_endpointPotential_P11_sq_eq,
+    integral_zero_one_fourCellOddP11DirectTail_sq]
+  unfold fourCellOddP11CoreDiagonalAlgebraicPart
+    fourCellOddP11CoreDiagonalRegularMoment
+  ring
+
+/-- Rational-radius enclosure around the exact algebraic diagonal. -/
+theorem fourCellOddCoreLocalQuadratic_P11_algebraic_enclosure :
+    fourCellOddP11CoreDiagonalAlgebraicPart - (1 / 230 : ℝ) ≤
+        fourCellOddCoreLocalQuadratic fourCellOddP11DirectTail ∧
+      fourCellOddCoreLocalQuadratic fourCellOddP11DirectTail ≤
+        fourCellOddP11CoreDiagonalAlgebraicPart + (1 / 230 : ℝ) := by
+  have hregular := abs_fourCellOddP11CoreDiagonalRegularCorrection_le
+  rw [abs_le] at hregular
+  rw [fourCellOddCoreLocalQuadratic_P11_eq_algebraic_sub_regular]
+  constructor <;> linarith
+
+private theorem log_five_four_lt_one_fourth :
+    Real.log (5 / 4 : ℝ) < (1 / 4 : ℝ) := by
+  have h := Real.log_lt_sub_one_of_pos
+    (by norm_num : (0 : ℝ) < 5 / 4)
+    (by norm_num : (5 / 4 : ℝ) ≠ 1)
+  norm_num at h ⊢
+  exact h
+
+private theorem fourCellScalar_lt_16057_div_10000 :
+    Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi <
+      (16057 / 10000 : ℝ) := by
+  have hlogTwo : Real.log 2 ≠ 0 := (Real.log_pos (by norm_num)).ne'
+  have hwidth :
+      Real.log (2 * fourCellOperatorHalfWidth) =
+        Real.log (5 / 4 : ℝ) + Real.log (Real.log 2) := by
+    rw [show 2 * fourCellOperatorHalfWidth =
+        (5 / 4 : ℝ) * Real.log 2 by
+      unfold fourCellOperatorHalfWidth
+      ring,
+      Real.log_mul (by norm_num : (5 / 4 : ℝ) ≠ 0) hlogTwo]
+  rw [hwidth]
+  linarith [log_five_four_lt_one_fourth,
+    strict_log_log_two_bounds.2, strict_euler_gamma_bounds.2,
+    strict_log_pi_bounds.2]
+
+private theorem sqrt_two_mul_log_two_lower :
+    (141421 / 100000 : ℝ) * (6931 / 10000 : ℝ) <
+      Real.sqrt 2 * Real.log 2 := by
+  have hs := sqrt_two_kernel_bounds.1
+  have hl := strict_log_two_bounds.1
+  have hspos : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  calc
+    (141421 / 100000 : ℝ) * (6931 / 10000 : ℝ) <
+        Real.sqrt 2 * (6931 / 10000 : ℝ) :=
+      mul_lt_mul_of_pos_right hs (by norm_num)
+    _ < Real.sqrt 2 * Real.log 2 := mul_lt_mul_of_pos_left hl hspos
+
+/-- Strong rational lower bound for the actual augmented diagonal.  This is
+the scale needed by the rank-one Schur step; it is much sharper than the
+uniform coercivity floor because the full `P₁₁` structure is retained. -/
+theorem seventeen_div_oneHundred_lt_fourCellOddCoreLocalQuadratic_P11 :
+    (17 / 100 : ℝ) <
+      fourCellOddCoreLocalQuadratic fourCellOddP11DirectTail := by
+  have hA :
+      (17 / 100 : ℝ) + 1 / 230 <
+        fourCellOddP11CoreDiagonalAlgebraicPart := by
+    have halpha := sqrt_two_mul_log_two_lower
+    have hlog := strict_log_two_bounds.2
+    have hscalar := fourCellScalar_lt_16057_div_10000
+    unfold fourCellOddP11CoreDiagonalAlgebraicPart
+    nlinarith
+  have henclosure :=
+    fourCellOddCoreLocalQuadratic_P11_algebraic_enclosure.1
+  linarith
 
 end
 
