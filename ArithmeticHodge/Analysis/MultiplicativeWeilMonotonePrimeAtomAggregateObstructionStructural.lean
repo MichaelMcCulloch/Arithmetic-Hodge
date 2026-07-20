@@ -5053,6 +5053,23 @@ private theorem real_two_by_two_determinant_of_all_nonnegative_allLength
     · exact sub_nonneg.mp hpos.1
     · exact (not_le_of_gt hBpos hneg.2).elim
 
+/-- Global real Bombieri nonnegativity supplies the real Cauchy--Schwarz
+determinant for any two conjugation-fixed tests. -/
+theorem bombieriTwoBlockGlobalCrossSymbol_re_sq_le_of_realQuadraticNonnegativity
+    (hglobal : BombieriRealQuadraticNonnegativity)
+    (f g : BombieriTest)
+    (hf : bombieriConjugateTest f = f)
+    (hg : bombieriConjugateTest g = g) :
+    (bombieriTwoBlockGlobalCrossSymbol f g).re ^ 2 ≤
+      bombieriRealQuadraticValue f * bombieriRealQuadraticValue g := by
+  have hG : 0 ≤ bombieriRealQuadraticValue g := hglobal g hg
+  apply real_two_by_two_determinant_of_all_nonnegative_allLength hG
+  intro t
+  rw [← bombieriRealQuadraticValue_add_real_smul_allLength]
+  apply hglobal
+  rw [bombieriConjugateTest_add, hf,
+    conjugate_fixed_real_smul_allLength hg t]
+
 /-- Under positivity at the shorter interior length, a zero interior
 diagonal is a radical vector for every real common-parent variation of that
 same interior block.  This is the exact structural information available in
@@ -5254,6 +5271,39 @@ def finiteBlockRightMiddleOrthogonalResidual
   let M := bombieriRealQuadraticValue m
   let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
   (M : ℂ) • e + ((-V : ℝ) : ℂ) • m
+
+/-- Both middle-orthogonal residuals remain conjugation-fixed when cut from
+a conjugation-fixed common parent. -/
+theorem bombieriConjugateTest_finiteBlockMiddleOrthogonalResiduals
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (n : ℕ) :
+    bombieriConjugateTest
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n) =
+          finiteBlockLeftMiddleOrthogonalResidual parent k n ∧
+      bombieriConjugateTest
+        (finiteBlockRightMiddleOrthogonalResidual parent k n) =
+          finiteBlockRightMiddleOrthogonalResidual parent k n := by
+  have ha := bombieriConjugateTest_monotoneQuarterCell parent hparent k
+  have hm : bombieriConjugateTest
+      (monotoneQuarterFiniteBlockInterior parent k n) =
+        monotoneQuarterFiniteBlockInterior parent k n := by
+    unfold monotoneQuarterFiniteBlockInterior
+    exact bombieriConjugateTest_monotoneQuarterFiniteBlock
+      parent hparent k 1 (n - 2)
+  have he := bombieriConjugateTest_monotoneQuarterCell parent hparent
+    (k + ((n - 1 : ℕ) : ℤ))
+  constructor
+  · unfold finiteBlockLeftMiddleOrthogonalResidual
+    dsimp only
+    rw [bombieriConjugateTest_add,
+      conjugate_fixed_real_smul_allLength ha,
+      conjugate_fixed_real_smul_allLength hm]
+  · unfold finiteBlockRightMiddleOrthogonalResidual
+    dsimp only
+    rw [bombieriConjugateTest_add,
+      conjugate_fixed_real_smul_allLength he,
+      conjugate_fixed_real_smul_allLength hm]
 
 /-- The actual common-parent residual-cross sign statement at one length. -/
 def RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength
@@ -6339,6 +6389,66 @@ theorem bombieriRealQuadraticNonnegativity_of_inductiveResidualDeterminantClosur
     simpa only [monotoneQuarterFiniteBlock, zero_add] using hsum
   rw [hblock] at hproduction
   exact hproduction
+
+/-- Conversely, global real Bombieri positivity supplies both clauses of the
+staged residual determinant interface. -/
+theorem realFiniteBlockInductiveResidualDeterminantClosure_of_bombieriRealQuadraticNonnegativity
+    (hglobal : BombieriRealQuadraticNonnegativity) :
+    RealFiniteBlockInductiveResidualDeterminantClosure := by
+  intro n _hn _hprev
+  constructor
+  · intro parent hparent k _hMpos
+    have hfixed :=
+      bombieriConjugateTest_finiteBlockMiddleOrthogonalResiduals
+        parent hparent k n
+    exact
+      bombieriTwoBlockGlobalCrossSymbol_re_sq_le_of_realQuadraticNonnegativity
+        hglobal
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+        (finiteBlockRightMiddleOrthogonalResidual parent k n)
+        hfixed.1 hfixed.2
+  · intro parent hparent k
+    dsimp only
+    intro _hzero
+    apply hglobal
+    rw [bombieriConjugateTest_add,
+      bombieriConjugateTest_monotoneQuarterCell parent hparent k,
+      bombieriConjugateTest_monotoneQuarterCell parent hparent
+        (k + ((n - 1 : ℕ) : ℤ))]
+
+/-- Thus the robust staged determinant closure is a lossless structural
+reformulation of complete real Bombieri quadratic nonnegativity. -/
+theorem bombieriRealQuadraticNonnegativity_iff_inductiveResidualDeterminantClosure :
+    BombieriRealQuadraticNonnegativity ↔
+      RealFiniteBlockInductiveResidualDeterminantClosure := by
+  exact ⟨
+    realFiniteBlockInductiveResidualDeterminantClosure_of_bombieriRealQuadraticNonnegativity,
+    bombieriRealQuadraticNonnegativity_of_inductiveResidualDeterminantClosure⟩
+
+/-- Global positivity also supplies the radical-information refinement; the
+extra radical hypothesis is simply unnecessary in this direction. -/
+theorem realFiniteBlockInductiveRadicalResidualDeterminantClosure_of_bombieriRealQuadraticNonnegativity
+    (hglobal : BombieriRealQuadraticNonnegativity) :
+    RealFiniteBlockInductiveRadicalResidualDeterminantClosure := by
+  intro n hn hprev
+  have hordinary :=
+    realFiniteBlockInductiveResidualDeterminantClosure_of_bombieriRealQuadraticNonnegativity
+      hglobal n hn hprev
+  refine ⟨hordinary.1, ?_⟩
+  intro parent hparent k
+  dsimp only
+  intro hzero _hradical
+  exact hordinary.2 parent hparent k hzero
+
+theorem bombieriRealQuadraticNonnegativity_iff_inductiveRadicalResidualDeterminantClosure :
+    BombieriRealQuadraticNonnegativity ↔
+      RealFiniteBlockInductiveRadicalResidualDeterminantClosure := by
+  constructor
+  · exact
+      realFiniteBlockInductiveRadicalResidualDeterminantClosure_of_bombieriRealQuadraticNonnegativity
+  · intro hclosure
+    exact bombieriRealQuadraticNonnegativity_of_inductiveResidualDeterminantClosure
+      (realFiniteBlockInductiveResidualDeterminantClosure_of_radical hclosure)
 
 /-- Conditional local-to-global closure: the two all-length common-parent
 middle-pivot obligations imply the Riemann Hypothesis through the already
