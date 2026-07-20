@@ -13231,6 +13231,208 @@ theorem fourCellOddCoreLocalQuadratic_nonneg_of_endpointZero_fiveMode_formDual
   dsimp only [p, r] at hcompleted
   linarith
 
+private theorem centeredRawLogBilinear_symm_local
+    (u v : ℝ → ℝ) :
+    centeredRawLogBilinear u v = centeredRawLogBilinear v u := by
+  unfold centeredRawLogBilinear
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  apply intervalIntegral.integral_congr
+  intro y _hy
+  ring
+
+private theorem centeredRawLogBilinear_add_left_local
+    (u v w : ℝ → ℝ)
+    (hu : LocallyLipschitzOn (Icc (-1 : ℝ) 1) u)
+    (hv : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v)
+    (hw : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w) :
+    centeredRawLogBilinear (u + v) w =
+      centeredRawLogBilinear u w + centeredRawLogBilinear v w := by
+  rw [centeredRawLogBilinear_eq_two_mul_unitCross_local
+      (u + v) w (hu.add hv) hw,
+    centeredRawLogBilinear_eq_two_mul_unitCross_local u w hu hw,
+    centeredRawLogBilinear_eq_two_mul_unitCross_local v w hv hw]
+  let fu : unitInterval → ℝ := fun t ↦ centeredPullback u (t : ℝ)
+  let fv : unitInterval → ℝ := fun t ↦ centeredPullback v (t : ℝ)
+  let fw : unitInterval → ℝ := fun t ↦ centeredPullback w (t : ℝ)
+  obtain ⟨C, hfu⟩ := exists_lipschitzWith_centeredPullback u hu
+  obtain ⟨D, hfv⟩ := exists_lipschitzWith_centeredPullback v hv
+  obtain ⟨E, hfw⟩ := exists_lipschitzWith_centeredPullback w hw
+  have huInt := integrable_fourCellUnitIntervalRawLogCrossIntegrand
+    fu fw hfu hfw
+  have hvInt := integrable_fourCellUnitIntervalRawLogCrossIntegrand
+    fv fw hfv hfw
+  rw [show (fun z : unitInterval × unitInterval ↦
+      fourCellUnitIntervalRawLogCrossIntegrand
+        (fun t ↦ centeredPullback (u + v) (t : ℝ)) fw z) =
+      fun z ↦ fourCellUnitIntervalRawLogCrossIntegrand fu fw z +
+        fourCellUnitIntervalRawLogCrossIntegrand fv fw z by
+    funext z
+    unfold fourCellUnitIntervalRawLogCrossIntegrand fu fv fw centeredPullback
+    simp only [Pi.add_apply]
+    ring,
+    integral_add huInt hvInt]
+  ring
+
+private theorem centeredRawLogBilinear_const_mul_left_local
+    (u v : ℝ → ℝ) (a : ℝ) :
+    centeredRawLogBilinear (fun x ↦ a * u x) v =
+      a * centeredRawLogBilinear u v := by
+  rw [centeredRawLogBilinear_symm_local,
+    centeredRawLogBilinear_const_mul_right_local,
+    centeredRawLogBilinear_symm_local]
+
+private theorem centeredRawLogBilinear_neg_shiftedLegendre_eq_moment_local
+    (n : ℕ) (q r : ℝ → ℝ) (hr : Continuous r)
+    (hmode : ∀ t : ℝ, centeredPullback q t =
+      -(shiftedLegendreReal n).eval t) :
+    centeredRawLogBilinear q r =
+      4 * (harmonic n : ℝ) * (∫ x : ℝ in -1..1, r x * q x) := by
+  let p : ℝ[X] := -(shiftedLegendreReal n)
+  have hmode' (t : ℝ) : centeredPullback q t = p.eval t := by
+    dsimp only [p]
+    rw [Polynomial.eval_neg, hmode]
+  have hunit := integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+    n q r hmode
+  have hpLog : shiftedLogKernel p =
+      -(Polynomial.C (2 * (harmonic n : ℝ)) * shiftedLegendreReal n) := by
+    dsimp only [p]
+    rw [map_neg, shiftedLogKernel_shiftedLegendreReal]
+  have hpair : (∫ t : unitInterval,
+      centeredPullback r (t : ℝ) *
+        (shiftedLogKernel p).eval (t : ℝ)) =
+      (harmonic n : ℝ) * (∫ x : ℝ in -1..1, r x * q x) := by
+    rw [hpLog]
+    simp only [Polynomial.eval_neg, Polynomial.eval_mul, Polynomial.eval_C]
+    rw [show (fun t : unitInterval ↦ centeredPullback r (t : ℝ) *
+        -(2 * (harmonic n : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ))) =
+      fun t ↦ -(2 * (harmonic n : ℝ)) *
+        (centeredPullback r (t : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ)) by
+      funext t
+      ring,
+      integral_const_mul, hunit]
+    ring
+  rw [centeredRawLogBilinear_polynomialMode_eq_four_mul_pair
+    p q r hr hmode', hpair]
+  ring
+
+private theorem centeredRawLogBilinear_P7_tail_eq_zero_local
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hseven : centeredOddP7Coefficient r = 0) :
+    centeredRawLogBilinear factorTwoCenteredP7 r = 0 := by
+  have h := centeredRawLogBilinear_neg_shiftedLegendre_eq_moment_local
+    7 factorTwoCenteredP7 r hr centeredPullback_factorTwoCenteredP7
+  unfold centeredOddP7Coefficient at hseven
+  have hmoment : (∫ x : ℝ in -1..1,
+      r x * factorTwoCenteredP7 x) = 0 := by
+    nlinarith
+  rw [hmoment] at h
+  simpa using h
+
+private theorem centeredRawLogBilinear_P9_tail_eq_zero_local
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hnine : centeredOddP9Coefficient r = 0) :
+    centeredRawLogBilinear factorTwoCenteredP9 r = 0 := by
+  have h := centeredRawLogBilinear_neg_shiftedLegendre_eq_moment_local
+    9 factorTwoCenteredP9 r hr centeredPullback_factorTwoCenteredP9
+  unfold centeredOddP9Coefficient at hnine
+  have hmoment : (∫ x : ℝ in -1..1,
+      r x * factorTwoCenteredP9 x) = 0 := by
+    nlinarith
+  rw [hmoment] at h
+  simpa using h
+
+/-- The complete global singular raw cross vanishes between the retained
+five-mode pivot and a genuine `P₁₁+` residual. -/
+theorem centeredRawLogBilinear_oneThreeFiveSevenNine_tail_eq_zero
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (hseven : centeredOddP7Coefficient r = 0)
+    (hnine : centeredOddP9Coefficient r = 0)
+    (c d e f g : ℝ) :
+    centeredRawLogBilinear
+      (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r = 0 := by
+  have hp135 :=
+    centeredRawLogBilinear_oneThreeFiveLowProfile_tail_eq_zero
+      r hr.continuous hone hthree hfive c d e
+  have hp7 := centeredRawLogBilinear_P7_tail_eq_zero_local
+    r hr.continuous hseven
+  have hp9 := centeredRawLogBilinear_P9_tail_eq_zero_local
+    r hr.continuous hnine
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r :=
+    hr.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hp135Local : LocallyLipschitzOn (Icc (-1 : ℝ) 1)
+      (fourCellOddOneThreeFiveLowProfile c d e) :=
+    (contDiff_fourCellOddOneThreeFiveLowProfile c d e).contDiffOn
+      |>.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hp7Local : LocallyLipschitzOn (Icc (-1 : ℝ) 1)
+      (fun x ↦ f * factorTwoCenteredP7 x) :=
+    (contDiff_const.mul contDiff_factorTwoCenteredP7_local).contDiffOn
+      |>.locallyLipschitzOn (convex_Icc (-1) 1)
+  unfold fourCellOddOneThreeFiveSevenNineLowProfile
+  rw [show (fun x : ℝ ↦
+      fourCellOddOneThreeFiveLowProfile c d e x +
+        f * factorTwoCenteredP7 x + g * factorTwoCenteredP9 x) =
+      (fourCellOddOneThreeFiveLowProfile c d e +
+        fun x ↦ f * factorTwoCenteredP7 x) +
+          (fun x ↦ g * factorTwoCenteredP9 x) by
+    funext x
+    rfl,
+    centeredRawLogBilinear_add_left_local _ _ r
+      (hp135Local.add hp7Local)
+      ((contDiff_const.mul contDiff_factorTwoCenteredP9_local).contDiffOn
+        |>.locallyLipschitzOn (convex_Icc (-1) 1)) hrLocal,
+    centeredRawLogBilinear_add_left_local _ _ r hp135Local hp7Local hrLocal,
+    centeredRawLogBilinear_const_mul_left_local,
+    centeredRawLogBilinear_const_mul_left_local,
+    hp135, hp7, hp9]
+  ring
+
+/-- Exact singular normal form of the five-mode/`P₁₁+` mixed row:
+the global raw operator is gone, leaving only the adverse endpoint-strip
+polarization. -/
+theorem fourCellOddRawStripCancellationPolarization_fiveMode_tail_eq
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (hseven : centeredOddP7Coefficient r = 0)
+    (hnine : centeredOddP9Coefficient r = 0)
+    (c d e f g : ℝ) :
+    fourCellOddRawStripCancellationPolarization
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r =
+      -(1 / 2 : ℝ) * fourCellOddEndpointStripOddRawPolarization
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r := by
+  rw [fourCellOddRawStripCancellationPolarization_eq_centered_sub_strip
+      _ r (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile c d e f g)
+        hr (odd_fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) hodd,
+    centeredRawLogBilinear_oneThreeFiveSevenNine_tail_eq_zero
+      r hr hone hthree hfive hseven hnine c d e f g]
+  ring
+
+/-- Final exact normal form of the unresolved `P₁₁+` Riesz row. -/
+theorem fourCellOddCoreLocalBilinear_fiveMode_tail_eq_endpointForms
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (hseven : centeredOddP7Coefficient r = 0)
+    (hnine : centeredOddP9Coefficient r = 0)
+    (c d e f g : ℝ) :
+    fourCellOddCoreLocalBilinear
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r =
+      -(1 / 2 : ℝ) * fourCellOddEndpointStripOddRawPolarization
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r +
+        fourCellOddStripReducedBilinear
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r := by
+  unfold fourCellOddCoreLocalBilinear
+  rw [fourCellOddRawStripCancellationPolarization_fiveMode_tail_eq
+    r hr hodd hone hthree hfive hseven hnine c d e f g]
+
 private theorem integral_zero_three_fifths_P7_sq_le :
     (∫ x : ℝ in 0..3 / 5, factorTwoCenteredP7 x ^ 2) ≤
       (1 / 15 : ℝ) := by
