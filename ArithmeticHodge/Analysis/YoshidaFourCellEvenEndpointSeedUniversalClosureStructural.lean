@@ -12,9 +12,12 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedUniversalClosu
 noncomputable section
 
 open YoshidaConstantBounds
+open CenteredEndpointCorrelation
 open ShiftedLegendreLogEnergyOrthogonalProjection
 open UnitIntervalLogEnergyAffine
 open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoEndpointClean
+open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
@@ -22,6 +25,7 @@ open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicRankResidualBound
 open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
 open YoshidaFactorTwoPhaseSymmetricCoercivity
+open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointCapacityCauchyStructural
 open YoshidaFourCellEvenEndpointSeedCapacityCrossStructural
@@ -31,6 +35,7 @@ open YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
 open YoshidaFourCellEvenEndpointSeedRegularRemainderStructural
 open YoshidaFourCellEvenPolarSchurStructural
 open YoshidaFourCellEvenZeroCoshCoupledCoreStructural
+open YoshidaFourCellEvenZeroCoshRegularStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaRegularKernelBound
@@ -329,6 +334,169 @@ theorem centeredRawLogEnergy_nonnegative (u : ℝ → ℝ) :
   apply intervalIntegral.integral_nonneg (by norm_num)
   intro y _hy
   exact div_nonneg (sq_nonneg _) (abs_nonneg _)
+
+/-- The four-cell regular correlation costs at most one quarter of centered
+mass without any cosh or modal hypothesis.  This deliberately crude estimate
+is used only above the fourteenth harmonic, where the singular diagonal has
+ample room. -/
+theorem fourCellRegularCorrelation_le_one_fourth_mass
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation w t) ≤
+      (1 / 4 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let C : ℝ → ℝ := centeredEndpointCorrelation w
+  let q : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+  have hC : Continuous C := by
+    simpa only [C] using
+      continuous_centeredEndpointCorrelation_of_continuous w hw
+  have hqMeas : Measurable q := by
+    dsimp only [q]
+    exact measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)
+  have hqBound : ∀ t ∈ Icc (0 : ℝ) 2, |q t| ≤ 1 / 4 := by
+    intro t ht
+    have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+      unfold fourCellOperatorHalfWidth
+      positivity
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg ha0 ht.1
+    have hargUpper : fourCellOperatorHalfWidth * t ≤
+        5 * Real.log 2 / 4 := by
+      calc
+        fourCellOperatorHalfWidth * t ≤
+            fourCellOperatorHalfWidth * 2 :=
+          mul_le_mul_of_nonneg_left ht.2 ha0
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hq0 :=
+      yoshidaRegularKernel_nonneg_fourCellRange harg0 hargUpper
+    have hq1 := yoshidaRegularKernel_le_quarter harg0
+    dsimp only [q]
+    rw [abs_of_nonneg hq0]
+    exact hq1
+  have hqC : IntervalIntegrable (fun t ↦ q t * C t) volume 0 2 :=
+    intervalIntegrable_boundedLag_mul_continuous q C hqMeas hC (1 / 4)
+      hqBound
+  have habs : IntervalIntegrable (fun t ↦ |q t * C t|) volume 0 2 :=
+    hqC.abs
+  have hmajor : IntervalIntegrable (fun t ↦ (1 / 4 : ℝ) * |C t|)
+      volume 0 2 := (hC.abs.intervalIntegrable _ _).const_mul (1 / 4)
+  have hmono : (∫ t : ℝ in 0..2, |q t * C t|) ≤
+      ∫ t : ℝ in 0..2, (1 / 4 : ℝ) * |C t| := by
+    apply intervalIntegral.integral_mono_on (by norm_num) habs hmajor
+    intro t ht
+    rw [abs_mul]
+    exact mul_le_mul_of_nonneg_right (hqBound t ht) (abs_nonneg (C t))
+  rw [intervalIntegral.integral_const_mul] at hmono
+  have hnorm := intervalIntegral.norm_integral_le_integral_norm
+    (by norm_num : (0 : ℝ) ≤ 2) (f := fun t ↦ q t * C t)
+      (μ := volume)
+  have hL1 := integral_abs_centeredEndpointCorrelation_le_energy w hw
+  have hself := le_abs_self (∫ t : ℝ in 0..2, q t * C t)
+  simp only [Real.norm_eq_abs] at hnorm
+  dsimp only [q, C] at hself hnorm hmono ⊢
+  linarith
+
+/-- After restoring the physical four-cell width, the unrestricted regular
+loss is still below `217/1000` of mass. -/
+theorem two_mul_fourCellWidth_mul_regularCorrelation_le_217_div_1000_mass
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            centeredEndpointCorrelation w t) ≤
+      (217 / 1000 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) := by
+  let I : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation w t
+  let M : ℝ := ∫ x : ℝ in -1..1, w x ^ 2
+  have hI : I ≤ (1 / 4 : ℝ) * M := by
+    simpa only [I, M] using fourCellRegularCorrelation_le_one_fourth_mass w hw
+  have hM : 0 ≤ M := by
+    dsimp only [M]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hwidth0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hwidth : 2 * fourCellOperatorHalfWidth < (867 / 1000 : ℝ) := by
+    have hlog := strict_log_two_bounds.2
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  have hscaled := mul_le_mul_of_nonneg_left hI hwidth0
+  have hquarterM : 0 ≤ (1 / 4 : ℝ) * M := by positivity
+  have hwidthScaled :=
+    mul_le_mul_of_nonneg_right hwidth.le hquarterM
+  dsimp only [I, M] at hscaled ⊢
+  calc
+    _ ≤ 2 * fourCellOperatorHalfWidth *
+        ((1 / 4 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2)) := hscaled
+    _ ≤ (867 / 1000 : ℝ) *
+        ((1 / 4 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2)) :=
+      hwidthScaled
+    _ ≤ (217 / 1000 : ℝ) *
+        (∫ x : ℝ in -1..1, w x ^ 2) := by
+      dsimp only [M] at hM
+      nlinarith only [hM]
+
+/-- A genuine even `P₁₄+` tail retains two fifths of its raw
+logarithmic energy in the complete polar-free operator.  The infinite block
+is therefore quantitatively closed independently of the low bordered
+certificate. -/
+theorem two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    (2 / 5 : ℝ) * (centeredRawLogEnergy r / 4) ≤
+      fourCellEvenPolarFreeOperator r := by
+  let M : ℝ := ∫ x : ℝ in -1..1, r x ^ 2
+  let E : ℝ := centeredRawLogEnergy r / 4
+  let S : ℝ := Real.log (2 * fourCellOperatorHalfWidth) +
+    Real.eulerMascheroniConstant + Real.log Real.pi
+  let I : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation r t
+  let B : ℝ := fourCellEvenEndpointCapacityQuadratic r
+  have hM : 0 ≤ M := by
+    dsimp only [M]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hB : 0 ≤ B := by
+    simpa only [B] using
+      fourCellEvenEndpointCapacityQuadratic_nonnegative r hr heven
+  have hraw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    r hr hlocal 14 hlow
+  have hgap : (1171733 / 360360 : ℝ) * M ≤ E := by
+    norm_num [harmonic, Finset.sum_range_succ] at hraw
+    simpa only [M, E, factorTwoIntrinsicEnergy] using hraw
+  have hscalar : S * M ≤ (15787 / 10000 : ℝ) * M :=
+    mul_le_mul_of_nonneg_right
+      fourCellEndpointScalar_lt_15787_div_10000.le hM
+  have hregular : 2 * fourCellOperatorHalfWidth * I ≤
+      (217 / 1000 : ℝ) * M := by
+    simpa only [I, M] using
+      two_mul_fourCellWidth_mul_regularCorrelation_le_217_div_1000_mass
+        r hr
+  have hnormal :=
+    fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular_of_even
+      r hr hlocal heven
+  have hcore : fourCellEvenZeroCoshCoupledCore r = E + B := by
+    dsimp only [E, B]
+    unfold fourCellEvenZeroCoshCoupledCore
+      fourCellEvenEndpointCapacityQuadratic
+    ring
+  have hbudget :
+      (15787 / 10000 : ℝ) * M + (217 / 1000 : ℝ) * M ≤
+        (3 / 5 : ℝ) * E := by
+    linarith only [hgap, hM]
+  rw [hnormal, hcore]
+  change (2 / 5 : ℝ) * E ≤ E + B - S * M -
+    2 * fourCellOperatorHalfWidth * I
+  linarith only [hscalar, hregular, hB, hbudget]
 
 private theorem natDegree_sub_smul_lt_fourteen
     (q p : ℝ[X]) (s : ℝ)
