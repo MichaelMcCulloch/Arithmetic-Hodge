@@ -112,6 +112,76 @@ theorem globalHardyProbe_nonneg_of_tailHardyConcentration
     (tailHardyResidual_le_globalHardyProbe r hr.continuous hodd)
 
 /-!
+## Removing the reciprocal strip weight
+
+On `[3/5,1]` the elementary tangent-line inequality
+`2 - x \le 1 / x` is exact to second order at the endpoint.  Replacing the
+reciprocal by this affine minorant preserves the direction needed for a
+counterexample and leaves only polynomial interval integrals.
+-/
+
+/-- Affine version of the global Hardy probe.  Unlike the original probe,
+all its strip-mass integrands are polynomial whenever `r` is polynomial. -/
+def fourCellOddP11AffineHardyProbe (r : ℝ → ℝ) : ℝ :=
+  fourCellOddRawStripCancellationReserve r -
+    (68427 / 20000 : ℝ) * (∫ x : ℝ in 0..3 / 5, r x ^ 2) -
+    (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, (2 - x) * r x ^ 2) +
+    (2813 / 20000 : ℝ) * (∫ x : ℝ in 3 / 5..1, r x ^ 2) -
+    (93 / 200 : ℝ) *
+      (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * r x ^ 2)
+
+/-- The reciprocal upper-strip mass dominates its endpoint tangent-line
+minorant. -/
+theorem upperStripAffineMass_le_weightedMass
+    (r : ℝ → ℝ) (hr : Continuous r) :
+    (∫ x : ℝ in 3 / 5..1, (2 - x) * r x ^ 2) ≤
+      ∫ x : ℝ in 3 / 5..1, r x ^ 2 / x := by
+  have haffine : IntervalIntegrable (fun x : ℝ ↦ (2 - x) * r x ^ 2)
+      volume (3 / 5) 1 := by
+    exact (by fun_prop : Continuous (fun x : ℝ ↦
+      (2 - x) * r x ^ 2)).intervalIntegrable _ _
+  have hweighted : IntervalIntegrable (fun x : ℝ ↦ r x ^ 2 / x)
+      volume (3 / 5) 1 := by
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.div (hr.pow 2).continuousOn continuous_id.continuousOn
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    simpa only [id_eq] using (by linarith [hx.1] : x ≠ 0)
+  apply intervalIntegral.integral_mono_on (by norm_num) haffine hweighted
+  intro x hx
+  have hxpos : 0 < x := by linarith [hx.1]
+  rw [div_eq_mul_inv]
+  have hinv : 2 - x ≤ x⁻¹ := by
+    rw [inv_eq_one_div, le_div_iff₀ hxpos]
+    nlinarith [sq_nonneg (x - 1)]
+  simpa [mul_comm] using
+    mul_le_mul_of_nonneg_right hinv (sq_nonneg (r x))
+
+/-- The affine probe is an upper bound for the reciprocal probe.  Hence a
+negative affine value is already a structural countercertificate. -/
+theorem globalHardyProbe_le_affineHardyProbe
+    (r : ℝ → ℝ) (hr : Continuous r) :
+    fourCellOddP11GlobalHardyProbe r ≤
+      fourCellOddP11AffineHardyProbe r := by
+  have hmass := upperStripAffineMass_le_weightedMass r hr
+  unfold fourCellOddP11GlobalHardyProbe fourCellOddP11AffineHardyProbe
+  linarith
+
+/-- A negative affine probe on a genuine `P₁₁+` profile refutes the retained
+Hardy concentration premise without evaluating a reciprocal integral. -/
+theorem not_tailHardyConcentration_of_affineProbe_neg
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (h1 : centeredOddP1Coefficient r = 0)
+    (h3 : centeredOddP3Coefficient r = 0)
+    (h5 : centeredOddP5Coefficient r = 0)
+    (h7 : centeredOddP7Coefficient r = 0)
+    (h9 : centeredOddP9Coefficient r = 0)
+    (hneg : fourCellOddP11AffineHardyProbe r < 0) :
+    ¬ FourCellOddP11TailHardyConcentration := by
+  apply not_tailHardyConcentration_of_globalProbe_neg r hr hodd h1 h3 h5 h7 h9
+  exact (globalHardyProbe_le_affineHardyProbe r hr.continuous).trans_lt hneg
+
+/-!
 ## Endpoint-concentration no-go
 
 A pure endpoint packet does not furnish the sought counterdirection.  In the
