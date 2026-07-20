@@ -1820,6 +1820,163 @@ theorem abs_fourCellEvenFiniteSevenTrueBorderEntry_sub_polynomial_nonconstant_lt
         (mul_lt_mul_of_pos_left henv (by norm_num))
     _ < (1 / 10000000000 : ℝ) := by norm_num
 
+/-! ## Complete polynomialization of the endpoint border
+
+The preceding entry center still retains the genuine kernel in the fixed
+seed pivot and in the two endpoint-seed rows.  The definitions below remove
+those final occurrences without changing any singular, endpoint-potential,
+scalar, prime, or wide-cosh term.  Consequently the remaining numerical
+certificate is an entirely algebraic polynomial-moment calculation, while
+all analytic loss is isolated in copies of the single envelope quadratic
+already controlled above.
+-/
+
+/-- Complete even bracket with the regular kernel replaced by the checked
+degree-eighteen polynomial. -/
+def fourCellEvenFiniteSevenPolynomialExactBracket (w : ℝ → ℝ) : ℝ :=
+  fourCellEvenFiniteSevenPolynomialPolarFreeOperator w +
+    8 * fourCellOperatorHalfWidth *
+      fourCellPositiveCoshMoment w
+        (fourCellOperatorHalfWidth / 2) ^ 2
+
+/-- Symmetric polarization of the completely polynomialized bracket. -/
+def fourCellEvenFiniteSevenPolynomialExactBracketPolarization
+    (u v : ℝ → ℝ) : ℝ :=
+  (fourCellEvenFiniteSevenPolynomialExactBracket (u + v) -
+      fourCellEvenFiniteSevenPolynomialExactBracket u -
+      fourCellEvenFiniteSevenPolynomialExactBracket v) / 2
+
+/-- Polynomialized version of the fixed endpoint-seed mixed row. -/
+def fourCellEvenFiniteSevenPolynomialEndpointSeedRow (v : ℝ → ℝ) : ℝ :=
+  fourCellEvenFiniteSevenPolynomialExactBracketPolarization
+    fourCellEvenEndpointCoshSeed v
+
+private theorem finiteSeven_exactBracket_eq_polynomial_sub_envelope
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w) :
+    fourCellEvenExactBracket w =
+      fourCellEvenFiniteSevenPolynomialExactBracket w -
+        2 * fourCellOperatorHalfWidth *
+          fourCellEvenFiniteSevenRegularEnvelopeQuadratic w := by
+  unfold fourCellEvenExactBracket
+  rw [fourCell_evenBracket_eq_polarFree_add_coshRank w hw hlocal heven,
+    finiteSeven_polarFreeOperator_eq_polynomial_sub_envelope
+      w hw hlocal heven]
+  unfold fourCellEvenFiniteSevenPolynomialExactBracket
+  ring
+
+private theorem finiteSeven_endpointCoshSeed_locallyLipschitzOn :
+    LocallyLipschitzOn (Icc (-1 : ℝ) 1) fourCellEvenEndpointCoshSeed := by
+  have hdiff : ContDiff ℝ 1 fourCellEvenEndpointCoshSeed := by
+    unfold fourCellEvenEndpointCoshSeed
+    fun_prop
+  exact hdiff.locallyLipschitz.locallyLipschitzOn
+
+private theorem finiteSeven_exactBracketPolarization_eq_polynomial_sub_envelope
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (huLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) u)
+    (hvLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v)
+    (huEven : Function.Even u) (hvEven : Function.Even v) :
+    fourCellExactBracketPolarization u v =
+      fourCellEvenFiniteSevenPolynomialExactBracketPolarization u v -
+        2 * fourCellOperatorHalfWidth *
+          fourCellEvenFiniteSevenRegularEnvelopePolarization u v := by
+  have huv := finiteSeven_exactBracket_eq_polynomial_sub_envelope
+    (u + v) (hu.add hv) (huLocal.add hvLocal) (huEven.add hvEven)
+  have huEq := finiteSeven_exactBracket_eq_polynomial_sub_envelope
+    u hu huLocal huEven
+  have hvEq := finiteSeven_exactBracket_eq_polynomial_sub_envelope
+    v hv hvLocal hvEven
+  have hadd := fourCell_evenBracket_add_eq_low_add_mixed_add_tail
+    u v hu hv
+  unfold fourCellEvenExactBracket at huv huEq hvEq
+  unfold fourCellEvenFiniteSevenPolynomialExactBracketPolarization
+    fourCellEvenFiniteSevenRegularEnvelopePolarization
+  rw [huv, huEq, hvEq] at hadd
+  linarith
+
+private theorem finiteSeven_endpointSeedRow_eq_polynomial_sub_envelope
+    (k : ℕ) :
+    fourCellEvenEndpointSeedRow
+        (fourCellEvenFiniteSevenQuotientMode (2 * k)) =
+      fourCellEvenFiniteSevenPolynomialEndpointSeedRow
+        (fourCellEvenFiniteSevenQuotientMode (2 * k)) -
+        2 * fourCellOperatorHalfWidth *
+          fourCellEvenFiniteSevenRegularEnvelopePolarization
+            fourCellEvenEndpointCoshSeed
+            (fourCellEvenFiniteSevenQuotientMode (2 * k)) := by
+  have h := finiteSeven_exactBracketPolarization_eq_polynomial_sub_envelope
+    fourCellEvenEndpointCoshSeed
+    (fourCellEvenFiniteSevenQuotientMode (2 * k))
+    fourCellEvenEndpointCoshSeed_continuous
+    (finiteSeven_quotientMode_continuous (2 * k))
+    finiteSeven_endpointCoshSeed_locallyLipschitzOn
+    (finiteSeven_quotientMode_locallyLipschitzOn k)
+    fourCellEvenEndpointCoshSeed_even
+    (finiteSeven_quotientMode_even k)
+  simpa only [fourCellEvenEndpointSeedRow,
+    fourCellEvenFiniteSevenPolynomialEndpointSeedRow] using h
+
+/-- The fully polynomialized bordered entry.  Unlike
+`fourCellEvenFiniteSevenPolynomialBorderEntry`, this contains no occurrence
+of the genuine regular kernel: the seed pivot and both mixed rows have also
+been replaced. -/
+def fourCellEvenFiniteSevenFullyPolynomialBorderEntry (m n : ℕ) : ℝ :=
+  fourCellEvenFiniteSevenPolynomialExactBracket
+      fourCellEvenEndpointCoshSeed *
+    fourCellEvenFiniteSevenPolynomialPolarFreePolarization
+      (fourCellEvenFiniteSevenQuotientMode m)
+      (fourCellEvenFiniteSevenQuotientMode n) -
+    (251 / 250 : ℝ) *
+      fourCellEvenFiniteSevenPolynomialEndpointSeedRow
+        (fourCellEvenFiniteSevenQuotientMode m) *
+      fourCellEvenFiniteSevenPolynomialEndpointSeedRow
+        (fourCellEvenFiniteSevenQuotientMode n)
+
+/-- Exact four-remainder normal form for a true even quotient entry.  The
+only nonalgebraic errors are the regular envelope on the quotient pair, the
+fixed seed, and the two seed--quotient mixed rows. -/
+theorem fourCellEvenFiniteSevenTrueBorderEntry_eq_fullyPolynomial_envelopes
+    (k l : ℕ) :
+    fourCellEvenFiniteSevenTrueBorderEntry (2 * k) (2 * l) =
+      (fourCellEvenFiniteSevenPolynomialExactBracket
+          fourCellEvenEndpointCoshSeed -
+        2 * fourCellOperatorHalfWidth *
+          fourCellEvenFiniteSevenRegularEnvelopeQuadratic
+            fourCellEvenEndpointCoshSeed) *
+        (fourCellEvenFiniteSevenPolynomialPolarFreePolarization
+            (fourCellEvenFiniteSevenQuotientMode (2 * k))
+            (fourCellEvenFiniteSevenQuotientMode (2 * l)) -
+          2 * fourCellOperatorHalfWidth *
+            fourCellEvenFiniteSevenRegularEnvelopePolarization
+              (fourCellEvenFiniteSevenQuotientMode (2 * k))
+              (fourCellEvenFiniteSevenQuotientMode (2 * l))) -
+      (251 / 250 : ℝ) *
+        (fourCellEvenFiniteSevenPolynomialEndpointSeedRow
+            (fourCellEvenFiniteSevenQuotientMode (2 * k)) -
+          2 * fourCellOperatorHalfWidth *
+            fourCellEvenFiniteSevenRegularEnvelopePolarization
+              fourCellEvenEndpointCoshSeed
+              (fourCellEvenFiniteSevenQuotientMode (2 * k))) *
+        (fourCellEvenFiniteSevenPolynomialEndpointSeedRow
+            (fourCellEvenFiniteSevenQuotientMode (2 * l)) -
+          2 * fourCellOperatorHalfWidth *
+            fourCellEvenFiniteSevenRegularEnvelopePolarization
+              fourCellEvenEndpointCoshSeed
+              (fourCellEvenFiniteSevenQuotientMode (2 * l))) := by
+  have hseed := finiteSeven_exactBracket_eq_polynomial_sub_envelope
+    fourCellEvenEndpointCoshSeed fourCellEvenEndpointCoshSeed_continuous
+    finiteSeven_endpointCoshSeed_locallyLipschitzOn
+    fourCellEvenEndpointCoshSeed_even
+  have hpolar :=
+    finiteSeven_truePolarFreePolarization_eq_polynomial_sub_envelope k l
+  have hrowK := finiteSeven_endpointSeedRow_eq_polynomial_sub_envelope k
+  have hrowL := finiteSeven_endpointSeedRow_eq_polynomial_sub_envelope l
+  unfold fourCellEvenFiniteSevenTrueBorderEntry
+    fourCellEvenFiniteSevenBorderPolarization
+  rw [hseed, hpolar, hrowK, hrowL]
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedFiniteSevenEntryEnclosuresStructural
