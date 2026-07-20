@@ -320,7 +320,7 @@ def fourCellOddP11P1UpperRepresenter (x : ℝ) : ℝ :=
 the pure row.  Its cost has a wide margin below the `P₁` pivot. -/
 def fourCellOddP11P1Selector : ℝ → ℝ :=
   fourCellOddOneThreeFiveSevenNineLowProfile
-    (-2) (-(3 / 2)) (-(1 / 5)) (-(3 / 4)) (-(7 / 10))
+    2 (3 / 2) (1 / 5) (3 / 4) (7 / 10)
 
 private theorem intervalIntegrable_zero_one_endpointPotential_mul_x_mul
     (u : ℝ → ℝ) (hu : Continuous u) :
@@ -477,12 +477,12 @@ theorem fourCellOddCoreLocalBilinear_P1_P11Plus_eq_selectorResiduals
     unfold fourCellOddP11P1Selector
     exact integral_zero_one_fiveMode_mul_P11Plus_eq_zero
       r hr.continuous hodd h1 h3 h5 h7 h9
-        (-2) (-(3 / 2)) (-(1 / 5)) (-(3 / 4)) (-(7 / 10))
+        2 (3 / 2) (1 / 5) (3 / 4) (7 / 10)
   have hselectorInt : IntervalIntegrable
       (fun x : ℝ ↦ fourCellOddP11P1Selector x * r x)
       volume 0 1 := by
     exact ((contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
-      (-2) (-(3 / 2)) (-(1 / 5)) (-(3 / 4)) (-(7 / 10))).continuous.mul
+      2 (3 / 2) (1 / 5) (3 / 4) (7 / 10)).continuous.mul
         hr.continuous).intervalIntegrable _ _
   have hselectorL : IntervalIntegrable
       (fun x : ℝ ↦ fourCellOddP11P1Selector x * r x)
