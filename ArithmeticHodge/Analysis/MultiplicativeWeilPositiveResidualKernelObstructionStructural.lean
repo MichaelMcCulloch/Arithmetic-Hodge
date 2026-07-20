@@ -15,9 +15,12 @@ open ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthEndpointReserveStructur
 open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellCommonParentDeterminantStructural
 open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
 open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural
+open ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
 open MultiplicativeWeilFourCellEnergyAbsorptionStructural
 open MultiplicativeWeilMonotoneCellEnergyFrameStructural
+open MultiplicativeWeilMonotoneNullSuffixVariationStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
+open MultiplicativeWeilQuarterLogLatticePartitionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 
 /-!
@@ -482,6 +485,143 @@ theorem threeMiddleCombination_quadratic_pos_of_pointSeparated_ratioTwo
   · exact threeMiddleCombination_conjugate_fixed middle c hreal
   · exact threeMiddleCombination_ne_zero_of_pointSeparated
       middle center hpoint c hc
+
+private theorem monotoneQuarterCell_eq_zero_of_centralSupport_left
+    (f : BombieriTest) (k : ℤ)
+    (hsupport : tsupport (f : ℝ → ℂ) ⊆
+      Icc (quarterLogLatticePoint (k + 2))
+        (quarterLogLatticePoint (k + 4))) :
+    monotoneQuarterCell f k = 0 := by
+  apply TestFunction.ext
+  intro x
+  by_cases hx : f x = 0
+  · simp [monotoneQuarterCell_apply, hx]
+  · have hxt := hsupport
+      (subset_tsupport (f : ℝ → ℂ) (Function.mem_support.mpr hx))
+    rw [monotoneQuarterCell_apply,
+      monotoneQuarterWeight_eq_zero_of_le_left k hxt.1]
+    simp
+
+private theorem monotoneQuarterCell_eq_zero_of_centralSupport_right
+    (f : BombieriTest) (k : ℤ)
+    (hsupport : tsupport (f : ℝ → ℂ) ⊆
+      Icc (quarterLogLatticePoint (k + 2))
+        (quarterLogLatticePoint (k + 4))) :
+    monotoneQuarterCell f (k + 4) = 0 := by
+  apply TestFunction.ext
+  intro x
+  by_cases hx : f x = 0
+  · simp [monotoneQuarterCell_apply, hx]
+  · have hxt := hsupport
+      (subset_tsupport (f : ℝ → ℂ) (Function.mem_support.mpr hx))
+    rw [monotoneQuarterCell_apply,
+      monotoneQuarterWeight_eq_zero_of_le (k + 4) hxt.2]
+    simp
+
+private theorem fiveCellMiddleThree_eq_self_of_centralSupport
+    (f : BombieriTest) (k : ℤ)
+    (hsupport : tsupport (f : ℝ → ℂ) ⊆
+      Icc (quarterLogLatticePoint (k + 2))
+        (quarterLogLatticePoint (k + 4))) :
+    fiveCellMiddleThree f k = f := by
+  apply TestFunction.ext
+  intro x
+  by_cases hx : f x = 0
+  · simp [fiveCellMiddleThree, monotoneQuarterCell_apply, hx]
+  · have hxt := hsupport
+      (subset_tsupport (f : ℝ → ℂ) (Function.mem_support.mpr hx))
+    simp only [fiveCellMiddleThree, TestFunction.coe_add, Pi.add_apply,
+      monotoneQuarterCell_apply]
+    unfold monotoneQuarterWeight
+    simp only [show k + 1 + 1 = k + 2 by ring,
+      show k + 2 + 1 = k + 3 by ring,
+      show k + 3 + 1 = k + 4 by ring]
+    rw [monotoneQuarterStep_eq_one_of_le (k + 1) (by
+        simpa only [show k + 1 + 1 = k + 2 by ring] using hxt.1),
+      monotoneQuarterStep_eq_zero_of_le (k + 4) hxt.2]
+    push_cast
+    ring
+
+private theorem fiveCellMiddleThree_add_local
+    (f g : BombieriTest) (k : ℤ) :
+    fiveCellMiddleThree (f + g) k =
+      fiveCellMiddleThree f k + fiveCellMiddleThree g k := by
+  unfold fiveCellMiddleThree
+  simp_rw [monotoneQuarterCell_add]
+  module
+
+/-- The three middle bumps can be inserted into the actual negative-endpoint
+common parent without changing either endpoint cell.  This realizes the
+rank-nullity obstruction inside genuine five-cell production geometry. -/
+theorem exists_real_fiveCell_strictly_negative_middlePivotNumerator
+    (k : ℤ) :
+    ∃ parent : BombieriTest,
+      bombieriConjugateTest parent = parent ∧
+        0 < bombieriRealQuadraticValue (fiveCellMiddleThree parent k) ∧
+        bombieriRealQuadraticValue (fiveCellMiddleThree parent k) *
+              (bombieriTwoBlockGlobalCrossSymbol
+                (monotoneQuarterCell parent k)
+                (monotoneQuarterCell parent (k + 4))).re -
+            (bombieriTwoBlockGlobalCrossSymbol
+              (monotoneQuarterCell parent k)
+              (fiveCellMiddleThree parent k)).re *
+            (bombieriTwoBlockGlobalCrossSymbol
+              (fiveCellMiddleThree parent k)
+              (monotoneQuarterCell parent (k + 4))).re < 0 := by
+  obtain ⟨base, hbaseReal, hbaseMiddle, hremote⟩ :=
+    exists_real_middleZero_fiveCell_negative_remoteGlobalCross k
+  let qa : ℝ := quarterLogLatticePoint (k + 2)
+  let qb : ℝ := quarterLogLatticePoint (k + 4)
+  have hqa : 0 < qa := quarterLogLatticePoint_pos (k + 2)
+  have hqaqb : qa < qb := quarterLogLatticePoint_strictMono (by omega)
+  obtain ⟨middle, center, hmiddleReal, hmiddleSupport, hpoint⟩ :=
+    exists_three_pointSeparated_real_bombieri_bumps qa qb hqa hqaqb
+  have hratio : qb / qa ≤ 2 := by
+    apply (div_le_iff₀ hqa).2
+    dsimp only [qa, qb]
+    calc
+      quarterLogLatticePoint (k + 4) ≤
+          quarterLogLatticePoint ((k + 2) + 4) :=
+        quarterLogLatticePoint_mono (by omega)
+      _ = 2 * quarterLogLatticePoint (k + 2) :=
+        quarterLogLatticePoint_add_four (k + 2)
+  have hmiddleSupportClosed : ∀ i,
+      tsupport (middle i : ℝ → ℂ) ⊆ Icc qa qb := by
+    intro i
+    exact (hmiddleSupport i).trans Ioo_subset_Icc_self
+  have hpositive : ∀ c : Fin 3 → ℝ, c ≠ 0 →
+      0 < bombieriRealQuadraticValue
+        (threeMiddleCombination middle c) := by
+    intro c hc
+    exact threeMiddleCombination_quadratic_pos_of_pointSeparated_ratioTwo
+      middle center qa qb hqa hqaqb.le hratio hmiddleReal
+      hmiddleSupportClosed hpoint c hc
+  let a : BombieriTest := monotoneQuarterCell base k
+  let e : BombieriTest := monotoneQuarterCell base (k + 4)
+  apply exists_real_fiveCell_strictly_negative_middlePivotNumerator_of_realization
+    k a e middle hpositive
+  · simpa only [a, e] using hremote
+  · intro c
+    let m : BombieriTest := threeMiddleCombination middle c
+    have hmSupport : tsupport (m : ℝ → ℂ) ⊆
+        Icc (quarterLogLatticePoint (k + 2))
+          (quarterLogLatticePoint (k + 4)) := by
+      simpa only [m, qa, qb] using
+        threeMiddleCombination_tsupport_subset
+          middle c qa qb hmiddleSupportClosed
+    refine ⟨base + m, ?_, ?_, ?_, ?_⟩
+    · rw [bombieriConjugateTest_add, hbaseReal]
+      exact congrArg (fun t : BombieriTest ↦ base + t)
+        (threeMiddleCombination_conjugate_fixed middle c hmiddleReal)
+    · rw [monotoneQuarterCell_add,
+        monotoneQuarterCell_eq_zero_of_centralSupport_left m k hmSupport,
+        add_zero]
+    · rw [monotoneQuarterCell_add,
+        monotoneQuarterCell_eq_zero_of_centralSupport_right m k hmSupport,
+        add_zero]
+    · rw [fiveCellMiddleThree_add_local, hbaseMiddle,
+        fiveCellMiddleThree_eq_self_of_centralSupport m k hmSupport,
+        zero_add]
 
 end
 
