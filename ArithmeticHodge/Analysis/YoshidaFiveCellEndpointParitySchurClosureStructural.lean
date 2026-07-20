@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFiveCellEndpointOperatorParitySplitStructural
 import ArithmeticHodge.Analysis.YoshidaFiveCellLowModeClosureStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseCenteredP9Structural
 
 set_option autoImplicit false
 
@@ -13,10 +14,24 @@ noncomputable section
 open YoshidaFactorTwoEndpointParityPencil
 open MultiplicativeWeilFiveCellSingleProfileStructural
 open MultiplicativeWeilFiveCellResidualFactorTwoStructural
+open ShiftedLegendreBasis
 open ShiftedLegendreCenteredLowModes
+open ShiftedLegendreCenteredParity
+open ShiftedLegendreFiniteEnergyGap
+open ShiftedLegendreL2Basis
+open ShiftedLegendreOrthogonality
+open UnitIntervalLogEnergyAffine
+open YoshidaEndpointOcticPotential
+open YoshidaEndpointOddResidualRegularity
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
+open YoshidaFactorTwoPhaseCenteredP9Structural
+open YoshidaFactorTwoPhaseIntrinsicEightUnbalancedStaticDiskStructural
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
+open YoshidaFactorTwoPhaseIntrinsicNineUnbalancedStaticDiskStructural
+open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
+open YoshidaFactorTwoPhaseLegendreFourFiveStructural
+open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 open YoshidaClippedEndpointContinuous
 open YoshidaFiveCellCanonicalLowTailSchurStructural
 open YoshidaFiveCellEndpointAdaptedIntrinsicLowStructural
@@ -865,6 +880,344 @@ theorem smoothEndpointZeroParityNonnegative_of_intrinsicParityRays
       simpa only [u, v] using fiveCellEndpointAdaptedLow_add_tail o hoc
     rw [← huv, huCoord]
     simpa using hray
+
+/-! ## The odd ray after retaining its shared degree-nine reserve -/
+
+/-- The complete odd polynomial block below the genuine `P11+` residual.
+Unlike the endpoint-adapted four-coordinate profile, its `P9` coefficient is
+free: it absorbs the `P9` component of the original ninth-gap tail. -/
+def fiveCellOddP11FiniteProfile
+    (c1 c3 c5 c7 c9 : ℝ) : ℝ → ℝ :=
+  factorTwoIntrinsicNineOddProfile c1 c3 c5 c7 +
+    fun x ↦ c9 * factorTwoCenteredP9 x
+
+theorem contDiff_top_fiveCellOddP11FiniteProfile
+    (c1 c3 c5 c7 c9 : ℝ) :
+    ContDiff ℝ ∞ (fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9) := by
+  unfold fiveCellOddP11FiniteProfile factorTwoIntrinsicNineOddProfile
+    factorTwoIntrinsicEightOddProfile factorTwoIntrinsicSixOddTail
+  apply ContDiff.add
+  · apply ContDiff.add
+    · apply ContDiff.add
+      · unfold factorTwoOddStructuralLowProfile centeredP1 centeredP3
+        fun_prop
+      · unfold factorTwoCenteredP5
+        fun_prop
+    · rw [show factorTwoCenteredP7 = fun x ↦
+          (429 * x ^ 7 - 693 * x ^ 5 + 315 * x ^ 3 - 35 * x) / 16 by
+        funext x
+        exact factorTwoCenteredP7_eq x]
+      fun_prop
+  · rw [show factorTwoCenteredP9 = fun x ↦
+        (12155 * x ^ 9 - 25740 * x ^ 7 + 18018 * x ^ 5 -
+          4620 * x ^ 3 + 315 * x) / 128 by
+      funext x
+      exact factorTwoCenteredP9_eq x]
+    fun_prop
+
+theorem fiveCellOddP11FiniteProfile_odd
+    (c1 c3 c5 c7 c9 : ℝ) :
+    Function.Odd (fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9) := by
+  intro x
+  unfold fiveCellOddP11FiniteProfile factorTwoIntrinsicNineOddProfile
+    factorTwoIntrinsicEightOddProfile factorTwoIntrinsicSixOddTail
+    factorTwoOddStructuralLowProfile
+  simp only [Pi.add_apply]
+  rw [odd_factorTwoCenteredP5 x, odd_factorTwoCenteredP7 x,
+    odd_factorTwoCenteredP9 x]
+  unfold centeredP1 centeredP3
+  ring
+
+theorem fiveCellOddP11FiniteProfile_one
+    (c1 c3 c5 c7 c9 : ℝ) :
+    fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9 1 =
+      c1 + c3 + c5 + c7 + c9 := by
+  unfold fiveCellOddP11FiniteProfile factorTwoIntrinsicNineOddProfile
+    factorTwoIntrinsicEightOddProfile factorTwoIntrinsicSixOddTail
+    factorTwoOddStructuralLowProfile centeredP1 centeredP3
+    factorTwoCenteredP5
+  simp only [Pi.add_apply]
+  rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  norm_num
+
+private theorem fiveCellOddEndpointReserve_eq_neg_centeredP9 (x : ℝ) :
+    fiveCellOddEndpointReserve x = -factorTwoCenteredP9 x := by
+  unfold fiveCellOddEndpointReserve factorTwoCenteredP9
+  ring
+
+/-- Endpoint adaptation forces exactly the coefficient
+`c9 = -(c1+c3+c5+c7)`.  This is the structural reason the original odd low
+block has four coordinates while the coupled finite/`P11+` block has five. -/
+theorem fiveCellEndpointAdaptedIntrinsicOddProfile_eq_P11Finite
+    (c1 c3 c5 c7 : ℝ) :
+    fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7 =
+      fiveCellOddP11FiniteProfile c1 c3 c5 c7
+        (-(c1 + c3 + c5 + c7)) := by
+  let p := factorTwoIntrinsicNineOddProfile c1 c3 c5 c7
+  have hp1 : p 1 = c1 + c3 + c5 + c7 := by
+    have h := fiveCellOddP11FiniteProfile_one c1 c3 c5 c7 0
+    change p 1 + 0 * factorTwoCenteredP9 1 = _ at h
+    simpa only [zero_mul, add_zero] using h
+  funext x
+  unfold fiveCellEndpointAdaptedIntrinsicOddProfile
+  change p x + p 1 * fiveCellOddEndpointReserve x = _
+  rw [hp1, fiveCellOddEndpointReserve_eq_neg_centeredP9]
+  unfold fiveCellOddP11FiniteProfile
+  change p x + (c1 + c3 + c5 + c7) * (-factorTwoCenteredP9 x) =
+    p x + -(c1 + c3 + c5 + c7) * factorTwoCenteredP9 x
+  ring
+
+theorem contDiff_top_fiveCellEndpointAdaptedIntrinsicOddProfile
+    (c1 c3 c5 c7 : ℝ) :
+    ContDiff ℝ ∞
+      (fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7) := by
+  rw [fiveCellEndpointAdaptedIntrinsicOddProfile_eq_P11Finite]
+  exact contDiff_top_fiveCellOddP11FiniteProfile _ _ _ _ _
+
+theorem fiveCellEndpointAdaptedIntrinsicOddProfile_odd
+    (c1 c3 c5 c7 : ℝ) :
+    Function.Odd
+      (fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7) := by
+  rw [fiveCellEndpointAdaptedIntrinsicOddProfile_eq_P11Finite]
+  exact fiveCellOddP11FiniteProfile_odd _ _ _ _ _
+
+theorem fiveCellEndpointAdaptedIntrinsicOddProfile_endpoints_zero
+    (c1 c3 c5 c7 : ℝ) :
+    fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7 (-1) = 0 ∧
+      fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7 1 = 0 := by
+  let p := fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7
+  have hpOdd : Function.Odd p := by
+    simpa only [p] using
+      fiveCellEndpointAdaptedIntrinsicOddProfile_odd c1 c3 c5 c7
+  have hpOne : p 1 = 0 := by
+    rw [show p = fiveCellOddP11FiniteProfile c1 c3 c5 c7
+        (-(c1 + c3 + c5 + c7)) by
+      simpa only [p] using
+        fiveCellEndpointAdaptedIntrinsicOddProfile_eq_P11Finite
+          c1 c3 c5 c7,
+      fiveCellOddP11FiniteProfile_one]
+    ring
+  constructor
+  · have h := hpOdd 1
+    norm_num at h ⊢
+    change p (-1) = 0
+    rw [h, hpOne]
+    ring
+  · exact hpOne
+
+private theorem shiftedLegendreReal_one_centered_oddP11 (x : ℝ) :
+    (shiftedLegendreReal 1).eval ((x + 1) / 2) = -centeredP1 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredP1]
+  ring
+
+private theorem shiftedLegendreReal_three_centered_oddP11 (x : ℝ) :
+    (shiftedLegendreReal 3).eval ((x + 1) / 2) = -centeredP3 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredP3]
+  ring
+
+private theorem shiftedLegendreReal_five_centered_oddP11 (x : ℝ) :
+    (shiftedLegendreReal 5).eval ((x + 1) / 2) =
+      -factorTwoCenteredP5 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, factorTwoCenteredP5]
+  ring
+
+private theorem shiftedLegendreReal_seven_centered_oddP11 (x : ℝ) :
+    (shiftedLegendreReal 7).eval ((x + 1) / 2) =
+      -factorTwoCenteredP7 x := by
+  have h := centeredPullback_factorTwoCenteredP7 ((x + 1) / 2)
+  unfold centeredPullback at h
+  rw [show 2 * ((x + 1) / 2) - 1 = x by ring] at h
+  linarith
+
+private theorem shiftedLegendreReal_nine_centered_oddP11 (x : ℝ) :
+    (shiftedLegendreReal 9).eval ((x + 1) / 2) =
+      -factorTwoCenteredP9 x := by
+  have h := centeredPullback_factorTwoCenteredP9 ((x + 1) / 2)
+  unfold centeredPullback at h
+  rw [show 2 * ((x + 1) / 2) - 1 = x by ring] at h
+  linarith
+
+/-- Exact five-coordinate description of the cutoff-eleven projection of
+an arbitrary odd profile.  Parity kills all six even coefficients at once;
+the five surviving odd coefficients are retained symbolically. -/
+theorem centeredLegendreLowProjection_eleven_eq_oddP11FiniteProfile
+    (o : ℝ → ℝ) (hoc : Continuous o) (hodd : Function.Odd o) :
+    centeredLegendreLowProjection o hoc 11 =
+      fiveCellOddP11FiniteProfile
+        (-factorTwoCanonicalLegendreCoefficient o hoc 1)
+        (-factorTwoCanonicalLegendreCoefficient o hoc 3)
+        (-factorTwoCanonicalLegendreCoefficient o hoc 5)
+        (-factorTwoCanonicalLegendreCoefficient o hoc 7)
+        (-factorTwoCanonicalLegendreCoefficient o hoc 9) := by
+  have h0 := centeredPullback_repr_eq_zero_of_odd_of_even
+    o (centeredPullback_memLp_two o hoc) hodd 0 (by norm_num : Even 0)
+  have h2 := centeredPullback_repr_eq_zero_of_odd_of_even
+    o (centeredPullback_memLp_two o hoc) hodd 2 (by norm_num : Even 2)
+  have h4 := centeredPullback_repr_eq_zero_of_odd_of_even
+    o (centeredPullback_memLp_two o hoc) hodd 4 (by norm_num : Even 4)
+  have h6 := centeredPullback_repr_eq_zero_of_odd_of_even
+    o (centeredPullback_memLp_two o hoc) hodd 6 (by norm_num : Even 6)
+  have h8 := centeredPullback_repr_eq_zero_of_odd_of_even
+    o (centeredPullback_memLp_two o hoc) hodd 8 (by norm_num : Even 8)
+  have h10 := centeredPullback_repr_eq_zero_of_odd_of_even
+    o (centeredPullback_memLp_two o hoc) hodd 10 (by norm_num : Even 10)
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 o hoc) 0 = 0 at h0
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 o hoc) 2 = 0 at h2
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 o hoc) 4 = 0 at h4
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 o hoc) 6 = 0 at h6
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 o hoc) 8 = 0 at h8
+  change shiftedLegendreHilbertBasis.repr (centeredPullbackL2 o hoc) 10 = 0 at h10
+  funext x
+  unfold centeredLegendreLowProjection centeredLegendreProjectionPolynomial
+    shiftedLegendrePartialProjectionPolynomial
+  rw [Polynomial.eval_finset_sum]
+  simp only [normalizedShiftedLegendrePolynomial, Polynomial.eval_smul,
+    smul_eq_mul, Finset.sum_range_succ, Finset.sum_range_zero,
+    h0, h2, h4, h6, h8, h10, zero_mul, zero_add, add_zero]
+  rw [shiftedLegendreReal_one_centered_oddP11,
+    shiftedLegendreReal_three_centered_oddP11,
+    shiftedLegendreReal_five_centered_oddP11,
+    shiftedLegendreReal_seven_centered_oddP11,
+    shiftedLegendreReal_nine_centered_oddP11]
+  unfold fiveCellOddP11FiniteProfile factorTwoIntrinsicNineOddProfile
+    factorTwoIntrinsicEightOddProfile factorTwoIntrinsicSixOddTail
+    factorTwoOddStructuralLowProfile factorTwoCanonicalLegendreCoefficient
+  simp only [Pi.add_apply]
+  ring
+
+/-- Finite diagonal obligation on the complete five-mode odd block. -/
+def FiveCellOddP11FiniteDiagonalNonnegative : Prop :=
+  ∀ c1 c3 c5 c7 c9 : ℝ,
+    0 ≤ fiveCellEndpointOperator
+      (fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9)
+
+/-- The sole infinite-dimensional odd obligation after retaining `P9`.
+The residual begins at `P11`; its endpoint trace is not discarded, but is
+kept as the exact condition that the reconstructed profile vanish at both
+endpoints. -/
+def FiveCellOddP11MixedSchur : Prop :=
+  ∀ (c1 c3 c5 c7 c9 : ℝ) (r : ℝ → ℝ),
+    Continuous r →
+    LocallyLipschitzOn (Icc (-1 : ℝ) 1) r →
+    Function.Odd r →
+    centeredLegendreMomentsVanishBelow r 11 →
+    ((fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9 + r) (-1) = 0 ∧
+      (fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9 + r) 1 = 0) →
+    fiveCellEndpointOperatorCross
+        (fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9) r ^ 2 ≤
+      fiveCellEndpointOperator
+          (fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9) *
+        fiveCellEndpointOperator r
+
+/-- Exact odd closure from the five-mode diagonal and the genuine `P11+`
+Schur contraction.  The residual diagonal is discharged structurally by the
+existing ninth-gap coercivity theorem. -/
+theorem fiveCellEndpointOperator_nonnegative_of_odd_P11Schur
+    (hfinite : FiveCellOddP11FiniteDiagonalNonnegative)
+    (hmixed : FiveCellOddP11MixedSchur)
+    (o : ℝ → ℝ) (hoTop : ContDiff ℝ ∞ o)
+    (hoEnd : o (-1) = 0 ∧ o 1 = 0) (hodd : Function.Odd o) :
+    0 ≤ fiveCellEndpointOperator o := by
+  let hoc : Continuous o := hoTop.continuous
+  let p := centeredLegendreLowProjection o hoc 11
+  let r := centeredLegendreHigherResidual o hoc 11
+  let c1 := -factorTwoCanonicalLegendreCoefficient o hoc 1
+  let c3 := -factorTwoCanonicalLegendreCoefficient o hoc 3
+  let c5 := -factorTwoCanonicalLegendreCoefficient o hoc 5
+  let c7 := -factorTwoCanonicalLegendreCoefficient o hoc 7
+  let c9 := -factorTwoCanonicalLegendreCoefficient o hoc 9
+  have hpCoord : p = fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9 := by
+    simpa only [p, c1, c3, c5, c7, c9] using
+      centeredLegendreLowProjection_eleven_eq_oddP11FiniteProfile
+        o hoc hodd
+  have hrContinuous : Continuous r := by
+    simpa only [r] using
+      continuous_centeredLegendreHigherResidual o hoc 11
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual o hoc
+        ((hoTop.of_le (by norm_num)).contDiffOn.locallyLipschitzOn
+          (convex_Icc (-1) 1)) 11
+  have hrOdd : Function.Odd r := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_odd o hoc hodd 11
+  have hrGap11 : centeredLegendreMomentsVanishBelow r 11 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow o hoc 11
+  have hrGap9 : centeredLegendreMomentsVanishBelow r 9 := by
+    intro n hn
+    exact hrGap11 n (by omega)
+  have hreconstruct : p + r = o := by
+    simpa only [p, r] using
+      centeredLegendreLowProjection_add_higherResidual o hoc 11
+  have hprofileEnd :
+      (fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9 + r) (-1) = 0 ∧
+        (fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9 + r) 1 = 0 := by
+    rw [← hpCoord, hreconstruct]
+    exact hoEnd
+  have hpNonnegative := hfinite c1 c3 c5 c7 c9
+  have hrNonnegative := fiveCellEndpointOperator_nonnegative_of_odd_tailNine
+    r hrContinuous hrLocal hrOdd hrGap9
+  have hcross := hmixed c1 c3 c5 c7 c9 r hrContinuous hrLocal hrOdd
+    hrGap11 hprofileEnd
+  rw [← hpCoord] at hpNonnegative hcross
+  rw [← hreconstruct]
+  exact fiveCellEndpointOperator_add_nonnegative_of_schur
+    p r hpNonnegative hrNonnegative hcross
+
+/-- Consequently the same two structural obligations close every actual
+endpoint-adapted odd ninth-gap ray used by the production split. -/
+theorem fiveCellEndpointAdaptedIntrinsicOddRay_nonnegative_of_P11Schur
+    (hfinite : FiveCellOddP11FiniteDiagonalNonnegative)
+    (hmixed : FiveCellOddP11MixedSchur)
+    (c1 c3 c5 c7 : ℝ) (r : ℝ → ℝ)
+    (hrTop : ContDiff ℝ ∞ r)
+    (hrEnd : r (-1) = 0 ∧ r 1 = 0)
+    (hrOdd : Function.Odd r)
+    (_hrGap : centeredLegendreMomentsVanishBelow r 9)
+    (s : ℝ) :
+    0 ≤ fiveCellEndpointOperator
+      (fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7 + s • r) := by
+  let p := fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7
+  let w := p + s • r
+  have hpTop : ContDiff ℝ ∞ p := by
+    simpa only [p] using
+      contDiff_top_fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7
+  have hpEnd : p (-1) = 0 ∧ p 1 = 0 := by
+    simpa only [p] using
+      fiveCellEndpointAdaptedIntrinsicOddProfile_endpoints_zero c1 c3 c5 c7
+  have hpOdd : Function.Odd p := by
+    simpa only [p] using
+      fiveCellEndpointAdaptedIntrinsicOddProfile_odd c1 c3 c5 c7
+  have hwTop : ContDiff ℝ ∞ w := by
+    dsimp only [w]
+    exact hpTop.add (by
+      simpa only [Pi.smul_apply, smul_eq_mul] using contDiff_const.mul hrTop)
+  have hwEnd : w (-1) = 0 ∧ w 1 = 0 := by
+    constructor
+    · dsimp only [w]
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+      rw [hpEnd.1, hrEnd.1]
+      ring
+    · dsimp only [w]
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+      rw [hpEnd.2, hrEnd.2]
+      ring
+  have hwOdd : Function.Odd w := by
+    intro x
+    dsimp only [w]
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    rw [hpOdd x, hrOdd x]
+    ring
+  simpa only [w, p] using
+    fiveCellEndpointOperator_nonnegative_of_odd_P11Schur
+      hfinite hmixed w hwTop hwEnd hwOdd
 
 
 end
