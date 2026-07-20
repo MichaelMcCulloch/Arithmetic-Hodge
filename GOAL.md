@@ -102,6 +102,10 @@ Commit and push coherent checkpoints when doing so preserves useful progress.
 There is no required theorem count, audit template, documentation quota, or
 commit cadence.
 
+## Commit Policy
+
+Commit and push each independent proof.
+
 ## Current mathematical frontier
 
 The current production route has established restricted positivity for
@@ -239,19 +243,36 @@ kernel-checked rational boxes of width at most `10^-9`, including the extra
 `S_200` introduced by endpoint adaptation.  The retained `p = 3` sine and
 cosine phases at every frequency `0` through `200` also have exact rational
 Taylor enclosures of width at most `10^-10`, after a kernel-checked
-quarter-turn reduction.  The remaining finite obligation is to prove
-sufficiently sharp rational enclosures for the dyadic parts of all four
-perturbation families and the still-unboxed clean moments through frequency
-`200`, then replay an exact certificate.  A generic robust-congruence theorem
-is now compiled: a
+quarter-turn reduction.  The scalar enclosure obligation is now discharged:
+compiled modules provide kernel-checked rational boxes of width at most
+`10^-9` for all four perturbation families (symmetric sine, affine cosine,
+one-minus-cosine, and affine sine, each with dedicated low- and high-mode
+evaluations), for the clean diagonal at every retained mode, and for the
+clean sine moments through frequency `200`, supported by a sixth-order
+Euler--Mascheroni enclosure and quarter-line digamma residual enclosures.
+`YoshidaFactorTwoScalarTargetSelectors` exposes one uniform
+`contains`/`width_le` interface for the six scalar families
+`S`, `D`, `s`, `c`, `r`, and `u`.  A generic robust-congruence theorem
+is also compiled: a
 rational invertible change of basis, a uniform entrywise error bound around a
 rational center, and kernel-checked weighted diagonal dominance imply
 positive definiteness of the true matrix.  This avoids the width growth of a
-raw 210-stage interval elimination and makes the two fixed static splits the
-shortest current formal route.  Numerical conditioning still calls for
-scalar moment boxes around `1e-9` or tighter.  The healthier scalar-Schur
-margin remains a fallback if the static certificate cannot retain its thin
-reserve under rigorous enclosure inflation.
+raw 210-stage interval elimination.
+
+Certificate decision (2026-07-20): the production finite certificate is the
+inverse-free scalar-Schur criterion, not the static splits.  The static
+reserve of about `2.51e-7` is unlikely to survive rigorous enclosure
+inflation across a 210-dimensional replay, while the scalar-Schur route
+retains a margin of about four percent (worst normalized ratio `0.959645`).
+Concretely: instantiate every matrix entry from the unified scalar target
+selectors, prove kernel-checked positive semidefiniteness of the endpoint
+pencil matrices `Q_E ± P_E` and `Q_O ± P_O` through the robust-congruence
+theorem, extend to every `a² ≤ 1` by linearity of the pencil in `a`, and
+close the coupling inequality `(1 - a²) X² ≤ 4 Eₐ Oₐ` by scalar arithmetic
+against the certified pencil floors, using the compiled inverse-free
+reduction.  The two static splits remain compiled as a fallback only; do not
+spend further effort sharpening their thin reserve unless the scalar-Schur
+replay fails.
 
 For the full-profile assembly, the clean part of the low-tail mixed term is
 now exactly the real clipped critical pairing divided by `yoshidaA`, obtained
@@ -259,14 +280,55 @@ from the diagonal endpoint-clean bridge and Hermitian sesquilinearity. The
 remaining assembly obligation is still the phase-dependent low-tail Schur
 bound, including the symmetric-perturbation and alternating mixed terms.
 
+In parallel, a structural route to the odd low--tail coercivity (the
+`FourCell` odd `P51` chain) has been developed through exact Galerkin,
+Picone, and Hardy reductions.  Its current state: the complete `P53+`
+high-tail row has one honest Hilbert representer with a recorded Pythagorean
+norm deficit, and the loose scalar budget `3/40000` below the `7/10000`
+pivot floor is already proved.  The remaining named obligations are the
+analytic norm cap on that representer, positivity of the tail diagonal after
+the `1/256` raw reservation, and one local mixed determinant inequality.  A
+compiled counterwitness transport already shows that a single genuine
+negative tail diagonal refutes the one-eighth raw-strip surplus certificate
+outright, so the tail-diagonal question decides this rung.
+Time-box rule: this ladder has already escalated through `P4`, six-mode,
+nine-mode, `P024`, `P11`, and `P51` certificates, with several rungs
+refuted.  It may continue only while the named obligations above close
+without introducing a new, larger finite family.  If one of them is refuted,
+record the obstruction theorem and return to the scalar-Schur certificate
+track; do not open a larger rung by default.
+
 Even if the same-seed factor-two inequality is proved, arbitrary support still
 requires a valid local-to-global argument, such as a controlled chain of
 logarithmic windows or another all-support mechanism. Conversely, a strict
 negative production witness becomes a falsification only after its
 admissibility and the transport to `¬ RiemannHypothesis` are proved in Lean.
 
+Before any chaining lemma is written, run the adversarial margin experiment:
+numerically chain two, three, and four logarithmic windows and measure how
+the positivity margin decays with total support.  Near-extremal tests that
+concentrate spectral mass near the low zeta zeros force the unrestricted
+margin to zero, so a chaining argument that needs a uniform per-window
+margin cannot close; a valid local-to-global mechanism must be exact or
+telescoping.  Treat a measured inverse-power decay of the chained margin as
+a refutation of the uniform-margin mechanism, not as a tuning problem.
+
 The agent may bypass this frontier entirely if a more direct proof or
 falsification route becomes credible.
+
+## Workbench notes
+
+- The Justfile resource guard now measures proportional set size (PSS), so
+  shared olean mappings are no longer double counted across parallel lean
+  workers.  Full-parallel `lake build` of the whole library is safe under
+  the guard; prefer `just build` (or `just build <target>`) over one-file
+  compiles, and reserve `just strict <file>` for focused iteration.
+- `lake build` verifies only the import closure of the root
+  `ArithmeticHodge.lean`.  Every committed module must be imported, directly
+  or transitively, by that root in the same commit.  Run
+  `python3 scripts/module_reachability.py` to audit coverage; `MODULES.md`
+  records the current coverage debt and the integrate-or-archive guidance
+  for it.
 
 ## Research conduct
 
