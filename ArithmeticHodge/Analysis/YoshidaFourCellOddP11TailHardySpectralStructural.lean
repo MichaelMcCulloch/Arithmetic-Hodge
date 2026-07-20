@@ -1,10 +1,13 @@
 import ArithmeticHodge.Analysis.ShiftedLegendreCenteredL2Structural
+import ArithmeticHodge.Analysis.ShiftedLegendrePolynomialGap
+import ArithmeticHodge.Analysis.UnitIntervalIntegralBridge
 import ArithmeticHodge.Analysis.EndpointPotentialPolynomialPairBilinearStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP11TailConcentrationClosureStructural
 
 set_option autoImplicit false
 
 open Filter MeasureTheory Polynomial Real Set Topology
+open scoped unitInterval
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellOddP11TailHardySpectralStructural
 
@@ -15,7 +18,10 @@ open EndpointPotentialPolynomialPairBilinearStructural
 open ShiftedLegendreCenteredL2Structural
 open ShiftedLegendreCenteredLowModes
 open ShiftedLegendreOrthogonality
+open ShiftedLegendreLogEigen
+open UnitIntervalIntegralBridge
 open UnitIntervalLogEnergyAffine
+open UnitIntervalLogEnergyProjection
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointPotentialLegendreDiagonalStructural
@@ -333,6 +339,121 @@ with the corresponding endpoint rows.  The rational profile below records
 that structure directly.  No list of mode coefficients is expanded.
 -/
 
+/-- Exact bridge from a centered polynomial profile to the diagonal
+unit-interval logarithmic form. -/
+private theorem centeredRawLogEnergy_eq_four_mul_shiftedPair
+    (q : ℝ → ℝ) (p : ℝ[X])
+    (hmode : ∀ t : ℝ, centeredPullback q t = p.eval t) :
+    centeredRawLogEnergy q =
+      4 * ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear p p := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback q (t : ℝ)
+  have hfeq : f = fun t : unitInterval ↦ p.eval (t : ℝ) := by
+    funext t
+    exact hmode t
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) := by
+    rw [hfeq]
+    exact integrable_unitIntervalRawLogEnergyIntegrand_polynomial p
+  have hbridge := unitIntervalLogEnergy_centeredPullback q henergy
+  change unitIntervalLogEnergy f = (1 / 4 : ℝ) * centeredRawLogEnergy q
+    at hbridge
+  rw [hfeq] at hbridge
+  have hpoly := integral_unitIntervalRawLogEnergyIntegrand_polynomial p
+  unfold unitIntervalLogEnergy at hbridge
+  rw [hpoly] at hbridge
+  rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply,
+    ← integral_unitInterval_eq_intervalIntegral]
+  linarith
+
+private theorem integral_shiftedLegendreReal_sq_closed (n : ℕ) :
+    (∫ x : ℝ in 0..1, (shiftedLegendreReal n).eval x ^ 2) =
+      1 / (2 * (n : ℝ) + 1) := by
+  have hdiag := centeredLegendreL2Diagonal_closed n
+  unfold centeredLegendreL2Diagonal centeredPolynomialPair at hdiag
+  have htransport := integral_comp_two_mul_sub_one
+    (fun x : ℝ ↦ (centeredShiftedLegendreReal n).eval x ^ 2)
+  rw [show (fun t : ℝ ↦
+      (centeredShiftedLegendreReal n).eval (2 * t - 1) ^ 2) =
+      fun t ↦ (shiftedLegendreReal n).eval t ^ 2 by
+    funext t
+    rw [eval_centeredShiftedLegendreReal]
+    congr 2
+    ring] at htransport
+  rw [show (fun x : ℝ ↦
+      (centeredShiftedLegendreReal n).eval x ^ 2) = fun x ↦
+      (centeredShiftedLegendreReal n).eval x *
+        (centeredShiftedLegendreReal n).eval x by
+    funext x
+    ring,
+    hdiag] at htransport
+  calc
+    (∫ x : ℝ in 0..1, (shiftedLegendreReal n).eval x ^ 2) =
+        (1 / 2 : ℝ) * (2 / (2 * (n : ℝ) + 1)) := htransport
+    _ = 1 / (2 * (n : ℝ) + 1) := by ring
+
+private theorem shiftedLogEnergyBilinear_legendre_eq (m n : ℕ) :
+    ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+        (shiftedLegendreReal m) (shiftedLegendreReal n) =
+      if m = n then
+        2 * (harmonic n : ℝ) / (2 * (n : ℝ) + 1)
+      else 0 := by
+  by_cases hmn : m = n
+  · subst n
+    rw [if_pos rfl,
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply,
+      shiftedLogKernel_shiftedLegendreReal]
+    simp only [Polynomial.eval_mul, Polynomial.eval_C]
+    rw [show (fun x : ℝ ↦
+        (shiftedLegendreReal m).eval x *
+          (2 * (harmonic m : ℝ) * (shiftedLegendreReal m).eval x)) =
+        fun x ↦ (2 * (harmonic m : ℝ)) *
+          ((shiftedLegendreReal m).eval x ^ 2) by
+      funext x
+      ring,
+      intervalIntegral.integral_const_mul,
+      integral_shiftedLegendreReal_sq_closed]
+    ring
+  · rw [if_neg hmn,
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply,
+      shiftedLogKernel_shiftedLegendreReal]
+    simp only [Polynomial.eval_mul, Polynomial.eval_C]
+    rw [show (fun x : ℝ ↦
+        (shiftedLegendreReal m).eval x *
+          (2 * (harmonic n : ℝ) * (shiftedLegendreReal n).eval x)) =
+        fun x ↦ (2 * (harmonic n : ℝ)) *
+          ((shiftedLegendreReal m).eval x *
+            (shiftedLegendreReal n).eval x) by
+      funext x
+      ring,
+      intervalIntegral.integral_const_mul,
+      ShiftedLegendreBasis.integral_shiftedLegendreReal_mul_eq_zero hmn]
+    ring
+
+private theorem shiftedLogEnergyBilinear_oddPacket
+    (N : ℕ) (a : ℕ → ℝ) :
+    ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+        (∑ k ∈ Finset.range N,
+          a k • (-(shiftedLegendreReal (11 + 2 * k))))
+        (∑ k ∈ Finset.range N,
+          a k • (-(shiftedLegendreReal (11 + 2 * k)))) =
+      ∑ k ∈ Finset.range N,
+        a k ^ 2 *
+          (2 * (harmonic (11 + 2 * k) : ℝ) /
+            (2 * ((11 + 2 * k : ℕ) : ℝ) + 1)) := by
+  classical
+  simp only [map_sum, LinearMap.sum_apply, map_smul,
+    LinearMap.smul_apply, smul_eq_mul, map_neg, LinearMap.neg_apply,
+    shiftedLogEnergyBilinear_legendre_eq]
+  apply Finset.sum_congr rfl
+  intro k hk
+  rw [Finset.sum_eq_single k]
+  · simp
+    ring
+  · intro j hj hjk
+    have hdegree : 11 + 2 * j ≠ 11 + 2 * k := by omega
+    rw [if_neg hdegree]
+    ring
+  · exact fun hnot ↦ (hnot hk).elim
+
 /-- The classical-sign centered Legendre polynomial.  The project's shifted
 convention differs by a minus sign in odd degree. -/
 def fourCellOddP11BoundaryClassicalMode (n : ℕ) : ℝ[X] :=
@@ -353,8 +474,88 @@ def fourCellOddP11BoundaryRepresenterPolynomial : ℝ[X] :=
     fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * k) •
       fourCellOddP11BoundaryClassicalMode (11 + 2 * k)
 
+/-- The same packet in unit-interval shifted Legendre coordinates. -/
+def fourCellOddP11BoundaryRepresenterShiftedPolynomial : ℝ[X] :=
+  ∑ k ∈ Finset.range 66,
+    fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * k) •
+      (-(shiftedLegendreReal (11 + 2 * k)))
+
+/-- Shifted-coordinate polynomial of the reflection-odd endpoint-strip
+pullback.  The two affine arguments are `3/5 + (2/5)t` and
+`1 - (2/5)t`; this retains the strip involution exactly. -/
+def fourCellOddP11BoundaryStripOddShiftedPolynomial : ℝ[X] :=
+  (1 / 2 : ℝ) •
+    (fourCellOddP11BoundaryRepresenterPolynomial.comp
+        ((2 / 5 : ℝ) • X + C (3 / 5)) -
+      fourCellOddP11BoundaryRepresenterPolynomial.comp
+        ((-(2 / 5 : ℝ)) • X + C 1))
+
 def fourCellOddP11BoundaryRepresenter : ℝ → ℝ := fun x ↦
   fourCellOddP11BoundaryRepresenterPolynomial.eval x
+
+theorem centeredPullback_boundaryRepresenter_eq (t : ℝ) :
+    centeredPullback fourCellOddP11BoundaryRepresenter t =
+      fourCellOddP11BoundaryRepresenterShiftedPolynomial.eval t := by
+  unfold centeredPullback fourCellOddP11BoundaryRepresenter
+    fourCellOddP11BoundaryRepresenterPolynomial
+    fourCellOddP11BoundaryRepresenterShiftedPolynomial
+    fourCellOddP11BoundaryClassicalMode
+  simp only [Polynomial.eval_finset_sum, Polynomial.eval_smul,
+    Polynomial.eval_neg, smul_eq_mul]
+  apply Finset.sum_congr rfl
+  intro k hk
+  rw [eval_centeredShiftedLegendreReal]
+  congr 3
+  ring
+
+theorem centeredPullback_boundaryStripOdd_eq (t : ℝ) :
+    centeredPullback
+        (fourCellOddEndpointStripOdd fourCellOddP11BoundaryRepresenter) t =
+      fourCellOddP11BoundaryStripOddShiftedPolynomial.eval t := by
+  unfold centeredPullback fourCellOddEndpointStripOdd
+    fourCellOddEndpointStripPullback fourCellOddP11BoundaryRepresenter
+    fourCellOddP11BoundaryStripOddShiftedPolynomial
+  simp only [Polynomial.eval_smul, Polynomial.eval_sub,
+    Polynomial.eval_comp, Polynomial.eval_add, Polynomial.eval_C,
+    Polynomial.eval_X, smul_eq_mul]
+  ring_nf
+
+/-- Exact all-degree harmonic formula for the packet's global raw energy.
+The proof uses logarithmic-energy diagonalization and degree injectivity;
+none of the sixty-six Legendre modes is expanded. -/
+theorem centeredRawLogEnergy_boundaryRepresenter_eq :
+    centeredRawLogEnergy fourCellOddP11BoundaryRepresenter =
+      ∑ k ∈ Finset.range 66,
+        fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * k) ^ 2 *
+          (8 * (harmonic (11 + 2 * k) : ℝ) /
+            (2 * ((11 + 2 * k : ℕ) : ℝ) + 1)) := by
+  rw [centeredRawLogEnergy_eq_four_mul_shiftedPair
+      fourCellOddP11BoundaryRepresenter
+      fourCellOddP11BoundaryRepresenterShiftedPolynomial
+      centeredPullback_boundaryRepresenter_eq,
+    fourCellOddP11BoundaryRepresenterShiftedPolynomial,
+    shiftedLogEnergyBilinear_oddPacket]
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro k hk
+  ring
+
+/-- Exact logarithmic form of the strip-odd subtraction after its affine
+pullback.  This keeps the strip operator as one compact polynomial rather
+than expanding its shifted-Legendre coordinates. -/
+theorem endpointStripOddRawEnergy_boundaryRepresenter_eq :
+    fourCellOddEndpointStripOddRawEnergy
+        fourCellOddP11BoundaryRepresenter =
+      (4 / 5 : ℝ) *
+        ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+          fourCellOddP11BoundaryStripOddShiftedPolynomial
+          fourCellOddP11BoundaryStripOddShiftedPolynomial := by
+  unfold fourCellOddEndpointStripOddRawEnergy
+  rw [centeredRawLogEnergy_eq_four_mul_shiftedPair
+      (fourCellOddEndpointStripOdd fourCellOddP11BoundaryRepresenter)
+      fourCellOddP11BoundaryStripOddShiftedPolynomial
+      centeredPullback_boundaryStripOdd_eq]
+  ring
 
 theorem contDiff_fourCellOddP11BoundaryRepresenter :
     ContDiff ℝ 1 fourCellOddP11BoundaryRepresenter := by
@@ -378,6 +579,33 @@ theorem odd_fourCellOddP11BoundaryRepresenter :
     exact odd_two_mul_add_one _
   rw [Odd.neg_one_pow hdegree]
   ring
+
+/-- Exact structural formula for the complete raw reserve of the packet.
+The global term is diagonal in the original Legendre coordinates, while the
+single compact shifted polynomial retains every strip-boundary correlation. -/
+theorem rawStripCancellationReserve_boundaryRepresenter_eq :
+    fourCellOddRawStripCancellationReserve
+        fourCellOddP11BoundaryRepresenter =
+      (∑ k ∈ Finset.range 66,
+        fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * k) ^ 2 *
+          (2 * (harmonic (11 + 2 * k) : ℝ) /
+            (2 * ((11 + 2 * k : ℕ) : ℝ) + 1))) -
+      (2 / 5 : ℝ) *
+        ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+          fourCellOddP11BoundaryStripOddShiftedPolynomial
+          fourCellOddP11BoundaryStripOddShiftedPolynomial := by
+  rw [rawStripCancellationReserve_eq_global_sub_strip
+      fourCellOddP11BoundaryRepresenter
+      contDiff_fourCellOddP11BoundaryRepresenter
+      odd_fourCellOddP11BoundaryRepresenter,
+    centeredRawLogEnergy_boundaryRepresenter_eq,
+    endpointStripOddRawEnergy_boundaryRepresenter_eq,
+    Finset.mul_sum]
+  apply congrArg₂ (· - ·)
+  · apply Finset.sum_congr rfl
+    intro k hk
+    ring
+  · ring
 
 /-- Every centered Legendre coordinate below degree eleven annihilates the
 boundary-representer packet.  This is an all-degree orthogonality argument;
