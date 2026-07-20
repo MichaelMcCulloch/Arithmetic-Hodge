@@ -5150,6 +5150,120 @@ theorem realFiniteBlockProductionNonnegativeAtLength_of_previousLengths_and_midd
     exact threeBlockQuadratic_nonnegative_of_conditionalCross
       hMpos hadj.1 hadj.2 (hdelta hMpos)
 
+private theorem monotoneQuarterFiniteBlock_eq_shiftedZero_allLength
+    (parent : BombieriTest) (lo : ℤ) (start n : ℕ) :
+    monotoneQuarterFiniteBlock parent lo start n =
+      monotoneQuarterFiniteBlock parent
+        (monotoneQuarterFiniteBlockBase lo start) 0 n := by
+  classical
+  unfold monotoneQuarterFiniteBlock monotoneQuarterFiniteBlockBase
+  apply Finset.sum_congr rfl
+  intro i _hi
+  congr 1
+  push_cast
+  ring
+
+/-- Arbitrary-length obstruction form for a support-minimal negative block.
+Assuming all shorter production lengths, there are exactly two branches:
+
+* the interior diagonal vanishes and the sparse endpoint pair is negative;
+* the interior diagonal is positive and the two concrete middle-orthogonal
+  residual tests have strictly negative real global cross.
+
+Thus nonnegativity of the actual residual cross rules out the entire
+nondegenerate branch at every length, not only at five cells. -/
+theorem supportMinimalNegativeMonotoneBlock_length_n_forces_zeroInteriorEndpoint_or_residualCross_neg
+    (n : ℕ) (hn : 4 ≤ n)
+    (hprev : RealFiniteBlockProductionNonnegativeUpTo (n - 1))
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) (hlen : len = n) :
+    let k := monotoneQuarterFiniteBlockBase lo start
+    let a := monotoneQuarterCell parent k
+    let m := monotoneQuarterFiniteBlockInterior parent k n
+    let e := monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+    let M := bombieriRealQuadraticValue m
+    (M = 0 ∧ bombieriRealQuadraticValue (a + e) < 0) ∨
+      (bombieriTwoBlockGlobalCrossSymbol
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+        (finiteBlockRightMiddleOrthogonalResidual parent k n)).re < 0 := by
+  dsimp only
+  let k : ℤ := monotoneQuarterFiniteBlockBase lo start
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+  let e : BombieriTest :=
+    monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+  have hnegative : bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent k 0 n) < 0 := by
+    rw [← monotoneQuarterFiniteBlock_eq_shiftedZero_allLength
+      parent lo start n]
+    simpa only [hlen] using hmin.negative
+  have hadj := finiteBlock_adjacentPrincipalMinors_of_previousLengths
+    n hn hprev parent hparent k
+  change U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E at hadj
+  have hmShift :
+      monotoneQuarterFiniteBlock parent (k + 1) 0 (n - 2) = m := by
+    dsimp only [m, monotoneQuarterFiniteBlockInterior]
+    exact monotoneQuarterFiniteBlock_shift_start_one parent k (n - 2)
+  have hM : 0 ≤ M := by
+    have hmiddle := hprev (n - 2) (by omega) parent hparent (k + 1)
+    rw [hmShift] at hmiddle
+    exact hmiddle
+  have hvalue := bombieriRealQuadraticValue_finiteBlock_eq_threeBlock_allLength
+    parent k n (by omega)
+  change bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent k 0 n) =
+    A + M + E + 2 * (U + V + X) at hvalue
+  have hwhole : A + M + E + 2 * (U + V + X) < 0 := by
+    rw [← hvalue]
+    exact hnegative
+  by_cases hMzero : M = 0
+  · left
+    refine ⟨hMzero, ?_⟩
+    have hU : U = 0 := by
+      have h := hadj.1
+      rw [hMzero, mul_zero] at h
+      nlinarith [sq_nonneg U]
+    have hV : V = 0 := by
+      have h := hadj.2
+      rw [hMzero, zero_mul] at h
+      nlinarith [sq_nonneg V]
+    rw [bombieriRealQuadraticValue_add]
+    change A + E + 2 * X < 0
+    rw [hMzero, hU, hV] at hwhole
+    linarith
+  · right
+    have hMpos : 0 < M := lt_of_le_of_ne hM (Ne.symm hMzero)
+    have halpha : 0 ≤ A * M - U ^ 2 := by linarith [hadj.1]
+    have hbeta : 0 ≤ M * E - V ^ 2 := by linarith [hadj.2]
+    have hidentity :
+        M * (A + M + E + 2 * (U + V + X)) =
+          (M + U + V) ^ 2 + (A * M - U ^ 2) +
+            (M * E - V ^ 2) + 2 * (M * X - U * V) := by
+      ring
+    have hscaled :
+        M * (A + M + E + 2 * (U + V + X)) < 0 :=
+      mul_neg_of_pos_of_neg hMpos hwhole
+    rw [hidentity] at hscaled
+    have hdelta : M * X - U * V < 0 := by
+      nlinarith [sq_nonneg (M + U + V)]
+    have hcoordinate := finiteBlock_middleOrthogonalResidualCross_coordinate
+      parent k n
+    change
+      (bombieriTwoBlockGlobalCrossSymbol
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+        (finiteBlockRightMiddleOrthogonalResidual parent k n)).re =
+          M * (M * X - U * V) at hcoordinate
+    rw [hcoordinate]
+    exact mul_neg_of_pos_of_neg hMpos hdelta
+
 /-- The unconditional ratio-two theorem initializes the induction through
 length three. -/
 theorem realFiniteBlockProductionNonnegativeUpTo_three :
