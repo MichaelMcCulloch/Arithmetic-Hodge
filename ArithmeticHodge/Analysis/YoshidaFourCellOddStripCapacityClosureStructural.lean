@@ -14399,6 +14399,261 @@ theorem fourCellOddCoreLocalBilinear_P3_P9_bounds :
     (fourCellOddSignedMassRegularBilinear centeredP3 factorTwoCenteredP9)
   constructor <;> linarith
 
+/-! ### Tight high-cross entries for the rational five-mode certificate -/
+
+set_option maxHeartbeats 800000 in
+private theorem integral_fourCellRegularPolynomial_mul_P5P7CorrelationLocal :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddP5P7CorrelationLocal t) =
+      -(1 / 82368 : ℝ) * Real.log 2 -
+        (35 / 1613094912 : ℝ) * Real.log 2 ^ 3 -
+        (96875 / 768917177892864 : ℝ) * Real.log 2 ^ 5 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddP5P7CorrelationLocal
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem integral_fourCellRegularPolynomial_mul_P5P9CorrelationLocal :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddP5P9CorrelationLocal t) =
+      (35 / 13621690368 : ℝ) * Real.log 2 ^ 3 +
+        (19375 / 1153375766839296 : ℝ) * Real.log 2 ^ 5 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddP5P9CorrelationLocal
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem integral_fourCellRegularPolynomial_mul_P7P9Correlation :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        factorTwoP7P9Correlation t) =
+      -(1 / 186048 : ℝ) * Real.log 2 -
+        (5 / 928751616 : ℝ) * Real.log 2 ^ 3 -
+        (96875 / 5895031697178624 : ℝ) * Real.log 2 ^ 5 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    factorTwoP7P9Correlation
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+private theorem fourCellOddHighCrossRegularPolynomial_bounds :
+    (-843 / 100000000 : ℝ) <
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+            oddP5P7CorrelationLocal t) ∧
+      (∫ t : ℝ in 0..2,
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+            oddP5P7CorrelationLocal t) < (-842 / 100000000 : ℝ) ∧
+      (8 / 10000000000 : ℝ) <
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+            oddP5P9CorrelationLocal t) ∧
+      (∫ t : ℝ in 0..2,
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+            oddP5P9CorrelationLocal t) < (9 / 10000000000 : ℝ) ∧
+      (-373 / 100000000 : ℝ) <
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+            factorTwoP7P9Correlation t) ∧
+      (∫ t : ℝ in 0..2,
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+            factorTwoP7P9Correlation t) < (-372 / 100000000 : ℝ) := by
+  rw [integral_fourCellRegularPolynomial_mul_P5P7CorrelationLocal,
+    integral_fourCellRegularPolynomial_mul_P5P9CorrelationLocal,
+    integral_fourCellRegularPolynomial_mul_P7P9Correlation]
+  have h1 := fourCell_log_two_pow_fine_bounds 1 (by norm_num)
+  have h3 := fourCell_log_two_pow_fine_bounds 3 (by norm_num)
+  have h5 := fourCell_log_two_pow_fine_bounds 5 (by norm_num)
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+private theorem abs_fourCellWideRegularEnvelopeError_P5P7_lt :
+    |fourCellWideRegularEnvelopeError oddP5P7CorrelationLocal| <
+      (2 / 1000000 : ℝ) := by
+  let I : ℝ := ∫ t : ℝ in 0..2, |oddP5P7CorrelationLocal t|
+  have hI0 : 0 ≤ I := by
+    dsimp only [I]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _t _ht ↦ abs_nonneg _)
+  have hE5 : factorTwoIntrinsicEnergy factorTwoCenteredP5 =
+      (2 / 11 : ℝ) := by
+    unfold factorTwoIntrinsicEnergy
+    simpa only [pow_two] using integral_factorTwoCenteredP5_sq
+  have hI2 : I ^ 2 ≤ (2 / 11 : ℝ) * (2 / 15) := by
+    have h :=
+      ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural.integral_abs_factorTwoCenteredCorrelationBilinear_sq_le_energy_mul
+        factorTwoCenteredP5 factorTwoCenteredP7
+          continuous_factorTwoCenteredP5 continuous_factorTwoCenteredP7
+    rw [hE5, factorTwoCenteredP7_energy] at h
+    simp_rw [factorTwoCenteredCorrelationBilinear_P5_P7_local] at h
+    simpa only [I] using h
+  have hIlt : I < (157 / 1000 : ℝ) := by
+    nlinarith
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    oddP5P7CorrelationLocal
+      (by unfold oddP5P7CorrelationLocal; fun_prop)
+  change |fourCellWideRegularEnvelopeError oddP5P7CorrelationLocal| ≤
+    (1 / 80000 : ℝ) * I at herr
+  calc
+    |fourCellWideRegularEnvelopeError oddP5P7CorrelationLocal| ≤
+        (1 / 80000 : ℝ) * I := herr
+    _ < (1 / 80000 : ℝ) * (157 / 1000) :=
+      mul_lt_mul_of_pos_left hIlt (by norm_num)
+    _ < (2 / 1000000 : ℝ) := by norm_num
+
+private theorem abs_fourCellWideRegularEnvelopeError_P5P9_lt :
+    |fourCellWideRegularEnvelopeError oddP5P9CorrelationLocal| <
+      (2 / 1000000 : ℝ) := by
+  let I : ℝ := ∫ t : ℝ in 0..2, |oddP5P9CorrelationLocal t|
+  have hI0 : 0 ≤ I := by
+    dsimp only [I]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _t _ht ↦ abs_nonneg _)
+  have hE5 : factorTwoIntrinsicEnergy factorTwoCenteredP5 =
+      (2 / 11 : ℝ) := by
+    unfold factorTwoIntrinsicEnergy
+    simpa only [pow_two] using integral_factorTwoCenteredP5_sq
+  have hI2 : I ^ 2 ≤ (2 / 11 : ℝ) * (2 / 19) := by
+    have h :=
+      ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural.integral_abs_factorTwoCenteredCorrelationBilinear_sq_le_energy_mul
+        factorTwoCenteredP5 factorTwoCenteredP9
+          continuous_factorTwoCenteredP5 continuous_factorTwoCenteredP9
+    rw [hE5, factorTwoCenteredP9_energy] at h
+    simp_rw [factorTwoCenteredCorrelationBilinear_P5_P9_local] at h
+    simpa only [I] using h
+  have hIlt : I < (14 / 100 : ℝ) := by
+    nlinarith
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    oddP5P9CorrelationLocal
+      (by unfold oddP5P9CorrelationLocal; fun_prop)
+  change |fourCellWideRegularEnvelopeError oddP5P9CorrelationLocal| ≤
+    (1 / 80000 : ℝ) * I at herr
+  calc
+    |fourCellWideRegularEnvelopeError oddP5P9CorrelationLocal| ≤
+        (1 / 80000 : ℝ) * I := herr
+    _ < (1 / 80000 : ℝ) * (14 / 100) :=
+      mul_lt_mul_of_pos_left hIlt (by norm_num)
+    _ < (2 / 1000000 : ℝ) := by norm_num
+
+private theorem abs_fourCellWideRegularEnvelopeError_P7P9_lt :
+    |fourCellWideRegularEnvelopeError factorTwoP7P9Correlation| <
+      (3 / 2000000 : ℝ) := by
+  let I : ℝ := ∫ t : ℝ in 0..2, |factorTwoP7P9Correlation t|
+  have hI0 : 0 ≤ I := by
+    dsimp only [I]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _t _ht ↦ abs_nonneg _)
+  have hI2 : I ^ 2 ≤ (2 / 15 : ℝ) * (2 / 19) := by
+    have h :=
+      ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural.integral_abs_factorTwoCenteredCorrelationBilinear_sq_le_energy_mul
+        factorTwoCenteredP7 factorTwoCenteredP9
+          continuous_factorTwoCenteredP7 continuous_factorTwoCenteredP9
+    rw [factorTwoCenteredP7_energy, factorTwoCenteredP9_energy] at h
+    simp_rw [factorTwoCenteredCorrelationBilinear_P7_P9] at h
+    simpa only [I] using h
+  have hIlt : I < (12 / 100 : ℝ) := by
+    nlinarith
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    factorTwoP7P9Correlation
+      (by unfold factorTwoP7P9Correlation; fun_prop)
+  change |fourCellWideRegularEnvelopeError factorTwoP7P9Correlation| ≤
+    (1 / 80000 : ℝ) * I at herr
+  calc
+    |fourCellWideRegularEnvelopeError factorTwoP7P9Correlation| ≤
+        (1 / 80000 : ℝ) * I := herr
+    _ < (1 / 80000 : ℝ) * (12 / 100) :=
+      mul_lt_mul_of_pos_left hIlt (by norm_num)
+    _ = (3 / 2000000 : ℝ) := by norm_num
+
+private theorem fourCellOddHighCrossRegularIntegral_bounds :
+    (-11 / 1000000 : ℝ) <
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              factorTwoCenteredP5 factorTwoCenteredP7 t) ∧
+      (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              factorTwoCenteredP5 factorTwoCenteredP7 t) <
+        (-6 / 1000000 : ℝ) ∧
+      (-3 / 1000000 : ℝ) <
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              factorTwoCenteredP5 factorTwoCenteredP9 t) ∧
+      (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              factorTwoCenteredP5 factorTwoCenteredP9 t) <
+        (3 / 1000000 : ℝ) ∧
+      (-6 / 1000000 : ℝ) <
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              factorTwoCenteredP7 factorTwoCenteredP9 t) ∧
+      (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              factorTwoCenteredP7 factorTwoCenteredP9 t) <
+        (-2 / 1000000 : ℝ) := by
+  rcases fourCellOddHighCrossRegularPolynomial_bounds with
+    ⟨h57lo, h57hi, h59lo, h59hi, h79lo, h79hi⟩
+  have he57 := abs_lt.mp abs_fourCellWideRegularEnvelopeError_P5P7_lt
+  have he59 := abs_lt.mp abs_fourCellWideRegularEnvelopeError_P5P9_lt
+  have he79 := abs_lt.mp abs_fourCellWideRegularEnvelopeError_P7P9_lt
+  have hd57 := fourCellRegularIntegral_eq_polynomial_add_error
+    oddP5P7CorrelationLocal
+      (by unfold oddP5P7CorrelationLocal; fun_prop)
+  have hd59 := fourCellRegularIntegral_eq_polynomial_add_error
+    oddP5P9CorrelationLocal
+      (by unfold oddP5P9CorrelationLocal; fun_prop)
+  have hd79 := fourCellRegularIntegral_eq_polynomial_add_error
+    factorTwoP7P9Correlation
+      (by unfold factorTwoP7P9Correlation; fun_prop)
+  simp_rw [factorTwoCenteredCorrelationBilinear_P5_P7_local,
+    factorTwoCenteredCorrelationBilinear_P5_P9_local,
+    factorTwoCenteredCorrelationBilinear_P7_P9]
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
 /-! ### Exact `P₁₁+` Riesz endpoint -/
 
 /-- Normalized centered `P₇` coefficient. -/
