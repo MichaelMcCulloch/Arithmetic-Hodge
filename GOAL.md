@@ -259,20 +259,38 @@ rational center, and kernel-checked weighted diagonal dominance imply
 positive definiteness of the true matrix.  This avoids the width growth of a
 raw 210-stage interval elimination.
 
+The analytic-to-rational matrix handoff is now compiled as well.  Exact
+rational interval targets contain every clean, symmetric-perturbation, and
+alternating concrete entry.  Ordered endpoint target matrices for
+`Q_E ± P_E` and `Q_O ± P_O` have symmetric rational midpoint matrices, and a
+generic midpoint lemma turns interval containment plus half-width bounds into
+the entrywise error premise of robust congruence.  Positivity of the four
+endpoint matrices extends to every `a² ≤ 1` by an exact affine-chord identity.
+A quantitative floor adapter records the remaining coupling payload: lower
+bounds for the two diagonal pencils, an upper bound for `X²`, and one rational
+budget imply the inverse-free scalar-Schur inequality.
+
 Certificate decision (2026-07-20): the production finite certificate is the
 inverse-free scalar-Schur criterion, not the static splits.  The static
 reserve of about `2.51e-7` is unlikely to survive rigorous enclosure
 inflation across a 210-dimensional replay, while the scalar-Schur route
 retains a margin of about four percent (worst normalized ratio `0.959645`).
 Concretely: instantiate every matrix entry from the unified scalar target
-selectors, prove kernel-checked positive semidefiniteness of the endpoint
-pencil matrices `Q_E ± P_E` and `Q_O ± P_O` through the robust-congruence
-theorem, extend to every `a² ≤ 1` by linearity of the pencil in `a`, and
-close the coupling inequality `(1 - a²) X² ≤ 4 Eₐ Oₐ` by scalar arithmetic
-against the certified pencil floors, using the compiled inverse-free
-reduction.  The two static splits remain compiled as a fallback only; do not
-spend further effort sharpening their thin reserve unless the scalar-Schur
-replay fails.
+selectors.  For the even endpoints, do not robust-certify the four-term
+adapted entry intervals directly: that loses shared interval dependencies.
+The production adapted `Fin 200` pencils are now proved to be injective
+congruence pullbacks of canonical `0, ..., 200` pencils.  Certify those two
+canonical `201 x 201` endpoint matrices instead, then transfer positive
+definiteness through the compiled pullback.  Deterministic discovery finds
+the canonical inverse-Cholesky certificates sparse (about 856 retained
+entries per sign, with row support at most 10), while reproducing the adapted
+matrices to floating-point roundoff.  Certify the two `10 x 10` odd endpoint
+matrices directly.  Then extend to every `a² ≤ 1` by linearity of the pencil
+in `a`, and close the coupling inequality
+`(1 - a²) X² ≤ 4 Eₐ Oₐ` by scalar arithmetic against the certified pencil
+floors, using the compiled inverse-free reduction.  The two static splits
+remain compiled as a fallback only; do not spend further effort sharpening
+their thin reserve unless the scalar-Schur replay fails.
 
 For the full-profile assembly, the clean part of the low-tail mixed term is
 now exactly the real clipped critical pairing divided by `yoshidaA`, obtained
@@ -290,7 +308,14 @@ analytic norm cap on that representer, positivity of the tail diagonal after
 the `1/256` raw reservation, and one local mixed determinant inequality.  A
 compiled counterwitness transport already shows that a single genuine
 negative tail diagonal refutes the one-eighth raw-strip surplus certificate
-outright, so the tail-diagonal question decides this rung.
+outright, so the tail-diagonal question decides this rung.  The sharpened
+decision theorem now proves that a genuine `P53+` tail with raw-strip reserve
+and retained prime/potential diagonal each at most `3M`, but centered raw
+energy greater than `768M`, makes the reserved tail diagonal negative;
+conversely, the proposed one-eighth certificate forces the reverse
+`raw ≤ 768M` bound on this saturation class.  No smooth tail satisfying those
+three inequalities has yet been constructed, so this is a conditional
+obstruction rather than a closed refutation of `P51`.
 Time-box rule: this ladder has already escalated through `P4`, six-mode,
 nine-mode, `P024`, `P11`, and `P51` certificates, with several rungs
 refuted.  It may continue only while the named obligations above close
