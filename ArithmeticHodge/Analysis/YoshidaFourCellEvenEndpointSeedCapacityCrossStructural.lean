@@ -9,7 +9,14 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCapacityCrossS
 
 noncomputable section
 
+open ShiftedLegendreCenteredParity
+open ShiftedLegendreFiniteEnergyGap
+open ShiftedLegendreL2Basis
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open ShiftedLegendreOrthogonality
+open UnitIntervalIntegralBridge
+open UnitIntervalLogEnergyAffine
+open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialIntegrable
 open YoshidaFactorTwoEndpointBilinear
@@ -18,7 +25,13 @@ open YoshidaFactorTwoPhaseIntrinsicNineP6EvenCleanPolynomialGramStructural
 open YoshidaFactorTwoPhaseIntrinsicNineP6EvenProfileCorrelationStructural
 open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
 open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
+open YoshidaFactorTwoPhaseHigherLegendreDecomposition
+open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
+open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
+open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseLowSchur
+open YoshidaFactorTwoPhaseLegendreFourFiveStructural
+open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
 open YoshidaFourCellEvenPolarSchurStructural
@@ -317,6 +330,112 @@ private theorem continuous_endpointSeedFixedLagExtension :
   rw [hx]
   norm_num
 
+private theorem even_endpointSeedFixedLagExtension :
+    Function.Even endpointSeedFixedLagExtension := by
+  intro x
+  by_cases hfarLeft : x < -(3 / 5 : ℝ)
+  · have hxFirst : x ≤ -(3 / 5 : ℝ) := hfarLeft.le
+    have hnegFirst : ¬ -x ≤ -(3 / 5 : ℝ) := by linarith
+    have hnegMiddle : ¬ -x ≤ (3 / 5 : ℝ) := by linarith
+    unfold endpointSeedFixedLagExtension fourCellEvenEndpointCoshSeed
+    rw [if_neg hnegFirst, if_neg hnegMiddle, if_pos hxFirst]
+    ring
+  · by_cases hleft : x = -(3 / 5 : ℝ)
+    · unfold endpointSeedFixedLagExtension fourCellEvenEndpointCoshSeed
+      rw [hleft]
+      norm_num
+    · have hxLeft : -(3 / 5 : ℝ) < x :=
+        lt_of_le_of_ne (le_of_not_gt hfarLeft) (Ne.symm hleft)
+      by_cases hmiddle : x < (3 / 5 : ℝ)
+      · have hxFirst : ¬ x ≤ -(3 / 5 : ℝ) := by linarith
+        have hxMiddle : x ≤ (3 / 5 : ℝ) := hmiddle.le
+        have hnegFirst : ¬ -x ≤ -(3 / 5 : ℝ) := by linarith
+        have hnegMiddle : -x ≤ (3 / 5 : ℝ) := by linarith
+        unfold endpointSeedFixedLagExtension
+        rw [if_neg hnegFirst, if_pos hnegMiddle,
+          if_neg hxFirst, if_pos hxMiddle]
+      · by_cases hright : x = (3 / 5 : ℝ)
+        · unfold endpointSeedFixedLagExtension fourCellEvenEndpointCoshSeed
+          rw [hright]
+          norm_num
+        · have hxRight : (3 / 5 : ℝ) < x :=
+            lt_of_le_of_ne (le_of_not_gt hmiddle) (Ne.symm hright)
+          have hxFirst : ¬ x ≤ -(3 / 5 : ℝ) := by linarith
+          have hxMiddle : ¬ x ≤ (3 / 5 : ℝ) := by linarith
+          have hnegFirst : -x ≤ -(3 / 5 : ℝ) := by linarith
+          unfold endpointSeedFixedLagExtension fourCellEvenEndpointCoshSeed
+          rw [if_pos hnegFirst, if_neg hxFirst, if_neg hxMiddle]
+          ring
+
+private theorem canonicalLegendreCoefficient_eq_centered_pairing
+    (w : ℝ → ℝ) (hw : Continuous w) (n : ℕ) (P : ℝ → ℝ)
+    (hP : ∀ x : ℝ,
+      (shiftedLegendreReal n).eval ((x + 1) / 2) = P x) :
+    factorTwoCanonicalLegendreCoefficient w hw n =
+      ((2 * (n : ℝ) + 1) / 2) *
+        (∫ x : ℝ in -1..1, w x * P x) := by
+  have hunit :
+      (∫ t : unitInterval,
+        centeredPullback w (t : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ)) =
+      (1 / 2 : ℝ) * (∫ x : ℝ in -1..1, w x * P x) := by
+    calc
+      _ = ∫ t : ℝ in 0..1,
+          centeredPullback w t * (shiftedLegendreReal n).eval t := by
+        exact integral_unitInterval_eq_intervalIntegral
+          (fun t : ℝ ↦
+            centeredPullback w t * (shiftedLegendreReal n).eval t)
+      _ = ∫ t : ℝ in 0..1, (fun x : ℝ ↦ w x * P x) (2 * t - 1) := by
+        apply intervalIntegral.integral_congr
+        intro t _ht
+        unfold centeredPullback
+        dsimp only
+        rw [← hP (2 * t - 1)]
+        congr 2
+        ring
+      _ = _ := integral_comp_two_mul_sub_one (fun x : ℝ ↦ w x * P x)
+  unfold factorTwoCanonicalLegendreCoefficient centeredPullbackL2
+  rw [shiftedLegendreHilbertBasis_repr_eq
+    (fun t : unitInterval ↦ centeredPullback w (t : ℝ))
+    (centeredPullback_memLp_two w hw) n, hunit]
+  calc
+    ‖shiftedLegendreL2 n‖⁻¹ *
+          ((1 / 2 : ℝ) * (∫ x : ℝ in -1..1, w x * P x)) *
+        ‖shiftedLegendreL2 n‖⁻¹ =
+      (‖shiftedLegendreL2 n‖⁻¹ ^ 2 / 2) *
+        (∫ x : ℝ in -1..1, w x * P x) := by ring_nf
+    _ = _ := by
+      rw [inv_norm_shiftedLegendreL2_sq_closed]
+
+private theorem shiftedLegendreReal_zero_centered_seedCross (x : ℝ) :
+    (shiftedLegendreReal 0).eval ((x + 1) / 2) = centeredEvenP0 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredEvenP0]
+
+private theorem shiftedLegendreReal_two_centered_seedCross (x : ℝ) :
+    (shiftedLegendreReal 2).eval ((x + 1) / 2) = centeredEvenP2 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredEvenP2]
+  ring
+
+private theorem shiftedLegendreReal_four_centered_seedCross (x : ℝ) :
+    (shiftedLegendreReal 4).eval ((x + 1) / 2) =
+      factorTwoCenteredP4 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, factorTwoCenteredP4]
+  ring
+
+private theorem shiftedLegendreReal_six_centered_seedCross (x : ℝ) :
+    (shiftedLegendreReal 6).eval ((x + 1) / 2) =
+      factorTwoCenteredP6 x := by
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, factorTwoCenteredP6_eq]
+  ring
+
 private theorem fixedLagK_endpointSeed_eq_extension
     {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
     factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed x =
@@ -605,6 +724,202 @@ theorem integral_endpointPotential_seed_mul_fixedLagSelector :
               (2 / 3) (-2 / 3) 0 0 / 2) x) =
         (32424568 / 369140625 : ℝ) -
           (3232 / 46875) * Real.log 2)
+
+private theorem integral_fixedLagExtension_mul_P0 :
+    (∫ x : ℝ in -1..1,
+      endpointSeedFixedLagExtension x * centeredEvenP0 x) =
+      fourCellEvenP0246CutoffEightFixedLagRow0
+        (2 / 3) (-2 / 3) 0 0 := by
+  calc
+    _ = ∫ x : ℝ in -1..1,
+        factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed x *
+          centeredEvenP0 x := by
+      apply intervalIntegral.integral_congr
+      intro x hx
+      rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+      dsimp only
+      rw [fixedLagK_endpointSeed_eq_extension ⟨hx.1, hx.2⟩]
+    _ = _ := by
+      have h := integral_fixedLagK_intrinsicEvenP0246_mul_P0
+        (2 / 3) (-2 / 3) 0 0
+      rw [← fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile] at h
+      exact h
+
+private theorem integral_fixedLagExtension_mul_P2 :
+    (∫ x : ℝ in -1..1,
+      endpointSeedFixedLagExtension x * centeredEvenP2 x) =
+      fourCellEvenP0246CutoffEightFixedLagRow2
+        (2 / 3) (-2 / 3) 0 0 := by
+  calc
+    _ = ∫ x : ℝ in -1..1,
+        factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed x *
+          centeredEvenP2 x := by
+      apply intervalIntegral.integral_congr
+      intro x hx
+      rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+      dsimp only
+      rw [fixedLagK_endpointSeed_eq_extension ⟨hx.1, hx.2⟩]
+    _ = _ := by
+      have h := integral_fixedLagK_intrinsicEvenP0246_mul_P2
+        (2 / 3) (-2 / 3) 0 0
+      rw [← fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile] at h
+      exact h
+
+private theorem integral_fixedLagExtension_mul_P4 :
+    (∫ x : ℝ in -1..1,
+      endpointSeedFixedLagExtension x * factorTwoCenteredP4 x) =
+      fourCellEvenP0246CutoffEightFixedLagRow4
+        (2 / 3) (-2 / 3) 0 0 := by
+  calc
+    _ = ∫ x : ℝ in -1..1,
+        factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed x *
+          factorTwoCenteredP4 x := by
+      apply intervalIntegral.integral_congr
+      intro x hx
+      rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+      dsimp only
+      rw [fixedLagK_endpointSeed_eq_extension ⟨hx.1, hx.2⟩]
+    _ = _ := by
+      have h := integral_fixedLagK_intrinsicEvenP0246_mul_P4
+        (2 / 3) (-2 / 3) 0 0
+      rw [← fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile] at h
+      exact h
+
+private theorem integral_fixedLagExtension_mul_P6 :
+    (∫ x : ℝ in -1..1,
+      endpointSeedFixedLagExtension x * factorTwoCenteredP6 x) =
+      fourCellEvenP0246CutoffEightFixedLagRow6
+        (2 / 3) (-2 / 3) 0 0 := by
+  calc
+    _ = ∫ x : ℝ in -1..1,
+        factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed x *
+          factorTwoCenteredP6 x := by
+      apply intervalIntegral.integral_congr
+      intro x hx
+      rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+      dsimp only
+      rw [fixedLagK_endpointSeed_eq_extension ⟨hx.1, hx.2⟩]
+    _ = _ := by
+      have h := integral_fixedLagK_intrinsicEvenP0246_mul_P6
+        (2 / 3) (-2 / 3) 0 0
+      rw [← fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile] at h
+      exact h
+
+private theorem centeredLegendreLowProjection_fixedLagExtension_eq_selector :
+    centeredLegendreLowProjection endpointSeedFixedLagExtension
+        continuous_endpointSeedFixedLagExtension 8 =
+      centeredPolynomialLift
+        (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+          (2 / 3) (-2 / 3) 0 0) := by
+  have hc0 : factorTwoCanonicalLegendreCoefficient
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension 0 =
+      fourCellEvenP0246CutoffEightFixedLagRow0
+        (2 / 3) (-2 / 3) 0 0 / 2 := by
+    rw [canonicalLegendreCoefficient_eq_centered_pairing
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension
+      0 centeredEvenP0 shiftedLegendreReal_zero_centered_seedCross,
+      integral_fixedLagExtension_mul_P0]
+    ring_nf
+  have hc2 : factorTwoCanonicalLegendreCoefficient
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension 2 =
+      5 * fourCellEvenP0246CutoffEightFixedLagRow2
+        (2 / 3) (-2 / 3) 0 0 / 2 := by
+    rw [canonicalLegendreCoefficient_eq_centered_pairing
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension
+      2 centeredEvenP2 shiftedLegendreReal_two_centered_seedCross,
+      integral_fixedLagExtension_mul_P2]
+    ring_nf
+  have hc4 : factorTwoCanonicalLegendreCoefficient
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension 4 =
+      9 * fourCellEvenP0246CutoffEightFixedLagRow4
+        (2 / 3) (-2 / 3) 0 0 / 2 := by
+    rw [canonicalLegendreCoefficient_eq_centered_pairing
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension
+      4 factorTwoCenteredP4 shiftedLegendreReal_four_centered_seedCross,
+      integral_fixedLagExtension_mul_P4]
+    ring_nf
+  have hc6 : factorTwoCanonicalLegendreCoefficient
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension 6 =
+      13 * fourCellEvenP0246CutoffEightFixedLagRow6
+        (2 / 3) (-2 / 3) 0 0 / 2 := by
+    rw [canonicalLegendreCoefficient_eq_centered_pairing
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension
+      6 factorTwoCenteredP6 shiftedLegendreReal_six_centered_seedCross,
+      integral_fixedLagExtension_mul_P6]
+    ring_nf
+  rw [centeredLegendreLowProjection_eight_eq_intrinsicEvenP0246Profile
+      endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension
+      even_endpointSeedFixedLagExtension,
+    centeredPolynomialLift_cutoffEightFixedLagSelector,
+    hc0, hc2, hc4, hc6]
+
+private def endpointSeedProjectedFixedLagExtension (x : ℝ) : ℝ :=
+  endpointSeedFixedLagExtension x -
+    centeredPolynomialLift
+      (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+        (2 / 3) (-2 / 3) 0 0) x
+
+private theorem continuous_endpointSeedProjectedFixedLagExtension :
+    Continuous endpointSeedProjectedFixedLagExtension := by
+  unfold endpointSeedProjectedFixedLagExtension
+  exact continuous_endpointSeedFixedLagExtension.sub (by
+    unfold centeredPolynomialLift
+    fun_prop)
+
+private theorem endpointSeedProjectedFixedLagExtension_momentsVanishBelow :
+    centeredLegendreMomentsVanishBelow
+      endpointSeedProjectedFixedLagExtension 8 := by
+  have h := centeredLegendreHigherResidual_momentsVanishBelow
+    endpointSeedFixedLagExtension continuous_endpointSeedFixedLagExtension 8
+  have heq : centeredLegendreHigherResidual endpointSeedFixedLagExtension
+      continuous_endpointSeedFixedLagExtension 8 =
+      endpointSeedProjectedFixedLagExtension := by
+    funext x
+    unfold centeredLegendreHigherResidual
+      endpointSeedProjectedFixedLagExtension
+    rw [centeredLegendreLowProjection_fixedLagExtension_eq_selector]
+  rw [heq] at h
+  exact h
+
+private theorem projectedFixedLagRepresenter_seed_eq_extension
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+        (2 / 3) (-2 / 3) 0 0 x =
+      endpointSeedProjectedFixedLagExtension x := by
+  unfold fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+    endpointSeedProjectedFixedLagExtension
+  rw [← fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile,
+    fixedLagK_endpointSeed_eq_extension hx]
+
+/-- The potential selector is exactly orthogonal to the projected fixed-lag
+tail.  This is the cancellation which permits subtraction of only the one
+finite low cross computed above. -/
+theorem integral_potentialSelector_mul_projectedFixedLag_seed_eq_zero :
+    (∫ x : ℝ in -1..1,
+      centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
+            (2 / 3) (-2 / 3) 0 0) x *
+        fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+          (2 / 3) (-2 / 3) 0 0 x) = 0 := by
+  let q : ℝ[X] := fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
+    (2 / 3) (-2 / 3) 0 0
+  have hzero := intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+    q endpointSeedProjectedFixedLagExtension
+      continuous_endpointSeedProjectedFixedLagExtension
+      endpointSeedProjectedFixedLagExtension_momentsVanishBelow
+      (natDegree_fourCellEvenP0246CutoffEightPotentialSelectorPolynomial_lt_eight
+        (2 / 3) (-2 / 3) 0 0)
+  calc
+    _ = ∫ x : ℝ in -1..1,
+        centeredPolynomialLift q x *
+          endpointSeedProjectedFixedLagExtension x := by
+      apply intervalIntegral.integral_congr
+      intro x hx
+      rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+      dsimp only
+      rw [projectedFixedLagRepresenter_seed_eq_extension
+        ⟨hx.1, hx.2⟩]
+    _ = 0 := hzero
 
 end
 
