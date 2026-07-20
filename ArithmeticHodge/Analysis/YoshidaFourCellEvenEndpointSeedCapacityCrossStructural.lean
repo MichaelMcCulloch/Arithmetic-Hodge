@@ -1028,6 +1028,178 @@ theorem integral_projectedPotential_mul_projectedFixedLag_seed :
           integral_endpointPotential_seed_mul_fixedLagSelector]
       ring
 
+/-! ## Exact endpoint-seed projected capacity norm -/
+
+/-- The canonical projected capacity representer for the endpoint seed,
+using the exact degree-below-eight split selector. -/
+def fourCellEvenEndpointSeedProjectedCapacityRepresenter : ℝ → ℝ :=
+  fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+    (2 / 3) (-2 / 3) 0 0
+    (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+      (2 / 3) (-2 / 3) 0 0)
+
+theorem endpointSeedProjectedCapacityRepresenter_eq_split (x : ℝ) :
+    fourCellEvenEndpointSeedProjectedCapacityRepresenter x =
+      fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+          (2 / 3) (-2 / 3) 0 0 x -
+        (Real.sqrt 2 * Real.log 2 / 2) *
+          fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+            (2 / 3) (-2 / 3) 0 0 x := by
+  exact projectedCapacityRepresenter_split_eq (2 / 3) (-2 / 3) 0 0 x
+
+private theorem memLp_two_restrict_of_continuous_seedCross
+    (f : ℝ → ℝ) (hf : Continuous f) :
+    MemLp f 2 (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    hf.aestronglyMeasurable.restrict
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  have hcompact : IntegrableOn (fun x : ℝ ↦ ‖f x‖ ^ 2)
+      (Icc (-1 : ℝ) 1) :=
+    (hf.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  exact hcompact.mono_set Ioc_subset_Icc_self
+
+private theorem intervalIntegrable_sq_of_memLp_two_restrict_seedCross
+    (f : ℝ → ℝ)
+    (hf : MemLp f 2 (volume.restrict (Ioc (-1 : ℝ) 1))) :
+    IntervalIntegrable (fun x : ℝ ↦ f x ^ 2) volume (-1) 1 := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+  apply (hf.integrable_norm_pow (by norm_num)).congr
+  filter_upwards with x
+  rw [Real.norm_eq_abs, sq_abs]
+
+private theorem memLp_endpointSeedProjectedFixedLagRepresenter :
+    MemLp
+      (fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+        (2 / 3) (-2 / 3) 0 0) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hext := memLp_two_restrict_of_continuous_seedCross
+    endpointSeedProjectedFixedLagExtension
+      continuous_endpointSeedProjectedFixedLagExtension
+  apply hext.ae_eq
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+  have hx' : x ∈ Icc (-1 : ℝ) 1 := ⟨hx.1.le, hx.2⟩
+  exact (projectedFixedLagRepresenter_seed_eq_extension hx').symm
+
+private theorem memLp_endpointSeedProjectedPotentialRepresenter :
+    MemLp
+      (fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+        (2 / 3) (-2 / 3) 0 0) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let G : ℝ → ℝ := fourCellEvenEndpointSeedProjectedCapacityRepresenter
+  let K : ℝ → ℝ :=
+    fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+      (2 / 3) (-2 / 3) 0 0
+  let V : ℝ → ℝ :=
+    fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+      (2 / 3) (-2 / 3) 0 0
+  let a : ℝ := Real.sqrt 2 * Real.log 2 / 2
+  have hG : MemLp G 2 (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [G, fourCellEvenEndpointSeedProjectedCapacityRepresenter] using
+      memLp_fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+        (2 / 3) (-2 / 3) 0 0
+        (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+          (2 / 3) (-2 / 3) 0 0)
+  have hK : MemLp K 2 (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [K] using memLp_endpointSeedProjectedFixedLagRepresenter
+  have hsum : MemLp (fun x : ℝ ↦ G x + a * K x) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [Pi.smul_apply, smul_eq_mul] using hG.add (hK.const_smul a)
+  apply hsum.ae_eq
+  filter_upwards with x
+  dsimp only [G, K, V, a]
+  rw [endpointSeedProjectedCapacityRepresenter_eq_split]
+  ring
+
+/-- Exact squared norm of the canonical endpoint-seed projected capacity
+representer.  In particular, the fixed-lag cross is retained with its sign;
+no triangle or Young estimate enters this identity. -/
+theorem integral_endpointSeedProjectedCapacityRepresenter_sq :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedProjectedCapacityRepresenter x ^ 2) =
+      (3917387 / 4465125 : ℝ) - (4 / 45) * Real.pi ^ 2 +
+        (Real.log 2 ^ 2 / 2) *
+          (9796165472 / 11444091796875 : ℝ) -
+        Real.sqrt 2 * Real.log 2 *
+          (-(216607168 / 369140625 : ℝ) +
+            (3232 / 46875) * Real.log 2 +
+            (37744 / 15625) * Real.log (5 / 4 : ℝ)) := by
+  let G : ℝ → ℝ := fourCellEvenEndpointSeedProjectedCapacityRepresenter
+  let V : ℝ → ℝ :=
+    fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+      (2 / 3) (-2 / 3) 0 0
+  let K : ℝ → ℝ :=
+    fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+      (2 / 3) (-2 / 3) 0 0
+  let a : ℝ := Real.sqrt 2 * Real.log 2 / 2
+  have hVlp : MemLp V 2 (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [V] using memLp_endpointSeedProjectedPotentialRepresenter
+  have hKlp : MemLp K 2 (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [K] using memLp_endpointSeedProjectedFixedLagRepresenter
+  have hVsq : IntervalIntegrable (fun x : ℝ ↦ V x ^ 2)
+      volume (-1) 1 :=
+    intervalIntegrable_sq_of_memLp_two_restrict_seedCross V hVlp
+  have hKsq : IntervalIntegrable (fun x : ℝ ↦ K x ^ 2)
+      volume (-1) 1 :=
+    intervalIntegrable_sq_of_memLp_two_restrict_seedCross K hKlp
+  have hVK : IntervalIntegrable (fun x : ℝ ↦ V x * K x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hKlp.mul' hVlp : MemLp (fun x : ℝ ↦ V x * K x) 1
+      (volume.restrict (Ioc (-1 : ℝ) 1))).integrable (by norm_num)
+  have hsqrt : Real.sqrt 2 ^ 2 = (2 : ℝ) :=
+    Real.sq_sqrt (by norm_num)
+  have haSq : a ^ 2 = Real.log 2 ^ 2 / 2 := by
+    dsimp only [a]
+    calc
+      (Real.sqrt 2 * Real.log 2 / 2) ^ 2 =
+          (Real.sqrt 2 ^ 2 * Real.log 2 ^ 2) / 2 ^ 2 := by
+        rw [div_pow, mul_pow]
+      _ = _ := by rw [hsqrt]; ring
+  calc
+    _ = ∫ x : ℝ in -1..1,
+        V x ^ 2 + a ^ 2 * K x ^ 2 -
+          (2 * a) * (V x * K x) := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      dsimp only [G, V, K, a]
+      rw [endpointSeedProjectedCapacityRepresenter_eq_split]
+      ring
+    _ = ((∫ x : ℝ in -1..1, V x ^ 2) +
+          a ^ 2 * (∫ x : ℝ in -1..1, K x ^ 2)) -
+        (2 * a) * (∫ x : ℝ in -1..1, V x * K x) := by
+      rw [intervalIntegral.integral_sub
+          (hVsq.add (hKsq.const_mul (a ^ 2)))
+          (hVK.const_mul (2 * a)),
+        intervalIntegral.integral_add hVsq (hKsq.const_mul (a ^ 2)),
+        intervalIntegral.integral_const_mul,
+        intervalIntegral.integral_const_mul]
+    _ = _ := by
+      rw [show (∫ x : ℝ in -1..1, V x ^ 2) =
+          fourCellEvenP0246CutoffEightProjectedPotentialGram
+            (2 / 3) (-2 / 3) 0 0 by
+        simpa only [V] using
+          integral_fourCellEvenP0246CutoffEightProjectedPotentialRepresenter_sq_eq_gram
+            (2 / 3) (-2 / 3) 0 0,
+        show (∫ x : ℝ in -1..1, K x ^ 2) =
+          fourCellEvenP0246CutoffEightProjectedFixedLagGram
+            (2 / 3) (-2 / 3) 0 0 by
+        simpa only [K] using
+          integral_cutoffEightProjectedFixedLagRepresenter_sq_eq_projectedGram
+            (2 / 3) (-2 / 3) 0 0,
+        show (∫ x : ℝ in -1..1, V x * K x) =
+          -(216607168 / 369140625 : ℝ) +
+            (3232 / 46875) * Real.log 2 +
+            (37744 / 15625) * Real.log (5 / 4 : ℝ) by
+        simpa only [V, K] using
+          integral_projectedPotential_mul_projectedFixedLag_seed]
+      unfold fourCellEvenP0246CutoffEightProjectedPotentialGram
+        fourCellEvenP0246CutoffEightProjectedFixedLagGram
+      rw [haSq]
+      dsimp only [a]
+      norm_num
+      ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCapacityCrossStructural
