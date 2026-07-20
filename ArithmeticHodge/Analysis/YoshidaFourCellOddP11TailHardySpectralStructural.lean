@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.ShiftedLegendreCenteredL2Structural
+import ArithmeticHodge.Analysis.EndpointPotentialPolynomialPairBilinearStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP11TailConcentrationClosureStructural
 
 set_option autoImplicit false
@@ -10,18 +11,22 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellOddP11TailHardySpectralStructu
 noncomputable section
 
 open CenteredOddOneThreeEnergy
+open EndpointPotentialPolynomialPairBilinearStructural
 open ShiftedLegendreCenteredL2Structural
 open ShiftedLegendreCenteredLowModes
 open ShiftedLegendreOrthogonality
 open UnitIntervalLogEnergyAffine
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointOcticPotential
+open YoshidaEndpointPotentialLegendreDiagonalStructural
 open YoshidaFactorTwoPhaseCenteredP9Structural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 open YoshidaFourCellOddP11TailConcentrationClosureStructural
+open YoshidaFourCellOddEndpointStripCoercivityStructural
 open YoshidaFourCellOddStripCapacityClosureStructural
 open YoshidaFourCellParityHalfFoldStructural
+open YoshidaFourCellRawParityFoldStructural
 
 /-!
 # A global spectral probe for the proposed odd tail Hardy inequality
@@ -180,6 +185,64 @@ theorem not_tailHardyConcentration_of_affineProbe_neg
     ¬ FourCellOddP11TailHardyConcentration := by
   apply not_tailHardyConcentration_of_globalProbe_neg r hr hodd h1 h3 h5 h7 h9
   exact (globalHardyProbe_le_affineHardyProbe r hr.continuous).trans_lt hneg
+
+/-- For an odd `C¹` profile, the raw reserve is exactly the global centered
+logarithmic energy minus the reflection-odd energy removed on the endpoint
+strip.  This exposes both spectral pieces without estimating either one. -/
+theorem rawStripCancellationReserve_eq_global_sub_strip
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r) :
+    fourCellOddRawStripCancellationReserve r =
+      (1 / 4 : ℝ) * centeredRawLogEnergy r -
+        (1 / 2 : ℝ) * fourCellOddEndpointStripOddRawEnergy r := by
+  have hfold := centeredRawLogEnergy_div_four_eq_positiveHalf_odd r
+    (hr.contDiffOn.locallyLipschitzOn (convex_Icc (-1 : ℝ) 1)) hodd
+  unfold fourCellOddRawStripCancellationReserve
+  rw [← hfold]
+  ring
+
+/-- Exact polynomial normal form of the affine probe.  The only nonlocal
+objects left are two logarithmic energies and the global endpoint-potential
+pair; all interval terms are ordinary polynomial moments. -/
+theorem affineHardyProbe_polynomial_eq
+    (p : ℝ[X]) (hodd : Function.Odd fun x : ℝ ↦ p.eval x) :
+    fourCellOddP11AffineHardyProbe (fun x : ℝ ↦ p.eval x) =
+      (1 / 4 : ℝ) * centeredRawLogEnergy (fun x : ℝ ↦ p.eval x) -
+        (1 / 2 : ℝ) *
+          fourCellOddEndpointStripOddRawEnergy (fun x : ℝ ↦ p.eval x) -
+        (68427 / 20000 : ℝ) *
+          (∫ x : ℝ in 0..3 / 5, (p.eval x) ^ 2) -
+        (6 / 5 : ℝ) *
+          (∫ x : ℝ in 3 / 5..1, (2 - x) * (p.eval x) ^ 2) +
+        (2813 / 20000 : ℝ) *
+          (∫ x : ℝ in 3 / 5..1, (p.eval x) ^ 2) -
+        (93 / 200 : ℝ) * endpointPotentialPolynomialPair p p := by
+  rw [fourCellOddP11AffineHardyProbe,
+    rawStripCancellationReserve_eq_global_sub_strip
+      (fun x : ℝ ↦ p.eval x) (p.contDiff_aeval (𝕜 := ℝ) 1) hodd]
+  unfold endpointPotentialPolynomialPair
+  congr 2
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  ring
+
+/-- A small rational component box suffices for negativity of the affine
+probe.  These five bounds are independent structural targets: raw reserve,
+lower mass, affine upper mass, ordinary upper mass, and global potential. -/
+theorem affineHardyProbe_neg_of_component_box
+    (r : ℝ → ℝ)
+    (hraw : fourCellOddRawStripCancellationReserve r ≤ 11 / 100)
+    (hlower : (195 / 1000000 : ℝ) ≤
+      ∫ x : ℝ in 0..3 / 5, r x ^ 2)
+    (haffine : (2448 / 100000 : ℝ) ≤
+      ∫ x : ℝ in 3 / 5..1, (2 - x) * r x ^ 2)
+    (hupper : (∫ x : ℝ in 3 / 5..1, r x ^ 2) ≤
+      (2411 / 100000 : ℝ))
+    (hpotential : (17945 / 100000 : ℝ) ≤
+      ∫ x : ℝ in -1..1, yoshidaEndpointPotential x * r x ^ 2) :
+    fourCellOddP11AffineHardyProbe r < 0 := by
+  unfold fourCellOddP11AffineHardyProbe
+  norm_num at hraw hlower haffine hupper hpotential ⊢
+  linarith
 
 /-!
 ## Endpoint-concentration no-go
