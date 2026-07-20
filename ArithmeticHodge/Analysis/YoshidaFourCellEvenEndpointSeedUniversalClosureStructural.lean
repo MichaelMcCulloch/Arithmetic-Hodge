@@ -1800,6 +1800,93 @@ theorem fourCellEvenEndpointSeedRow_sq_le_polynomialCoshBorderQuadratic
   convert hbound using 1
   all_goals ring
 
+/-- Completely rational analytic handoff for the shared cosh border.  The
+only remaining profile-dependent entries are the finite row `L`, its finite
+cosh coordinate `P`, and the raw tail energy `E`; all three tail Gram entries
+have been replaced by structural rational bounds. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_quadraticCoshBorderRational
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (s η : ℝ) (hη : 0 < η) :
+    let L : ℝ := fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw
+    let P : ℝ := fourCellPositiveCoshMoment
+      (centeredLegendreLowProjection w hw 14)
+      (fourCellOperatorHalfWidth / 2)
+    let E : ℝ := centeredRawLogEnergy
+      (centeredLegendreHigherResidual w hw 14) / 4
+    let W : ℝ :=
+      (1 + η⁻¹) * (360360 / 1171733 : ℝ) * E
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (1 + η) * (L - s * P) ^ 2 +
+        W * (fourCellEvenEndpointSeedCanonicalTailNormBudget +
+          |s| / 200000 + s ^ 2 / 50000000) := by
+  dsimp only
+  let A : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter 0 x ^ 2
+  let B : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter 0 x *
+      (fourCellEvenHalfWideCoshRepresenter x - centeredPolynomialLift
+        fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x)
+  let D : ℝ := ∫ x : ℝ in -1..1,
+    (fourCellEvenHalfWideCoshRepresenter x - centeredPolynomialLift
+      fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x) ^ 2
+  let E : ℝ := centeredRawLogEnergy
+    (centeredLegendreHigherResidual w hw 14) / 4
+  let W : ℝ := (1 + η⁻¹) * (360360 / 1171733 : ℝ) * E
+  have hA : A ≤ fourCellEvenEndpointSeedCanonicalTailNormBudget := by
+    simpa only [A] using
+      integral_endpointSeedTailFourteenRepresenter_zero_sq_le_rational
+  have hB : |B| ≤ (1 / 400000 : ℝ) := by
+    simpa only [B] using
+      abs_integral_endpointSeedTailFourteenRepresenter_zero_mul_quadraticCoshRemainder_le
+  have hD : D ≤ (1 / 50000000 : ℝ) := by
+    simpa only [D] using integral_halfWideCosh_sub_quadraticSelector_sq_le
+  have hcross : -2 * s * B ≤ |s| / 200000 := by
+    calc
+      -2 * s * B ≤ |-2 * s * B| := le_abs_self _
+      _ = 2 * |s| * |B| := by
+        rw [abs_mul, abs_mul]
+        norm_num
+      _ ≤ 2 * |s| * (1 / 400000 : ℝ) :=
+        mul_le_mul_of_nonneg_left hB (by positivity)
+      _ = |s| / 200000 := by ring
+  have hDscaled : s ^ 2 * D ≤ s ^ 2 / 50000000 := by
+    have h := mul_le_mul_of_nonneg_left hD (sq_nonneg s)
+    nlinarith only [h]
+  have hgram :
+      A - 2 * s * B + s ^ 2 * D ≤
+        fourCellEvenEndpointSeedCanonicalTailNormBudget +
+          |s| / 200000 + s ^ 2 / 50000000 := by
+    linarith only [hA, hcross, hDscaled]
+  have hE : 0 ≤ E := by
+    dsimp only [E]
+    exact div_nonneg (centeredRawLogEnergy_nonnegative _) (by norm_num)
+  have hW : 0 ≤ W := by
+    dsimp only [W]
+    have hinv : 0 < η⁻¹ := inv_pos.mpr hη
+    positivity
+  have hgramScaled := mul_le_mul_of_nonneg_left hgram hW
+  have hquad :=
+    fourCellEvenEndpointSeedRow_sq_le_polynomialCoshBorderQuadratic
+      w hw hlocal heven hzero 0
+        fourCellEvenHalfWideCoshQuadraticSelectorPolynomial (by simp)
+        natDegree_fourCellEvenHalfWideCoshQuadraticSelectorPolynomial_lt_fourteen
+        s η hη
+  have hquad' : fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (1 + η) *
+          (fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw -
+            s * fourCellPositiveCoshMoment
+              (centeredLegendreLowProjection w hw 14)
+              (fourCellOperatorHalfWidth / 2)) ^ 2 +
+        W * (A - 2 * s * B + s ^ 2 * D) := by
+    simpa only [A, B, D, E, W] using hquad
+  apply hquad'.trans
+  dsimp only [W, E] at hgramScaled ⊢
+  linarith only [hgramScaled]
+
 /-- Exact scalar Schur complement of the shared finite/tail cosh border.
 The negative square is retained: this is the structural gain lost by treating
 the finite row and the tail representer with separate absolute-value bounds.
