@@ -13433,6 +13433,161 @@ theorem fourCellOddCoreLocalBilinear_fiveMode_tail_eq_endpointForms
   rw [fourCellOddRawStripCancellationPolarization_fiveMode_tail_eq
     r hr hodd hone hthree hfive hseven hnine c d e f g]
 
+private theorem integral_zero_one_P7_mul_P11Plus_eq_zero
+    (r : ℝ → ℝ) (hr : Continuous r) (hodd : Function.Odd r)
+    (hseven : centeredOddP7Coefficient r = 0) :
+    (∫ x : ℝ in 0..1, factorTwoCenteredP7 x * r x) = 0 := by
+  have hfullReverse : (∫ x : ℝ in -1..1,
+      r x * factorTwoCenteredP7 x) = 0 := by
+    unfold centeredOddP7Coefficient at hseven
+    nlinarith
+  have hfull : (∫ x : ℝ in -1..1,
+      factorTwoCenteredP7 x * r x) = 0 := by
+    calc
+      _ = ∫ x : ℝ in -1..1, r x * factorTwoCenteredP7 x := by
+        apply intervalIntegral.integral_congr
+        intro x _hx
+        ring
+      _ = 0 := hfullReverse
+  let F : ℝ → ℝ := fun x ↦ factorTwoCenteredP7 x * r x
+  have hF : IntervalIntegrable F volume (-1) 1 :=
+    (continuous_factorTwoCenteredP7.mul hr).intervalIntegrable _ _
+  have hFeven : Function.Even F := by
+    intro x
+    dsimp only [F]
+    rw [odd_factorTwoCenteredP7, hodd]
+    ring
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even F hF hFeven
+  dsimp only [F] at hfold
+  rw [hfull] at hfold
+  linarith
+
+private theorem integral_zero_one_P9_mul_P11Plus_eq_zero
+    (r : ℝ → ℝ) (hr : Continuous r) (hodd : Function.Odd r)
+    (hnine : centeredOddP9Coefficient r = 0) :
+    (∫ x : ℝ in 0..1, factorTwoCenteredP9 x * r x) = 0 := by
+  have hfullReverse : (∫ x : ℝ in -1..1,
+      r x * factorTwoCenteredP9 x) = 0 := by
+    unfold centeredOddP9Coefficient at hnine
+    nlinarith
+  have hfull : (∫ x : ℝ in -1..1,
+      factorTwoCenteredP9 x * r x) = 0 := by
+    calc
+      _ = ∫ x : ℝ in -1..1, r x * factorTwoCenteredP9 x := by
+        apply intervalIntegral.integral_congr
+        intro x _hx
+        ring
+      _ = 0 := hfullReverse
+  let F : ℝ → ℝ := fun x ↦ factorTwoCenteredP9 x * r x
+  have hF : IntervalIntegrable F volume (-1) 1 :=
+    (continuous_factorTwoCenteredP9.mul hr).intervalIntegrable _ _
+  have hFeven : Function.Even F := by
+    intro x
+    dsimp only [F]
+    rw [odd_factorTwoCenteredP9, hodd]
+    ring
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even F hF hFeven
+  dsimp only [F] at hfold
+  rw [hfull] at hfold
+  linarith
+
+/-- Exact positive-half mass orthogonality of the five-mode pivot and its
+`P₁₁+` residual. -/
+theorem integral_zero_one_fiveMode_mul_P11Plus_eq_zero
+    (r : ℝ → ℝ) (hr : Continuous r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (hseven : centeredOddP7Coefficient r = 0)
+    (hnine : centeredOddP9Coefficient r = 0)
+    (c d e f g : ℝ) :
+    (∫ x : ℝ in 0..1,
+      fourCellOddOneThreeFiveSevenNineLowProfile c d e f g x * r x) = 0 := by
+  have h135 := integral_zero_one_oneThreeFiveLowProfile_mul_tail_eq_zero
+    r hr hodd hone hthree hfive c d e
+  have h7 := integral_zero_one_P7_mul_P11Plus_eq_zero
+    r hr hodd hseven
+  have h9 := integral_zero_one_P9_mul_P11Plus_eq_zero
+    r hr hodd hnine
+  have h135I : IntervalIntegrable (fun x : ℝ ↦
+      fourCellOddOneThreeFiveLowProfile c d e x * r x) volume 0 1 :=
+    ((contDiff_fourCellOddOneThreeFiveLowProfile c d e).continuous.mul hr)
+      |>.intervalIntegrable _ _
+  have h7I : IntervalIntegrable (fun x : ℝ ↦
+      f * (factorTwoCenteredP7 x * r x)) volume 0 1 :=
+    (continuous_const.mul (continuous_factorTwoCenteredP7.mul hr))
+      |>.intervalIntegrable _ _
+  have h9I : IntervalIntegrable (fun x : ℝ ↦
+      g * (factorTwoCenteredP9 x * r x)) volume 0 1 :=
+    (continuous_const.mul (continuous_factorTwoCenteredP9.mul hr))
+      |>.intervalIntegrable _ _
+  unfold fourCellOddOneThreeFiveSevenNineLowProfile
+  rw [show (fun x : ℝ ↦
+      (fourCellOddOneThreeFiveLowProfile c d e x +
+        f * factorTwoCenteredP7 x + g * factorTwoCenteredP9 x) * r x) =
+      fun x ↦ fourCellOddOneThreeFiveLowProfile c d e x * r x +
+        f * (factorTwoCenteredP7 x * r x) +
+          g * (factorTwoCenteredP9 x * r x) by
+    funext x
+    ring,
+    intervalIntegral.integral_add (h135I.add h7I) h9I,
+    intervalIntegral.integral_add h135I h7I,
+    intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_const_mul,
+    h135, h7, h9]
+  ring
+
+/-- On the five-mode/`P₁₁+` row the signed scalar mass vanishes
+exactly; only the wide regular correlation remains. -/
+theorem fourCellOddSignedMassRegularBilinear_fiveMode_tail_eq_regular
+    (r : ℝ → ℝ) (hr : Continuous r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (hseven : centeredOddP7Coefficient r = 0)
+    (hnine : centeredOddP9Coefficient r = 0)
+    (c d e f g : ℝ) :
+    fourCellOddSignedMassRegularBilinear
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r =
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r t) := by
+  unfold fourCellOddSignedMassRegularBilinear
+  rw [integral_zero_one_fiveMode_mul_P11Plus_eq_zero
+    r hr hodd hone hthree hfive hseven hnine c d e f g]
+  ring
+
+/-- Fully reduced exact `P₁₁+` mixed row: both the global raw cross
+and scalar mass cross have vanished. -/
+theorem fourCellOddCoreLocalBilinear_fiveMode_P11Plus_fullyReduced
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (hseven : centeredOddP7Coefficient r = 0)
+    (hnine : centeredOddP9Coefficient r = 0)
+    (c d e f g : ℝ) :
+    fourCellOddCoreLocalBilinear
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r =
+      -(1 / 2 : ℝ) * fourCellOddEndpointStripOddRawPolarization
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r +
+        fourCellOddRetainedPrimePotentialBilinear
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear
+                (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r t) := by
+  rw [fourCellOddCoreLocalBilinear_eq_retained_sub_signed]
+  unfold fourCellOddRetainedEndpointBilinear
+  rw [fourCellOddRawStripCancellationPolarization_fiveMode_tail_eq
+      r hr hodd hone hthree hfive hseven hnine c d e f g,
+    fourCellOddSignedMassRegularBilinear_fiveMode_tail_eq_regular
+      r hr.continuous hodd hone hthree hfive hseven hnine c d e f g]
+  ring
+
 private theorem integral_zero_three_fifths_P7_sq_le :
     (∫ x : ℝ in 0..3 / 5, factorTwoCenteredP7 x ^ 2) ≤
       (1 / 15 : ℝ) := by
