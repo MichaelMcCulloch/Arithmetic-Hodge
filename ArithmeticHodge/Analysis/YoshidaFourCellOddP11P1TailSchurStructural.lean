@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP11ThreeHalvesClosureStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedRegularRemainderStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP5CleanSharpStructural
 
 set_option autoImplicit false
 
@@ -21,6 +22,7 @@ open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseCenteredP9Structural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
+open YoshidaFactorTwoPhaseIntrinsicSixP5CleanSharpStructural
 open YoshidaFourCellOddP11CoupledRieszDefectClosureStructural
 open YoshidaFourCellOddP11EndpointFormDualClosureStructural
 open YoshidaFourCellOddP11FormDualProbeStructural
@@ -541,6 +543,225 @@ def fourCellOddP11P1LowerSelectorResidual (x : ℝ) : ℝ :=
 
 def fourCellOddP11P1UpperSelectorResidual (x : ℝ) : ℝ :=
   fourCellOddP11P1UpperRepresenter x - fourCellOddP11P1Selector x
+
+/-! ## Rational reciprocal certificate for the selector cost -/
+
+/-- A rational center for the four-cell halfwidth. -/
+private def fourCellOddP11P1RationalHalfWidth : ℝ := 433217 / 1000000
+
+/-- A rational center for `sqrt 2 * log 2`. -/
+private def fourCellOddP11P1RationalEndpointScale : ℝ := 980259 / 1000000
+
+/-- The rational degree-five model obtained from the exact polynomial lag
+formula by replacing the halfwidth with its certified rational center. -/
+private def fourCellOddP11P1RationalRegularRepresenter (x : ℝ) : ℝ :=
+  let a := fourCellOddP11P1RationalHalfWidth
+  7 * a ^ 3 * x ^ 5 / 115200 +
+    (-(5 * a ^ 4 / 576) - 7 * a ^ 3 / 11520 - a / 144) * x ^ 3 +
+    (-(a ^ 4 / 192) - 7 * a ^ 3 / 7680 + a ^ 2 / 24 + a / 48) * x
+
+private def fourCellOddP11P1RationalLowerH (x : ℝ) : ℝ :=
+  -2 * fourCellOddP11P1RationalHalfWidth *
+      fourCellOddP11P1RationalRegularRepresenter x -
+    fourCellOddP11P1Selector x - (27 / 250) * x
+
+private def fourCellOddP11P1RationalUpperH (x : ℝ) : ℝ :=
+  fourCellOddP11P1RationalEndpointScale * (8 / 5 - x) -
+    2 * fourCellOddP11P1RationalHalfWidth *
+      fourCellOddP11P1RationalRegularRepresenter x -
+    fourCellOddP11P1Selector x - (6 / 5 - (57 / 25) * x)
+
+private def fourCellOddP11P1HexLowerWeight (x : ℝ) : ℝ :=
+  (27 / 250 : ℝ) + (93 / 50) * yoshidaEndpointHexadecic x
+
+/-- `x` times the upper hexadecic weight, written without division. -/
+private def fourCellOddP11P1HexUpperDensity (x : ℝ) : ℝ :=
+  (93 / 50 : ℝ) * x * yoshidaEndpointHexadecic x +
+    6 / 5 - (57 / 25) * x
+
+private def bernsteinAtom (n k : ℕ) (t : ℝ) : ℝ :=
+  (Nat.choose n k : ℝ) * t ^ k * (1 - t) ^ (n - k)
+
+private def fourCellOddP11P1LowerReciprocalCoeff : ℕ → ℝ
+  | 0 => 4645237 / 500000
+  | 1 => 1842383 / 200000
+  | 2 => 4355817 / 500000
+  | 3 => 1805413 / 250000
+  | 4 => 1488669 / 250000
+  | 5 => 122123 / 25000
+  | 6 => 2010147 / 500000
+  | 7 => 3322669 / 1000000
+  | 8 => 1378727 / 500000
+  | 9 => 1147639 / 500000
+  | 10 => 1912931 / 1000000
+  | _ => 0
+
+private def fourCellOddP11P1UpperReciprocalCoeff : ℕ → ℝ
+  | 0 => 3085951 / 250000
+  | 1 => 17334703 / 1000000
+  | 2 => 8175499 / 100000
+  | 3 => -(4322409 / 1000000)
+  | 4 => 3073283 / 250000
+  | 5 => 2188457 / 500000
+  | 6 => 3175221 / 1000000
+  | 7 => 414493 / 200000
+  | 8 => 352823 / 250000
+  | 9 => 19611 / 20000
+  | 10 => 138359 / 200000
+  | _ => 0
+
+private def fourCellOddP11P1LowerReciprocalMajorant (t : ℝ) : ℝ :=
+  ∑ k ∈ Finset.range 11,
+    fourCellOddP11P1LowerReciprocalCoeff k * bernsteinAtom 10 k t
+
+private def fourCellOddP11P1UpperReciprocalMajorant (t : ℝ) : ℝ :=
+  ∑ k ∈ Finset.range 11,
+    fourCellOddP11P1UpperReciprocalCoeff k * bernsteinAtom 10 k t
+
+private def fourCellOddP11P1LowerReciprocalRemainderCoeff : ℕ → ℝ
+  | 0 => 15301287813334960937500000
+  | 1 => 490067207023925781250000
+  | 2 => 494749542924355468750000
+  | 3 => 2006030128789924316406250
+  | 4 => 2216826051310408398437500
+  | 5 => 1574735981749461425781250
+  | 6 => 901533507072946210937500
+  | 7 => 589004606202845136718750
+  | 8 => 622386791414461209062500
+  | 9 => 813445209195795816718750
+  | 10 => 988507394523133748462500
+  | 11 => 1068380451369202504946875
+  | 12 => 1062490433267932701282250
+  | 13 => 1023650564979912971583625
+  | 14 => 1002821834284107280382005
+  | 15 => 1024711572186278309006575
+  | 16 => 1086890582576428512159454
+  | 17 => 1173332958072259601502655
+  | 18 => 1269696194254556317075192
+  | 19 => 1371037018596121370456098
+  | 20 => 1479883015165420364255620
+  | 21 => 1599487124362520038661680
+  | 22 => 1729925291820114582135712
+  | 23 => 1870699716585813102466543
+  | 24 => 2024657925932286429172234
+  | 25 => 2191804859749081270601050
+  | 26 => 2374125281350933156388485
+  | _ => 0
+
+private def fourCellOddP11P1UpperReciprocalRemainderCoeff : ℕ → ℝ
+  | 0 => 49650744012255389165387940
+  | 1 => 42206949003534362123698050
+  | 2 => 362117671791821137343142354000
+  | 3 => 482174539442302518422454363894
+  | 4 => 373777256624170811200219655664
+  | 5 => 193513953777846174566443878396
+  | 6 => 56617916369710944458080745595
+  | 7 => 21776136983480303846429875
+  | 8 => 5602105360475649219441026972
+  | 9 => 35689393047853587823042109940
+  | 10 => 59141097208684848013022342445
+  | 11 => 62308711294976716468600812825
+  | 12 => 47679044313186059712844578750
+  | 13 => 26119097435655077319209315000
+  | 14 => 8448444727856819426757445000
+  | 15 => 97487643971345944190531250
+  | 16 => 120527438442695700543187500
+  | 17 => 3695675163267309157091093750
+  | 18 => 5984232993623449681136718750
+  | 19 => 5037978230170140910734375000
+  | 20 => 2248324756774922278710937500
+  | 21 => 315943443774655219335937500
+  | 22 => 377475253625086297119140625
+  | 23 => 964562019427415704345703125
+  | 24 => 534031340603198657226562500
+  | 25 => 633185704354266357421875000
+  | 26 => 749728653249822235107421875
+  | 27 => 886873851295635223388671875
+  | _ => 0
+
+private def fourCellOddP11P1LowerReciprocalRemainder (t : ℝ) : ℝ :=
+  ∑ k ∈ Finset.range 27,
+    fourCellOddP11P1LowerReciprocalRemainderCoeff k * bernsteinAtom 26 k t
+
+private def fourCellOddP11P1UpperReciprocalRemainder (t : ℝ) : ℝ :=
+  ∑ k ∈ Finset.range 28,
+    fourCellOddP11P1UpperReciprocalRemainderCoeff k * bernsteinAtom 27 k t
+
+private theorem fourCellOddP11P1LowerReciprocalRemainder_nonneg
+    {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
+    0 ≤ fourCellOddP11P1LowerReciprocalRemainder t := by
+  have hc : ∀ k ∈ Finset.range 27,
+      0 ≤ fourCellOddP11P1LowerReciprocalRemainderCoeff k := by
+    intro k hk
+    simp only [Finset.mem_range] at hk
+    interval_cases k <;>
+      norm_num [fourCellOddP11P1LowerReciprocalRemainderCoeff]
+  unfold fourCellOddP11P1LowerReciprocalRemainder
+  apply Finset.sum_nonneg
+  intro k hk
+  exact mul_nonneg (hc k hk) (by
+    unfold bernsteinAtom
+    have hcomp : 0 ≤ 1 - t := sub_nonneg.mpr ht1
+    positivity)
+
+set_option maxHeartbeats 5000000 in
+set_option maxRecDepth 10000 in
+private theorem one_le_fourCellOddP11P1LowerReciprocalCertificate
+    {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
+    1 ≤ fourCellOddP11P1LowerReciprocalMajorant t *
+      fourCellOddP11P1HexLowerWeight (3 * t / 5) := by
+  have hrem := fourCellOddP11P1LowerReciprocalRemainder_nonneg ht0 ht1
+  have hfactor :
+      (4538836059570312500000000000 : ℝ) *
+          (fourCellOddP11P1LowerReciprocalMajorant t *
+              fourCellOddP11P1HexLowerWeight (3 * t / 5) - 1) =
+        fourCellOddP11P1LowerReciprocalRemainder t := by
+    unfold fourCellOddP11P1LowerReciprocalMajorant
+      fourCellOddP11P1HexLowerWeight yoshidaEndpointHexadecic
+      fourCellOddP11P1LowerReciprocalRemainder bernsteinAtom
+    norm_num [Finset.sum_range_succ, Nat.choose,
+      fourCellOddP11P1LowerReciprocalCoeff,
+      fourCellOddP11P1LowerReciprocalRemainderCoeff]
+    ring
+  nlinarith
+
+private theorem fourCellOddP11P1UpperReciprocalRemainder_nonneg
+    {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
+    0 ≤ fourCellOddP11P1UpperReciprocalRemainder t := by
+  have hc : ∀ k ∈ Finset.range 28,
+      0 ≤ fourCellOddP11P1UpperReciprocalRemainderCoeff k := by
+    intro k hk
+    simp only [Finset.mem_range] at hk
+    interval_cases k <;>
+      norm_num [fourCellOddP11P1UpperReciprocalRemainderCoeff]
+  unfold fourCellOddP11P1UpperReciprocalRemainder
+  apply Finset.sum_nonneg
+  intro k hk
+  exact mul_nonneg (hc k hk) (by
+    unfold bernsteinAtom
+    have hcomp : 0 ≤ 1 - t := sub_nonneg.mpr ht1
+    positivity)
+
+set_option maxHeartbeats 5000000 in
+set_option maxRecDepth 10000 in
+private theorem one_le_fourCellOddP11P1UpperReciprocalCertificate
+    {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
+    1 ≤ fourCellOddP11P1UpperReciprocalMajorant t *
+      fourCellOddP11P1HexUpperDensity ((3 + 2 * t) / 5) := by
+  have hrem := fourCellOddP11P1UpperReciprocalRemainder_nonneg ht0 ht1
+  have hfactor :
+      (612742868041992187500000000000 : ℝ) *
+          (fourCellOddP11P1UpperReciprocalMajorant t *
+              fourCellOddP11P1HexUpperDensity ((3 + 2 * t) / 5) - 1) =
+        fourCellOddP11P1UpperReciprocalRemainder t := by
+    unfold fourCellOddP11P1UpperReciprocalMajorant
+      fourCellOddP11P1HexUpperDensity yoshidaEndpointHexadecic
+      fourCellOddP11P1UpperReciprocalRemainder bernsteinAtom
+    norm_num [Finset.sum_range_succ, Nat.choose,
+      fourCellOddP11P1UpperReciprocalCoeff,
+      fourCellOddP11P1UpperReciprocalRemainderCoeff]
+    ring
+  nlinarith
 
 /-- Exact scalar cost of the concrete degree-`< 11` selector. -/
 def fourCellOddP11P1SelectorDual : ℝ :=
