@@ -107,10 +107,28 @@ def factorTwoPrimePhaseInterval (n : Fin 201) : RatInterval :=
   pure 2 * factorTwoPrimePiInterval * pure n.1 *
       factorTwoPrimeShiftInterval / factorTwoPrimeLogTwoInterval
 
-/-- Rational enclosure after subtracting the certified number of quarter turns. -/
+/-- Rational enclosure of `4 * log(3/2) / log 2`. -/
+def factorTwoPrimeRatioInterval : RatInterval :=
+  ⟨4 * factorTwoPrimeShiftInterval.lower /
+      factorTwoPrimeLogTwoInterval.upper,
+    4 * factorTwoPrimeShiftInterval.upper /
+      factorTwoPrimeLogTwoInterval.lower⟩
+
+/-- Cancellation-aware enclosure of the residual measured in quarter turns. -/
+def factorTwoPrimeCenteredRatioInterval (n : Fin 201) : RatInterval :=
+  ⟨factorTwoPrimeRatioInterval.lower * n.1 - factorTwoPrimeQuarterIndex n,
+    factorTwoPrimeRatioInterval.upper * n.1 - factorTwoPrimeQuarterIndex n⟩
+
+/-- Rational enclosure of `pi / 2`. -/
+def factorTwoPrimePiHalfInterval : RatInterval :=
+  ⟨factorTwoPrimePiInterval.lower / 2,
+    factorTwoPrimePiInterval.upper / 2⟩
+
+/-- Rational enclosure after subtracting the certified number of quarter
+turns.  Factoring out `pi/2` retains the analytic cancellation and makes its
+uniform width transparent. -/
 def factorTwoPrimeResidualInterval (n : Fin 201) : RatInterval :=
-  factorTwoPrimePhaseInterval n -
-    pure (factorTwoPrimeQuarterIndex n) * factorTwoPrimePiInterval / pure 2
+  factorTwoPrimePiHalfInterval * factorTwoPrimeCenteredRatioInterval n
 
 /-- The exact real reduced phase corresponding to
 `factorTwoPrimeResidualInterval`. -/
@@ -142,27 +160,187 @@ theorem factorTwoPrimePhaseInterval_contains (n : Fin 201) :
   rw [factorTwoMomentLength_eq_yoshidaLength]
   ring
 
+theorem factorTwoPrimeRatioInterval_contains :
+    factorTwoPrimeRatioInterval.Contains
+      (4 * factorTwoPrimeShift / factorTwoMomentLength) := by
+  have hshiftPos : 0 < factorTwoPrimeShift :=
+    (show (0 : ℝ) < factorTwoPrimeShiftInterval.lower by
+      norm_num [factorTwoPrimeShiftInterval]).trans_le
+        factorTwoPrimeShiftInterval_contains.1
+  have hnum0 : 0 ≤ 4 * factorTwoPrimeShift :=
+    mul_nonneg (by norm_num) hshiftPos.le
+  have hnumLo :
+      (4 : ℝ) * (factorTwoPrimeShiftInterval.lower : ℝ) ≤
+        (4 * factorTwoPrimeShift : ℝ) := by
+    exact mul_le_mul_of_nonneg_left factorTwoPrimeShiftInterval_contains.1
+      (by norm_num)
+  have hnumHi :
+      (4 * factorTwoPrimeShift : ℝ) ≤
+        (4 : ℝ) * (factorTwoPrimeShiftInterval.upper : ℝ) := by
+    exact mul_le_mul_of_nonneg_left factorTwoPrimeShiftInterval_contains.2
+      (by norm_num)
+  have hlogLowerPos :
+      (0 : ℝ) < factorTwoPrimeLogTwoInterval.lower := by
+    norm_num [factorTwoPrimeLogTwoInterval]
+  unfold factorTwoPrimeRatioInterval
+  constructor
+  · norm_num only [Rat.cast_div, Rat.cast_mul, Rat.cast_ofNat]
+    exact div_le_div₀ hnum0 hnumLo factorTwoMomentLength_pos
+      factorTwoPrimeLogTwoInterval_contains.2
+  · norm_num only [Rat.cast_div, Rat.cast_mul, Rat.cast_ofNat]
+    exact div_le_div₀
+      (by norm_num [factorTwoPrimeShiftInterval]) hnumHi hlogLowerPos
+      factorTwoPrimeLogTwoInterval_contains.1
+
+theorem factorTwoPrimeCenteredRatioInterval_contains (n : Fin 201) :
+    (factorTwoPrimeCenteredRatioInterval n).Contains
+      (4 * factorTwoPrimeShift / factorTwoMomentLength * n.1 -
+        factorTwoPrimeQuarterIndex n) := by
+  have hratio := factorTwoPrimeRatioInterval_contains
+  constructor
+  · norm_num only [factorTwoPrimeCenteredRatioInterval, Contains,
+      Rat.cast_sub, Rat.cast_mul, Rat.cast_natCast]
+    exact sub_le_sub_right
+      (mul_le_mul_of_nonneg_right hratio.1 (by positivity)) _
+  · norm_num only [factorTwoPrimeCenteredRatioInterval, Contains,
+      Rat.cast_sub, Rat.cast_mul, Rat.cast_natCast]
+    exact sub_le_sub_right
+      (mul_le_mul_of_nonneg_right hratio.2 (by positivity)) _
+
+theorem factorTwoPrimePiHalfInterval_contains :
+    factorTwoPrimePiHalfInterval.Contains (Real.pi / 2) := by
+  constructor
+  · norm_num only [factorTwoPrimePiHalfInterval, Contains, Rat.cast_div,
+      Rat.cast_ofNat]
+    exact div_le_div_of_nonneg_right factorTwoPrimePiInterval_contains.1
+      (by norm_num)
+  · norm_num only [factorTwoPrimePiHalfInterval, Contains, Rat.cast_div,
+      Rat.cast_ofNat]
+    exact div_le_div_of_nonneg_right factorTwoPrimePiInterval_contains.2
+      (by norm_num)
+
 theorem factorTwoPrimeResidualInterval_contains (n : Fin 201) :
     (factorTwoPrimeResidualInterval n).Contains
       (factorTwoPrimeResidual n) := by
-  have hquarter :
-      (pure (factorTwoPrimeQuarterIndex n) * factorTwoPrimePiInterval /
-          pure 2).Contains
-        (factorTwoPrimeQuarterIndex n * Real.pi / 2) :=
-    contains_div_of_pos (by norm_num [RatInterval.pure])
-      (contains_mul (contains_pure (factorTwoPrimeQuarterIndex n))
-        factorTwoPrimePiInterval_contains)
-      (contains_pure 2)
-  exact contains_sub (factorTwoPrimePhaseInterval_contains n) hquarter
+  have h := contains_mul factorTwoPrimePiHalfInterval_contains
+    (factorTwoPrimeCenteredRatioInterval_contains n)
+  unfold factorTwoPrimeResidual factorTwoPrimeResidualInterval
+    factorTwoMomentY factorTwoNaturalFrequency
+  convert h using 1
+  ring
 
-set_option maxRecDepth 1000000 in
-set_option maxHeartbeats 0 in
-theorem factorTwoPrimeResidualInterval_absBound :
-    ∀ n : Fin 201,
-      (factorTwoPrimeResidualInterval n).AbsBound (4 / 5) := by
-  intro n
-  unfold RatInterval.AbsBound
-  fin_cases n <;> decide +kernel
+private theorem factorTwoPrimeRatioInterval_valid :
+    factorTwoPrimeRatioInterval.Valid := by
+  change
+    4 * factorTwoPrimeShiftInterval.lower /
+        factorTwoPrimeLogTwoInterval.upper ≤
+      4 * factorTwoPrimeShiftInterval.upper /
+        factorTwoPrimeLogTwoInterval.lower
+  norm_num [factorTwoPrimeShiftInterval, factorTwoPrimeLogTwoInterval]
+
+private theorem factorTwoPrimeRatioInterval_lower_ge_surrogate :
+    (233985 / 100000 : ℚ) ≤ factorTwoPrimeRatioInterval.lower := by
+  change (233985 / 100000 : ℚ) ≤
+    4 * factorTwoPrimeShiftInterval.lower /
+      factorTwoPrimeLogTwoInterval.upper
+  norm_num [factorTwoPrimeShiftInterval, factorTwoPrimeLogTwoInterval]
+
+private theorem factorTwoPrimeRatioInterval_upper_le_surrogate :
+    factorTwoPrimeRatioInterval.upper ≤
+      (233985 / 100000 : ℚ) + 3 / 1000000000 := by
+  change
+    4 * factorTwoPrimeShiftInterval.upper /
+        factorTwoPrimeLogTwoInterval.lower ≤
+      (233985 / 100000 : ℚ) + 3 / 1000000000
+  norm_num [factorTwoPrimeShiftInterval, factorTwoPrimeLogTwoInterval]
+
+private theorem factorTwoPrimeQuarterIndex_le_surrogate (n : Fin 201) :
+    (factorTwoPrimeQuarterIndex n : ℚ) ≤
+      (233985 / 100000 : ℚ) * n.1 + 1 / 2 := by
+  have hnat := Nat.div_mul_le_self (233985 * n.1 + 50000) 100000
+  have hq : factorTwoPrimeQuarterIndex n * 100000 ≤
+      233985 * n.1 + 50000 := by
+    simpa only [factorTwoPrimeQuarterIndex] using hnat
+  have hqQ :
+      (factorTwoPrimeQuarterIndex n : ℚ) * 100000 ≤
+        233985 * n.1 + 50000 := by
+    exact_mod_cast hq
+  norm_num at hqQ ⊢
+  linarith
+
+private theorem surrogate_sub_half_lt_factorTwoPrimeQuarterIndex
+    (n : Fin 201) :
+    (233985 / 100000 : ℚ) * n.1 - 1 / 2 <
+      factorTwoPrimeQuarterIndex n := by
+  have hnat := Nat.lt_mul_div_succ (233985 * n.1 + 50000)
+    (by norm_num : 0 < 100000)
+  have hq : 233985 * n.1 + 50000 <
+      100000 * (factorTwoPrimeQuarterIndex n + 1) := by
+    simpa only [factorTwoPrimeQuarterIndex] using hnat
+  have hqQ :
+      (233985 * n.1 + 50000 : ℚ) <
+        100000 * (factorTwoPrimeQuarterIndex n + 1) := by
+    exact_mod_cast hq
+  norm_num at hqQ ⊢
+  linarith
+
+private theorem factorTwoPrimeCenteredRatioInterval_valid (n : Fin 201) :
+    (factorTwoPrimeCenteredRatioInterval n).Valid := by
+  change factorTwoPrimeRatioInterval.lower * n.1 -
+      factorTwoPrimeQuarterIndex n ≤
+    factorTwoPrimeRatioInterval.upper * n.1 -
+      factorTwoPrimeQuarterIndex n
+  exact sub_le_sub_right
+    (mul_le_mul_of_nonneg_right factorTwoPrimeRatioInterval_valid
+      (by positivity)) _
+
+private theorem factorTwoPrimeCenteredRatioInterval_absBound (n : Fin 201) :
+    (factorTwoPrimeCenteredRatioInterval n).AbsBound (501 / 1000) := by
+  have hn200 : n.1 ≤ 200 := by omega
+  have hlo := factorTwoPrimeRatioInterval_lower_ge_surrogate
+  have hup := factorTwoPrimeRatioInterval_upper_le_surrogate
+  have hqlo := surrogate_sub_half_lt_factorTwoPrimeQuarterIndex n
+  have hqhi := factorTwoPrimeQuarterIndex_le_surrogate n
+  unfold AbsBound factorTwoPrimeCenteredRatioInterval
+  constructor
+  · have hmul := mul_le_mul_of_nonneg_right hlo
+      (show (0 : ℚ) ≤ n.1 by positivity)
+    linarith
+  · have hmul := mul_le_mul_of_nonneg_right hup
+      (show (0 : ℚ) ≤ n.1 by positivity)
+    have hnQ : (n.1 : ℚ) ≤ 200 := by exact_mod_cast hn200
+    nlinarith
+
+private theorem factorTwoPrimePiHalfInterval_valid :
+    factorTwoPrimePiHalfInterval.Valid := by
+  change factorTwoPrimePiInterval.lower / 2 ≤
+    factorTwoPrimePiInterval.upper / 2
+  exact div_le_div_of_nonneg_right
+    (valid_of_contains factorTwoPrimePiInterval_contains) (by norm_num)
+
+private theorem factorTwoPrimePiHalfInterval_absBound :
+    factorTwoPrimePiHalfInterval.AbsBound (1571 / 1000) := by
+  unfold AbsBound factorTwoPrimePiHalfInterval factorTwoPrimePiInterval
+  constructor <;> norm_num [piFineInterval]
+
+private theorem factorTwoPrimeResidualInterval_valid (n : Fin 201) :
+    (factorTwoPrimeResidualInterval n).Valid := by
+  exact valid_mul factorTwoPrimePiHalfInterval_valid
+    (factorTwoPrimeCenteredRatioInterval_valid n)
+
+theorem factorTwoPrimeResidualInterval_absBound
+    (n : Fin 201) :
+    (factorTwoPrimeResidualInterval n).AbsBound (4 / 5) := by
+  have hsmall := absBound_mul factorTwoPrimePiHalfInterval_valid
+    (factorTwoPrimeCenteredRatioInterval_valid n)
+    factorTwoPrimePiHalfInterval_absBound
+    (factorTwoPrimeCenteredRatioInterval_absBound n)
+    (by norm_num : (0 : ℚ) ≤ 1571 / 1000)
+    (by norm_num : (0 : ℚ) ≤ 501 / 1000)
+  have hB : (1571 / 1000 : ℚ) * (501 / 1000) ≤ 4 / 5 := by
+    norm_num
+  unfold AbsBound at hsmall ⊢
+  exact ⟨(neg_le_neg hB).trans hsmall.1, hsmall.2.trans hB⟩
 
 theorem factorTwoPrimeResidual_abs_le (n : Fin 201) :
     |factorTwoPrimeResidual n| ≤ (4 / 5 : ℝ) := by
@@ -179,6 +357,71 @@ theorem factorTwoPrimeResidual_abs_le (n : Fin 201) :
           ((factorTwoPrimeResidualInterval n).upper : ℝ) := hmem.2
       _ ≤ (4 / 5 : ℝ) := by
         simpa using (Rat.cast_le (K := ℝ)).2 hbox.2
+
+/-! ## Structural residual metrics -/
+
+private theorem factorTwoPrimeRatioInterval_width_le :
+    width factorTwoPrimeRatioInterval ≤ (1 / 10000000000000 : ℚ) := by
+  norm_num [width, factorTwoPrimeRatioInterval,
+    factorTwoPrimeShiftInterval, factorTwoPrimeLogTwoInterval]
+
+private theorem factorTwoPrimeCenteredRatioInterval_width_le
+    (n : Fin 201) :
+    width (factorTwoPrimeCenteredRatioInterval n) ≤
+      (1 / 50000000000 : ℚ) := by
+  have hn200 : (n.1 : ℚ) ≤ 200 := by
+    exact_mod_cast (show n.1 ≤ 200 by omega)
+  change
+    (factorTwoPrimeRatioInterval.upper * n.1 -
+        factorTwoPrimeQuarterIndex n) -
+      (factorTwoPrimeRatioInterval.lower * n.1 -
+        factorTwoPrimeQuarterIndex n) ≤ (1 / 50000000000 : ℚ)
+  calc
+    (factorTwoPrimeRatioInterval.upper * n.1 -
+          factorTwoPrimeQuarterIndex n) -
+        (factorTwoPrimeRatioInterval.lower * n.1 -
+          factorTwoPrimeQuarterIndex n) =
+      width factorTwoPrimeRatioInterval * n.1 := by
+        unfold width
+        ring
+    _ ≤ (1 / 10000000000000 : ℚ) * n.1 := by
+      exact mul_le_mul_of_nonneg_right
+        factorTwoPrimeRatioInterval_width_le (by positivity)
+    _ ≤ (1 / 10000000000000 : ℚ) * 200 := by
+      exact mul_le_mul_of_nonneg_left hn200 (by norm_num)
+    _ = (1 / 50000000000 : ℚ) := by norm_num
+
+private theorem factorTwoPrimePiHalfInterval_width_le :
+    width factorTwoPrimePiHalfInterval ≤
+      (1 / 200000000000000000000 : ℚ) := by
+  norm_num [width, factorTwoPrimePiHalfInterval,
+    factorTwoPrimePiInterval, piFineInterval]
+
+private theorem factorTwoPrimeResidualInterval_width_le_structural
+    (n : Fin 201) :
+    width (factorTwoPrimeResidualInterval n) ≤
+      (1 / 30000000000 : ℚ) := by
+  have hmul := width_mul_le factorTwoPrimePiHalfInterval_valid
+    (factorTwoPrimeCenteredRatioInterval_valid n)
+    factorTwoPrimePiHalfInterval_absBound
+    (factorTwoPrimeCenteredRatioInterval_absBound n)
+    (by norm_num : (0 : ℚ) ≤ 1571 / 1000)
+    (by norm_num : (0 : ℚ) ≤ 501 / 1000)
+  calc
+    width (factorTwoPrimeResidualInterval n) ≤
+        (501 / 1000 : ℚ) * width factorTwoPrimePiHalfInterval +
+          (1571 / 1000 : ℚ) *
+            width (factorTwoPrimeCenteredRatioInterval n) := by
+      simpa only [factorTwoPrimeResidualInterval] using hmul
+    _ ≤ (501 / 1000 : ℚ) *
+          (1 / 200000000000000000000 : ℚ) +
+        (1571 / 1000 : ℚ) * (1 / 50000000000 : ℚ) := by
+      exact add_le_add
+        (mul_le_mul_of_nonneg_left factorTwoPrimePiHalfInterval_width_le
+          (by norm_num))
+        (mul_le_mul_of_nonneg_left
+          (factorTwoPrimeCenteredRatioInterval_width_le n) (by norm_num))
+    _ ≤ (1 / 30000000000 : ℚ) := by norm_num
 
 /-! ## Taylor enclosure on `[-4/5, 4/5]` -/
 
@@ -214,6 +457,229 @@ def factorTwoPrimeCosTaylorInterval (I : RatInterval) : RatInterval :=
   pure 1 + z * (pure (-1 / 2) + z * (pure (1 / 24) + z *
     (pure (-1 / 720) + z * (pure (1 / 40320) + z *
       (pure (-1 / 3628800) + z * pure (1 / 479001600))))))
+
+private theorem absBound_mono
+    {I : RatInterval} {B C : ℚ} (hI : I.AbsBound B) (hBC : B ≤ C) :
+    I.AbsBound C := by
+  unfold AbsBound at hI ⊢
+  exact ⟨(neg_le_neg hBC).trans hI.1, hI.2.trans hBC⟩
+
+/-- One structural Horner step, tracking validity, magnitude, and width. -/
+private theorem hornerStep_metrics
+    (c : ℚ) {Z H : RatInterval}
+    {BZ BH WZ WH B W : ℚ}
+    (hZvalid : Z.Valid) (hHvalid : H.Valid)
+    (hZabs : Z.AbsBound BZ) (hHabs : H.AbsBound BH)
+    (hBZ : 0 ≤ BZ) (hBH : 0 ≤ BH)
+    (hZwidth : width Z ≤ WZ) (hHwidth : width H ≤ WH)
+    (_hWZ : 0 ≤ WZ) (_hWH : 0 ≤ WH)
+    (hB : |c| + BZ * BH ≤ B)
+    (hW : BH * WZ + BZ * WH ≤ W) :
+    let R := pure c + Z * H
+    R.Valid ∧ R.AbsBound B ∧ width R ≤ W := by
+  dsimp only
+  have hProdValid := valid_mul hZvalid hHvalid
+  have hProdAbs := absBound_mul hZvalid hHvalid hZabs hHabs hBZ hBH
+  have hProdWidth := width_mul_le hZvalid hHvalid hZabs hHabs hBZ hBH
+  constructor
+  · exact valid_add (valid_pure c) hProdValid
+  constructor
+  · exact absBound_mono (absBound_add (absBound_pure le_rfl) hProdAbs) hB
+  · rw [width_add, width_pure, zero_add]
+    calc
+      width (Z * H) ≤ BH * width Z + BZ * width H := hProdWidth
+      _ ≤ BH * WZ + BZ * WH := by
+        exact add_le_add
+          (mul_le_mul_of_nonneg_left hZwidth hBH)
+          (mul_le_mul_of_nonneg_left hHwidth hBZ)
+      _ ≤ W := hW
+
+private theorem squareInterval_metrics
+    {I : RatInterval} {w : ℚ}
+    (hIvalid : I.Valid) (hIabs : I.AbsBound (4 / 5))
+    (hIwidth : width I ≤ w) (_hw : 0 ≤ w) :
+    let Z := I * I
+    Z.Valid ∧ Z.AbsBound (16 / 25) ∧ width Z ≤ (8 / 5) * w := by
+  dsimp only
+  constructor
+  · exact valid_mul hIvalid hIvalid
+  constructor
+  · have h := absBound_mul hIvalid hIvalid hIabs hIabs
+      (by norm_num) (by norm_num)
+    norm_num at h ⊢
+    exact h
+  · calc
+      width (I * I) ≤ (4 / 5 : ℚ) * width I +
+          (4 / 5 : ℚ) * width I :=
+        width_mul_le hIvalid hIvalid hIabs hIabs (by norm_num) (by norm_num)
+      _ ≤ (4 / 5 : ℚ) * w + (4 / 5 : ℚ) * w :=
+        add_le_add
+          (mul_le_mul_of_nonneg_left hIwidth (by norm_num))
+          (mul_le_mul_of_nonneg_left hIwidth (by norm_num))
+      _ = (8 / 5 : ℚ) * w := by ring
+
+private theorem factorTwoPrimeSinTaylorInterval_width_le_structural
+    {I : RatInterval} {w : ℚ}
+    (hIvalid : I.Valid) (hIabs : I.AbsBound (4 / 5))
+    (hIwidth : width I ≤ w) (hw : 0 ≤ w) :
+    width (factorTwoPrimeSinTaylorInterval I) ≤ (3 / 2) * w := by
+  let Z := I * I
+  have hZ := squareInterval_metrics hIvalid hIabs hIwidth hw
+  change Z.Valid ∧ Z.AbsBound (16 / 25) ∧
+    width Z ≤ (8 / 5) * w at hZ
+  let H6 : RatInterval := pure (1 / 6227020800)
+  have hH6valid : H6.Valid := by
+    exact valid_pure _
+  have hH6abs : H6.AbsBound (1 / 1000000000) := by
+    apply absBound_pure
+    norm_num [H6]
+  have hH6width : width H6 ≤ 0 := by
+    simp only [H6, width_pure, le_refl]
+  let H5 := pure (-1 / 39916800) + Z * H6
+  have hH5 := hornerStep_metrics (-1 / 39916800)
+    hZ.1 hH6valid hZ.2.1 hH6abs
+    (by norm_num) (by norm_num) hZ.2.2 hH6width
+    (mul_nonneg (by norm_num) hw) (by norm_num)
+    (B := 1 / 30000000) (W := (1 / 500000000) * w)
+    (by norm_num) (by nlinarith)
+  change H5.Valid ∧ H5.AbsBound (1 / 30000000) ∧
+    width H5 ≤ (1 / 500000000) * w at hH5
+  let H4 := pure (1 / 362880) + Z * H5
+  have hH4 := hornerStep_metrics (1 / 362880)
+    hZ.1 hH5.1 hZ.2.1 hH5.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH5.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 1 / 300000) (W := (1 / 18000000) * w)
+    (by norm_num) (by nlinarith)
+  change H4.Valid ∧ H4.AbsBound (1 / 300000) ∧
+    width H4 ≤ (1 / 18000000) * w at hH4
+  let H3 := pure (-1 / 5040) + Z * H4
+  have hH3 := hornerStep_metrics (-1 / 5040)
+    hZ.1 hH4.1 hZ.2.1 hH4.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH4.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 1 / 4000) (W := (1 / 180000) * w)
+    (by norm_num) (by nlinarith)
+  change H3.Valid ∧ H3.AbsBound (1 / 4000) ∧
+    width H3 ≤ (1 / 180000) * w at hH3
+  let H2 := pure (1 / 120) + Z * H3
+  have hH2 := hornerStep_metrics (1 / 120)
+    hZ.1 hH3.1 hZ.2.1 hH3.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH3.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 1 / 100) (W := (1 / 2400) * w)
+    (by norm_num) (by nlinarith)
+  change H2.Valid ∧ H2.AbsBound (1 / 100) ∧
+    width H2 ≤ (1 / 2400) * w at hH2
+  let H1 := pure (-1 / 6) + Z * H2
+  have hH1 := hornerStep_metrics (-1 / 6)
+    hZ.1 hH2.1 hZ.2.1 hH2.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH2.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 1 / 5) (W := (1 / 60) * w)
+    (by norm_num) (by nlinarith)
+  change H1.Valid ∧ H1.AbsBound (1 / 5) ∧
+    width H1 ≤ (1 / 60) * w at hH1
+  let H0 := pure 1 + Z * H1
+  have hH0 := hornerStep_metrics 1
+    hZ.1 hH1.1 hZ.2.1 hH1.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH1.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 6 / 5) (W := (1 / 3) * w)
+    (by norm_num) (by nlinarith)
+  change H0.Valid ∧ H0.AbsBound (6 / 5) ∧
+    width H0 ≤ (1 / 3) * w at hH0
+  have hfinal := width_mul_le hIvalid hH0.1 hIabs hH0.2.1
+    (by norm_num : (0 : ℚ) ≤ 4 / 5) (by norm_num : (0 : ℚ) ≤ 6 / 5)
+  change width (I * H0) ≤ (3 / 2) * w
+  calc
+    width (I * H0) ≤ (6 / 5 : ℚ) * width I +
+        (4 / 5 : ℚ) * width H0 := hfinal
+    _ ≤ (6 / 5 : ℚ) * w + (4 / 5 : ℚ) * ((1 / 3) * w) := by
+      exact add_le_add
+        (mul_le_mul_of_nonneg_left hIwidth (by norm_num))
+        (mul_le_mul_of_nonneg_left hH0.2.2 (by norm_num))
+    _ ≤ (3 / 2 : ℚ) * w := by nlinarith
+
+private theorem factorTwoPrimeCosTaylorInterval_width_le_structural
+    {I : RatInterval} {w : ℚ}
+    (hIvalid : I.Valid) (hIabs : I.AbsBound (4 / 5))
+    (hIwidth : width I ≤ w) (hw : 0 ≤ w) :
+    width (factorTwoPrimeCosTaylorInterval I) ≤ (9 / 10) * w := by
+  let Z := I * I
+  have hZ := squareInterval_metrics hIvalid hIabs hIwidth hw
+  change Z.Valid ∧ Z.AbsBound (16 / 25) ∧
+    width Z ≤ (8 / 5) * w at hZ
+  let H6 : RatInterval := pure (1 / 479001600)
+  have hH6valid : H6.Valid := by
+    exact valid_pure _
+  have hH6abs : H6.AbsBound (1 / 400000000) := by
+    apply absBound_pure
+    norm_num [H6]
+  have hH6width : width H6 ≤ 0 := by
+    simp only [H6, width_pure, le_refl]
+  let H5 := pure (-1 / 3628800) + Z * H6
+  have hH5 := hornerStep_metrics (-1 / 3628800)
+    hZ.1 hH6valid hZ.2.1 hH6abs
+    (by norm_num) (by norm_num) hZ.2.2 hH6width
+    (mul_nonneg (by norm_num) hw) (by norm_num)
+    (B := 1 / 3000000) (W := (1 / 250000000) * w)
+    (by norm_num) (by nlinarith)
+  change H5.Valid ∧ H5.AbsBound (1 / 3000000) ∧
+    width H5 ≤ (1 / 250000000) * w at hH5
+  let H4 := pure (1 / 40320) + Z * H5
+  have hH4 := hornerStep_metrics (1 / 40320)
+    hZ.1 hH5.1 hZ.2.1 hH5.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH5.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 1 / 38000) (W := (1 / 1800000) * w)
+    (by norm_num) (by nlinarith)
+  change H4.Valid ∧ H4.AbsBound (1 / 38000) ∧
+    width H4 ≤ (1 / 1800000) * w at hH4
+  let H3 := pure (-1 / 720) + Z * H4
+  have hH3 := hornerStep_metrics (-1 / 720)
+    hZ.1 hH4.1 hZ.2.1 hH4.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH4.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 1 / 700) (W := (1 / 23000) * w)
+    (by norm_num) (by nlinarith)
+  change H3.Valid ∧ H3.AbsBound (1 / 700) ∧
+    width H3 ≤ (1 / 23000) * w at hH3
+  let H2 := pure (1 / 24) + Z * H3
+  have hH2 := hornerStep_metrics (1 / 24)
+    hZ.1 hH3.1 hZ.2.1 hH3.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH3.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 1 / 23) (W := (1 / 430) * w)
+    (by norm_num) (by nlinarith)
+  change H2.Valid ∧ H2.AbsBound (1 / 23) ∧
+    width H2 ≤ (1 / 430) * w at hH2
+  let H1 := pure (-1 / 2) + Z * H2
+  have hH1 := hornerStep_metrics (-1 / 2)
+    hZ.1 hH2.1 hZ.2.1 hH2.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH2.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 8 / 15) (W := (1 / 14) * w)
+    (by norm_num) (by nlinarith)
+  change H1.Valid ∧ H1.AbsBound (8 / 15) ∧
+    width H1 ≤ (1 / 14) * w at hH1
+  let H0 := pure 1 + Z * H1
+  have hH0 := hornerStep_metrics 1
+    hZ.1 hH1.1 hZ.2.1 hH1.2.1
+    (by norm_num) (by norm_num) hZ.2.2 hH1.2.2
+    (mul_nonneg (by norm_num) hw) (mul_nonneg (by norm_num) hw)
+    (B := 7 / 5) (W := (9 / 10) * w)
+    (by norm_num) (by nlinarith)
+  change H0.Valid ∧ H0.AbsBound (7 / 5) ∧
+    width H0 ≤ (9 / 10) * w at hH0
+  change width H0 ≤ (9 / 10) * w
+  exact hH0.2.2
+
+private theorem factorTwoPrimeTaylorErrorInterval_width_le :
+    width factorTwoPrimeTaylorErrorInterval ≤
+      (1 / 70000000000 : ℚ) := by
+  norm_num [width, factorTwoPrimeTaylorErrorInterval,
+    factorTwoPrimeTaylorError]
 
 private theorem factorTwoPrimeSinTaylor_error_nonneg
     {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ (4 / 5 : ℝ)) :
@@ -380,6 +846,44 @@ theorem factorTwoPrimeReducedCosInterval_contains (n : Fin 201) :
   convert h using 1
   ring
 
+private theorem factorTwoPrimeReducedSinInterval_width_le (n : Fin 201) :
+    width (factorTwoPrimeReducedSinInterval n) ≤
+      (1 / 10000000000 : ℚ) := by
+  rw [factorTwoPrimeReducedSinInterval, width_add]
+  calc
+    width (factorTwoPrimeSinTaylorInterval
+          (factorTwoPrimeResidualInterval n)) +
+        width factorTwoPrimeTaylorErrorInterval ≤
+      (3 / 2 : ℚ) * (1 / 30000000000) +
+        (1 / 70000000000 : ℚ) :=
+      add_le_add
+        (factorTwoPrimeSinTaylorInterval_width_le_structural
+          (factorTwoPrimeResidualInterval_valid n)
+          (factorTwoPrimeResidualInterval_absBound n)
+          (factorTwoPrimeResidualInterval_width_le_structural n)
+          (by norm_num))
+        factorTwoPrimeTaylorErrorInterval_width_le
+    _ ≤ (1 / 10000000000 : ℚ) := by norm_num
+
+private theorem factorTwoPrimeReducedCosInterval_width_le (n : Fin 201) :
+    width (factorTwoPrimeReducedCosInterval n) ≤
+      (1 / 10000000000 : ℚ) := by
+  rw [factorTwoPrimeReducedCosInterval, width_add]
+  calc
+    width (factorTwoPrimeCosTaylorInterval
+          (factorTwoPrimeResidualInterval n)) +
+        width factorTwoPrimeTaylorErrorInterval ≤
+      (9 / 10 : ℚ) * (1 / 30000000000) +
+        (1 / 70000000000 : ℚ) :=
+      add_le_add
+        (factorTwoPrimeCosTaylorInterval_width_le_structural
+          (factorTwoPrimeResidualInterval_valid n)
+          (factorTwoPrimeResidualInterval_absBound n)
+          (factorTwoPrimeResidualInterval_width_le_structural n)
+          (by norm_num))
+        factorTwoPrimeTaylorErrorInterval_width_le
+    _ ≤ (1 / 10000000000 : ℚ) := by norm_num
+
 /-! ## Restore the quarter turns -/
 
 private def quarterSin (q : ℕ) (s c : ℝ) : ℝ :=
@@ -411,6 +915,32 @@ private def quarterCosInterval
   | 1 => -S
   | 2 => -C
   | _ => S
+
+private theorem width_neg (I : RatInterval) : width (-I) = width I := by
+  change -I.lower - -I.upper = I.upper - I.lower
+  ring
+
+private theorem quarterSinInterval_width_le
+    {q : ℕ} {S C : RatInterval} {w : ℚ}
+    (hS : width S ≤ w) (hC : width C ≤ w) :
+    width (quarterSinInterval q S C) ≤ w := by
+  have hlt : q % 4 < 4 := Nat.mod_lt q (by norm_num)
+  interval_cases h : q % 4
+  · simpa [quarterSinInterval, h] using hS
+  · simpa [quarterSinInterval, h] using hC
+  · simpa [quarterSinInterval, h, width_neg] using hS
+  · simpa [quarterSinInterval, h, width_neg] using hC
+
+private theorem quarterCosInterval_width_le
+    {q : ℕ} {S C : RatInterval} {w : ℚ}
+    (hS : width S ≤ w) (hC : width C ≤ w) :
+    width (quarterCosInterval q S C) ≤ w := by
+  have hlt : q % 4 < 4 := Nat.mod_lt q (by norm_num)
+  interval_cases h : q % 4
+  · simpa [quarterCosInterval, h] using hC
+  · simpa [quarterCosInterval, h, width_neg] using hS
+  · simpa [quarterCosInterval, h, width_neg] using hC
+  · simpa [quarterCosInterval, h] using hS
 
 private theorem sin_add_nat_mul_pi_div_two (x : ℝ) (q : ℕ) :
     Real.sin (x + (q : ℝ) * Real.pi / 2) =
@@ -522,16 +1052,20 @@ theorem factorTwoPrimeCosInterval_contains (n : Fin 201) :
   unfold factorTwoPrimeResidual
   ring
 
-/-! ## Exact width certificates -/
+/-! ## Structural width certificates -/
 
-set_option maxRecDepth 1000000 in
-set_option maxHeartbeats 0 in
 theorem factorTwoPrimeTrigIntervals_width_le :
     ∀ n : Fin 201,
       width (factorTwoPrimeSinInterval n) ≤ (1 / 10000000000 : ℚ) ∧
       width (factorTwoPrimeCosInterval n) ≤ (1 / 10000000000 : ℚ) := by
   intro n
-  fin_cases n <;> decide +kernel
+  constructor
+  · exact quarterSinInterval_width_le
+      (factorTwoPrimeReducedSinInterval_width_le n)
+      (factorTwoPrimeReducedCosInterval_width_le n)
+  · exact quarterCosInterval_width_le
+      (factorTwoPrimeReducedSinInterval_width_le n)
+      (factorTwoPrimeReducedCosInterval_width_le n)
 
 theorem factorTwoPrimeSinInterval_width_le (n : Fin 201) :
     width (factorTwoPrimeSinInterval n) ≤ (1 / 10000000000 : ℚ) :=
