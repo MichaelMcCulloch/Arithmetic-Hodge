@@ -1887,6 +1887,119 @@ theorem fourCellEvenEndpointSeedRow_sq_le_quadraticCoshBorderRational
   dsimp only [W, E] at hgramScaled ⊢
   linarith only [hgramScaled]
 
+/-- The rational cosh-border tail charge still fits inside one sixteenth of
+the tail operator for every selector in the wide structural range
+`|s| ≤ 10`.  This leaves the finite Schur certificate free to use the cosh
+constraint without reopening the infinite block. -/
+theorem quadraticCoshBorderRational_tailCharge_le_one_sixteenth_polarFree_of_tailFourteen
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14)
+    (s : ℝ) (hs : |s| ≤ 10) :
+    (1 + ((1 / 250 : ℝ)⁻¹)) * (360360 / 1171733 : ℝ) *
+        (centeredRawLogEnergy r / 4) *
+          (fourCellEvenEndpointSeedCanonicalTailNormBudget +
+            |s| / 200000 + s ^ 2 / 50000000) ≤
+      (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator r := by
+  let C : ℝ := fourCellEvenEndpointSeedCanonicalTailNormBudget +
+    |s| / 200000 + s ^ 2 / 50000000
+  let E : ℝ := centeredRawLogEnergy r / 4
+  let K : ℝ :=
+    (1 + ((1 / 250 : ℝ)⁻¹)) * (360360 / 1171733 : ℝ)
+  have hsSq : s ^ 2 ≤ (100 : ℝ) := by
+    nlinarith only [sq_abs s, abs_nonneg s, hs]
+  have hC : C ≤
+      fourCellEvenEndpointSeedCanonicalTailNormBudget +
+        (10 : ℝ) / 200000 + 100 / 50000000 := by
+    dsimp only [C]
+    linarith only [hs, hsSq]
+  have hK : 0 ≤ K := by
+    dsimp only [K]
+    norm_num
+  have hKC : K * C ≤ (1 / 40 : ℝ) := by
+    calc
+      K * C ≤ K *
+          (fourCellEvenEndpointSeedCanonicalTailNormBudget +
+            (10 : ℝ) / 200000 + 100 / 50000000) :=
+        mul_le_mul_of_nonneg_left hC hK
+      _ ≤ (1 / 40 : ℝ) := by
+        dsimp only [K]
+        norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget]
+  have hE : 0 ≤ E := by
+    dsimp only [E]
+    exact div_nonneg (centeredRawLogEnergy_nonnegative r) (by norm_num)
+  have hcharge := mul_le_mul_of_nonneg_right hKC hE
+  have htail :=
+    two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+      r hr hlocal heven hlow
+  have htailScaled :=
+    mul_le_mul_of_nonneg_left htail (by norm_num : (0 : ℝ) ≤ 1 / 16)
+  change K * E * C ≤ (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator r
+  calc
+    K * E * C = (K * C) * E := by ring
+    _ ≤ (1 / 40 : ℝ) * E := hcharge
+    _ = (1 / 16 : ℝ) * ((2 / 5 : ℝ) * E) := by ring
+    _ ≤ (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator r := by
+      simpa only [E] using htailScaled
+
+/-- Final infinite-block elimination with the shared finite cosh selector
+retained.  For any `|s| ≤ 10`, the endpoint row is reduced to the single
+finite square `L - sP`; every `P₁₄+` contribution is absorbed by the
+fixed one-sixteenth tail reserve. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_251_div_250_coshReducedLowThroughTwelve_add_one_sixteenth_tailPolarFree
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (s : ℝ) (hs : |s| ≤ 10) :
+    let L : ℝ := fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw
+    let P : ℝ := fourCellPositiveCoshMoment
+      (centeredLegendreLowProjection w hw 14)
+      (fourCellOperatorHalfWidth / 2)
+    let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 14
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (251 / 250 : ℝ) * (L - s * P) ^ 2 +
+        (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator r := by
+  dsimp only
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 14
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrEven : Function.Even r := by
+    simpa only [r] using centeredLegendreHigherResidual_even w hw heven 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  let T : ℝ :=
+    (1 + ((1 / 250 : ℝ)⁻¹)) * (360360 / 1171733 : ℝ) *
+      (centeredRawLogEnergy r / 4) *
+        (fourCellEvenEndpointSeedCanonicalTailNormBudget +
+          |s| / 200000 + s ^ 2 / 50000000)
+  have hrow := fourCellEvenEndpointSeedRow_sq_le_quadraticCoshBorderRational
+    w hw hlocal heven hzero s (1 / 250) (by norm_num)
+  have hrow' : fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (251 / 250 : ℝ) *
+          (fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw -
+            s * fourCellPositiveCoshMoment
+              (centeredLegendreLowProjection w hw 14)
+              (fourCellOperatorHalfWidth / 2)) ^ 2 + T := by
+    dsimp only [T, r]
+    norm_num at hrow
+    ring_nf at hrow ⊢
+    exact hrow
+  have htail : T ≤
+      (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator r := by
+    dsimp only [T]
+    exact
+      quadraticCoshBorderRational_tailCharge_le_one_sixteenth_polarFree_of_tailFourteen
+        r hr hrLocal hrEven hrGap s hs
+  dsimp only [r] at htail ⊢
+  linarith only [hrow', htail]
+
 /-- Exact scalar Schur complement of the shared finite/tail cosh border.
 The negative square is retained: this is the structural gain lost by treating
 the finite row and the tail representer with separate absolute-value bounds.
