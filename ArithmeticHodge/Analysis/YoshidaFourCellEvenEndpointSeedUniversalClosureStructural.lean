@@ -2,7 +2,7 @@ import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCombinedNormStruc
 
 set_option autoImplicit false
 
-open MeasureTheory Real Set
+open MeasureTheory Polynomial Real Set
 open scoped Interval
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedUniversalClosureStructural
@@ -10,10 +10,12 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedUniversalClosu
 noncomputable section
 
 open YoshidaConstantBounds
+open ShiftedLegendreLogEnergyOrthogonalProjection
 open UnitIntervalLogEnergyAffine
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
+open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
 open YoshidaFourCellEvenEndpointCoshSchurStructural
@@ -74,6 +76,33 @@ def fourCellEvenEndpointSeedCanonicalLowRow
 def fourCellEvenEndpointSeedCanonicalTailMass
     (w : ℝ → ℝ) (hw : Continuous w) : ℝ :=
   ∫ x : ℝ in -1..1, centeredLegendreHigherResidual w hw 8 x ^ 2
+
+/-- Remove an arbitrary additional low polynomial from the canonical
+cutoff-eight endpoint representer.  On a `P₁₄+` tail every polynomial of
+degree below fourteen is annihilated, so this selector can absorb the exact
+`P₈/P₁₀/P₁₂` representer coordinates before Cauchy--Schwarz is applied. -/
+def fourCellEvenEndpointSeedTailFourteenRepresenter
+    (q : ℝ[X]) (x : ℝ) : ℝ :=
+  fourCellEvenEndpointSeedProjectedTailRowRepresenter
+      fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial x -
+    centeredPolynomialLift q x
+
+private theorem memLp_centeredPolynomialLift_two_restrict
+    (q : ℝ[X]) :
+    MemLp (centeredPolynomialLift q) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hq : Continuous (centeredPolynomialLift q) := by
+    unfold centeredPolynomialLift
+    fun_prop
+  have hmeas : AEStronglyMeasurable (centeredPolynomialLift q)
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    hq.aestronglyMeasurable.restrict
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  have hcompact : IntegrableOn
+      (fun x : ℝ ↦ ‖centeredPolynomialLift q x‖ ^ 2)
+      (Icc (-1 : ℝ) 1) :=
+    (hq.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  exact hcompact.mono_set Ioc_subset_Icc_self
 
 /-- The complete projected endpoint row is genuinely linear on continuous
 tails.  Keeping this identity at the row level lets us move finitely many
@@ -268,6 +297,125 @@ theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_rational_mass
         fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial)
       fourCellEvenEndpointSeedCanonicalTailNormBudget
       integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_rational
+
+/-- Refined Cauchy closure on a `P₁₄+` tail.  The extra polynomial selector
+is invisible to the tail, but removes its first three even dual coordinates
+from the representer norm.  This is the exact weighted/coupled replacement
+for charging the adversarial `P₈/P₁₀/P₁₂` direction by unweighted mass. -/
+theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_mass_of_tailFourteenNorm
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14)
+    (q : ℝ[X]) (hq : q.natDegree < 14)
+    (C : ℝ)
+    (hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2) ≤ C) :
+    fourCellEvenEndpointSeedCanonicalTailRow r ^ 2 ≤
+      C * (∫ x : ℝ in -1..1, r x ^ 2) := by
+  let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  let G₀ : ℝ → ℝ :=
+    fourCellEvenEndpointSeedProjectedTailRowRepresenter
+      fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  let P : ℝ → ℝ := centeredPolynomialLift q
+  let G : ℝ → ℝ := fourCellEvenEndpointSeedTailFourteenRepresenter q
+  have hlowEight : centeredLegendreMomentsVanishBelow r 8 := by
+    intro n hn
+    exact hlow n (by omega)
+  have hG₀ : MemLp G₀ 2 μ := by
+    simpa only [G₀, μ] using
+      memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  have hP : MemLp P 2 μ := by
+    simpa only [P, μ] using memLp_centeredPolynomialLift_two_restrict q
+  have hG : MemLp G 2 μ := by
+    simpa only [G, G₀, P,
+      fourCellEvenEndpointSeedTailFourteenRepresenter] using hG₀.sub hP
+  have hrMeas : AEStronglyMeasurable r μ :=
+    hr.aestronglyMeasurable.restrict
+  have hrLp : MemLp r 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hrMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖r x‖ ^ 2)
+        (Icc (-1 : ℝ) 1) :=
+      (hr.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hG₀r : IntervalIntegrable (fun x : ℝ ↦ G₀ x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hG₀ : MemLp (fun x : ℝ ↦ G₀ x * r x) 1 μ).integrable
+      (by norm_num)
+  have hPr : IntervalIntegrable (fun x : ℝ ↦ P x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hP : MemLp (fun x : ℝ ↦ P x * r x) 1 μ).integrable
+      (by norm_num)
+  have hpoly : (∫ x : ℝ in -1..1, P x * r x) = 0 := by
+    simpa only [P] using
+      intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+        q r hr hlow hq
+  have hpairing : fourCellEvenEndpointSeedCanonicalTailRow r =
+      ∫ x : ℝ in -1..1, G x * r x := by
+    have hbase :=
+      fourCellEvenEndpointSeedTailRow_eq_projectedRepresenterPairing
+        r hr hlowEight
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+        natDegree_fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial_lt_eight
+    change fourCellEvenEndpointSeedCanonicalTailRow r = _ at hbase
+    calc
+      fourCellEvenEndpointSeedCanonicalTailRow r =
+          ∫ x : ℝ in -1..1, G₀ x * r x := by
+        simpa only [G₀] using hbase
+      _ = (∫ x : ℝ in -1..1, G₀ x * r x) -
+          ∫ x : ℝ in -1..1, P x * r x := by rw [hpoly, sub_zero]
+      _ = ∫ x : ℝ in -1..1, G x * r x := by
+        rw [← intervalIntegral.integral_sub hG₀r hPr]
+        apply intervalIntegral.integral_congr
+        intro x _hx
+        dsimp only [G, G₀, P,
+          fourCellEvenEndpointSeedTailFourteenRepresenter]
+        ring
+  have hcauchy :=
+    YoshidaEndpointWeightedCauchy.sq_integral_mul_le_weighted
+      μ (fun _ : ℝ ↦ 1) G r (by simp)
+        (by simpa only [div_one, Real.sqrt_one] using hG)
+        (by simpa only [Real.sqrt_one, one_mul] using hrLp)
+  have hcauchy' :
+      (∫ x : ℝ in -1..1, G x * r x) ^ 2 ≤
+        (∫ x : ℝ in -1..1, G x ^ 2) *
+          (∫ x : ℝ in -1..1, r x ^ 2) := by
+    repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+    simpa only [μ, div_one, one_mul] using hcauchy
+  have hR : 0 ≤ ∫ x : ℝ in -1..1, r x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num) (fun _ _ ↦ sq_nonneg _)
+  have hdualScaled := mul_le_mul_of_nonneg_right hdual hR
+  rw [hpairing]
+  exact hcauchy'.trans hdualScaled
+
+/-- Harmonic version of the refined `P₁₄+` estimate.  Any exact norm bound
+for the additionally projected representer is converted directly into a
+bound by the retained singular logarithmic energy. -/
+theorem harmonic_fourteen_mul_fourCellEvenEndpointSeedCanonicalTailRow_sq_le_raw_of_norm
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14)
+    (q : ℝ[X]) (hq : q.natDegree < 14)
+    (C : ℝ) (hC : 0 ≤ C)
+    (hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2) ≤ C) :
+    (harmonic 14 : ℝ) *
+        fourCellEvenEndpointSeedCanonicalTailRow r ^ 2 ≤
+      C * (centeredRawLogEnergy r / 4) := by
+  have hrow :=
+    fourCellEvenEndpointSeedCanonicalTailRow_sq_le_mass_of_tailFourteenNorm
+      r hr hlow q hq C hdual
+  have hraw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    r hr hlocal 14 hlow
+  have hH : 0 ≤ (harmonic 14 : ℝ) := by
+    norm_num [harmonic, Finset.sum_range_succ]
+  have hrowScaled := mul_le_mul_of_nonneg_left hrow hH
+  have hrawScaled := mul_le_mul_of_nonneg_left hraw hC
+  unfold factorTwoIntrinsicEnergy at hrawScaled
+  nlinarith only [hrowScaled, hrawScaled]
 
 /-- Harmonic-weighted form of the endpoint-row estimate above a genuine
 `P₁₄` cutoff.  Unlike the unweighted mass estimate, this charges the row to
