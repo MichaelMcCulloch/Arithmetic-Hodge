@@ -921,6 +921,113 @@ theorem integral_potentialSelector_mul_projectedFixedLag_seed_eq_zero :
         ⟨hx.1, hx.2⟩]
     _ = 0 := hzero
 
+/-- Exact retained cross between the projected endpoint-potential and
+fixed-lag representers for the endpoint seed.  The only transcendental
+terms are the full overlap logarithm and the finite low-block logarithm. -/
+theorem integral_projectedPotential_mul_projectedFixedLag_seed :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
+          (2 / 3) (-2 / 3) 0 0 x *
+        fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+          (2 / 3) (-2 / 3) 0 0 x) =
+      -(216607168 / 369140625 : ℝ) +
+        (3232 / 46875) * Real.log 2 +
+        (37744 / 15625) * Real.log (5 / 4 : ℝ) := by
+  let S : ℝ → ℝ := centeredPolynomialLift
+    (fourCellEvenP0246CutoffEightPotentialSelectorPolynomial
+      (2 / 3) (-2 / 3) 0 0)
+  let T : ℝ → ℝ := centeredPolynomialLift
+    (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+      (2 / 3) (-2 / 3) 0 0)
+  let V : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * fourCellEvenEndpointCoshSeed x
+  let K : ℝ → ℝ :=
+    factorTwoFixedLagK (8 / 5) fourCellEvenEndpointCoshSeed
+  let KR : ℝ → ℝ :=
+    fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+      (2 / 3) (-2 / 3) 0 0
+  have hVK : IntervalIntegrable (fun x : ℝ ↦ V x * K x)
+      volume (-1) 1 := by
+    simpa only [V, K, mul_assoc] using
+      intervalIntegrable_endpointPotential_seed_mul_fixedLagK_seed
+  have hVT : IntervalIntegrable (fun x : ℝ ↦ V x * T x)
+      volume (-1) 1 := by
+    have h := intervalIntegrable_endpointPotential_mul
+      (fun x : ℝ ↦ fourCellEvenEndpointCoshSeed x * T x)
+      (fourCellEvenEndpointCoshSeed_continuous.mul (by
+        dsimp only [T]
+        unfold centeredPolynomialLift
+        fun_prop))
+    simpa only [V, mul_assoc] using h
+  have hVKR : IntervalIntegrable (fun x : ℝ ↦ V x * KR x)
+      volume (-1) 1 := by
+    apply (hVK.sub hVT).congr
+    intro x hx
+    have hx' : x ∈ Icc (-1 : ℝ) 1 := by
+      rw [uIoc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+      exact ⟨hx.1.le, hx.2⟩
+    dsimp only [KR, V, K, T]
+    unfold fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+    rw [← fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile]
+    ring
+  have hSKR : IntervalIntegrable (fun x : ℝ ↦ S x * KR x)
+      volume (-1) 1 := by
+    have hcontinuous : Continuous
+        (fun x : ℝ ↦ S x * endpointSeedProjectedFixedLagExtension x) := by
+      apply Continuous.mul
+      · dsimp only [S]
+        unfold centeredPolynomialLift
+        fun_prop
+      · exact continuous_endpointSeedProjectedFixedLagExtension
+    apply hcontinuous.intervalIntegrable (-1) 1 |>.congr
+    intro x hx
+    have hx' : x ∈ Icc (-1 : ℝ) 1 := by
+      rw [uIoc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+      exact ⟨hx.1.le, hx.2⟩
+    dsimp only [KR]
+    rw [projectedFixedLagRepresenter_seed_eq_extension hx']
+  calc
+    _ = ∫ x : ℝ in -1..1,
+        V x * KR x - S x * KR x := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      dsimp only [V, KR, S]
+      rw [projectedPotentialRepresenter_eq_potential_sub_selector,
+        ← fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile]
+      ring
+    _ = (∫ x : ℝ in -1..1, V x * KR x) -
+        ∫ x : ℝ in -1..1, S x * KR x :=
+      intervalIntegral.integral_sub hVKR hSKR
+    _ = ∫ x : ℝ in -1..1, V x * KR x := by
+      have horth :=
+        integral_potentialSelector_mul_projectedFixedLag_seed_eq_zero
+      simpa only [S, KR] using (by rw [horth, sub_zero] :
+        (∫ x : ℝ in -1..1, V x * KR x) -
+            ∫ x : ℝ in -1..1, S x * KR x =
+          ∫ x : ℝ in -1..1, V x * KR x)
+    _ = ∫ x : ℝ in -1..1, V x * K x - V x * T x := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      dsimp only [KR, K, T]
+      unfold fourCellEvenP0246CutoffEightProjectedFixedLagRepresenter
+      rw [← fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile]
+      ring
+    _ = (∫ x : ℝ in -1..1, V x * K x) -
+        ∫ x : ℝ in -1..1, V x * T x :=
+      intervalIntegral.integral_sub hVK hVT
+    _ = _ := by
+      rw [show (∫ x : ℝ in -1..1, V x * K x) =
+          -(350824 / 703125 : ℝ) +
+            (37744 / 15625) * Real.log (5 / 4 : ℝ) by
+        simpa only [V, K] using
+          integral_endpointPotential_seed_mul_fixedLagK_seed,
+        show (∫ x : ℝ in -1..1, V x * T x) =
+          (32424568 / 369140625 : ℝ) -
+            (3232 / 46875) * Real.log 2 by
+        simpa only [V, T, mul_assoc] using
+          integral_endpointPotential_seed_mul_fixedLagSelector]
+      ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCapacityCrossStructural
