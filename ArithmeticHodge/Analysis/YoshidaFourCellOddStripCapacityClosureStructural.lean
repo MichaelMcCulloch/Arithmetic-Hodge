@@ -13125,6 +13125,82 @@ theorem abs_integral_fourCellRegularKernel_mul_correlation_P1_P7_lt :
       add_lt_add hPabs herrlt
     _ < (1 / 5000 : ℝ) := by norm_num
 
+private theorem integral_zero_one_P1_mul_P7 :
+    (∫ x : ℝ in 0..1, centeredP1 x * factorTwoCenteredP7 x) = 0 := by
+  rcases centeredOddCoefficients_P7_eq_zero with ⟨h1, h3, h5⟩
+  have h := integral_zero_one_oneThreeFiveLowProfile_mul_tail_eq_zero
+    factorTwoCenteredP7 continuous_factorTwoCenteredP7
+      odd_factorTwoCenteredP7 h1 h3 h5 1 0 0
+  have hp : fourCellOddOneThreeFiveLowProfile 1 0 0 = centeredP1 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile
+      factorTwoOddStructuralLowProfile
+    simp
+  simpa only [hp] using h
+
+private theorem fourCellOddSignedMassRegularBilinear_P1_P7_eq :
+    fourCellOddSignedMassRegularBilinear centeredP1 factorTwoCenteredP7 =
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              centeredP1 factorTwoCenteredP7 t) := by
+  unfold fourCellOddSignedMassRegularBilinear
+  rw [integral_zero_one_P1_mul_P7]
+  ring
+
+private theorem abs_fourCellOddSignedMassRegularBilinear_P1_P7_lt :
+    |fourCellOddSignedMassRegularBilinear centeredP1 factorTwoCenteredP7| <
+      (1 / 5000 : ℝ) := by
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      factorTwoCenteredCorrelationBilinear centeredP1 factorTwoCenteredP7 t
+  have hR : |R| < (1 / 5000 : ℝ) := by
+    simpa only [R] using
+      abs_integral_fourCellRegularKernel_mul_correlation_P1_P7_lt
+  have ha0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha : 2 * fourCellOperatorHalfWidth ≤ (1 : ℝ) := by
+    linarith [fourCellOperatorHalfWidth_le_one_half]
+  rw [fourCellOddSignedMassRegularBilinear_P1_P7_eq]
+  change |2 * fourCellOperatorHalfWidth * R| < _
+  rw [abs_mul, abs_of_nonneg ha0]
+  calc
+    2 * fourCellOperatorHalfWidth * |R| ≤ 1 * |R| :=
+      mul_le_mul_of_nonneg_right ha (abs_nonneg R)
+    _ < 1 * (1 / 5000 : ℝ) :=
+      mul_lt_mul_of_pos_left hR (by norm_num)
+    _ = (1 / 5000 : ℝ) := one_mul _
+
+private theorem fourCellOddRetainedEndpointBilinear_P1_P7_bounds :
+    (89 / 2500 : ℝ) <
+        fourCellOddRetainedEndpointBilinear centeredP1 factorTwoCenteredP7 ∧
+      fourCellOddRetainedEndpointBilinear centeredP1 factorTwoCenteredP7 <
+        (357 / 10000 : ℝ) := by
+  rw [fourCellOddRetainedEndpointBilinear_P1_P7_eq]
+  rcases sqrt_two_mul_log_two_bounds with ⟨hklo, hkhi⟩
+  constructor <;> nlinarith
+
+/-- Tight complete-form enclosure for the first missing finite entry.  The
+interval combines the exact endpoint row with the preceding analytic
+wide-kernel remainder; no independent raw or prime estimates are inserted.
+-/
+theorem fourCellOddCoreLocalBilinear_P1_P7_bounds :
+    (177 / 5000 : ℝ) <
+        fourCellOddCoreLocalBilinear centeredP1 factorTwoCenteredP7 ∧
+      fourCellOddCoreLocalBilinear centeredP1 factorTwoCenteredP7 <
+        (18 / 500 : ℝ) := by
+  rw [fourCellOddCoreLocalBilinear_eq_retained_sub_signed]
+  rcases fourCellOddRetainedEndpointBilinear_P1_P7_bounds with
+    ⟨hretlo, hrethi⟩
+  have hsigned := abs_fourCellOddSignedMassRegularBilinear_P1_P7_lt
+  have hsignedLo := neg_abs_le
+    (fourCellOddSignedMassRegularBilinear centeredP1 factorTwoCenteredP7)
+  have hsignedHi := le_abs_self
+    (fourCellOddSignedMassRegularBilinear centeredP1 factorTwoCenteredP7)
+  constructor <;> linarith
+
 /-! ### Exact `P₁₁+` Riesz endpoint -/
 
 /-- Normalized centered `P₇` coefficient. -/
