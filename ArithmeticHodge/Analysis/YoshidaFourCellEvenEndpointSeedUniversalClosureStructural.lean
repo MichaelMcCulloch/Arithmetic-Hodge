@@ -18,6 +18,7 @@ open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
+open YoshidaFactorTwoPhaseSymmetricCoercivity
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointCapacityCauchyStructural
 open YoshidaFourCellEvenEndpointSeedCapacityCrossStructural
@@ -86,6 +87,18 @@ def fourCellEvenEndpointSeedTailFourteenRepresenter
   fourCellEvenEndpointSeedProjectedTailRowRepresenter
       fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial x -
     centeredPolynomialLift q x
+
+/-- The centered Riesz representer of the positive-half wide-cosh
+coordinate on even profiles. -/
+def fourCellEvenHalfWideCoshRepresenter (x : ℝ) : ℝ :=
+  Real.cosh ((fourCellOperatorHalfWidth / 2) * x) / 2
+
+/-- Simultaneously remove a finite polynomial selector and an arbitrary
+multiple of the wide-cosh constraint from the `P₁₄+` row representer. -/
+def fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter
+    (q : ℝ[X]) (s : ℝ) (x : ℝ) : ℝ :=
+  fourCellEvenEndpointSeedTailFourteenRepresenter q x -
+    s * fourCellEvenHalfWideCoshRepresenter x
 
 private theorem memLp_centeredPolynomialLift_two_restrict
     (q : ℝ[X]) :
@@ -331,6 +344,233 @@ theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_rational_mass
         fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial)
       fourCellEvenEndpointSeedCanonicalTailNormBudget
       integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_rational
+
+/-- Exact pairing identity after any additional degree-`< 14` selector is
+removed.  This is the equality underlying the refined Cauchy theorem below. -/
+theorem fourCellEvenEndpointSeedCanonicalTailRow_eq_tailFourteenRepresenterPairing
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14)
+    (q : ℝ[X]) (hq : q.natDegree < 14) :
+    fourCellEvenEndpointSeedCanonicalTailRow r =
+      ∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenRepresenter q x * r x := by
+  let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  let G₀ : ℝ → ℝ :=
+    fourCellEvenEndpointSeedProjectedTailRowRepresenter
+      fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  let P : ℝ → ℝ := centeredPolynomialLift q
+  have hlowEight : centeredLegendreMomentsVanishBelow r 8 := by
+    intro n hn
+    exact hlow n (by omega)
+  have hG₀ : MemLp G₀ 2 μ := by
+    simpa only [G₀, μ] using
+      memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  have hP : MemLp P 2 μ := by
+    simpa only [P, μ] using memLp_centeredPolynomialLift_two_restrict q
+  have hrMeas : AEStronglyMeasurable r μ :=
+    hr.aestronglyMeasurable.restrict
+  have hrLp : MemLp r 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hrMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖r x‖ ^ 2)
+        (Icc (-1 : ℝ) 1) :=
+      (hr.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hG₀r : IntervalIntegrable (fun x : ℝ ↦ G₀ x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hG₀ : MemLp (fun x : ℝ ↦ G₀ x * r x) 1 μ).integrable
+      (by norm_num)
+  have hPr : IntervalIntegrable (fun x : ℝ ↦ P x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hP : MemLp (fun x : ℝ ↦ P x * r x) 1 μ).integrable
+      (by norm_num)
+  have hpoly : (∫ x : ℝ in -1..1, P x * r x) = 0 := by
+    simpa only [P] using
+      intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+        q r hr hlow hq
+  have hbase :=
+    fourCellEvenEndpointSeedTailRow_eq_projectedRepresenterPairing
+      r hr hlowEight
+      fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+      natDegree_fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial_lt_eight
+  change fourCellEvenEndpointSeedCanonicalTailRow r = _ at hbase
+  calc
+    fourCellEvenEndpointSeedCanonicalTailRow r =
+        ∫ x : ℝ in -1..1, G₀ x * r x := by
+      simpa only [G₀] using hbase
+    _ = (∫ x : ℝ in -1..1, G₀ x * r x) -
+        ∫ x : ℝ in -1..1, P x * r x := by rw [hpoly, sub_zero]
+    _ = ∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenRepresenter q x * r x := by
+      rw [← intervalIntegral.integral_sub hG₀r hPr]
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      dsimp only [G₀, P,
+        fourCellEvenEndpointSeedTailFourteenRepresenter]
+      ring
+
+/-- On an even profile the half-cosh representer pairs to exactly the
+positive-half wide-cosh coordinate. -/
+theorem integral_fourCellEvenHalfWideCoshRepresenter_mul_eq_positiveCoshMoment
+    (r : ℝ → ℝ) (hr : Continuous r) (heven : Function.Even r) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenHalfWideCoshRepresenter x * r x) =
+      fourCellPositiveCoshMoment r (fourCellOperatorHalfWidth / 2) := by
+  have hcenter := centeredCoshMoment_eq_two_mul_positive_of_even
+    r hr heven (fourCellOperatorHalfWidth / 2)
+  calc
+    (∫ x : ℝ in -1..1,
+        fourCellEvenHalfWideCoshRepresenter x * r x) =
+        (1 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+          Real.cosh ((fourCellOperatorHalfWidth / 2) * x) * r x := by
+      rw [← intervalIntegral.integral_const_mul]
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      unfold fourCellEvenHalfWideCoshRepresenter
+      ring
+    _ = fourCellPositiveCoshMoment r
+          (fourCellOperatorHalfWidth / 2) := by
+      unfold centeredCoshMoment at hcenter
+      linarith
+
+/-- Exact constrained tail pairing.  A multiple of the wide-cosh
+representer is removed from the Riesz density and reappears only as the
+corresponding scalar coordinate. -/
+theorem fourCellEvenEndpointSeedCanonicalTailRow_eq_constrainedPairing_add_cosh
+    (r : ℝ → ℝ) (hr : Continuous r) (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14)
+    (q : ℝ[X]) (hq : q.natDegree < 14) (s : ℝ) :
+    fourCellEvenEndpointSeedCanonicalTailRow r =
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x *
+          r x) +
+        s * fourCellPositiveCoshMoment r
+          (fourCellOperatorHalfWidth / 2) := by
+  let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  let G : ℝ → ℝ := fourCellEvenEndpointSeedTailFourteenRepresenter q
+  let H : ℝ → ℝ := fourCellEvenHalfWideCoshRepresenter
+  have hG₀ : MemLp
+      (fourCellEvenEndpointSeedProjectedTailRowRepresenter
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial) 2 μ := by
+    simpa only [μ] using
+      memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  have hP : MemLp (centeredPolynomialLift q) 2 μ := by
+    simpa only [μ] using memLp_centeredPolynomialLift_two_restrict q
+  have hG : MemLp G 2 μ := by
+    simpa only [G, fourCellEvenEndpointSeedTailFourteenRepresenter] using
+      hG₀.sub hP
+  have hrMeas : AEStronglyMeasurable r μ :=
+    hr.aestronglyMeasurable.restrict
+  have hrLp : MemLp r 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hrMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖r x‖ ^ 2)
+        (Icc (-1 : ℝ) 1) :=
+      (hr.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hGr : IntervalIntegrable (fun x : ℝ ↦ G x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hG : MemLp (fun x : ℝ ↦ G x * r x) 1 μ).integrable
+      (by norm_num)
+  have hHr : IntervalIntegrable (fun x : ℝ ↦ H x * r x)
+      volume (-1) 1 := by
+    apply Continuous.intervalIntegrable
+    dsimp only [H, fourCellEvenHalfWideCoshRepresenter]
+    fun_prop
+  have hpair :=
+    fourCellEvenEndpointSeedCanonicalTailRow_eq_tailFourteenRepresenterPairing
+      r hr hlow q hq
+  have hcosh :=
+    integral_fourCellEvenHalfWideCoshRepresenter_mul_eq_positiveCoshMoment
+      r hr heven
+  rw [hpair]
+  rw [show (fun x : ℝ ↦
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x *
+        r x) =
+      fun x ↦ G x * r x - s * (H x * r x) by
+    funext x
+    dsimp only [G, H,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter]
+    ring,
+    intervalIntegral.integral_sub hGr (hHr.const_mul s),
+    intervalIntegral.integral_const_mul]
+  rw [hcosh]
+  ring
+
+/-- Lossless finite--tail row decomposition after quotienting by the actual
+zero-wide-cosh constraint.  The selector parameter `s` shifts the finite
+`P₀..P₁₂` row and the infinite representer in opposite directions;
+their sum is unchanged because the full profile has zero cosh coordinate.
+This is the coupled alternative to any fixed Young allocation. -/
+theorem fourCellEvenEndpointSeedRow_eq_coshConstrainedLowThroughTwelve_add_tailPairing
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (q : ℝ[X]) (hq : q.natDegree < 14) (s : ℝ) :
+    fourCellEvenEndpointSeedRow w =
+      (fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw -
+        s * fourCellPositiveCoshMoment
+          (centeredLegendreLowProjection w hw 14)
+          (fourCellOperatorHalfWidth / 2)) +
+        ∫ x : ℝ in -1..1,
+          fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x *
+            centeredLegendreHigherResidual w hw 14 x := by
+  let p : ℝ → ℝ := centeredLegendreLowProjection w hw 14
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 14
+  have hp : Continuous p := by
+    simpa only [p] using continuous_centeredLegendreLowProjection w hw 14
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 14
+  have hpEven : Function.Even p := by
+    simpa only [p] using centeredLegendreLowProjection_even w hw heven 14
+  have hrEven : Function.Even r := by
+    simpa only [r] using centeredLegendreHigherResidual_even w hw heven 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hsum : p + r = w := by
+    simpa only [p, r] using
+      centeredLegendreLowProjection_add_higherResidual w hw 14
+  let lambda : ℝ := fourCellOperatorHalfWidth / 2
+  have hpInt : IntervalIntegrable
+      (fun x : ℝ ↦ Real.cosh (lambda * x) * p x) volume 0 1 :=
+    ((Real.continuous_cosh.comp (continuous_const.mul continuous_id)).mul hp)
+      |>.intervalIntegrable _ _
+  have hrInt : IntervalIntegrable
+      (fun x : ℝ ↦ Real.cosh (lambda * x) * r x) volume 0 1 :=
+    ((Real.continuous_cosh.comp (continuous_const.mul continuous_id)).mul hr)
+      |>.intervalIntegrable _ _
+  have hCadd : fourCellPositiveCoshMoment (p + r) lambda =
+      fourCellPositiveCoshMoment p lambda +
+        fourCellPositiveCoshMoment r lambda := by
+    unfold fourCellPositiveCoshMoment
+    rw [show (fun x : ℝ ↦ Real.cosh (lambda * x) * (p + r) x) =
+      fun x ↦ Real.cosh (lambda * x) * p x +
+        Real.cosh (lambda * x) * r x by
+      funext x
+      simp only [Pi.add_apply]
+      ring,
+      intervalIntegral.integral_add hpInt hrInt]
+  rw [hsum] at hCadd
+  have hCzero : fourCellPositiveCoshMoment p lambda +
+      fourCellPositiveCoshMoment r lambda = 0 := by
+    dsimp only [lambda] at hCadd
+    linarith only [hCadd, hzero]
+  have hrow :=
+    fourCellEvenEndpointSeedRow_eq_canonicalLowThroughTwelve_add_tailFourteen
+      w hw hlocal heven hzero
+  have htail :=
+    fourCellEvenEndpointSeedCanonicalTailRow_eq_constrainedPairing_add_cosh
+      r hr hrEven hrGap q hq s
+  dsimp only [r] at htail
+  rw [hrow, htail]
+  dsimp only [p, r, lambda] at hCzero ⊢
+  linear_combination s * hCzero
 
 /-- Refined Cauchy closure on a `P₁₄+` tail.  The extra polynomial selector
 is invisible to the tail, but removes its first three even dual coordinates
