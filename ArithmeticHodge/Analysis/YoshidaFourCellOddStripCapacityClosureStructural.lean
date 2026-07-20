@@ -12618,6 +12618,205 @@ private theorem integral_zero_one_P7_sq :
   rw [integral_factorTwoCenteredP7_sq] at hfold
   linarith
 
+private theorem integral_zero_one_P9_sq :
+    (∫ x : ℝ in 0..1, factorTwoCenteredP9 x ^ 2) = (1 / 19 : ℝ) := by
+  have hfold := integral_sq_eq_two_mul_positiveHalf
+    factorTwoCenteredP9 continuous_factorTwoCenteredP9
+      (Or.inr odd_factorTwoCenteredP9)
+  have henergy := factorTwoCenteredP9_energy
+  unfold factorTwoIntrinsicEnergy at henergy
+  rw [henergy] at hfold
+  linarith
+
+private theorem two_hundred_eleven_five_hundredths_lt_retained_P7 :
+    (211 / 500 : ℝ) <
+      fourCellOddRetainedEndpointQuadratic factorTwoCenteredP7 := by
+  unfold fourCellOddRetainedEndpointQuadratic
+    fourCellOddRetainedPrimePotentialQuadratic
+  rw [fourCellOddRawStripCancellationReserve_P7_eq,
+    fourCellOddEndpointStripEvenMass_P7_eq,
+    fourCellOddEndpointStripOddMass_P7_eq,
+    integral_zero_one_endpointPotential_mul_P7_sq_eq]
+  have hk := sqrt_two_mul_log_two_bounds.1
+  have hlog := strict_log_two_bounds.2
+  nlinarith
+
+private theorem one_hundred_fifty_nine_five_hundredths_lt_retained_P9 :
+    (159 / 500 : ℝ) <
+      fourCellOddRetainedEndpointQuadratic factorTwoCenteredP9 := by
+  unfold fourCellOddRetainedEndpointQuadratic
+    fourCellOddRetainedPrimePotentialQuadratic
+  rw [fourCellOddRawStripCancellationReserve_P9_eq,
+    fourCellOddEndpointStripEvenMass_P9_eq,
+    fourCellOddEndpointStripOddMass_P9_eq,
+    integral_zero_one_endpointPotential_mul_P9_sq_eq]
+  have hk := sqrt_two_mul_log_two_bounds.2
+  have hlog := strict_log_two_bounds.2
+  nlinarith
+
+private theorem fourCellOddSignedMassRegularQuadratic_P7_lt_eleven_fiftieths :
+    fourCellOddSignedMassRegularQuadratic factorTwoCenteredP7 <
+      (11 / 50 : ℝ) := by
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation factorTwoCenteredP7 t
+  have hcorr := abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+    factorTwoCenteredP7 continuous_factorTwoCenteredP7
+      odd_factorTwoCenteredP7
+  rw [integral_factorTwoCenteredP7_sq] at hcorr
+  change |R| ≤ (1 / 20 : ℝ) * (2 / 15) at hcorr
+  norm_num at hcorr
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha := fourCellOperatorHalfWidth_le_one_half
+  have hregular : 2 * fourCellOperatorHalfWidth * R ≤ (1 / 150 : ℝ) := by
+    calc
+      2 * fourCellOperatorHalfWidth * R ≤
+          2 * fourCellOperatorHalfWidth * |R| :=
+        mul_le_mul_of_nonneg_left (le_abs_self R)
+          (mul_nonneg (by norm_num) ha0)
+      _ ≤ 2 * (1 / 2 : ℝ) * |R| := by
+        exact mul_le_mul_of_nonneg_right (by nlinarith) (abs_nonneg R)
+      _ ≤ 2 * (1 / 2 : ℝ) * (1 / 150 : ℝ) := by
+        exact mul_le_mul_of_nonneg_left hcorr (by norm_num)
+      _ = (1 / 150 : ℝ) := by norm_num
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  unfold fourCellOddSignedMassRegularQuadratic
+  rw [integral_zero_one_P7_sq]
+  change
+    (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+        (1 / 15 : ℝ) + 2 * fourCellOperatorHalfWidth * R < 11 / 50
+  nlinarith
+
+private theorem fourCellOddSignedMassRegularQuadratic_P9_lt_one_hundred_seventy_three_thousandths :
+    fourCellOddSignedMassRegularQuadratic factorTwoCenteredP9 <
+      (173 / 1000 : ℝ) := by
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation factorTwoCenteredP9 t
+  have hcorr := abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+    factorTwoCenteredP9 continuous_factorTwoCenteredP9
+      odd_factorTwoCenteredP9
+  have henergy := factorTwoCenteredP9_energy
+  unfold factorTwoIntrinsicEnergy at henergy
+  rw [henergy] at hcorr
+  change |R| ≤ (1 / 20 : ℝ) * (2 / 19) at hcorr
+  norm_num at hcorr
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha := fourCellOperatorHalfWidth_le_one_half
+  have hregular : 2 * fourCellOperatorHalfWidth * R ≤ (1 / 190 : ℝ) := by
+    calc
+      2 * fourCellOperatorHalfWidth * R ≤
+          2 * fourCellOperatorHalfWidth * |R| :=
+        mul_le_mul_of_nonneg_left (le_abs_self R)
+          (mul_nonneg (by norm_num) ha0)
+      _ ≤ 2 * (1 / 2 : ℝ) * |R| := by
+        exact mul_le_mul_of_nonneg_right (by nlinarith) (abs_nonneg R)
+      _ ≤ 2 * (1 / 2 : ℝ) * (1 / 190 : ℝ) := by
+        exact mul_le_mul_of_nonneg_left hcorr (by norm_num)
+      _ = (1 / 190 : ℝ) := by norm_num
+  have hscalar := fourCellScalar_lt_31577_div_20000
+  unfold fourCellOddSignedMassRegularQuadratic
+  rw [integral_zero_one_P9_sq]
+  change
+    (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+        (1 / 19 : ℝ) + 2 * fourCellOperatorHalfWidth * R < 173 / 1000
+  nlinarith
+
+private theorem one_fifth_lt_fourCellOddCoreLocalQuadratic_P7 :
+    (1 / 5 : ℝ) < fourCellOddCoreLocalQuadratic factorTwoCenteredP7 := by
+  rw [fourCellOddCoreLocalQuadratic_eq_retained_sub_signed]
+  linarith [two_hundred_eleven_five_hundredths_lt_retained_P7,
+    fourCellOddSignedMassRegularQuadratic_P7_lt_eleven_fiftieths]
+
+private theorem twenty_nine_two_hundredths_lt_fourCellOddCoreLocalQuadratic_P9 :
+    (29 / 200 : ℝ) < fourCellOddCoreLocalQuadratic factorTwoCenteredP9 := by
+  rw [fourCellOddCoreLocalQuadratic_eq_retained_sub_signed]
+  linarith [one_hundred_fifty_nine_five_hundredths_lt_retained_P9,
+    fourCellOddSignedMassRegularQuadratic_P9_lt_one_hundred_seventy_three_thousandths]
+
+private theorem neg_beta_sq_sum_le_two_mul_of_abs_le
+    (B β x y : ℝ) (hB : |B| ≤ β) (hβ : 0 ≤ β) :
+    -β * (x ^ 2 + y ^ 2) ≤ 2 * B * x * y := by
+  have hxy : 2 * |x * y| ≤ x ^ 2 + y ^ 2 := by
+    rw [abs_mul]
+    nlinarith [sq_nonneg (|x| - |y|), sq_abs x, sq_abs y]
+  have habs : |2 * B * x * y| ≤ β * (x ^ 2 + y ^ 2) := by
+    calc
+      |2 * B * x * y| = 2 * |B| * |x * y| := by
+        rw [abs_mul, abs_mul, abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
+        ring
+      _ ≤ 2 * β * |x * y| := by
+        exact mul_le_mul_of_nonneg_right
+          (mul_le_mul_of_nonneg_left hB (by norm_num)) (abs_nonneg _)
+      _ = β * (2 * |x * y|) := by ring
+      _ ≤ β * (x ^ 2 + y ^ 2) :=
+        mul_le_mul_of_nonneg_left hxy hβ
+  calc
+    -β * (x ^ 2 + y ^ 2) ≤ -|2 * B * x * y| := by
+      linarith
+    _ ≤ 2 * B * x * y := neg_abs_le _
+
+/-- The actual `P₅/P₇/P₉` complete-form matrix is positive
+semidefinite.  This is a symbolic diagonal-dominance certificate for the
+true quadratic and cross entries, not a sampled or truncated surrogate. -/
+theorem fourCellOddCoreLocal_P5_P7_P9_matrix_nonneg (c d e : ℝ) :
+    0 ≤
+      fourCellOddCoreLocalQuadratic factorTwoCenteredP5 * c ^ 2 +
+        2 * fourCellOddCoreLocalBilinear
+            factorTwoCenteredP5 factorTwoCenteredP7 * c * d +
+        fourCellOddCoreLocalQuadratic factorTwoCenteredP7 * d ^ 2 +
+        2 * fourCellOddCoreLocalBilinear
+            factorTwoCenteredP5 factorTwoCenteredP9 * c * e +
+        2 * fourCellOddCoreLocalBilinear
+            factorTwoCenteredP7 factorTwoCenteredP9 * d * e +
+        fourCellOddCoreLocalQuadratic factorTwoCenteredP9 * e ^ 2 := by
+  let Q5 := fourCellOddCoreLocalQuadratic factorTwoCenteredP5
+  let Q7 := fourCellOddCoreLocalQuadratic factorTwoCenteredP7
+  let Q9 := fourCellOddCoreLocalQuadratic factorTwoCenteredP9
+  let B57 := fourCellOddCoreLocalBilinear
+    factorTwoCenteredP5 factorTwoCenteredP7
+  let B59 := fourCellOddCoreLocalBilinear
+    factorTwoCenteredP5 factorTwoCenteredP9
+  let B79 := fourCellOddCoreLocalBilinear
+    factorTwoCenteredP7 factorTwoCenteredP9
+  have hQ5 : (6 / 25 : ℝ) < Q5 :=
+    six_twenty_fifths_lt_fourCellOddCoreLocalQuadratic_P5
+  have hQ7 : (1 / 5 : ℝ) < Q7 :=
+    one_fifth_lt_fourCellOddCoreLocalQuadratic_P7
+  have hQ9 : (29 / 200 : ℝ) < Q9 :=
+    twenty_nine_two_hundredths_lt_fourCellOddCoreLocalQuadratic_P9
+  have h57abs : |B57| ≤ (21 / 200 : ℝ) :=
+    abs_fourCellOddCoreLocalBilinear_P5_P7_lt_twenty_one_two_hundredths.le
+  have h59abs : |B59| ≤ (7 / 200 : ℝ) :=
+    abs_fourCellOddCoreLocalBilinear_P5_P9_lt_seven_two_hundredths.le
+  have h79abs : |B79| ≤ (11 / 500 : ℝ) :=
+    abs_fourCellOddCoreLocalBilinear_P7_P9_lt_eleven_five_hundredths.le
+  have hQ5c : (6 / 25 : ℝ) * c ^ 2 ≤ Q5 * c ^ 2 :=
+    mul_le_mul_of_nonneg_right hQ5.le (sq_nonneg c)
+  have hQ7d : (1 / 5 : ℝ) * d ^ 2 ≤ Q7 * d ^ 2 :=
+    mul_le_mul_of_nonneg_right hQ7.le (sq_nonneg d)
+  have hQ9e : (29 / 200 : ℝ) * e ^ 2 ≤ Q9 * e ^ 2 :=
+    mul_le_mul_of_nonneg_right hQ9.le (sq_nonneg e)
+  have h57 := neg_beta_sq_sum_le_two_mul_of_abs_le
+    B57 (21 / 200) c d h57abs (by norm_num)
+  have h59 := neg_beta_sq_sum_le_two_mul_of_abs_le
+    B59 (7 / 200) c e h59abs (by norm_num)
+  have h79 := neg_beta_sq_sum_le_two_mul_of_abs_le
+    B79 (11 / 500) d e h79abs (by norm_num)
+  have hmargin : 0 ≤
+      ((6 / 25 : ℝ) - 21 / 200 - 7 / 200) * c ^ 2 +
+        ((1 / 5 : ℝ) - 21 / 200 - 11 / 500) * d ^ 2 +
+        ((29 / 200 : ℝ) - 7 / 200 - 11 / 500) * e ^ 2 := by
+    positivity
+  dsimp only [Q5, Q7, Q9, B57, B59, B79] at hQ5c hQ7d hQ9e h57 h59 h79 ⊢
+  linarith
+
 private theorem integral_zero_three_fifths_P7_sq_le :
     (∫ x : ℝ in 0..3 / 5, factorTwoCenteredP7 x ^ 2) ≤
       (1 / 15 : ℝ) := by
