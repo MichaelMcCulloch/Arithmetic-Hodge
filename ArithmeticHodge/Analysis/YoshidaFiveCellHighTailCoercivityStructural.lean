@@ -402,6 +402,43 @@ theorem fiveCellPolarProduct_nonnegative_of_even
     (mul_nonneg (by norm_num) fiveCellOperatorHalfWidth_pos.le)
     (sq_nonneg _)
 
+/-- The `1/10` polar lower bound does not actually require parity: the
+positive cosh square can be discarded while the negative sinh square is
+paid by Cauchy--Schwarz. -/
+theorem fiveCellPolarProduct_lower
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    -(1 / 10 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+      2 * fiveCellOperatorHalfWidth *
+        (∫ x : ℝ in -1..1,
+          Real.exp (-fiveCellOperatorHalfWidth * x / 2) * w x) *
+        (∫ x : ℝ in -1..1,
+          Real.exp (fiveCellOperatorHalfWidth * x / 2) * w x) := by
+  let C : ℝ := centeredCoshMoment w (fiveCellOperatorHalfWidth / 2)
+  let S : ℝ := centeredSinhMoment w (fiveCellOperatorHalfWidth / 2)
+  have hbound := two_mul_fiveCellWidth_mul_sinhMoment_sq_le_mass w hw
+  change 2 * fiveCellOperatorHalfWidth * S ^ 2 ≤
+    (1 / 10 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) at hbound
+  have hpolar := centeredPolarMoments_mul_eq_cosh_sq_sub_sinh_sq
+    w hw fiveCellOperatorHalfWidth
+  have hcosh : 0 ≤ 2 * fiveCellOperatorHalfWidth * C ^ 2 :=
+    mul_nonneg
+      (mul_nonneg (by norm_num) fiveCellOperatorHalfWidth_pos.le)
+      (sq_nonneg C)
+  calc
+    -(1 / 10 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
+        -(2 * fiveCellOperatorHalfWidth * S ^ 2) := by
+      nlinarith
+    _ ≤ 2 * fiveCellOperatorHalfWidth * (C ^ 2 - S ^ 2) := by
+      nlinarith
+    _ = 2 * fiveCellOperatorHalfWidth *
+        ((∫ x : ℝ in -1..1,
+            Real.exp (-fiveCellOperatorHalfWidth * x / 2) * w x) *
+          (∫ x : ℝ in -1..1,
+            Real.exp (fiveCellOperatorHalfWidth * x / 2) * w x)) := by
+      dsimp only [C, S]
+      rw [hpolar]
+    _ = _ := by ring
+
 theorem fiveCellPolarProduct_lower_of_odd
     (w : ℝ → ℝ) (hw : Continuous w) (hodd : Function.Odd w) :
     -(1 / 10 : ℝ) * (∫ x : ℝ in -1..1, w x ^ 2) ≤
@@ -496,6 +533,17 @@ theorem fiveCellEndpointOperator_nonnegative_of_odd_tailNine
     0 ≤ fiveCellEndpointOperator w := by
   exact fiveCellEndpointOperator_nonnegative_of_tailNine_of_polarLower
     w hw hlocal hlow (fiveCellPolarProduct_lower_of_odd w hw hodd)
+
+/-- Every continuous locally Lipschitz profile above the ninth
+shifted-Legendre gap satisfies the complete five-cell endpoint inequality.
+Reflection parity is not needed after retaining the positive cosh rank. -/
+theorem fiveCellEndpointOperator_nonnegative_of_tailNine
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (hlow : centeredLegendreMomentsVanishBelow w 9) :
+    0 ≤ fiveCellEndpointOperator w := by
+  exact fiveCellEndpointOperator_nonnegative_of_tailNine_of_polarLower
+    w hw hlocal hlow (fiveCellPolarProduct_lower w hw)
 
 end
 
