@@ -12847,6 +12847,150 @@ theorem fourCellOddCoreLocal_P5_P7_P9_matrix_nonneg (c d e : ℝ) :
   dsimp only [Q5, Q7, Q9, B57, B59, B79] at hQ5c hQ7d hQ9e h57 h59 h79 ⊢
   linarith
 
+/-! ### The missing `P₁/P₃`--`P₇/P₉` finite cross block -/
+
+private theorem fourCellOddEndpointStripEvenMassBilinear_P1_P7 :
+    fourCellOddEndpointStripEvenMassBilinear
+        centeredP1 factorTwoCenteredP7 =
+      (-4192 / 1953125 : ℝ) := by
+  unfold fourCellOddEndpointStripEvenMassBilinear centeredP1
+  simp_rw [fourCellOddEndpointStripEven_P7]
+  rw [show (fun z : ℝ ↦
+      fourCellOddEndpointStripEven (fun x : ℝ ↦ x) z *
+        ((3003 / 312500 : ℝ) * z ^ 6 +
+          (30723 / 62500 : ℝ) * z ^ 4 +
+          (124929 / 312500 : ℝ) * z ^ 2 - 74891 / 312500)) =
+      fun z ↦
+        (-299564 / 1562500 : ℝ) * z ^ 0 + 0 * z ^ 1 +
+          (499716 / 1562500 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (122892 / 312500 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (12012 / 1562500 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          0 * z ^ 8 + 0 * z ^ 9 + 0 * z ^ 10 + 0 * z ^ 11 +
+          0 * z ^ 12 + 0 * z ^ 13 by
+    funext z
+    unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
+    ring,
+    integral_polynomial_thirteen]
+  norm_num
+
+private theorem fourCellOddEndpointStripOddMassBilinear_P1_P7 :
+    fourCellOddEndpointStripOddMassBilinear
+        centeredP1 factorTwoCenteredP7 =
+      (-6536 / 1953125 : ℝ) := by
+  rcases endpointStripOdd_P7_moments with ⟨h1, _h3, _h5⟩
+  unfold fourCellOddEndpointStripOddMassBilinear centeredP1
+  rw [show fourCellOddEndpointStripOdd (fun x : ℝ ↦ x) =
+      fun z ↦ z / 5 by
+    funext z
+    unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+    ring]
+  have hrewrite :
+      (∫ z : ℝ in -1..1,
+        (z / 5) * fourCellOddEndpointStripOdd factorTwoCenteredP7 z) =
+        (1 / 5 : ℝ) *
+          ∫ z : ℝ in -1..1,
+            fourCellOddEndpointStripOdd factorTwoCenteredP7 z * z := by
+    rw [← intervalIntegral.integral_const_mul]
+    apply intervalIntegral.integral_congr
+    intro z _hz
+    ring
+  rw [hrewrite]
+  unfold centeredP1 at h1
+  rw [h1]
+  norm_num
+
+private theorem integral_zero_one_endpointPotential_mul_P1_mul_P7 :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * centeredP1 x *
+        factorTwoCenteredP7 x) = (1 / 54 : ℝ) := by
+  have h7 : factorTwoCenteredP7 =
+      fun x ↦ -(centeredShiftedLegendreReal 7).eval x := by
+    funext x
+    rw [eval_centeredShiftedLegendreReal]
+    rfl
+  have hfull :=
+    YoshidaEndpointPotentialLegendreOffDiagonalStructural.integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+      (m := 1) (n := 7) (by norm_num) (by norm_num)
+  norm_num at hfull
+  have hfullActual : (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x * centeredP1 x *
+        factorTwoCenteredP7 x) = (1 / 27 : ℝ) := by
+    unfold centeredP1
+    rw [h7]
+    rw [show (fun x : ℝ ↦
+        yoshidaEndpointPotential x * x *
+          (-(centeredShiftedLegendreReal 7).eval x)) =
+        fun x ↦ -(yoshidaEndpointPotential x * x *
+          (centeredShiftedLegendreReal 7).eval x) by
+      funext x
+      ring,
+      intervalIntegral.integral_neg]
+    exact hfull
+  let q : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * centeredP1 x * factorTwoCenteredP7 x
+  have hq : IntervalIntegrable q volume (-1) 1 := by
+    dsimp only [q]
+    simpa only [mul_assoc] using
+      YoshidaEndpointPotentialIntegrable.intervalIntegrable_endpointPotential_mul
+        (fun x : ℝ ↦ centeredP1 x * factorTwoCenteredP7 x)
+        ((by unfold centeredP1; fun_prop : Continuous centeredP1).mul
+          continuous_factorTwoCenteredP7)
+  have hqeven : Function.Even q := by
+    intro x
+    dsimp only [q]
+    have hp : yoshidaEndpointPotential (-x) =
+        yoshidaEndpointPotential x := by
+      unfold yoshidaEndpointPotential
+      congr 2
+      ring
+    rw [hp, odd_factorTwoCenteredP7]
+    unfold centeredP1
+    ring
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even q hq hqeven
+  dsimp only [q] at hfold
+  rw [hfullActual] at hfold
+  linarith
+
+private theorem fourCellOddRetainedPrimePotentialBilinear_P1_P7 :
+    fourCellOddRetainedPrimePotentialBilinear
+        centeredP1 factorTwoCenteredP7 =
+      Real.sqrt 2 * Real.log 2 * (-4192 / 1953125 : ℝ) +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          (-6536 / 1953125 : ℝ) +
+        (93 / 50 : ℝ) * (1 / 54) := by
+  unfold fourCellOddRetainedPrimePotentialBilinear
+  rw [fourCellOddEndpointStripEvenMassBilinear_P1_P7,
+    fourCellOddEndpointStripOddMassBilinear_P1_P7,
+    integral_zero_one_endpointPotential_mul_P1_mul_P7]
+
+/-- Exact retained endpoint entry on the first previously missing finite
+row.  The global raw form vanishes by shifted-Legendre orthogonality; the
+display contains only the affine-strip raw moment, two prime channels, and
+the all-degree endpoint-potential Green entry. -/
+theorem fourCellOddRetainedEndpointBilinear_P1_P7_eq :
+    fourCellOddRetainedEndpointBilinear
+        centeredP1 factorTwoCenteredP7 =
+      (13072 / 1953125 : ℝ) +
+        Real.sqrt 2 * Real.log 2 * (-4192 / 1953125 : ℝ) +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          (-6536 / 1953125 : ℝ) +
+        (93 / 50 : ℝ) * (1 / 54) := by
+  rcases centeredOddCoefficients_P7_eq_zero with ⟨h1, h3, h5⟩
+  have h := fourCellOddRetainedEndpointBilinear_oneThreeFive_tail_eq_moments
+    factorTwoCenteredP7 contDiff_factorTwoCenteredP7_local
+      odd_factorTwoCenteredP7 h1 h3 h5 1 0 0
+  have hp : fourCellOddOneThreeFiveLowProfile 1 0 0 = centeredP1 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile
+      factorTwoOddStructuralLowProfile
+    simp
+  rw [hp, fourCellOddRetainedPrimePotentialBilinear_P1_P7] at h
+  rcases endpointStripOdd_P7_moments with ⟨hm1, hm3, hm5⟩
+  rw [hm1, hm3, hm5] at h
+  norm_num at h ⊢
+  convert h using 1
+  ring
+
 /-! ### Exact `P₁₁+` Riesz endpoint -/
 
 /-- Normalized centered `P₇` coefficient. -/
