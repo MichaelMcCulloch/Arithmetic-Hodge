@@ -2181,11 +2181,13 @@ private theorem intervalIntegrable_fourCellOddP11P1UpperDualMajorant :
   exact intervalIntegrable_P1_upper_rational_base.add
     (htail.intervalIntegrable _ _)
 
-/-- The concrete degree-`< 11` selector costs at most `23/100` against the
-exact two-strip multiplication density.  The proof uses one global
-degree-sixteen endpoint envelope and exact rational integrals; no interval
-mesh or exhaustive evaluation enters the certificate. -/
-theorem fourCellOddP11P1SelectorDual_le :
+private theorem fourCellOddP11P1SelectorDual_control :
+    IntervalIntegrable (fun x : ℝ ↦
+      fourCellOddP11P1LowerSelectorResidual x ^ 2 /
+        fourCellOddP11SelectorLowerWeight x) volume 0 (3 / 5) ∧
+    IntervalIntegrable (fun x : ℝ ↦
+      fourCellOddP11P1UpperSelectorResidual x ^ 2 /
+        fourCellOddP11SelectorUpperWeight x) volume (3 / 5) 1 ∧
     fourCellOddP11P1SelectorDual ≤ (23 / 100 : ℝ) := by
   let fL : ℝ → ℝ := fun x ↦
     fourCellOddP11P1LowerSelectorResidual x ^ 2 /
@@ -2319,9 +2321,132 @@ theorem fourCellOddP11P1SelectorDual_le :
     (by simpa only [μU] using hboundU)
   have hsum := add_le_add hL.2 hU.2
   have hmaj := fourCellOddP11P1DualMajorant_integral_lt
-  unfold fourCellOddP11P1SelectorDual
-  dsimp only [fL, fU] at hsum
-  linarith
+  have hdual : fourCellOddP11P1SelectorDual ≤ (23 / 100 : ℝ) := by
+    unfold fourCellOddP11P1SelectorDual
+    dsimp only [fL, fU] at hsum
+    linarith
+  simpa only [fL, fU] using And.intro hL.1 (And.intro hU.1 hdual)
+
+/-- The concrete degree-`< 11` selector costs at most `23/100` against the
+exact two-strip multiplication density.  The proof uses one global
+degree-sixteen endpoint envelope and exact rational integrals; no interval
+mesh or exhaustive evaluation enters the certificate. -/
+theorem fourCellOddP11P1SelectorDual_le :
+    fourCellOddP11P1SelectorDual ≤ (23 / 100 : ℝ) :=
+  fourCellOddP11P1SelectorDual_control.2.2
+
+private theorem memLp_div_sqrt_of_integrable_sq_div
+    (G W : ℝ → ℝ) (a b : ℝ)
+    (hG : AEStronglyMeasurable G (volume.restrict (Ioc a b)))
+    (hW : Measurable W)
+    (hWpos : ∀ᵐ x ∂volume.restrict (Ioc a b), 0 < W x)
+    (hInt : Integrable (fun x ↦ G x ^ 2 / W x)
+      (volume.restrict (Ioc a b))) :
+    MemLp (fun x ↦ G x / Real.sqrt (W x)) 2
+      (volume.restrict (Ioc a b)) := by
+  have hsqrt : Measurable (fun x ↦ Real.sqrt (W x)) :=
+    hW.sqrt
+  have hmeas : AEStronglyMeasurable
+      (fun x ↦ G x / Real.sqrt (W x))
+      (volume.restrict (Ioc a b)) := by
+    simpa only [div_eq_mul_inv] using
+      hG.mul hsqrt.inv.aestronglyMeasurable
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  apply hInt.congr
+  filter_upwards [hWpos] with x hx
+  rw [Real.norm_eq_abs, sq_abs, div_pow, Real.sq_sqrt hx.le]
+
+private theorem memLp_sqrt_mul_of_integrable_weighted_sq
+    (r W : ℝ → ℝ) (a b : ℝ)
+    (hr : AEStronglyMeasurable r (volume.restrict (Ioc a b)))
+    (hW : Measurable W)
+    (hWpos : ∀ᵐ x ∂volume.restrict (Ioc a b), 0 < W x)
+    (hInt : Integrable (fun x ↦ W x * r x ^ 2)
+      (volume.restrict (Ioc a b))) :
+    MemLp (fun x ↦ Real.sqrt (W x) * r x) 2
+      (volume.restrict (Ioc a b)) := by
+  have hsqrt : Measurable (fun x ↦ Real.sqrt (W x)) :=
+    hW.sqrt
+  have hmeas : AEStronglyMeasurable
+      (fun x ↦ Real.sqrt (W x) * r x)
+      (volume.restrict (Ioc a b)) :=
+    hsqrt.aestronglyMeasurable.mul hr
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  apply hInt.congr
+  filter_upwards [hWpos] with x hx
+  rw [Real.norm_eq_abs, sq_abs, mul_pow, Real.sq_sqrt hx.le]
+
+private theorem intervalIntegrable_lowerWeight_mul_sq
+    (r : ℝ → ℝ) (hr : Continuous r) :
+    IntervalIntegrable (fun x ↦
+      fourCellOddP11SelectorLowerWeight x * r x ^ 2)
+      volume 0 (3 / 5) := by
+  have hmass : IntervalIntegrable (fun x : ℝ ↦ r x ^ 2)
+      volume 0 (3 / 5) := (hr.pow 2).intervalIntegrable _ _
+  have hpotentialFull := intervalIntegrable_endpointPotential_mul_sq r hr
+  have hpotential : IntervalIntegrable (fun x : ℝ ↦
+      yoshidaEndpointPotential x * r x ^ 2) volume 0 (3 / 5) := by
+    apply hpotentialFull.mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 3 / 5)] at hx
+    rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
+    exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  rw [show (fun x ↦ fourCellOddP11SelectorLowerWeight x * r x ^ 2) =
+      fun x ↦ (27 / 250 : ℝ) * r x ^ 2 +
+        (93 / 50) * (yoshidaEndpointPotential x * r x ^ 2) by
+    funext x
+    unfold fourCellOddP11SelectorLowerWeight
+    ring]
+  exact (hmass.const_mul _).add (hpotential.const_mul _)
+
+private theorem intervalIntegrable_upperWeight_mul_sq
+    (r : ℝ → ℝ) (hr : Continuous r) :
+    IntervalIntegrable (fun x ↦
+      fourCellOddP11SelectorUpperWeight x * r x ^ 2)
+      volume (3 / 5) 1 := by
+  have hmass : IntervalIntegrable (fun x : ℝ ↦ r x ^ 2)
+      volume (3 / 5) 1 := (hr.pow 2).intervalIntegrable _ _
+  have hpotentialFull := intervalIntegrable_endpointPotential_mul_sq r hr
+  have hpotential : IntervalIntegrable (fun x : ℝ ↦
+      yoshidaEndpointPotential x * r x ^ 2) volume (3 / 5) 1 := by
+    apply hpotentialFull.mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)]
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hdivCont : ContinuousOn (fun x : ℝ ↦ r x ^ 2 / x)
+      (Icc (3 / 5 : ℝ) 1) := by
+    apply ContinuousOn.div (hr.pow 2).continuousOn continuous_id.continuousOn
+    intro x hx
+    simp only [id_eq]
+    linarith [hx.1]
+  have hdiv : IntervalIntegrable (fun x : ℝ ↦ r x ^ 2 / x)
+      volume (3 / 5) 1 := by
+    have hcontU : ContinuousOn (fun x : ℝ ↦ r x ^ 2 / x)
+        (uIcc (3 / 5 : ℝ) 1) := by
+      rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)]
+      exact hdivCont
+    exact hcontU.intervalIntegrable
+  have heq : (fun x ↦ fourCellOddP11SelectorUpperWeight x * r x ^ 2) =
+      fun x ↦ (93 / 50 : ℝ) *
+          (yoshidaEndpointPotential x * r x ^ 2) +
+        (6 / 5) * (r x ^ 2 / x) - (57 / 25) * r x ^ 2 := by
+    funext x
+    by_cases hx : x = 0
+    · subst x
+      simp [fourCellOddP11SelectorUpperWeight]
+      ring
+    · unfold fourCellOddP11SelectorUpperWeight
+      field_simp [hx]
+  rw [heq]
+  exact ((hpotential.const_mul _).add (hdiv.const_mul _)).sub
+    (hmass.const_mul _)
+
+/-- The exact row is lower on the lower strip and gains the affine endpoint
+term only on the upper strip. -/
+private def fourCellOddP11P1PiecewiseRepresenter (x : ℝ) : ℝ :=
+  if x ≤ 3 / 5 then fourCellOddP11P1LowerRepresenter x
+  else fourCellOddP11P1UpperRepresenter x
 
 end
 
