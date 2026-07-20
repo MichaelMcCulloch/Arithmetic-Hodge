@@ -5200,6 +5200,32 @@ def RealFiniteBlockAllLengthResidualCrossClosure : Prop :=
     RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength n ∧
       RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n
 
+/-- Weakest staged form of the middle-pivot interface exposed by the
+induction: the two new length-`n` obligations may use the already established
+production positivity through length `n-1`. -/
+def RealFiniteBlockInductiveMiddlePivotClosure : Prop :=
+  ∀ n : ℕ, 4 ≤ n →
+    RealFiniteBlockProductionNonnegativeUpTo (n - 1) →
+      RealFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength n ∧
+        RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n
+
+/-- Residual-test version of the staged all-length interface. -/
+def RealFiniteBlockInductiveResidualCrossClosure : Prop :=
+  ∀ n : ℕ, 4 ≤ n →
+    RealFiniteBlockProductionNonnegativeUpTo (n - 1) →
+      RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength n ∧
+        RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n
+
+theorem realFiniteBlockInductiveMiddlePivotClosure_of_residualCross
+    (hclosure : RealFiniteBlockInductiveResidualCrossClosure) :
+    RealFiniteBlockInductiveMiddlePivotClosure := by
+  intro n hn hprev
+  have h := hclosure n hn hprev
+  exact ⟨
+    realFiniteBlockMiddlePivotConditionalCrossNonnegative_of_residualCross
+      n h.1,
+    h.2⟩
+
 theorem realFiniteBlockAllLengthMiddlePivotClosure_of_residualCross
     (hclosure : RealFiniteBlockAllLengthResidualCrossClosure) :
     RealFiniteBlockAllLengthMiddlePivotClosure := by
@@ -5230,6 +5256,39 @@ theorem realFiniteBlockProductionNonnegativeUpTo_all
         exact
           realFiniteBlockProductionNonnegativeUpTo_succ_of_middlePivot
             n (by omega) ih hnew.1 hnew.2
+
+/-- Finite induction from the staged interface.  At the `n`-th step the
+closure hypothesis receives exactly the shorter-length production theorem
+that has just been established. -/
+theorem realFiniteBlockProductionNonnegativeUpTo_all_of_inductiveMiddlePivot
+    (hclosure : RealFiniteBlockInductiveMiddlePivotClosure) :
+    ∀ n : ℕ, RealFiniteBlockProductionNonnegativeUpTo n := by
+  intro n
+  induction n with
+  | zero =>
+      intro m hm
+      exact realFiniteBlockProductionNonnegativeUpTo_three m (by omega)
+  | succ n ih =>
+      by_cases hsmall : n + 1 ≤ 3
+      · intro m hm
+        exact realFiniteBlockProductionNonnegativeUpTo_three m
+          (hm.trans hsmall)
+      · have hn4 : 4 ≤ n + 1 := by omega
+        have hprev :
+            RealFiniteBlockProductionNonnegativeUpTo ((n + 1) - 1) := by
+          simpa only [Nat.add_sub_cancel] using ih
+        have hnew := hclosure (n + 1) hn4 hprev
+        exact
+          realFiniteBlockProductionNonnegativeUpTo_succ_of_middlePivot
+            n (by omega) ih hnew.1 hnew.2
+
+theorem realFiniteBlockAllLengthMiddlePivotClosure_of_inductive
+    (hclosure : RealFiniteBlockInductiveMiddlePivotClosure) :
+    RealFiniteBlockAllLengthMiddlePivotClosure := by
+  intro n hn
+  exact hclosure n hn
+    (realFiniteBlockProductionNonnegativeUpTo_all_of_inductiveMiddlePivot
+      hclosure (n - 1))
 
 /-- In particular every exact finite production length is nonnegative. -/
 theorem realFiniteBlockProductionNonnegativeAtLength_all
@@ -5275,6 +5334,17 @@ theorem riemannHypothesis_of_allLengthResidualCrossClosure
     RiemannHypothesis := by
   exact riemannHypothesis_of_allLengthMiddlePivotClosure zeros
     (realFiniteBlockAllLengthMiddlePivotClosure_of_residualCross hclosure)
+
+/-- Sharp staged local-to-global theorem: it is enough to prove the concrete
+residual-cross and singular-pivot clauses one length at a time, using all
+shorter production positivity at the next step. -/
+theorem riemannHypothesis_of_inductiveResidualCrossClosure
+    (zeros : ZetaZeroEnumeration)
+    (hclosure : RealFiniteBlockInductiveResidualCrossClosure) :
+    RiemannHypothesis := by
+  apply riemannHypothesis_of_allLengthMiddlePivotClosure zeros
+  exact realFiniteBlockAllLengthMiddlePivotClosure_of_inductive
+    (realFiniteBlockInductiveMiddlePivotClosure_of_residualCross hclosure)
 
 end
 
