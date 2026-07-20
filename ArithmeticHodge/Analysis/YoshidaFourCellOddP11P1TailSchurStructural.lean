@@ -1128,6 +1128,388 @@ theorem fourCellOddP11P1RegularRepresenter_eq_polynomial_add_remainder
   rw [hright, hleft]
   ring
 
+private def fourCellOddP11P1PolynomialInteraction (a x : ℝ) : ℝ :=
+  7 * a ^ 4 * x ^ 5 / 57600 +
+    (-(5 * a ^ 5 / 288) - 7 * a ^ 4 / 5760 - a ^ 2 / 72) * x ^ 3 +
+    (-(a ^ 5 / 96) - 7 * a ^ 4 / 3840 + a ^ 3 / 12 + a ^ 2 / 24) * x
+
+private theorem fourCellOddP11P1PolynomialInteraction_lipschitz
+    {a b x : ℝ} (ha0 : 0 ≤ a) (ha1 : a ≤ 1)
+    (hb0 : 0 ≤ b) (hb1 : b ≤ 1) (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    |fourCellOddP11P1PolynomialInteraction a x -
+        fourCellOddP11P1PolynomialInteraction b x| ≤ |a - b| := by
+  let S2 : ℝ := a + b
+  let S3 : ℝ := a ^ 2 + a * b + b ^ 2
+  let S4 : ℝ := a ^ 3 + a ^ 2 * b + a * b ^ 2 + b ^ 3
+  let S5 : ℝ :=
+    a ^ 4 + a ^ 3 * b + a ^ 2 * b ^ 2 + a * b ^ 3 + b ^ 4
+  let Q : ℝ :=
+    7 / 57600 * (S4 * x ^ 5) +
+      (-(5 / 288) * (S5 * x ^ 3) -
+        7 / 5760 * (S4 * x ^ 3) - 1 / 72 * (S2 * x ^ 3)) +
+      (-(1 / 96) * (S5 * x) - 7 / 3840 * (S4 * x) +
+        1 / 12 * (S3 * x) + 1 / 24 * (S2 * x))
+  have hpowA (n : ℕ) : 0 ≤ a ^ n ∧ a ^ n ≤ 1 :=
+    ⟨pow_nonneg ha0 n, pow_le_one₀ ha0 ha1⟩
+  have hpowB (n : ℕ) : 0 ≤ b ^ n ∧ b ^ n ≤ 1 :=
+    ⟨pow_nonneg hb0 n, pow_le_one₀ hb0 hb1⟩
+  have hpowX (n : ℕ) : 0 ≤ x ^ n ∧ x ^ n ≤ 1 :=
+    ⟨pow_nonneg hx0 n, pow_le_one₀ hx0 hx1⟩
+  have hab (i j : ℕ) :
+      0 ≤ a ^ i * b ^ j ∧ a ^ i * b ^ j ≤ 1 := by
+    exact ⟨mul_nonneg (hpowA i).1 (hpowB j).1,
+      mul_le_one₀ (hpowA i).2 (hpowB j).1 (hpowB j).2⟩
+  have hS2 : 0 ≤ S2 ∧ S2 ≤ 2 := by
+    dsimp only [S2]
+    constructor <;> linarith
+  have hS3 : 0 ≤ S3 ∧ S3 ≤ 3 := by
+    dsimp only [S3]
+    constructor
+    · positivity
+    · linarith [(hpowA 2).2, (hab 1 1).2, (hpowB 2).2]
+  have hS4 : 0 ≤ S4 ∧ S4 ≤ 4 := by
+    dsimp only [S4]
+    constructor
+    · positivity
+    · linarith [(hpowA 3).2, (hab 2 1).2, (hab 1 2).2,
+        (hpowB 3).2]
+  have hS5 : 0 ≤ S5 ∧ S5 ≤ 5 := by
+    dsimp only [S5]
+    constructor
+    · positivity
+    · linarith [(hpowA 4).2, (hab 3 1).2, (hab 2 2).2,
+        (hab 1 3).2, (hpowB 4).2]
+  have hS4x5 : 0 ≤ S4 * x ^ 5 ∧ S4 * x ^ 5 ≤ 4 := by
+    constructor
+    · exact mul_nonneg hS4.1 (hpowX 5).1
+    · exact (mul_le_mul hS4.2 (hpowX 5).2 (hpowX 5).1
+        (by norm_num)).trans_eq (by norm_num)
+  have hS5x3 : 0 ≤ S5 * x ^ 3 ∧ S5 * x ^ 3 ≤ 5 := by
+    constructor
+    · exact mul_nonneg hS5.1 (hpowX 3).1
+    · exact (mul_le_mul hS5.2 (hpowX 3).2 (hpowX 3).1
+        (by norm_num)).trans_eq (by norm_num)
+  have hS4x3 : 0 ≤ S4 * x ^ 3 ∧ S4 * x ^ 3 ≤ 4 := by
+    constructor
+    · exact mul_nonneg hS4.1 (hpowX 3).1
+    · exact (mul_le_mul hS4.2 (hpowX 3).2 (hpowX 3).1
+        (by norm_num)).trans_eq (by norm_num)
+  have hS2x3 : 0 ≤ S2 * x ^ 3 ∧ S2 * x ^ 3 ≤ 2 := by
+    constructor
+    · exact mul_nonneg hS2.1 (hpowX 3).1
+    · exact (mul_le_mul hS2.2 (hpowX 3).2 (hpowX 3).1
+        (by norm_num)).trans_eq (by norm_num)
+  have hS5x : 0 ≤ S5 * x ∧ S5 * x ≤ 5 := by
+    constructor
+    · exact mul_nonneg hS5.1 hx0
+    · exact (mul_le_mul hS5.2 hx1 hx0 (by norm_num)).trans_eq
+        (by norm_num)
+  have hS4x : 0 ≤ S4 * x ∧ S4 * x ≤ 4 := by
+    constructor
+    · exact mul_nonneg hS4.1 hx0
+    · exact (mul_le_mul hS4.2 hx1 hx0 (by norm_num)).trans_eq
+        (by norm_num)
+  have hS3x : 0 ≤ S3 * x ∧ S3 * x ≤ 3 := by
+    constructor
+    · exact mul_nonneg hS3.1 hx0
+    · exact (mul_le_mul hS3.2 hx1 hx0 (by norm_num)).trans_eq
+        (by norm_num)
+  have hS2x : 0 ≤ S2 * x ∧ S2 * x ≤ 2 := by
+    constructor
+    · exact mul_nonneg hS2.1 hx0
+    · exact (mul_le_mul hS2.2 hx1 hx0 (by norm_num)).trans_eq
+        (by norm_num)
+  have hQ : |Q| ≤ 1 := by
+    rw [abs_le]
+    dsimp only [Q]
+    constructor <;> nlinarith [hS4x5.1, hS4x5.2, hS5x3.1, hS5x3.2,
+      hS4x3.1, hS4x3.2, hS2x3.1, hS2x3.2, hS5x.1, hS5x.2,
+      hS4x.1, hS4x.2, hS3x.1, hS3x.2, hS2x.1, hS2x.2]
+  have hfactor :
+      fourCellOddP11P1PolynomialInteraction a x -
+          fourCellOddP11P1PolynomialInteraction b x = (a - b) * Q := by
+    unfold fourCellOddP11P1PolynomialInteraction
+    dsimp only [Q, S2, S3, S4, S5]
+    ring
+  rw [hfactor, abs_mul]
+  simpa only [mul_one] using
+    mul_le_mul_of_nonneg_left hQ (abs_nonneg (a - b))
+
+private theorem abs_fourCellOperatorHalfWidth_sub_rational_lt :
+    |fourCellOperatorHalfWidth - fourCellOddP11P1RationalHalfWidth| <
+      (1 / 1000000 : ℝ) := by
+  have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds
+  have hnonpos : fourCellOperatorHalfWidth -
+      fourCellOddP11P1RationalHalfWidth ≤ 0 := by
+    unfold fourCellOperatorHalfWidth fourCellOddP11P1RationalHalfWidth
+    linarith [hlog.2]
+  rw [abs_of_nonpos hnonpos]
+  unfold fourCellOperatorHalfWidth fourCellOddP11P1RationalHalfWidth
+  linarith [hlog.1]
+
+private theorem sqrt_two_mul_log_two_P1_fine_bounds :
+    (1414213562 / 1000000000 : ℝ) *
+        (69314718055 / 100000000000 : ℝ) <
+          Real.sqrt 2 * Real.log 2 ∧
+      Real.sqrt 2 * Real.log 2 <
+        (1414213563 / 1000000000 : ℝ) *
+          (69314718057 / 100000000000 : ℝ) := by
+  have hs0 : 0 ≤ Real.sqrt 2 := Real.sqrt_nonneg 2
+  have hs2 : Real.sqrt 2 ^ 2 = 2 := by
+    simpa only using Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)
+  have hslo : (1414213562 / 1000000000 : ℝ) < Real.sqrt 2 := by
+    have hrat : (1414213562 / 1000000000 : ℝ) ^ 2 < 2 := by
+      norm_num
+    nlinarith
+  have hshi : Real.sqrt 2 < (1414213563 / 1000000000 : ℝ) := by
+    have hrat : (2 : ℝ) <
+        (1414213563 / 1000000000 : ℝ) ^ 2 := by
+      norm_num
+    nlinarith
+  have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds
+  have hspos : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  have hlogpos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  constructor
+  · exact (mul_lt_mul_of_pos_right hslo (by norm_num)).trans
+      (mul_lt_mul_of_pos_left hlog.1 hspos)
+  · exact (mul_lt_mul_of_pos_right hshi hlogpos).trans
+      (mul_lt_mul_of_pos_left hlog.2 (by norm_num))
+
+private theorem abs_endpointScale_sub_rational_lt :
+    |Real.sqrt 2 * Real.log 2 -
+        fourCellOddP11P1RationalEndpointScale| < (1 / 1000000 : ℝ) := by
+  have hs := sqrt_two_mul_log_two_P1_fine_bounds
+  have hnonpos : Real.sqrt 2 * Real.log 2 -
+      fourCellOddP11P1RationalEndpointScale ≤ 0 := by
+    unfold fourCellOddP11P1RationalEndpointScale
+    norm_num at hs ⊢
+    linarith [hs.2]
+  rw [abs_of_nonpos hnonpos]
+  unfold fourCellOddP11P1RationalEndpointScale
+  norm_num at hs ⊢
+  linarith [hs.1]
+
+private def fourCellOddP11P1ExactLowerH (x : ℝ) : ℝ :=
+  -2 * fourCellOperatorHalfWidth * fourCellOddP11P1RegularRepresenter x -
+    fourCellOddP11P1Selector x - (27 / 250) * x
+
+private def fourCellOddP11P1ExactUpperH (x : ℝ) : ℝ :=
+  Real.sqrt 2 * Real.log 2 * (8 / 5 - x) -
+    2 * fourCellOperatorHalfWidth * fourCellOddP11P1RegularRepresenter x -
+    fourCellOddP11P1Selector x - (6 / 5 - (57 / 25) * x)
+
+private theorem fourCellOddP11P1LowerResidual_eq_weight_add_H (x : ℝ) :
+    fourCellOddP11P1LowerSelectorResidual x =
+      x * fourCellOddP11SelectorLowerWeight x +
+        fourCellOddP11P1ExactLowerH x := by
+  unfold fourCellOddP11P1LowerSelectorResidual
+    fourCellOddP11P1LowerRepresenter
+    fourCellOddP11SelectorLowerWeight fourCellOddP11P1ExactLowerH
+  ring
+
+private theorem fourCellOddP11P1UpperResidual_eq_weight_add_H
+    {x : ℝ} (hx : x ≠ 0) :
+    fourCellOddP11P1UpperSelectorResidual x =
+      x * fourCellOddP11SelectorUpperWeight x +
+        fourCellOddP11P1ExactUpperH x := by
+  unfold fourCellOddP11P1UpperSelectorResidual
+    fourCellOddP11P1UpperRepresenter fourCellOddP11P1LowerRepresenter
+    fourCellOddP11SelectorUpperWeight fourCellOddP11P1ExactUpperH
+  field_simp [hx]
+  ring
+
+private theorem abs_P1_polynomialInteraction_sub_rational_lt
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    |2 * fourCellOperatorHalfWidth *
+          fourCellOddP11P1RegularPolynomialRepresenter x -
+        2 * fourCellOddP11P1RationalHalfWidth *
+          fourCellOddP11P1RationalRegularRepresenter x| <
+      (1 / 1000000 : ℝ) := by
+  have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha1 : fourCellOperatorHalfWidth ≤ 1 := by
+    unfold fourCellOperatorHalfWidth
+    linarith [hlog.2]
+  have hb0 : 0 ≤ fourCellOddP11P1RationalHalfWidth := by
+    unfold fourCellOddP11P1RationalHalfWidth
+    norm_num
+  have hb1 : fourCellOddP11P1RationalHalfWidth ≤ 1 := by
+    unfold fourCellOddP11P1RationalHalfWidth
+    norm_num
+  have hlip := fourCellOddP11P1PolynomialInteraction_lipschitz
+    ha0 ha1 hb0 hb1 hx0 hx1
+  have heq :
+      2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularPolynomialRepresenter x -
+          2 * fourCellOddP11P1RationalHalfWidth *
+            fourCellOddP11P1RationalRegularRepresenter x =
+        fourCellOddP11P1PolynomialInteraction fourCellOperatorHalfWidth x -
+          fourCellOddP11P1PolynomialInteraction
+            fourCellOddP11P1RationalHalfWidth x := by
+    rw [fourCellOddP11P1RegularPolynomialRepresenter_eq]
+    unfold fourCellOddP11P1RationalRegularRepresenter
+      fourCellOddP11P1PolynomialInteraction
+    ring
+  rw [heq]
+  exact hlip.trans_lt abs_fourCellOperatorHalfWidth_sub_rational_lt
+
+private theorem abs_twoHalfWidth_mul_P1Remainder_le
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    |2 * fourCellOperatorHalfWidth *
+        fourCellOddP11P1RegularRemainderRepresenter x| ≤
+      (1 / 700 : ℝ) := by
+  have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds
+  have ha0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha1 : 2 * fourCellOperatorHalfWidth ≤ 1 := by
+    unfold fourCellOperatorHalfWidth
+    linarith [hlog.2]
+  have hrem := norm_fourCellOddP11P1RegularRemainderRepresenter_le hx
+  rw [Real.norm_eq_abs] at hrem
+  rw [abs_mul, abs_of_nonneg ha0]
+  calc
+    2 * fourCellOperatorHalfWidth *
+        |fourCellOddP11P1RegularRemainderRepresenter x| ≤
+        1 * (1 / 700 : ℝ) :=
+      mul_le_mul ha1 hrem (abs_nonneg _) (by norm_num)
+    _ = _ := by ring
+
+private theorem abs_fourCellOddP11P1ExactLowerH_sub_rational_lt
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    |fourCellOddP11P1ExactLowerH x -
+        fourCellOddP11P1RationalLowerH x| < (1 / 600 : ℝ) := by
+  have hx : x ∈ Icc (-1 : ℝ) 1 := ⟨by linarith, hx1⟩
+  have hsplit :=
+    fourCellOddP11P1RegularRepresenter_eq_polynomial_add_remainder hx
+  have hpoly := abs_P1_polynomialInteraction_sub_rational_lt hx0 hx1
+  have hrem := abs_twoHalfWidth_mul_P1Remainder_le hx
+  have heq :
+      fourCellOddP11P1ExactLowerH x -
+          fourCellOddP11P1RationalLowerH x =
+        -(2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularPolynomialRepresenter x -
+          2 * fourCellOddP11P1RationalHalfWidth *
+            fourCellOddP11P1RationalRegularRepresenter x) -
+          2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularRemainderRepresenter x := by
+    unfold fourCellOddP11P1ExactLowerH fourCellOddP11P1RationalLowerH
+    rw [hsplit]
+    ring
+  rw [heq]
+  calc
+    |-(2 * fourCellOperatorHalfWidth *
+          fourCellOddP11P1RegularPolynomialRepresenter x -
+        2 * fourCellOddP11P1RationalHalfWidth *
+          fourCellOddP11P1RationalRegularRepresenter x) -
+        2 * fourCellOperatorHalfWidth *
+          fourCellOddP11P1RegularRemainderRepresenter x| ≤
+        |2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularPolynomialRepresenter x -
+          2 * fourCellOddP11P1RationalHalfWidth *
+            fourCellOddP11P1RationalRegularRepresenter x| +
+          |2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularRemainderRepresenter x| := by
+      simpa only [abs_neg] using abs_sub
+        (-(2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularPolynomialRepresenter x -
+          2 * fourCellOddP11P1RationalHalfWidth *
+            fourCellOddP11P1RationalRegularRepresenter x))
+        (2 * fourCellOperatorHalfWidth *
+          fourCellOddP11P1RegularRemainderRepresenter x)
+    _ < (1 / 1000000 : ℝ) + 1 / 700 :=
+      add_lt_add_of_lt_of_le hpoly hrem
+    _ < (1 / 600 : ℝ) := by norm_num
+
+private theorem abs_fourCellOddP11P1ExactUpperH_sub_rational_lt
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    |fourCellOddP11P1ExactUpperH x -
+        fourCellOddP11P1RationalUpperH x| < (1 / 600 : ℝ) := by
+  have hx : x ∈ Icc (-1 : ℝ) 1 := ⟨by linarith, hx1⟩
+  have hsplit :=
+    fourCellOddP11P1RegularRepresenter_eq_polynomial_add_remainder hx
+  have hpoly := abs_P1_polynomialInteraction_sub_rational_lt hx0 hx1
+  have hrem := abs_twoHalfWidth_mul_P1Remainder_le hx
+  have hscale := abs_endpointScale_sub_rational_lt
+  have hfactor0 : 0 ≤ (8 / 5 : ℝ) - x := by linarith
+  have hfactor1 : (8 / 5 : ℝ) - x ≤ 8 / 5 := by linarith
+  have hendpoint :
+      |(Real.sqrt 2 * Real.log 2 -
+          fourCellOddP11P1RationalEndpointScale) * (8 / 5 - x)| <
+        (8 / 5 : ℝ) * (1 / 1000000) := by
+    rw [abs_mul, abs_of_nonneg hfactor0]
+    calc
+      |Real.sqrt 2 * Real.log 2 -
+          fourCellOddP11P1RationalEndpointScale| * (8 / 5 - x) <
+          (1 / 1000000 : ℝ) * (8 / 5 - x) :=
+        mul_lt_mul_of_pos_right hscale (by linarith)
+      _ ≤ (1 / 1000000 : ℝ) * (8 / 5) :=
+        mul_le_mul_of_nonneg_left hfactor1 (by norm_num)
+      _ = (8 / 5 : ℝ) * (1 / 1000000) := by ring
+  have heq :
+      fourCellOddP11P1ExactUpperH x -
+          fourCellOddP11P1RationalUpperH x =
+        (Real.sqrt 2 * Real.log 2 -
+            fourCellOddP11P1RationalEndpointScale) * (8 / 5 - x) -
+          (2 * fourCellOperatorHalfWidth *
+              fourCellOddP11P1RegularPolynomialRepresenter x -
+            2 * fourCellOddP11P1RationalHalfWidth *
+              fourCellOddP11P1RationalRegularRepresenter x) -
+          2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularRemainderRepresenter x := by
+    unfold fourCellOddP11P1ExactUpperH fourCellOddP11P1RationalUpperH
+    rw [hsplit]
+    ring
+  rw [heq]
+  calc
+    |(Real.sqrt 2 * Real.log 2 -
+          fourCellOddP11P1RationalEndpointScale) * (8 / 5 - x) -
+        (2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularPolynomialRepresenter x -
+          2 * fourCellOddP11P1RationalHalfWidth *
+            fourCellOddP11P1RationalRegularRepresenter x) -
+        2 * fourCellOperatorHalfWidth *
+          fourCellOddP11P1RegularRemainderRepresenter x| ≤
+        |(Real.sqrt 2 * Real.log 2 -
+            fourCellOddP11P1RationalEndpointScale) * (8 / 5 - x)| +
+          |2 * fourCellOperatorHalfWidth *
+              fourCellOddP11P1RegularPolynomialRepresenter x -
+            2 * fourCellOddP11P1RationalHalfWidth *
+              fourCellOddP11P1RationalRegularRepresenter x| +
+          |2 * fourCellOperatorHalfWidth *
+            fourCellOddP11P1RegularRemainderRepresenter x| := by
+      calc
+        |(Real.sqrt 2 * Real.log 2 -
+              fourCellOddP11P1RationalEndpointScale) * (8 / 5 - x) -
+            (2 * fourCellOperatorHalfWidth *
+                fourCellOddP11P1RegularPolynomialRepresenter x -
+              2 * fourCellOddP11P1RationalHalfWidth *
+                fourCellOddP11P1RationalRegularRepresenter x) -
+            2 * fourCellOperatorHalfWidth *
+              fourCellOddP11P1RegularRemainderRepresenter x| ≤
+            |(Real.sqrt 2 * Real.log 2 -
+                fourCellOddP11P1RationalEndpointScale) * (8 / 5 - x) -
+              (2 * fourCellOperatorHalfWidth *
+                  fourCellOddP11P1RegularPolynomialRepresenter x -
+                2 * fourCellOddP11P1RationalHalfWidth *
+                  fourCellOddP11P1RationalRegularRepresenter x)| +
+              |2 * fourCellOperatorHalfWidth *
+                fourCellOddP11P1RegularRemainderRepresenter x| := abs_sub _ _
+        _ ≤ (|(Real.sqrt 2 * Real.log 2 -
+                fourCellOddP11P1RationalEndpointScale) * (8 / 5 - x)| +
+              |2 * fourCellOperatorHalfWidth *
+                  fourCellOddP11P1RegularPolynomialRepresenter x -
+                2 * fourCellOddP11P1RationalHalfWidth *
+                  fourCellOddP11P1RationalRegularRepresenter x|) +
+              |2 * fourCellOperatorHalfWidth *
+                fourCellOddP11P1RegularRemainderRepresenter x| :=
+          add_le_add_left (abs_sub _ _) _
+    _ < (8 / 5 : ℝ) * (1 / 1000000) + 1 / 1000000 + 1 / 700 := by
+      linarith
+    _ < (1 / 600 : ℝ) := by norm_num
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellOddP11P1TailSchurStructural
