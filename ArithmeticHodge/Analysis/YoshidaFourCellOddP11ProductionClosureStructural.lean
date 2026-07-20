@@ -1,4 +1,4 @@
-import ArithmeticHodge.Analysis.YoshidaFourCellOddP11ConcreteWeightedDualClosureStructural
+import ArithmeticHodge.Analysis.YoshidaFourCellOddP11WeightedDualSelectorStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP1OrthogonalCoupledClosureStructural
 
 set_option autoImplicit false
@@ -11,6 +11,7 @@ open YoshidaFourCellOddP11ConcreteWeightedDualClosureStructural
 open YoshidaFourCellOddP11CoupledRieszClosureStructural
 open YoshidaFourCellOddP11CoupledRieszDefectClosureStructural
 open YoshidaFourCellOddP11FormDualProbeStructural
+open YoshidaFourCellOddP11WeightedDualSelectorStructural
 open YoshidaFourCellOddP1OrthogonalCoupledClosureStructural
 open YoshidaFourCellOddStripCapacityAssemblyStructural
 open YoshidaFourCellOddStripCapacityClosureStructural
@@ -32,6 +33,29 @@ theorem fourCellOddStripCapacityLowerOperator_nonnegative_of_concreteWeightedDua
     0 ≤ fourCellOddStripCapacityLowerOperator w := by
   have hdefect : FourCellOddP11CoupledRieszDefectNonnegative :=
     fourCellOddP11CoupledRieszDefectNonnegative_of_concreteWeightedDual hdual
+  have hcoupled : FourCellOddP1FiveModeP11CoupledTailBound :=
+    fourCellOddP1FiveModeP11CoupledTailBound_of_correctedDefect hdefect
+  have horthogonal : FourCellOddP1OrthogonalFormDualBound :=
+    fourCellOddP1OrthogonalFormDualBound_of_fiveModeP11CoupledTail hcoupled
+  have hcore : 0 ≤ fourCellOddCoreLocalQuadratic w :=
+    fourCellOddCoreLocalQuadratic_nonneg_of_P1OrthogonalFormDual
+      horthogonal w hw hodd
+  apply fourCellOddStripCapacityLowerOperator_nonneg_of_base_ge_blended
+    w hw.continuous
+  rw [← sub_nonneg]
+  rw [fourCellOddStripCapacityBase_sub_blended_eq_core_add_localWidthDefect
+    w hw hodd]
+  simpa only [fourCellOddCoreLocalQuadratic] using hcore
+
+/-- The weaker correlation-preserving selector Loewner condition feeds the
+same production chain directly; the obsolete independent `D₀` allocation is
+not needed. -/
+theorem fourCellOddStripCapacityLowerOperator_nonnegative_of_selectorLoewner
+    (hselector : FourCellOddP11CoupledSelectorLoewnerCertificate)
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    0 ≤ fourCellOddStripCapacityLowerOperator w := by
+  have hdefect : FourCellOddP11CoupledRieszDefectNonnegative :=
+    fourCellOddP11CoupledRieszDefectNonnegative_of_selectorLoewner hselector
   have hcoupled : FourCellOddP1FiveModeP11CoupledTailBound :=
     fourCellOddP1FiveModeP11CoupledTailBound_of_correctedDefect hdefect
   have horthogonal : FourCellOddP1OrthogonalFormDualBound :=
