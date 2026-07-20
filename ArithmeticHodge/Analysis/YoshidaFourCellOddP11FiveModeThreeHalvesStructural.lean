@@ -2,8 +2,10 @@ import ArithmeticHodge.Analysis.YoshidaFourCellOddP11ThreeHalvesClosureStructura
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP11EndpointFormDualClosureStructural
 import ArithmeticHodge.Analysis.ShiftedLogKernelCrossEnergy
 import ArithmeticHodge.Analysis.ShiftedLegendreCenteredL2Structural
+import ArithmeticHodge.Analysis.UnitIntervalLogEnergyProjection
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP11ThreeHalvesCounterTailStructural
 import ArithmeticHodge.Analysis.EndpointPotentialPolynomialPairBilinearStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoEndpointParityPencil
 
 set_option autoImplicit false
 
@@ -15,22 +17,31 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellOddP11FiveModeThreeHalvesStruc
 noncomputable section
 
 open CenteredOddOneThreeEnergy
+open CenteredEndpointCorrelation
 open EndpointPotentialPolynomialPairBilinearStructural
 open ShiftedLegendreLogKernel
 open ShiftedLegendreCenteredL2Structural
 open ShiftedLegendreCenteredLowModes
+open ShiftedLegendreLogEigen
 open ShiftedLegendreOrthogonality
+open ShiftedLegendrePolynomialGap
 open ShiftedLogKernelCrossEnergy
 open UnitIntervalIntegralBridge
 open UnitIntervalLogEnergyAffine
+open UnitIntervalLogEnergyProjection
 open YoshidaEndpointEvenTailRepresenter
+open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddResidualRegularity
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialLegendreDiagonalStructural
 open YoshidaEndpointPotentialLegendreOffDiagonalStructural
 open YoshidaFactorTwoContinuousLagRepresenterStructural
+open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoEndpointParityPencil
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
+open YoshidaFactorTwoPhaseIntrinsicResidual
+open YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural
 open YoshidaFactorTwoPhaseCenteredP9Structural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
@@ -47,6 +58,7 @@ open YoshidaFourCellOddFiveModeCoreExpressionBridgeStructural
 open YoshidaFourCellOddStripCapacityClosureStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
+open YoshidaFourCellRawParityFoldStructural
 open YoshidaRegularKernelBound
 
 /-!
@@ -853,6 +865,569 @@ private theorem threeHalvesCounterexampleTail_eq_monomials (x : ℝ) :
     Polynomial.smul_eq_C_mul]
   ring
 
+private theorem threeHalvesCounterexampleLow_eq_monomials (x : ℝ) :
+    fourCellOddP11ThreeHalvesCounterexampleLow x =
+      -(7405 / 3072 : ℝ) * x -
+      (1425 / 256 : ℝ) * x ^ 3 +
+      (22323 / 512 : ℝ) * x ^ 5 -
+      (18161 / 256 : ℝ) * x ^ 7 +
+      (36465 / 1024 : ℝ) * x ^ 9 := by
+  unfold fourCellOddP11ThreeHalvesCounterexampleLow
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  ring
+
+/-- The strip-log image of the fixed low polynomial, kept in its exact
+shifted-Legendre eigenbasis. -/
+private def threeHalvesCounterexampleEndpointLogKernelPolynomial : ℝ[X] :=
+  -(1103523 / 1953125 : ℝ) • shiftedLegendreReal 1 -
+    (34285471 / 35156250 : ℝ) • shiftedLegendreReal 3 -
+    (127413151 / 703125000 : ℝ) • shiftedLegendreReal 5 -
+    (50941 / 27343750 : ℝ) • shiftedLegendreReal 7 -
+    (7129 / 6562500000 : ℝ) • shiftedLegendreReal 9
+
+set_option maxHeartbeats 5000000 in
+private theorem shiftedLogKernel_threeHalvesCounterexampleLow_eq :
+    shiftedLogKernel
+        (fourCellOddFiveModeEndpointStripOddUnitPolynomial
+          (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)) =
+      threeHalvesCounterexampleEndpointLogKernelPolynomial := by
+  have hp :
+      fourCellOddFiveModeEndpointStripOddUnitPolynomial
+          (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ) =
+        -(1103523 / 3906250 : ℝ) • shiftedLegendreReal 1 -
+          (3116861 / 11718750 : ℝ) • shiftedLegendreReal 3 -
+          (930023 / 23437500 : ℝ) • shiftedLegendreReal 5 -
+          (421 / 1171875 : ℝ) • shiftedLegendreReal 7 -
+          (3 / 15625000 : ℝ) • shiftedLegendreReal 9 := by
+    apply Polynomial.funext
+    intro x
+    unfold fourCellOddFiveModeEndpointStripOddUnitPolynomial
+      fourCellOddFiveModeEndpointStripOddPolynomial
+      fourCellOddFiveModePolynomial
+    simp only [Polynomial.eval_add, Polynomial.eval_sub,
+      Polynomial.eval_smul, Polynomial.eval_comp, Polynomial.eval_C,
+      Polynomial.eval_X, Polynomial.eval_pow, smul_eq_mul]
+    norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+      Polynomial.eval_map, Polynomial.eval_finset_sum,
+      Finset.sum_range_succ, Nat.choose]
+    ring
+  rw [hp]
+  simp only [map_sub, map_smul, shiftedLogKernel_shiftedLegendreReal]
+  unfold threeHalvesCounterexampleEndpointLogKernelPolynomial
+  apply Polynomial.funext
+  intro x
+  norm_num [harmonic, Finset.sum_range_succ]
+  ring
+
+private theorem fourCellOddFiveModeRawUpperRepresenter_threeHalves_eq
+    (x : ℝ) :
+    fourCellOddFiveModeRawUpperRepresenter
+        (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ) x =
+      threeHalvesCounterexampleEndpointLogKernelPolynomial.eval
+          ((5 * x - 3) / 2) -
+        threeHalvesCounterexampleEndpointLogKernelPolynomial.eval
+          ((5 - 5 * x) / 2) := by
+  unfold fourCellOddFiveModeRawUpperRepresenter
+  rw [shiftedLogKernel_threeHalvesCounterexampleLow_eq]
+
+set_option maxHeartbeats 10000000 in
+private theorem threeHalvesCounterexample_endpointStripOddRawPolarization_eq :
+    fourCellOddEndpointStripOddRawPolarization
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail =
+      (-(10297173152795488687957277 /
+        183354131877422332763671875 : ℝ)) := by
+  have htailDiff :
+      ContDiff ℝ 1 fourCellOddP11ThreeHalvesCounterexampleTail := by
+    unfold fourCellOddP11ThreeHalvesCounterexampleTail
+    exact fourCellOddP11ThreeHalvesCounterexampleTailPolynomial.contDiff_aeval
+      (𝕜 := ℝ) 1
+  have hraw :=
+    fourCellOddEndpointStripOddRawPolarization_fiveMode_eq_integral
+      (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+      fourCellOddP11ThreeHalvesCounterexampleTail
+      htailDiff
+  change fourCellOddEndpointStripOddRawPolarization
+      fourCellOddP11ThreeHalvesCounterexampleLow
+      fourCellOddP11ThreeHalvesCounterexampleTail = _ at hraw
+  rw [hraw]
+  simp_rw [fourCellOddFiveModeRawUpperRepresenter_threeHalves_eq,
+    threeHalvesCounterexampleTail_eq_monomials]
+  unfold threeHalvesCounterexampleEndpointLogKernelPolynomial
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  norm_num
+
+set_option maxHeartbeats 10000000 in
+private theorem threeHalvesCounterexample_endpointStripEvenMassBilinear_eq :
+    fourCellOddEndpointStripEvenMassBilinear
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail =
+      (252258544870025701014232 /
+        26193447411060333251953125 : ℝ) := by
+  have hlow : Continuous fourCellOddP11ThreeHalvesCounterexampleLow := by
+    exact (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+      (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)).continuous
+  have htail : Continuous fourCellOddP11ThreeHalvesCounterexampleTail := by
+    unfold fourCellOddP11ThreeHalvesCounterexampleTail
+    exact fourCellOddP11ThreeHalvesCounterexampleTailPolynomial.continuous
+  rw [fourCellOddEndpointStripEvenMassBilinear_eq_integral
+    fourCellOddP11ThreeHalvesCounterexampleLow
+    fourCellOddP11ThreeHalvesCounterexampleTail hlow htail]
+  simp_rw [threeHalvesCounterexampleLow_eq_monomials,
+    threeHalvesCounterexampleTail_eq_monomials]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  norm_num
+
+set_option maxHeartbeats 10000000 in
+private theorem threeHalvesCounterexample_endpointStripOddMassBilinear_eq :
+    fourCellOddEndpointStripOddMassBilinear
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail =
+      (-(291084660486861304919858 /
+        36670826375484466552734375 : ℝ)) := by
+  have hlow : Continuous fourCellOddP11ThreeHalvesCounterexampleLow := by
+    exact (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+      (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)).continuous
+  have htail : Continuous fourCellOddP11ThreeHalvesCounterexampleTail := by
+    unfold fourCellOddP11ThreeHalvesCounterexampleTail
+    exact fourCellOddP11ThreeHalvesCounterexampleTailPolynomial.continuous
+  rw [fourCellOddEndpointStripOddMassBilinear_eq_integral
+    fourCellOddP11ThreeHalvesCounterexampleLow
+    fourCellOddP11ThreeHalvesCounterexampleTail hlow htail]
+  simp_rw [threeHalvesCounterexampleLow_eq_monomials,
+    threeHalvesCounterexampleTail_eq_monomials]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  norm_num
+
+private def threeHalvesCounterexampleLowPolynomial : ℝ[X] :=
+  centeredShiftedLegendreReal 1 - centeredShiftedLegendreReal 3 +
+    (1 / 4 : ℝ) • centeredShiftedLegendreReal 5 -
+    (1 / 6 : ℝ) • centeredShiftedLegendreReal 7 -
+    (3 / 8 : ℝ) • centeredShiftedLegendreReal 9
+
+private theorem threeHalvesCounterexampleLow_eq_eval (x : ℝ) :
+    fourCellOddP11ThreeHalvesCounterexampleLow x =
+      threeHalvesCounterexampleLowPolynomial.eval x := by
+  rw [threeHalvesCounterexampleLow_eq_monomials]
+  unfold threeHalvesCounterexampleLowPolynomial
+  norm_num [centeredShiftedLegendreReal, shiftedLegendreReal,
+    Polynomial.shiftedLegendre, Polynomial.eval_comp, Polynomial.eval_map,
+    Polynomial.eval_finset_sum, Finset.sum_range_succ, Nat.choose,
+    Polynomial.smul_eq_C_mul]
+  ring
+
+set_option maxHeartbeats 1000000 in
+private theorem endpointPotentialPolynomialPair_threeHalvesCounterexampleLow_tail_eq :
+    endpointPotentialPolynomialPair threeHalvesCounterexampleLowPolynomial
+        fourCellOddP11ThreeHalvesCounterexampleTailPolynomial =
+      (560680694743 / 129592932084000 : ℝ) := by
+  have hoff : ∀ {m n : ℕ}, m < n → Even (m + n) →
+      endpointPotentialPolynomialPair
+          (centeredShiftedLegendreReal m)
+          (centeredShiftedLegendreReal n) =
+        2 / (((n : ℝ) - m) * ((n : ℝ) + m + 1)) := by
+    intro m n hmn heven
+    simpa only [endpointPotentialPolynomialPair] using
+      integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+        hmn heven
+  unfold threeHalvesCounterexampleLowPolynomial
+    fourCellOddP11ThreeHalvesCounterexampleTailPolynomial
+  simp only [endpointPotentialPolynomialPair_add_left,
+    endpointPotentialPolynomialPair_sub_left,
+    endpointPotentialPolynomialPair_smul_left,
+    endpointPotentialPolynomialPair_add_right,
+    endpointPotentialPolynomialPair_sub_right,
+    endpointPotentialPolynomialPair_smul_right]
+  rw [hoff (m := 1) (n := 13) (by omega) (by norm_num),
+    hoff (m := 1) (n := 17) (by omega) (by norm_num),
+    hoff (m := 1) (n := 21) (by omega) (by norm_num),
+    hoff (m := 1) (n := 25) (by omega) (by norm_num),
+    hoff (m := 3) (n := 13) (by omega) (by norm_num),
+    hoff (m := 3) (n := 17) (by omega) (by norm_num),
+    hoff (m := 3) (n := 21) (by omega) (by norm_num),
+    hoff (m := 3) (n := 25) (by omega) (by norm_num),
+    hoff (m := 5) (n := 13) (by omega) (by norm_num),
+    hoff (m := 5) (n := 17) (by omega) (by norm_num),
+    hoff (m := 5) (n := 21) (by omega) (by norm_num),
+    hoff (m := 5) (n := 25) (by omega) (by norm_num),
+    hoff (m := 7) (n := 13) (by omega) (by norm_num),
+    hoff (m := 7) (n := 17) (by omega) (by norm_num),
+    hoff (m := 7) (n := 21) (by omega) (by norm_num),
+    hoff (m := 7) (n := 25) (by omega) (by norm_num),
+    hoff (m := 9) (n := 13) (by omega) (by norm_num),
+    hoff (m := 9) (n := 17) (by omega) (by norm_num),
+    hoff (m := 9) (n := 21) (by omega) (by norm_num),
+    hoff (m := 9) (n := 25) (by omega) (by norm_num)]
+  norm_num
+
+private theorem integral_endpointPotential_threeHalvesCounterexampleLow_mul_tail_eq :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x *
+        fourCellOddP11ThreeHalvesCounterexampleLow x *
+        fourCellOddP11ThreeHalvesCounterexampleTail x) =
+      (560680694743 / 259185864168000 : ℝ) := by
+  have hpair :=
+    endpointPotentialPolynomialPair_threeHalvesCounterexampleLow_tail_eq
+  unfold endpointPotentialPolynomialPair at hpair
+  rw [show (fun x : ℝ ↦
+      yoshidaEndpointPotential x *
+        threeHalvesCounterexampleLowPolynomial.eval x *
+        fourCellOddP11ThreeHalvesCounterexampleTailPolynomial.eval x) =
+      fun x ↦ yoshidaEndpointPotential x *
+        fourCellOddP11ThreeHalvesCounterexampleLow x *
+        fourCellOddP11ThreeHalvesCounterexampleTail x by
+    funext x
+    rw [threeHalvesCounterexampleLow_eq_eval]
+    rfl] at hpair
+  have hInt : IntervalIntegrable (fun x : ℝ ↦
+      yoshidaEndpointPotential x *
+        (fourCellOddP11ThreeHalvesCounterexampleLow x *
+          fourCellOddP11ThreeHalvesCounterexampleTail x)) volume (-1) 1 := by
+    simpa only [mul_assoc] using
+      YoshidaEndpointEvenTailRepresenter.intervalIntegrable_endpointPotential_mul
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail
+        (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+          (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)).continuous
+        fourCellOddP11ThreeHalvesCounterexampleTailPolynomial.continuous
+  have hlowOdd : Function.Odd
+      fourCellOddP11ThreeHalvesCounterexampleLow :=
+    odd_fourCellOddOneThreeFiveSevenNineLowProfile
+      (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+  have htailOdd : Function.Odd
+      fourCellOddP11ThreeHalvesCounterexampleTail := by
+    intro x
+    simp_rw [threeHalvesCounterexampleTail_eq_monomials]
+    ring
+  have heven : Function.Even (fun x : ℝ ↦
+      yoshidaEndpointPotential x *
+        (fourCellOddP11ThreeHalvesCounterexampleLow x *
+          fourCellOddP11ThreeHalvesCounterexampleTail x)) := by
+    intro x
+    change yoshidaEndpointPotential (-x) *
+        (fourCellOddP11ThreeHalvesCounterexampleLow (-x) *
+          fourCellOddP11ThreeHalvesCounterexampleTail (-x)) = _
+    unfold yoshidaEndpointPotential
+    rw [hlowOdd x, htailOdd x]
+    ring_nf
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even
+    (fun x : ℝ ↦ yoshidaEndpointPotential x *
+      (fourCellOddP11ThreeHalvesCounterexampleLow x *
+        fourCellOddP11ThreeHalvesCounterexampleTail x)) hInt heven
+  rw [show (fun x : ℝ ↦ yoshidaEndpointPotential x *
+      (fourCellOddP11ThreeHalvesCounterexampleLow x *
+        fourCellOddP11ThreeHalvesCounterexampleTail x)) =
+      fun x ↦ yoshidaEndpointPotential x *
+        fourCellOddP11ThreeHalvesCounterexampleLow x *
+        fourCellOddP11ThreeHalvesCounterexampleTail x by
+    funext x
+    ring_nf] at hfold
+  rw [hpair] at hfold
+  linarith
+
+/-- Exact centered correlation of the fixed low/tail pair.  The missing even
+powers are genuinely zero; this sparsity is inherited from odd--odd
+Legendre parity rather than imposed by truncation. -/
+private def threeHalvesCounterexampleLowTailCenteredCorrelation (t : ℝ) : ℝ :=
+  -(7 / 180 : ℝ) * t - (89 / 8 : ℝ) * t ^ 2 +
+    (242479 / 432 : ℝ) * t ^ 3 - (11809769 / 960 : ℝ) * t ^ 4 +
+    (127985903 / 960 : ℝ) * t ^ 5 -
+      (1515135853 / 2880 : ℝ) * t ^ 6 -
+    (4838737033 / 1344 : ℝ) * t ^ 7 +
+      (63992179329 / 1024 : ℝ) * t ^ 8 -
+    (30057040533169 / 69120 : ℝ) * t ^ 9 +
+      (29904657953131 / 15360 : ℝ) * t ^ 10 -
+    (96623948505721 / 15360 : ℝ) * t ^ 11 +
+      (1139116876346605 / 73728 : ℝ) * t ^ 12 -
+    (365040424013395 / 12288 : ℝ) * t ^ 13 +
+      (1305840358705745 / 28672 : ℝ) * t ^ 14 -
+    (20764654092546731 / 368640 : ℝ) * t ^ 15 +
+      (3709096574739965 / 65536 : ℝ) * t ^ 16 -
+    (6076092337776439 / 131072 : ℝ) * t ^ 17 +
+      (18261158768752855 / 589824 : ℝ) * t ^ 18 -
+    (132208552859299919 / 7864320 : ℝ) * t ^ 19 +
+      (3865602906925695 / 524288 : ℝ) * t ^ 20 -
+    (1705506310328227199 / 660602880 : ℝ) * t ^ 21 +
+      (185423721177825 / 262144 : ℝ) * t ^ 22 -
+    (76548474733445 / 524288 : ℝ) * t ^ 23 +
+      (43892571679775 / 2097152 : ℝ) * t ^ 24 -
+    (8670055072497 / 5242880 : ℝ) * t ^ 25 +
+      (3694746319123 / 603979776 : ℝ) * t ^ 27 +
+    (385395070519 / 805306368 : ℝ) * t ^ 29 -
+      (73081106369 / 1610612736 : ℝ) * t ^ 31 +
+    (169747304519 / 77309411328 : ℝ) * t ^ 33 -
+      (836978961 / 17179869184 : ℝ) * t ^ 35
+
+set_option maxHeartbeats 20000000 in
+private theorem factorTwoCenteredCorrelationBilinear_threeHalvesCounterexample_eq
+    (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail t =
+      threeHalvesCounterexampleLowTailCenteredCorrelation t := by
+  have hlowOdd : Function.Odd
+      fourCellOddP11ThreeHalvesCounterexampleLow :=
+    odd_fourCellOddOneThreeFiveSevenNineLowProfile
+      (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+  have htailOdd : Function.Odd
+      fourCellOddP11ThreeHalvesCounterexampleTail := by
+    intro x
+    simp_rw [threeHalvesCounterexampleTail_eq_monomials]
+    ring
+  have hswap := factorTwoCenteredCrossCorrelation_swap_of_odd_odd
+    hlowOdd htailOdd t
+  unfold factorTwoCenteredCorrelationBilinear
+  rw [hswap]
+  rw [show (factorTwoCenteredCrossCorrelation
+          fourCellOddP11ThreeHalvesCounterexampleLow
+          fourCellOddP11ThreeHalvesCounterexampleTail t +
+        factorTwoCenteredCrossCorrelation
+          fourCellOddP11ThreeHalvesCounterexampleLow
+          fourCellOddP11ThreeHalvesCounterexampleTail t) / 2 =
+      factorTwoCenteredCrossCorrelation
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail t by ring]
+  change factorTwoCenteredCrossCorrelation
+      fourCellOddP11ThreeHalvesCounterexampleLow
+      fourCellOddP11ThreeHalvesCounterexampleTail t = _
+  unfold factorTwoCenteredCrossCorrelation
+  simp_rw [threeHalvesCounterexampleLow_eq_monomials,
+    threeHalvesCounterexampleTail_eq_monomials]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) (1 - t))
+    (Continuous.intervalIntegrable (by fun_prop) (-1) (1 - t))]
+  simp only [intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_mul_const,
+    YoshidaEndpointOcticPotential.integral_pow_nat]
+  have hlinear (c : ℝ) :
+      (∫ x : ℝ in -1..1 - t, c * x) =
+        c * (((1 - t) ^ 2 - (-1 : ℝ) ^ 2) / 2) := by
+    calc
+      (∫ x : ℝ in -1..1 - t, c * x) =
+          c * (∫ x : ℝ in -1..1 - t, x) :=
+        intervalIntegral.integral_const_mul c (fun x : ℝ ↦ x)
+      _ = _ := by
+        congr 1
+        convert YoshidaEndpointOcticPotential.integral_pow_nat 1
+          (-(1 : ℝ)) (1 - t) using 1 <;> norm_num
+  repeat rw [hlinear]
+  norm_num
+  unfold threeHalvesCounterexampleLowTailCenteredCorrelation
+  ring
+
+set_option maxHeartbeats 10000000 in
+set_option maxRecDepth 100000 in
+private theorem integral_regularPolynomial_threeHalvesCorrelation_eq :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        threeHalvesCounterexampleLowTailCenteredCorrelation t) =
+      (1 / 11598888960 : ℝ) * Real.log 2 ^ 3 +
+        (53785 / 290505513077047296 : ℝ) * Real.log 2 ^ 5 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    threeHalvesCounterexampleLowTailCenteredCorrelation
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  norm_num
+  ring
+
+set_option maxHeartbeats 10000000 in
+private theorem factorTwoIntrinsicEnergy_threeHalvesCounterexampleLow_eq :
+    factorTwoIntrinsicEnergy fourCellOddP11ThreeHalvesCounterexampleLow =
+      (6207983 / 6320160 : ℝ) := by
+  unfold factorTwoIntrinsicEnergy
+  simp_rw [threeHalvesCounterexampleLow_eq_monomials]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)]
+  norm_num
+
+set_option maxHeartbeats 10000000 in
+private theorem factorTwoIntrinsicEnergy_threeHalvesCounterexampleTail_eq :
+    factorTwoIntrinsicEnergy fourCellOddP11ThreeHalvesCounterexampleTail =
+      (193988 / 1151325 : ℝ) := by
+  unfold factorTwoIntrinsicEnergy
+  simp_rw [threeHalvesCounterexampleTail_eq_monomials]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)]
+  norm_num
+
+private theorem abs_regularKernel_threeHalvesCorrelation_lt :
+    |∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        threeHalvesCounterexampleLowTailCenteredCorrelation t| <
+      (73 / 10000000 : ℝ) := by
+  let C : ℝ → ℝ := threeHalvesCounterexampleLowTailCenteredCorrelation
+  let K : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+  let P : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) * C t
+  let E : ℝ := fourCellWideRegularEnvelopeError C
+  have hC : Continuous C := by
+    dsimp only [C]
+    unfold threeHalvesCounterexampleLowTailCenteredCorrelation
+    fun_prop
+  have hKmeas : Measurable K := by
+    dsimp only [K]
+    exact measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)
+  have hKbound : ∀ t ∈ Icc (0 : ℝ) 2, |K t| ≤ (1 / 4 : ℝ) := by
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+    have harg4 : fourCellOperatorHalfWidth * t ≤ 5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤
+            fourCellOperatorHalfWidth * 2 := hmul
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 harg4
+    have hk1 := yoshidaRegularKernel_le_quarter harg0
+    dsimp only [K]
+    rw [abs_of_nonneg hk0]
+    exact hk1
+  have hfull : IntervalIntegrable (fun t : ℝ ↦ K t * C t)
+      volume 0 2 :=
+    intervalIntegrable_boundedLag_mul_continuous K C hKmeas hC
+      (1 / 4 : ℝ) hKbound
+  have hpoly : IntervalIntegrable (fun t : ℝ ↦
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) * C t)
+      volume 0 2 := by
+    exact (by
+      unfold yoshidaRegularKernelPolynomial6
+      fun_prop : Continuous (fun t : ℝ ↦
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+          C t)).intervalIntegrable 0 2
+  have hEeq : E = (∫ t : ℝ in 0..2, K t * C t) - P := by
+    dsimp only [E, P]
+    unfold fourCellWideRegularEnvelopeError
+    rw [← intervalIntegral.integral_sub hfull hpoly]
+    apply intervalIntegral.integral_congr
+    intro t _ht
+    dsimp only [K]
+    ring
+  have hPexact := integral_regularPolynomial_threeHalvesCorrelation_eq
+  change P = _ at hPexact
+  have hlog0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hloghi := YoshidaConstantBounds.strict_log_two_bounds.2
+  have hlogseven : Real.log 2 < (7 / 10 : ℝ) :=
+    hloghi.trans (by norm_num)
+  have hlog3 : Real.log 2 ^ 3 < (7 / 10 : ℝ) ^ 3 :=
+    pow_lt_pow_left₀ hlogseven hlog0.le (by norm_num : (3 : ℕ) ≠ 0)
+  have hlog5 : Real.log 2 ^ 5 < (7 / 10 : ℝ) ^ 5 :=
+    pow_lt_pow_left₀ hlogseven hlog0.le (by norm_num : (5 : ℕ) ≠ 0)
+  have hPpos : 0 < P := by
+    rw [hPexact]
+    positivity
+  have hPabs : |P| < (1 / 1000000000 : ℝ) := by
+    rw [abs_of_pos hPpos, hPexact]
+    nlinarith
+  have hmass :=
+    integral_abs_factorTwoCenteredCorrelationBilinear_le_half_energy_add
+      fourCellOddP11ThreeHalvesCounterexampleLow
+      fourCellOddP11ThreeHalvesCounterexampleTail
+      (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+        (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)).continuous
+      fourCellOddP11ThreeHalvesCounterexampleTailPolynomial.continuous
+  simp_rw [factorTwoCenteredCorrelationBilinear_threeHalvesCounterexample_eq]
+    at hmass
+  rw [factorTwoIntrinsicEnergy_threeHalvesCounterexampleLow_eq,
+    factorTwoIntrinsicEnergy_threeHalvesCounterexampleTail_eq] at hmass
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths C hC
+  change |E| ≤ (1 / 80000 : ℝ) * (∫ t : ℝ in 0..2, |C t|)
+    at herr
+  have hEabs : |E| ≤ (36 / 5000000 : ℝ) := by
+    calc
+      |E| ≤ (1 / 80000 : ℝ) * (∫ t : ℝ in 0..2, |C t|) :=
+        herr
+      _ ≤ (1 / 80000 : ℝ) *
+          ((1 / 2 : ℝ) * (6207983 / 6320160 + 193988 / 1151325)) := by
+        exact mul_le_mul_of_nonneg_left hmass (by norm_num)
+      _ ≤ (36 / 5000000 : ℝ) := by norm_num
+  have hdecomp : (∫ t : ℝ in 0..2, K t * C t) = P + E := by
+    linarith [hEeq]
+  change |∫ t : ℝ in 0..2, K t * C t| < (73 / 10000000 : ℝ)
+  rw [hdecomp]
+  calc
+    |P + E| ≤ |P| + |E| := abs_add_le P E
+    _ < (1 / 1000000000 : ℝ) + 36 / 5000000 :=
+      add_lt_add_of_lt_of_le hPabs hEabs
+    _ < (73 / 10000000 : ℝ) := by norm_num
+
+private theorem abs_two_width_regular_threeHalvesCorrelation_lt :
+    |2 * fourCellOperatorHalfWidth *
+      (∫ t : ℝ in 0..2,
+        yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+          factorTwoCenteredCorrelationBilinear
+            fourCellOddP11ThreeHalvesCounterexampleLow
+            fourCellOddP11ThreeHalvesCounterexampleTail t)| <
+      (73 / 10000000 : ℝ) := by
+  simp_rw [factorTwoCenteredCorrelationBilinear_threeHalvesCounterexample_eq]
+  have hI := abs_regularKernel_threeHalvesCorrelation_lt
+  have hwidth0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hwidth1 : 2 * fourCellOperatorHalfWidth < (1 : ℝ) := by
+    have hlog := YoshidaConstantBounds.strict_log_two_bounds.2
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  rw [abs_mul, abs_of_nonneg hwidth0]
+  calc
+    2 * fourCellOperatorHalfWidth *
+        |∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            threeHalvesCounterexampleLowTailCenteredCorrelation t| ≤
+      1 * |∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            threeHalvesCounterexampleLowTailCenteredCorrelation t| := by
+        exact mul_le_mul_of_nonneg_right hwidth1.le (abs_nonneg _)
+    _ < 1 * (73 / 10000000 : ℝ) :=
+      mul_lt_mul_of_pos_left hI (by norm_num)
+    _ = (73 / 10000000 : ℝ) := one_mul _
+
+private theorem threeHalvesCounterexample_sqrt_two_mul_log_two_gt :
+    (4901 / 5000 : ℝ) < Real.sqrt 2 * Real.log 2 := by
+  have hs0 : 0 ≤ Real.sqrt 2 := Real.sqrt_nonneg 2
+  have hs2 : Real.sqrt 2 ^ 2 = 2 := by
+    simpa only using Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)
+  have hslo : (14142 / 10000 : ℝ) < Real.sqrt 2 := by
+    have hrat : (14142 / 10000 : ℝ) ^ 2 < 2 := by norm_num
+    nlinarith
+  have hlogfine := YoshidaConstantBounds.strict_log_two_fine_bounds.1
+  have hloglo : (69314 / 100000 : ℝ) < Real.log 2 := by
+    nlinarith
+  have hspos : 0 < Real.sqrt 2 := Real.sqrt_pos.2 (by norm_num)
+  have hproduct :
+      (14142 / 10000 : ℝ) * (69314 / 100000 : ℝ) <
+        Real.sqrt 2 * Real.log 2 :=
+    (mul_lt_mul_of_pos_right hslo (by norm_num)).trans
+      (mul_lt_mul_of_pos_left hloglo hspos)
+  nlinarith
+
 private theorem integral_zero_three_fifths_threeHalvesCounterexampleTail_sq_eq :
     (∫ x : ℝ in 0..3 / 5,
       fourCellOddP11ThreeHalvesCounterexampleTail x ^ 2) =
@@ -1407,13 +1982,715 @@ theorem fourCellOddP1ExactTailWeight_threeHalvesCounterexampleTail_lt :
   have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds.1
   nlinarith
 
+/-- Exact structural lower enclosure for the fixed mixed low--tail row.  The
+proof diagonalizes the strip singularity, evaluates every polynomial endpoint
+row exactly, and bounds only the analytic regular-kernel remainder. -/
+theorem fourCellOddCoreLocalBilinear_threeHalvesCounterexampleLow_tail_gt :
+    (209 / 6250 : ℝ) <
+      fourCellOddCoreLocalBilinear
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail := by
+  rcases fourCellOddP11ThreeHalvesCounterexampleTail_moments with
+    ⟨hone, hthree, hfive, hseven, hnine⟩
+  have hrow := fourCellOddCoreLocalBilinear_fiveMode_P11Plus_fullyReduced
+    fourCellOddP11ThreeHalvesCounterexampleTail
+      contDiff_fourCellOddP11ThreeHalvesCounterexampleTail
+      odd_fourCellOddP11ThreeHalvesCounterexampleTail
+      hone hthree hfive hseven hnine
+      (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+  change fourCellOddCoreLocalBilinear
+      fourCellOddP11ThreeHalvesCounterexampleLow
+      fourCellOddP11ThreeHalvesCounterexampleTail =
+    -(1 / 2 : ℝ) * fourCellOddEndpointStripOddRawPolarization
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail +
+      fourCellOddRetainedPrimePotentialBilinear
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleTail -
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              fourCellOddP11ThreeHalvesCounterexampleLow
+              fourCellOddP11ThreeHalvesCounterexampleTail t) at hrow
+  unfold fourCellOddRetainedPrimePotentialBilinear at hrow
+  rw [threeHalvesCounterexample_endpointStripOddRawPolarization_eq,
+    threeHalvesCounterexample_endpointStripEvenMassBilinear_eq,
+    threeHalvesCounterexample_endpointStripOddMassBilinear_eq,
+    integral_endpointPotential_threeHalvesCounterexampleLow_mul_tail_eq]
+    at hrow
+  let R : ℝ := 2 * fourCellOperatorHalfWidth *
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        factorTwoCenteredCorrelationBilinear
+          fourCellOddP11ThreeHalvesCounterexampleLow
+          fourCellOddP11ThreeHalvesCounterexampleTail t)
+  have hRabs : |R| < (73 / 10000000 : ℝ) := by
+    simpa only [R] using abs_two_width_regular_threeHalvesCorrelation_lt
+  have hRhi : R < (73 / 10000000 : ℝ) :=
+    (le_abs_self R).trans_lt hRabs
+  have hk := threeHalvesCounterexample_sqrt_two_mul_log_two_gt
+  change fourCellOddCoreLocalBilinear
+      fourCellOddP11ThreeHalvesCounterexampleLow
+      fourCellOddP11ThreeHalvesCounterexampleTail =
+    -(1 / 2 : ℝ) *
+        (-(10297173152795488687957277 /
+          183354131877422332763671875 : ℝ)) +
+      (Real.sqrt 2 * Real.log 2 *
+          (252258544870025701014232 /
+            26193447411060333251953125 : ℝ) +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          (-(291084660486861304919858 /
+            36670826375484466552734375 : ℝ)) +
+        (93 / 50 : ℝ) *
+          (560680694743 / 259185864168000 : ℝ)) - R at hrow
+  rw [hrow]
+  nlinarith
+
+/-! ## Direct structural enclosure of the fixed low diagonal -/
+
+private theorem integral_shiftedLegendreReal_sq_threeHalves_closed (n : ℕ) :
+    (∫ x : ℝ in 0..1, (shiftedLegendreReal n).eval x ^ 2) =
+      1 / (2 * (n : ℝ) + 1) := by
+  have hdiag := centeredLegendreL2Diagonal_closed n
+  unfold centeredLegendreL2Diagonal centeredPolynomialPair at hdiag
+  have htransport := integral_comp_two_mul_sub_one
+    (fun x : ℝ ↦ (centeredShiftedLegendreReal n).eval x ^ 2)
+  rw [show (fun t : ℝ ↦
+      (centeredShiftedLegendreReal n).eval (2 * t - 1) ^ 2) =
+      fun t ↦ (shiftedLegendreReal n).eval t ^ 2 by
+    funext t
+    rw [eval_centeredShiftedLegendreReal]
+    congr 2
+    ring] at htransport
+  rw [show (fun x : ℝ ↦
+      (centeredShiftedLegendreReal n).eval x ^ 2) = fun x ↦
+      (centeredShiftedLegendreReal n).eval x *
+        (centeredShiftedLegendreReal n).eval x by
+    funext x
+    ring,
+    hdiag] at htransport
+  calc
+    (∫ x : ℝ in 0..1, (shiftedLegendreReal n).eval x ^ 2) =
+        (1 / 2 : ℝ) * (2 / (2 * (n : ℝ) + 1)) := htransport
+    _ = 1 / (2 * (n : ℝ) + 1) := by ring
+
+private theorem shiftedLogEnergyBilinear_legendre_threeHalves_ne
+    {m n : ℕ} (hmn : m ≠ n) :
+    ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+        (shiftedLegendreReal m) (shiftedLegendreReal n) = 0 := by
+  rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply,
+    shiftedLogKernel_shiftedLegendreReal]
+  simp only [Polynomial.eval_mul, Polynomial.eval_C]
+  rw [show (fun x : ℝ ↦
+      (shiftedLegendreReal m).eval x *
+        (2 * (harmonic n : ℝ) * (shiftedLegendreReal n).eval x)) =
+      fun x ↦ (2 * (harmonic n : ℝ)) *
+        ((shiftedLegendreReal m).eval x *
+          (shiftedLegendreReal n).eval x) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul,
+    ShiftedLegendreBasis.integral_shiftedLegendreReal_mul_eq_zero hmn]
+  ring
+
+private theorem shiftedLogEnergyBilinear_legendre_threeHalves_self (n : ℕ) :
+    ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+        (shiftedLegendreReal n) (shiftedLegendreReal n) =
+      2 * (harmonic n : ℝ) / (2 * (n : ℝ) + 1) := by
+  rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply,
+    shiftedLogKernel_shiftedLegendreReal]
+  simp only [Polynomial.eval_mul, Polynomial.eval_C]
+  rw [show (fun x : ℝ ↦
+      (shiftedLegendreReal n).eval x *
+        (2 * (harmonic n : ℝ) * (shiftedLegendreReal n).eval x)) =
+      fun x ↦ (2 * (harmonic n : ℝ)) *
+        ((shiftedLegendreReal n).eval x ^ 2) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul,
+    integral_shiftedLegendreReal_sq_threeHalves_closed]
+  ring
+
+private theorem shiftedLogEnergyBilinear_legendre_threeHalves_eq
+    (m n : ℕ) :
+    ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+        (shiftedLegendreReal m) (shiftedLegendreReal n) =
+      if m = n then 2 * (harmonic n : ℝ) / (2 * (n : ℝ) + 1)
+      else 0 := by
+  by_cases hmn : m = n
+  · subst n
+    rw [if_pos rfl, shiftedLogEnergyBilinear_legendre_threeHalves_self]
+  · rw [if_neg hmn,
+      shiftedLogEnergyBilinear_legendre_threeHalves_ne hmn]
+
+private def threeHalvesCounterexampleLowShiftedPolynomial : ℝ[X] :=
+  shiftedLegendreReal 1 - shiftedLegendreReal 3 +
+    (1 / 4 : ℝ) • shiftedLegendreReal 5 -
+    (1 / 6 : ℝ) • shiftedLegendreReal 7 -
+    (3 / 8 : ℝ) • shiftedLegendreReal 9
+
+private theorem centeredPullback_threeHalvesCounterexampleLow_eq
+    (t : ℝ) :
+    centeredPullback fourCellOddP11ThreeHalvesCounterexampleLow t =
+      threeHalvesCounterexampleLowShiftedPolynomial.eval t := by
+  unfold centeredPullback threeHalvesCounterexampleLowShiftedPolynomial
+  rw [threeHalvesCounterexampleLow_eq_monomials]
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose]
+  ring
+
+/-- Local affine bridge from the centered raw logarithmic energy to the
+shifted-polynomial bilinear form. -/
+private theorem centeredRawLogEnergy_eq_four_mul_shiftedPair_local
+    (q : ℝ → ℝ) (p : ℝ[X])
+    (hmode : ∀ t : ℝ, centeredPullback q t = p.eval t) :
+    centeredRawLogEnergy q =
+      4 * ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear p p := by
+  let f : unitInterval → ℝ := fun t ↦ centeredPullback q (t : ℝ)
+  have hfeq : f = fun t : unitInterval ↦ p.eval (t : ℝ) := by
+    funext t
+    exact hmode t
+  have henergy : Integrable (unitIntervalRawLogEnergyIntegrand f) := by
+    rw [hfeq]
+    exact integrable_unitIntervalRawLogEnergyIntegrand_polynomial p
+  have hbridge := unitIntervalLogEnergy_centeredPullback q henergy
+  change unitIntervalLogEnergy f = (1 / 4 : ℝ) * centeredRawLogEnergy q
+    at hbridge
+  rw [hfeq] at hbridge
+  have hpoly := integral_unitIntervalRawLogEnergyIntegrand_polynomial p
+  unfold unitIntervalLogEnergy at hbridge
+  rw [hpoly] at hbridge
+  rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply,
+    ← integral_unitInterval_eq_intervalIntegral]
+  linarith
+
+set_option maxHeartbeats 5000000 in
+private theorem centeredRawLogEnergy_threeHalvesCounterexampleLow_eq :
+    centeredRawLogEnergy fourCellOddP11ThreeHalvesCounterexampleLow =
+      (106844623 / 21067200 : ℝ) := by
+  rw [centeredRawLogEnergy_eq_four_mul_shiftedPair_local
+    fourCellOddP11ThreeHalvesCounterexampleLow
+      threeHalvesCounterexampleLowShiftedPolynomial
+      centeredPullback_threeHalvesCounterexampleLow_eq]
+  unfold threeHalvesCounterexampleLowShiftedPolynomial
+  simp only [map_add, map_sub, map_smul, LinearMap.add_apply,
+    LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul,
+    shiftedLogEnergyBilinear_legendre_threeHalves_eq]
+  norm_num [harmonic, Finset.sum_range_succ]
+
+set_option maxHeartbeats 10000000 in
+private theorem threeHalvesCounterexample_endpointStripOddRawPolarization_self_eq :
+    fourCellOddEndpointStripOddRawPolarization
+        fourCellOddP11ThreeHalvesCounterexampleLow
+        fourCellOddP11ThreeHalvesCounterexampleLow =
+      (1169002197575309831 / 16072998046875000000 : ℝ) := by
+  have hlowDiff := contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+    (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+  have hraw :=
+    fourCellOddEndpointStripOddRawPolarization_fiveMode_eq_integral
+      (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+      fourCellOddP11ThreeHalvesCounterexampleLow hlowDiff
+  change fourCellOddEndpointStripOddRawPolarization
+      fourCellOddP11ThreeHalvesCounterexampleLow
+      fourCellOddP11ThreeHalvesCounterexampleLow = _ at hraw
+  rw [hraw]
+  simp_rw [fourCellOddFiveModeRawUpperRepresenter_threeHalves_eq,
+    threeHalvesCounterexampleLow_eq_monomials]
+  unfold threeHalvesCounterexampleEndpointLogKernelPolynomial
+  norm_num [shiftedLegendreReal, Polynomial.shiftedLegendre,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (3 / 5) 1)]
+  norm_num
+
+private theorem fourCellOddEndpointStripOddRawEnergy_threeHalvesCounterexampleLow_eq :
+    fourCellOddEndpointStripOddRawEnergy
+        fourCellOddP11ThreeHalvesCounterexampleLow =
+      (1169002197575309831 / 16072998046875000000 : ℝ) := by
+  have hlowDiff := contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+    (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+  have hbil := fourCellOddEndpointStripOddRawPolarization_eq_bilinear
+    fourCellOddP11ThreeHalvesCounterexampleLow
+    fourCellOddP11ThreeHalvesCounterexampleLow hlowDiff hlowDiff
+  have hself : centeredRawLogBilinear
+      (fourCellOddEndpointStripOdd fourCellOddP11ThreeHalvesCounterexampleLow)
+      (fourCellOddEndpointStripOdd fourCellOddP11ThreeHalvesCounterexampleLow) =
+    centeredRawLogEnergy
+      (fourCellOddEndpointStripOdd
+        fourCellOddP11ThreeHalvesCounterexampleLow) := by
+    unfold centeredRawLogBilinear centeredRawLogEnergy
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    apply intervalIntegral.integral_congr
+    intro y _hy
+    ring
+  rw [threeHalvesCounterexample_endpointStripOddRawPolarization_self_eq,
+    hself] at hbil
+  unfold fourCellOddEndpointStripOddRawEnergy
+  linarith
+
+set_option maxHeartbeats 10000000 in
+private theorem fourCellOddEndpointStripEvenMass_threeHalvesCounterexampleLow_eq :
+    fourCellOddEndpointStripEvenMass
+        fourCellOddP11ThreeHalvesCounterexampleLow =
+      (9583084061233 / 68664550781250 : ℝ) := by
+  unfold fourCellOddEndpointStripEvenMass fourCellOddEndpointStripEven
+    fourCellOddEndpointStripPullback
+  simp_rw [threeHalvesCounterexampleLow_eq_monomials]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)]
+  norm_num
+
+set_option maxHeartbeats 10000000 in
+private theorem fourCellOddEndpointStripOddMass_threeHalvesCounterexampleLow_eq :
+    fourCellOddEndpointStripOddMass
+        fourCellOddP11ThreeHalvesCounterexampleLow =
+      (71077640014544663 / 4821899414062500000 : ℝ) := by
+  unfold fourCellOddEndpointStripOddMass fourCellOddEndpointStripOdd
+    fourCellOddEndpointStripPullback
+  simp_rw [threeHalvesCounterexampleLow_eq_monomials]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)]
+  norm_num
+
+private theorem endpointPotentialLegendreDiagonal_threeHalvesLow_values :
+    endpointPotentialLegendreDiagonal 1 =
+        (8 / 9 : ℝ) - (2 / 3) * Real.log 2 ∧
+    endpointPotentialLegendreDiagonal 3 =
+        (289 / 735 : ℝ) - (2 / 7) * Real.log 2 ∧
+    endpointPotentialLegendreDiagonal 5 =
+        (19157 / 76230 : ℝ) - (2 / 11) * Real.log 2 ∧
+    endpointPotentialLegendreDiagonal 7 =
+        (249383 / 1351350 : ℝ) - (2 / 15) * Real.log 2 ∧
+    endpointPotentialLegendreDiagonal 9 =
+        (32239703 / 221152932 : ℝ) - (2 / 19) * Real.log 2 := by
+  have h0 := endpointPotentialLegendreDiagonal_zero
+  have h1r := endpointPotentialLegendreDiagonal_succ 0
+  norm_num [h0] at h1r
+  have h1 : endpointPotentialLegendreDiagonal 1 =
+      (8 / 9 : ℝ) - (2 / 3) * Real.log 2 := by linarith
+  have h2r := endpointPotentialLegendreDiagonal_succ 1
+  norm_num [h1] at h2r
+  have h2 : endpointPotentialLegendreDiagonal 2 =
+      (41 / 75 : ℝ) - (2 / 5) * Real.log 2 := by linarith
+  have h3r := endpointPotentialLegendreDiagonal_succ 2
+  norm_num [h2] at h3r
+  have h3 : endpointPotentialLegendreDiagonal 3 =
+      (289 / 735 : ℝ) - (2 / 7) * Real.log 2 := by linarith
+  have h4r := endpointPotentialLegendreDiagonal_succ 3
+  norm_num [h3] at h4r
+  have h4 : endpointPotentialLegendreDiagonal 4 =
+      (1739 / 5670 : ℝ) - (2 / 9) * Real.log 2 := by linarith
+  have h5r := endpointPotentialLegendreDiagonal_succ 4
+  norm_num [h4] at h5r
+  have h5 : endpointPotentialLegendreDiagonal 5 =
+      (19157 / 76230 : ℝ) - (2 / 11) * Real.log 2 := by linarith
+  have h6r := endpointPotentialLegendreDiagonal_succ 5
+  norm_num [h5] at h6r
+  have h6 : endpointPotentialLegendreDiagonal 6 =
+      (249251 / 1171170 : ℝ) - (2 / 13) * Real.log 2 := by linarith
+  have h7r := endpointPotentialLegendreDiagonal_succ 6
+  norm_num [h6] at h7r
+  have h7 : endpointPotentialLegendreDiagonal 7 =
+      (249383 / 1351350 : ℝ) - (2 / 15) * Real.log 2 := by linarith
+  have h8r := endpointPotentialLegendreDiagonal_succ 7
+  norm_num [h7] at h8r
+  have h8 : endpointPotentialLegendreDiagonal 8 =
+      (1696405 / 10414404 : ℝ) - (2 / 17) * Real.log 2 := by linarith
+  have h9r := endpointPotentialLegendreDiagonal_succ 8
+  norm_num [h8] at h9r
+  have h9 : endpointPotentialLegendreDiagonal 9 =
+      (32239703 / 221152932 : ℝ) - (2 / 19) * Real.log 2 := by linarith
+  exact ⟨h1, h3, h5, h7, h9⟩
+
+set_option maxHeartbeats 1000000 in
+private theorem endpointPotentialPolynomialPair_threeHalvesCounterexampleLow_eq :
+    endpointPotentialPolynomialPair threeHalvesCounterexampleLowPolynomial
+        threeHalvesCounterexampleLowPolynomial =
+      (51113720177293 / 56587931769600 : ℝ) -
+        (6207983 / 6320160 : ℝ) * Real.log 2 := by
+  rcases endpointPotentialLegendreDiagonal_threeHalvesLow_values with
+    ⟨h1, h3, h5, h7, h9⟩
+  change endpointPotentialPolynomialPair
+      (centeredShiftedLegendreReal 1)
+      (centeredShiftedLegendreReal 1) = _ at h1
+  change endpointPotentialPolynomialPair
+      (centeredShiftedLegendreReal 3)
+      (centeredShiftedLegendreReal 3) = _ at h3
+  change endpointPotentialPolynomialPair
+      (centeredShiftedLegendreReal 5)
+      (centeredShiftedLegendreReal 5) = _ at h5
+  change endpointPotentialPolynomialPair
+      (centeredShiftedLegendreReal 7)
+      (centeredShiftedLegendreReal 7) = _ at h7
+  change endpointPotentialPolynomialPair
+      (centeredShiftedLegendreReal 9)
+      (centeredShiftedLegendreReal 9) = _ at h9
+  have hoff : ∀ {m n : ℕ}, m < n → Even (m + n) →
+      endpointPotentialPolynomialPair
+          (centeredShiftedLegendreReal m)
+          (centeredShiftedLegendreReal n) =
+        2 / (((n : ℝ) - m) * ((n : ℝ) + m + 1)) := by
+    intro m n hmn heven
+    simpa only [endpointPotentialPolynomialPair] using
+      integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+        hmn heven
+  have hrev : ∀ {m n : ℕ}, m < n → Even (m + n) →
+      endpointPotentialPolynomialPair
+          (centeredShiftedLegendreReal n)
+          (centeredShiftedLegendreReal m) =
+        2 / (((n : ℝ) - m) * ((n : ℝ) + m + 1)) := by
+    intro m n hmn heven
+    rw [endpointPotentialPolynomialPair_comm]
+    exact hoff hmn heven
+  unfold threeHalvesCounterexampleLowPolynomial
+  simp only [endpointPotentialPolynomialPair_add_left,
+    endpointPotentialPolynomialPair_sub_left,
+    endpointPotentialPolynomialPair_smul_left,
+    endpointPotentialPolynomialPair_add_right,
+    endpointPotentialPolynomialPair_sub_right,
+    endpointPotentialPolynomialPair_smul_right]
+  rw [h1, h3, h5, h7, h9,
+    hoff (m := 1) (n := 3) (by omega) (by norm_num),
+    hoff (m := 1) (n := 5) (by omega) (by norm_num),
+    hoff (m := 1) (n := 7) (by omega) (by norm_num),
+    hoff (m := 1) (n := 9) (by omega) (by norm_num),
+    hoff (m := 3) (n := 5) (by omega) (by norm_num),
+    hoff (m := 3) (n := 7) (by omega) (by norm_num),
+    hoff (m := 3) (n := 9) (by omega) (by norm_num),
+    hoff (m := 5) (n := 7) (by omega) (by norm_num),
+    hoff (m := 5) (n := 9) (by omega) (by norm_num),
+    hoff (m := 7) (n := 9) (by omega) (by norm_num),
+    hrev (m := 1) (n := 3) (by omega) (by norm_num),
+    hrev (m := 1) (n := 5) (by omega) (by norm_num),
+    hrev (m := 1) (n := 7) (by omega) (by norm_num),
+    hrev (m := 1) (n := 9) (by omega) (by norm_num),
+    hrev (m := 3) (n := 5) (by omega) (by norm_num),
+    hrev (m := 3) (n := 7) (by omega) (by norm_num),
+    hrev (m := 3) (n := 9) (by omega) (by norm_num),
+    hrev (m := 5) (n := 7) (by omega) (by norm_num),
+    hrev (m := 5) (n := 9) (by omega) (by norm_num),
+    hrev (m := 7) (n := 9) (by omega) (by norm_num)]
+  ring
+
+private theorem integral_endpointPotential_threeHalvesCounterexampleLow_sq_eq :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x *
+        fourCellOddP11ThreeHalvesCounterexampleLow x ^ 2) =
+      (51113720177293 / 113175863539200 : ℝ) -
+        (6207983 / 12640320 : ℝ) * Real.log 2 := by
+  have hoddPolynomial : Function.Odd (fun x : ℝ ↦
+      threeHalvesCounterexampleLowPolynomial.eval x) := by
+    intro x
+    change threeHalvesCounterexampleLowPolynomial.eval (-x) =
+      -threeHalvesCounterexampleLowPolynomial.eval x
+    rw [← threeHalvesCounterexampleLow_eq_eval,
+      ← threeHalvesCounterexampleLow_eq_eval]
+    exact odd_fourCellOddOneThreeFiveSevenNineLowProfile
+      (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ) x
+  have hfold :=
+    integral_zero_one_endpointPotential_polynomial_sq_eq_half_pair
+      threeHalvesCounterexampleLowPolynomial hoddPolynomial
+  rw [endpointPotentialPolynomialPair_threeHalvesCounterexampleLow_eq]
+    at hfold
+  rw [show (fun x : ℝ ↦
+      yoshidaEndpointPotential x *
+        threeHalvesCounterexampleLowPolynomial.eval x ^ 2) =
+      fun x ↦ yoshidaEndpointPotential x *
+        fourCellOddP11ThreeHalvesCounterexampleLow x ^ 2 by
+    funext x
+    rw [threeHalvesCounterexampleLow_eq_eval]] at hfold
+  linarith
+
+private def threeHalvesCounterexampleLowCenteredCorrelation (t : ℝ) : ℝ :=
+  (6207983 / 6320160 : ℝ) - (49 / 576 : ℝ) * t -
+    (35 / 4 : ℝ) * t ^ 2 + (157081 / 3456 : ℝ) * t ^ 3 -
+    (22275 / 128 : ℝ) * t ^ 4 +
+      (498259 / 1280 : ℝ) * t ^ 5 -
+    (100529 / 192 : ℝ) * t ^ 6 +
+      (2341943 / 5376 : ℝ) * t ^ 7 -
+    (109395 / 512 : ℝ) * t ^ 8 +
+      (10870345 / 221184 : ℝ) * t ^ 9 -
+    (49853 / 180224 : ℝ) * t ^ 11 -
+      (145379 / 196608 : ℝ) * t ^ 13 +
+    (296627 / 1474560 : ℝ) * t ^ 15 -
+      (54483 / 2097152 : ℝ) * t ^ 17 +
+    (109395 / 79691776 : ℝ) * t ^ 19
+
+set_option maxHeartbeats 10000000 in
+private theorem centeredEndpointCorrelation_threeHalvesCounterexampleLow_eq
+    (t : ℝ) :
+    centeredEndpointCorrelation
+        fourCellOddP11ThreeHalvesCounterexampleLow t =
+      threeHalvesCounterexampleLowCenteredCorrelation t := by
+  unfold centeredEndpointCorrelation
+  simp_rw [threeHalvesCounterexampleLow_eq_monomials]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) (1 - t))
+    (Continuous.intervalIntegrable (by fun_prop) (-1) (1 - t))]
+  simp only [intervalIntegral.integral_const_mul,
+    intervalIntegral.integral_mul_const,
+    YoshidaEndpointOcticPotential.integral_pow_nat]
+  have hlinear (c : ℝ) :
+      (∫ x : ℝ in -1..1 - t, c * x) =
+        c * (((1 - t) ^ 2 - (-1 : ℝ) ^ 2) / 2) := by
+    calc
+      (∫ x : ℝ in -1..1 - t, c * x) =
+          c * (∫ x : ℝ in -1..1 - t, x) :=
+        intervalIntegral.integral_const_mul c (fun x : ℝ ↦ x)
+      _ = _ := by
+        congr 1
+        convert YoshidaEndpointOcticPotential.integral_pow_nat 1
+          (-(1 : ℝ)) (1 - t) using 1 <;> norm_num
+  repeat rw [hlinear]
+  norm_num
+  unfold threeHalvesCounterexampleLowCenteredCorrelation
+  ring
+
+set_option maxHeartbeats 10000000 in
+private theorem integral_regularPolynomial_threeHalvesLowCorrelation_eq :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        threeHalvesCounterexampleLowCenteredCorrelation t) =
+      (222950171 / 53635405824 : ℝ) * Real.log 2 +
+        (25 / 4608 : ℝ) * Real.log 2 ^ 2 -
+      (7710304535 / 90230076997632 : ℝ) * Real.log 2 ^ 3 -
+        (3125 / 8257536 : ℝ) * Real.log 2 ^ 4 +
+      (36493528053625 / 22919883238630490112 : ℝ) *
+          Real.log 2 ^ 5 +
+        (28403125 / 976635297792 : ℝ) * Real.log 2 ^ 6 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    threeHalvesCounterexampleLowCenteredCorrelation
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  norm_num
+  have hlinear :
+      (∫ x : ℝ in 0..2, Real.log 2 * x) = 2 * Real.log 2 := by
+    rw [intervalIntegral.integral_const_mul]
+    norm_num [YoshidaEndpointOcticPotential.integral_pow_nat]
+    ring
+  rw [hlinear]
+  ring
+
+private theorem two_width_regular_threeHalvesLowCorrelation_gt :
+    (927 / 200000 : ℝ) <
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            centeredEndpointCorrelation
+              fourCellOddP11ThreeHalvesCounterexampleLow t) := by
+  let C : ℝ → ℝ := threeHalvesCounterexampleLowCenteredCorrelation
+  let K : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+  let P : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) * C t
+  let E : ℝ := fourCellWideRegularEnvelopeError C
+  let J : ℝ := ∫ t : ℝ in 0..2, K t * C t
+  let W : ℝ := 2 * fourCellOperatorHalfWidth
+  have hC : Continuous C := by
+    dsimp only [C]
+    unfold threeHalvesCounterexampleLowCenteredCorrelation
+    fun_prop
+  have hKmeas : Measurable K := by
+    dsimp only [K]
+    exact measurable_yoshidaRegularKernel.comp
+      (measurable_const.mul measurable_id)
+  have hKbound : ∀ t ∈ Icc (0 : ℝ) 2, |K t| ≤ (1 / 4 : ℝ) := by
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+    have harg4 : fourCellOperatorHalfWidth * t ≤ 5 * Real.log 2 / 4 := by
+      have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+      calc
+        fourCellOperatorHalfWidth * t ≤
+            fourCellOperatorHalfWidth * 2 := hmul
+        _ = 5 * Real.log 2 / 4 := by
+          unfold fourCellOperatorHalfWidth
+          ring
+    have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 harg4
+    have hk1 := yoshidaRegularKernel_le_quarter harg0
+    dsimp only [K]
+    rw [abs_of_nonneg hk0]
+    exact hk1
+  have hfull : IntervalIntegrable (fun t : ℝ ↦ K t * C t)
+      volume 0 2 :=
+    intervalIntegrable_boundedLag_mul_continuous K C hKmeas hC
+      (1 / 4 : ℝ) hKbound
+  have hpoly : IntervalIntegrable (fun t : ℝ ↦
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) * C t)
+      volume 0 2 := by
+    exact (by
+      unfold yoshidaRegularKernelPolynomial6
+      fun_prop : Continuous (fun t : ℝ ↦
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+          C t)).intervalIntegrable 0 2
+  have hEeq : E = J - P := by
+    dsimp only [E, J, P]
+    unfold fourCellWideRegularEnvelopeError
+    rw [← intervalIntegral.integral_sub hfull hpoly]
+    apply intervalIntegral.integral_congr
+    intro t _ht
+    dsimp only [K]
+    ring
+  have hPexact := integral_regularPolynomial_threeHalvesLowCorrelation_eq
+  change P = _ at hPexact
+  have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds
+  have hlog0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hpwLo (n : ℕ) (hn : n ≠ 0) :
+      (69314718055 / 100000000000 : ℝ) ^ n < Real.log 2 ^ n :=
+    pow_lt_pow_left₀ hlog.1 (by norm_num) hn
+  have hpwHi (n : ℕ) (hn : n ≠ 0) :
+      Real.log 2 ^ n < (69314718057 / 100000000000 : ℝ) ^ n :=
+    pow_lt_pow_left₀ hlog.2 hlog0.le hn
+  have hPlo : (537 / 100000 : ℝ) < P := by
+    rw [hPexact]
+    nlinarith [hpwLo 2 (by norm_num), hpwHi 2 (by norm_num),
+      hpwLo 3 (by norm_num), hpwHi 3 (by norm_num),
+      hpwLo 4 (by norm_num), hpwHi 4 (by norm_num),
+      hpwLo 5 (by norm_num), hpwHi 5 (by norm_num),
+      hpwLo 6 (by norm_num), hpwHi 6 (by norm_num)]
+  have hmass :=
+    integral_abs_factorTwoCenteredCorrelationBilinear_le_half_energy_add
+      fourCellOddP11ThreeHalvesCounterexampleLow
+      fourCellOddP11ThreeHalvesCounterexampleLow
+      (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+        (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)).continuous
+      (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+        (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)).continuous
+  simp_rw [factorTwoCenteredCorrelationBilinear_self,
+    centeredEndpointCorrelation_threeHalvesCounterexampleLow_eq] at hmass
+  rw [factorTwoIntrinsicEnergy_threeHalvesCounterexampleLow_eq] at hmass
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths C hC
+  change |E| ≤ (1 / 80000 : ℝ) * (∫ t : ℝ in 0..2, |C t|)
+    at herr
+  have hEabs : |E| < (123 / 10000000 : ℝ) := by
+    calc
+      |E| ≤ (1 / 80000 : ℝ) * (∫ t : ℝ in 0..2, |C t|) :=
+        herr
+      _ ≤ (1 / 80000 : ℝ) *
+          ((1 / 2 : ℝ) * (6207983 / 6320160 + 6207983 / 6320160)) := by
+        exact mul_le_mul_of_nonneg_left hmass (by norm_num)
+      _ < (123 / 10000000 : ℝ) := by norm_num
+  have hElow : -(123 / 10000000 : ℝ) < E :=
+    (neg_lt_neg hEabs).trans_le (neg_abs_le E)
+  have hdecomp : J = P + E := by linarith [hEeq]
+  have hJ : (535 / 100000 : ℝ) < J := by
+    rw [hdecomp]
+    nlinarith
+  have hW : (1083 / 1250 : ℝ) < W := by
+    have hlo := YoshidaConstantBounds.strict_log_two_bounds.1
+    dsimp only [W]
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  have hW0 : 0 < W := (by norm_num : (0 : ℝ) < 1083 / 1250).trans hW
+  have hproduct :
+      (1083 / 1250 : ℝ) * (535 / 100000 : ℝ) < W * J := by
+    calc
+      (1083 / 1250 : ℝ) * (535 / 100000 : ℝ) <
+          W * (535 / 100000 : ℝ) :=
+        mul_lt_mul_of_pos_right hW (by norm_num)
+      _ < W * J := mul_lt_mul_of_pos_left hJ hW0
+  simp_rw [centeredEndpointCorrelation_threeHalvesCounterexampleLow_eq]
+  change (927 / 200000 : ℝ) < W * J
+  nlinarith
+
+private theorem integral_zero_one_threeHalvesCounterexampleLow_sq_eq :
+    (∫ x : ℝ in 0..1,
+      fourCellOddP11ThreeHalvesCounterexampleLow x ^ 2) =
+      (6207983 / 12640320 : ℝ) := by
+  have hfold := integral_sq_eq_two_mul_positiveHalf
+    fourCellOddP11ThreeHalvesCounterexampleLow
+      (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+        (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)).continuous
+      (Or.inr (odd_fourCellOddOneThreeFiveSevenNineLowProfile
+        (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)))
+  have henergy := factorTwoIntrinsicEnergy_threeHalvesCounterexampleLow_eq
+  unfold factorTwoIntrinsicEnergy at henergy
+  rw [henergy] at hfold
+  linarith
+
+private theorem fourCellOddRawStripCancellationReserve_threeHalves_eq :
+    fourCellOddRawStripCancellationReserve
+        fourCellOddP11ThreeHalvesCounterexampleLow =
+      (1 / 4 : ℝ) * centeredRawLogEnergy
+          fourCellOddP11ThreeHalvesCounterexampleLow -
+        (1 / 2 : ℝ) * fourCellOddEndpointStripOddRawEnergy
+          fourCellOddP11ThreeHalvesCounterexampleLow := by
+  have hdiff := contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+    (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+  have hodd := odd_fourCellOddOneThreeFiveSevenNineLowProfile
+    (-1) 1 (-(1 / 4 : ℝ)) (1 / 6 : ℝ) (3 / 8 : ℝ)
+  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1)
+      fourCellOddP11ThreeHalvesCounterexampleLow :=
+    hdiff.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hfold := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    fourCellOddP11ThreeHalvesCounterexampleLow hlocal hodd
+  unfold fourCellOddRawStripCancellationReserve
+  rw [← hfold]
+  ring
+
+private theorem threeHalvesCounterexample_sqrt_two_mul_log_two_lt :
+    Real.sqrt 2 * Real.log 2 < (49013 / 50000 : ℝ) := by
+  have hs0 : 0 ≤ Real.sqrt 2 := Real.sqrt_nonneg 2
+  have hs2 : Real.sqrt 2 ^ 2 = 2 := by
+    simpa only using Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)
+  have hshi : Real.sqrt 2 < (1414213563 / 1000000000 : ℝ) := by
+    have hrat : (2 : ℝ) <
+        (1414213563 / 1000000000 : ℝ) ^ 2 := by norm_num
+    nlinarith
+  have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds.2
+  have hlogpos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hproduct : Real.sqrt 2 * Real.log 2 <
+      (1414213563 / 1000000000 : ℝ) *
+        (69314718057 / 100000000000 : ℝ) :=
+    (mul_lt_mul_of_pos_right hshi hlogpos).trans
+      (mul_lt_mul_of_pos_left hlog (by norm_num))
+  nlinarith
+
+/-- A direct retained-minus-signed evaluation of the adverse low diagonal.
+The relaxed rational cap is still strong enough for the strict factor-two
+obstruction and leaves room for the uniform analytic kernel envelope. -/
+theorem fourCellOddCoreLocalQuadratic_threeHalvesCounterexampleLow_lt_139_div_5000 :
+    fourCellOddCoreLocalQuadratic
+        fourCellOddP11ThreeHalvesCounterexampleLow < (139 / 5000 : ℝ) := by
+  have hbeta := threeHalvesCounterexample_sqrt_two_mul_log_two_lt
+  have hlog := YoshidaConstantBounds.strict_log_two_fine_bounds.1
+  have hscalar := fourCellScalar_fine_bounds.1
+  have hregular := two_width_regular_threeHalvesLowCorrelation_gt
+  rw [fourCellOddCoreLocalQuadratic_eq_retained_sub_signed]
+  unfold fourCellOddRetainedEndpointQuadratic
+    fourCellOddRetainedPrimePotentialQuadratic
+    fourCellOddSignedMassRegularQuadratic
+  rw [fourCellOddRawStripCancellationReserve_threeHalves_eq,
+    centeredRawLogEnergy_threeHalvesCounterexampleLow_eq,
+    fourCellOddEndpointStripOddRawEnergy_threeHalvesCounterexampleLow_eq,
+    fourCellOddEndpointStripEvenMass_threeHalvesCounterexampleLow_eq,
+    fourCellOddEndpointStripOddMass_threeHalvesCounterexampleLow_eq,
+    integral_endpointPotential_threeHalvesCounterexampleLow_sq_eq,
+    integral_zero_one_threeHalvesCounterexampleLow_sq_eq]
+  nlinarith
+
 /-- The sparse degree-25 witness forces every universal matched scalar factor
 strictly above two once the two displayed finite/mixed enclosures are
 available.  The exact tail-weight enclosure is already discharged above. -/
 theorem two_lt_factor_of_fiveModeCauchy_of_counterexample_bounds
     {κ : ℝ} (hcauchy : FourCellOddP11FiveModeCauchyAtFactor κ)
     (hquadratic : fourCellOddCoreLocalQuadratic
-        fourCellOddP11ThreeHalvesCounterexampleLow < (553 / 20000 : ℝ))
+        fourCellOddP11ThreeHalvesCounterexampleLow < (139 / 5000 : ℝ))
     (hmixed : (209 / 6250 : ℝ) <
       fourCellOddCoreLocalBilinear
         fourCellOddP11ThreeHalvesCounterexampleLow
@@ -1437,7 +2714,7 @@ theorem two_lt_factor_of_fiveModeCauchy_of_counterexample_bounds
     exact fourCellOddP1ExactTailWeight_nonneg
       fourCellOddP11ThreeHalvesCounterexampleTail
       contDiff_fourCellOddP11ThreeHalvesCounterexampleTail.continuous
-  have hQupper : Q < (553 / 20000 : ℝ) := by
+  have hQupper : Q < (139 / 5000 : ℝ) := by
     simpa only [Q] using hquadratic
   have hWupper : W < (2001 / 100000 : ℝ) := by
     simpa only [W] using
@@ -1460,13 +2737,23 @@ theorem two_lt_factor_of_fiveModeCauchy_of_counterexample_bounds
   have hQκW : Q * (κ * W) ≤ Q * (2 * W) :=
     mul_le_mul_of_nonneg_left hκW hQ
   have hQWgap : 0 <
-      ((553 / 20000 : ℝ) - Q) *
+      ((139 / 5000 : ℝ) - Q) *
         ((2001 / 100000 : ℝ) - W) :=
     mul_pos (sub_pos.2 hQupper) (sub_pos.2 hWupper)
   have hBsquare : (209 / 6250 : ℝ) ^ 2 < B ^ 2 := by
     nlinarith
   norm_num at hQWgap hBsquare ⊢
   nlinarith
+
+/-- The certified sparse retained witness unconditionally rules out every
+universal matched scalar factor at or below two. -/
+theorem two_lt_factor_of_fiveModeCauchy
+    {κ : ℝ} (hcauchy : FourCellOddP11FiveModeCauchyAtFactor κ) :
+    (2 : ℝ) < κ :=
+  two_lt_factor_of_fiveModeCauchy_of_counterexample_bounds
+    hcauchy
+    fourCellOddCoreLocalQuadratic_threeHalvesCounterexampleLow_lt_139_div_5000
+    fourCellOddCoreLocalBilinear_threeHalvesCounterexampleLow_tail_gt
 
 /-- A single strict reversal for the displayed low polynomial and genuine
 `P₁₁+` tail refutes the universal scalar factor-three-halves Cauchy
