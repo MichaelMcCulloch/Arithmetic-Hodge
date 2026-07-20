@@ -763,6 +763,55 @@ private theorem one_le_fourCellOddP11P1UpperReciprocalCertificate
     ring
   nlinarith
 
+set_option maxHeartbeats 5000000 in
+set_option maxRecDepth 10000 in
+private theorem fourCellOddP11P1RationalH_reciprocal_cost_lt :
+    (∫ x : ℝ in 0..3 / 5,
+        fourCellOddP11P1RationalLowerH x ^ 2 *
+          fourCellOddP11P1LowerReciprocalMajorant (5 * x / 3)) +
+      (∫ x : ℝ in 3 / 5..1,
+        x * fourCellOddP11P1RationalUpperH x ^ 2 *
+          fourCellOddP11P1UpperReciprocalMajorant ((5 * x - 3) / 2)) <
+    (23 / 50 : ℝ) := by
+  unfold fourCellOddP11P1RationalLowerH
+    fourCellOddP11P1RationalUpperH
+    fourCellOddP11P1RationalRegularRepresenter
+    fourCellOddP11P1RationalHalfWidth
+    fourCellOddP11P1RationalEndpointScale fourCellOddP11P1Selector
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+    fourCellOddP11P1LowerReciprocalMajorant
+    fourCellOddP11P1UpperReciprocalMajorant bernsteinAtom
+  simp_rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  norm_num [Finset.sum_range_succ, Nat.choose,
+    fourCellOddP11P1LowerReciprocalCoeff,
+    fourCellOddP11P1UpperReciprocalCoeff]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) _ _)
+    (Continuous.intervalIntegrable (by fun_prop) _ _)]
+  norm_num
+
+set_option maxHeartbeats 5000000 in
+set_option maxRecDepth 10000 in
+private theorem fourCellOddP11P1Reciprocal_majorant_mass_lt :
+    (∫ x : ℝ in 0..3 / 5,
+        fourCellOddP11P1LowerReciprocalMajorant (5 * x / 3)) +
+      (∫ x : ℝ in 3 / 5..1,
+        x * fourCellOddP11P1UpperReciprocalMajorant ((5 * x - 3) / 2)) <
+    (7 : ℝ) := by
+  unfold fourCellOddP11P1LowerReciprocalMajorant
+    fourCellOddP11P1UpperReciprocalMajorant bernsteinAtom
+  norm_num [Finset.sum_range_succ, Nat.choose,
+    fourCellOddP11P1LowerReciprocalCoeff,
+    fourCellOddP11P1UpperReciprocalCoeff]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) _ _)
+    (Continuous.intervalIntegrable (by fun_prop) _ _)]
+  norm_num
+
 /-- Exact scalar cost of the concrete degree-`< 11` selector. -/
 def fourCellOddP11P1SelectorDual : ℝ :=
   (∫ x : ℝ in 0..3 / 5,
