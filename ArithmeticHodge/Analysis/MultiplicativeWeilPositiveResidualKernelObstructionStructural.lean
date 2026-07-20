@@ -186,6 +186,49 @@ theorem exists_real_middleZero_fiveCell_negative_remoteGlobalCross
   refine ⟨parent, hparent, hmiddle, ?_⟩
   linarith
 
+/-! ## Common-parent realization interface -/
+
+/-- If the three middle directions can be realized while keeping two fixed
+endpoint cells, the rank-nullity obstruction is an actual real common-parent
+five-cell obstruction: its interior pivot is positive but its conditional
+residual numerator is strictly negative. -/
+theorem exists_real_fiveCell_strictly_negative_middlePivotNumerator_of_realization
+    (k : ℤ) (a e : BombieriTest) (middle : Fin 3 → BombieriTest)
+    (hmiddle : ∀ c : Fin 3 → ℝ, c ≠ 0 →
+      0 < bombieriRealQuadraticValue
+        (threeMiddleCombination middle c))
+    (hremote :
+      (bombieriTwoBlockGlobalCrossSymbol a e).re < 0)
+    (hrealize : ∀ c : Fin 3 → ℝ,
+      ∃ parent : BombieriTest,
+        bombieriConjugateTest parent = parent ∧
+          monotoneQuarterCell parent k = a ∧
+          monotoneQuarterCell parent (k + 4) = e ∧
+          fiveCellMiddleThree parent k =
+            threeMiddleCombination middle c) :
+    ∃ parent : BombieriTest,
+      bombieriConjugateTest parent = parent ∧
+        0 < bombieriRealQuadraticValue (fiveCellMiddleThree parent k) ∧
+        bombieriRealQuadraticValue (fiveCellMiddleThree parent k) *
+              (bombieriTwoBlockGlobalCrossSymbol
+                (monotoneQuarterCell parent k)
+                (monotoneQuarterCell parent (k + 4))).re -
+            (bombieriTwoBlockGlobalCrossSymbol
+              (monotoneQuarterCell parent k)
+              (fiveCellMiddleThree parent k)).re *
+            (bombieriTwoBlockGlobalCrossSymbol
+              (fiveCellMiddleThree parent k)
+              (monotoneQuarterCell parent (k + 4))).re < 0 := by
+  obtain ⟨c, hc0, hleft, hright, hnegative⟩ :=
+    exists_strictly_negative_middlePivotNumerator_of_three_middle_modes
+      a e middle hmiddle hremote
+  obtain ⟨parent, hparent, ha, he, hm⟩ := hrealize c
+  refine ⟨parent, hparent, ?_, ?_⟩
+  · rw [hm]
+    exact hmiddle c hc0
+  · rw [ha, he, hm]
+    exact hnegative
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilPositiveResidualKernelObstructionStructural
