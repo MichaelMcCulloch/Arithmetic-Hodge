@@ -166,6 +166,15 @@ private theorem intervalIntegrable_sq_of_memLp_two_restrict
   filter_upwards with x
   rw [Real.norm_eq_abs, sq_abs]
 
+theorem centeredRawLogEnergy_nonnegative (u : ℝ → ℝ) :
+    0 ≤ centeredRawLogEnergy u := by
+  unfold centeredRawLogEnergy
+  apply intervalIntegral.integral_nonneg (by norm_num)
+  intro x _hx
+  apply intervalIntegral.integral_nonneg (by norm_num)
+  intro y _hy
+  exact div_nonneg (sq_nonneg _) (abs_nonneg _)
+
 /-- The complete projected endpoint row is genuinely linear on continuous
 tails.  Keeping this identity at the row level lets us move finitely many
 dangerous low-tail harmonics into the coupled finite block without applying
@@ -1304,6 +1313,114 @@ theorem fourCellEvenEndpointSeedRow_sq_le_coshBorderSchurComplement
         a * L ^ 2 + W * A - N ^ 2 / K := by
     simpa [s, N, K] using hcompletion
   exact hquad'.trans_eq hcompletion'
+
+/-- The scalar Schur-complement handoff is unconditional.  Its diagonal is
+nonnegative from the raw-energy square and the cosh pivot `D ≥ 1/2`.  If the
+diagonal vanishes, both the finite cosh coordinate and the weighted tail
+factor vanish, so Lean's zero-division convention gives the same displayed
+formula without a separate analytic case assumption. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_coshBorderSchurComplement_unconditional
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (q : ℝ[X]) (hq : q.natDegree < 14)
+    (η : ℝ) (hη : 0 < η) :
+    let a : ℝ := 1 + η
+    let L : ℝ := fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw
+    let P : ℝ := fourCellPositiveCoshMoment
+      (centeredLegendreLowProjection w hw 14)
+      (fourCellOperatorHalfWidth / 2)
+    let A : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2
+    let B : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+        fourCellEvenHalfWideCoshRepresenter x
+    let D : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenHalfWideCoshRepresenter x ^ 2
+    let E : ℝ := centeredRawLogEnergy
+      (centeredLegendreHigherResidual w hw 14) / 4
+    let W : ℝ :=
+      (1 + η⁻¹) * (360360 / 1171733 : ℝ) * E
+    let K : ℝ := a * P ^ 2 + W * D
+    let N : ℝ := a * L * P + W * B
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      a * L ^ 2 + W * A - N ^ 2 / K := by
+  dsimp only
+  let a : ℝ := 1 + η
+  let L : ℝ := fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw
+  let P : ℝ := fourCellPositiveCoshMoment
+    (centeredLegendreLowProjection w hw 14)
+    (fourCellOperatorHalfWidth / 2)
+  let A : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2
+  let B : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+      fourCellEvenHalfWideCoshRepresenter x
+  let D : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenHalfWideCoshRepresenter x ^ 2
+  let E : ℝ := centeredRawLogEnergy
+    (centeredLegendreHigherResidual w hw 14) / 4
+  let W : ℝ :=
+    (1 + η⁻¹) * (360360 / 1171733 : ℝ) * E
+  let K : ℝ := a * P ^ 2 + W * D
+  let N : ℝ := a * L * P + W * B
+  change fourCellEvenEndpointSeedRow w ^ 2 ≤
+    a * L ^ 2 + W * A - N ^ 2 / K
+  have ha : 0 < a := by
+    dsimp only [a]
+    linarith only [hη]
+  have hDlower : (1 / 2 : ℝ) ≤ D := by
+    simpa only [D] using
+      one_half_le_integral_fourCellEvenHalfWideCoshRepresenter_sq
+  have hD : 0 < D := lt_of_lt_of_le (by norm_num) hDlower
+  have hE : 0 ≤ E := by
+    dsimp only [E]
+    exact div_nonneg (centeredRawLogEnergy_nonnegative _) (by norm_num)
+  have hinv : 0 < η⁻¹ := inv_pos.mpr hη
+  have hW : 0 ≤ W := by
+    dsimp only [W]
+    positivity
+  have hAP : 0 ≤ a * P ^ 2 := mul_nonneg ha.le (sq_nonneg P)
+  have hWD : 0 ≤ W * D := mul_nonneg hW hD.le
+  have hKnonneg : 0 ≤ K := by
+    dsimp only [K]
+    exact add_nonneg hAP hWD
+  by_cases hKzero : K = 0
+  · have hsum : a * P ^ 2 + W * D = 0 := by
+      simpa only [K] using hKzero
+    have hAPzero : a * P ^ 2 = 0 := by
+      nlinarith only [hsum, hAP, hWD]
+    have hWDzero : W * D = 0 := by
+      nlinarith only [hsum, hAP, hWD]
+    have hPsqzero : P ^ 2 = 0 :=
+      (mul_eq_zero.mp hAPzero).resolve_left ha.ne'
+    have hPzero : P = 0 := sq_eq_zero_iff.mp hPsqzero
+    have hWzero : W = 0 :=
+      (mul_eq_zero.mp hWDzero).resolve_right hD.ne'
+    have hNzero : N = 0 := by
+      dsimp only [N]
+      rw [hPzero, hWzero]
+      ring
+    have hquad := fourCellEvenEndpointSeedRow_sq_le_coshBorderQuadratic
+      w hw hlocal heven hzero q hq 0 η hη
+    have hquad' : fourCellEvenEndpointSeedRow w ^ 2 ≤
+        a * (L - 0 * P) ^ 2 + W * (A - 2 * 0 * B + 0 ^ 2 * D) := by
+      simpa only [a, L, P, A, B, D, E, W] using hquad
+    rw [hWzero] at hquad'
+    rw [hWzero, hNzero, hKzero]
+    norm_num at hquad' ⊢
+    exact hquad'
+  · have hKpos : 0 < K :=
+      lt_of_le_of_ne hKnonneg (Ne.symm hKzero)
+    have hschur :=
+      fourCellEvenEndpointSeedRow_sq_le_coshBorderSchurComplement
+        w hw hlocal heven hzero q hq η hη
+    dsimp only at hschur
+    have hschur' := hschur (by
+      simpa only [a, L, P, A, B, D, E, W, K] using hKpos)
+    simpa only [a, L, P, A, B, D, E, W, K, N] using hschur'
 
 /-- The canonical row is bounded by one explicit finite-row square and the
 mass of the moment-eight residual, for every positive Young allocation.
