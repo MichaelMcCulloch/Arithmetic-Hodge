@@ -20,19 +20,20 @@ open YoshidaFourCellOddP1OrthogonalFormDualClosureStructural
 open YoshidaFourCellOddStripCapacityClosureStructural
 
 /-!
-# Three-halves closure of the odd `P₁₁+` corrected determinant
+# Matched-factor closure of the odd `P₁₁+` corrected determinant
 
 The scalar exact-tail weight is too small for the old selector certificate.
-The corrected determinant only needs a matched enlargement: the core tail
-reserve must dominate `3/2` times the weight, and the two selector rows may
-spend that same enlarged reserve jointly.  This file proves that those two
-structural estimates close the exact determinant, including the singular
-finite-reserve fibers.
+The corrected determinant only needs a matched enlargement: for one common
+factor `κ`, the core tail reserve must dominate `κ` times the weight, and the
+two selector rows may spend that same enlarged reserve jointly.  This file
+proves that any such matched factor closes the exact determinant, including
+the singular finite-reserve fibers.  The named `3/2` interfaces are retained
+as one concrete probe, not asserted to hold.
 -/
 
-/-- The genuine `P₁₁+` tail core dominates three halves of the exact scalar
+/-- The genuine `P₁₁+` tail core dominates `κ` times the exact scalar
 weight. -/
-def FourCellOddP11TailReserveThreeHalves : Prop :=
+def FourCellOddP11TailReserveAtFactor (κ : ℝ) : Prop :=
   ∀ (r : ℝ → ℝ),
     ContDiff ℝ 1 r → Function.Odd r →
     centeredOddP1Coefficient r = 0 →
@@ -40,12 +41,13 @@ def FourCellOddP11TailReserveThreeHalves : Prop :=
     centeredOddP5Coefficient r = 0 →
     centeredOddP7Coefficient r = 0 →
     centeredOddP9Coefficient r = 0 →
-    (3 / 2 : ℝ) * fourCellOddP1ExactTailWeight r ≤
+    κ * fourCellOddP1ExactTailWeight r ≤
       fourCellOddCoreLocalQuadratic r
 
-/-- The two corrected selector rows spend at most the enlarged tail reserve.
-Keeping the two rows together preserves their finite--tail correlation. -/
-def FourCellOddP11JointSelectorThreeHalves : Prop :=
+/-- The two corrected selector rows spend at most the tail reserve enlarged
+by `κ`.  Keeping the rows together preserves their finite--tail
+correlation. -/
+def FourCellOddP11JointSelectorAtFactor (κ : ℝ) : Prop :=
   ∀ (d e f g : ℝ) (r : ℝ → ℝ),
     ContDiff ℝ 1 r → Function.Odd r →
     centeredOddP1Coefficient r = 0 →
@@ -58,12 +60,12 @@ def FourCellOddP11JointSelectorThreeHalves : Prop :=
         fourCellOddP11FiniteTailCorrectedCross d e f g r ^ 2 ≤
       fourCellOddP11FiniteCorrectedReserve d e f g *
         fourCellOddCoreLocalQuadratic centeredP1 *
-          ((3 / 2 : ℝ) * fourCellOddP1ExactTailWeight r)
+          (κ * fourCellOddP1ExactTailWeight r)
 
 /-- A selector-free formulation of the same finite task: every retained
-five-mode polynomial acts on the genuine tail with weighted norm at most
-`3 / 2` times its core norm. -/
-def FourCellOddP11FiveModeCauchyThreeHalves : Prop :=
+five-mode polynomial acts on the genuine tail with weighted norm at most `κ`
+times its core norm. -/
+def FourCellOddP11FiveModeCauchyAtFactor (κ : ℝ) : Prop :=
   ∀ (c d e f g : ℝ) (r : ℝ → ℝ),
     ContDiff ℝ 1 r → Function.Odd r →
     centeredOddP1Coefficient r = 0 →
@@ -75,14 +77,28 @@ def FourCellOddP11FiveModeCauchyThreeHalves : Prop :=
           (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r ^ 2 ≤
       fourCellOddCoreLocalQuadratic
           (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) *
-        ((3 / 2 : ℝ) * fourCellOddP1ExactTailWeight r)
+        (κ * fourCellOddP1ExactTailWeight r)
 
-/-- The universal five-mode weighted Cauchy bound supplies the joint
-two-selector estimate.  The exact Gram--Schmidt profile identity preserves
-the full correlation, so there is no rowwise triangle loss. -/
-theorem fourCellOddP11JointSelectorThreeHalves_of_fiveModeCauchy
-    (hcauchy : FourCellOddP11FiveModeCauchyThreeHalves) :
-    FourCellOddP11JointSelectorThreeHalves := by
+/-- The concrete three-halves tail probe. -/
+def FourCellOddP11TailReserveThreeHalves : Prop :=
+  FourCellOddP11TailReserveAtFactor (3 / 2 : ℝ)
+
+/-- The concrete three-halves joint-selector probe. -/
+def FourCellOddP11JointSelectorThreeHalves : Prop :=
+  FourCellOddP11JointSelectorAtFactor (3 / 2 : ℝ)
+
+/-- The concrete three-halves five-mode Cauchy probe. -/
+def FourCellOddP11FiveModeCauchyThreeHalves : Prop :=
+  FourCellOddP11FiveModeCauchyAtFactor (3 / 2 : ℝ)
+
+/-- The universal five-mode weighted Cauchy bound at a nonnegative factor
+supplies the joint two-selector estimate.  The exact Gram--Schmidt profile
+identity preserves the full correlation, so there is no rowwise triangle
+loss. -/
+theorem fourCellOddP11JointSelectorAtFactor_of_fiveModeCauchy
+    (κ : ℝ) (hκ : 0 ≤ κ)
+    (hcauchy : FourCellOddP11FiveModeCauchyAtFactor κ) :
+    FourCellOddP11JointSelectorAtFactor κ := by
   intro d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
   let A := fourCellOddCoreLocalQuadratic centeredP1
   let F := fourCellOddP11FiniteCorrectedReserve d e f g
@@ -95,8 +111,8 @@ theorem fourCellOddP11JointSelectorThreeHalves_of_fiveModeCauchy
   have hF : 0 ≤ F := by
     dsimp only [F]
     exact fourCellOddP11FiniteCorrectedReserve_nonnegative d e f g
-  have hW : 0 ≤ (3 / 2 : ℝ) * W := by
-    exact mul_nonneg (by norm_num)
+  have hW : 0 ≤ κ * W := by
+    exact mul_nonneg hκ
       (fourCellOddP1ExactTailWeight_nonneg r hr.continuous)
   apply (jointWeightedDual_iff_twoRowLoewner hA hF hW).2
   intro s t
@@ -117,13 +133,21 @@ theorem fourCellOddP11JointSelectorThreeHalves_of_fiveModeCauchy
   dsimp only [A, F, x, X, W] at hrow ⊢
   simpa only [mul_assoc] using hrow
 
-/-- The matched three-halves tail and joint-selector estimates imply the
-actual universal corrected determinant.  The strict `P₃` finite reserve is
-used only to recover the pure `P₁` tail row, so no division or positive
+/-- Specialization of the matched-factor reduction at `κ = 3 / 2`. -/
+theorem fourCellOddP11JointSelectorThreeHalves_of_fiveModeCauchy
+    (hcauchy : FourCellOddP11FiveModeCauchyThreeHalves) :
+    FourCellOddP11JointSelectorThreeHalves :=
+  fourCellOddP11JointSelectorAtFactor_of_fiveModeCauchy
+    (3 / 2 : ℝ) (by norm_num) hcauchy
+
+/-- Tail domination and joint-selector control at one matched factor imply
+the actual universal corrected determinant.  The strict `P₃` finite reserve
+is used only to recover the pure `P₁` tail row, so no division or positive
 definiteness assumption is imposed on the arbitrary low profile. -/
-theorem fourCellOddP11CoupledRieszDefectNonnegative_of_threeHalves
-    (htail : FourCellOddP11TailReserveThreeHalves)
-    (hjoint : FourCellOddP11JointSelectorThreeHalves) :
+theorem fourCellOddP11CoupledRieszDefectNonnegative_of_matchedFactor
+    (κ : ℝ)
+    (htail : FourCellOddP11TailReserveAtFactor κ)
+    (hjoint : FourCellOddP11JointSelectorAtFactor κ) :
     FourCellOddP11CoupledRieszDefectNonnegative := by
   intro d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
   let p := fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
@@ -143,7 +167,7 @@ theorem fourCellOddP11CoupledRieszDefectNonnegative_of_threeHalves
     dsimp only [F, A, b, C, p]
     simpa only [fourCellOddP11FiniteCorrectedReserve] using
       fourCellOddP11FiniteCorrectedReserve_nonnegative d e f g
-  have hWz : (3 / 2 : ℝ) * W ≤ z := by
+  have hWz : κ * W ≤ z := by
     dsimp only [W, z]
     exact htail r hr hrodd hr1 hr3 hr5 hr7 hr9
   have hcurrent := hjoint d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
@@ -153,26 +177,45 @@ theorem fourCellOddP11CoupledRieszDefectNonnegative_of_threeHalves
   have hF₃ : 0 < F₃ := by
     dsimp only [F₃]
     exact fourCellOddP11FiniteCorrectedReserve_P3_pos
-  have hpure : x ^ 2 ≤ A * ((3 / 2 : ℝ) * W) := by
+  have hpure : x ^ 2 ≤ A * (κ * W) := by
     dsimp only [F₃, X₃, x, A, W] at hprobe hF₃ ⊢
     by_contra hle
     have hgap : 0 <
         fourCellOddCoreLocalBilinear centeredP1 r ^ 2 -
           fourCellOddCoreLocalQuadratic centeredP1 *
-            ((3 / 2 : ℝ) * fourCellOddP1ExactTailWeight r) :=
+            (κ * fourCellOddP1ExactTailWeight r) :=
       sub_pos.mpr (lt_of_not_ge hle)
     have hprod := mul_pos hF₃ hgap
     nlinarith [sq_nonneg
       (fourCellOddP11FiniteTailCorrectedCross 1 0 0 0 r)]
   have hdet := coupledP1TailSchurDefect_nonneg_of_jointWeightedDual
     (A := A) (b := b) (C := C) (x := x) (y := y) (z := z)
-    (W := (3 / 2 : ℝ) * W) hA hF hWz hpure
+    (W := κ * W) hA hF hWz hpure
     (by
       dsimp only [F, X, A, b, C, x, y, W, p]
       simpa only [fourCellOddP11FiniteCorrectedReserve,
         fourCellOddP11FiniteTailCorrectedCross] using hcurrent)
   simpa only [fourCellOddP11CoupledRieszDefect, p, A, b, C, x, y, z]
     using hdet
+
+/-- Selector-free matched-factor handoff: tail domination and the universal
+five-mode weighted Cauchy inequality close the corrected determinant. -/
+theorem fourCellOddP11CoupledRieszDefectNonnegative_of_matchedFactor_fiveModeCauchy
+    (κ : ℝ) (hκ : 0 ≤ κ)
+    (htail : FourCellOddP11TailReserveAtFactor κ)
+    (hcauchy : FourCellOddP11FiveModeCauchyAtFactor κ) :
+    FourCellOddP11CoupledRieszDefectNonnegative :=
+  fourCellOddP11CoupledRieszDefectNonnegative_of_matchedFactor κ htail
+    (fourCellOddP11JointSelectorAtFactor_of_fiveModeCauchy κ hκ hcauchy)
+
+/-- Specialization of the matched-factor determinant closure at
+`κ = 3 / 2`. -/
+theorem fourCellOddP11CoupledRieszDefectNonnegative_of_threeHalves
+    (htail : FourCellOddP11TailReserveThreeHalves)
+    (hjoint : FourCellOddP11JointSelectorThreeHalves) :
+    FourCellOddP11CoupledRieszDefectNonnegative :=
+  fourCellOddP11CoupledRieszDefectNonnegative_of_matchedFactor
+    (3 / 2 : ℝ) htail hjoint
 
 end
 
