@@ -19,6 +19,7 @@ open UnitIntervalLogEnergyAffine
 open YoshidaEndpointEvenStructuralReduction
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialIntegrable
+open YoshidaConstantBounds
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoFixedLagRepresenterStructural
 open YoshidaFactorTwoPhaseIntrinsicNineP6EvenCleanPolynomialGramStructural
@@ -1038,6 +1039,15 @@ def fourCellEvenEndpointSeedProjectedCapacityRepresenter : ℝ → ℝ :=
     (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
       (2 / 3) (-2 / 3) 0 0)
 
+theorem memLp_fourCellEvenEndpointSeedProjectedCapacityRepresenter :
+    MemLp fourCellEvenEndpointSeedProjectedCapacityRepresenter 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  simpa only [fourCellEvenEndpointSeedProjectedCapacityRepresenter] using
+    memLp_fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+      (2 / 3) (-2 / 3) 0 0
+      (fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+        (2 / 3) (-2 / 3) 0 0)
+
 theorem endpointSeedProjectedCapacityRepresenter_eq_split (x : ℝ) :
     fourCellEvenEndpointSeedProjectedCapacityRepresenter x =
       fourCellEvenP0246CutoffEightProjectedPotentialRepresenter
@@ -1199,6 +1209,135 @@ theorem integral_endpointSeedProjectedCapacityRepresenter_sq :
       dsimp only [a]
       norm_num
       ring
+
+private theorem log_five_four_fine_bounds_seedCross :
+    (223143 / 1000000 : ℝ) < Real.log (5 / 4 : ℝ) ∧
+      Real.log (5 / 4 : ℝ) < (223144 / 1000000 : ℝ) := by
+  have hlo := Real.sum_range_le_log_div (x := (1 / 9 : ℝ))
+    (by norm_num) (by norm_num) 4
+  have hup := Real.log_div_le_sum_range_add (x := (1 / 9 : ℝ))
+    (by norm_num) (by norm_num) 4
+  norm_num [Finset.sum_range_succ] at hlo hup ⊢
+  constructor <;> linarith
+
+/-- The exact projected endpoint-seed capacity norm fits the rational budget
+needed by the final endpoint determinant. -/
+theorem integral_endpointSeedProjectedCapacityRepresenter_sq_le :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedProjectedCapacityRepresenter x ^ 2) ≤
+      (21 / 100000 : ℝ) := by
+  let L : ℝ := Real.log 2
+  let M : ℝ := Real.log (5 / 4 : ℝ)
+  let B : ℝ := Real.sqrt 2 * L
+  let C : ℝ :=
+    -(216607168 / 369140625 : ℝ) +
+      (3232 / 46875) * L + (37744 / 15625) * M
+  let Llo : ℝ := 69314718055 / 100000000000
+  let Lhi : ℝ := 69314718057 / 100000000000
+  let Slo : ℝ := 1414213562 / 1000000000
+  let Mlo : ℝ := 223143 / 1000000
+  let Plo : ℝ := 98696 / 10000
+  have hL : Llo < L ∧ L < Lhi := by
+    simpa only [L, Llo, Lhi] using strict_log_two_fine_bounds
+  have hL0 : 0 < L := by
+    simpa only [L] using Real.log_pos (by norm_num : (1 : ℝ) < 2)
+  have hM : Mlo < M := by
+    simpa only [M, Mlo] using log_five_four_fine_bounds_seedCross.1
+  have hS : Slo < Real.sqrt 2 := by
+    have hs0 := Real.sqrt_nonneg 2
+    have hs2 : Real.sqrt 2 ^ 2 = (2 : ℝ) :=
+      Real.sq_sqrt (by norm_num)
+    have hrat : Slo ^ 2 < (2 : ℝ) := by
+      dsimp only [Slo]
+      norm_num
+    nlinarith
+  have hB0 : 0 < B := by
+    dsimp only [B]
+    exact mul_pos (Real.sqrt_pos.2 (by norm_num)) hL0
+  have hBlo : Slo * Llo < B := by
+    calc
+      Slo * Llo < Real.sqrt 2 * Llo :=
+        mul_lt_mul_of_pos_right hS (by norm_num [Llo])
+      _ < Real.sqrt 2 * L :=
+        mul_lt_mul_of_pos_left hL.1 (Real.sqrt_pos.2 (by norm_num))
+      _ = B := by rfl
+  have hClo :
+      -(216607168 / 369140625 : ℝ) +
+          (3232 / 46875) * Llo + (37744 / 15625) * Mlo < C := by
+    dsimp only [C]
+    have hLterm : (3232 / 46875 : ℝ) * Llo <
+        (3232 / 46875) * L :=
+      mul_lt_mul_of_pos_left hL.1 (by norm_num)
+    have hMterm : (37744 / 15625 : ℝ) * Mlo <
+        (37744 / 15625) * M :=
+      mul_lt_mul_of_pos_left hM (by norm_num)
+    linarith
+  have hClo0 : 0 <
+      -(216607168 / 369140625 : ℝ) +
+        (3232 / 46875) * Llo + (37744 / 15625) * Mlo := by
+    dsimp only [Llo, Mlo]
+    norm_num
+  have hCross :
+      (Slo * Llo) *
+          (-(216607168 / 369140625 : ℝ) +
+            (3232 / 46875) * Llo + (37744 / 15625) * Mlo) ≤
+        B * C := by
+    have hC0 : 0 < C := hClo0.trans hClo
+    exact (calc
+      (Slo * Llo) *
+          (-(216607168 / 369140625 : ℝ) +
+            (3232 / 46875) * Llo + (37744 / 15625) * Mlo) <
+          B *
+            (-(216607168 / 369140625 : ℝ) +
+              (3232 / 46875) * Llo + (37744 / 15625) * Mlo) :=
+        mul_lt_mul_of_pos_right hBlo hClo0
+      _ < B * C := mul_lt_mul_of_pos_left hClo hB0
+      ).le
+  have hLsq : L ^ 2 ≤ Lhi ^ 2 := by
+    have hp : 0 < (Lhi - L) * (Lhi + L) :=
+      mul_pos (sub_pos.mpr hL.2) (by nlinarith [hL0])
+    nlinarith
+  have hpi : (3141592 / 1000000 : ℝ) < Real.pi := by
+    have hp := Real.pi_gt_d6
+    norm_num at hp ⊢
+    exact hp
+  have hpiSq : Plo ≤ Real.pi ^ 2 := by
+    have hp : 0 <
+        (Real.pi - (3141592 / 1000000 : ℝ)) *
+          (Real.pi + (3141592 / 1000000 : ℝ)) :=
+      mul_pos (sub_pos.mpr hpi) (by nlinarith [Real.pi_pos])
+    have hrat : Plo < (3141592 / 1000000 : ℝ) ^ 2 := by
+      dsimp only [Plo]
+      norm_num
+    have hpSq : (3141592 / 1000000 : ℝ) ^ 2 < Real.pi ^ 2 := by
+      nlinarith only [hp]
+    exact hrat.le.trans hpSq.le
+  have hV :
+      (3917387 / 4465125 : ℝ) - (4 / 45) * Real.pi ^ 2 ≤
+        (3917387 / 4465125 : ℝ) - (4 / 45) * Plo := by
+    nlinarith
+  have hK :
+      (L ^ 2 / 2) * (9796165472 / 11444091796875 : ℝ) ≤
+        (Lhi ^ 2 / 2) * (9796165472 / 11444091796875 : ℝ) := by
+    have hhalf : L ^ 2 / 2 ≤ Lhi ^ 2 / 2 := by
+      have hscaled := mul_le_mul_of_nonneg_right hLsq
+        (by norm_num : (0 : ℝ) ≤ 1 / 2)
+      simpa only [div_eq_mul_inv, one_mul] using hscaled
+    exact mul_le_mul_of_nonneg_right hhalf (by norm_num)
+  rw [integral_endpointSeedProjectedCapacityRepresenter_sq]
+  change
+    (3917387 / 4465125 : ℝ) - (4 / 45) * Real.pi ^ 2 +
+          (L ^ 2 / 2) * (9796165472 / 11444091796875 : ℝ) - B * C ≤ _
+  calc
+    _ ≤ ((3917387 / 4465125 : ℝ) - (4 / 45) * Plo) +
+          (Lhi ^ 2 / 2) * (9796165472 / 11444091796875 : ℝ) -
+          (Slo * Llo) *
+            (-(216607168 / 369140625 : ℝ) +
+              (3232 / 46875) * Llo + (37744 / 15625) * Mlo) := by
+      linarith
+    _ ≤ (21 / 100000 : ℝ) := by
+      dsimp only [Plo, Lhi, Slo, Llo, Mlo]
+      norm_num
 
 end
 
