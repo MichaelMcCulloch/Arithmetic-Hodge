@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthCommonParentResidualStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthPositiveRayKernelStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthResidualParentLocalizationStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilFourCellSelectorProductionClosureStructural
 import ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
 import ArithmeticHodge.Analysis.YoshidaFiveCellEndpointParitySchurClosureStructural
@@ -13,6 +14,7 @@ noncomputable section
 open MultiplicativeWeil
 open MultiplicativeWeilAllLengthCommonParentResidualStructural
 open MultiplicativeWeilAllLengthPositiveRayKernelStructural
+open MultiplicativeWeilAllLengthResidualParentLocalizationStructural
 open MultiplicativeWeilFiveCellResidualFactorTwoStructural
 open MultiplicativeWeilFourCellSelectorProductionClosureStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
@@ -27,7 +29,9 @@ any analytic premise.  Length four is one even endpoint-zero capacity family
 plus the odd two-row selector Loewner certificate.  Length five is the pair of
 intrinsic same-parity low-plus-tail ray families.  Every later length is the
 positive ray of the actual common-parent residual pencil, restricted to
-genuinely nonlocal parents; ratio-two parents are already unconditional.
+genuinely nonlocal parents in the exact surrounding lattice window;
+ratio-two parents and remote parent support are already unconditional or
+irrelevant.
 -/
 
 /-- The intrinsic five-cell parity rays imply production positivity at exact
@@ -38,14 +42,15 @@ theorem realFiniteBlockProductionNonnegativeAtLength_five_of_intrinsicParityRays
   exact realFiveCellFactorTwoDomination_iff_productionNonnegative.mp
     (realFiveCellFactorTwoDomination_of_intrinsicParityRays hfive)
 
-/-- The complete sharpened analytic frontier, with no finite-window,
+/-- The complete sharpened analytic frontier, with no remote-support,
 ratio-two-support, or singular-pivot bookkeeping left implicit. -/
 def ArithmeticHodgeStructuralRayCertificate : Prop :=
   FourCellEvenEndpointZeroExactCapacity ∧
     FourCellOddP11CoupledSelectorLoewnerCertificate ∧
       FiveCellEndpointAdaptedIntrinsicParityRayNonnegative ∧
         ∀ n : ℕ, 6 ≤ n →
-          RealFiniteBlockCommonParentResidualPositiveRayNonnegativeOutsideRatioTwoAtLength n
+          RealFiniteBlockCommonParentResidualPositiveRayNonnegativeLocalizedOutsideRatioTwoAtLength
+            n
 
 /-- The structural-ray certificate implies RH.  The zero enumeration is an
 already-proved existence theorem and is chosen internally, so no auxiliary
@@ -62,7 +67,7 @@ theorem riemannHypothesis_of_structuralRayCertificate
     (realFiniteBlockProductionNonnegativeAtLength_five_of_intrinsicParityRays
       hcert.2.2.1)
     (fun n hn ↦
-      (realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_outsideRatioTwo
+      (realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_localizedOutsideRatioTwo
         n (by omega)).2 (hcert.2.2.2 n hn))
 
 end
