@@ -36,10 +36,11 @@ Riesz functional.  Its squared norm is bounded before any zero-cosh
 assumption is used, and a sharp scalar Young split removes that functional
 from the remaining universal obligation.
 
-The result isolates a diagonal low--tail reserve statement: it contains the
-explicit four-dimensional low row and the tail mass, but no longer contains
-the singular capacity/regular mixed row.  Proving that reserve is sufficient
-for the exact `hrow` premise of the endpoint-seed universal Schur theorem.
+The resulting free-parameter Young estimate is deliberately diagnostic.  It
+shows exactly how an unweighted tail norm trades against the very thin finite
+row margin, without asserting that a fixed coarse split closes the universal
+Schur determinant.  A final proof needs a weighted/harmonic tail estimate (or
+an equivalent coupled block argument) rather than another fixed mass charge.
 -/
 
 /-- The rational squared-norm budget retained by the canonical complete
@@ -171,26 +172,39 @@ theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_rational_mass
       fourCellEvenEndpointSeedCanonicalTailNormBudget
       integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_rational
 
-/-- A sharp rational Young split.  Only one thousandth of the finite-row
-square is lost; the tail square is charged by the reciprocal factor. -/
-theorem add_sq_le_oneThousandOne_split (x y : ℝ) :
+/-- Exact scalar Young inequality with a free positive allocation parameter.
+Keeping the parameter free is essential: a fixed split can consume more tail
+diagonal than the four-cell operator possesses. -/
+theorem add_sq_le_of_positive_youngParameter
+    (x y η : ℝ) (hη : 0 < η) :
     (x + y) ^ 2 ≤
-      (1001 / 1000 : ℝ) * x ^ 2 + 1001 * y ^ 2 := by
-  nlinarith only [sq_nonneg (x - 1000 * y)]
+      (1 + η) * x ^ 2 + (1 + η⁻¹) * y ^ 2 := by
+  have hηne : η ≠ 0 := hη.ne'
+  have hinv0 : 0 ≤ η⁻¹ := (inv_pos.mpr hη).le
+  have hid :
+      (1 + η) * x ^ 2 + (1 + η⁻¹) * y ^ 2 - (x + y) ^ 2 =
+        η⁻¹ * (η * x - y) ^ 2 := by
+    field_simp [hηne]
+    all_goals ring
+  rw [← sub_nonneg, hid]
+  exact mul_nonneg hinv0 (sq_nonneg (η * x - y))
 
 /-- The canonical row is bounded by one explicit finite-row square and the
-mass of the moment-eight residual.  In particular the non-polynomial
-capacity/regular row has disappeared from the remaining obligation. -/
-theorem fourCellEvenEndpointSeedRow_sq_le_canonicalLowTailBudget
+mass of the moment-eight residual, for every positive Young allocation.
+This is an unconditional diagnostic interface; closing the universal Schur
+step still requires a sharper weighted tail allocation than the unweighted
+mass estimate alone supplies. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_canonicalLowTailBudget_of_positive
     (w : ℝ → ℝ) (hw : Continuous w)
     (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
     (heven : Function.Even w)
     (hzero : fourCellPositiveCoshMoment w
-      (fourCellOperatorHalfWidth / 2) = 0) :
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (η : ℝ) (hη : 0 < η) :
     fourCellEvenEndpointSeedRow w ^ 2 ≤
-      (1001 / 1000 : ℝ) *
+      (1 + η) *
           fourCellEvenEndpointSeedCanonicalLowRow w hw ^ 2 +
-        1001 * fourCellEvenEndpointSeedCanonicalTailNormBudget *
+        (1 + η⁻¹) * fourCellEvenEndpointSeedCanonicalTailNormBudget *
           fourCellEvenEndpointSeedCanonicalTailMass w hw := by
   let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 8
   let L : ℝ := fourCellEvenEndpointSeedCanonicalLowRow w hw
@@ -204,7 +218,10 @@ theorem fourCellEvenEndpointSeedRow_sq_le_canonicalLowTailBudget
         (∫ x : ℝ in -1..1, r x ^ 2) := by
     simpa only [T] using
       fourCellEvenEndpointSeedCanonicalTailRow_sq_le_rational_mass r hr hrGap
-  have hTscaled := mul_le_mul_of_nonneg_left hT (by norm_num : (0 : ℝ) ≤ 1001)
+  have hscale : 0 ≤ (1 + η⁻¹) := by
+    have hinv : 0 < η⁻¹ := inv_pos.mpr hη
+    positivity
+  have hTscaled := mul_le_mul_of_nonneg_left hT hscale
   have hrow := fourCellEvenEndpointSeedRow_eq_canonicalCutoffEightLow_add_tail
     w hw hlocal heven hzero
   have hrow' : fourCellEvenEndpointSeedRow w = L + T := by
@@ -213,70 +230,17 @@ theorem fourCellEvenEndpointSeedRow_sq_le_canonicalLowTailBudget
     simpa only [sub_eq_add_neg, add_assoc] using hrow
   rw [hrow']
   calc
-    (L + T) ^ 2 ≤ (1001 / 1000 : ℝ) * L ^ 2 + 1001 * T ^ 2 :=
-      add_sq_le_oneThousandOne_split L T
-    _ ≤ (1001 / 1000 : ℝ) * L ^ 2 +
-        1001 * fourCellEvenEndpointSeedCanonicalTailNormBudget *
+    (L + T) ^ 2 ≤ (1 + η) * L ^ 2 + (1 + η⁻¹) * T ^ 2 :=
+      add_sq_le_of_positive_youngParameter L T η hη
+    _ ≤ (1 + η) * L ^ 2 +
+        (1 + η⁻¹) * fourCellEvenEndpointSeedCanonicalTailNormBudget *
           (∫ x : ℝ in -1..1, r x ^ 2) := by
       nlinarith only [hTscaled]
-    _ = (1001 / 1000 : ℝ) *
+    _ = (1 + η) *
           fourCellEvenEndpointSeedCanonicalLowRow w hw ^ 2 +
-        1001 * fourCellEvenEndpointSeedCanonicalTailNormBudget *
+        (1 + η⁻¹) * fourCellEvenEndpointSeedCanonicalTailNormBudget *
           fourCellEvenEndpointSeedCanonicalTailMass w hw := by
       dsimp only [L, r, fourCellEvenEndpointSeedCanonicalTailMass]
-
-/-- The exact diagonal reserve left after eliminating the complete tail row.
-This is strictly stronger information than the coarse universal mass
-coercivity, but it contains no remaining mixed endpoint-seed functional. -/
-def fourCellEvenEndpointSeedCanonicalLowTailDiagonalReserve
-    (w : ℝ → ℝ) (hw : Continuous w) : Prop :=
-  (1001 / 1000 : ℝ) *
-        fourCellEvenEndpointSeedCanonicalLowRow w hw ^ 2 +
-      1001 * fourCellEvenEndpointSeedCanonicalTailNormBudget *
-        fourCellEvenEndpointSeedCanonicalTailMass w hw ≤
-    fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
-      fourCellEvenPolarFreeOperator w
-
-/-- The diagonal reserve is sufficient for the exact endpoint-seed row
-Schur inequality. -/
-theorem fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_canonicalReserve
-    (w : ℝ → ℝ) (hw : Continuous w)
-    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
-    (heven : Function.Even w)
-    (hzero : fourCellPositiveCoshMoment w
-      (fourCellOperatorHalfWidth / 2) = 0)
-    (hreserve :
-      fourCellEvenEndpointSeedCanonicalLowTailDiagonalReserve w hw) :
-    fourCellEvenEndpointSeedRow w ^ 2 ≤
-      fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
-        fourCellEvenPolarFreeOperator w := by
-  exact (fourCellEvenEndpointSeedRow_sq_le_canonicalLowTailBudget
-    w hw hlocal heven hzero).trans hreserve
-
-/-- Universal form of the preceding handoff, matching the `hrow` premise of
-`fourCell_evenBracket_nonnegative_of_endpointSeedUniversalSchur`. -/
-theorem fourCellEvenEndpointSeedUniversalSchur_of_canonicalReserve
-    (hreserve : ∀ (v : ℝ → ℝ) (hv : ContDiff ℝ 1 v),
-      Function.Even v →
-      v (-1) = 0 ∧ v 1 = 0 →
-      fourCellPositiveCoshMoment v
-          (fourCellOperatorHalfWidth / 2) = 0 →
-      fourCellEvenEndpointSeedCanonicalLowTailDiagonalReserve
-        v hv.continuous) :
-    ∀ v : ℝ → ℝ,
-      ContDiff ℝ 1 v → Function.Even v →
-      v (-1) = 0 ∧ v 1 = 0 →
-      fourCellPositiveCoshMoment v
-          (fourCellOperatorHalfWidth / 2) = 0 →
-      fourCellEvenEndpointSeedRow v ^ 2 ≤
-        fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
-          fourCellEvenPolarFreeOperator v := by
-  intro v hv heven hend hzero
-  have hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v :=
-    hv.contDiffOn.locallyLipschitzOn (convex_Icc (-1 : ℝ) 1)
-  exact fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_canonicalReserve
-    v hv.continuous hlocal heven hzero
-      (hreserve v hv heven hend hzero)
 
 end
 
