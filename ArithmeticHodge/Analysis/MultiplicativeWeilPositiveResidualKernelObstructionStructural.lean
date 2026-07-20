@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellCommonParentDeterminantStructural
 
 set_option autoImplicit false
 
@@ -9,6 +10,10 @@ namespace ArithmeticHodge.Analysis.MultiplicativeWeilPositiveResidualKernelObstr
 noncomputable section
 
 open MultiplicativeWeil
+open ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthEndpointReserveStructural
+open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellCommonParentDeterminantStructural
+open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural
+open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 
 /-!
@@ -154,6 +159,32 @@ theorem exists_strictly_negative_middlePivotNumerator_of_three_middle_modes
   · rw [hleft, hright]
     simp only [zero_mul, sub_zero]
     exact mul_neg_of_pos_of_neg (hmiddle c hc0) hremote
+
+/-! ## The actual negative remote endpoint supplied by common-parent geometry -/
+
+/-- The already constructed zero-middle common parent has a strictly negative
+*global* endpoint cross, not merely a negative local-kernel cross.  The
+zero-middle support identity annihilates the only factor-two prime atom, so
+the exact local-minus-prime formula transfers the strict sign without loss. -/
+theorem exists_real_middleZero_fiveCell_negative_remoteGlobalCross
+    (k : ℤ) :
+    ∃ parent : BombieriTest,
+      bombieriConjugateTest parent = parent ∧
+        fiveCellMiddleThree parent k = 0 ∧
+        (bombieriTwoBlockGlobalCrossSymbol
+          (monotoneQuarterCell parent k)
+          (monotoneQuarterCell parent (k + 4))).re < 0 := by
+  obtain ⟨parent, hparent, hmiddle, hlocal⟩ :=
+    exists_real_middleZero_fiveCell_negative_remoteLocalCross k
+  have hprime := fiveCell_remoteEndpointCross_eq_zero_of_middle_zero
+    parent k hmiddle
+  have hcross :=
+    two_mul_fiveCell_remoteEndpointGlobalCross_re_eq_local_sub_prime
+      parent k
+  rw [hprime] at hcross
+  simp only [Complex.zero_re, mul_zero, sub_zero] at hcross
+  refine ⟨parent, hparent, hmiddle, ?_⟩
+  linarith
 
 end
 
