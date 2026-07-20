@@ -1977,6 +1977,146 @@ theorem fourCellEvenFiniteSevenTrueBorderEntry_eq_fullyPolynomial_envelopes
     fourCellEvenFiniteSevenBorderPolarization
   rw [hseed, hpolar, hrowK, hrowL]
 
+/-! ## Sharp envelope budget for the fixed seed rows -/
+
+private theorem finiteSeven_endpointCoshSeed_eq_evenLowProfile :
+    fourCellEvenEndpointCoshSeed =
+      YoshidaEndpointEvenLowProfile.yoshidaEndpointEvenLowProfile
+        (2 / 3) (-2 / 3) := by
+  funext x
+  unfold fourCellEvenEndpointCoshSeed
+    YoshidaEndpointEvenLowProfile.yoshidaEndpointEvenLowProfile
+    YoshidaEndpointEvenStructuralReduction.centeredEvenP2
+  ring
+
+private theorem finiteSeven_endpointCoshSeed_sq_integral :
+    (∫ x : ℝ in -1..1, fourCellEvenEndpointCoshSeed x ^ 2) =
+      16 / 15 := by
+  rw [finiteSeven_endpointCoshSeed_eq_evenLowProfile,
+    YoshidaEndpointEvenLowProfile.integral_yoshidaEndpointEvenLowProfile_sq]
+  norm_num
+
+/-- Replacing the kernel in the fixed seed pivot costs less than
+`1 / (3·10¹¹)`. -/
+theorem abs_fourCellEvenFiniteSevenRegularEnvelopeQuadratic_endpointSeed_lt :
+    |fourCellEvenFiniteSevenRegularEnvelopeQuadratic
+      fourCellEvenEndpointCoshSeed| < (1 / 300000000000 : ℝ) := by
+  have hraw := finiteSeven_abs_regularEnvelopeQuadratic_le_energy
+    fourCellEvenEndpointCoshSeed fourCellEvenEndpointCoshSeed_continuous
+  rw [finiteSeven_endpointCoshSeed_sq_integral] at hraw
+  calc
+    _ ≤ (1 / 380000000000 : ℝ) * (16 / 15) := hraw
+    _ < (1 / 300000000000 : ℝ) := by norm_num
+
+private theorem finiteSeven_sum_endpointSeed_nonconstantQuotient_sq_integral_lt
+    (k : ℕ) :
+    (∫ x : ℝ in -1..1,
+      (fourCellEvenEndpointCoshSeed x +
+        fourCellEvenFiniteSevenQuotientMode (2 * (k + 1)) x) ^ 2) <
+      (21 / 5 : ℝ) := by
+  let u : ℝ → ℝ := fourCellEvenEndpointCoshSeed
+  let v : ℝ → ℝ :=
+    fourCellEvenFiniteSevenQuotientMode (2 * (k + 1))
+  have hu : Continuous u := fourCellEvenEndpointCoshSeed_continuous
+  have hv : Continuous v :=
+    finiteSeven_quotientMode_continuous (2 * (k + 1))
+  have hmono :
+      (∫ x : ℝ in -1..1, (u x + v x) ^ 2) ≤
+        ∫ x : ℝ in -1..1, 2 * u x ^ 2 + 2 * v x ^ 2 := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      (((hu.add hv).pow 2).intervalIntegrable (-1) 1)
+      ((((hu.pow 2).const_mul 2).add ((hv.pow 2).const_mul 2))
+        |>.intervalIntegrable (-1) 1)
+    intro x _hx
+    change (u x + v x) ^ 2 ≤ 2 * u x ^ 2 + 2 * v x ^ 2
+    nlinarith [sq_nonneg (u x - v x)]
+  have hsplit :
+      (∫ x : ℝ in -1..1, 2 * u x ^ 2 + 2 * v x ^ 2) =
+        2 * (∫ x : ℝ in -1..1, u x ^ 2) +
+          2 * (∫ x : ℝ in -1..1, v x ^ 2) := by
+    rw [intervalIntegral.integral_add
+        ((hu.pow 2).const_mul 2 |>.intervalIntegrable (-1) 1)
+        ((hv.pow 2).const_mul 2 |>.intervalIntegrable (-1) 1),
+      intervalIntegral.integral_const_mul,
+      intervalIntegral.integral_const_mul]
+  have huSq : (∫ x : ℝ in -1..1, u x ^ 2) = 16 / 15 := by
+    simpa only [u] using finiteSeven_endpointCoshSeed_sq_integral
+  have hvSq : (∫ x : ℝ in -1..1, v x ^ 2) < 1 := by
+    simpa only [v] using
+      finiteSeven_nonconstantQuotientMode_sq_integral_lt_one k
+  calc
+    _ ≤ ∫ x : ℝ in -1..1, 2 * u x ^ 2 + 2 * v x ^ 2 := hmono
+    _ = 2 * (∫ x : ℝ in -1..1, u x ^ 2) +
+        2 * (∫ x : ℝ in -1..1, v x ^ 2) := hsplit
+    _ < (21 / 5 : ℝ) := by rw [huSq]; linarith
+
+/-- Each of the six polynomialized endpoint-seed rows differs from the true
+row by less than the same `10⁻¹¹` envelope scale as a quotient-pair
+entry.  This uses only the fixed seed energy and the structural quotient
+energy bound. -/
+theorem abs_fourCellEvenFiniteSevenRegularEnvelopePolarization_endpointSeed_lt
+    (k : ℕ) :
+    |fourCellEvenFiniteSevenRegularEnvelopePolarization
+      fourCellEvenEndpointCoshSeed
+      (fourCellEvenFiniteSevenQuotientMode (2 * (k + 1)))| <
+        (1 / 100000000000 : ℝ) := by
+  let u : ℝ → ℝ := fourCellEvenEndpointCoshSeed
+  let v : ℝ → ℝ :=
+    fourCellEvenFiniteSevenQuotientMode (2 * (k + 1))
+  let A : ℝ := fourCellEvenFiniteSevenRegularEnvelopeQuadratic (u + v)
+  let B : ℝ := fourCellEvenFiniteSevenRegularEnvelopeQuadratic u
+  let C : ℝ := fourCellEvenFiniteSevenRegularEnvelopeQuadratic v
+  have hu : Continuous u := fourCellEvenEndpointCoshSeed_continuous
+  have hv : Continuous v :=
+    finiteSeven_quotientMode_continuous (2 * (k + 1))
+  have hAraw := finiteSeven_abs_regularEnvelopeQuadratic_le_energy
+    (u + v) (hu.add hv)
+  have hBraw := finiteSeven_abs_regularEnvelopeQuadratic_le_energy u hu
+  have hCraw := finiteSeven_abs_regularEnvelopeQuadratic_le_energy v hv
+  have hsumEnergy :
+      (∫ x : ℝ in -1..1, (u x + v x) ^ 2) < (21 / 5 : ℝ) := by
+    simpa only [u, v] using
+      finiteSeven_sum_endpointSeed_nonconstantQuotient_sq_integral_lt k
+  have huEnergy : (∫ x : ℝ in -1..1, u x ^ 2) = 16 / 15 := by
+    simpa only [u] using finiteSeven_endpointCoshSeed_sq_integral
+  have hvEnergy : (∫ x : ℝ in -1..1, v x ^ 2) < 1 := by
+    simpa only [v] using
+      finiteSeven_nonconstantQuotientMode_sq_integral_lt_one k
+  have hdelta : (0 : ℝ) < 1 / 380000000000 := by norm_num
+  have hA : |A| < (21 / 5 : ℝ) / 380000000000 := by
+    calc
+      |A| ≤ (1 / 380000000000 : ℝ) *
+          (∫ x : ℝ in -1..1, (u + v) x ^ 2) := by
+        simpa only [A] using hAraw
+      _ < (1 / 380000000000 : ℝ) * (21 / 5) :=
+        mul_lt_mul_of_pos_left hsumEnergy hdelta
+      _ = (21 / 5 : ℝ) / 380000000000 := by ring
+  have hB : |B| ≤ (16 / 15 : ℝ) / 380000000000 := by
+    calc
+      |B| ≤ (1 / 380000000000 : ℝ) *
+          (∫ x : ℝ in -1..1, u x ^ 2) := by
+        simpa only [B] using hBraw
+      _ = (16 / 15 : ℝ) / 380000000000 := by rw [huEnergy]; ring
+  have hC : |C| < (1 : ℝ) / 380000000000 := by
+    calc
+      |C| ≤ (1 / 380000000000 : ℝ) *
+          (∫ x : ℝ in -1..1, v x ^ 2) := by
+        simpa only [C] using hCraw
+      _ < (1 / 380000000000 : ℝ) * 1 :=
+        mul_lt_mul_of_pos_left hvEnergy hdelta
+      _ = (1 : ℝ) / 380000000000 := by ring
+  have habc : |A - B - C| ≤ |A| + |B| + |C| := by
+    calc
+      |A - B - C| ≤ |A - B| + |C| := abs_sub _ _
+      _ ≤ (|A| + |B|) + |C| := by linarith [abs_sub A B]
+  have htotal :
+      |A - B - C| < ((21 / 5 : ℝ) + 16 / 15 + 1) /
+        380000000000 := habc.trans_lt (by linarith)
+  change |(A - B - C) / 2| < _
+  rw [abs_div, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
+  norm_num at htotal ⊢
+  linarith
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedFiniteSevenEntryEnclosuresStructural
