@@ -11,6 +11,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStr
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseCenteredP9Structural
+import ArithmeticHodge.Analysis.ShiftedLegendrePolynomialGap
 
 set_option autoImplicit false
 
@@ -12282,6 +12283,569 @@ theorem fourCellOddCoreLocalBilinear_P7_P9_sq_le_mul :
       _ < Q7 * Q9 := mul_lt_mul_of_pos_left hQ9 hQ7pos
   dsimp only [B, Q7, Q9] at hBsq hprod ⊢
   nlinarith
+
+private theorem centeredRawLogEnergy_eq_bilinear_self_local
+    (w : ℝ → ℝ) :
+    centeredRawLogEnergy w = centeredRawLogBilinear w w := by
+  unfold centeredRawLogEnergy centeredRawLogBilinear
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  apply intervalIntegral.integral_congr
+  intro y _hy
+  ring
+
+private theorem integral_shiftedLegendreReal_sq_of_centeredMode_local
+    (n : ℕ) (q : ℝ → ℝ) (r : ℝ)
+    (hmode : ∀ t : ℝ, centeredPullback q t =
+      -(shiftedLegendreReal n).eval t)
+    (henergy : factorTwoIntrinsicEnergy q = 2 * r) :
+    (∫ t : unitInterval,
+      (shiftedLegendreReal n).eval (t : ℝ) *
+        (shiftedLegendreReal n).eval (t : ℝ)) = r := by
+  have hbridge := integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+    n q q hmode
+  have hsq : (∫ x : ℝ in -1..1, q x * q x) =
+      factorTwoIntrinsicEnergy q := by
+    unfold factorTwoIntrinsicEnergy
+    apply intervalIntegral.integral_congr
+    intro x _hx
+    ring
+  rw [hsq, henergy] at hbridge
+  calc
+    (∫ t : unitInterval,
+        (shiftedLegendreReal n).eval (t : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ)) =
+        -(∫ t : unitInterval,
+          centeredPullback q (t : ℝ) *
+            (shiftedLegendreReal n).eval (t : ℝ)) := by
+      rw [← integral_neg]
+      apply integral_congr_ae
+      filter_upwards [] with t
+      rw [hmode]
+      ring
+    _ = r := by rw [hbridge]; ring
+
+private theorem shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    {m n : ℕ} (hmn : m ≠ n) :
+    ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+        (shiftedLegendreReal m) (shiftedLegendreReal n) = 0 := by
+  rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply,
+    shiftedLogKernel_shiftedLegendreReal]
+  simp only [Polynomial.eval_mul, Polynomial.eval_C]
+  rw [show (fun x : ℝ ↦
+      (shiftedLegendreReal m).eval x *
+        (2 * (harmonic n : ℝ) *
+          (shiftedLegendreReal n).eval x)) =
+      fun x : ℝ ↦ (2 * (harmonic n : ℝ)) *
+        ((shiftedLegendreReal m).eval x *
+          (shiftedLegendreReal n).eval x) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul,
+    ShiftedLegendreBasis.integral_shiftedLegendreReal_mul_eq_zero hmn]
+  ring
+
+private theorem shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    (n : ℕ) (r : ℝ)
+    (hsq : (∫ t : unitInterval,
+      (shiftedLegendreReal n).eval (t : ℝ) *
+        (shiftedLegendreReal n).eval (t : ℝ)) = r) :
+    ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+        (shiftedLegendreReal n) (shiftedLegendreReal n) =
+      2 * (harmonic n : ℝ) * r := by
+  rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply,
+    shiftedLogKernel_shiftedLegendreReal]
+  simp only [Polynomial.eval_mul, Polynomial.eval_C]
+  have hsq' : (∫ x : ℝ in 0..1,
+      (shiftedLegendreReal n).eval x *
+        (shiftedLegendreReal n).eval x) = r := by
+    rw [← integral_unitInterval_eq_intervalIntegral]
+    exact hsq
+  rw [show (fun x : ℝ ↦
+      (shiftedLegendreReal n).eval x *
+        (2 * (harmonic n : ℝ) *
+          (shiftedLegendreReal n).eval x)) =
+      fun x : ℝ ↦ (2 * (harmonic n : ℝ)) *
+        ((shiftedLegendreReal n).eval x *
+          (shiftedLegendreReal n).eval x) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul, hsq']
+
+private theorem shiftedLegendreOddMode_sq_values_local :
+    (∫ t : unitInterval,
+      (shiftedLegendreReal 1).eval (t : ℝ) ^ 2) = (1 / 3 : ℝ) ∧
+    (∫ t : unitInterval,
+      (shiftedLegendreReal 3).eval (t : ℝ) ^ 2) = (1 / 7 : ℝ) ∧
+    (∫ t : unitInterval,
+      (shiftedLegendreReal 5).eval (t : ℝ) ^ 2) = (1 / 11 : ℝ) ∧
+    (∫ t : unitInterval,
+      (shiftedLegendreReal 7).eval (t : ℝ) ^ 2) = (1 / 15 : ℝ) ∧
+    (∫ t : unitInterval,
+      (shiftedLegendreReal 9).eval (t : ℝ) ^ 2) = (1 / 19 : ℝ) := by
+  have h1Energy : factorTwoIntrinsicEnergy centeredP1 = 2 * (1 / 3 : ℝ) := by
+    unfold factorTwoIntrinsicEnergy
+    rw [integral_centeredP1_sq]
+    norm_num
+  have h3Energy : factorTwoIntrinsicEnergy centeredP3 = 2 * (1 / 7 : ℝ) := by
+    unfold factorTwoIntrinsicEnergy
+    rw [integral_centeredP3_sq]
+    norm_num
+  have h5Energy : factorTwoIntrinsicEnergy factorTwoCenteredP5 =
+      2 * (1 / 11 : ℝ) := by
+    have h := factorTwoIntrinsicEnergy_oneThreeFiveLowProfile 0 0 1
+    have hp : fourCellOddOneThreeFiveLowProfile 0 0 1 =
+        factorTwoCenteredP5 := by
+      funext x
+      unfold fourCellOddOneThreeFiveLowProfile
+        factorTwoOddStructuralLowProfile centeredP1 centeredP3
+      simp
+    rw [hp] at h
+    norm_num at h ⊢
+    exact h
+  have h7Energy : factorTwoIntrinsicEnergy factorTwoCenteredP7 =
+      2 * (1 / 15 : ℝ) := by
+    rw [factorTwoCenteredP7_energy]
+    norm_num
+  have h9Energy : factorTwoIntrinsicEnergy factorTwoCenteredP9 =
+      2 * (1 / 19 : ℝ) := by
+    rw [factorTwoCenteredP9_energy]
+    norm_num
+  have h1 := integral_shiftedLegendreReal_sq_of_centeredMode_local
+    1 centeredP1 (1 / 3) centeredPullback_centeredP1_eq_neg_shiftedLegendre_local
+      h1Energy
+  have h3 := integral_shiftedLegendreReal_sq_of_centeredMode_local
+    3 centeredP3 (1 / 7) centeredPullback_centeredP3_eq_neg_shiftedLegendre_local
+      h3Energy
+  have h5 := integral_shiftedLegendreReal_sq_of_centeredMode_local
+    5 factorTwoCenteredP5 (1 / 11)
+      centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre h5Energy
+  have h7 := integral_shiftedLegendreReal_sq_of_centeredMode_local
+    7 factorTwoCenteredP7 (1 / 15) centeredPullback_factorTwoCenteredP7 h7Energy
+  have h9 := integral_shiftedLegendreReal_sq_of_centeredMode_local
+    9 factorTwoCenteredP9 (1 / 19) centeredPullback_factorTwoCenteredP9 h9Energy
+  simpa only [pow_two] using ⟨h1, h3, h5, h7, h9⟩
+
+private theorem fourCellOddEndpointStripOdd_P9_eq_legendreFive :
+    fourCellOddEndpointStripOdd factorTwoCenteredP9 =
+      fourCellOddOneThreeFiveLowProfile
+        (-303036 / 1953125) (1126916 / 1953125) (195844 / 1953125) +
+        fun x ↦ (372 / 390625 : ℝ) * factorTwoCenteredP7 x +
+          (1 / 1953125 : ℝ) * factorTwoCenteredP9 x := by
+  funext x
+  rw [fourCellOddEndpointStripOdd_P9]
+  unfold fourCellOddOneThreeFiveLowProfile
+    factorTwoOddStructuralLowProfile centeredP1 centeredP3
+    factorTwoCenteredP5
+  simp only [Pi.add_apply]
+  rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  ring
+
+private theorem centeredRawLogEnergy_endpointStripOdd_P7_eq :
+    centeredRawLogEnergy
+        (fourCellOddEndpointStripOdd factorTwoCenteredP7) =
+      (500810834962 / 5340576171875 : ℝ) := by
+  let p : ℝ[X] := -(
+    (-9804 / 78125 : ℝ) • shiftedLegendreReal 1 +
+      (35252 / 78125 : ℝ) • shiftedLegendreReal 3 +
+      (1012 / 78125 : ℝ) • shiftedLegendreReal 5 +
+      (1 / 78125 : ℝ) • shiftedLegendreReal 7)
+  let q : ℝ → ℝ := fourCellOddEndpointStripOdd factorTwoCenteredP7
+  have hmode (t : ℝ) : centeredPullback q t = p.eval t := by
+    have h1 := centeredPullback_centeredP1_eq_neg_shiftedLegendre_local t
+    have h3 := centeredPullback_centeredP3_eq_neg_shiftedLegendre_local t
+    have h5 := centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre t
+    have h7 := centeredPullback_factorTwoCenteredP7 t
+    have hdecomp := congrFun fourCellOddEndpointStripOdd_P7_eq_legendreFour
+      (2 * t - 1)
+    dsimp only [p, q]
+    simp only [Polynomial.eval_neg, Polynomial.eval_add,
+      Polynomial.eval_smul, smul_eq_mul]
+    unfold centeredPullback at h1 h3 h5 h7 ⊢
+    rw [hdecomp]
+    simp only [Pi.add_apply]
+    unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    rw [h1, h3, h5, h7]
+    ring
+  rcases shiftedLegendreOddMode_sq_values_local with
+    ⟨hsq1, hsq3, hsq5, hsq7, _hsq9⟩
+  simp only [pow_two] at hsq1 hsq3 hsq5 hsq7
+  have h11 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    1 (1 / 3) hsq1
+  have h33 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    3 (1 / 7) hsq3
+  have h55 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    5 (1 / 11) hsq5
+  have h77 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    7 (1 / 15) hsq7
+  norm_num [harmonic, Finset.sum_range_succ] at h11 h33 h55 h77
+  have h13 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 1 ≠ 3)
+  have h15 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 1 ≠ 5)
+  have h17 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 1 ≠ 7)
+  have h31 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 3 ≠ 1)
+  have h35 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 3 ≠ 5)
+  have h37 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 3 ≠ 7)
+  have h51 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 5 ≠ 1)
+  have h53 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 5 ≠ 3)
+  have h57 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 5 ≠ 7)
+  have h71 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 7 ≠ 1)
+  have h73 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 7 ≠ 3)
+  have h75 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 7 ≠ 5)
+  have hpEnergy :
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear p p =
+        (250405417481 / 10681152343750 : ℝ) := by
+    dsimp only [p]
+    simp only [map_neg, map_add, map_smul, neg_neg, smul_eq_mul]
+    rw [h11, h13, h15, h17, h31, h33, h35, h37,
+      h51, h53, h55, h57, h71, h73, h75, h77]
+    norm_num
+  have hpair : (∫ t : unitInterval,
+      centeredPullback q (t : ℝ) *
+        (shiftedLogKernel p).eval (t : ℝ)) =
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear p p := by
+    rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply]
+    change (∫ t : unitInterval,
+      (fun x : ℝ ↦ centeredPullback q x *
+        (shiftedLogKernel p).eval x) (t : ℝ)) = _
+    rw [integral_unitInterval_eq_intervalIntegral]
+    apply intervalIntegral.integral_congr
+    intro t _ht
+    rw [hmode]
+  have hqcont : Continuous q := by
+    dsimp only [q]
+    exact (contDiff_fourCellOddEndpointStripOdd_local
+      factorTwoCenteredP7 contDiff_factorTwoCenteredP7_local).continuous
+  have h := centeredRawLogBilinear_polynomialMode_eq_four_mul_pair
+    p q q hqcont hmode
+  rw [hpair, hpEnergy] at h
+  rw [centeredRawLogEnergy_eq_bilinear_self_local]
+  exact h
+
+private theorem centeredRawLogEnergy_endpointStripOdd_P9_eq :
+    centeredRawLogEnergy
+        (fourCellOddEndpointStripOdd factorTwoCenteredP9) =
+      (507768301938707 / 3261566162109375 : ℝ) := by
+  let p : ℝ[X] := -(
+    (-303036 / 1953125 : ℝ) • shiftedLegendreReal 1 +
+      (1126916 / 1953125 : ℝ) • shiftedLegendreReal 3 +
+      (195844 / 1953125 : ℝ) • shiftedLegendreReal 5 +
+      (372 / 390625 : ℝ) • shiftedLegendreReal 7 +
+      (1 / 1953125 : ℝ) • shiftedLegendreReal 9)
+  let q : ℝ → ℝ := fourCellOddEndpointStripOdd factorTwoCenteredP9
+  have hmode (t : ℝ) : centeredPullback q t = p.eval t := by
+    have h1 := centeredPullback_centeredP1_eq_neg_shiftedLegendre_local t
+    have h3 := centeredPullback_centeredP3_eq_neg_shiftedLegendre_local t
+    have h5 := centeredPullback_factorTwoCenteredP5_eq_neg_shiftedLegendre t
+    have h7 := centeredPullback_factorTwoCenteredP7 t
+    have h9 := centeredPullback_factorTwoCenteredP9 t
+    have hdecomp := congrFun fourCellOddEndpointStripOdd_P9_eq_legendreFive
+      (2 * t - 1)
+    dsimp only [p, q]
+    simp only [Polynomial.eval_neg, Polynomial.eval_add,
+      Polynomial.eval_smul, smul_eq_mul]
+    unfold centeredPullback at h1 h3 h5 h7 h9 ⊢
+    rw [hdecomp]
+    simp only [Pi.add_apply]
+    unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    rw [h1, h3, h5, h7, h9]
+    ring
+  rcases shiftedLegendreOddMode_sq_values_local with
+    ⟨hsq1, hsq3, hsq5, hsq7, hsq9⟩
+  simp only [pow_two] at hsq1 hsq3 hsq5 hsq7 hsq9
+  have h11 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    1 (1 / 3) hsq1
+  have h33 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    3 (1 / 7) hsq3
+  have h55 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    5 (1 / 11) hsq5
+  have h77 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    7 (1 / 15) hsq7
+  have h99 := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    9 (1 / 19) hsq9
+  norm_num [harmonic, Finset.sum_range_succ] at h11 h33 h55 h77 h99
+  have h13 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 1 ≠ 3)
+  have h15 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 1 ≠ 5)
+  have h17 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 1 ≠ 7)
+  have h19 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 1 ≠ 9)
+  have h31 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 3 ≠ 1)
+  have h35 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 3 ≠ 5)
+  have h37 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 3 ≠ 7)
+  have h39 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 3 ≠ 9)
+  have h51 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 5 ≠ 1)
+  have h53 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 5 ≠ 3)
+  have h57 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 5 ≠ 7)
+  have h59 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 5 ≠ 9)
+  have h71 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 7 ≠ 1)
+  have h73 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 7 ≠ 3)
+  have h75 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 7 ≠ 5)
+  have h79 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 7 ≠ 9)
+  have h91 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 9 ≠ 1)
+  have h93 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 9 ≠ 3)
+  have h95 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 9 ≠ 5)
+  have h97 := shiftedLogEnergyBilinear_shiftedLegendreReal_ne_local
+    (by norm_num : 9 ≠ 7)
+  have hpEnergy :
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear p p =
+        (507768301938707 / 13046264648437500 : ℝ) := by
+    dsimp only [p]
+    simp only [map_neg, map_add, map_smul, neg_neg, smul_eq_mul]
+    rw [h11, h13, h15, h17, h19,
+      h31, h33, h35, h37, h39,
+      h51, h53, h55, h57, h59,
+      h71, h73, h75, h77, h79,
+      h91, h93, h95, h97, h99]
+    norm_num
+  have hpair : (∫ t : unitInterval,
+      centeredPullback q (t : ℝ) *
+        (shiftedLogKernel p).eval (t : ℝ)) =
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear p p := by
+    rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply]
+    change (∫ t : unitInterval,
+      (fun x : ℝ ↦ centeredPullback q x *
+        (shiftedLogKernel p).eval x) (t : ℝ)) = _
+    rw [integral_unitInterval_eq_intervalIntegral]
+    apply intervalIntegral.integral_congr
+    intro t _ht
+    rw [hmode]
+  have hqcont : Continuous q := by
+    dsimp only [q]
+    exact (contDiff_fourCellOddEndpointStripOdd_local
+      factorTwoCenteredP9 contDiff_factorTwoCenteredP9_local).continuous
+  have h := centeredRawLogBilinear_polynomialMode_eq_four_mul_pair
+    p q q hqcont hmode
+  rw [hpair, hpEnergy] at h
+  rw [centeredRawLogEnergy_eq_bilinear_self_local]
+  exact h
+
+private theorem centeredRawLogEnergy_of_neg_shiftedLegendre_local
+    (n : ℕ) (q : ℝ → ℝ) (r : ℝ)
+    (hq : Continuous q)
+    (hmode : ∀ t : ℝ, centeredPullback q t =
+      -(shiftedLegendreReal n).eval t)
+    (hsq : (∫ t : unitInterval,
+      (shiftedLegendreReal n).eval (t : ℝ) *
+        (shiftedLegendreReal n).eval (t : ℝ)) = r) :
+    centeredRawLogEnergy q = 8 * (harmonic n : ℝ) * r := by
+  let p : ℝ[X] := -(shiftedLegendreReal n)
+  have hmode' (t : ℝ) : centeredPullback q t = p.eval t := by
+    dsimp only [p]
+    rw [Polynomial.eval_neg, hmode]
+  have hself := shiftedLogEnergyBilinear_shiftedLegendreReal_self_local
+    n r hsq
+  have hpEnergy :
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear p p =
+        2 * (harmonic n : ℝ) * r := by
+    dsimp only [p]
+    simp only [map_neg, neg_neg]
+    exact hself
+  have hpair : (∫ t : unitInterval,
+      centeredPullback q (t : ℝ) *
+        (shiftedLogKernel p).eval (t : ℝ)) =
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear p p := by
+    rw [ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear_apply]
+    change (∫ t : unitInterval,
+      (fun x : ℝ ↦ centeredPullback q x *
+        (shiftedLogKernel p).eval x) (t : ℝ)) = _
+    rw [integral_unitInterval_eq_intervalIntegral]
+    apply intervalIntegral.integral_congr
+    intro t _ht
+    rw [hmode']
+  have h := centeredRawLogBilinear_polynomialMode_eq_four_mul_pair
+    p q q hq hmode'
+  rw [hpair, hpEnergy] at h
+  rw [centeredRawLogEnergy_eq_bilinear_self_local]
+  nlinarith
+
+private theorem centeredRawLogEnergy_factorTwoCenteredP7_eq_local :
+    centeredRawLogEnergy factorTwoCenteredP7 = (242 / 175 : ℝ) := by
+  rcases shiftedLegendreOddMode_sq_values_local with
+    ⟨_hsq1, _hsq3, _hsq5, hsq7, _hsq9⟩
+  simp only [pow_two] at hsq7
+  have h := centeredRawLogEnergy_of_neg_shiftedLegendre_local
+    7 factorTwoCenteredP7 (1 / 15) continuous_factorTwoCenteredP7
+      centeredPullback_factorTwoCenteredP7 hsq7
+  norm_num [harmonic, Finset.sum_range_succ] at h ⊢
+  exact h
+
+private theorem centeredRawLogEnergy_factorTwoCenteredP9_eq_local :
+    centeredRawLogEnergy factorTwoCenteredP9 = (7129 / 5985 : ℝ) := by
+  rcases shiftedLegendreOddMode_sq_values_local with
+    ⟨_hsq1, _hsq3, _hsq5, _hsq7, hsq9⟩
+  simp only [pow_two] at hsq9
+  have h := centeredRawLogEnergy_of_neg_shiftedLegendre_local
+    9 factorTwoCenteredP9 (1 / 19) continuous_factorTwoCenteredP9
+      centeredPullback_factorTwoCenteredP9 hsq9
+  norm_num [harmonic, Finset.sum_range_succ] at h ⊢
+  exact h
+
+private theorem fourCellOddRawStripCancellationReserve_eq_raw_sub_strip
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    fourCellOddRawStripCancellationReserve w =
+      (1 / 4 : ℝ) * centeredRawLogEnergy w -
+        (1 / 2 : ℝ) * fourCellOddEndpointStripOddRawEnergy w := by
+  have hwLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hfold := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    w hwLocal hodd
+  unfold fourCellOddRawStripCancellationReserve
+  rw [← hfold]
+  ring
+
+private theorem fourCellOddRawStripCancellationReserve_P7_eq :
+    fourCellOddRawStripCancellationReserve factorTwoCenteredP7 =
+      (121 / 350 : ℝ) -
+        (1 / 2 : ℝ) * (500810834962 / 5340576171875 : ℝ) := by
+  rw [fourCellOddRawStripCancellationReserve_eq_raw_sub_strip
+      factorTwoCenteredP7 contDiff_factorTwoCenteredP7_local
+        odd_factorTwoCenteredP7,
+    centeredRawLogEnergy_factorTwoCenteredP7_eq_local]
+  unfold fourCellOddEndpointStripOddRawEnergy
+  rw [centeredRawLogEnergy_endpointStripOdd_P7_eq]
+  ring
+
+private theorem fourCellOddRawStripCancellationReserve_P9_eq :
+    fourCellOddRawStripCancellationReserve factorTwoCenteredP9 =
+      (7129 / 23940 : ℝ) -
+        (1 / 2 : ℝ) *
+          (507768301938707 / 3261566162109375 : ℝ) := by
+  rw [fourCellOddRawStripCancellationReserve_eq_raw_sub_strip
+      factorTwoCenteredP9 contDiff_factorTwoCenteredP9_local
+        odd_factorTwoCenteredP9,
+    centeredRawLogEnergy_factorTwoCenteredP9_eq_local]
+  unfold fourCellOddEndpointStripOddRawEnergy
+  rw [centeredRawLogEnergy_endpointStripOdd_P9_eq]
+  ring
+
+private theorem fourCellOddEndpointStripEvenMass_P7_eq :
+    fourCellOddEndpointStripEvenMass factorTwoCenteredP7 =
+      (3812346752 / 152587890625 : ℝ) := by
+  unfold fourCellOddEndpointStripEvenMass
+  simp_rw [fourCellOddEndpointStripEven_P7]
+  rw [show (fun z : ℝ ↦
+      ((3003 / 312500 : ℝ) * z ^ 6 +
+        (30723 / 62500 : ℝ) * z ^ 4 +
+        (124929 / 312500 : ℝ) * z ^ 2 - 74891 / 312500) ^ 2) =
+      fun z ↦
+        (5608661881 / 97656250000 : ℝ) * z ^ 0 + 0 * z ^ 1 +
+          (-9356057739 / 48828125000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (-7401506889 / 97656250000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (9483035331 / 24414062500 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (24347891799 / 97656250000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (92261169 / 9765625000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (9018009 / 97656250000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          0 * z ^ 14 + 0 * z ^ 15 + 0 * z ^ 16 + 0 * z ^ 17 +
+          0 * z ^ 18 + 0 * z ^ 19 by
+    funext z
+    ring,
+    integral_polynomial_nineteen_local]
+  norm_num
+
+private theorem fourCellOddEndpointStripOddMass_P7_eq :
+    fourCellOddEndpointStripOddMass factorTwoCenteredP7 =
+      (6289849442 / 457763671875 : ℝ) := by
+  unfold fourCellOddEndpointStripOddMass
+  simp_rw [fourCellOddEndpointStripOdd_P7]
+  rw [show (fun z : ℝ ↦
+      ((429 / 1250000 : ℝ) * z ^ 7 +
+        (126819 / 1250000 : ℝ) * z ^ 5 +
+        (253743 / 250000 : ℝ) * z ^ 3 -
+        (972587 / 1250000 : ℝ) * z) ^ 2) = fun z ↦
+        0 * z ^ 0 + 0 * z ^ 1 +
+          (945925472569 / 1562500000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (-246787143141 / 156250000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (1362952729719 / 1562500000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (80239963881 / 390625000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (17171616231 / 1562500000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (54405351 / 781250000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          (184041 / 1562500000000 : ℝ) * z ^ 14 + 0 * z ^ 15 +
+          0 * z ^ 16 + 0 * z ^ 17 + 0 * z ^ 18 + 0 * z ^ 19 by
+    funext z
+    ring,
+    integral_polynomial_nineteen_local]
+  norm_num
+
+private theorem fourCellOddEndpointStripEvenMass_P9_eq :
+    fourCellOddEndpointStripEvenMass factorTwoCenteredP9 =
+      (30336849696 / 3814697265625 : ℝ) := by
+  unfold fourCellOddEndpointStripEvenMass
+  simp_rw [fourCellOddEndpointStripEven_P9]
+  rw [show (fun z : ℝ ↦
+      ((21879 / 12500000 : ℝ) * z ^ 8 +
+        (591591 / 3125000 : ℝ) * z ^ 6 +
+        (8801793 / 6250000 : ℝ) * z ^ 4 -
+        (4094541 / 3125000 : ℝ) * z ^ 2 +
+        2348191 / 12500000) ^ 2) = fun z ↦
+        (5514000972481 / 156250000000000 : ℝ) * z ^ 0 + 0 * z ^ 1 +
+          (-9614764325331 / 19531250000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (87729355109187 / 39062500000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (-14137887192429 / 3906250000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (116237798424891 / 78125000000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (10324538582787 / 19531250000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (1592494074171 / 39062500000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          (12943419489 / 19531250000000 : ℝ) * z ^ 14 + 0 * z ^ 15 +
+          (478690641 / 156250000000000 : ℝ) * z ^ 16 + 0 * z ^ 17 +
+          0 * z ^ 18 + 0 * z ^ 19 by
+    funext z
+    ring,
+    integral_polynomial_nineteen_local]
+  norm_num
+
+private theorem fourCellOddEndpointStripOddMass_P9_eq :
+    fourCellOddEndpointStripOddMass factorTwoCenteredP9 =
+      (1637931196186 / 72479248046875 : ℝ) := by
+  unfold fourCellOddEndpointStripOddMass
+  simp_rw [fourCellOddEndpointStripOdd_P9]
+  rw [show (fun z : ℝ ↦
+      ((2431 / 50000000 : ℝ) * z ^ 9 +
+        (317889 / 12500000 : ℝ) * z ^ 7 +
+        (18711693 / 25000000 : ℝ) * z ^ 5 +
+        (7297521 / 12500000 : ℝ) * z ^ 3 -
+        (41734881 / 50000000 : ℝ) * z) ^ 2) = fun z ↦
+        0 * z ^ 0 + 0 * z ^ 1 +
+          (1741800292084161 / 2500000000000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+          (-304561170530001 / 312500000000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+          (-567915029681769 / 625000000000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+          (259830885639897 / 312500000000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+          (737270278807491 / 1250000000000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+          (2382844605141 / 62500000000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+          (449701790967 / 625000000000000 : ℝ) * z ^ 14 + 0 * z ^ 15 +
+          (772788159 / 312500000000000 : ℝ) * z ^ 16 + 0 * z ^ 17 +
+          (5909761 / 2500000000000000 : ℝ) * z ^ 18 + 0 * z ^ 19 by
+    funext z
+    ring,
+    integral_polynomial_nineteen_local]
+  norm_num
 
 theorem fourCellOddCoreLocalQuadratic_add
     (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
