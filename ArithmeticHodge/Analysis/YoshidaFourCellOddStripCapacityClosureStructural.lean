@@ -12817,6 +12817,101 @@ theorem fourCellOddCoreLocal_P5_P7_P9_matrix_nonneg (c d e : ℝ) :
   dsimp only [Q5, Q7, Q9, B57, B59, B79] at hQ5c hQ7d hQ9e h57 h59 h79 ⊢
   linarith
 
+/-! ### Exact `P₁₁+` Riesz endpoint -/
+
+/-- Normalized centered `P₇` coefficient. -/
+def centeredOddP7Coefficient (w : ℝ → ℝ) : ℝ :=
+  (15 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+    w x * factorTwoCenteredP7 x
+
+/-- Normalized centered `P₉` coefficient. -/
+def centeredOddP9Coefficient (w : ℝ → ℝ) : ℝ :=
+  (19 / 2 : ℝ) * ∫ x : ℝ in -1..1,
+    w x * factorTwoCenteredP9 x
+
+/-- The exact first five odd shifted-Legendre modes retained before the
+arbitrary `P₁₁+` residual. -/
+def fourCellOddOneThreeFiveSevenNineLowProfile
+    (c d e f g : ℝ) : ℝ → ℝ := fun x ↦
+  fourCellOddOneThreeFiveLowProfile c d e x +
+    f * factorTwoCenteredP7 x + g * factorTwoCenteredP9 x
+
+theorem contDiff_fourCellOddOneThreeFiveSevenNineLowProfile
+    (c d e f g : ℝ) :
+    ContDiff ℝ 1 (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) := by
+  unfold fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  rw [show factorTwoCenteredP7 = fun x ↦
+      (429 * x ^ 7 - 693 * x ^ 5 + 315 * x ^ 3 - 35 * x) / 16 by
+    funext x
+    exact factorTwoCenteredP7_eq x,
+    show factorTwoCenteredP9 = fun x ↦
+      (12155 * x ^ 9 - 25740 * x ^ 7 + 18018 * x ^ 5 -
+        4620 * x ^ 3 + 315 * x) / 128 by
+      funext x
+      exact factorTwoCenteredP9_eq x]
+  fun_prop
+
+theorem odd_fourCellOddOneThreeFiveSevenNineLowProfile
+    (c d e f g : ℝ) :
+    Function.Odd (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) := by
+  intro x
+  unfold fourCellOddOneThreeFiveSevenNineLowProfile
+  rw [odd_fourCellOddOneThreeFiveLowProfile c d e,
+    odd_factorTwoCenteredP7, odd_factorTwoCenteredP9]
+  ring
+
+theorem fourCellOddOneThreeFiveSevenNineLowProfile_one
+    (c d e f g : ℝ) :
+    fourCellOddOneThreeFiveSevenNineLowProfile c d e f g 1 =
+      c + d + e + f + g := by
+  unfold fourCellOddOneThreeFiveSevenNineLowProfile
+  rw [fourCellOddOneThreeFiveLowProfile_one,
+    factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  norm_num
+
+/-- The sole genuinely arbitrary-tail Schur statement after retaining
+`P₁/P₃/P₅/P₇/P₉`.  The residual hypotheses say exactly that its
+shifted-Legendre expansion starts at `P₁₁`; the endpoint equation is the
+uncollapsed trace forced by endpoint zero.  The right-hand side keeps the
+complete local quadratic form, so this is a form/Riesz assertion rather
+than a scalar-weight surrogate. -/
+def fourCellOddOneThreeFiveSevenNineEndpointFormDualBound : Prop :=
+  ∀ (c d e f g : ℝ) (r : ℝ → ℝ),
+    ContDiff ℝ 1 r → Function.Odd r →
+    centeredOddP1Coefficient r = 0 →
+    centeredOddP3Coefficient r = 0 →
+    centeredOddP5Coefficient r = 0 →
+    centeredOddP7Coefficient r = 0 →
+    centeredOddP9Coefficient r = 0 →
+    r 1 = -(c + d + e + f + g) →
+    fourCellOddCoreLocalBilinear
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r ^ 2 ≤
+      fourCellOddCoreLocalQuadratic
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) *
+        fourCellOddCoreLocalQuadratic r
+
+/-- Every `P₁₁+` residual already has a strictly controlled diagonal.
+Thus the preceding mixed Riesz inequality, not tail positivity, is the
+remaining infinite-dimensional issue. -/
+theorem fourCellOddCoreLocalQuadratic_nonneg_of_P11Plus
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (_hthree : centeredOddP3Coefficient r = 0)
+    (_hfive : centeredOddP5Coefficient r = 0)
+    (_hseven : centeredOddP7Coefficient r = 0)
+    (_hnine : centeredOddP9Coefficient r = 0) :
+    0 ≤ fourCellOddCoreLocalQuadratic r := by
+  have htail := one_fiftieth_positiveHalfMass_le_core_add_localWidthDefect_of_P1
+    r hr hodd hone
+  have hmass : 0 ≤ ∫ x : ℝ in 0..1, r x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg (r x))
+  change (1 / 50 : ℝ) * (∫ x : ℝ in 0..1, r x ^ 2) ≤
+    fourCellOddCoreLocalQuadratic r at htail
+  nlinarith
+
 private theorem integral_zero_three_fifths_P7_sq_le :
     (∫ x : ℝ in 0..3 / 5, factorTwoCenteredP7 x ^ 2) ≤
       (1 / 15 : ℝ) := by
