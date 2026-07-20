@@ -19,8 +19,10 @@ open MultiplicativeWeilFourCellEnergyAbsorptionStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
 open MultiplicativeWeilMinimalBlockEndpointEliminationStructural
 open MultiplicativeWeilMonotoneCellEnergyFrameStructural
+open MultiplicativeWeilMonotoneCutChebyshevFrontierStructural
 open MultiplicativeWeilMonotoneCutoffEnergyMonotonicityObstructionStructural
 open MultiplicativeWeilMonotoneNullSuffixVariationStructural
+open MultiplicativeWeilMonotoneFourCellPrimeGeometryStructural
 open MultiplicativeWeilMonotonePrimeAtomAbsorptionStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
@@ -4272,6 +4274,208 @@ theorem supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotResidu
   exact
     FiveCellCoupledEndpointSchurConstraints.middlePivotResidual_negativeBranch
       hconstraints hMpos hadj.1 hadj.2
+
+/-- In particular, the conditional remote cross itself is strictly
+negative.  This is the sign-only interface of the quantitative branch
+theorem and is often the more convenient contradiction target. -/
+theorem supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotConditionalCross_neg
+    (hfour : RealFourCellProductionNonnegative)
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) (hlen : len = 5) :
+    let k := monotoneQuarterFiniteBlockBase lo start
+    let a := monotoneQuarterCell parent k
+    let m := fiveCellMiddleThree parent k
+    let e := monotoneQuarterCell parent (k + 4)
+    let M := bombieriRealQuadraticValue m
+    let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X := fiveCellRemoteEndpointBalance parent k
+    M * X - U * V < 0 := by
+  dsimp only
+  let k : ℤ := monotoneQuarterFiniteBlockBase lo start
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := fiveCellMiddleThree parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := fiveCellRemoteEndpointBalance parent k
+  have hbranch :=
+    supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotResidual_negativeBranch
+      hfour hparent hmin hlen
+  change M * X - U * V <
+    -((M + U + V) ^ 2 + (A * M - U ^ 2) +
+        (M * E - V ^ 2)) / 2 at hbranch
+  have hadj := fiveCell_adjacentPrincipalMinors_of_fourCellProduction
+    hfour parent hparent k
+  change U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E at hadj
+  change M * X - U * V < 0
+  nlinarith [sq_nonneg (M + U + V)]
+
+/-- Concrete residual-test form of the forced branch.  The two actual
+middle-orthogonal tests cut from the same parent cannot have zero or positive
+real global cross in a remaining support-minimal negative five-cell block;
+their cross is strictly negative. -/
+theorem supportMinimalNegativeMonotoneBlock_length_five_forces_middleOrthogonalResidualCross_neg
+    (hfour : RealFourCellProductionNonnegative)
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) (hlen : len = 5) :
+    let k := monotoneQuarterFiniteBlockBase lo start
+    (bombieriTwoBlockGlobalCrossSymbol
+      (fiveCellLeftMiddleOrthogonalResidual parent k)
+      (fiveCellRightMiddleOrthogonalResidual parent k)).re < 0 := by
+  dsimp only
+  let k : ℤ := monotoneQuarterFiniteBlockBase lo start
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := fiveCellMiddleThree parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let M : ℝ := bombieriRealQuadraticValue m
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := fiveCellRemoteEndpointBalance parent k
+  have hdelta :=
+    supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotConditionalCross_neg
+      hfour hparent hmin hlen
+  change M * X - U * V < 0 at hdelta
+  have hmiddle : m ≠ 0 := by
+    dsimp only [m, k]
+    simpa only [monotoneQuarterFiniteBlockBase] using
+      supportMinimalNegativeMonotoneBlock_length_five_middle_ne_zero
+        hparent hmin hlen
+  have hMpos : 0 < M := by
+    dsimp only [M, m]
+    exact fiveCellMiddleThree_quadratic_pos_of_ne_zero
+      parent hparent k hmiddle
+  have hcoordinates := fiveCell_middleOrthogonalResidual_coordinates parent k
+  have hcross := hcoordinates.2.2
+  change
+    (bombieriTwoBlockGlobalCrossSymbol
+      (fiveCellLeftMiddleOrthogonalResidual parent k)
+      (fiveCellRightMiddleOrthogonalResidual parent k)).re =
+        M * (M * X - U * V) at hcross
+  rw [hcross]
+  exact mul_neg_of_pos_of_neg hMpos hdelta
+
+/-! ## Exact common-parent remote-row closure at five cells -/
+
+/-- The remaining analytic sign condition written entirely in the exact
+common-parent remote-row coordinates.  The two adjacent rows consist of
+their near entries plus the lag-three corrected-Chebyshev entries, while the
+remote corner is the lag-four corrected-Chebyshev entry.
+
+This is strictly weaker than the full middle-pivot Cauchy--Schwarz
+contraction: it asks only that the conditional remote cross have the
+nonnegative sign. -/
+def RealFiveCellRemoteRowConditionalNonnegative : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        (fiveCellLeftNearCross parent k +
+            monotoneQuarterFarChebyshevContribution parent k 3) *
+          (monotoneQuarterFarChebyshevContribution parent (k + 1) 3 +
+            fiveCellRightNearCross parent k) ≤
+          bombieriRealQuadraticValue (fiveCellMiddleThree parent k) *
+            monotoneQuarterFarChebyshevContribution parent k 4
+
+/-- The expanded remote-row condition is exactly nonnegativity of
+`M X - U V` in the endpoint--middle--endpoint coordinates. -/
+theorem middlePivotConditionalCross_nonnegative_of_realFiveCellRemoteRow
+    (hrow : RealFiveCellRemoteRowConditionalNonnegative)
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent) (k : ℤ) :
+    let a := monotoneQuarterCell parent k
+    let m := fiveCellMiddleThree parent k
+    let e := monotoneQuarterCell parent (k + 4)
+    let M := bombieriRealQuadraticValue m
+    let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X := fiveCellRemoteEndpointBalance parent k
+    0 ≤ M * X - U * V := by
+  dsimp only
+  have h := hrow parent hparent k
+  rw [← fiveCell_leftEndpointMiddleCross_re_eq_near_add_chebyshev,
+    ← fiveCell_middleRightEndpointCross_re_eq_chebyshev_add_near,
+    ← fiveCellRemoteEndpointBalance_eq_farChebyshevContribution] at h
+  linarith
+
+/-- The exact remote-row sign condition directly excludes a
+support-minimal negative five-cell block.  This is the sharp current
+five-cell interface: four-cell production positivity supplies the adjacent
+principal minors, and only the signed conditional remote-row inequality is
+new. -/
+theorem not_supportMinimalNegativeMonotoneBlock_length_five_of_realFiveCellRemoteRow
+    (hfour : RealFourCellProductionNonnegative)
+    (hrow : RealFiveCellRemoteRowConditionalNonnegative)
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) (hlen : len = 5) : False := by
+  let k : ℤ := monotoneQuarterFiniteBlockBase lo start
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := fiveCellMiddleThree parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let M : ℝ := bombieriRealQuadraticValue m
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := fiveCellRemoteEndpointBalance parent k
+  have hnegative :=
+    supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotConditionalCross_neg
+      hfour hparent hmin hlen
+  change M * X - U * V < 0 at hnegative
+  have hnonnegative :=
+    middlePivotConditionalCross_nonnegative_of_realFiveCellRemoteRow
+      hrow parent hparent k
+  change 0 ≤ M * X - U * V at hnonnegative
+  exact (not_lt_of_ge hnonnegative) hnegative
+
+private theorem monotoneQuarterFiniteBlock_four_eq_fourBlock
+    (parent : BombieriTest) (lo : ℤ) (start : ℕ) :
+    monotoneQuarterFiniteBlock parent lo start 4 =
+      monotoneQuarterFourBlock parent (lo + (start : ℤ)) := by
+  classical
+  unfold monotoneQuarterFourBlock monotoneQuarterFiniteBlock
+  apply Finset.sum_congr rfl
+  intro i _hi
+  congr 1
+  push_cast
+  ring
+
+/-- Five-cell production positivity now has a sharply isolated sufficient
+interface.  Four-cell production positivity excludes a shortest negative
+subblock of length four; the exact conditional remote-row sign excludes the
+only other possible length, five. -/
+theorem bombieriRealQuadraticValue_monotoneQuarterFiveBlock_nonnegative_of_fourCell_and_remoteRow
+    (hfour : RealFourCellProductionNonnegative)
+    (hrow : RealFiveCellRemoteRowConditionalNonnegative)
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent) (k : ℤ) :
+    0 ≤ bombieriRealQuadraticValue (monotoneQuarterFiveBlock parent k) := by
+  by_contra hnot
+  have hnegative : bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent k 0 5) < 0 := by
+    change bombieriRealQuadraticValue
+      (monotoneQuarterFiveBlock parent k) < 0
+    exact lt_of_not_ge hnot
+  obtain ⟨start, len, hmin⟩ :=
+    exists_supportMinimalNegativeMonotoneBlock parent k 5 hnegative
+  have hlenLower : 4 ≤ len :=
+    four_le_length_of_supportMinimalNegativeMonotoneBlock hmin
+  have hwithin := hmin.within
+  have hlenUpper : len ≤ 5 := by omega
+  rcases (show len = 4 ∨ len = 5 by omega) with hlen | hlen
+  · have hnegativeFour := hmin.negative
+    rw [hlen, monotoneQuarterFiniteBlock_four_eq_fourBlock] at hnegativeFour
+    have hnonnegativeFour := hfour parent hparent (k + (start : ℤ))
+    exact (not_lt_of_ge hnonnegativeFour) hnegativeFour
+  · exact
+      not_supportMinimalNegativeMonotoneBlock_length_five_of_realFiveCellRemoteRow
+        hfour hrow hparent hmin hlen
 
 end
 
