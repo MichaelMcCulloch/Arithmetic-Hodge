@@ -5286,6 +5286,26 @@ def RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength
             bombieriRealQuadraticValue
               (finiteBlockRightMiddleOrthogonalResidual parent k n)
 
+/-- Scalar middle-pivot coordinate form of the same residual determinant. -/
+def RealFiniteBlockMiddlePivotResidualDeterminantAtLength
+    (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        let a := monotoneQuarterCell parent k
+        let m := monotoneQuarterFiniteBlockInterior parent k n
+        let e := monotoneQuarterCell parent
+          (k + ((n - 1 : ℕ) : ℤ))
+        let A := bombieriRealQuadraticValue a
+        let M := bombieriRealQuadraticValue m
+        let E := bombieriRealQuadraticValue e
+        let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+        let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+        let X := (bombieriTwoBlockGlobalCrossSymbol a e).re
+        0 < M →
+          (M * X - U * V) ^ 2 ≤
+            (A * M - U ^ 2) * (M * E - V ^ 2)
+
 private theorem bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength
     (f g : BombieriTest) (a b : ℝ) :
     (bombieriTwoBlockGlobalCrossSymbol
@@ -5425,6 +5445,95 @@ theorem finiteBlock_middleOrthogonalResidualQuadratic_coordinates
   · rw [hright, hem]
     dsimp only [M, E, V]
     ring
+
+/-- The concrete residual-test Cauchy--Schwarz inequality is exactly the
+scalar middle-pivot residual determinant once the interior pivot is
+positive. -/
+theorem realFiniteBlockMiddleOrthogonalResidualDeterminant_iff_middlePivot
+    (n : ℕ) :
+    RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength n ↔
+      RealFiniteBlockMiddlePivotResidualDeterminantAtLength n := by
+  constructor
+  · intro hresidual parent hparent k
+    dsimp only
+    let a : BombieriTest := monotoneQuarterCell parent k
+    let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+    let e : BombieriTest :=
+      monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+    let A : ℝ := bombieriRealQuadraticValue a
+    let M : ℝ := bombieriRealQuadraticValue m
+    let E : ℝ := bombieriRealQuadraticValue e
+    let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+    intro hMpos
+    have hactual := hresidual parent hparent k hMpos
+    have hcross := finiteBlock_middleOrthogonalResidualCross_coordinate
+      parent k n
+    have hdiagonals :=
+      finiteBlock_middleOrthogonalResidualQuadratic_coordinates parent k n
+    change
+      (bombieriTwoBlockGlobalCrossSymbol
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+        (finiteBlockRightMiddleOrthogonalResidual parent k n)).re =
+          M * (M * X - U * V) at hcross
+    change
+      bombieriRealQuadraticValue
+          (finiteBlockLeftMiddleOrthogonalResidual parent k n) =
+            M * (A * M - U ^ 2) ∧
+        bombieriRealQuadraticValue
+          (finiteBlockRightMiddleOrthogonalResidual parent k n) =
+            M * (M * E - V ^ 2) at hdiagonals
+    rw [hcross, hdiagonals.1, hdiagonals.2] at hactual
+    have hscaled :
+        M ^ 2 * (M * X - U * V) ^ 2 ≤
+          M ^ 2 * ((A * M - U ^ 2) * (M * E - V ^ 2)) := by
+      calc
+        M ^ 2 * (M * X - U * V) ^ 2 =
+            (M * (M * X - U * V)) ^ 2 := by ring
+        _ ≤ (M * (A * M - U ^ 2)) *
+              (M * (M * E - V ^ 2)) := hactual
+        _ = M ^ 2 * ((A * M - U ^ 2) * (M * E - V ^ 2)) := by ring
+    exact le_of_mul_le_mul_left hscaled (sq_pos_of_pos hMpos)
+  · intro hpivot parent hparent k hMpos
+    let a : BombieriTest := monotoneQuarterCell parent k
+    let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+    let e : BombieriTest :=
+      monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+    let A : ℝ := bombieriRealQuadraticValue a
+    let M : ℝ := bombieriRealQuadraticValue m
+    let E : ℝ := bombieriRealQuadraticValue e
+    let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+    have hscalar := hpivot parent hparent k hMpos
+    have hcross := finiteBlock_middleOrthogonalResidualCross_coordinate
+      parent k n
+    have hdiagonals :=
+      finiteBlock_middleOrthogonalResidualQuadratic_coordinates parent k n
+    change
+      (bombieriTwoBlockGlobalCrossSymbol
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+        (finiteBlockRightMiddleOrthogonalResidual parent k n)).re =
+          M * (M * X - U * V) at hcross
+    change
+      bombieriRealQuadraticValue
+          (finiteBlockLeftMiddleOrthogonalResidual parent k n) =
+            M * (A * M - U ^ 2) ∧
+        bombieriRealQuadraticValue
+          (finiteBlockRightMiddleOrthogonalResidual parent k n) =
+            M * (M * E - V ^ 2) at hdiagonals
+    change
+      (M * X - U * V) ^ 2 ≤
+        (A * M - U ^ 2) * (M * E - V ^ 2) at hscalar
+    rw [hcross, hdiagonals.1, hdiagonals.2]
+    calc
+      (M * (M * X - U * V)) ^ 2 =
+          M ^ 2 * (M * X - U * V) ^ 2 := by ring
+      _ ≤ M ^ 2 * ((A * M - U ^ 2) * (M * E - V ^ 2)) :=
+        mul_le_mul_of_nonneg_left hscalar (sq_nonneg M)
+      _ = (M * (A * M - U ^ 2)) *
+          (M * (M * E - V ^ 2)) := by ring
 
 /-- For a positive interior pivot, nonnegativity of the concrete residual
 cross is exactly the conditional numerator sign used by the induction. -/
