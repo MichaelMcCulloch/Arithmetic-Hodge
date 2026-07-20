@@ -30,8 +30,10 @@ open YoshidaFourCellOddStripCapacityClosureStructural
 # The cutoff-eleven reserve in the four-cell odd tail
 
 The first five odd shifted-Legendre moments and parity remove every degree
-below eleven.  The resulting exact harmonic gap supplies the additional
-reserve needed to enlarge the production scalar tail weight by `3 / 2`.
+below eleven.  The resulting exact harmonic gap is an infinite-dimensional
+input for the direct corrected tail Schur form.  No scalar matched-factor
+bound is asserted here: that stronger surrogate does not preserve the
+finite--tail correlation of the production determinant.
 -/
 
 private theorem shiftedLegendreReal_one_centered (x : ℝ) :

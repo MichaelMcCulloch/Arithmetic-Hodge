@@ -4,7 +4,7 @@ set_option autoImplicit false
 
 open MeasureTheory Real Set
 
-namespace ArithmeticHodge.Analysis.YoshidaFourCellOddP11JointSelectorThreeHalvesStructural
+namespace ArithmeticHodge.Analysis.YoshidaFourCellOddP11DirectCorrectedCauchyStructural
 
 noncomputable section
 
@@ -246,4 +246,4 @@ theorem fourCellOddP11DirectCorrectedCauchy_iff_coupledRieszDefectNonnegative :
 
 end
 
-end ArithmeticHodge.Analysis.YoshidaFourCellOddP11JointSelectorThreeHalvesStructural
+end ArithmeticHodge.Analysis.YoshidaFourCellOddP11DirectCorrectedCauchyStructural
