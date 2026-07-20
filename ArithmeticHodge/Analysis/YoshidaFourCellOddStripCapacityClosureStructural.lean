@@ -7,6 +7,7 @@ import ArithmeticHodge.Analysis.YoshidaEndpointPullbackLipschitz
 import ArithmeticHodge.Analysis.YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 import ArithmeticHodge.Analysis.YoshidaFourCellRegularKernelWideEnvelope
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP3P7RegularCrossStructural
+import ArithmeticHodge.Analysis.YoshidaFourCellOddP3P9RegularCrossStructural
 import ArithmeticHodge.Analysis.UnitIntervalLogEnergyLipschitz
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddCleanSharp
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStructural
@@ -40,6 +41,7 @@ open YoshidaEndpointOcticTwoModeSchurData
 open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 open YoshidaFourCellRegularKernelWideEnvelope
 open YoshidaFourCellOddP3P7RegularCrossStructural
+open YoshidaFourCellOddP3P9RegularCrossStructural
 open YoshidaEndpointPullbackLipschitz
 open YoshidaFourCellOddPolarPotentialStructural
 open YoshidaFourCellOddStripCapacityAssemblyStructural
@@ -13776,6 +13778,232 @@ theorem fourCellOddCoreLocalBilinear_P1_P9_bounds :
     (fourCellOddSignedMassRegularBilinear centeredP1 factorTwoCenteredP9)
   have hsignedHi := le_abs_self
     (fourCellOddSignedMassRegularBilinear centeredP1 factorTwoCenteredP9)
+  constructor <;> linarith
+
+private theorem fourCellOddEndpointStripEvenMassBilinear_P3_P9 :
+    fourCellOddEndpointStripEvenMassBilinear
+        centeredP3 factorTwoCenteredP9 =
+      (1006528 / 244140625 : ℝ) := by
+  unfold fourCellOddEndpointStripEvenMassBilinear
+  rw [show fourCellOddEndpointStripEven centeredP3 = fun z : ℝ ↦
+      (2 / 25 : ℝ) + (6 / 25 : ℝ) * z ^ 2 by
+    funext z
+    unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
+      centeredP3
+    ring]
+  simp_rw [fourCellOddEndpointStripEven_P9]
+  rw [show (fun z : ℝ ↦
+      ((2 / 25 : ℝ) + (6 / 25 : ℝ) * z ^ 2) *
+        ((21879 / 12500000 : ℝ) * z ^ 8 +
+          (591591 / 3125000 : ℝ) * z ^ 6 +
+          (8801793 / 6250000 : ℝ) * z ^ 4 -
+          (4094541 / 3125000 : ℝ) * z ^ 2 +
+          2348191 / 12500000)) = fun z ↦
+      (2348191 / 156250000 : ℝ) * z ^ 0 + 0 * z ^ 1 +
+        (-9333591 / 156250000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+        (-15765453 / 78125000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+        (27588561 / 78125000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+        (7120971 / 156250000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+        (65637 / 156250000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+        0 * z ^ 12 + 0 * z ^ 13 + 0 * z ^ 14 + 0 * z ^ 15 by
+    funext z
+    ring,
+    integral_polynomial_fifteen_local]
+  norm_num
+
+private theorem fourCellOddEndpointStripOddMassBilinear_P3_P9 :
+    fourCellOddEndpointStripOddMassBilinear
+        centeredP3 factorTwoCenteredP9 =
+      (-3329608 / 244140625 : ℝ) := by
+  unfold fourCellOddEndpointStripOddMassBilinear
+  rw [show fourCellOddEndpointStripOdd centeredP3 = fun z : ℝ ↦
+      (33 / 50 : ℝ) * z + (1 / 50 : ℝ) * z ^ 3 by
+    funext z
+    unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+      centeredP3
+    ring]
+  simp_rw [fourCellOddEndpointStripOdd_P9]
+  rw [show (fun z : ℝ ↦
+      ((33 / 50 : ℝ) * z + (1 / 50 : ℝ) * z ^ 3) *
+        ((2431 / 50000000 : ℝ) * z ^ 9 +
+          (317889 / 12500000 : ℝ) * z ^ 7 +
+          (18711693 / 25000000 : ℝ) * z ^ 5 +
+          (7297521 / 12500000 : ℝ) * z ^ 3 -
+          (41734881 / 50000000 : ℝ) * z)) = fun z ↦
+      0 * z ^ 0 + 0 * z ^ 1 +
+        (-1377251073 / 2500000000 : ℝ) * z ^ 2 + 0 * z ^ 3 +
+        (921537891 / 2500000000 : ℝ) * z ^ 4 + 0 * z ^ 5 +
+        (632080911 / 1250000000 : ℝ) * z ^ 6 + 0 * z ^ 7 +
+        (39692367 / 1250000000 : ℝ) * z ^ 8 + 0 * z ^ 9 +
+        (1351779 / 2500000000 : ℝ) * z ^ 10 + 0 * z ^ 11 +
+        (2431 / 2500000000 : ℝ) * z ^ 12 + 0 * z ^ 13 +
+        0 * z ^ 14 + 0 * z ^ 15 by
+    funext z
+    ring,
+    integral_polynomial_fifteen_local]
+  norm_num
+
+private theorem integral_zero_one_endpointPotential_mul_P3_mul_P9 :
+    (∫ x : ℝ in 0..1,
+      yoshidaEndpointPotential x * centeredP3 x *
+        factorTwoCenteredP9 x) = (1 / 78 : ℝ) := by
+  have h9 : factorTwoCenteredP9 =
+      fun x ↦ -(centeredShiftedLegendreReal 9).eval x := by
+    funext x
+    rw [eval_centeredShiftedLegendreReal]
+    rfl
+  have hfull :=
+    YoshidaEndpointPotentialLegendreOffDiagonalStructural.integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+      (m := 3) (n := 9) (by norm_num) (by norm_num)
+  norm_num at hfull
+  have hfullActual : (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x * centeredP3 x *
+        factorTwoCenteredP9 x) = (1 / 39 : ℝ) := by
+    rw [h9]
+    unfold centeredP3
+    rw [show (fun x : ℝ ↦
+        yoshidaEndpointPotential x * ((5 * x ^ 3 - 3 * x) / 2) *
+          (-(centeredShiftedLegendreReal 9).eval x)) = fun x ↦
+        -(yoshidaEndpointPotential x *
+          (1 / 2 * (5 * x ^ 3 - 3 * x)) *
+            (centeredShiftedLegendreReal 9).eval x) by
+      funext x
+      ring,
+      intervalIntegral.integral_neg]
+    exact hfull
+  let q : ℝ → ℝ := fun x ↦
+    yoshidaEndpointPotential x * centeredP3 x * factorTwoCenteredP9 x
+  have hq : IntervalIntegrable q volume (-1) 1 := by
+    dsimp only [q]
+    simpa only [mul_assoc] using
+      intervalIntegrable_endpointPotential_mul
+        (fun x : ℝ ↦ centeredP3 x * factorTwoCenteredP9 x)
+        ((by unfold centeredP3; fun_prop : Continuous centeredP3).mul
+          continuous_factorTwoCenteredP9)
+  have hqeven : Function.Even q := by
+    intro x
+    dsimp only [q]
+    have hp : yoshidaEndpointPotential (-x) =
+        yoshidaEndpointPotential x := by
+      unfold yoshidaEndpointPotential
+      congr 2
+      ring
+    rw [hp, odd_factorTwoCenteredP9]
+    unfold centeredP3
+    ring
+  have hfold := integral_neg_one_one_eq_two_mul_zero_one_of_even q hq hqeven
+  dsimp only [q] at hfold
+  rw [hfullActual] at hfold
+  linarith
+
+private theorem fourCellOddRetainedPrimePotentialBilinear_P3_P9 :
+    fourCellOddRetainedPrimePotentialBilinear
+        centeredP3 factorTwoCenteredP9 =
+      Real.sqrt 2 * Real.log 2 * (1006528 / 244140625 : ℝ) +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          (-3329608 / 244140625 : ℝ) +
+        (93 / 50 : ℝ) * (1 / 78) := by
+  unfold fourCellOddRetainedPrimePotentialBilinear
+  rw [fourCellOddEndpointStripEvenMassBilinear_P3_P9,
+    fourCellOddEndpointStripOddMassBilinear_P3_P9,
+    integral_zero_one_endpointPotential_mul_P3_mul_P9]
+
+/-- Exact retained endpoint entry on the final missing low/high row. -/
+theorem fourCellOddRetainedEndpointBilinear_P3_P9_eq :
+    fourCellOddRetainedEndpointBilinear
+        centeredP3 factorTwoCenteredP9 =
+      (19655672 / 732421875 : ℝ) +
+        Real.sqrt 2 * Real.log 2 * (1006528 / 244140625 : ℝ) +
+        (2 - Real.sqrt 2 * Real.log 2) *
+          (-3329608 / 244140625 : ℝ) +
+        (93 / 50 : ℝ) * (1 / 78) := by
+  rcases centeredOddCoefficients_P9_eq_zero with ⟨h1, h3, h5⟩
+  have h := fourCellOddRetainedEndpointBilinear_oneThreeFive_tail_eq_moments
+    factorTwoCenteredP9 contDiff_factorTwoCenteredP9_local
+      odd_factorTwoCenteredP9 h1 h3 h5 0 1 0
+  have hp : fourCellOddOneThreeFiveLowProfile 0 1 0 = centeredP3 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    simp
+  rw [hp, fourCellOddRetainedPrimePotentialBilinear_P3_P9] at h
+  rcases endpointStripOdd_P9_moments with ⟨hm1, hm3, hm5⟩
+  rw [hm1, hm3, hm5] at h
+  norm_num at h ⊢
+  convert h using 1
+  ring
+
+private theorem integral_zero_one_P3_mul_P9 :
+    (∫ x : ℝ in 0..1, centeredP3 x * factorTwoCenteredP9 x) = 0 := by
+  rcases centeredOddCoefficients_P9_eq_zero with ⟨h1, h3, h5⟩
+  have h := integral_zero_one_oneThreeFiveLowProfile_mul_tail_eq_zero
+    factorTwoCenteredP9 continuous_factorTwoCenteredP9
+      odd_factorTwoCenteredP9 h1 h3 h5 0 1 0
+  have hp : fourCellOddOneThreeFiveLowProfile 0 1 0 = centeredP3 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    simp
+  simpa only [hp] using h
+
+private theorem fourCellOddSignedMassRegularBilinear_P3_P9_eq :
+    fourCellOddSignedMassRegularBilinear centeredP3 factorTwoCenteredP9 =
+      2 * fourCellOperatorHalfWidth *
+        (∫ t : ℝ in 0..2,
+          yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+            factorTwoCenteredCorrelationBilinear
+              centeredP3 factorTwoCenteredP9 t) := by
+  unfold fourCellOddSignedMassRegularBilinear
+  rw [integral_zero_one_P3_mul_P9]
+  ring
+
+private theorem abs_fourCellOddSignedMassRegularBilinear_P3_P9_lt :
+    |fourCellOddSignedMassRegularBilinear centeredP3 factorTwoCenteredP9| <
+      (1 / 100000 : ℝ) := by
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      factorTwoCenteredCorrelationBilinear centeredP3 factorTwoCenteredP9 t
+  have hR : |R| < (1 / 100000 : ℝ) := by
+    simpa only [R] using
+      abs_integral_fourCellRegularKernel_mul_correlation_P3_P9_lt
+  have ha0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have ha : 2 * fourCellOperatorHalfWidth ≤ (1 : ℝ) := by
+    linarith [fourCellOperatorHalfWidth_le_one_half]
+  rw [fourCellOddSignedMassRegularBilinear_P3_P9_eq]
+  change |2 * fourCellOperatorHalfWidth * R| < _
+  rw [abs_mul, abs_of_nonneg ha0]
+  calc
+    2 * fourCellOperatorHalfWidth * |R| ≤ 1 * |R| :=
+      mul_le_mul_of_nonneg_right ha (abs_nonneg R)
+    _ < 1 * (1 / 100000 : ℝ) :=
+      mul_lt_mul_of_pos_left hR (by norm_num)
+    _ = (1 / 100000 : ℝ) := one_mul _
+
+private theorem fourCellOddRetainedEndpointBilinear_P3_P9_bounds :
+    (4081 / 100000 : ℝ) <
+        fourCellOddRetainedEndpointBilinear centeredP3 factorTwoCenteredP9 ∧
+      fourCellOddRetainedEndpointBilinear centeredP3 factorTwoCenteredP9 <
+        (2041 / 50000 : ℝ) := by
+  rw [fourCellOddRetainedEndpointBilinear_P3_P9_eq]
+  rcases sqrt_two_mul_log_two_bounds with ⟨hklo, hkhi⟩
+  constructor <;> nlinarith
+
+/-- Tight complete-form enclosure for the `P₃/P₉` row.  Together with
+the preceding three cross enclosures this completes the exact rational
+description of the `P₁/P₃`--`P₇/P₉` block. -/
+theorem fourCellOddCoreLocalBilinear_P3_P9_bounds :
+    (102 / 2500 : ℝ) <
+        fourCellOddCoreLocalBilinear centeredP3 factorTwoCenteredP9 ∧
+      fourCellOddCoreLocalBilinear centeredP3 factorTwoCenteredP9 <
+        (4083 / 100000 : ℝ) := by
+  rw [fourCellOddCoreLocalBilinear_eq_retained_sub_signed]
+  rcases fourCellOddRetainedEndpointBilinear_P3_P9_bounds with
+    ⟨hretlo, hrethi⟩
+  have hsigned := abs_fourCellOddSignedMassRegularBilinear_P3_P9_lt
+  have hsignedLo := neg_abs_le
+    (fourCellOddSignedMassRegularBilinear centeredP3 factorTwoCenteredP9)
+  have hsignedHi := le_abs_self
+    (fourCellOddSignedMassRegularBilinear centeredP3 factorTwoCenteredP9)
   constructor <;> linarith
 
 /-! ### Exact `P₁₁+` Riesz endpoint -/
