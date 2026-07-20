@@ -5,7 +5,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseCenteredP9Structural
 set_option autoImplicit false
 
 open Complex MeasureTheory Real Set
-open scoped ContDiff
+open scoped ContDiff unitInterval
 
 namespace ArithmeticHodge.Analysis.YoshidaFiveCellEndpointParitySchurClosureStructural
 
@@ -20,6 +20,7 @@ open ShiftedLegendreCenteredParity
 open ShiftedLegendreFiniteEnergyGap
 open ShiftedLegendreL2Basis
 open ShiftedLegendreOrthogonality
+open UnitIntervalIntegralBridge
 open UnitIntervalLogEnergyAffine
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointOddResidualRegularity
@@ -1217,6 +1218,326 @@ theorem fiveCellEndpointAdaptedIntrinsicOddRay_nonnegative_of_P11Schur
     ring
   simpa only [w, p] using
     fiveCellEndpointOperator_nonnegative_of_odd_P11Schur
+      hfinite hmixed w hwTop hwEnd hwOdd
+
+/-! ## Endpoint-preserving cutoff-eleven split -/
+
+/-- The first odd reserve at the new cutoff.  Its endpoint signature is the
+same `(1,-1)` signature as every odd shifted-Legendre mode. -/
+def fiveCellOddP11EndpointReserve (x : ℝ) : ℝ :=
+  (shiftedLegendreReal 11).eval ((x + 1) / 2)
+
+theorem contDiff_top_fiveCellOddP11EndpointReserve :
+    ContDiff ℝ ∞ fiveCellOddP11EndpointReserve := by
+  let p := shiftedLegendreReal 11
+  have hp : ContDiff ℝ ∞ (fun y : ℝ ↦ p.eval y) := by
+    simpa only [Polynomial.coe_aeval_eq_eval] using
+      p.contDiff_aeval (𝕜 := ℝ) ∞
+  have haff : ContDiff ℝ ∞ (fun x : ℝ ↦ (x + 1) / 2) := by fun_prop
+  simpa only [fiveCellOddP11EndpointReserve, p, Function.comp_apply] using
+    hp.comp haff
+
+theorem fiveCellOddP11EndpointReserve_odd :
+    Function.Odd fiveCellOddP11EndpointReserve := by
+  intro x
+  unfold fiveCellOddP11EndpointReserve
+  rw [← eval_centeredShiftedLegendreReal,
+    ← eval_centeredShiftedLegendreReal,
+    eval_centeredShiftedLegendreReal_neg]
+  norm_num
+
+theorem fiveCellOddP11EndpointReserve_endpoints :
+    fiveCellOddP11EndpointReserve (-1) = 1 ∧
+      fiveCellOddP11EndpointReserve 1 = -1 := by
+  have hneg : fiveCellOddP11EndpointReserve (-1) = 1 := by
+    unfold fiveCellOddP11EndpointReserve
+    norm_num
+  have hparity := fiveCellOddP11EndpointReserve_odd 1
+  norm_num at hparity
+  exact ⟨hneg, by linarith⟩
+
+@[simp]
+theorem centeredPullback_fiveCellOddP11EndpointReserve (t : ℝ) :
+    centeredPullback fiveCellOddP11EndpointReserve t =
+      (shiftedLegendreReal 11).eval t := by
+  unfold centeredPullback fiveCellOddP11EndpointReserve
+  congr 1
+  ring
+
+theorem fiveCellOddP11EndpointReserve_momentsVanishBelow :
+    centeredLegendreMomentsVanishBelow
+      fiveCellOddP11EndpointReserve 11 := by
+  intro n hn
+  simp only [centeredPullback_fiveCellOddP11EndpointReserve]
+  change (∫ t : unitInterval,
+    (fun x : ℝ ↦ (shiftedLegendreReal 11).eval x *
+      (shiftedLegendreReal n).eval x) (t : ℝ)) = 0
+  rw [integral_unitInterval_eq_intervalIntegral
+      (fun x : ℝ ↦ (shiftedLegendreReal 11).eval x *
+        (shiftedLegendreReal n).eval x),
+    integral_shiftedLegendreReal_mul_eq_zero (by omega)]
+
+/-- Endpoint adaptation of the complete five-coordinate odd block through
+`P9`, using `P11` as the reserve. -/
+def fiveCellOddP11EndpointAdaptedProfile
+    (c1 c3 c5 c7 c9 : ℝ) : ℝ → ℝ :=
+  let p := fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9
+  fun x ↦ p x + p 1 * fiveCellOddP11EndpointReserve x
+
+theorem contDiff_top_fiveCellOddP11EndpointAdaptedProfile
+    (c1 c3 c5 c7 c9 : ℝ) :
+    ContDiff ℝ ∞
+      (fiveCellOddP11EndpointAdaptedProfile c1 c3 c5 c7 c9) := by
+  let p := fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9
+  change ContDiff ℝ ∞ (p + fun x ↦ p 1 * fiveCellOddP11EndpointReserve x)
+  exact (contDiff_top_fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9).add
+    (contDiff_const.mul contDiff_top_fiveCellOddP11EndpointReserve)
+
+theorem fiveCellOddP11EndpointAdaptedProfile_odd
+    (c1 c3 c5 c7 c9 : ℝ) :
+    Function.Odd
+      (fiveCellOddP11EndpointAdaptedProfile c1 c3 c5 c7 c9) := by
+  let p := fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9
+  have hpOdd : Function.Odd p := by
+    simpa only [p] using fiveCellOddP11FiniteProfile_odd c1 c3 c5 c7 c9
+  intro x
+  unfold fiveCellOddP11EndpointAdaptedProfile
+  change p (-x) + p 1 * fiveCellOddP11EndpointReserve (-x) =
+    -(p x + p 1 * fiveCellOddP11EndpointReserve x)
+  rw [hpOdd x, fiveCellOddP11EndpointReserve_odd x]
+  ring
+
+theorem fiveCellOddP11EndpointAdaptedProfile_endpoints_zero
+    (c1 c3 c5 c7 c9 : ℝ) :
+    fiveCellOddP11EndpointAdaptedProfile c1 c3 c5 c7 c9 (-1) = 0 ∧
+      fiveCellOddP11EndpointAdaptedProfile c1 c3 c5 c7 c9 1 = 0 := by
+  let p := fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9
+  have hpOdd : Function.Odd p := by
+    simpa only [p] using fiveCellOddP11FiniteProfile_odd c1 c3 c5 c7 c9
+  rcases fiveCellOddP11EndpointReserve_endpoints with ⟨hRneg, hRpos⟩
+  constructor
+  · unfold fiveCellOddP11EndpointAdaptedProfile
+    change p (-1) + p 1 * fiveCellOddP11EndpointReserve (-1) = 0
+    rw [hpOdd 1, hRneg]
+    ring
+  · unfold fiveCellOddP11EndpointAdaptedProfile
+    change p 1 + p 1 * fiveCellOddP11EndpointReserve 1 = 0
+    rw [hRpos]
+    ring
+
+private theorem centeredLegendreMomentsVanishBelow_sub_const_mul
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    {k : ℕ} (huGap : centeredLegendreMomentsVanishBelow u k)
+    (hvGap : centeredLegendreMomentsVanishBelow v k) (a : ℝ) :
+    centeredLegendreMomentsVanishBelow (fun x ↦ u x - a * v x) k := by
+  intro n hn
+  have huInt : Integrable (fun t : unitInterval ↦
+      centeredPullback u (t : ℝ) *
+        (shiftedLegendreReal n).eval (t : ℝ)) := by
+    have hcont : Continuous (fun t : unitInterval ↦
+        centeredPullback u (t : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ)) :=
+      (continuous_centeredPullback_restrict u hu).mul (by fun_prop)
+    exact hcont.integrable_of_hasCompactSupport
+      (HasCompactSupport.of_compactSpace _)
+  have hvInt : Integrable (fun t : unitInterval ↦
+      centeredPullback v (t : ℝ) *
+        (shiftedLegendreReal n).eval (t : ℝ)) := by
+    have hcont : Continuous (fun t : unitInterval ↦
+        centeredPullback v (t : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ)) :=
+      (continuous_centeredPullback_restrict v hv).mul (by fun_prop)
+    exact hcont.integrable_of_hasCompactSupport
+      (HasCompactSupport.of_compactSpace _)
+  rw [show (fun t : unitInterval ↦
+      centeredPullback (fun x ↦ u x - a * v x) (t : ℝ) *
+        (shiftedLegendreReal n).eval (t : ℝ)) =
+      fun t : unitInterval ↦ centeredPullback u (t : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ) -
+        a * (centeredPullback v (t : ℝ) *
+          (shiftedLegendreReal n).eval (t : ℝ)) by
+    funext t
+    unfold centeredPullback
+    ring,
+    integral_sub huInt (hvInt.const_mul a), integral_const_mul,
+    huGap n hn, hvGap n hn]
+  ring
+
+/-- Finite endpoint-zero diagonal after absorbing the shared `P9`
+coordinate and adapting once more with `P11`. -/
+def FiveCellOddP11EndpointAdaptedFiniteDiagonalNonnegative : Prop :=
+  ∀ c1 c3 c5 c7 c9 : ℝ,
+    0 ≤ fiveCellEndpointOperator
+      (fiveCellOddP11EndpointAdaptedProfile c1 c3 c5 c7 c9)
+
+/-- Endpoint-preserving mixed Schur frontier.  Both operands now vanish at
+the endpoints, and the infinite operand has a genuine `P11` moment gap. -/
+def FiveCellOddP11EndpointAdaptedMixedSchur : Prop :=
+  ∀ (c1 c3 c5 c7 c9 : ℝ) (r : ℝ → ℝ),
+    Continuous r →
+    LocallyLipschitzOn (Icc (-1 : ℝ) 1) r →
+    (r (-1) = 0 ∧ r 1 = 0) →
+    Function.Odd r →
+    centeredLegendreMomentsVanishBelow r 11 →
+    fiveCellEndpointOperatorCross
+        (fiveCellOddP11EndpointAdaptedProfile c1 c3 c5 c7 c9) r ^ 2 ≤
+      fiveCellEndpointOperator
+          (fiveCellOddP11EndpointAdaptedProfile c1 c3 c5 c7 c9) *
+        fiveCellEndpointOperator r
+
+/-- The endpoint-preserving cutoff-eleven split closes every smooth odd
+endpoint-zero profile from exactly the adapted five-mode diagonal and one
+`P11+` Schur contraction. -/
+theorem fiveCellEndpointOperator_nonnegative_of_odd_endpointAdaptedP11Schur
+    (hfinite : FiveCellOddP11EndpointAdaptedFiniteDiagonalNonnegative)
+    (hmixed : FiveCellOddP11EndpointAdaptedMixedSchur)
+    (o : ℝ → ℝ) (hoTop : ContDiff ℝ ∞ o)
+    (hoEnd : o (-1) = 0 ∧ o 1 = 0) (hodd : Function.Odd o) :
+    0 ≤ fiveCellEndpointOperator o := by
+  let hoc : Continuous o := hoTop.continuous
+  let p := centeredLegendreLowProjection o hoc 11
+  let r := centeredLegendreHigherResidual o hoc 11
+  let t := p 1
+  let R := fiveCellOddP11EndpointReserve
+  let u := p + fun x ↦ t * R x
+  let v := fun x ↦ r x - t * R x
+  let c1 := -factorTwoCanonicalLegendreCoefficient o hoc 1
+  let c3 := -factorTwoCanonicalLegendreCoefficient o hoc 3
+  let c5 := -factorTwoCanonicalLegendreCoefficient o hoc 5
+  let c7 := -factorTwoCanonicalLegendreCoefficient o hoc 7
+  let c9 := -factorTwoCanonicalLegendreCoefficient o hoc 9
+  have hpCoord : p = fiveCellOddP11FiniteProfile c1 c3 c5 c7 c9 := by
+    simpa only [p, c1, c3, c5, c7, c9] using
+      centeredLegendreLowProjection_eleven_eq_oddP11FiniteProfile
+        o hoc hodd
+  have huCoord :
+      u = fiveCellOddP11EndpointAdaptedProfile c1 c3 c5 c7 c9 := by
+    funext x
+    dsimp only [u, t, R]
+    simp only [Pi.add_apply]
+    unfold fiveCellOddP11EndpointAdaptedProfile
+    rw [congrFun hpCoord x, congrFun hpCoord 1]
+  have hrContinuous : Continuous r := by
+    simpa only [r] using
+      continuous_centeredLegendreHigherResidual o hoc 11
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual o hoc
+        ((hoTop.of_le (by norm_num)).contDiffOn.locallyLipschitzOn
+          (convex_Icc (-1) 1)) 11
+  have hrOdd : Function.Odd r := by
+    simpa only [r] using centeredLegendreHigherResidual_odd o hoc hodd 11
+  have hrGap : centeredLegendreMomentsVanishBelow r 11 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow o hoc 11
+  have hvContinuous : Continuous v := by
+    dsimp only [v, R]
+    exact hrContinuous.sub
+      (continuous_const.mul contDiff_top_fiveCellOddP11EndpointReserve.continuous)
+  have hvLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v := by
+    dsimp only [v, R]
+    have hRTop : ContDiff ℝ ∞
+        (fun x ↦ t * fiveCellOddP11EndpointReserve x) :=
+      contDiff_const.mul contDiff_top_fiveCellOddP11EndpointReserve
+    have hRLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1)
+        (fun x ↦ t * fiveCellOddP11EndpointReserve x) :=
+      (hRTop.of_le (by norm_num)).locallyLipschitz.locallyLipschitzOn
+    exact hrLocal.sub hRLocal
+  have hvOdd : Function.Odd v := by
+    intro x
+    dsimp only [v, R]
+    rw [hrOdd x, fiveCellOddP11EndpointReserve_odd x]
+    ring
+  have hvGap : centeredLegendreMomentsVanishBelow v 11 := by
+    dsimp only [v, R]
+    exact centeredLegendreMomentsVanishBelow_sub_const_mul
+      r fiveCellOddP11EndpointReserve hrContinuous
+        contDiff_top_fiveCellOddP11EndpointReserve.continuous
+        hrGap fiveCellOddP11EndpointReserve_momentsVanishBelow t
+  have hpr : p + r = o := by
+    simpa only [p, r] using
+      centeredLegendreLowProjection_add_higherResidual o hoc 11
+  have hrOne : r 1 = -t := by
+    have h := congrFun hpr 1
+    simp only [Pi.add_apply, hoEnd.2] at h
+    dsimp only [t]
+    linarith
+  have hvEnd : v (-1) = 0 ∧ v 1 = 0 := by
+    have hRone := fiveCellOddP11EndpointReserve_endpoints.2
+    have hvOne : v 1 = 0 := by
+      dsimp only [v, R]
+      rw [hrOne, hRone]
+      ring
+    constructor
+    · have h := hvOdd 1
+      norm_num at h
+      rw [h, hvOne]
+      ring
+    · exact hvOne
+  have huv : u + v = o := by
+    rw [← hpr]
+    funext x
+    dsimp only [u, v, R]
+    simp only [Pi.add_apply]
+    ring
+  have hvGap9 : centeredLegendreMomentsVanishBelow v 9 := by
+    intro n hn
+    exact hvGap n (by omega)
+  have huNonnegative := hfinite c1 c3 c5 c7 c9
+  have hvNonnegative := fiveCellEndpointOperator_nonnegative_of_odd_tailNine
+    v hvContinuous hvLocal hvOdd hvGap9
+  have hcross := hmixed c1 c3 c5 c7 c9 v hvContinuous hvLocal hvEnd hvOdd hvGap
+  rw [← huCoord] at huNonnegative hcross
+  rw [← huv]
+  exact fiveCellEndpointOperator_add_nonnegative_of_schur
+    u v huNonnegative hvNonnegative hcross
+
+/-- This sharper endpoint-preserving pair of obligations is sufficient for
+the actual odd intrinsic rays in the production certificate. -/
+theorem fiveCellEndpointAdaptedIntrinsicOddRay_nonnegative_of_endpointAdaptedP11Schur
+    (hfinite : FiveCellOddP11EndpointAdaptedFiniteDiagonalNonnegative)
+    (hmixed : FiveCellOddP11EndpointAdaptedMixedSchur)
+    (c1 c3 c5 c7 : ℝ) (r : ℝ → ℝ)
+    (hrTop : ContDiff ℝ ∞ r)
+    (hrEnd : r (-1) = 0 ∧ r 1 = 0)
+    (hrOdd : Function.Odd r)
+    (_hrGap : centeredLegendreMomentsVanishBelow r 9)
+    (s : ℝ) :
+    0 ≤ fiveCellEndpointOperator
+      (fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7 + s • r) := by
+  let p := fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7
+  let w := p + s • r
+  have hpTop : ContDiff ℝ ∞ p := by
+    simpa only [p] using
+      contDiff_top_fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7
+  have hpEnd : p (-1) = 0 ∧ p 1 = 0 := by
+    simpa only [p] using
+      fiveCellEndpointAdaptedIntrinsicOddProfile_endpoints_zero c1 c3 c5 c7
+  have hpOdd : Function.Odd p := by
+    simpa only [p] using
+      fiveCellEndpointAdaptedIntrinsicOddProfile_odd c1 c3 c5 c7
+  have hwTop : ContDiff ℝ ∞ w := by
+    dsimp only [w]
+    exact hpTop.add (by
+      simpa only [Pi.smul_apply, smul_eq_mul] using contDiff_const.mul hrTop)
+  have hwEnd : w (-1) = 0 ∧ w 1 = 0 := by
+    constructor
+    · dsimp only [w]
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+      rw [hpEnd.1, hrEnd.1]
+      ring
+    · dsimp only [w]
+      simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+      rw [hpEnd.2, hrEnd.2]
+      ring
+  have hwOdd : Function.Odd w := by
+    intro x
+    dsimp only [w]
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    rw [hpOdd x, hrOdd x]
+    ring
+  simpa only [w, p] using
+    fiveCellEndpointOperator_nonnegative_of_odd_endpointAdaptedP11Schur
       hfinite hmixed w hwTop hwEnd hwOdd
 
 
