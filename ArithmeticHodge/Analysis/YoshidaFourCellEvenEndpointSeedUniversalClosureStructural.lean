@@ -281,6 +281,16 @@ theorem integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_rationa
     _ = fourCellEvenEndpointSeedCanonicalTailNormBudget := by
       norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget]
 
+/-- The zero additional selector recovers the already-certified canonical
+representer as a valid cutoff-fourteen dual bound. -/
+theorem integral_endpointSeedTailFourteenRepresenter_zero_sq_le_rational :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter 0 x ^ 2) ≤
+      fourCellEvenEndpointSeedCanonicalTailNormBudget := by
+  simpa only [fourCellEvenEndpointSeedTailFourteenRepresenter,
+    centeredPolynomialLift, Polynomial.eval_zero, sub_zero] using
+      integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_rational
+
 /-- Cauchy closure of the complete endpoint tail row, with no zero-cosh or
 endpoint-trace hypothesis on the tail itself. -/
 theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_rational_mass
@@ -496,6 +506,32 @@ theorem fourCellEvenEndpointSeedRow_sq_le_lowThroughTwelve_add_rawTail_of_norm
           (centeredRawLogEnergy
             (centeredLegendreHigherResidual w hw 14) / 4) := by
       dsimp only [L, r]
+
+/-- Concrete unconditional cutoff-fourteen budget obtained from the current
+canonical representer certificate.  Its tail coefficient
+`6719427 / 82021310000` is exactly the old norm budget divided by `H₁₄`;
+future `P₈/P₁₀/P₁₂` projection certificates can only improve it. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_lowThroughTwelve_add_rawTail_of_positive
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (η : ℝ) (hη : 0 < η) :
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (1 + η) *
+          fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw ^ 2 +
+        (1 + η⁻¹) * (6719427 / 82021310000 : ℝ) *
+          (centeredRawLogEnergy
+            (centeredLegendreHigherResidual w hw 14) / 4) := by
+  have h :=
+    fourCellEvenEndpointSeedRow_sq_le_lowThroughTwelve_add_rawTail_of_norm
+      w hw hlocal heven hzero 0 (by norm_num)
+      fourCellEvenEndpointSeedCanonicalTailNormBudget
+      (by norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget])
+      integral_endpointSeedTailFourteenRepresenter_zero_sq_le_rational η hη
+  convert h using 1
+  all_goals norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget]
 
 /-- Harmonic-weighted form of the endpoint-row estimate above a genuine
 `P₁₄` cutoff.  Unlike the unweighted mass estimate, this charges the row to
