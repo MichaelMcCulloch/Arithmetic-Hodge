@@ -14,6 +14,7 @@ open CenteredEndpointCorrelation
 open ShiftedLegendreCenteredL2Structural
 open ShiftedLegendreCenteredLowModes
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open ShiftedLegendreOrthogonality
 open YoshidaConstantBounds
 open YoshidaFactorTwoEndpointClean
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
@@ -21,6 +22,7 @@ open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointSeedFiniteSevenClosureStructural
 open YoshidaFourCellEvenPolarSchurStructural
+open YoshidaFourCellEvenZeroCoshRegularStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 
@@ -1066,6 +1068,361 @@ theorem abs_fourCellEvenFiniteSevenRegularEnvelopePolarization_lt
   rw [abs_div, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
   norm_num at htotal ⊢
   linarith
+
+/-! ## Lossless transport into the true bordered entries -/
+
+/-- The polar-free quadratic with only the regular Yoshida kernel replaced
+by its degree-eighteen polynomial center.  All singular, endpoint-potential,
+scalar, and retained-prime terms remain exact. -/
+def fourCellEvenFiniteSevenPolynomialPolarFreeOperator (w : ℝ → ℝ) : ℝ :=
+  fourCellEvenZeroCoshCoupledCore w -
+    (Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi) *
+      (∫ x : ℝ in -1..1, w x ^ 2) -
+    2 * fourCellOperatorHalfWidth *
+      (∫ t : ℝ in 0..2,
+        fourCellEvenFiniteSevenRegularKernelPolynomial18
+            (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t)
+
+/-- Polarization of the kernel-polynomial polar-free quadratic. -/
+def fourCellEvenFiniteSevenPolynomialPolarFreePolarization
+    (u v : ℝ → ℝ) : ℝ :=
+  (fourCellEvenFiniteSevenPolynomialPolarFreeOperator (u + v) -
+      fourCellEvenFiniteSevenPolynomialPolarFreeOperator u -
+      fourCellEvenFiniteSevenPolynomialPolarFreeOperator v) / 2
+
+private theorem finiteSeven_regularKernelIntegral_eq_polynomial_add_envelope
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation w t) =
+      (∫ t : ℝ in 0..2,
+        fourCellEvenFiniteSevenRegularKernelPolynomial18
+            (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t) +
+        fourCellEvenFiniteSevenRegularEnvelopeQuadratic w := by
+  have hcorr : Continuous (centeredEndpointCorrelation w) :=
+    continuous_centeredEndpointCorrelation_of_continuous w hw
+  have hpoly : IntervalIntegrable
+      (fun t : ℝ ↦
+        fourCellEvenFiniteSevenRegularKernelPolynomial18
+            (fourCellOperatorHalfWidth * t) *
+          centeredEndpointCorrelation w t) volume 0 2 := by
+    apply Continuous.intervalIntegrable
+    unfold fourCellEvenFiniteSevenRegularKernelPolynomial18
+      finiteSevenSechPolynomial18 finiteSevenCschRegularPolynomial17
+    fun_prop
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation w t) = fun t ↦
+      fourCellEvenFiniteSevenRegularKernelPolynomial18
+          (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation w t +
+      (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+        fourCellEvenFiniteSevenRegularKernelPolynomial18
+          (fourCellOperatorHalfWidth * t)) *
+        centeredEndpointCorrelation w t by
+      funext t
+      ring,
+    intervalIntegral.integral_add hpoly
+      (finiteSeven_regularEnvelopeQuadratic_intervalIntegrable w hw)]
+  rfl
+
+private theorem finiteSeven_polarFreeOperator_eq_polynomial_sub_envelope
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w) :
+    fourCellEvenPolarFreeOperator w =
+      fourCellEvenFiniteSevenPolynomialPolarFreeOperator w -
+        2 * fourCellOperatorHalfWidth *
+          fourCellEvenFiniteSevenRegularEnvelopeQuadratic w := by
+  rw [fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular_of_even
+    w hw hlocal heven,
+    finiteSeven_regularKernelIntegral_eq_polynomial_add_envelope w hw]
+  unfold fourCellEvenFiniteSevenPolynomialPolarFreeOperator
+  ring
+
+private theorem finiteSeven_quotientMode_even (k : ℕ) :
+    Function.Even (fourCellEvenFiniteSevenQuotientMode (2 * k)) := by
+  intro x
+  unfold fourCellEvenFiniteSevenQuotientMode
+  rw [finiteSeven_centeredMode_even k x,
+    finiteSeven_centeredMode_even 0 x]
+
+private theorem finiteSeven_centeredMode_contDiff (n : ℕ) :
+    ContDiff ℝ 1 (fourCellEvenFiniteSevenCenteredMode n) := by
+  have hp : ContDiff ℝ 1
+      (fun y : ℝ ↦ (shiftedLegendreReal n).eval y) := by
+    simpa only [Polynomial.coe_aeval_eq_eval] using
+      (shiftedLegendreReal n).contDiff_aeval (𝕜 := ℝ) 1
+  have haff : ContDiff ℝ 1 (fun x : ℝ ↦ (x + 1) / 2) := by
+    fun_prop
+  unfold fourCellEvenFiniteSevenCenteredMode centeredPolynomialLift
+  simpa only [Function.comp_apply] using hp.comp haff
+
+private theorem finiteSeven_quotientMode_locallyLipschitzOn (k : ℕ) :
+    LocallyLipschitzOn (Icc (-1 : ℝ) 1)
+      (fourCellEvenFiniteSevenQuotientMode (2 * k)) := by
+  unfold fourCellEvenFiniteSevenQuotientMode
+  have hdiff : ContDiff ℝ 1
+      (fun x : ℝ ↦ fourCellEvenFiniteSevenCenteredMode (2 * k) x -
+        (fourCellEvenFiniteSevenCoshCoordinate (2 * k) /
+          fourCellEvenFiniteSevenCoshCoordinate 0) *
+            fourCellEvenFiniteSevenCenteredMode 0 x) :=
+    (finiteSeven_centeredMode_contDiff (2 * k)).sub
+      (contDiff_const.mul (finiteSeven_centeredMode_contDiff 0))
+  exact hdiff.locallyLipschitz.locallyLipschitzOn
+
+private theorem finiteSeven_truePolarFreePolarization_eq_polynomial_sub_envelope
+    (k l : ℕ) :
+    fourCellEvenFiniteSevenPolarFreePolarization
+        (fourCellEvenFiniteSevenQuotientMode (2 * k))
+        (fourCellEvenFiniteSevenQuotientMode (2 * l)) =
+      fourCellEvenFiniteSevenPolynomialPolarFreePolarization
+        (fourCellEvenFiniteSevenQuotientMode (2 * k))
+        (fourCellEvenFiniteSevenQuotientMode (2 * l)) -
+      2 * fourCellOperatorHalfWidth *
+        fourCellEvenFiniteSevenRegularEnvelopePolarization
+          (fourCellEvenFiniteSevenQuotientMode (2 * k))
+          (fourCellEvenFiniteSevenQuotientMode (2 * l)) := by
+  let u : ℝ → ℝ := fourCellEvenFiniteSevenQuotientMode (2 * k)
+  let v : ℝ → ℝ := fourCellEvenFiniteSevenQuotientMode (2 * l)
+  have hu : Continuous u := finiteSeven_quotientMode_continuous (2 * k)
+  have hv : Continuous v := finiteSeven_quotientMode_continuous (2 * l)
+  have huLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) u :=
+    finiteSeven_quotientMode_locallyLipschitzOn k
+  have hvLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v :=
+    finiteSeven_quotientMode_locallyLipschitzOn l
+  have huEven : Function.Even u := finiteSeven_quotientMode_even k
+  have hvEven : Function.Even v := finiteSeven_quotientMode_even l
+  have huv := finiteSeven_polarFreeOperator_eq_polynomial_sub_envelope
+    (u + v) (hu.add hv) (huLocal.add hvLocal) (huEven.add hvEven)
+  have huEq := finiteSeven_polarFreeOperator_eq_polynomial_sub_envelope
+    u hu huLocal huEven
+  have hvEq := finiteSeven_polarFreeOperator_eq_polynomial_sub_envelope
+    v hv hvLocal hvEven
+  unfold fourCellEvenFiniteSevenPolarFreePolarization
+    fourCellEvenFiniteSevenPolynomialPolarFreePolarization
+    fourCellEvenFiniteSevenRegularEnvelopePolarization
+  change (fourCellEvenPolarFreeOperator (u + v) -
+      fourCellEvenPolarFreeOperator u - fourCellEvenPolarFreeOperator v) / 2 = _
+  rw [huv, huEq, hvEq]
+  ring
+
+private theorem finiteSeven_endpointSeedCorrelation_nonnegative
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t := by
+  unfold centeredEndpointCorrelation
+  apply intervalIntegral.integral_nonneg (by linarith [ht.2])
+  intro x hx
+  have hxLower : (-1 : ℝ) ≤ x := hx.1
+  have hxUpper : x ≤ 1 := by linarith [hx.2, ht.1]
+  have htxLower : (-1 : ℝ) ≤ t + x := by linarith [ht.1, hx.1]
+  have htxUpper : t + x ≤ 1 := by linarith [hx.2]
+  unfold fourCellEvenEndpointCoshSeed
+  exact mul_nonneg
+    (by nlinarith [sq_nonneg (t + x)])
+    (by nlinarith [sq_nonneg x])
+
+private theorem finiteSeven_endpointSeed_regularCorrelation_nonnegative :
+    0 ≤ ∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t := by
+  apply intervalIntegral.integral_nonneg (by norm_num)
+  intro t ht
+  have ha0 : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+    mul_nonneg ha0 ht.1
+  have hargUpper : fourCellOperatorHalfWidth * t ≤
+      5 * Real.log 2 / 4 := by
+    calc
+      fourCellOperatorHalfWidth * t ≤ fourCellOperatorHalfWidth * 2 :=
+        mul_le_mul_of_nonneg_left ht.2 ha0
+      _ = 5 * Real.log 2 / 4 := by
+        unfold fourCellOperatorHalfWidth
+        ring
+  exact mul_nonneg
+    (yoshidaRegularKernel_nonneg_fourCellRange harg0 hargUpper)
+    (finiteSeven_endpointSeedCorrelation_nonnegative ht)
+
+private theorem finiteSeven_endpointSeed_coshMoment_nonnegative_le :
+    0 ≤ fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+        (fourCellOperatorHalfWidth / 2) ∧
+      fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+          (fourCellOperatorHalfWidth / 2) ≤ (4 / 3 : ℝ) := by
+  unfold fourCellPositiveCoshMoment
+  constructor
+  · apply intervalIntegral.integral_nonneg (by norm_num)
+    intro x hx
+    unfold fourCellEvenEndpointCoshSeed
+    exact mul_nonneg (Real.cosh_pos _).le
+      (by nlinarith [mul_nonneg hx.1 (sub_nonneg.mpr hx.2)])
+  · calc
+      (∫ x : ℝ in 0..1,
+        Real.cosh ((fourCellOperatorHalfWidth / 2) * x) *
+          fourCellEvenEndpointCoshSeed x) ≤
+          ∫ _x : ℝ in 0..1, (4 / 3 : ℝ) := by
+        apply intervalIntegral.integral_mono_on (by norm_num)
+          ((Continuous.mul (by fun_prop)
+            fourCellEvenEndpointCoshSeed_continuous).intervalIntegrable 0 1)
+          (Continuous.intervalIntegrable continuous_const 0 1)
+        intro x hx
+        have hu0 : 0 ≤ (fourCellOperatorHalfWidth / 2) * x :=
+          mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) hx.1
+        have hu : (fourCellOperatorHalfWidth / 2) * x < (7 / 10 : ℝ) := by
+          have hlog := strict_log_two_bounds.2
+          unfold fourCellOperatorHalfWidth
+          norm_num at hx ⊢
+          nlinarith [Real.log_pos (by norm_num : (1 : ℝ) < 2)]
+        have hcosh := finiteSeven_cosh_lt_four_thirds hu0 hu
+        have hseed0 : 0 ≤ fourCellEvenEndpointCoshSeed x := by
+          unfold fourCellEvenEndpointCoshSeed
+          nlinarith [mul_nonneg hx.1 (sub_nonneg.mpr hx.2)]
+        have hseed1 : fourCellEvenEndpointCoshSeed x ≤ 1 := by
+          unfold fourCellEvenEndpointCoshSeed
+          nlinarith [sq_nonneg x]
+        have hmul := mul_le_mul hcosh.le hseed1
+          hseed0 (by norm_num : (0 : ℝ) ≤ 4 / 3)
+        change Real.cosh ((fourCellOperatorHalfWidth / 2) * x) *
+          fourCellEvenEndpointCoshSeed x ≤ 4 / 3
+        nlinarith
+      _ = (4 / 3 : ℝ) := by norm_num
+
+private theorem finiteSeven_fourCellScalar_nonnegative :
+    0 ≤ Real.log (2 * fourCellOperatorHalfWidth) +
+      Real.eulerMascheroniConstant + Real.log Real.pi := by
+  have hlogTwo : Real.log 2 ≠ 0 := (Real.log_pos (by norm_num)).ne'
+  have hwidth :
+      Real.log (2 * fourCellOperatorHalfWidth) =
+        Real.log (5 / 4 : ℝ) + Real.log (Real.log 2) := by
+    rw [show 2 * fourCellOperatorHalfWidth =
+        (5 / 4 : ℝ) * Real.log 2 by
+      unfold fourCellOperatorHalfWidth
+      ring,
+      Real.log_mul (by norm_num : (5 / 4 : ℝ) ≠ 0) hlogTwo]
+  rw [hwidth]
+  have hfive : 0 ≤ Real.log (5 / 4 : ℝ) :=
+    Real.log_nonneg (by norm_num)
+  linarith [strict_log_log_two_bounds.1,
+    strict_euler_gamma_bounds.1, strict_log_pi_bounds.1]
+
+/-- A coarse but fully structural upper bound for the fixed positive seed
+bracket.  Its only role is to transport the `10⁻¹⁰` regular-row error
+through the final bordered entry. -/
+theorem fourCellEvenExactBracket_endpointCoshSeed_lt_eight :
+    fourCellEvenExactBracket fourCellEvenEndpointCoshSeed < 8 := by
+  let L : ℝ := Real.log 2
+  let S : ℝ := Real.log (2 * fourCellOperatorHalfWidth) +
+    Real.eulerMascheroniConstant + Real.log Real.pi
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t
+  let H : ℝ := fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+    (fourCellOperatorHalfWidth / 2)
+  have hL0 : 0 ≤ L := (Real.log_pos (by norm_num)).le
+  have hL : L < (7 / 10 : ℝ) := by
+    dsimp only [L]
+    linarith [strict_log_two_bounds.2]
+  have hS : 0 ≤ S := by
+    simpa only [S] using finiteSeven_fourCellScalar_nonnegative
+  have hR : 0 ≤ R := by
+    simpa only [R] using finiteSeven_endpointSeed_regularCorrelation_nonnegative
+  have hH := finiteSeven_endpointSeed_coshMoment_nonnegative_le
+  have hH0 : 0 ≤ H := by simpa only [H] using hH.1
+  have hHle : H ≤ (4 / 3 : ℝ) := by simpa only [H] using hH.2
+  have hHsq : H ^ 2 ≤ (16 / 9 : ℝ) := by
+    have := pow_le_pow_left₀ hH0 hHle 2
+    norm_num at this ⊢
+    exact this
+  have hLHsq : L * H ^ 2 ≤ (7 / 10 : ℝ) * (16 / 9 : ℝ) := by
+    calc
+      L * H ^ 2 ≤ (7 / 10 : ℝ) * H ^ 2 :=
+        mul_le_mul_of_nonneg_right hL.le (sq_nonneg H)
+      _ ≤ (7 / 10 : ℝ) * (16 / 9 : ℝ) :=
+        mul_le_mul_of_nonneg_left hHsq (by norm_num)
+  have hsqrt : 0 ≤ Real.sqrt 2 := Real.sqrt_nonneg 2
+  rw [fourCellEvenExactBracket_endpointCoshSeed_formula]
+  change 248 / 225 - (16 / 15 : ℝ) * L - S * (16 / 15) -
+      (5 * L / 4) * R + 5 * L * H ^ 2 -
+        Real.sqrt 2 * L * (1616 / 46875) < 8
+  nlinarith
+
+/-- The true bordered entry with only its regular kernel row replaced by the
+degree-eighteen polynomial. -/
+def fourCellEvenFiniteSevenPolynomialBorderEntry (m n : ℕ) : ℝ :=
+  fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+      fourCellEvenFiniteSevenPolynomialPolarFreePolarization
+        (fourCellEvenFiniteSevenQuotientMode m)
+        (fourCellEvenFiniteSevenQuotientMode n) -
+    (251 / 250 : ℝ) *
+      fourCellEvenEndpointSeedRow (fourCellEvenFiniteSevenQuotientMode m) *
+      fourCellEvenEndpointSeedRow (fourCellEvenFiniteSevenQuotientMode n)
+
+theorem fourCellEvenFiniteSevenTrueBorderEntry_eq_polynomial_sub_envelope
+    (k l : ℕ) :
+    fourCellEvenFiniteSevenTrueBorderEntry (2 * k) (2 * l) =
+      fourCellEvenFiniteSevenPolynomialBorderEntry (2 * k) (2 * l) -
+        fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          (2 * fourCellOperatorHalfWidth) *
+          fourCellEvenFiniteSevenRegularEnvelopePolarization
+            (fourCellEvenFiniteSevenQuotientMode (2 * k))
+            (fourCellEvenFiniteSevenQuotientMode (2 * l)) := by
+  unfold fourCellEvenFiniteSevenTrueBorderEntry
+    fourCellEvenFiniteSevenBorderPolarization
+    fourCellEvenFiniteSevenPolynomialBorderEntry
+  rw [finiteSeven_truePolarFreePolarization_eq_polynomial_sub_envelope k l]
+  ring
+
+/-- Actual entrywise analytic enclosure: every one of the twenty-one true
+border entries lies within the certificate radius `10⁻⁹` of its fully
+kernel-polynomial counterpart. -/
+theorem abs_fourCellEvenFiniteSevenTrueBorderEntry_sub_polynomial_lt
+    (k l : ℕ) :
+    |fourCellEvenFiniteSevenTrueBorderEntry (2 * k) (2 * l) -
+      fourCellEvenFiniteSevenPolynomialBorderEntry (2 * k) (2 * l)| <
+        (1 / 1000000000 : ℝ) := by
+  have hseed0 : 0 < fourCellEvenExactBracket fourCellEvenEndpointCoshSeed :=
+    fourCellEvenExactBracket_endpointCoshSeed_pos
+  have hseed8 := fourCellEvenExactBracket_endpointCoshSeed_lt_eight
+  have hwidth0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hwidth1 : 2 * fourCellOperatorHalfWidth < 1 := by
+    have hlog := strict_log_two_bounds.2
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  have henv := abs_fourCellEvenFiniteSevenRegularEnvelopePolarization_lt k l
+  rw [fourCellEvenFiniteSevenTrueBorderEntry_eq_polynomial_sub_envelope]
+  rw [show (fourCellEvenFiniteSevenPolynomialBorderEntry (2 * k) (2 * l) -
+      fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          (2 * fourCellOperatorHalfWidth) *
+          fourCellEvenFiniteSevenRegularEnvelopePolarization
+            (fourCellEvenFiniteSevenQuotientMode (2 * k))
+            (fourCellEvenFiniteSevenQuotientMode (2 * l)) -
+      fourCellEvenFiniteSevenPolynomialBorderEntry (2 * k) (2 * l)) =
+        -(fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          (2 * fourCellOperatorHalfWidth) *
+          fourCellEvenFiniteSevenRegularEnvelopePolarization
+            (fourCellEvenFiniteSevenQuotientMode (2 * k))
+            (fourCellEvenFiniteSevenQuotientMode (2 * l))) by ring,
+    abs_neg, abs_mul, abs_mul,
+    abs_of_pos hseed0, abs_of_nonneg hwidth0]
+  have hmul1 :
+      fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+          (2 * fourCellOperatorHalfWidth) < 8 := by
+    nlinarith
+  have henv0 :
+      0 ≤ |fourCellEvenFiniteSevenRegularEnvelopePolarization
+        (fourCellEvenFiniteSevenQuotientMode (2 * k))
+        (fourCellEvenFiniteSevenQuotientMode (2 * l))| := abs_nonneg _
+  calc
+    _ < 8 * (1 / 10000000000 : ℝ) := by
+      exact (mul_le_mul_of_nonneg_right hmul1.le henv0).trans_lt
+        (mul_lt_mul_of_pos_left henv (by norm_num))
+    _ < (1 / 1000000000 : ℝ) := by norm_num
 
 end
 
