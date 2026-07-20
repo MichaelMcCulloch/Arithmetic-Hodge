@@ -10801,7 +10801,7 @@ private theorem integral_three_fifths_one_P7_sq_div_x_eq :
     integral_polynomial_fifteen_local]
   norm_num
 
-private theorem integral_zero_one_endpointPotential_mul_P7_sq_eq :
+theorem integral_zero_one_endpointPotential_mul_P7_sq_eq :
     (∫ x : ℝ in 0..1,
       yoshidaEndpointPotential x * factorTwoCenteredP7 x ^ 2) =
       249383 / 2702700 - (1 / 15 : ℝ) * Real.log 2 := by
@@ -12460,7 +12460,7 @@ private theorem fourCellOddRawStripCancellationReserve_eq_raw_sub_strip
   rw [← hfold]
   ring
 
-private theorem fourCellOddRawStripCancellationReserve_P7_eq :
+theorem fourCellOddRawStripCancellationReserve_P7_eq :
     fourCellOddRawStripCancellationReserve factorTwoCenteredP7 =
       (121 / 350 : ℝ) -
         (1 / 2 : ℝ) * (500810834962 / 5340576171875 : ℝ) := by
@@ -12485,7 +12485,7 @@ private theorem fourCellOddRawStripCancellationReserve_P9_eq :
   rw [centeredRawLogEnergy_endpointStripOdd_P9_eq]
   ring
 
-private theorem fourCellOddEndpointStripEvenMass_P7_eq :
+theorem fourCellOddEndpointStripEvenMass_P7_eq :
     fourCellOddEndpointStripEvenMass factorTwoCenteredP7 =
       (3812346752 / 152587890625 : ℝ) := by
   unfold fourCellOddEndpointStripEvenMass
@@ -12509,7 +12509,7 @@ private theorem fourCellOddEndpointStripEvenMass_P7_eq :
     integral_polynomial_nineteen_local]
   norm_num
 
-private theorem fourCellOddEndpointStripOddMass_P7_eq :
+theorem fourCellOddEndpointStripOddMass_P7_eq :
     fourCellOddEndpointStripOddMass factorTwoCenteredP7 =
       (6289849442 / 457763671875 : ℝ) := by
   unfold fourCellOddEndpointStripOddMass
@@ -13078,7 +13078,7 @@ private theorem fourCellOddOneThreeFiveCombined_entry_certificate_bounds :
   constructor <;> nlinarith
 
 set_option maxHeartbeats 1000000 in
-private theorem fourCellOddOneThreeFivePerturbed_entry_certificate_bounds :
+theorem fourCellOddOneThreeFivePerturbed_entry_certificate_bounds :
     (247682 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed11 ∧
     fourCellOddOneThreeFivePerturbed11 < (247719 / 1000000 : ℝ) ∧
     (218784 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed13 ∧
