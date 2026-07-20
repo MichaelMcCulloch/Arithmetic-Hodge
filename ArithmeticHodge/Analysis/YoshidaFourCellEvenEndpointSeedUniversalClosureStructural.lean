@@ -417,6 +417,86 @@ theorem harmonic_fourteen_mul_fourCellEvenEndpointSeedCanonicalTailRow_sq_le_raw
   unfold factorTwoIntrinsicEnergy at hrawScaled
   nlinarith only [hrowScaled, hrawScaled]
 
+/-- Final cutoff-fourteen Young handoff.  The old coarse tail-mass charge is
+replaced by the exact reciprocal fourteenth harmonic and by an arbitrary
+degree-`< 14` representer projection.  Thus the only finite obligation is
+the coupled row through `P₁₂`; every higher mode is paid by retained
+singular energy with the sharp structural factor `1 / H₁₄`. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_lowThroughTwelve_add_rawTail_of_norm
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (q : ℝ[X]) (hq : q.natDegree < 14)
+    (C : ℝ) (hC : 0 ≤ C)
+    (hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2) ≤ C)
+    (η : ℝ) (hη : 0 < η) :
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (1 + η) *
+          fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw ^ 2 +
+        (1 + η⁻¹) * ((360360 / 1171733 : ℝ) * C) *
+          (centeredRawLogEnergy
+            (centeredLegendreHigherResidual w hw 14) / 4) := by
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 14
+  let L : ℝ := fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw
+  let T : ℝ := fourCellEvenEndpointSeedCanonicalTailRow r
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hweighted : (harmonic 14 : ℝ) * T ^ 2 ≤
+      C * (centeredRawLogEnergy r / 4) := by
+    simpa only [T] using
+      harmonic_fourteen_mul_fourCellEvenEndpointSeedCanonicalTailRow_sq_le_raw_of_norm
+        r hr hrLocal hrGap q hq C hC hdual
+  have hT : T ^ 2 ≤
+      (360360 / 1171733 : ℝ) * C *
+        (centeredRawLogEnergy r / 4) := by
+    norm_num [harmonic, Finset.sum_range_succ] at hweighted
+    nlinarith only [hweighted]
+  have hscale : 0 ≤ 1 + η⁻¹ := by
+    have hinv : 0 < η⁻¹ := inv_pos.mpr hη
+    positivity
+  have hTscaled := mul_le_mul_of_nonneg_left hT hscale
+  have hrow :=
+    fourCellEvenEndpointSeedRow_eq_canonicalLowThroughTwelve_add_tailFourteen
+      w hw hlocal heven hzero
+  have hrow' : fourCellEvenEndpointSeedRow w = L + T := by
+    simpa only [L, T, r] using hrow
+  have hyoung : (L + T) ^ 2 ≤
+      (1 + η) * L ^ 2 + (1 + η⁻¹) * T ^ 2 := by
+    have hηne : η ≠ 0 := hη.ne'
+    have hinv0 : 0 ≤ η⁻¹ := (inv_pos.mpr hη).le
+    have hid :
+        (1 + η) * L ^ 2 + (1 + η⁻¹) * T ^ 2 - (L + T) ^ 2 =
+          η⁻¹ * (η * L - T) ^ 2 := by
+      field_simp [hηne]
+      all_goals ring
+    rw [← sub_nonneg, hid]
+    exact mul_nonneg hinv0 (sq_nonneg (η * L - T))
+  rw [hrow']
+  calc
+    (L + T) ^ 2 ≤
+        (1 + η) * L ^ 2 + (1 + η⁻¹) * T ^ 2 :=
+      hyoung
+    _ ≤ (1 + η) * L ^ 2 +
+        (1 + η⁻¹) * ((360360 / 1171733 : ℝ) * C) *
+          (centeredRawLogEnergy r / 4) := by
+      nlinarith only [hTscaled]
+    _ = (1 + η) *
+          fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw ^ 2 +
+        (1 + η⁻¹) * ((360360 / 1171733 : ℝ) * C) *
+          (centeredRawLogEnergy
+            (centeredLegendreHigherResidual w hw 14) / 4) := by
+      dsimp only [L, r]
+
 /-- Harmonic-weighted form of the endpoint-row estimate above a genuine
 `P₁₄` cutoff.  Unlike the unweighted mass estimate, this charges the row to
 the singular logarithmic diagonal retained by the four-cell operator.  The
