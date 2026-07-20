@@ -75,6 +75,101 @@ def fourCellEvenEndpointSeedCanonicalTailMass
     (w : ℝ → ℝ) (hw : Continuous w) : ℝ :=
   ∫ x : ℝ in -1..1, centeredLegendreHigherResidual w hw 8 x ^ 2
 
+/-- The complete projected endpoint row is genuinely linear on continuous
+tails.  Keeping this identity at the row level lets us move finitely many
+dangerous low-tail harmonics into the coupled finite block without applying
+a triangle inequality. -/
+theorem fourCellEvenEndpointSeedCanonicalTailRow_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellEvenEndpointSeedCanonicalTailRow (u + v) =
+      fourCellEvenEndpointSeedCanonicalTailRow u +
+        fourCellEvenEndpointSeedCanonicalTailRow v := by
+  have hseed : Continuous fourCellEvenEndpointCoshSeed :=
+    fourCellEvenEndpointCoshSeed_continuous
+  have hcapacity := fourCellEvenEndpointCapacityPolarization_add_right
+    fourCellEvenEndpointCoshSeed u v hseed hu hv
+  have hmassU : IntervalIntegrable
+      (fun x : ℝ ↦ fourCellEvenEndpointCoshSeed x * u x)
+      volume (-1) 1 := (hseed.mul hu).intervalIntegrable _ _
+  have hmassV : IntervalIntegrable
+      (fun x : ℝ ↦ fourCellEvenEndpointCoshSeed x * v x)
+      volume (-1) 1 := (hseed.mul hv).intervalIntegrable _ _
+  have hmassAdd :
+      (∫ x : ℝ in -1..1,
+          fourCellEvenEndpointCoshSeed x * (u + v) x) =
+        (∫ x : ℝ in -1..1,
+          fourCellEvenEndpointCoshSeed x * u x) +
+          ∫ x : ℝ in -1..1,
+            fourCellEvenEndpointCoshSeed x * v x := by
+    rw [show (fun x : ℝ ↦
+        fourCellEvenEndpointCoshSeed x * (u + v) x) =
+      fun x ↦ fourCellEvenEndpointCoshSeed x * u x +
+        fourCellEvenEndpointCoshSeed x * v x by
+      funext x
+      simp only [Pi.add_apply]
+      ring,
+      intervalIntegral.integral_add hmassU hmassV]
+  have hsigned := fourCellEvenSignedMassRegularPolarization_add_right
+    fourCellEvenEndpointCoshSeed u v hseed hu hv
+  unfold fourCellEvenSignedMassRegularPolarization at hsigned
+  rw [hmassAdd] at hsigned
+  unfold fourCellEvenEndpointSeedCanonicalTailRow
+  rw [hcapacity]
+  linear_combination -hsigned
+
+/-- The finite row through degree twelve.  It is written as the old
+`P₀/P₂/P₄/P₆` row plus the exact `P₈/P₁₀/P₁₂` slice, so no individual mode
+is estimated or enumerated. -/
+def fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow
+    (w : ℝ → ℝ) (hw : Continuous w) : ℝ :=
+  fourCellEvenEndpointSeedCanonicalLowRow w hw +
+    fourCellEvenEndpointSeedCanonicalTailRow
+      (centeredLegendreHigherResidual w hw 8 -
+        centeredLegendreHigherResidual w hw 14)
+
+/-- The endpoint-seed row splits exactly into a finite block through
+`P₁₂` and a genuine `P₁₄+` tail.  This is the structural cutoff at which the
+harmonic estimate below applies; no Young loss has yet been taken. -/
+theorem fourCellEvenEndpointSeedRow_eq_canonicalLowThroughTwelve_add_tailFourteen
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    fourCellEvenEndpointSeedRow w =
+      fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw +
+        fourCellEvenEndpointSeedCanonicalTailRow
+          (centeredLegendreHigherResidual w hw 14) := by
+  let r₈ : ℝ → ℝ := centeredLegendreHigherResidual w hw 8
+  let r₁₄ : ℝ → ℝ := centeredLegendreHigherResidual w hw 14
+  let m : ℝ → ℝ := r₈ - r₁₄
+  have hr₈ : Continuous r₈ := by
+    simpa only [r₈] using continuous_centeredLegendreHigherResidual w hw 8
+  have hr₁₄ : Continuous r₁₄ := by
+    simpa only [r₁₄] using continuous_centeredLegendreHigherResidual w hw 14
+  have hm : Continuous m := by
+    simpa only [m] using hr₈.sub hr₁₄
+  have hsplit : m + r₁₄ = r₈ := by
+    funext x
+    dsimp only [m]
+    simp only [Pi.add_apply, Pi.sub_apply]
+    ring
+  have htailAdd :=
+    fourCellEvenEndpointSeedCanonicalTailRow_add m r₁₄ hm hr₁₄
+  rw [hsplit] at htailAdd
+  have hrow := fourCellEvenEndpointSeedRow_eq_canonicalCutoffEightLow_add_tail
+    w hw hlocal heven hzero
+  have hrow' : fourCellEvenEndpointSeedRow w =
+      fourCellEvenEndpointSeedCanonicalLowRow w hw +
+        fourCellEvenEndpointSeedCanonicalTailRow r₈ := by
+    dsimp only [r₈, fourCellEvenEndpointSeedCanonicalLowRow,
+      fourCellEvenEndpointSeedCanonicalTailRow]
+    simpa only [sub_eq_add_neg, add_assoc] using hrow
+  dsimp only [fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow]
+  dsimp only [m, r₈, r₁₄] at htailAdd
+  rw [hrow', htailAdd]
+  ring
+
 /-- The canonical combined representer satisfies the sharper rational norm
 bound used before the final multiplication by the seed pivot. -/
 theorem integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_rational :
