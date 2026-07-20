@@ -1510,6 +1510,117 @@ private theorem abs_fourCellOddP11P1ExactUpperH_sub_rational_lt
       linarith
     _ < (1 / 600 : ℝ) := by norm_num
 
+private theorem one_div_lowerWeight_le_reciprocalMajorant
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 3 / 5) :
+    1 / fourCellOddP11SelectorLowerWeight x ≤
+      fourCellOddP11P1LowerReciprocalMajorant (5 * x / 3) := by
+  let t : ℝ := 5 * x / 3
+  have ht0 : 0 ≤ t := by dsimp only [t]; linarith
+  have ht1 : t ≤ 1 := by dsimp only [t]; linarith
+  have hcert := one_le_fourCellOddP11P1LowerReciprocalCertificate ht0 ht1
+  have htx : 3 * t / 5 = x := by
+    dsimp only [t]
+    ring
+  have hcertx :
+      1 ≤ fourCellOddP11P1LowerReciprocalMajorant t *
+        fourCellOddP11P1HexLowerWeight x := by
+    rw [← htx]
+    exact hcert
+  have hhexpos : 0 < fourCellOddP11P1HexLowerWeight x := by
+    unfold fourCellOddP11P1HexLowerWeight yoshidaEndpointHexadecic
+    have hxpow (n : ℕ) : 0 ≤ x ^ n := pow_nonneg hx0 n
+    positivity
+  have hPpos : 0 < fourCellOddP11P1LowerReciprocalMajorant t := by
+    by_contra hnot
+    have hPnonpos : fourCellOddP11P1LowerReciprocalMajorant t ≤ 0 :=
+      le_of_not_gt hnot
+    have := mul_nonpos_of_nonpos_of_nonneg hPnonpos hhexpos.le
+    linarith
+  have hhexle : fourCellOddP11P1HexLowerWeight x ≤
+      fourCellOddP11SelectorLowerWeight x := by
+    have hV := hexadecic_le_endpointPotential (x := x) (by
+      rw [abs_lt]
+      constructor <;> linarith)
+    unfold fourCellOddP11P1HexLowerWeight
+      fourCellOddP11SelectorLowerWeight
+    nlinarith
+  have hprod : 1 ≤ fourCellOddP11P1LowerReciprocalMajorant t *
+      fourCellOddP11SelectorLowerWeight x :=
+    hcertx.trans (mul_le_mul_of_nonneg_left hhexle hPpos.le)
+  have hWpos := fourCellOddP11SelectorLowerWeight_pos ⟨hx0, hx1⟩
+  rw [div_le_iff₀ hWpos]
+  simpa only [one_mul] using hprod
+
+private theorem one_fiftieth_mul_x_le_hexUpperDensity
+    {x : ℝ} (hx0 : (3 / 5 : ℝ) ≤ x) (hx1 : x ≤ 1) :
+    (1 / 50 : ℝ) * x ≤ fourCellOddP11P1HexUpperDensity x := by
+  let t : ℝ := (5 * x - 3) / 2
+  have ht0 : 0 ≤ t := by dsimp only [t]; linarith
+  have ht1 : t ≤ 1 := by dsimp only [t]; linarith
+  have hcomp : 0 ≤ 1 - t := sub_nonneg.mpr ht1
+  rw [← sub_nonneg]
+  rw [show fourCellOddP11P1HexUpperDensity x - (1 / 50 : ℝ) * x =
+      (53171469 / 781250000 : ℝ) * (1 - t) ^ 9 +
+      (42090487 / 156250000 : ℝ) * t * (1 - t) ^ 8 +
+      (1968121 / 7812500 : ℝ) * t ^ 2 * (1 - t) ^ 7 +
+      (15799 / 62500 : ℝ) * t ^ 3 * (1 - t) ^ 6 +
+      (1806347 / 625000 : ℝ) * t ^ 4 * (1 - t) ^ 5 +
+      (1157849 / 125000 : ℝ) * t ^ 5 * (1 - t) ^ 4 +
+      (172237 / 12500 : ℝ) * t ^ 6 * (1 - t) ^ 3 +
+      (27683 / 2500 : ℝ) * t ^ 7 * (1 - t) ^ 2 +
+      (9413 / 2000 : ℝ) * t ^ 8 * (1 - t) +
+      (67 / 80 : ℝ) * t ^ 9 +
+      (93 / 50 : ℝ) * x *
+        (x ^ 10 / 10 + x ^ 12 / 12 + x ^ 14 / 14 + x ^ 16 / 16) by
+    dsimp only [t]
+    unfold fourCellOddP11P1HexUpperDensity yoshidaEndpointHexadecic
+    ring]
+  positivity
+
+private theorem one_div_upperDensity_le_reciprocalMajorant
+    {x : ℝ} (hx0 : (3 / 5 : ℝ) ≤ x) (hx1 : x < 1) :
+    1 / (x * fourCellOddP11SelectorUpperWeight x) ≤
+      fourCellOddP11P1UpperReciprocalMajorant ((5 * x - 3) / 2) := by
+  let t : ℝ := (5 * x - 3) / 2
+  have ht0 : 0 ≤ t := by dsimp only [t]; linarith
+  have ht1 : t ≤ 1 := by dsimp only [t]; linarith
+  have hxpos : 0 < x := by linarith
+  have hcert := one_le_fourCellOddP11P1UpperReciprocalCertificate ht0 ht1
+  have htx : (3 + 2 * t) / 5 = x := by
+    dsimp only [t]
+    ring
+  have hcertx :
+      1 ≤ fourCellOddP11P1UpperReciprocalMajorant t *
+        fourCellOddP11P1HexUpperDensity x := by
+    rw [← htx]
+    exact hcert
+  have hhexpos : 0 < fourCellOddP11P1HexUpperDensity x := by
+    have hlow := one_fiftieth_mul_x_le_hexUpperDensity hx0 hx1.le
+    nlinarith
+  have hPpos : 0 < fourCellOddP11P1UpperReciprocalMajorant t := by
+    by_contra hnot
+    have hPnonpos : fourCellOddP11P1UpperReciprocalMajorant t ≤ 0 :=
+      le_of_not_gt hnot
+    have := mul_nonpos_of_nonpos_of_nonneg hPnonpos hhexpos.le
+    linarith
+  have hV := hexadecic_le_endpointPotential (x := x) (by
+    rw [abs_lt]
+    constructor <;> linarith)
+  have hdensity : fourCellOddP11P1HexUpperDensity x ≤
+      x * fourCellOddP11SelectorUpperWeight x := by
+    unfold fourCellOddP11P1HexUpperDensity
+      fourCellOddP11SelectorUpperWeight
+    field_simp [hxpos.ne']
+    nlinarith [mul_le_mul_of_nonneg_left hV
+      (mul_nonneg (by norm_num : (0 : ℝ) ≤ 93 / 50) hxpos.le)]
+  have hprod : 1 ≤ fourCellOddP11P1UpperReciprocalMajorant t *
+      (x * fourCellOddP11SelectorUpperWeight x) :=
+    hcertx.trans (mul_le_mul_of_nonneg_left hdensity hPpos.le)
+  have hDpos : 0 < x * fourCellOddP11SelectorUpperWeight x :=
+    lt_of_lt_of_le hhexpos hdensity
+  rw [div_le_iff₀ hDpos]
+  simpa only [one_mul] using hprod
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellOddP11P1TailSchurStructural
