@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellOddCoreBlockPiconeStructural
+import ArithmeticHodge.Analysis.YoshidaFourCellRegularKernelLowerStructural
 
 set_option autoImplicit false
 
@@ -12,6 +13,7 @@ open YoshidaConstantBounds
 open YoshidaFourCellOddCoreBlockPiconeStructural
 open YoshidaFourCellOddCoreGroundStatePiconeStructural
 open YoshidaFourCellParityOperatorStructural
+open YoshidaFourCellRegularKernelLowerStructural
 open YoshidaRegularKernelBound
 
 /-!
@@ -56,6 +58,47 @@ theorem twoChannelSquares_sub_cross_nonneg
       mul_nonneg hkAdd (sq_nonneg _)
     nlinarith
 
+/-- General retained-fraction form.  If the subtraction coefficient is at
+most `δ` times the plus-square weight, then at least `1 - δ/2` of the original
+two-channel energy remains. -/
+theorem one_sub_halfDelta_mul_twoChannelSquares_le_sub_cross
+    {kSub kAdd c δ wX wY : ℝ}
+    (hkSub : 0 ≤ kSub) (hkAdd : 0 ≤ kAdd)
+    (hc : 0 ≤ c) (hδ : 0 ≤ δ) (hcap : c ≤ δ * kAdd) :
+    (1 - δ / 2) *
+        (kSub * (wX - wY) ^ 2 + kAdd * (wX + wY) ^ 2) ≤
+      kSub * (wX - wY) ^ 2 + kAdd * (wX + wY) ^ 2 -
+        2 * c * wX * wY := by
+  by_cases hcross : 0 ≤ wX * wY
+  · have hcapScaled : c * (wX * wY) ≤
+        (δ * kAdd) * (wX * wY) :=
+      mul_le_mul_of_nonneg_right hcap hcross
+    have hsquare : 4 * (wX * wY) ≤ (wX + wY) ^ 2 := by
+      nlinarith [sq_nonneg (wX - wY)]
+    have hsquareScaled : kAdd * (4 * (wX * wY)) ≤
+        kAdd * (wX + wY) ^ 2 :=
+      mul_le_mul_of_nonneg_left hsquare hkAdd
+    have hsquareDeltaScaled :
+        δ * (kAdd * (4 * (wX * wY))) ≤
+          δ * (kAdd * (wX + wY) ^ 2) :=
+      mul_le_mul_of_nonneg_left hsquareScaled hδ
+    have hsubSquare : 0 ≤ kSub * (wX - wY) ^ 2 :=
+      mul_nonneg hkSub (sq_nonneg _)
+    have hsubDelta : 0 ≤ δ * (kSub * (wX - wY) ^ 2) :=
+      mul_nonneg hδ hsubSquare
+    nlinarith
+  · have hcross' : wX * wY ≤ 0 := le_of_not_ge hcross
+    have hregular : c * (wX * wY) ≤ 0 :=
+      mul_nonpos_of_nonneg_of_nonpos hc hcross'
+    have hsubSquare : 0 ≤ kSub * (wX - wY) ^ 2 :=
+      mul_nonneg hkSub (sq_nonneg _)
+    have haddSquare : 0 ≤ kAdd * (wX + wY) ^ 2 :=
+      mul_nonneg hkAdd (sq_nonneg _)
+    have hdeltaEnergy : 0 ≤ δ *
+        (kSub * (wX - wY) ^ 2 + kAdd * (wX + wY) ^ 2) :=
+      mul_nonneg hδ (add_nonneg hsubSquare haddSquare)
+    nlinarith
+
 /-- If the subtraction cross is at most half of the plus-square weight, then
 the combined form retains at least three quarters of the original two-channel
 energy. -/
@@ -67,26 +110,32 @@ theorem threeFourths_mul_twoChannelSquares_le_sub_cross
         (kSub * (wX - wY) ^ 2 + kAdd * (wX + wY) ^ 2) ≤
       kSub * (wX - wY) ^ 2 + kAdd * (wX + wY) ^ 2 -
         2 * c * wX * wY := by
-  by_cases hcross : 0 ≤ wX * wY
-  · have hcapScaled : c * (wX * wY) ≤
-        (kAdd / 2) * (wX * wY) :=
-      mul_le_mul_of_nonneg_right hcap hcross
-    have hsquare : 4 * (wX * wY) ≤ (wX + wY) ^ 2 := by
-      nlinarith [sq_nonneg (wX - wY)]
-    have hsquareScaled : kAdd * (4 * (wX * wY)) ≤
-        kAdd * (wX + wY) ^ 2 :=
-      mul_le_mul_of_nonneg_left hsquare hkAdd
-    have hsubSquare : 0 ≤ kSub * (wX - wY) ^ 2 :=
-      mul_nonneg hkSub (sq_nonneg _)
+  have hcap' : c ≤ (1 / 2 : ℝ) * kAdd := by
     nlinarith
-  · have hcross' : wX * wY ≤ 0 := le_of_not_ge hcross
-    have hregular : c * (wX * wY) ≤ 0 :=
-      mul_nonpos_of_nonneg_of_nonpos hc hcross'
-    have hsubSquare : 0 ≤ kSub * (wX - wY) ^ 2 :=
-      mul_nonneg hkSub (sq_nonneg _)
-    have haddSquare : 0 ≤ kAdd * (wX + wY) ^ 2 :=
-      mul_nonneg hkAdd (sq_nonneg _)
+  have hretained := one_sub_halfDelta_mul_twoChannelSquares_le_sub_cross
+    (kSub := kSub) (kAdd := kAdd) (c := c) (δ := (1 / 2 : ℝ))
+    (wX := wX) (wY := wY) hkSub hkAdd hc (by norm_num) hcap'
+  norm_num at hretained
+  exact hretained
+
+/-- The specialization used by the sharp regular-kernel bounds: a cross of
+size at most one tenth of the plus channel leaves nineteen twentieths of the
+two-channel energy. -/
+theorem nineteenTwentieths_mul_twoChannelSquares_le_sub_cross
+    {kSub kAdd c wX wY : ℝ}
+    (hkSub : 0 ≤ kSub) (hkAdd : 0 ≤ kAdd)
+    (hc : 0 ≤ c) (hcap : c ≤ kAdd / 10) :
+    (19 / 20 : ℝ) *
+        (kSub * (wX - wY) ^ 2 + kAdd * (wX + wY) ^ 2) ≤
+      kSub * (wX - wY) ^ 2 + kAdd * (wX + wY) ^ 2 -
+        2 * c * wX * wY := by
+  have hcap' : c ≤ (1 / 10 : ℝ) * kAdd := by
     nlinarith
+  have hretained := one_sub_halfDelta_mul_twoChannelSquares_le_sub_cross
+    (kSub := kSub) (kAdd := kAdd) (c := c) (δ := (1 / 10 : ℝ))
+    (wX := wX) (wY := wY) hkSub hkAdd hc (by norm_num) hcap'
+  norm_num at hretained
+  exact hretained
 
 /-! ## Kernel bounds -/
 
@@ -111,6 +160,31 @@ theorem fourCellOddFoldedRegularDifferenceKernel_le_quarter
     nlinarith
   have hsameUpper := yoshidaRegularKernel_le_quarter hdistArg
   have hreflectedNonneg := yoshidaRegularKernel_nonneg_fourCellRange
+    hsumArg hsumArgUpper
+  unfold fourCellOddFoldedRegularDifferenceKernel
+  linarith
+
+/-- Using the uniform `1/5` lower bound at the reflected argument sharpens
+the folded regular difference to `1/4 - 1/5 = 1/20`. -/
+theorem fourCellOddFoldedRegularDifferenceKernel_le_oneTwentieth
+    {x y : ℝ} (hx : 0 < x) (hx1 : x ≤ 1)
+    (hy : 0 < y) (hy1 : y ≤ 1) :
+    fourCellOddFoldedRegularDifferenceKernel x y ≤ 1 / 20 := by
+  have hlog : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hwidth : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hdistArg : 0 ≤ fourCellOperatorHalfWidth * |x - y| :=
+    mul_nonneg hwidth (abs_nonneg _)
+  have hsumArg : 0 ≤ fourCellOperatorHalfWidth * (x + y) :=
+    mul_nonneg hwidth (add_nonneg hx.le hy.le)
+  have hsum : x + y ≤ 2 := by linarith
+  have hsumArgUpper :
+      fourCellOperatorHalfWidth * (x + y) ≤ 5 * Real.log 2 / 4 := by
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  have hsameUpper := yoshidaRegularKernel_le_quarter hdistArg
+  have hreflectedLower := one_fifth_le_yoshidaRegularKernel_fourCellRange
     hsumArg hsumArgUpper
   unfold fourCellOddFoldedRegularDifferenceKernel
   linarith
@@ -194,6 +268,45 @@ theorem fourCellOperatorHalfWidth_mul_foldedRegularDifferenceKernel_le_half_refl
     exact one_div_le_one_div_of_le hdenPos hdenUpper
   linarith
 
+/-- Sharp reserve allocation from the common four-cell kernel lower bound:
+the scaled regular difference costs at most one tenth of the reflected raw
+channel. -/
+theorem fourCellOperatorHalfWidth_mul_foldedRegularDifferenceKernel_le_tenth_reflected
+    {x y : ℝ} (hx : 0 < x) (hx1 : x ≤ 1)
+    (hy : 0 < y) (hy1 : y ≤ 1) :
+    fourCellOperatorHalfWidth *
+        fourCellOddFoldedRegularDifferenceKernel x y ≤
+      positiveHalfReflectedReserveWeight x y / 10 := by
+  have hkernel :
+      0 ≤ fourCellOddFoldedRegularDifferenceKernel x y :=
+    fourCellOddFoldedRegularDifferenceKernel_nonneg hx.le hx1 hy.le hy1
+  have hkernelUpper :
+      fourCellOddFoldedRegularDifferenceKernel x y ≤ 1 / 20 :=
+    fourCellOddFoldedRegularDifferenceKernel_le_oneTwentieth hx hx1 hy hy1
+  have hwidthLe : fourCellOperatorHalfWidth ≤ 1 / 2 := by
+    have hlogUpper := strict_log_two_bounds.2
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  have hscaledUpper :
+      fourCellOperatorHalfWidth *
+          fourCellOddFoldedRegularDifferenceKernel x y ≤ 1 / 40 := by
+    calc
+      fourCellOperatorHalfWidth *
+            fourCellOddFoldedRegularDifferenceKernel x y ≤
+          (1 / 2 : ℝ) * fourCellOddFoldedRegularDifferenceKernel x y :=
+        mul_le_mul_of_nonneg_right hwidthLe hkernel
+      _ ≤ (1 / 2 : ℝ) * (1 / 20 : ℝ) :=
+        mul_le_mul_of_nonneg_left hkernelUpper (by norm_num)
+      _ = 1 / 40 := by ring
+  have hsumPos : 0 < x + y := add_pos hx hy
+  have hdenPos : 0 < 2 * (x + y) := mul_pos (by norm_num) hsumPos
+  have hdenUpper : 2 * (x + y) ≤ 4 := by linarith
+  have hreflectedLower :
+      (1 / 4 : ℝ) ≤ positiveHalfReflectedReserveWeight x y := by
+    unfold positiveHalfReflectedReserveWeight
+    exact one_div_le_one_div_of_le hdenPos hdenUpper
+  linarith
+
 /-! ## Raw absorption -/
 
 /-- The unconditional pointwise off-strip estimate: the complete raw reserve
@@ -259,6 +372,42 @@ theorem threeFourths_mul_positiveHalfRawReservePair_le_sub_foldedRegularCross
       hx hx1 hy hy1
   simpa only [positiveHalfRawReservePair, mul_assoc] using
     (threeFourths_mul_twoChannelSquares_le_sub_cross
+      (kSub := positiveHalfSameReserveWeight x y)
+      (kAdd := positiveHalfReflectedReserveWeight x y)
+      (c := fourCellOperatorHalfWidth *
+        fourCellOddFoldedRegularDifferenceKernel x y)
+      (wX := wX) (wY := wY) hkSub hkAdd hc hcap)
+
+/-- Sharp pointwise retention from the uniform regular-kernel lower bound:
+nineteen twentieths of the complete positive-half raw reserve survives the
+folded-regular cross. -/
+theorem nineteenTwentieths_mul_positiveHalfRawReservePair_le_sub_foldedRegularCross
+    {x y wX wY : ℝ}
+    (hx : 0 < x) (hx1 : x ≤ 1)
+    (hy : 0 < y) (hy1 : y ≤ 1) :
+    (19 / 20 : ℝ) * positiveHalfRawReservePair x y wX wY ≤
+      positiveHalfRawReservePair x y wX wY -
+        2 * fourCellOperatorHalfWidth *
+          fourCellOddFoldedRegularDifferenceKernel x y * wX * wY := by
+  have hkSub : 0 ≤ positiveHalfSameReserveWeight x y :=
+    positiveHalfSameReserveWeight_nonneg x y
+  have hkAdd : 0 ≤ positiveHalfReflectedReserveWeight x y :=
+    (positiveHalfReflectedReserveWeight_pos hx hy).le
+  have hkernel :
+      0 ≤ fourCellOddFoldedRegularDifferenceKernel x y :=
+    fourCellOddFoldedRegularDifferenceKernel_nonneg hx.le hx1 hy.le hy1
+  have hwidth : 0 ≤ fourCellOperatorHalfWidth := by
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hc :
+      0 ≤ fourCellOperatorHalfWidth *
+        fourCellOddFoldedRegularDifferenceKernel x y :=
+    mul_nonneg hwidth hkernel
+  have hcap :=
+    fourCellOperatorHalfWidth_mul_foldedRegularDifferenceKernel_le_tenth_reflected
+      hx hx1 hy hy1
+  simpa only [positiveHalfRawReservePair, mul_assoc] using
+    (nineteenTwentieths_mul_twoChannelSquares_le_sub_cross
       (kSub := positiveHalfSameReserveWeight x y)
       (kAdd := positiveHalfReflectedReserveWeight x y)
       (c := fourCellOperatorHalfWidth *
