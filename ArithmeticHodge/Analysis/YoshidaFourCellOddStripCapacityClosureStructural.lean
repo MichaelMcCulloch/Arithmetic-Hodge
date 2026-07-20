@@ -12912,6 +12912,325 @@ theorem fourCellOddCoreLocalQuadratic_nonneg_of_P11Plus
     fourCellOddCoreLocalQuadratic r at htail
   nlinarith
 
+/-- `P₇` coefficient of the tail left after the canonical `P₁/P₃/P₅`
+projection. -/
+def fourCellOddP7TailCoefficient (w : ℝ → ℝ) : ℝ :=
+  centeredOddP7Coefficient (fourCellOddOneThreeFiveResidual w)
+
+/-- Residual after additionally removing the exact `P₇` direction. -/
+def fourCellOddOneThreeFiveSevenResidual (w : ℝ → ℝ) : ℝ → ℝ :=
+  fun x ↦ fourCellOddOneThreeFiveResidual w x -
+    fourCellOddP7TailCoefficient w * factorTwoCenteredP7 x
+
+/-- `P₉` coefficient of the residual already orthogonal through `P₇`. -/
+def fourCellOddP9TailCoefficient (w : ℝ → ℝ) : ℝ :=
+  centeredOddP9Coefficient (fourCellOddOneThreeFiveSevenResidual w)
+
+/-- Canonical residual whose odd shifted-Legendre expansion starts at
+`P₁₁`. -/
+def fourCellOddOneThreeFiveSevenNineResidual (w : ℝ → ℝ) : ℝ → ℝ :=
+  fun x ↦ fourCellOddOneThreeFiveSevenResidual w x -
+    fourCellOddP9TailCoefficient w * factorTwoCenteredP9 x
+
+/-- Canonical first-five-odd-mode part of an arbitrary profile. -/
+def fourCellOddOneThreeFiveSevenNineLowPart (w : ℝ → ℝ) : ℝ → ℝ :=
+  fourCellOddOneThreeFiveSevenNineLowProfile
+    (centeredOddP1Coefficient w) (centeredOddP3Coefficient w)
+      (fourCellOddP5TailCoefficient w) (fourCellOddP7TailCoefficient w)
+        (fourCellOddP9TailCoefficient w)
+
+theorem fourCellOddOneThreeFiveSevenNineLowPart_add_residual
+    (w : ℝ → ℝ) :
+    fourCellOddOneThreeFiveSevenNineLowPart w +
+        fourCellOddOneThreeFiveSevenNineResidual w = w := by
+  have hbase := fourCellOddOneThreeFiveLowPart_add_residual w
+  funext x
+  have hx := congrFun hbase x
+  unfold fourCellOddOneThreeFiveSevenNineLowPart
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveSevenNineResidual
+    fourCellOddOneThreeFiveSevenResidual
+    fourCellOddOneThreeFiveLowPart at hx ⊢
+  simp only [Pi.add_apply] at hx ⊢
+  linarith
+
+theorem contDiff_fourCellOddOneThreeFiveSevenNineResidual
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    ContDiff ℝ 1 (fourCellOddOneThreeFiveSevenNineResidual w) := by
+  unfold fourCellOddOneThreeFiveSevenNineResidual
+    fourCellOddOneThreeFiveSevenResidual
+  exact ((contDiff_fourCellOddOneThreeFiveResidual w hw).sub
+    (contDiff_const.mul contDiff_factorTwoCenteredP7_local)).sub
+      (contDiff_const.mul contDiff_factorTwoCenteredP9_local)
+
+theorem odd_fourCellOddOneThreeFiveSevenNineResidual
+    (w : ℝ → ℝ) (hodd : Function.Odd w) :
+    Function.Odd (fourCellOddOneThreeFiveSevenNineResidual w) := by
+  intro x
+  unfold fourCellOddOneThreeFiveSevenNineResidual
+    fourCellOddOneThreeFiveSevenResidual
+  rw [odd_fourCellOddOneThreeFiveResidual w hodd,
+    odd_factorTwoCenteredP7, odd_factorTwoCenteredP9]
+  ring
+
+theorem fourCellOddOneThreeFiveSevenNineResidual_one_of_endpoint_zero
+    (w : ℝ → ℝ) (hendpoint : w 1 = 0) :
+    fourCellOddOneThreeFiveSevenNineResidual w 1 =
+      -(centeredOddP1Coefficient w + centeredOddP3Coefficient w +
+        fourCellOddP5TailCoefficient w + fourCellOddP7TailCoefficient w +
+          fourCellOddP9TailCoefficient w) := by
+  have hreconstruct := congrFun
+    (fourCellOddOneThreeFiveSevenNineLowPart_add_residual w) 1
+  rw [hendpoint] at hreconstruct
+  unfold fourCellOddOneThreeFiveSevenNineLowPart at hreconstruct
+  rw [fourCellOddOneThreeFiveSevenNineLowProfile_one] at hreconstruct
+  linarith
+
+private theorem centeredOddP1Coefficient_sub_const_mul_local
+    (u v : ℝ → ℝ) (a : ℝ) (hu : Continuous u) (hv : Continuous v) :
+    centeredOddP1Coefficient (fun x ↦ u x - a * v x) =
+      centeredOddP1Coefficient u - a * centeredOddP1Coefficient v := by
+  unfold centeredOddP1Coefficient
+  rw [intervalIntegral_sub_const_mul_mul u v centeredP1 a (-1) 1
+    hu hv (by unfold centeredP1; fun_prop)]
+  ring
+
+private theorem centeredOddP3Coefficient_sub_const_mul_local
+    (u v : ℝ → ℝ) (a : ℝ) (hu : Continuous u) (hv : Continuous v) :
+    centeredOddP3Coefficient (fun x ↦ u x - a * v x) =
+      centeredOddP3Coefficient u - a * centeredOddP3Coefficient v := by
+  unfold centeredOddP3Coefficient
+  rw [intervalIntegral_sub_const_mul_mul u v centeredP3 a (-1) 1
+    hu hv (by unfold centeredP3; fun_prop)]
+  ring
+
+private theorem centeredOddP5Coefficient_sub_const_mul_local
+    (u v : ℝ → ℝ) (a : ℝ) (hu : Continuous u) (hv : Continuous v) :
+    centeredOddP5Coefficient (fun x ↦ u x - a * v x) =
+      centeredOddP5Coefficient u - a * centeredOddP5Coefficient v := by
+  unfold centeredOddP5Coefficient
+  rw [intervalIntegral_sub_const_mul_mul u v factorTwoCenteredP5 a (-1) 1
+    hu hv continuous_factorTwoCenteredP5]
+  ring
+
+private theorem centeredOddP7Coefficient_sub_const_mul_local
+    (u v : ℝ → ℝ) (a : ℝ) (hu : Continuous u) (hv : Continuous v) :
+    centeredOddP7Coefficient (fun x ↦ u x - a * v x) =
+      centeredOddP7Coefficient u - a * centeredOddP7Coefficient v := by
+  unfold centeredOddP7Coefficient
+  rw [intervalIntegral_sub_const_mul_mul u v factorTwoCenteredP7 a (-1) 1
+    hu hv continuous_factorTwoCenteredP7]
+  ring
+
+private theorem centeredOddP9Coefficient_sub_const_mul_local
+    (u v : ℝ → ℝ) (a : ℝ) (hu : Continuous u) (hv : Continuous v) :
+    centeredOddP9Coefficient (fun x ↦ u x - a * v x) =
+      centeredOddP9Coefficient u - a * centeredOddP9Coefficient v := by
+  unfold centeredOddP9Coefficient
+  rw [intervalIntegral_sub_const_mul_mul u v factorTwoCenteredP9 a (-1) 1
+    hu hv continuous_factorTwoCenteredP9]
+  ring
+
+private theorem centeredOddP7Coefficient_P7_eq_one :
+    centeredOddP7Coefficient factorTwoCenteredP7 = 1 := by
+  unfold centeredOddP7Coefficient
+  rw [show (fun x : ℝ ↦
+      factorTwoCenteredP7 x * factorTwoCenteredP7 x) =
+      fun x ↦ factorTwoCenteredP7 x ^ 2 by
+    funext x
+    ring,
+    integral_factorTwoCenteredP7_sq]
+  norm_num
+
+private theorem centeredOddP9Coefficient_P9_eq_one :
+    centeredOddP9Coefficient factorTwoCenteredP9 = 1 := by
+  have henergy := factorTwoCenteredP9_energy
+  unfold factorTwoIntrinsicEnergy at henergy
+  unfold centeredOddP9Coefficient
+  rw [show (fun x : ℝ ↦
+      factorTwoCenteredP9 x * factorTwoCenteredP9 x) =
+      fun x ↦ factorTwoCenteredP9 x ^ 2 by
+    funext x
+    ring,
+    henergy]
+  norm_num
+
+private theorem centeredOddP7Coefficient_P9_eq_zero :
+    centeredOddP7Coefficient factorTwoCenteredP9 = 0 := by
+  have hunit := factorTwoCenteredP9_momentsVanishBelow 7 (by norm_num)
+  rw [integral_centeredPullback_mul_shiftedLegendre_eq_neg_half_local
+      7 factorTwoCenteredP7 factorTwoCenteredP9
+        centeredPullback_factorTwoCenteredP7] at hunit
+  have hfull : (∫ x : ℝ in -1..1,
+      factorTwoCenteredP9 x * factorTwoCenteredP7 x) = 0 := by
+    nlinarith
+  unfold centeredOddP7Coefficient
+  rw [hfull]
+  ring
+
+theorem centeredOddLowCoefficients_oneThreeFiveSevenNineResidual_eq_zero
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    centeredOddP1Coefficient
+          (fourCellOddOneThreeFiveSevenNineResidual w) = 0 ∧
+      centeredOddP3Coefficient
+          (fourCellOddOneThreeFiveSevenNineResidual w) = 0 ∧
+        centeredOddP5Coefficient
+          (fourCellOddOneThreeFiveSevenNineResidual w) = 0 := by
+  let r5 := fourCellOddOneThreeFiveResidual w
+  let r7 := fourCellOddOneThreeFiveSevenResidual w
+  have hr5 : Continuous r5 := by
+    dsimp only [r5]
+    exact (contDiff_fourCellOddOneThreeFiveResidual w hw.contDiff).continuous
+  have hr7 : Continuous r7 := by
+    dsimp only [r7, fourCellOddOneThreeFiveSevenResidual]
+    exact hr5.sub (continuous_const.mul continuous_factorTwoCenteredP7)
+  rcases centeredOddCoefficients_P7_eq_zero with ⟨h71, h73, h75⟩
+  rcases centeredOddCoefficients_P9_eq_zero with ⟨h91, h93, h95⟩
+  have h1 := centeredOddP1Coefficient_oneThreeFiveResidual_eq_zero w hw
+  have h3 := centeredOddP3Coefficient_oneThreeFiveResidual_eq_zero w hw
+  have h5 := centeredOddP5Coefficient_oneThreeFiveResidual_eq_zero w hw
+  unfold fourCellOddOneThreeFiveSevenNineResidual
+    fourCellOddOneThreeFiveSevenResidual
+  rw [centeredOddP1Coefficient_sub_const_mul_local _ _ _ hr7
+      continuous_factorTwoCenteredP9,
+    centeredOddP1Coefficient_sub_const_mul_local _ _ _ hr5
+      continuous_factorTwoCenteredP7,
+    centeredOddP3Coefficient_sub_const_mul_local _ _ _ hr7
+      continuous_factorTwoCenteredP9,
+    centeredOddP3Coefficient_sub_const_mul_local _ _ _ hr5
+      continuous_factorTwoCenteredP7,
+    centeredOddP5Coefficient_sub_const_mul_local _ _ _ hr7
+      continuous_factorTwoCenteredP9,
+    centeredOddP5Coefficient_sub_const_mul_local _ _ _ hr5
+      continuous_factorTwoCenteredP7,
+    h1, h3, h5, h71, h73, h75, h91, h93, h95]
+  norm_num
+
+theorem centeredOddP7Coefficient_oneThreeFiveSevenNineResidual_eq_zero
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    centeredOddP7Coefficient
+        (fourCellOddOneThreeFiveSevenNineResidual w) = 0 := by
+  let r5 := fourCellOddOneThreeFiveResidual w
+  let r7 := fourCellOddOneThreeFiveSevenResidual w
+  have hr5 : Continuous r5 := by
+    dsimp only [r5]
+    exact (contDiff_fourCellOddOneThreeFiveResidual w hw.contDiff).continuous
+  have hr7 : Continuous r7 := by
+    dsimp only [r7, fourCellOddOneThreeFiveSevenResidual]
+    exact hr5.sub (continuous_const.mul continuous_factorTwoCenteredP7)
+  unfold fourCellOddOneThreeFiveSevenNineResidual
+    fourCellOddOneThreeFiveSevenResidual
+  rw [centeredOddP7Coefficient_sub_const_mul_local _ _ _ hr7
+      continuous_factorTwoCenteredP9,
+    centeredOddP7Coefficient_sub_const_mul_local _ _ _ hr5
+      continuous_factorTwoCenteredP7,
+    centeredOddP7Coefficient_P7_eq_one,
+    centeredOddP7Coefficient_P9_eq_zero]
+  unfold fourCellOddP7TailCoefficient
+  ring
+
+theorem centeredOddP9Coefficient_oneThreeFiveSevenNineResidual_eq_zero
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    centeredOddP9Coefficient
+        (fourCellOddOneThreeFiveSevenNineResidual w) = 0 := by
+  let r7 := fourCellOddOneThreeFiveSevenResidual w
+  have hr7 : Continuous r7 := by
+    dsimp only [r7, fourCellOddOneThreeFiveSevenResidual]
+    exact (contDiff_fourCellOddOneThreeFiveResidual w hw.contDiff).continuous.sub
+      (continuous_const.mul continuous_factorTwoCenteredP7)
+  unfold fourCellOddOneThreeFiveSevenNineResidual
+  rw [centeredOddP9Coefficient_sub_const_mul_local _ _ _ hr7
+      continuous_factorTwoCenteredP9,
+    centeredOddP9Coefficient_P9_eq_one]
+  unfold fourCellOddP9TailCoefficient
+  ring
+
+theorem fourCellOddCoreLocal_oneThreeFiveSevenNine_decomposition
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    fourCellOddCoreLocalQuadratic w =
+      fourCellOddCoreLocalQuadratic
+          (fourCellOddOneThreeFiveSevenNineLowPart w) +
+        2 * fourCellOddCoreLocalBilinear
+          (fourCellOddOneThreeFiveSevenNineLowPart w)
+          (fourCellOddOneThreeFiveSevenNineResidual w) +
+        fourCellOddCoreLocalQuadratic
+          (fourCellOddOneThreeFiveSevenNineResidual w) := by
+  let p := fourCellOddOneThreeFiveSevenNineLowPart w
+  let r := fourCellOddOneThreeFiveSevenNineResidual w
+  have hp : Continuous p := by
+    dsimp only [p, fourCellOddOneThreeFiveSevenNineLowPart]
+    exact (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile _ _ _ _ _).continuous
+  have hr : Continuous r := by
+    dsimp only [r]
+    exact (contDiff_fourCellOddOneThreeFiveSevenNineResidual w hw).continuous
+  have hadd := fourCellOddCoreLocalQuadratic_add p r hp hr
+  have hreconstruct : p + r = w := by
+    dsimp only [p, r]
+    exact fourCellOddOneThreeFiveSevenNineLowPart_add_residual w
+  rw [hreconstruct] at hadd
+  exact hadd
+
+/-- Exact endpoint-zero reduction through `P₉`.  Once the finite
+five-mode form is nonnegative, universal odd closure is equivalent to the
+single `P₁₁+` Riesz premise above; the arbitrary residual diagonal and
+the projection identities are discharged here. -/
+theorem fourCellOddCoreLocalQuadratic_nonneg_of_endpointZero_fiveMode_formDual
+    (hfinite : ∀ c d e f g : ℝ,
+      0 ≤ fourCellOddCoreLocalQuadratic
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g))
+    (hdual : fourCellOddOneThreeFiveSevenNineEndpointFormDualBound)
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w)
+    (hendpoint : w (-1) = 0 ∧ w 1 = 0) :
+    0 ≤ fourCellOddCoreLocalQuadratic w := by
+  let c := centeredOddP1Coefficient w
+  let d := centeredOddP3Coefficient w
+  let e := fourCellOddP5TailCoefficient w
+  let f := fourCellOddP7TailCoefficient w
+  let g := fourCellOddP9TailCoefficient w
+  let p := fourCellOddOneThreeFiveSevenNineLowPart w
+  let r := fourCellOddOneThreeFiveSevenNineResidual w
+  have hr : ContDiff ℝ 1 r := by
+    dsimp only [r]
+    exact contDiff_fourCellOddOneThreeFiveSevenNineResidual w hw
+  have hrodd : Function.Odd r := by
+    dsimp only [r]
+    exact odd_fourCellOddOneThreeFiveSevenNineResidual w hodd
+  rcases centeredOddLowCoefficients_oneThreeFiveSevenNineResidual_eq_zero
+      w hw.continuous with ⟨hr1, hr3, hr5⟩
+  have hr7 : centeredOddP7Coefficient r = 0 := by
+    dsimp only [r]
+    exact centeredOddP7Coefficient_oneThreeFiveSevenNineResidual_eq_zero
+      w hw.continuous
+  have hr9 : centeredOddP9Coefficient r = 0 := by
+    dsimp only [r]
+    exact centeredOddP9Coefficient_oneThreeFiveSevenNineResidual_eq_zero
+      w hw.continuous
+  have hrone : r 1 = -(c + d + e + f + g) := by
+    dsimp only [r, c, d, e, f, g]
+    exact fourCellOddOneThreeFiveSevenNineResidual_one_of_endpoint_zero
+      w hendpoint.2
+  have hp : p = fourCellOddOneThreeFiveSevenNineLowProfile c d e f g := by
+    rfl
+  have hlow : 0 ≤ fourCellOddCoreLocalQuadratic p := by
+    rw [hp]
+    exact hfinite c d e f g
+  have htail : 0 ≤ fourCellOddCoreLocalQuadratic r :=
+    fourCellOddCoreLocalQuadratic_nonneg_of_P11Plus
+      r hr hrodd hr1 hr3 hr5 hr7 hr9
+  have hschur : fourCellOddCoreLocalBilinear p r ^ 2 ≤
+      fourCellOddCoreLocalQuadratic p * fourCellOddCoreLocalQuadratic r := by
+    rw [hp]
+    exact hdual c d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9 hrone
+  have hcompleted : 0 ≤
+      fourCellOddCoreLocalQuadratic p +
+        2 * fourCellOddCoreLocalBilinear p r +
+          fourCellOddCoreLocalQuadratic r :=
+    add_two_mul_add_nonneg_of_sq_le_mul _ _ _ hlow htail hschur
+  have hdecomp :=
+    fourCellOddCoreLocal_oneThreeFiveSevenNine_decomposition w hw
+  dsimp only [p, r] at hcompleted
+  linarith
+
 private theorem integral_zero_three_fifths_P7_sq_le :
     (∫ x : ℝ in 0..3 / 5, factorTwoCenteredP7 x ^ 2) ≤
       (1 / 15 : ℝ) := by
