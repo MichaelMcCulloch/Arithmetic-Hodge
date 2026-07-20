@@ -17,6 +17,7 @@ open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstructio
 open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural
 open ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
 open MultiplicativeWeilFourCellEnergyAbsorptionStructural
+open MultiplicativeWeilMinimalNegativeBlockStructural
 open MultiplicativeWeilMonotoneCellEnergyFrameStructural
 open MultiplicativeWeilMonotoneNullSuffixVariationStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
@@ -622,6 +623,41 @@ theorem exists_real_fiveCell_strictly_negative_middlePivotNumerator
     · rw [fiveCellMiddleThree_add_local, hbaseMiddle,
         fiveCellMiddleThree_eq_self_of_centralSupport m k hmSupport,
         zero_add]
+
+private theorem monotoneQuarterFiniteBlockInterior_five_eq_middleThree_local
+    (parent : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiniteBlockInterior parent k 5 =
+      fiveCellMiddleThree parent k := by
+  classical
+  simp [monotoneQuarterFiniteBlockInterior,
+    monotoneQuarterFiniteBlock, fiveCellMiddleThree,
+    Finset.sum_range_succ]
+
+/-- The universal positive conditional-cross clause is false already at
+length five.  The counterexample is an actual real common parent and has a
+strictly positive interior pivot; no singular or abstract-coordinate
+degeneracy is involved. -/
+theorem not_realFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength_five :
+    ¬ RealFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength 5 := by
+  intro hcross
+  obtain ⟨parent, hparent, hMpos, hnegative⟩ :=
+    exists_real_fiveCell_strictly_negative_middlePivotNumerator 0
+  have hnonnegative := hcross parent hparent 0
+  dsimp only at hnonnegative
+  rw [monotoneQuarterFiniteBlockInterior_five_eq_middleThree_local]
+    at hnonnegative
+  have hge := hnonnegative hMpos
+  norm_num at hge hnegative
+  exact (not_lt_of_ge hge) hnegative
+
+/-- Equivalently, the concrete middle-orthogonal residual cross cannot have
+a universal nonnegative sign at length five. -/
+theorem not_realFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength_five :
+    ¬ RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength 5 := by
+  intro hresidual
+  exact not_realFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength_five
+    (realFiniteBlockMiddlePivotConditionalCrossNonnegative_of_residualCross
+      5 hresidual)
 
 end
 
