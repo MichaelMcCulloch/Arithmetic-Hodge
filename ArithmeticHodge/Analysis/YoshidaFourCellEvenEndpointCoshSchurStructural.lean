@@ -418,6 +418,22 @@ private theorem sqrt_two_lt_70711_div_50000 :
   have hn := Real.sqrt_nonneg 2
   nlinarith
 
+theorem fourCellEndpointCoshSeed_coshMoment_lower :
+    2 / 3 + (5 / 768 : ℝ) * Real.log 2 ^ 2 ≤
+      fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+        (fourCellOperatorHalfWidth / 2) :=
+  endpointCoshSeed_coshMoment_lower
+
+theorem fourCellEndpointScalar_lt_15787_div_10000 :
+    Real.log (2 * fourCellOperatorHalfWidth) +
+        Real.eulerMascheroniConstant + Real.log Real.pi <
+      15787 / 10000 :=
+  fourCellScalar_lt_15787_div_10000
+
+theorem fourCell_sqrt_two_lt_70711_div_50000 :
+    Real.sqrt 2 < (70711 / 50000 : ℝ) :=
+  sqrt_two_lt_70711_div_50000
+
 private theorem fourCellEvenExactBracket_endpointCoshSeed_eq :
     fourCellEvenExactBracket fourCellEvenEndpointCoshSeed =
       248 / 225 - (16 / 15 : ℝ) * Real.log 2 -
@@ -441,6 +457,24 @@ private theorem fourCellEvenExactBracket_endpointCoshSeed_eq :
     hpolar]
   unfold fourCellOperatorHalfWidth
   ring
+
+/-- Public exact normal form for the fixed endpoint-zero seed.  Downstream
+Schur certificates use this identity to retain a quantitative portion of the
+strict seed reserve rather than weakening it to mere positivity. -/
+theorem fourCellEvenExactBracket_endpointCoshSeed_formula :
+    fourCellEvenExactBracket fourCellEvenEndpointCoshSeed =
+      248 / 225 - (16 / 15 : ℝ) * Real.log 2 -
+        (Real.log (2 * fourCellOperatorHalfWidth) +
+            Real.eulerMascheroniConstant + Real.log Real.pi) * (16 / 15) -
+        (5 * Real.log 2 / 4) *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t) +
+        5 * Real.log 2 *
+          fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+            (fourCellOperatorHalfWidth / 2) ^ 2 -
+        Real.sqrt 2 * Real.log 2 * (1616 / 46875) :=
+  fourCellEvenExactBracket_endpointCoshSeed_eq
 
 /-- The fixed endpoint-zero cosh seed has strictly positive complete
 four-cell bracket.  This is a one-dimensional structural estimate: exact

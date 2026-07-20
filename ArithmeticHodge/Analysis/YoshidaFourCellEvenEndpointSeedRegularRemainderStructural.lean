@@ -11,13 +11,16 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedRegularRemaind
 noncomputable section
 
 open YoshidaConstantBounds
+open CenteredEndpointCorrelation
 open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
+open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoContinuousLagRepresenterStructural
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFourCellEvenPolarSchurStructural
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
 open YoshidaFourCellOddStripCapacityClosureStructural
+open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaRegularKernelBound
 
@@ -248,6 +251,537 @@ theorem integral_fourCellEndpointSeedRegularRemainderRepresenter_sq_le :
       simp only [intervalIntegral.integral_const, sub_neg_eq_add,
         smul_eq_mul]
       norm_num
+
+/-! ## A quantitative reserve for the fixed endpoint seed -/
+
+private theorem integral_polynomial_five
+    (a₀ a₁ a₂ a₃ a₄ a₅ l r : ℝ) :
+    (∫ x : ℝ in l..r,
+      a₀ + a₁ * x + a₂ * x ^ 2 + a₃ * x ^ 3 +
+        a₄ * x ^ 4 + a₅ * x ^ 5) =
+      a₀ * (r - l) + a₁ * (r ^ 2 - l ^ 2) / 2 +
+        a₂ * (r ^ 3 - l ^ 3) / 3 + a₃ * (r ^ 4 - l ^ 4) / 4 +
+          a₄ * (r ^ 5 - l ^ 5) / 5 +
+            a₅ * (r ^ 6 - l ^ 6) / 6 := by
+  rw [show (fun x : ℝ ↦
+      a₀ + a₁ * x + a₂ * x ^ 2 + a₃ * x ^ 3 +
+        a₄ * x ^ 4 + a₅ * x ^ 5) =
+      fun x ↦ a₀ * x ^ 0 + a₁ * x ^ 1 + a₂ * x ^ 2 +
+        a₃ * x ^ 3 + a₄ * x ^ 4 + a₅ * x ^ 5 by
+    funext x
+    ring]
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) l r)
+    (Continuous.intervalIntegrable (by fun_prop) l r)]
+  repeat rw [intervalIntegral.integral_const_mul, integral_pow]
+  norm_num
+  ring
+
+private def polynomialElevenLocal
+    (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ a₁₁ x : ℝ) : ℝ :=
+  a₀ * x ^ 0 + (a₁ * x ^ 1 + (a₂ * x ^ 2 +
+    (a₃ * x ^ 3 + (a₄ * x ^ 4 + (a₅ * x ^ 5 +
+      (a₆ * x ^ 6 + (a₇ * x ^ 7 + (a₈ * x ^ 8 +
+        (a₉ * x ^ 9 + (a₁₀ * x ^ 10 + a₁₁ * x ^ 11))))))))))
+
+private theorem integral_polynomial_eleven_local
+    (a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ a₁₁ l r : ℝ) :
+    (∫ x : ℝ in l..r,
+      polynomialElevenLocal a₀ a₁ a₂ a₃ a₄ a₅ a₆ a₇ a₈ a₉ a₁₀ a₁₁ x) =
+      a₀ * (r - l) + a₁ * (r ^ 2 - l ^ 2) / 2 +
+        a₂ * (r ^ 3 - l ^ 3) / 3 +
+        a₃ * (r ^ 4 - l ^ 4) / 4 +
+        a₄ * (r ^ 5 - l ^ 5) / 5 +
+        a₅ * (r ^ 6 - l ^ 6) / 6 +
+        a₆ * (r ^ 7 - l ^ 7) / 7 +
+        a₇ * (r ^ 8 - l ^ 8) / 8 +
+        a₈ * (r ^ 9 - l ^ 9) / 9 +
+        a₉ * (r ^ 10 - l ^ 10) / 10 +
+        a₁₀ * (r ^ 11 - l ^ 11) / 11 +
+        a₁₁ * (r ^ 12 - l ^ 12) / 12 := by
+  unfold polynomialElevenLocal
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) l r)
+    (Continuous.intervalIntegrable (by fun_prop) l r)]
+  repeat rw [intervalIntegral.integral_const_mul, integral_pow]
+  norm_num
+  ring
+
+private theorem centeredEndpointCorrelation_endpointCoshSeed (t : ℝ) :
+    centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t =
+      16 / 15 - (4 / 3 : ℝ) * t ^ 2 + (2 / 3 : ℝ) * t ^ 3 -
+        t ^ 5 / 30 := by
+  unfold centeredEndpointCorrelation
+  rw [show (fun x : ℝ ↦
+      fourCellEvenEndpointCoshSeed (t + x) *
+        fourCellEvenEndpointCoshSeed x) =
+      fun x ↦
+        (1 - t ^ 2) + (-2 * t) * x + (t ^ 2 - 2) * x ^ 2 +
+          (2 * t) * x ^ 3 + 1 * x ^ 4 + 0 * x ^ 5 by
+    funext x
+    unfold fourCellEvenEndpointCoshSeed
+    ring,
+    integral_polynomial_five]
+  ring
+
+private theorem centeredEndpointCorrelation_endpointCoshSeed_nonnegative
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t := by
+  rw [centeredEndpointCorrelation_endpointCoshSeed]
+  have hcube : 0 ≤ (2 - t) ^ 3 :=
+    pow_nonneg (sub_nonneg.mpr ht.2) 3
+  have hquad : 0 ≤ t ^ 2 + 6 * t + 4 := by
+    nlinarith [sq_nonneg t, ht.1]
+  have hfactor :
+      30 * (16 / 15 - (4 / 3 : ℝ) * t ^ 2 +
+        (2 / 3 : ℝ) * t ^ 3 - t ^ 5 / 30) =
+          (2 - t) ^ 3 * (t ^ 2 + 6 * t + 4) := by
+    ring
+  nlinarith [mul_nonneg hcube hquad]
+
+private theorem integral_centeredEndpointCorrelation_endpointCoshSeed_head :
+    (∫ t : ℝ in 0..8 / 5,
+      centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t) =
+        622464 / 703125 := by
+  simp_rw [centeredEndpointCorrelation_endpointCoshSeed]
+  rw [show (fun t : ℝ ↦
+      16 / 15 - (4 / 3 : ℝ) * t ^ 2 + (2 / 3 : ℝ) * t ^ 3 -
+        t ^ 5 / 30) =
+      fun t ↦ (16 / 15) + 0 * t + (-4 / 3) * t ^ 2 +
+        (2 / 3) * t ^ 3 + 0 * t ^ 4 + (-1 / 30) * t ^ 5 by
+    funext t
+    ring,
+    integral_polynomial_five]
+  norm_num
+
+private theorem integral_centeredEndpointCorrelation_endpointCoshSeed_tail :
+    (∫ t : ℝ in 8 / 5..2,
+      centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t) =
+        2536 / 703125 := by
+  simp_rw [centeredEndpointCorrelation_endpointCoshSeed]
+  rw [show (fun t : ℝ ↦
+      16 / 15 - (4 / 3 : ℝ) * t ^ 2 + (2 / 3 : ℝ) * t ^ 3 -
+        t ^ 5 / 30) =
+      fun t ↦ (16 / 15) + 0 * t + (-4 / 3) * t ^ 2 +
+        (2 / 3) * t ^ 3 + 0 * t ^ 4 + (-1 / 30) * t ^ 5 by
+    funext t
+    ring,
+    integral_polynomial_five]
+  norm_num
+
+private theorem integral_regularPolynomial6_mul_endpointCoshSeed_correlation :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t) =
+      2 / 9 - Real.log 2 / 168 - 5 * Real.log 2 ^ 2 / 1152 +
+        25 * Real.log 2 ^ 3 / 497664 +
+          125 * Real.log 2 ^ 4 / 688128 -
+            19375 * Real.log 2 ^ 5 / 29429858304 -
+              38125 * Real.log 2 ^ 6 / 3567255552 := by
+  rw [show (fun t : ℝ ↦
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t) =
+      fun t ↦ polynomialElevenLocal
+        (4 / 15)
+        (-(1 / 72) * Real.log 2)
+        (-(1 / 3) - (5 / 384) * Real.log 2 ^ 2)
+        (1 / 6 + (5 / 288) * Real.log 2 +
+          (35 / 221184) * Real.log 2 ^ 3)
+        (-(5 / 576) * Real.log 2 + (25 / 1536) * Real.log 2 ^ 2 +
+          (625 / 1179648) * Real.log 2 ^ 4)
+        (-(1 / 120) - (25 / 3072) * Real.log 2 ^ 2 -
+          (175 / 884736) * Real.log 2 ^ 3 -
+            (3875 / 2378170368) * Real.log 2 ^ 5)
+        ((1 / 2304) * Real.log 2 + (175 / 1769472) * Real.log 2 ^ 3 -
+          (3125 / 4718592) * Real.log 2 ^ 4 -
+            (38125 / 1811939328) * Real.log 2 ^ 6)
+        ((5 / 12288) * Real.log 2 ^ 2 +
+          (3125 / 9437184) * Real.log 2 ^ 4 +
+            (19375 / 9512681472) * Real.log 2 ^ 5)
+        (-(35 / 7077888) * Real.log 2 ^ 3 -
+          (19375 / 19025362944) * Real.log 2 ^ 5 +
+            (190625 / 7247757312) * Real.log 2 ^ 6)
+        (-(625 / 37748736) * Real.log 2 ^ 4 -
+          (190625 / 14495514624) * Real.log 2 ^ 6)
+        ((3875 / 76101451776) * Real.log 2 ^ 5)
+        ((38125 / 57982058496) * Real.log 2 ^ 6)
+        t by
+    funext t
+    rw [centeredEndpointCorrelation_endpointCoshSeed]
+    unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+      polynomialElevenLocal
+    ring]
+  rw [integral_polynomial_eleven_local]
+  norm_num
+  ring
+
+/-- The fixed endpoint seed retains a quantitative regular-row reserve.
+The sharp sixth-order envelope is used on `[0,8/5]`; only the very small
+remaining correlation tail pays the wider four-cell error. -/
+theorem endpointCoshSeed_regularMoment_lt_2161_div_10000 :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t) <
+      (2161 / 10000 : ℝ) := by
+  let C : ℝ → ℝ := fun t ↦
+    centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t
+  let K : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t)
+  let P : ℝ → ℝ := fun t ↦
+    yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t)
+  have hC : Continuous C := by
+    rw [show C = fun t : ℝ ↦
+        16 / 15 - (4 / 3 : ℝ) * t ^ 2 + (2 / 3 : ℝ) * t ^ 3 -
+          t ^ 5 / 30 by
+      funext t
+      exact centeredEndpointCorrelation_endpointCoshSeed t]
+    fun_prop
+  have hP : Continuous P := by
+    dsimp only [P]
+    unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    fun_prop
+  have hCfull : IntervalIntegrable C volume 0 2 :=
+    hC.intervalIntegrable _ _
+  have hPfull : IntervalIntegrable (fun t ↦ P t * C t) volume 0 2 :=
+    (hP.mul hC).intervalIntegrable _ _
+  have hKfull : IntervalIntegrable (fun t ↦ K t * C t) volume 0 2 := by
+    apply intervalIntegrable_boundedLag_mul_continuous K C
+      (by
+        dsimp only [K]
+        exact measurable_yoshidaRegularKernel.comp
+          (measurable_const.mul measurable_id)) hC (1 / 4)
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+    have hargUpper : fourCellOperatorHalfWidth * t ≤
+        5 * Real.log 2 / 4 := by
+      unfold fourCellOperatorHalfWidth
+      nlinarith [ht.2, Real.log_pos (by norm_num : (1 : ℝ) < 2)]
+    have hk0 := yoshidaRegularKernel_nonneg_fourCellRange harg0 hargUpper
+    rw [abs_of_nonneg hk0]
+    exact yoshidaRegularKernel_le_quarter harg0
+  have hChead : IntervalIntegrable C volume 0 (8 / 5) := by
+    apply hCfull.mono_set
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 8 / 5),
+      uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)]
+    intro t ht
+    exact ⟨ht.1, by linarith [ht.2]⟩
+  have hCtail : IntervalIntegrable C volume (8 / 5) 2 := by
+    apply hCfull.mono_set
+    rw [uIcc_of_le (by norm_num : (8 / 5 : ℝ) ≤ 2),
+      uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)]
+    intro t ht
+    exact ⟨by linarith [ht.1], ht.2⟩
+  have hPhead : IntervalIntegrable (fun t ↦ P t * C t)
+      volume 0 (8 / 5) := by
+    apply hPfull.mono_set
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 8 / 5),
+      uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)]
+    intro t ht
+    exact ⟨ht.1, by linarith [ht.2]⟩
+  have hPtail : IntervalIntegrable (fun t ↦ P t * C t)
+      volume (8 / 5) 2 := by
+    apply hPfull.mono_set
+    rw [uIcc_of_le (by norm_num : (8 / 5 : ℝ) ≤ 2),
+      uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)]
+    intro t ht
+    exact ⟨by linarith [ht.1], ht.2⟩
+  have hKhead : IntervalIntegrable (fun t ↦ K t * C t)
+      volume 0 (8 / 5) := by
+    apply hKfull.mono_set
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 8 / 5),
+      uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)]
+    intro t ht
+    exact ⟨ht.1, by linarith [ht.2]⟩
+  have hKtail : IntervalIntegrable (fun t ↦ K t * C t)
+      volume (8 / 5) 2 := by
+    apply hKfull.mono_set
+    rw [uIcc_of_le (by norm_num : (8 / 5 : ℝ) ≤ 2),
+      uIcc_of_le (by norm_num : (0 : ℝ) ≤ 2)]
+    intro t ht
+    exact ⟨by linarith [ht.1], ht.2⟩
+  have hheadMono :
+      (∫ t : ℝ in 0..8 / 5, K t * C t) ≤
+        ∫ t : ℝ in 0..8 / 5,
+          P t * C t + (1 / 500000 : ℝ) * C t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hKhead
+      (hPhead.add (hChead.const_mul (1 / 500000)))
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+    have hargLog : fourCellOperatorHalfWidth * t ≤ Real.log 2 := by
+      unfold fourCellOperatorHalfWidth
+      nlinarith [ht.2, Real.log_pos (by norm_num : (1 : ℝ) < 2)]
+    have henv := yoshidaRegularKernelPolynomial6_envelope harg0 hargLog
+    have hpoint : K t ≤ P t + (1 / 500000 : ℝ) := by
+      dsimp only [K, P]
+      linarith [henv.2]
+    have hC0 : 0 ≤ C t := by
+      dsimp only [C]
+      exact centeredEndpointCorrelation_endpointCoshSeed_nonnegative
+        ⟨ht.1, by linarith [ht.2]⟩
+    calc
+      K t * C t ≤ (P t + (1 / 500000 : ℝ)) * C t :=
+        mul_le_mul_of_nonneg_right hpoint hC0
+      _ = P t * C t + (1 / 500000 : ℝ) * C t := by ring
+  have htailMono :
+      (∫ t : ℝ in 8 / 5..2, K t * C t) ≤
+        ∫ t : ℝ in 8 / 5..2,
+          P t * C t + (1 / 1900 : ℝ) * C t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hKtail
+      (hPtail.add (hCtail.const_mul (1 / 1900)))
+    intro t ht
+    have harg0 : 0 ≤ fourCellOperatorHalfWidth * t :=
+      mul_nonneg (by unfold fourCellOperatorHalfWidth; positivity)
+        (by linarith [ht.1])
+    have hargLog : fourCellOperatorHalfWidth * t ≤ 2 * Real.log 2 := by
+      unfold fourCellOperatorHalfWidth
+      nlinarith [ht.2, Real.log_pos (by norm_num : (1 : ℝ) < 2)]
+    have henv := fourCell_yoshidaRegularKernelPolynomial6_wide_envelope
+      harg0 hargLog
+    have hpoint : K t ≤ P t + (1 / 1900 : ℝ) := by
+      dsimp only [K, P]
+      linarith [henv.2]
+    have hC0 : 0 ≤ C t := by
+      dsimp only [C]
+      exact centeredEndpointCorrelation_endpointCoshSeed_nonnegative
+        ⟨by linarith [ht.1], ht.2⟩
+    calc
+      K t * C t ≤ (P t + (1 / 1900 : ℝ)) * C t :=
+        mul_le_mul_of_nonneg_right hpoint hC0
+      _ = P t * C t + (1 / 1900 : ℝ) * C t := by ring
+  have hCheadExact : (∫ t : ℝ in 0..8 / 5, C t) =
+      (622464 / 703125 : ℝ) := by
+    simpa only [C] using
+      integral_centeredEndpointCorrelation_endpointCoshSeed_head
+  have hCtailExact : (∫ t : ℝ in 8 / 5..2, C t) =
+      (2536 / 703125 : ℝ) := by
+    simpa only [C] using
+      integral_centeredEndpointCorrelation_endpointCoshSeed_tail
+  have hheadBound :
+      (∫ t : ℝ in 0..8 / 5, K t * C t) ≤
+        (∫ t : ℝ in 0..8 / 5, P t * C t) +
+          (1 / 500000 : ℝ) * (622464 / 703125) := by
+    calc
+      (∫ t : ℝ in 0..8 / 5, K t * C t) ≤
+          ∫ t : ℝ in 0..8 / 5,
+            P t * C t + (1 / 500000 : ℝ) * C t := hheadMono
+      _ = (∫ t : ℝ in 0..8 / 5, P t * C t) +
+          ∫ t : ℝ in 0..8 / 5, (1 / 500000 : ℝ) * C t := by
+        rw [intervalIntegral.integral_add hPhead
+          (hChead.const_mul (1 / 500000))]
+      _ = (∫ t : ℝ in 0..8 / 5, P t * C t) +
+          (1 / 500000 : ℝ) * (622464 / 703125) := by
+        rw [intervalIntegral.integral_const_mul, hCheadExact]
+  have htailBound :
+      (∫ t : ℝ in 8 / 5..2, K t * C t) ≤
+        (∫ t : ℝ in 8 / 5..2, P t * C t) +
+          (1 / 1900 : ℝ) * (2536 / 703125) := by
+    calc
+      (∫ t : ℝ in 8 / 5..2, K t * C t) ≤
+          ∫ t : ℝ in 8 / 5..2,
+            P t * C t + (1 / 1900 : ℝ) * C t := htailMono
+      _ = (∫ t : ℝ in 8 / 5..2, P t * C t) +
+          ∫ t : ℝ in 8 / 5..2, (1 / 1900 : ℝ) * C t := by
+        rw [intervalIntegral.integral_add hPtail
+          (hCtail.const_mul (1 / 1900))]
+      _ = (∫ t : ℝ in 8 / 5..2, P t * C t) +
+          (1 / 1900 : ℝ) * (2536 / 703125) := by
+        rw [intervalIntegral.integral_const_mul, hCtailExact]
+  have hKsplit := intervalIntegral.integral_add_adjacent_intervals
+    hKhead hKtail
+  have hPsplit := intervalIntegral.integral_add_adjacent_intervals
+    hPhead hPtail
+  have hPexact : (∫ t : ℝ in 0..2, P t * C t) =
+      2 / 9 - Real.log 2 / 168 - 5 * Real.log 2 ^ 2 / 1152 +
+        25 * Real.log 2 ^ 3 / 497664 +
+          125 * Real.log 2 ^ 4 / 688128 -
+            19375 * Real.log 2 ^ 5 / 29429858304 -
+              38125 * Real.log 2 ^ 6 / 3567255552 := by
+    simpa only [P, C] using
+      integral_regularPolynomial6_mul_endpointCoshSeed_correlation
+  let L₀ : ℝ := 6931 / 10000
+  let L₁ : ℝ := 6932 / 10000
+  have hL := strict_log_two_bounds
+  have hL₀ : L₀ ≤ Real.log 2 := by
+    simpa only [L₀] using hL.1.le
+  have hL₁ : Real.log 2 ≤ L₁ := by
+    simpa only [L₁] using hL.2.le
+  have hL₀nonneg : 0 ≤ L₀ := by norm_num [L₀]
+  have hLnonneg : 0 ≤ Real.log 2 :=
+    (Real.log_pos (by norm_num)).le
+  have hpowLo2 : L₀ ^ 2 ≤ Real.log 2 ^ 2 :=
+    pow_le_pow_left₀ hL₀nonneg hL₀ 2
+  have hpowLo5 : L₀ ^ 5 ≤ Real.log 2 ^ 5 :=
+    pow_le_pow_left₀ hL₀nonneg hL₀ 5
+  have hpowLo6 : L₀ ^ 6 ≤ Real.log 2 ^ 6 :=
+    pow_le_pow_left₀ hL₀nonneg hL₀ 6
+  have hpowHi3 : Real.log 2 ^ 3 ≤ L₁ ^ 3 :=
+    pow_le_pow_left₀ hLnonneg hL₁ 3
+  have hpowHi4 : Real.log 2 ^ 4 ≤ L₁ ^ 4 :=
+    pow_le_pow_left₀ hLnonneg hL₁ 4
+  have hrat :
+      2 / 9 - L₀ / 168 - 5 * L₀ ^ 2 / 1152 +
+          25 * L₁ ^ 3 / 497664 + 125 * L₁ ^ 4 / 688128 -
+            19375 * L₀ ^ 5 / 29429858304 -
+              38125 * L₀ ^ 6 / 3567255552 +
+        (1 / 500000 : ℝ) * (622464 / 703125) +
+          (1 / 1900 : ℝ) * (2536 / 703125) < 2161 / 10000 := by
+    norm_num [L₀, L₁]
+  change (∫ t : ℝ in 0..2, K t * C t) < (2161 / 10000 : ℝ)
+  calc
+    (∫ t : ℝ in 0..2, K t * C t) =
+        (∫ t : ℝ in 0..8 / 5, K t * C t) +
+          ∫ t : ℝ in 8 / 5..2, K t * C t := hKsplit.symm
+    _ ≤ ((∫ t : ℝ in 0..8 / 5, P t * C t) +
+          (1 / 500000 : ℝ) * (622464 / 703125)) +
+        ((∫ t : ℝ in 8 / 5..2, P t * C t) +
+          (1 / 1900 : ℝ) * (2536 / 703125)) :=
+      add_le_add hheadBound htailBound
+    _ = (∫ t : ℝ in 0..2, P t * C t) +
+        (1 / 500000 : ℝ) * (622464 / 703125) +
+          (1 / 1900 : ℝ) * (2536 / 703125) := by
+      rw [← hPsplit]
+      ring
+    _ = (2 / 9 - Real.log 2 / 168 - 5 * Real.log 2 ^ 2 / 1152 +
+          25 * Real.log 2 ^ 3 / 497664 +
+            125 * Real.log 2 ^ 4 / 688128 -
+              19375 * Real.log 2 ^ 5 / 29429858304 -
+                38125 * Real.log 2 ^ 6 / 3567255552) +
+        (1 / 500000 : ℝ) * (622464 / 703125) +
+          (1 / 1900 : ℝ) * (2536 / 703125) := by rw [hPexact]
+    _ < (2161 / 10000 : ℝ) := by
+      have hterm1 : -Real.log 2 / 168 ≤ -L₀ / 168 := by
+        have hdiv := div_le_div_of_nonneg_right hL₀
+          (by norm_num : (0 : ℝ) ≤ 168)
+        have hneg := neg_le_neg hdiv
+        convert hneg using 1 <;> ring
+      have hterm2 : -5 * Real.log 2 ^ 2 / 1152 ≤
+          -5 * L₀ ^ 2 / 1152 := by
+        have hscaled := mul_le_mul_of_nonneg_left hpowLo2
+          (by norm_num : (0 : ℝ) ≤ 5 / 1152)
+        have hneg := neg_le_neg hscaled
+        convert hneg using 1 <;> ring
+      have hterm3 : 25 * Real.log 2 ^ 3 / 497664 ≤
+          25 * L₁ ^ 3 / 497664 := by
+        have hscaled := mul_le_mul_of_nonneg_left hpowHi3
+          (by norm_num : (0 : ℝ) ≤ 25 / 497664)
+        convert hscaled using 1 <;> ring
+      have hterm4 : 125 * Real.log 2 ^ 4 / 688128 ≤
+          125 * L₁ ^ 4 / 688128 := by
+        have hscaled := mul_le_mul_of_nonneg_left hpowHi4
+          (by norm_num : (0 : ℝ) ≤ 125 / 688128)
+        convert hscaled using 1 <;> ring
+      have hterm5 : -19375 * Real.log 2 ^ 5 / 29429858304 ≤
+          -19375 * L₀ ^ 5 / 29429858304 := by
+        have hscaled := mul_le_mul_of_nonneg_left hpowLo5
+          (by norm_num : (0 : ℝ) ≤ 19375 / 29429858304)
+        have hneg := neg_le_neg hscaled
+        convert hneg using 1 <;> ring
+      have hterm6 : -38125 * Real.log 2 ^ 6 / 3567255552 ≤
+          -38125 * L₀ ^ 6 / 3567255552 := by
+        have hscaled := mul_le_mul_of_nonneg_left hpowLo6
+          (by norm_num : (0 : ℝ) ≤ 38125 / 3567255552)
+        have hneg := neg_le_neg hscaled
+        convert hneg using 1 <;> ring
+      have hpoly :
+          2 / 9 - Real.log 2 / 168 - 5 * Real.log 2 ^ 2 / 1152 +
+              25 * Real.log 2 ^ 3 / 497664 +
+                125 * Real.log 2 ^ 4 / 688128 -
+                  19375 * Real.log 2 ^ 5 / 29429858304 -
+                    38125 * Real.log 2 ^ 6 / 3567255552 ≤
+            2 / 9 - L₀ / 168 - 5 * L₀ ^ 2 / 1152 +
+              25 * L₁ ^ 3 / 497664 + 125 * L₁ ^ 4 / 688128 -
+                19375 * L₀ ^ 5 / 29429858304 -
+                  38125 * L₀ ^ 6 / 3567255552 := by
+        linarith only [hterm1, hterm2, hterm3, hterm4, hterm5, hterm6]
+      linarith only [hpoly, hrat]
+
+/-- The sharpened regular-row estimate retains an explicit portion of the
+fixed endpoint seed's complete four-cell reserve. -/
+theorem one_div_eighty_lt_fourCellEvenExactBracket_endpointCoshSeed :
+    (1 / 80 : ℝ) <
+      fourCellEvenExactBracket fourCellEvenEndpointCoshSeed := by
+  let L₀ : ℝ := 6931 / 10000
+  let L₁ : ℝ := 6932 / 10000
+  let S₁ : ℝ := 15787 / 10000
+  let T₁ : ℝ := 70711 / 50000
+  let H₀ : ℝ := 2 / 3 + (5 / 768) * L₀ ^ 2
+  let R : ℝ := ∫ t : ℝ in 0..2,
+    yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+      centeredEndpointCorrelation fourCellEvenEndpointCoshSeed t
+  let H : ℝ := fourCellPositiveCoshMoment fourCellEvenEndpointCoshSeed
+    (fourCellOperatorHalfWidth / 2)
+  let S : ℝ := Real.log (2 * fourCellOperatorHalfWidth) +
+    Real.eulerMascheroniConstant + Real.log Real.pi
+  have hL := strict_log_two_bounds
+  have hL0 : L₀ < Real.log 2 := by simpa only [L₀] using hL.1
+  have hL1 : Real.log 2 < L₁ := by simpa only [L₁] using hL.2
+  have hL0nonneg : 0 ≤ L₀ := by norm_num [L₀]
+  have hLnonneg : 0 ≤ Real.log 2 := (Real.log_pos (by norm_num)).le
+  have hLsq : L₀ ^ 2 ≤ Real.log 2 ^ 2 :=
+    (sq_le_sq₀ hL0nonneg hLnonneg).2 hL0.le
+  have hHlower :
+      2 / 3 + (5 / 768 : ℝ) * Real.log 2 ^ 2 ≤ H := by
+    simpa only [H] using fourCellEndpointCoshSeed_coshMoment_lower
+  have hH0 : H₀ ≤ H := by
+    have hmid : H₀ ≤ 2 / 3 + (5 / 768 : ℝ) * Real.log 2 ^ 2 := by
+      dsimp only [H₀]
+      nlinarith
+    exact hmid.trans hHlower
+  have hH0nonneg : 0 ≤ H₀ := by
+    dsimp only [H₀, L₀]
+    positivity
+  have hHnonneg : 0 ≤ H := hH0nonneg.trans hH0
+  have hHsq : H₀ ^ 2 ≤ H ^ 2 :=
+    (sq_le_sq₀ hH0nonneg hHnonneg).2 hH0
+  have hPolar0 : 5 * L₀ * H₀ ^ 2 ≤ 5 * Real.log 2 * H ^ 2 := by
+    calc
+      5 * L₀ * H₀ ^ 2 ≤ 5 * Real.log 2 * H₀ ^ 2 := by
+        exact mul_le_mul_of_nonneg_right
+          (mul_le_mul_of_nonneg_left hL0.le (by norm_num)) (sq_nonneg H₀)
+      _ ≤ 5 * Real.log 2 * H ^ 2 := by
+        exact mul_le_mul_of_nonneg_left hHsq (by positivity)
+  have hR : R < 2161 / 10000 := by
+    simpa only [R] using endpointCoshSeed_regularMoment_lt_2161_div_10000
+  have hRscaled : (5 * Real.log 2 / 4) * R ≤
+      (5 * L₁ / 4) * (2161 / 10000) := by
+    calc
+      (5 * Real.log 2 / 4) * R ≤
+          (5 * Real.log 2 / 4) * (2161 / 10000) :=
+        mul_le_mul_of_nonneg_left hR.le (by positivity)
+      _ ≤ (5 * L₁ / 4) * (2161 / 10000) := by
+        have hcoef : 5 * Real.log 2 / 4 ≤ 5 * L₁ / 4 := by
+          have hscaled := mul_le_mul_of_nonneg_left hL1.le
+            (by norm_num : (0 : ℝ) ≤ 5 / 4)
+          convert hscaled using 1 <;> ring
+        exact mul_le_mul_of_nonneg_right hcoef (by norm_num)
+  have hS : S < S₁ := by
+    simpa only [S, S₁] using fourCellEndpointScalar_lt_15787_div_10000
+  have hSscaled : S * (16 / 15) ≤ S₁ * (16 / 15) :=
+    (mul_lt_mul_of_pos_right hS (by norm_num)).le
+  have hLscaled : (16 / 15 : ℝ) * Real.log 2 ≤
+      (16 / 15) * L₁ :=
+    mul_le_mul_of_nonneg_left hL1.le (by norm_num)
+  have hTL : Real.sqrt 2 * Real.log 2 ≤ T₁ * L₁ := by
+    calc
+      Real.sqrt 2 * Real.log 2 ≤ T₁ * Real.log 2 :=
+        mul_le_mul_of_nonneg_right
+          (by simpa only [T₁] using fourCell_sqrt_two_lt_70711_div_50000.le)
+          hLnonneg
+      _ ≤ T₁ * L₁ :=
+        mul_le_mul_of_nonneg_left hL1.le (by norm_num [T₁])
+  have hPrime : Real.sqrt 2 * Real.log 2 * (1616 / 46875) ≤
+      T₁ * L₁ * (1616 / 46875) :=
+    mul_le_mul_of_nonneg_right hTL (by norm_num)
+  have hrat :
+      (1 / 80 : ℝ) < 248 / 225 - (16 / 15 : ℝ) * L₁ -
+          S₁ * (16 / 15) - (5 * L₁ / 4) * (2161 / 10000) +
+          5 * L₀ * H₀ ^ 2 - T₁ * L₁ * (1616 / 46875) := by
+    norm_num [L₀, L₁, S₁, T₁, H₀]
+  rw [fourCellEvenExactBracket_endpointCoshSeed_formula]
+  dsimp only [R, H, S] at hRscaled hPolar0 hSscaled ⊢
+  linarith
 
 end
 
