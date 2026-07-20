@@ -12,6 +12,8 @@ noncomputable section
 open MultiplicativeWeil
 open MultiplicativeWeilAllLengthNegativeResidualStructural
 open MultiplicativeWeilAllLengthResidualDeterminantSingularClosureStructural
+open MultiplicativeWeilFiveCellResidualDeterminantClosureStructural
+open MultiplicativeWeilFourCellResidualDeterminantStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
 open MultiplicativeWeilMonotoneNullSuffixVariationStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
@@ -553,6 +555,80 @@ theorem realFiniteBlockMiddlePivotNegativeSchur_iff_commonParentPositiveRay
         _ = M ^ 2 *
               ((A * M - U ^ 2) * (M * E - V ^ 2)) := by ring
     exact le_of_mul_le_mul_left hscaled (sq_pos_of_pos hMpos)
+
+/-- Lengths four and five followed by the positive common-parent residual ray
+at every tail length supply the complete one-sided induction. -/
+theorem inductiveNegativeSchurOnlyClosure_of_four_five_and_tailPositiveRay
+    (hfour : RealFiniteBlockProductionNonnegativeAtLength 4)
+    (hfive : RealFiniteBlockProductionNonnegativeAtLength 5)
+    (htail : ∀ n : ℕ, 6 ≤ n →
+      RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength n) :
+    RealFiniteBlockInductiveNegativeSchurOnlyClosure := by
+  intro n hn hprev
+  by_cases hn4 : n = 4
+  · subst n
+    exact middlePivotNegativeSchur_of_residualDeterminant 4
+      (fourCell_residualDeterminant_of_production hfour)
+  by_cases hn5 : n = 5
+  · subst n
+    exact middlePivotNegativeSchur_of_residualDeterminant 5
+      (fiveCell_residualDeterminant_of_production hfive)
+  exact
+    (realFiniteBlockMiddlePivotNegativeSchur_iff_commonParentPositiveRay
+      n hn hprev).2 (htail n (by omega))
+
+/-- The two low production theorems and the positive-ray tail imply complete
+real Bombieri positivity. -/
+theorem bombieriRealQuadraticNonnegativity_of_four_five_and_tailPositiveRay
+    (hfour : RealFiniteBlockProductionNonnegativeAtLength 4)
+    (hfive : RealFiniteBlockProductionNonnegativeAtLength 5)
+    (htail : ∀ n : ℕ, 6 ≤ n →
+      RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength n) :
+    BombieriRealQuadraticNonnegativity := by
+  exact bombieriRealQuadraticNonnegativity_of_inductiveNegativeSchurOnlyClosure
+    (inductiveNegativeSchurOnlyClosure_of_four_five_and_tailPositiveRay
+      hfour hfive htail)
+
+/-- Terminal RH bridge with the weakest current all-length common-parent
+certificate. -/
+theorem riemannHypothesis_of_four_five_and_tailPositiveRay
+    (zeros : ZetaZeroEnumeration)
+    (hfour : RealFiniteBlockProductionNonnegativeAtLength 4)
+    (hfive : RealFiniteBlockProductionNonnegativeAtLength 5)
+    (htail : ∀ n : ℕ, 6 ≤ n →
+      RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength n) :
+    RiemannHypothesis := by
+  exact (riemannHypothesis_iff_bombieriRealQuadraticNonnegativity zeros).2
+    (bombieriRealQuadraticNonnegativity_of_four_five_and_tailPositiveRay
+      hfour hfive htail)
+
+/-- RH supplies every positive common-parent residual ray directly from global
+Bombieri positivity. -/
+theorem tailPositiveRay_of_riemannHypothesis
+    (zeros : ZetaZeroEnumeration) (hRH : RiemannHypothesis) :
+    ∀ n : ℕ, 6 ≤ n →
+      RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength n := by
+  have hglobal : BombieriRealQuadraticNonnegativity :=
+    (riemannHypothesis_iff_bombieriRealQuadraticNonnegativity zeros).1 hRH
+  intro n _hn parent hparent k _hMpos t _ht
+  apply hglobal
+  exact bombieriConjugateTest_monotoneQuarterFiniteBlock
+    (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+    (finiteBlockMiddleOrthogonalResidualPencilParent_conjugate_fixed
+      parent hparent k n t) k 0 n
+
+/-- Conditional only on the two active low-length production problems, the
+positive common-parent tail ray is exactly RH. -/
+theorem riemannHypothesis_iff_tailPositiveRay_of_four_five
+    (zeros : ZetaZeroEnumeration)
+    (hfour : RealFiniteBlockProductionNonnegativeAtLength 4)
+    (hfive : RealFiniteBlockProductionNonnegativeAtLength 5) :
+    RiemannHypothesis ↔
+      ∀ n : ℕ, 6 ≤ n →
+        RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength n := by
+  exact ⟨tailPositiveRay_of_riemannHypothesis zeros,
+    riemannHypothesis_of_four_five_and_tailPositiveRay
+      zeros hfour hfive⟩
 
 end
 
