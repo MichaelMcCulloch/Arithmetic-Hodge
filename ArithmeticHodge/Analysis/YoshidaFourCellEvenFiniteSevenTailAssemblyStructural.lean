@@ -10,18 +10,25 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenFiniteSevenTailAssemblyStr
 noncomputable section
 
 open ShiftedLegendreLogEnergyOrthogonalProjection
+open ShiftedLegendreBasis
+open ShiftedLegendreFiniteEnergyGap
+open ShiftedLegendreL2Basis
 open CenteredEndpointCorrelation
 open TwoByTwoSchur
 open UnitIntervalLogEnergyAffine
 open YoshidaConstantBounds
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
+open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
+open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
+open YoshidaFourCellEvenEndpointCapacityCauchyStructural
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointSeedFiniteSevenClosureStructural
 open YoshidaFourCellEvenEndpointSeedRegularRemainderStructural
 open YoshidaFourCellEvenEndpointSeedUniversalClosureStructural
 open YoshidaFourCellEvenPolarSchurStructural
+open YoshidaFourCellEvenZeroCoshRegularStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 open YoshidaFourCellRegularKernelLowerStructural
@@ -96,6 +103,193 @@ theorem fourCellEvenPolarFreeOperator_eq_finiteSevenLow_add_mixed_add_tail
     fourCellEvenFiniteSevenCanonicalLow
     fourCellEvenFiniteSevenCanonicalTail
   rw [hsplit]
+  ring
+
+/-! ## Exact cancellation inside the bordered mixed entry -/
+
+/-- The canonical cutoff-fourteen polynomial really has degree below the
+cutoff.  This is the structural fact which lets the whole singular
+low--tail cross vanish at once, without inspecting any of the six even
+coordinates. -/
+private theorem finiteSeven_projectionPolynomial_natDegree_lt_fourteen
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (centeredLegendreProjectionPolynomial w hw 14).natDegree < 14 := by
+  unfold centeredLegendreProjectionPolynomial
+    shiftedLegendrePartialProjectionPolynomial
+  have hle :
+      (∑ n ∈ Finset.range 14,
+        shiftedLegendreHilbertBasis.repr (centeredPullbackL2 w hw) n •
+          normalizedShiftedLegendrePolynomial n).natDegree ≤ 13 :=
+    Polynomial.natDegree_sum_le_of_forall_le (Finset.range 14) _
+      (fun n hn ↦
+        (Polynomial.natDegree_smul_le _ _).trans (by
+          unfold normalizedShiftedLegendrePolynomial
+          apply (Polynomial.natDegree_smul_le _ _).trans
+          rw [natDegree_shiftedLegendreReal]
+          simp only [Finset.mem_range] at hn
+          omega))
+  omega
+
+/-- The singular logarithmic form is exactly block diagonal at the
+canonical cutoff fourteen.  Thus the unresolved bordered mixed determinant
+does not contain a hidden singular cross term. -/
+theorem centeredRawLogEnergy_eq_finiteSevenLow_add_tail
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w) :
+    centeredRawLogEnergy w =
+      centeredRawLogEnergy (fourCellEvenFiniteSevenCanonicalLow w hw) +
+        centeredRawLogEnergy
+          (fourCellEvenFiniteSevenCanonicalTail w hw) := by
+  let p : ℝ[X] := centeredLegendreProjectionPolynomial w hw 14
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hpdeg : p.natDegree < 14 := by
+    simpa only [p] using
+      finiteSeven_projectionPolynomial_natDegree_lt_fourteen w hw
+  have hraw :=
+    centeredRawLogEnergy_centeredPolynomialLift_add_tail
+      p r hr hrLocal hrGap hpdeg
+  have hlow : centeredPolynomialLift p =
+      fourCellEvenFiniteSevenCanonicalLow w hw := by
+    rfl
+  have hsum : fourCellEvenFiniteSevenCanonicalLow w hw + r = w := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalLow,
+      fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreLowProjection_add_higherResidual w hw 14
+  rw [hlow, hsum] at hraw
+  simpa only [r] using hraw
+
+/-- The ordinary scalar-mass row is also block diagonal at cutoff fourteen.
+Together with the previous theorem this leaves only the endpoint-capacity
+and nonconstant regular-kernel correlations in the exact mixed entry. -/
+theorem finiteSevenCanonicalLow_mul_tail_integral_eq_zero
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenFiniteSevenCanonicalLow w hw x *
+        fourCellEvenFiniteSevenCanonicalTail w hw x) = 0 := by
+  let p : ℝ[X] := centeredLegendreProjectionPolynomial w hw 14
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hpdeg : p.natDegree < 14 := by
+    simpa only [p] using
+      finiteSeven_projectionPolynomial_natDegree_lt_fourteen w hw
+  have hmass := intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+    p r hr hrGap hpdeg
+  have hlow : centeredPolynomialLift p =
+      fourCellEvenFiniteSevenCanonicalLow w hw := by
+    rfl
+  rw [hlow] at hmass
+  simpa only [r] using hmass
+
+/-- Exact nonsingular normal form of the polar-free low--tail
+polarization.  Legendre orthogonality removes the complete raw logarithmic
+cross and the scalar-mass cross; the displayed two correlations are the
+only infinite-dimensional interaction still present. -/
+theorem finiteSevenPolarFreePolarization_eq_capacity_sub_regular
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w) :
+    fourCellEvenFiniteSevenPolarFreePolarization
+        (fourCellEvenFiniteSevenCanonicalLow w hw)
+        (fourCellEvenFiniteSevenCanonicalTail w hw) =
+      fourCellEvenEndpointCapacityPolarization
+          (fourCellEvenFiniteSevenCanonicalLow w hw)
+          (fourCellEvenFiniteSevenCanonicalTail w hw) -
+        2 * fourCellOperatorHalfWidth *
+          (∫ t : ℝ in 0..2,
+            yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+              factorTwoCenteredCorrelationBilinear
+                (fourCellEvenFiniteSevenCanonicalLow w hw)
+                (fourCellEvenFiniteSevenCanonicalTail w hw) t) := by
+  let u : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalLow w hw
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  have hu : Continuous u := by
+    simpa only [u, fourCellEvenFiniteSevenCanonicalLow] using
+      continuous_centeredLegendreLowProjection w hw 14
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have huLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) u := by
+    simpa only [u, fourCellEvenFiniteSevenCanonicalLow] using
+      locallyLipschitzOn_centeredLegendreLowProjection w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have huEven : Function.Even u := by
+    simpa only [u, fourCellEvenFiniteSevenCanonicalLow] using
+      centeredLegendreLowProjection_even w hw heven 14
+  have hrEven : Function.Even r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_even w hw heven 14
+  have hraw : centeredRawLogEnergy (u + r) =
+      centeredRawLogEnergy u + centeredRawLogEnergy r := by
+    have h := centeredRawLogEnergy_eq_finiteSevenLow_add_tail
+      w hw hlocal
+    have hsum : u + r = w := by
+      simpa only [u, r, fourCellEvenFiniteSevenCanonicalLow,
+        fourCellEvenFiniteSevenCanonicalTail] using
+        centeredLegendreLowProjection_add_higherResidual w hw 14
+    rw [hsum]
+    simpa only [u, r] using h
+  have hmass : (∫ x : ℝ in -1..1, u x * r x) = 0 := by
+    simpa only [u, r] using
+      finiteSevenCanonicalLow_mul_tail_integral_eq_zero w hw
+  have hcapacity := fourCellEvenEndpointCapacityQuadratic_add
+    u r hu hr
+  have hsigned := fourCellEvenSignedMassRegularQuadratic_add
+    u r hu hr
+  have hcore : fourCellEvenZeroCoshCoupledCore (u + r) =
+      fourCellEvenZeroCoshCoupledCore u +
+        2 * fourCellEvenEndpointCapacityPolarization u r +
+          fourCellEvenZeroCoshCoupledCore r := by
+    unfold fourCellEvenZeroCoshCoupledCore
+    unfold fourCellEvenEndpointCapacityQuadratic at hcapacity
+    rw [hraw]
+    linarith only [hcapacity]
+  have hnormalAdd : fourCellEvenPolarFreeOperator (u + r) =
+      fourCellEvenZeroCoshCoupledCore (u + r) -
+        fourCellEvenSignedMassRegularQuadratic (u + r) := by
+    rw [fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular_of_even
+      (u + r) (hu.add hr) (huLocal.add hrLocal) (huEven.add hrEven)]
+    unfold fourCellEvenSignedMassRegularQuadratic
+    ring
+  have hnormalU : fourCellEvenPolarFreeOperator u =
+      fourCellEvenZeroCoshCoupledCore u -
+        fourCellEvenSignedMassRegularQuadratic u := by
+    rw [fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular_of_even
+      u hu huLocal huEven]
+    unfold fourCellEvenSignedMassRegularQuadratic
+    ring
+  have hnormalR : fourCellEvenPolarFreeOperator r =
+      fourCellEvenZeroCoshCoupledCore r -
+        fourCellEvenSignedMassRegularQuadratic r := by
+    rw [fourCellEvenPolarFreeOperator_eq_coupledCore_sub_scalar_sub_regular_of_even
+      r hr hrLocal hrEven]
+    unfold fourCellEvenSignedMassRegularQuadratic
+    ring
+  have hpolar : fourCellEvenFiniteSevenPolarFreePolarization u r =
+      fourCellEvenEndpointCapacityPolarization u r -
+        fourCellEvenSignedMassRegularPolarization u r := by
+    unfold fourCellEvenFiniteSevenPolarFreePolarization
+    rw [hnormalAdd, hnormalU, hnormalR, hcore, hsigned]
+    ring
+  rw [hpolar]
+  unfold fourCellEvenSignedMassRegularPolarization
+  rw [hmass]
+  dsimp only [u, r]
   ring
 
 /-- Exact determinant accounting after the current universal endpoint-row
@@ -211,6 +405,32 @@ def fourCellEvenFiniteSevenExactBorderMixed
     fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw *
       fourCellEvenEndpointSeedCanonicalTailRow
         (fourCellEvenFiniteSevenCanonicalTail w hw)
+
+/-- Consequently the single unresolved bordered mixed entry is a smooth
+capacity/regular functional of the `P14+` residual, minus the product of the
+two endpoint rows.  There is no singular or scalar-mass contribution left
+to estimate in its determinant. -/
+theorem fourCellEvenFiniteSevenExactBorderMixed_eq_nonsingular
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w) :
+    fourCellEvenFiniteSevenExactBorderMixed w hw =
+      fourCellEvenFiniteSevenSeedDiagonal *
+        (fourCellEvenEndpointCapacityPolarization
+            (fourCellEvenFiniteSevenCanonicalLow w hw)
+            (fourCellEvenFiniteSevenCanonicalTail w hw) -
+          2 * fourCellOperatorHalfWidth *
+            (∫ t : ℝ in 0..2,
+              yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+                factorTwoCenteredCorrelationBilinear
+                  (fourCellEvenFiniteSevenCanonicalLow w hw)
+                  (fourCellEvenFiniteSevenCanonicalTail w hw) t)) -
+        fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw *
+          fourCellEvenEndpointSeedCanonicalTailRow
+            (fourCellEvenFiniteSevenCanonicalTail w hw) := by
+  unfold fourCellEvenFiniteSevenExactBorderMixed
+  rw [finiteSevenPolarFreePolarization_eq_capacity_sub_regular
+    w hw hlocal heven]
 
 /-- Exact bordered determinant decomposition with no separate tail
 allocation.  The `1/16` obstruction disappears: the tail keeps its true row
