@@ -156,6 +156,30 @@ def fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow
       (centeredLegendreHigherResidual w hw 8 -
         centeredLegendreHigherResidual w hw 14)
 
+/-- The added `8..13` slice is literally the difference of two finite
+Legendre projections.  This certifies that the new low row is genuinely
+finite-dimensional rather than merely named that way. -/
+theorem centeredLegendreHigherResidual_eight_sub_fourteen_eq_lowProjection_sub
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    centeredLegendreHigherResidual w hw 8 -
+        centeredLegendreHigherResidual w hw 14 =
+      centeredLegendreLowProjection w hw 14 -
+        centeredLegendreLowProjection w hw 8 := by
+  funext x
+  unfold centeredLegendreHigherResidual
+  simp only [Pi.sub_apply]
+  ring
+
+theorem fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow_eq_finiteProjection
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw =
+      fourCellEvenEndpointSeedCanonicalLowRow w hw +
+        fourCellEvenEndpointSeedCanonicalTailRow
+          (centeredLegendreLowProjection w hw 14 -
+            centeredLegendreLowProjection w hw 8) := by
+  unfold fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow
+  rw [centeredLegendreHigherResidual_eight_sub_fourteen_eq_lowProjection_sub]
+
 /-- The endpoint-seed row splits exactly into a finite block through
 `P₁₂` and a genuine `P₁₄+` tail.  This is the structural cutoff at which the
 harmonic estimate below applies; no Young loss has yet been taken. -/
