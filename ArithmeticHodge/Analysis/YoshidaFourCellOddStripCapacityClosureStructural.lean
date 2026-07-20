@@ -12832,6 +12832,60 @@ theorem one_fifth_lt_fourCellOddCoreLocalQuadratic_P7 :
   linarith [two_hundred_eleven_five_hundredths_lt_retained_P7,
     fourCellOddSignedMassRegularQuadratic_P7_lt_eleven_fiftieths]
 
+/-- A matching coarse upper box for the complete `P₇` diagonal.  The
+retained endpoint part is evaluated exactly, while the signed regular row is
+bounded structurally by the global correlation Cauchy estimate. -/
+theorem fourCellOddCoreLocalQuadratic_P7_lt_one_fourth :
+    fourCellOddCoreLocalQuadratic factorTwoCenteredP7 < (1 / 4 : ℝ) := by
+  have hretained :
+      fourCellOddRetainedEndpointQuadratic factorTwoCenteredP7 <
+        (9 / 20 : ℝ) := by
+    unfold fourCellOddRetainedEndpointQuadratic
+      fourCellOddRetainedPrimePotentialQuadratic
+    rw [fourCellOddRawStripCancellationReserve_P7_eq,
+      fourCellOddEndpointStripEvenMass_P7_eq,
+      fourCellOddEndpointStripOddMass_P7_eq,
+      integral_zero_one_endpointPotential_mul_P7_sq_eq]
+    have hsqrtlog := fourCell_sqrt_two_mul_log_two_fine_bounds
+    have hlog := strict_log_two_fine_bounds
+    nlinarith
+  have hsigned : (1 / 5 : ℝ) <
+      fourCellOddSignedMassRegularQuadratic factorTwoCenteredP7 := by
+    let R : ℝ := ∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        centeredEndpointCorrelation factorTwoCenteredP7 t
+    have hcorr := abs_fourCellRegularCorrelation_le_one_twentieth_centeredMass
+      factorTwoCenteredP7 continuous_factorTwoCenteredP7
+        odd_factorTwoCenteredP7
+    rw [integral_factorTwoCenteredP7_sq] at hcorr
+    change |R| ≤ (1 / 20 : ℝ) * (2 / 15) at hcorr
+    norm_num at hcorr
+    have hwidth0 : 0 ≤ 2 * fourCellOperatorHalfWidth := by
+      unfold fourCellOperatorHalfWidth
+      positivity
+    have hwidth : 2 * fourCellOperatorHalfWidth ≤ (1 : ℝ) := by
+      linarith [fourCellOperatorHalfWidth_le_one_half]
+    have habs : |2 * fourCellOperatorHalfWidth * R| ≤ (1 / 150 : ℝ) := by
+      rw [abs_mul, abs_of_nonneg hwidth0]
+      calc
+        2 * fourCellOperatorHalfWidth * |R| ≤ 1 * |R| :=
+          mul_le_mul_of_nonneg_right hwidth (abs_nonneg R)
+        _ ≤ (1 / 150 : ℝ) := by simpa using hcorr
+    have hregular : -(1 / 150 : ℝ) ≤
+        2 * fourCellOperatorHalfWidth * R :=
+      (neg_le_neg habs).trans (neg_abs_le _)
+    have hscalar := fourCellScalar_fine_bounds.1
+    unfold fourCellOddSignedMassRegularQuadratic
+    rw [integral_zero_one_P7_sq]
+    change
+      (1 / 5 : ℝ) <
+        (2 * (Real.log (2 * fourCellOperatorHalfWidth) +
+          Real.eulerMascheroniConstant + Real.log Real.pi) + 3 / 200) *
+            (1 / 15 : ℝ) + 2 * fourCellOperatorHalfWidth * R
+    nlinarith
+  rw [fourCellOddCoreLocalQuadratic_eq_retained_sub_signed]
+  linarith
+
 theorem twenty_nine_two_hundredths_lt_fourCellOddCoreLocalQuadratic_P9 :
     (29 / 200 : ℝ) < fourCellOddCoreLocalQuadratic factorTwoCenteredP9 := by
   rw [fourCellOddCoreLocalQuadratic_eq_retained_sub_signed]
