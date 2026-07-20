@@ -518,7 +518,7 @@ private theorem inverseError_entry_abs_lt (i j : Fin 4) :
   fin_cases i <;> fin_cases j <;>
     rw [abs_lt] <;>
     simp [inverseError, inverseErrorBound, approximateInverse,
-      Matrix.vecMul, Matrix.one_apply, dotProduct, Fin.sum_univ_succ,
+      Matrix.vecMul, dotProduct, Fin.sum_univ_succ,
       retainedGram_zero_zero, retainedGram_zero_one,
       retainedGram_zero_two, retainedGram_zero_three,
       retainedGram_one_zero, retainedGram_one_one,
@@ -532,10 +532,10 @@ private theorem inverseError_entry_abs_lt (i j : Fin 4) :
 private theorem abs_add_five_le (a b c d e : ℝ) :
     |a + (b + (c + (d + e)))| ≤
       |a| + |b| + |c| + |d| + |e| := by
-  have h₀ := abs_add a (b + (c + (d + e)))
-  have h₁ := abs_add b (c + (d + e))
-  have h₂ := abs_add c (d + e)
-  have h₃ := abs_add d e
+  have h₀ := abs_add_le a (b + (c + (d + e)))
+  have h₁ := abs_add_le b (c + (d + e))
+  have h₂ := abs_add_le c (d + e)
+  have h₃ := abs_add_le d e
   linarith
 
 private theorem inverseError_mul_deviation_abs_le (i j : Fin 4) :
@@ -553,8 +553,13 @@ private theorem solutionDeviation_zero_row_bound :
         (27 / 1000 : ℝ) * |solutionDeviation 2| +
         (1 / 100 : ℝ) * |solutionDeviation 3| := by
   have hfix := congrFun solutionDeviation_fixedPoint 0
-  simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ] at hfix
-  rw [hfix]
+  simp only [Pi.add_apply] at hfix
+  rw [show (inverseError *ᵥ solutionDeviation) 0 =
+      inverseError 0 0 * solutionDeviation 0 +
+        (inverseError 0 1 * solutionDeviation 1 +
+          (inverseError 0 2 * solutionDeviation 2 +
+            inverseError 0 3 * solutionDeviation 3)) by
+      simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ]] at hfix
   have htri := abs_add_five_le
     ((approximateInverse *ᵥ normalResidual) 0)
     (inverseError 0 0 * solutionDeviation 0)
@@ -566,7 +571,22 @@ private theorem solutionDeviation_zero_row_bound :
   have hm₂ := inverseError_mul_deviation_abs_le 0 2
   have hm₃ := inverseError_mul_deviation_abs_le 0 3
   simp [inverseErrorBound] at hm₀ hm₁ hm₂ hm₃
-  linarith [approximateInverse_mulVec_normalResidual_zero_abs_lt.le]
+  simp only [abs_mul] at htri
+  calc
+    |solutionDeviation 0| =
+        |(approximateInverse *ᵥ normalResidual) 0 +
+          (inverseError 0 0 * solutionDeviation 0 +
+            (inverseError 0 1 * solutionDeviation 1 +
+              (inverseError 0 2 * solutionDeviation 2 +
+                inverseError 0 3 * solutionDeviation 3)))| :=
+      congrArg abs hfix
+    _ ≤ |(approximateInverse *ᵥ normalResidual) 0| +
+          |inverseError 0 0| * |solutionDeviation 0| +
+          |inverseError 0 1| * |solutionDeviation 1| +
+          |inverseError 0 2| * |solutionDeviation 2| +
+          |inverseError 0 3| * |solutionDeviation 3| := htri
+    _ ≤ _ := by
+      linarith [approximateInverse_mulVec_normalResidual_zero_abs_lt.le]
 
 private theorem solutionDeviation_one_row_bound :
     |solutionDeviation 1| ≤
@@ -576,8 +596,13 @@ private theorem solutionDeviation_one_row_bound :
         (46 / 1000 : ℝ) * |solutionDeviation 2| +
         (19 / 5000 : ℝ) * |solutionDeviation 3| := by
   have hfix := congrFun solutionDeviation_fixedPoint 1
-  simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ] at hfix
-  rw [hfix]
+  simp only [Pi.add_apply] at hfix
+  rw [show (inverseError *ᵥ solutionDeviation) 1 =
+      inverseError 1 0 * solutionDeviation 0 +
+        (inverseError 1 1 * solutionDeviation 1 +
+          (inverseError 1 2 * solutionDeviation 2 +
+            inverseError 1 3 * solutionDeviation 3)) by
+      simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ]] at hfix
   have htri := abs_add_five_le
     ((approximateInverse *ᵥ normalResidual) 1)
     (inverseError 1 0 * solutionDeviation 0)
@@ -589,7 +614,22 @@ private theorem solutionDeviation_one_row_bound :
   have hm₂ := inverseError_mul_deviation_abs_le 1 2
   have hm₃ := inverseError_mul_deviation_abs_le 1 3
   simp [inverseErrorBound] at hm₀ hm₁ hm₂ hm₃
-  linarith [approximateInverse_mulVec_normalResidual_one_abs_lt.le]
+  simp only [abs_mul] at htri
+  calc
+    |solutionDeviation 1| =
+        |(approximateInverse *ᵥ normalResidual) 1 +
+          (inverseError 1 0 * solutionDeviation 0 +
+            (inverseError 1 1 * solutionDeviation 1 +
+              (inverseError 1 2 * solutionDeviation 2 +
+                inverseError 1 3 * solutionDeviation 3)))| :=
+      congrArg abs hfix
+    _ ≤ |(approximateInverse *ᵥ normalResidual) 1| +
+          |inverseError 1 0| * |solutionDeviation 0| +
+          |inverseError 1 1| * |solutionDeviation 1| +
+          |inverseError 1 2| * |solutionDeviation 2| +
+          |inverseError 1 3| * |solutionDeviation 3| := htri
+    _ ≤ _ := by
+      linarith [approximateInverse_mulVec_normalResidual_one_abs_lt.le]
 
 private theorem solutionDeviation_two_row_bound :
     |solutionDeviation 2| ≤
@@ -599,8 +639,13 @@ private theorem solutionDeviation_two_row_bound :
         (139 / 1000 : ℝ) * |solutionDeviation 2| +
         (1 / 2000 : ℝ) * |solutionDeviation 3| := by
   have hfix := congrFun solutionDeviation_fixedPoint 2
-  simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ] at hfix
-  rw [hfix]
+  simp only [Pi.add_apply] at hfix
+  rw [show (inverseError *ᵥ solutionDeviation) 2 =
+      inverseError 2 0 * solutionDeviation 0 +
+        (inverseError 2 1 * solutionDeviation 1 +
+          (inverseError 2 2 * solutionDeviation 2 +
+            inverseError 2 3 * solutionDeviation 3)) by
+      simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ]] at hfix
   have htri := abs_add_five_le
     ((approximateInverse *ᵥ normalResidual) 2)
     (inverseError 2 0 * solutionDeviation 0)
@@ -612,7 +657,22 @@ private theorem solutionDeviation_two_row_bound :
   have hm₂ := inverseError_mul_deviation_abs_le 2 2
   have hm₃ := inverseError_mul_deviation_abs_le 2 3
   simp [inverseErrorBound] at hm₀ hm₁ hm₂ hm₃
-  linarith [approximateInverse_mulVec_normalResidual_two_abs_lt.le]
+  simp only [abs_mul] at htri
+  calc
+    |solutionDeviation 2| =
+        |(approximateInverse *ᵥ normalResidual) 2 +
+          (inverseError 2 0 * solutionDeviation 0 +
+            (inverseError 2 1 * solutionDeviation 1 +
+              (inverseError 2 2 * solutionDeviation 2 +
+                inverseError 2 3 * solutionDeviation 3)))| :=
+      congrArg abs hfix
+    _ ≤ |(approximateInverse *ᵥ normalResidual) 2| +
+          |inverseError 2 0| * |solutionDeviation 0| +
+          |inverseError 2 1| * |solutionDeviation 1| +
+          |inverseError 2 2| * |solutionDeviation 2| +
+          |inverseError 2 3| * |solutionDeviation 3| := htri
+    _ ≤ _ := by
+      linarith [approximateInverse_mulVec_normalResidual_two_abs_lt.le]
 
 private theorem solutionDeviation_three_row_bound :
     |solutionDeviation 3| ≤
@@ -622,8 +682,13 @@ private theorem solutionDeviation_three_row_bound :
         (3 / 2500 : ℝ) * |solutionDeviation 2| +
         (53 / 1000 : ℝ) * |solutionDeviation 3| := by
   have hfix := congrFun solutionDeviation_fixedPoint 3
-  simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ] at hfix
-  rw [hfix]
+  simp only [Pi.add_apply] at hfix
+  rw [show (inverseError *ᵥ solutionDeviation) 3 =
+      inverseError 3 0 * solutionDeviation 0 +
+        (inverseError 3 1 * solutionDeviation 1 +
+          (inverseError 3 2 * solutionDeviation 2 +
+            inverseError 3 3 * solutionDeviation 3)) by
+      simp [Matrix.mulVec, dotProduct, Fin.sum_univ_succ]] at hfix
   have htri := abs_add_five_le
     ((approximateInverse *ᵥ normalResidual) 3)
     (inverseError 3 0 * solutionDeviation 0)
@@ -635,7 +700,22 @@ private theorem solutionDeviation_three_row_bound :
   have hm₂ := inverseError_mul_deviation_abs_le 3 2
   have hm₃ := inverseError_mul_deviation_abs_le 3 3
   simp [inverseErrorBound] at hm₀ hm₁ hm₂ hm₃
-  linarith [approximateInverse_mulVec_normalResidual_three_abs_lt.le]
+  simp only [abs_mul] at htri
+  calc
+    |solutionDeviation 3| =
+        |(approximateInverse *ᵥ normalResidual) 3 +
+          (inverseError 3 0 * solutionDeviation 0 +
+            (inverseError 3 1 * solutionDeviation 1 +
+              (inverseError 3 2 * solutionDeviation 2 +
+                inverseError 3 3 * solutionDeviation 3)))| :=
+      congrArg abs hfix
+    _ ≤ |(approximateInverse *ᵥ normalResidual) 3| +
+          |inverseError 3 0| * |solutionDeviation 0| +
+          |inverseError 3 1| * |solutionDeviation 1| +
+          |inverseError 3 2| * |solutionDeviation 2| +
+          |inverseError 3 3| * |solutionDeviation 3| := htri
+    _ ≤ _ := by
+      linarith [approximateInverse_mulVec_normalResidual_three_abs_lt.le]
 
 private theorem solutionDeviation_abs_sum_lt :
     |solutionDeviation 0| + |solutionDeviation 1| +
@@ -831,7 +911,8 @@ theorem fourCellOddEndpointStripEven_galerkinResidual_pos
   have hp := fourCellOddP11GalerkinRetainedResidualProfile_pos hp0 hp1
   have hm := fourCellOddP11GalerkinRetainedResidualProfile_pos hm0 hm1
   unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
-  simpa only [sub_eq_add_neg] using (half_pos (add_pos hp hm))
+  convert half_pos (add_pos hp hm) using 1
+  ring
 
 def fourCellOddP11GalerkinStripOddBernstein0 : ℝ :=
   -(1 / 5 : ℝ) +
