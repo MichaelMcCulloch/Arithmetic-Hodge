@@ -4168,6 +4168,111 @@ theorem supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotResidu
     supportMinimalNegativeMonotoneBlock_length_five_middlePivotResidual_reversed
       hfour hparent hmin hlen hmiddle
 
+/-! ## The forced sign of the nondegenerate five-cell residual -/
+
+/-- The negative all-ones direction selects the negative branch of the
+middle-pivot residual.  Once the adjacent principal minors are nonnegative,
+the exact pivot identity gives the stronger quantitative bound
+
+`M X - U V < -((M+U+V)^2 + (A M-U^2) + (M E-V^2))/2`.
+
+Thus the residual reversal above is not merely an absolute-value
+obstruction: its conditional remote corner has a forced sign. -/
+theorem FiveCellCoupledEndpointSchurConstraints.middlePivotResidual_negativeBranch
+    {A M E U V X : ℝ}
+    (h : FiveCellCoupledEndpointSchurConstraints A M E U V X)
+    (hMpos : 0 < M)
+    (hAM : U ^ 2 ≤ A * M)
+    (hME : V ^ 2 ≤ M * E) :
+    M * X - U * V <
+      -((M + U + V) ^ 2 + (A * M - U ^ 2) +
+          (M * E - V ^ 2)) / 2 := by
+  rcases h with
+    ⟨_hA, _hM, _hE, _hL, _hR, _hleftMean, _hleftDet,
+      _hrightMean, _hrightDet, hwhole⟩
+  have halpha : 0 ≤ A * M - U ^ 2 := by linarith
+  have hbeta : 0 ≤ M * E - V ^ 2 := by linarith
+  have hscaled :
+      M * (A + M + E + 2 * (U + V + X)) < 0 :=
+    mul_neg_of_pos_of_neg hMpos hwhole
+  have hidentity :
+      M * (A + M + E + 2 * (U + V + X)) =
+        (M + U + V) ^ 2 + (A * M - U ^ 2) +
+          (M * E - V ^ 2) + 2 * (M * X - U * V) := by
+    ring
+  rw [hidentity] at hscaled
+  nlinarith [sq_nonneg (M + U + V)]
+
+/-- Production form of the forced negative branch.  For an actual
+support-minimal negative five-cell block, universal four-cell positivity and
+the common-parent exclusion of the zero-middle case imply a strict signed
+coupling between the remote endpoint balance `X` and the two adjacent rows:
+
+`M X < U V`,
+
+with the displayed quantitative deficit.  Any common-parent argument that
+forces the opposite conditional-correlation sign therefore excludes the
+length-five obstruction outright. -/
+theorem supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotResidual_negativeBranch
+    (hfour : RealFourCellProductionNonnegative)
+    {parent : BombieriTest} {lo : ℤ} {N start len : ℕ}
+    (hparent : bombieriConjugateTest parent = parent)
+    (hmin : IsSupportMinimalNegativeMonotoneBlock
+      parent lo N start len) (hlen : len = 5) :
+    let k := monotoneQuarterFiniteBlockBase lo start
+    let a := monotoneQuarterCell parent k
+    let m := fiveCellMiddleThree parent k
+    let e := monotoneQuarterCell parent (k + 4)
+    let A := bombieriRealQuadraticValue a
+    let M := bombieriRealQuadraticValue m
+    let E := bombieriRealQuadraticValue e
+    let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X := fiveCellRemoteEndpointBalance parent k
+    M * X - U * V <
+      -((M + U + V) ^ 2 + (A * M - U ^ 2) +
+          (M * E - V ^ 2)) / 2 := by
+  dsimp only
+  let k : ℤ := monotoneQuarterFiniteBlockBase lo start
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := fiveCellMiddleThree parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 4)
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := fiveCellRemoteEndpointBalance parent k
+  have hmiddle : m ≠ 0 := by
+    dsimp only [m, k]
+    simpa only [monotoneQuarterFiniteBlockBase] using
+      supportMinimalNegativeMonotoneBlock_length_five_middle_ne_zero
+        hparent hmin hlen
+  have hconstraints :=
+    supportMinimalNegativeMonotoneBlock_length_five_coupledEndpointSchur
+      hmin hlen
+  dsimp only at hconstraints
+  have hmiddleEq :
+      monotoneQuarterFiniteBlock parent lo (start + 1) 3 = m := by
+    classical
+    dsimp only [m, k]
+    simp [monotoneQuarterFiniteBlock,
+      monotoneQuarterFiniteBlockBase, fiveCellMiddleThree,
+      Finset.sum_range_succ]
+    congr 1 <;> ring
+  rw [hmiddleEq] at hconstraints
+  change FiveCellCoupledEndpointSchurConstraints A M E U V X at hconstraints
+  have hadj := fiveCell_adjacentPrincipalMinors_of_fourCellProduction
+    hfour parent hparent k
+  change U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E at hadj
+  have hMpos : 0 < M := by
+    dsimp only [M, m]
+    exact fiveCellMiddleThree_quadratic_pos_of_ne_zero
+      parent hparent k hmiddle
+  exact
+    FiveCellCoupledEndpointSchurConstraints.middlePivotResidual_negativeBranch
+      hconstraints hMpos hadj.1 hadj.2
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
