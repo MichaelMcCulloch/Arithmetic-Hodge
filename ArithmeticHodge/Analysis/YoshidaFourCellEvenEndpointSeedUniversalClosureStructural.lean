@@ -2060,6 +2060,100 @@ theorem
       simpa [s, N, K] using hcompletion
     exact hquad'.trans_eq hcompletion'
 
+/-- At the engineered allocation `η = 1/250`, the complete canonical
+`P₁₄+` row charge uses at most one sixteenth of that tail's own
+polar-free operator.  Thus the infinite endpoint-row block is not merely
+positive: it is absorbed with a fixed quantitative reserve. -/
+theorem canonicalTailNormBudget_rawCharge_le_one_sixteenth_polarFree_of_tailFourteen
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    (1 + ((1 / 250 : ℝ)⁻¹)) * (360360 / 1171733 : ℝ) *
+        fourCellEvenEndpointSeedCanonicalTailNormBudget *
+          (centeredRawLogEnergy r / 4) ≤
+      (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator r := by
+  have hE : 0 ≤ centeredRawLogEnergy r / 4 :=
+    div_nonneg (centeredRawLogEnergy_nonnegative r) (by norm_num)
+  have hcoefficient :
+      (1 + ((1 / 250 : ℝ)⁻¹)) * (360360 / 1171733 : ℝ) *
+          fourCellEvenEndpointSeedCanonicalTailNormBudget ≤
+        (1 / 40 : ℝ) := by
+    norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget]
+  have hcharge := mul_le_mul_of_nonneg_right hcoefficient hE
+  have htail :=
+    two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+      r hr hlocal heven hlow
+  have htailScaled :=
+    mul_le_mul_of_nonneg_left htail (by norm_num : (0 : ℝ) ≤ 1 / 16)
+  calc
+    _ ≤ (1 / 40 : ℝ) * (centeredRawLogEnergy r / 4) := by
+      simpa only [mul_assoc] using hcharge
+    _ = (1 / 16 : ℝ) *
+        ((2 / 5 : ℝ) * (centeredRawLogEnergy r / 4)) := by ring
+    _ ≤ (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator r :=
+      htailScaled
+
+/-- Structural cutoff-fourteen reduction of the universal endpoint row.
+Only the seven even coordinates `P₀,P₂,…,P₁₂` remain in the
+finite square; the whole infinite block is charged against one sixteenth of
+its own polar-free quadratic form. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_251_div_250_lowThroughTwelve_add_one_sixteenth_tailPolarFree
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (251 / 250 : ℝ) *
+          fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw ^ 2 +
+        (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator
+          (centeredLegendreHigherResidual w hw 14) := by
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 14
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrEven : Function.Even r := by
+    simpa only [r] using centeredLegendreHigherResidual_even w hw heven 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hbudget : 0 ≤ fourCellEvenEndpointSeedCanonicalTailNormBudget := by
+    norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget]
+  have hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter 0 0 x ^ 2) ≤
+          fourCellEvenEndpointSeedCanonicalTailNormBudget := by
+    simpa only [fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter,
+      zero_mul, sub_zero] using
+        integral_endpointSeedTailFourteenRepresenter_zero_sq_le_rational
+  have hrow :=
+    fourCellEvenEndpointSeedRow_sq_le_coshConstrainedLowThroughTwelve_add_rawTail_of_norm
+      w hw hlocal heven hzero 0 (by simp) 0
+        fourCellEvenEndpointSeedCanonicalTailNormBudget hbudget hdual
+        (1 / 250) (by norm_num)
+  let T : ℝ :=
+    (1 + ((1 / 250 : ℝ)⁻¹)) * (360360 / 1171733 : ℝ) *
+      fourCellEvenEndpointSeedCanonicalTailNormBudget *
+        (centeredRawLogEnergy r / 4)
+  have hrow' : fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (251 / 250 : ℝ) *
+          fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw ^ 2 + T := by
+    dsimp only [T, r]
+    norm_num at hrow
+    ring_nf at hrow ⊢
+    exact hrow
+  have htail : T ≤
+      (1 / 16 : ℝ) * fourCellEvenPolarFreeOperator r := by
+    dsimp only [T]
+    exact
+      canonicalTailNormBudget_rawCharge_le_one_sixteenth_polarFree_of_tailFourteen
+        r hr hrLocal hrEven hrGap
+  dsimp only [r] at htail ⊢
+  linarith only [hrow', htail]
+
 /-- The canonical row is bounded by one explicit finite-row square and the
 mass of the moment-eight residual, for every positive Young allocation.
 This is an unconditional diagnostic interface; closing the universal Schur
