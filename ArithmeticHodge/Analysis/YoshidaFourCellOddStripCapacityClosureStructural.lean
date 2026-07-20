@@ -15240,6 +15240,69 @@ theorem fourCellOddFiveModeLowerMatrix_posDef :
     fourCellOddFiveModeCertificateWeights_pos
     fourCellOddFiveModeCertificateDominance
 
+/-- Quadratic form of the certified rational five-mode lower matrix. -/
+theorem fourCellOddFiveModeLowerQuadratic_nonneg
+    (c d e f g : ℝ) :
+    0 ≤ fourCellOddOneThreeFivePerturbedQuadratic c d e +
+      2 * fourCellOddCoreLocalBilinear
+          centeredP1 factorTwoCenteredP7 * c * f +
+      2 * fourCellOddCoreLocalBilinear
+          centeredP3 factorTwoCenteredP7 * d * f +
+      2 * fourCellOddCoreLocalBilinear
+          factorTwoCenteredP5 factorTwoCenteredP7 * e * f +
+      (1 / 5 : ℝ) * f ^ 2 +
+      2 * fourCellOddCoreLocalBilinear
+          centeredP1 factorTwoCenteredP9 * c * g +
+      2 * fourCellOddCoreLocalBilinear
+          centeredP3 factorTwoCenteredP9 * d * g +
+      2 * fourCellOddCoreLocalBilinear
+          factorTwoCenteredP5 factorTwoCenteredP9 * e * g +
+      2 * fourCellOddCoreLocalBilinear
+          factorTwoCenteredP7 factorTwoCenteredP9 * f * g +
+      (29 / 200 : ℝ) * g ^ 2 := by
+  let x : Fin 5 → ℝ := ![c, d, e, f, g]
+  have hnonneg :=
+    fourCellOddFiveModeLowerMatrix_posDef.posSemidef.dotProduct_mulVec_nonneg x
+  simp only [star_trivial] at hnonneg
+  simp [x, fourCellOddFiveModeLowerMatrix, dotProduct, Matrix.mulVec,
+    Fin.sum_univ_succ] at hnonneg
+  unfold fourCellOddOneThreeFivePerturbedQuadratic
+  convert hnonneg using 1
+  ring
+
+/-- The actual complete five-mode quadratic is nonnegative after restoring
+the strictly positive `P₇` and `P₉` diagonal residuals above the certified
+rational lower matrix. -/
+theorem fourCellOddFiveModeCoreQuadratic_nonneg
+    (c d e f g : ℝ) :
+    0 ≤ fourCellOddOneThreeFivePerturbedQuadratic c d e +
+      2 * fourCellOddCoreLocalBilinear
+          centeredP1 factorTwoCenteredP7 * c * f +
+      2 * fourCellOddCoreLocalBilinear
+          centeredP3 factorTwoCenteredP7 * d * f +
+      2 * fourCellOddCoreLocalBilinear
+          factorTwoCenteredP5 factorTwoCenteredP7 * e * f +
+      fourCellOddCoreLocalQuadratic factorTwoCenteredP7 * f ^ 2 +
+      2 * fourCellOddCoreLocalBilinear
+          centeredP1 factorTwoCenteredP9 * c * g +
+      2 * fourCellOddCoreLocalBilinear
+          centeredP3 factorTwoCenteredP9 * d * g +
+      2 * fourCellOddCoreLocalBilinear
+          factorTwoCenteredP5 factorTwoCenteredP9 * e * g +
+      2 * fourCellOddCoreLocalBilinear
+          factorTwoCenteredP7 factorTwoCenteredP9 * f * g +
+      fourCellOddCoreLocalQuadratic factorTwoCenteredP9 * g ^ 2 := by
+  have hlower := fourCellOddFiveModeLowerQuadratic_nonneg c d e f g
+  have h7 := one_fifth_lt_fourCellOddCoreLocalQuadratic_P7
+  have h9 := twenty_nine_two_hundredths_lt_fourCellOddCoreLocalQuadratic_P9
+  have h7sq : (1 / 5 : ℝ) * f ^ 2 ≤
+      fourCellOddCoreLocalQuadratic factorTwoCenteredP7 * f ^ 2 :=
+    mul_le_mul_of_nonneg_right h7.le (sq_nonneg f)
+  have h9sq : (29 / 200 : ℝ) * g ^ 2 ≤
+      fourCellOddCoreLocalQuadratic factorTwoCenteredP9 * g ^ 2 :=
+    mul_le_mul_of_nonneg_right h9.le (sq_nonneg g)
+  linarith
+
 /-! ### Exact `P₁₁+` Riesz endpoint -/
 
 /-- Normalized centered `P₇` coefficient. -/
