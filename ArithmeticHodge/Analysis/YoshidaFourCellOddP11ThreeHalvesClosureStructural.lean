@@ -60,6 +60,63 @@ def FourCellOddP11JointSelectorThreeHalves : Prop :=
         fourCellOddCoreLocalQuadratic centeredP1 *
           ((3 / 2 : ℝ) * fourCellOddP1ExactTailWeight r)
 
+/-- A selector-free formulation of the same finite task: every retained
+five-mode polynomial acts on the genuine tail with weighted norm at most
+`3 / 2` times its core norm. -/
+def FourCellOddP11FiveModeCauchyThreeHalves : Prop :=
+  ∀ (c d e f g : ℝ) (r : ℝ → ℝ),
+    ContDiff ℝ 1 r → Function.Odd r →
+    centeredOddP1Coefficient r = 0 →
+    centeredOddP3Coefficient r = 0 →
+    centeredOddP5Coefficient r = 0 →
+    centeredOddP7Coefficient r = 0 →
+    centeredOddP9Coefficient r = 0 →
+    fourCellOddCoreLocalBilinear
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r ^ 2 ≤
+      fourCellOddCoreLocalQuadratic
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) *
+        ((3 / 2 : ℝ) * fourCellOddP1ExactTailWeight r)
+
+/-- The universal five-mode weighted Cauchy bound supplies the joint
+two-selector estimate.  The exact Gram--Schmidt profile identity preserves
+the full correlation, so there is no rowwise triangle loss. -/
+theorem fourCellOddP11JointSelectorThreeHalves_of_fiveModeCauchy
+    (hcauchy : FourCellOddP11FiveModeCauchyThreeHalves) :
+    FourCellOddP11JointSelectorThreeHalves := by
+  intro d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
+  let A := fourCellOddCoreLocalQuadratic centeredP1
+  let F := fourCellOddP11FiniteCorrectedReserve d e f g
+  let x := fourCellOddCoreLocalBilinear centeredP1 r
+  let X := fourCellOddP11FiniteTailCorrectedCross d e f g r
+  let W := fourCellOddP1ExactTailWeight r
+  have hA : 0 ≤ A := by
+    dsimp only [A]
+    exact fourCellOddCoreLocalQuadratic_centeredP1_nonneg
+  have hF : 0 ≤ F := by
+    dsimp only [F]
+    exact fourCellOddP11FiniteCorrectedReserve_nonnegative d e f g
+  have hW : 0 ≤ (3 / 2 : ℝ) * W := by
+    exact mul_nonneg (by norm_num)
+      (fourCellOddP1ExactTailWeight_nonneg r hr.continuous)
+  apply (jointWeightedDual_iff_twoRowLoewner hA hF hW).2
+  intro s t
+  let p := fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  let b := fourCellOddCoreLocalBilinear centeredP1 p
+  have hrow := hcauchy
+    (F * s - t * b) (t * A * d) (t * A * e) (t * A * f)
+      (t * A * g) r hr hrodd hr1 hr3 hr5 hr7 hr9
+  have hprofile :=
+    fourCellOddP11CoupledLoewnerSelectorProfile_eq_lowProfile
+      d e f g s t
+  dsimp only [A, F, p, b] at hprofile
+  rw [← hprofile] at hrow
+  rw [fourCellOddCoreLocalBilinear_coupledLoewnerSelectorProfile
+        d e f g s t r hr hrodd,
+      fourCellOddCoreLocalQuadratic_coupledLoewnerSelectorProfile]
+    at hrow
+  dsimp only [A, F, x, X, W] at hrow ⊢
+  simpa only [mul_assoc] using hrow
+
 /-- The matched three-halves tail and joint-selector estimates imply the
 actual universal corrected determinant.  The strict `P₃` finite reserve is
 used only to recover the pure `P₁` tail row, so no division or positive
