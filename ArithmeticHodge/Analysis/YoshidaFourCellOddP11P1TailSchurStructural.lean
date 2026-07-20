@@ -1621,6 +1621,122 @@ private theorem one_div_upperDensity_le_reciprocalMajorant
   rw [div_le_iff₀ hDpos]
   simpa only [one_mul] using hprod
 
+private theorem fourCellOddP11P1Rational_base_lt :
+    (∫ x : ℝ in 0..3 / 5,
+        x ^ 2 * fourCellOddP11SelectorLowerWeight x +
+          2 * x * fourCellOddP11P1RationalLowerH x) +
+      (∫ x : ℝ in 3 / 5..1,
+        x ^ 2 * fourCellOddP11SelectorUpperWeight x +
+          2 * x * fourCellOddP11P1RationalUpperH x) <
+    (-29 / 120 : ℝ) := by
+  let V2 : ℝ → ℝ := fun x ↦ yoshidaEndpointPotential x * x ^ 2
+  let pL : ℝ → ℝ := fun x ↦
+    (27 / 250 : ℝ) * x ^ 2 +
+      2 * x * fourCellOddP11P1RationalLowerH x
+  let pU : ℝ → ℝ := fun x ↦
+    (6 / 5 : ℝ) * x - (57 / 25) * x ^ 2 +
+      2 * x * fourCellOddP11P1RationalUpperH x
+  have hV : IntervalIntegrable V2 volume 0 1 := by
+    have h := intervalIntegrable_zero_one_endpointPotential_mul_x_mul
+      (fun x : ℝ ↦ x) continuous_id
+    apply h.congr
+    intro x _hx
+    dsimp only [V2]
+    ring
+  have hVL : IntervalIntegrable V2 volume 0 (3 / 5) := by
+    apply hV.mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 3 / 5)] at hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1)]
+    exact ⟨hx.1, by linarith [hx.2]⟩
+  have hVU : IntervalIntegrable V2 volume (3 / 5) 1 := by
+    apply hV.mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1)]
+    exact ⟨by linarith [hx.1], hx.2⟩
+  have hPL : IntervalIntegrable pL volume 0 (3 / 5) := by
+    apply Continuous.intervalIntegrable
+    dsimp only [pL]
+    unfold fourCellOddP11P1RationalLowerH
+      fourCellOddP11P1RationalRegularRepresenter
+      fourCellOddP11P1Selector
+      fourCellOddOneThreeFiveSevenNineLowProfile
+      fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+      centeredP1 centeredP3 factorTwoCenteredP5
+    simp_rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+    fun_prop
+  have hPU : IntervalIntegrable pU volume (3 / 5) 1 := by
+    apply Continuous.intervalIntegrable
+    dsimp only [pU]
+    unfold fourCellOddP11P1RationalUpperH
+      fourCellOddP11P1RationalRegularRepresenter
+      fourCellOddP11P1Selector
+      fourCellOddOneThreeFiveSevenNineLowProfile
+      fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+      centeredP1 centeredP3 factorTwoCenteredP5
+    simp_rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+    fun_prop
+  have hsplit := intervalIntegral.integral_add_adjacent_intervals hVL hVU
+  have hpotential :=
+    integral_zero_one_endpointPotential_oddStructuralLow 1 0
+  unfold factorTwoOddStructuralLowProfile centeredP1 at hpotential
+  norm_num at hpotential
+  have hpotentialV :
+      (∫ x : ℝ in 0..1, V2 x) =
+        4 / 9 - (1 / 3 : ℝ) * Real.log 2 := by
+    simpa only [V2] using hpotential
+  rw [show (fun x : ℝ ↦
+      x ^ 2 * fourCellOddP11SelectorLowerWeight x +
+        2 * x * fourCellOddP11P1RationalLowerH x) = fun x ↦
+      (93 / 50 : ℝ) * V2 x + pL x by
+    funext x
+    dsimp only [V2, pL]
+    unfold fourCellOddP11SelectorLowerWeight
+    ring,
+    show (fun x : ℝ ↦
+      x ^ 2 * fourCellOddP11SelectorUpperWeight x +
+        2 * x * fourCellOddP11P1RationalUpperH x) = fun x ↦
+      (93 / 50 : ℝ) * V2 x + pU x by
+    funext x
+    by_cases hx : x = 0
+    · subst x
+      simp [V2, pU, fourCellOddP11SelectorUpperWeight]
+    · dsimp only [V2, pU]
+      unfold fourCellOddP11SelectorUpperWeight
+      field_simp [hx]
+      ring,
+    intervalIntegral.integral_add (hVL.const_mul _) hPL,
+    intervalIntegral.integral_add (hVU.const_mul _) hPU]
+  repeat rw [intervalIntegral.integral_const_mul]
+  rw [show
+      ((93 / 50 : ℝ) * (∫ x : ℝ in 0..3 / 5, V2 x) +
+          (∫ x : ℝ in 0..3 / 5, pL x)) +
+        ((93 / 50 : ℝ) * (∫ x : ℝ in 3 / 5..1, V2 x) +
+          (∫ x : ℝ in 3 / 5..1, pU x)) =
+        (93 / 50 : ℝ) *
+            ((∫ x : ℝ in 0..3 / 5, V2 x) +
+              (∫ x : ℝ in 3 / 5..1, V2 x)) +
+          (∫ x : ℝ in 0..3 / 5, pL x) +
+          (∫ x : ℝ in 3 / 5..1, pU x) by ring,
+    hsplit, hpotentialV]
+  unfold pL pU fourCellOddP11P1RationalLowerH
+    fourCellOddP11P1RationalUpperH
+    fourCellOddP11P1RationalRegularRepresenter
+    fourCellOddP11P1RationalHalfWidth
+    fourCellOddP11P1RationalEndpointScale fourCellOddP11P1Selector
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  simp_rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) _ _)
+    (Continuous.intervalIntegrable (by fun_prop) _ _)]
+  norm_num
+  nlinarith [YoshidaConstantBounds.strict_log_two_fine_bounds.1,
+    YoshidaConstantBounds.strict_log_two_fine_bounds.2]
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellOddP11P1TailSchurStructural
