@@ -11,11 +11,15 @@ noncomputable section
 
 open ShiftedLegendreLogEnergyOrthogonalProjection
 open CenteredEndpointCorrelation
+open TwoByTwoSchur
+open UnitIntervalLogEnergyAffine
 open YoshidaConstantBounds
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
+open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointSeedFiniteSevenClosureStructural
+open YoshidaFourCellEvenEndpointSeedRegularRemainderStructural
 open YoshidaFourCellEvenEndpointSeedUniversalClosureStructural
 open YoshidaFourCellEvenPolarSchurStructural
 open YoshidaFourCellParityHalfFoldStructural
@@ -176,6 +180,205 @@ theorem fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_finiteSeven
   exact
     fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_tailAssembly
       w hw hlocal heven hzero hassembly
+
+/-! ## Lossless bordered low--tail Schur alternative -/
+
+/-- The actual finite bordered diagonal, without a Young loss. -/
+def fourCellEvenFiniteSevenExactLowDiagonal
+    (w : ℝ → ℝ) (hw : Continuous w) : ℝ :=
+  fourCellEvenFiniteSevenSeedDiagonal *
+      fourCellEvenPolarFreeOperator
+        (fourCellEvenFiniteSevenCanonicalLow w hw) -
+    fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw ^ 2
+
+/-- The actual `P14+` bordered diagonal, without a Young loss. -/
+def fourCellEvenFiniteSevenExactTailDiagonal
+    (w : ℝ → ℝ) (hw : Continuous w) : ℝ :=
+  fourCellEvenFiniteSevenSeedDiagonal *
+      fourCellEvenPolarFreeOperator
+        (fourCellEvenFiniteSevenCanonicalTail w hw) -
+    fourCellEvenEndpointSeedCanonicalTailRow
+        (fourCellEvenFiniteSevenCanonicalTail w hw) ^ 2
+
+/-- The one exact mixed entry of the bordered determinant.  This is the
+operator polarization minus the product of the two endpoint-row pieces. -/
+def fourCellEvenFiniteSevenExactBorderMixed
+    (w : ℝ → ℝ) (hw : Continuous w) : ℝ :=
+  fourCellEvenFiniteSevenSeedDiagonal *
+      fourCellEvenFiniteSevenPolarFreePolarization
+        (fourCellEvenFiniteSevenCanonicalLow w hw)
+        (fourCellEvenFiniteSevenCanonicalTail w hw) -
+    fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw *
+      fourCellEvenEndpointSeedCanonicalTailRow
+        (fourCellEvenFiniteSevenCanonicalTail w hw)
+
+/-- Exact bordered determinant decomposition with no separate tail
+allocation.  The `1/16` obstruction disappears: the tail keeps its true row
+square and the mixed operator keeps its true polarization. -/
+theorem finiteSevenExactBorderDeterminant_eq_low_add_mixed_add_tail
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    fourCellEvenFiniteSevenSeedDiagonal *
+          fourCellEvenPolarFreeOperator w -
+        fourCellEvenEndpointSeedRow w ^ 2 =
+      fourCellEvenFiniteSevenExactLowDiagonal w hw +
+        2 * fourCellEvenFiniteSevenExactBorderMixed w hw +
+        fourCellEvenFiniteSevenExactTailDiagonal w hw := by
+  have hop :=
+    fourCellEvenPolarFreeOperator_eq_finiteSevenLow_add_mixed_add_tail w hw
+  have hrow :=
+    fourCellEvenEndpointSeedRow_eq_canonicalLowThroughTwelve_add_tailFourteen
+      w hw hlocal heven hzero
+  rw [hop, hrow]
+  unfold fourCellEvenFiniteSevenExactLowDiagonal
+    fourCellEvenFiniteSevenExactBorderMixed
+    fourCellEvenFiniteSevenExactTailDiagonal
+    fourCellEvenFiniteSevenCanonicalLow
+    fourCellEvenFiniteSevenCanonicalTail
+  ring
+
+/-- The existing harmonic representer estimate is already far stronger than
+the fixed-seed determinant needs on a pure `P14+` tail.  No zero-cosh
+hypothesis is required. -/
+theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_one_div_eighty_polarFree
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    fourCellEvenEndpointSeedCanonicalTailRow r ^ 2 ≤
+      (1 / 80 : ℝ) * fourCellEvenPolarFreeOperator r := by
+  have hweighted :=
+    harmonic_fourteen_mul_fourCellEvenEndpointSeedCanonicalTailRow_sq_le_raw
+      r hr hlocal hlow
+  have hcoercive :=
+    two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+      r hr hlocal heven hlow
+  have hE : 0 ≤ centeredRawLogEnergy r / 4 :=
+    div_nonneg (centeredRawLogEnergy_nonnegative r) (by norm_num)
+  norm_num [harmonic, Finset.sum_range_succ,
+    fourCellEvenEndpointSeedCanonicalTailNormBudget] at hweighted
+  nlinarith only [hweighted, hcoercive, hE]
+
+/-- Pure-tail endpoint Schur closure at cutoff fourteen, with the *actual*
+fixed seed diagonal rather than the coarse `1/16` Young allocation. -/
+theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_seedDiagonal_polarFree
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    fourCellEvenEndpointSeedCanonicalTailRow r ^ 2 ≤
+      fourCellEvenFiniteSevenSeedDiagonal *
+        fourCellEvenPolarFreeOperator r := by
+  have hrow :=
+    fourCellEvenEndpointSeedCanonicalTailRow_sq_le_one_div_eighty_polarFree
+      r hr hlocal heven hlow
+  have hcoercive :=
+    two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+      r hr hlocal heven hlow
+  have hE : 0 ≤ centeredRawLogEnergy r / 4 :=
+    div_nonneg (centeredRawLogEnergy_nonnegative r) (by norm_num)
+  have hQ : 0 ≤ fourCellEvenPolarFreeOperator r := by
+    nlinarith only [hcoercive, hE]
+  have hseed : (1 / 80 : ℝ) ≤ fourCellEvenFiniteSevenSeedDiagonal := by
+    unfold fourCellEvenFiniteSevenSeedDiagonal
+    exact one_div_eighty_lt_fourCellEvenExactBracket_endpointCoshSeed.le
+  exact hrow.trans (mul_le_mul_of_nonneg_right hseed hQ)
+
+/-- The exact tail diagonal is nonnegative for every canonical cutoff-
+fourteen residual. -/
+theorem fourCellEvenFiniteSevenExactTailDiagonal_nonnegative
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w) :
+    0 ≤ fourCellEvenFiniteSevenExactTailDiagonal w hw := by
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrEven : Function.Even r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_even w hw heven 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have htail :=
+    fourCellEvenEndpointSeedCanonicalTailRow_sq_le_seedDiagonal_polarFree
+      r hr hrLocal hrEven hrGap
+  unfold fourCellEvenFiniteSevenExactTailDiagonal
+  simpa only [r] using sub_nonneg.mpr htail
+
+/-- Lossless coupled-Schur assembly.  Once the finite diagonal and the true
+mixed bordered entry satisfy their scalar determinant, the endpoint row is
+closed without any coarse Young allocation. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_exactBorderSchur
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (hlow : 0 ≤ fourCellEvenFiniteSevenExactLowDiagonal w hw)
+    (hmixed : fourCellEvenFiniteSevenExactBorderMixed w hw ^ 2 ≤
+      fourCellEvenFiniteSevenExactLowDiagonal w hw *
+        fourCellEvenFiniteSevenExactTailDiagonal w hw) :
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      fourCellEvenFiniteSevenSeedDiagonal *
+        fourCellEvenPolarFreeOperator w := by
+  have htail :=
+    fourCellEvenFiniteSevenExactTailDiagonal_nonnegative
+      w hw hlocal heven
+  have hsum : 0 ≤
+      fourCellEvenFiniteSevenExactLowDiagonal w hw +
+        2 * fourCellEvenFiniteSevenExactBorderMixed w hw +
+        fourCellEvenFiniteSevenExactTailDiagonal w hw :=
+    scalar_low_tail_nonneg _ _ _ hlow htail hmixed
+  have hid :=
+    finiteSevenExactBorderDeterminant_eq_low_add_mixed_add_tail
+      w hw hlocal heven hzero
+  linarith only [hsum, hid]
+
+/-- The finite-seven certificate supplies the exact low diagonal with an
+extra positive `1/250` row reserve.  The only remaining infinite obligation
+is therefore the displayed mixed bordered Schur inequality. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_finiteSeven_exactSchur
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (hbox : fourCellEvenFiniteSevenTrueBorderEntryBox)
+    (x₂ x₄ x₆ x₈ x₁₀ x₁₂ : ℝ)
+    (hmatrix :
+      fourCellEvenFiniteSevenTrueBorderMatrixQuadratic
+          x₂ x₄ x₆ x₈ x₁₀ x₁₂ =
+        fourCellEvenFiniteSevenCanonicalLowBorder w hw)
+    (hmixed : fourCellEvenFiniteSevenExactBorderMixed w hw ^ 2 ≤
+      fourCellEvenFiniteSevenExactLowDiagonal w hw *
+        fourCellEvenFiniteSevenExactTailDiagonal w hw) :
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      fourCellEvenFiniteSevenSeedDiagonal *
+        fourCellEvenPolarFreeOperator w := by
+  have hmatrixNonneg :=
+    finiteSevenTrueBorderMatrixQuadratic_nonnegative_of_entryBox hbox
+      x₂ x₄ x₆ x₈ x₁₀ x₁₂
+  have hborder : 0 ≤ fourCellEvenFiniteSevenCanonicalLowBorder w hw := by
+    rw [← hmatrix]
+    exact hmatrixNonneg
+  have hlow : 0 ≤ fourCellEvenFiniteSevenExactLowDiagonal w hw := by
+    have hrowSq : 0 ≤
+        fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw ^ 2 :=
+      sq_nonneg _
+    unfold fourCellEvenFiniteSevenCanonicalLowBorder at hborder
+    unfold fourCellEvenFiniteSevenExactLowDiagonal
+    nlinarith only [hborder, hrowSq]
+  exact
+    fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_exactBorderSchur
+      w hw hlocal heven hzero hlow hmixed
 
 /-! ## The current `1/16` budget is not a closable pure-tail allocation -/
 
