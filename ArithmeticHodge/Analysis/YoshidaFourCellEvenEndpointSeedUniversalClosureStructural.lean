@@ -1267,6 +1267,206 @@ theorem abs_integral_endpointSeedTailFourteenRepresenter_zero_mul_quadraticCoshR
     nlinarith only [habsSq, abs_nonneg B]
   simpa only [B] using htarget
 
+/-- A genuine `P₁₄+` cosh coordinate sees only the quadratic Taylor
+remainder.  Its square is therefore controlled by the tiny quotient pivot
+times tail mass, with no transcendental evaluation. -/
+theorem positiveCoshMoment_sq_le_quadraticCoshRemainderNorm_mul_mass_of_tailFourteen
+    (r : ℝ → ℝ) (hr : Continuous r) (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    fourCellPositiveCoshMoment r (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+      (∫ x : ℝ in -1..1,
+        (fourCellEvenHalfWideCoshRepresenter x - centeredPolynomialLift
+          fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x) ^ 2) *
+        (∫ x : ℝ in -1..1, r x ^ 2) := by
+  let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  let H : ℝ → ℝ := fourCellEvenHalfWideCoshRepresenter
+  let P : ℝ → ℝ :=
+    centeredPolynomialLift fourCellEvenHalfWideCoshQuadraticSelectorPolynomial
+  let J : ℝ → ℝ := fun x ↦ H x - P x
+  have hH : MemLp H 2 μ := by
+    simpa only [H, μ] using
+      memLp_fourCellEvenHalfWideCoshRepresenter_two_restrict
+  have hP : MemLp P 2 μ := by
+    simpa only [P, μ] using
+      memLp_centeredPolynomialLift_two_restrict
+        fourCellEvenHalfWideCoshQuadraticSelectorPolynomial
+  have hJ : MemLp J 2 μ := by
+    simpa only [J, Pi.sub_apply] using hH.sub hP
+  have hrMeas : AEStronglyMeasurable r μ :=
+    hr.aestronglyMeasurable.restrict
+  have hrLp : MemLp r 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hrMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖r x‖ ^ 2)
+        (Icc (-1 : ℝ) 1) :=
+      (hr.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hcauchy :=
+    YoshidaEndpointWeightedCauchy.sq_integral_mul_le_weighted
+      μ (fun _ : ℝ ↦ 1) J r (by simp)
+        (by simpa only [div_one, Real.sqrt_one] using hJ)
+        (by simpa only [Real.sqrt_one, one_mul] using hrLp)
+  have hcauchy' :
+      (∫ x : ℝ in -1..1, J x * r x) ^ 2 ≤
+        (∫ x : ℝ in -1..1, J x ^ 2) *
+          (∫ x : ℝ in -1..1, r x ^ 2) := by
+    repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+    simpa only [μ, div_one, one_mul] using hcauchy
+  have hpoly : (∫ x : ℝ in -1..1, P x * r x) = 0 := by
+    simpa only [P] using
+      intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+        fourCellEvenHalfWideCoshQuadraticSelectorPolynomial r hr hlow
+          natDegree_fourCellEvenHalfWideCoshQuadraticSelectorPolynomial_lt_fourteen
+  have hHcont : Continuous H := by
+    dsimp only [H]
+    unfold fourCellEvenHalfWideCoshRepresenter
+    fun_prop
+  have hPcont : Continuous P := by
+    dsimp only [P]
+    unfold centeredPolynomialLift
+    fun_prop
+  have hHr : IntervalIntegrable (fun x : ℝ ↦ H x * r x)
+      volume (-1) 1 := (hHcont.mul hr).intervalIntegrable _ _
+  have hPr : IntervalIntegrable (fun x : ℝ ↦ P x * r x)
+      volume (-1) 1 := (hPcont.mul hr).intervalIntegrable _ _
+  have hcosh :=
+    integral_fourCellEvenHalfWideCoshRepresenter_mul_eq_positiveCoshMoment
+      r hr heven
+  have hpair : (∫ x : ℝ in -1..1, J x * r x) =
+      fourCellPositiveCoshMoment r (fourCellOperatorHalfWidth / 2) := by
+    rw [show (fun x : ℝ ↦ J x * r x) =
+        fun x ↦ H x * r x - P x * r x by
+      funext x
+      dsimp only [J]
+      ring,
+      intervalIntegral.integral_sub hHr hPr, hpoly, sub_zero]
+    simpa only [H] using hcosh
+  rw [hpair] at hcauchy'
+  simpa only [J, H, P] using hcauchy'
+
+/-- Above the fourteenth harmonic, mass itself is dominated by the complete
+polar-free tail operator.  This is the diagonal form of the spectral margin
+behind the stronger two-fifths raw-energy reserve. -/
+theorem tailFourteen_mass_le_fourCellEvenPolarFreeOperator
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    (∫ x : ℝ in -1..1, r x ^ 2) ≤
+      fourCellEvenPolarFreeOperator r := by
+  let M : ℝ := ∫ x : ℝ in -1..1, r x ^ 2
+  let E : ℝ := centeredRawLogEnergy r / 4
+  have hM : 0 ≤ M := by
+    dsimp only [M]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hraw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    r hr hlocal 14 hlow
+  have hgap : (1171733 / 360360 : ℝ) * M ≤ E := by
+    norm_num [harmonic, Finset.sum_range_succ] at hraw
+    simpa only [M, E, factorTwoIntrinsicEnergy] using hraw
+  have htail :=
+    two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+      r hr hlocal heven hlow
+  have hMtoE : M ≤ (2 / 5 : ℝ) * E := by
+    nlinarith only [hgap, hM]
+  exact hMtoE.trans htail
+
+/-- The wide-cosh coordinate of a `P₁₄+` tail costs at most one
+fifty-millionth of its polar-free operator. -/
+theorem tailFourteen_positiveCoshMoment_sq_le_one_div_fiftyMillion_polarFree
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    fourCellPositiveCoshMoment r (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+      (1 / 50000000 : ℝ) * fourCellEvenPolarFreeOperator r := by
+  let M : ℝ := ∫ x : ℝ in -1..1, r x ^ 2
+  let D : ℝ := ∫ x : ℝ in -1..1,
+    (fourCellEvenHalfWideCoshRepresenter x - centeredPolynomialLift
+      fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x) ^ 2
+  have hpair :
+      fourCellPositiveCoshMoment r (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+        D * M := by
+    simpa only [D, M] using
+      positiveCoshMoment_sq_le_quadraticCoshRemainderNorm_mul_mass_of_tailFourteen
+        r hr heven hlow
+  have hD : D ≤ (1 / 50000000 : ℝ) := by
+    simpa only [D] using integral_halfWideCosh_sub_quadraticSelector_sq_le
+  have hM : 0 ≤ M := by
+    dsimp only [M]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hDM : D * M ≤ (1 / 50000000 : ℝ) * M :=
+    mul_le_mul_of_nonneg_right hD hM
+  have hmass := tailFourteen_mass_le_fourCellEvenPolarFreeOperator
+    r hr hlocal heven hlow
+  have hmassScaled :=
+    mul_le_mul_of_nonneg_left hmass (by norm_num : (0 : ℝ) ≤ 1 / 50000000)
+  exact hpair.trans (hDM.trans hmassScaled)
+
+/-- For a full zero-cosh profile, the finite `P₀,…,P₁₂` cosh
+coordinate is exactly the negative tail coordinate.  Hence its entire
+constraint defect is owned by one fifty-millionth of the `P₁₄+`
+polar-free operator. -/
+theorem lowProjectionFourteen_positiveCoshMoment_sq_le_one_div_fiftyMillion_tailPolarFree
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0) :
+    fourCellPositiveCoshMoment (centeredLegendreLowProjection w hw 14)
+        (fourCellOperatorHalfWidth / 2) ^ 2 ≤
+      (1 / 50000000 : ℝ) * fourCellEvenPolarFreeOperator
+        (centeredLegendreHigherResidual w hw 14) := by
+  let p : ℝ → ℝ := centeredLegendreLowProjection w hw 14
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 14
+  let lambda : ℝ := fourCellOperatorHalfWidth / 2
+  have hp : Continuous p := by
+    simpa only [p] using continuous_centeredLegendreLowProjection w hw 14
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrEven : Function.Even r := by
+    simpa only [r] using centeredLegendreHigherResidual_even w hw heven 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hsum : p + r = w := by
+    simpa only [p, r] using
+      centeredLegendreLowProjection_add_higherResidual w hw 14
+  have hpInt : IntervalIntegrable
+      (fun x : ℝ ↦ Real.cosh (lambda * x) * p x) volume 0 1 :=
+    ((Real.continuous_cosh.comp (continuous_const.mul continuous_id)).mul hp)
+      |>.intervalIntegrable _ _
+  have hrInt : IntervalIntegrable
+      (fun x : ℝ ↦ Real.cosh (lambda * x) * r x) volume 0 1 :=
+    ((Real.continuous_cosh.comp (continuous_const.mul continuous_id)).mul hr)
+      |>.intervalIntegrable _ _
+  have hCadd : fourCellPositiveCoshMoment (p + r) lambda =
+      fourCellPositiveCoshMoment p lambda +
+        fourCellPositiveCoshMoment r lambda := by
+    unfold fourCellPositiveCoshMoment
+    rw [show (fun x : ℝ ↦ Real.cosh (lambda * x) * (p + r) x) =
+      fun x ↦ Real.cosh (lambda * x) * p x +
+        Real.cosh (lambda * x) * r x by
+      funext x
+      simp only [Pi.add_apply]
+      ring,
+      intervalIntegral.integral_add hpInt hrInt]
+  rw [hsum] at hCadd
+  have hneg : fourCellPositiveCoshMoment p lambda =
+      -fourCellPositiveCoshMoment r lambda := by
+    dsimp only [lambda] at hCadd
+    linarith only [hCadd, hzero]
+  have htail :=
+    tailFourteen_positiveCoshMoment_sq_le_one_div_fiftyMillion_polarFree
+      r hr hrLocal hrEven hrGap
+  dsimp only [p, r, lambda] at hneg ⊢
+  rw [hneg, neg_sq]
+  simpa only [r] using htail
+
 /-- The cosh Gram pivot is uniformly positive.  The simple lower bound
 comes from `cosh ≥ 1`; it is enough to make the quotient projection scalar
 canonical without evaluating any transcendental integral. -/
