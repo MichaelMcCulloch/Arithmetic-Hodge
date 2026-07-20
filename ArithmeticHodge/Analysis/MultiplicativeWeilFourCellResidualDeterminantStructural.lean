@@ -307,6 +307,201 @@ theorem fourCell_productionNonnegative_iff_residualDeterminant_and_factorTwoEndp
   rw [fourCell_productionNonnegative_iff_residualDeterminant_and_zeroInterior,
     realFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength_four_iff_factorTwo]
 
+/-! ## The one-sided residual inequality actually used by the Schur step -/
+
+/-- Only a negative residual cross needs a determinant bound.  A nonnegative
+residual cross already improves the three-block quadratic directly. -/
+def RealFourCellNegativeResidualCrossContractive : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        0 < bombieriRealQuadraticValue
+            (monotoneQuarterFiniteBlockInterior parent k 4) →
+          let l := finiteBlockLeftMiddleOrthogonalResidual parent k 4
+          let r := finiteBlockRightMiddleOrthogonalResidual parent k 4
+          (bombieriTwoBlockGlobalCrossSymbol l r).re < 0 →
+            (bombieriTwoBlockGlobalCrossSymbol l r).re ^ 2 ≤
+              bombieriRealQuadraticValue l * bombieriRealQuadraticValue r
+
+theorem fourCell_negativeResidualCrossContractive_of_residualDeterminant
+    (hdeterminant :
+      RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength 4) :
+    RealFourCellNegativeResidualCrossContractive := by
+  intro parent hparent k hMpos
+  dsimp only
+  intro _hnegative
+  exact hdeterminant parent hparent k hMpos
+
+private theorem threeBlockQuadratic_nonnegative_of_conditionalCross
+    {A M E U V X : ℝ}
+    (hMpos : 0 < M)
+    (hAM : U ^ 2 ≤ A * M)
+    (hME : V ^ 2 ≤ M * E)
+    (hdelta : 0 ≤ M * X - U * V) :
+    0 ≤ A + M + E + 2 * (U + V + X) := by
+  have halpha : 0 ≤ A * M - U ^ 2 := by linarith
+  have hbeta : 0 ≤ M * E - V ^ 2 := by linarith
+  have hidentity :
+      M * (A + M + E + 2 * (U + V + X)) =
+        (M + U + V) ^ 2 + (A * M - U ^ 2) +
+          (M * E - V ^ 2) + 2 * (M * X - U * V) := by
+    ring
+  have hscaled :
+      0 ≤ M * (A + M + E + 2 * (U + V + X)) := by
+    rw [hidentity]
+    nlinarith [sq_nonneg (M + U + V)]
+  exact (mul_nonneg_iff_of_pos_left hMpos).mp hscaled
+
+private theorem threeBlockQuadratic_nonnegative_of_residualDeterminant
+    {A M E U V X : ℝ}
+    (hMpos : 0 < M)
+    (hAM : U ^ 2 ≤ A * M)
+    (hME : V ^ 2 ≤ M * E)
+    (hresidual :
+      (M * X - U * V) ^ 2 ≤
+        (A * M - U ^ 2) * (M * E - V ^ 2)) :
+    0 ≤ A + M + E + 2 * (U + V + X) := by
+  let alpha : ℝ := A * M - U ^ 2
+  let beta : ℝ := M * E - V ^ 2
+  let delta : ℝ := M * X - U * V
+  have halpha : 0 ≤ alpha := by dsimp only [alpha]; linarith
+  have hbeta : 0 ≤ beta := by dsimp only [beta]; linarith
+  have hresidual' : delta ^ 2 ≤ alpha * beta := by
+    simpa only [alpha, beta, delta] using hresidual
+  have hschur : 0 ≤ alpha + beta + 2 * delta := by
+    by_contra hnot
+    have hnegative : alpha + beta + 2 * delta < 0 :=
+      lt_of_not_ge hnot
+    have hsumNonnegative : 0 ≤ alpha + beta := add_nonneg halpha hbeta
+    have hminusDeltaPositive : 0 < -2 * delta := by linarith
+    have hsquare :
+        (alpha + beta) ^ 2 < (-2 * delta) ^ 2 :=
+      (sq_lt_sq₀ hsumNonnegative hminusDeltaPositive.le).2 (by linarith)
+    nlinarith [sq_nonneg (alpha - beta)]
+  have hidentity :
+      M * (A + M + E + 2 * (U + V + X)) =
+        (M + U + V) ^ 2 + alpha + beta + 2 * delta := by
+    dsimp only [alpha, beta, delta]
+    ring
+  have hscaled :
+      0 ≤ M * (A + M + E + 2 * (U + V + X)) := by
+    rw [hidentity]
+    nlinarith [sq_nonneg (M + U + V)]
+  exact (mul_nonneg_iff_of_pos_left hMpos).mp hscaled
+
+/-- The one-sided contraction is sufficient for four-cell production: a
+nonnegative residual cross closes by sign, while a negative one closes by its
+contractive determinant bound. -/
+theorem fourCell_production_of_negativeResidualCrossContractive_and_zeroInterior
+    (hcontract : RealFourCellNegativeResidualCrossContractive)
+    (hzero : RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength 4) :
+    RealFiniteBlockProductionNonnegativeAtLength 4 := by
+  intro parent hparent k
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k 4
+  let e : BombieriTest := monotoneQuarterCell parent (k + 3)
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+  let l : BombieriTest := finiteBlockLeftMiddleOrthogonalResidual parent k 4
+  let r : BombieriTest := finiteBlockRightMiddleOrthogonalResidual parent k 4
+  let C : ℝ := (bombieriTwoBlockGlobalCrossSymbol l r).re
+  have hadj := finiteBlock_adjacentPrincipalMinors_of_previousLengths
+    4 (by omega) realFiniteBlockProductionNonnegativeUpTo_three
+      parent hparent k
+  change U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E at hadj
+  have hM : 0 ≤ M := by
+    have hmiddle :=
+      bombieriRealQuadraticValue_monotoneQuarterFiniteBlock_nonnegative_of_le_three
+        parent k 1 2 (by omega)
+    exact hmiddle
+  have hvalue := bombieriRealQuadraticValue_finiteBlock_eq_threeBlock_allLength
+    parent k 4 (by omega)
+  change bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent k 0 4) =
+    A + M + E + 2 * (U + V + X) at hvalue
+  rw [hvalue]
+  by_cases hMzero : M = 0
+  · have hU : U = 0 := by
+      have h := hadj.1
+      rw [hMzero, mul_zero] at h
+      nlinarith [sq_nonneg U]
+    have hV : V = 0 := by
+      have h := hadj.2
+      rw [hMzero, zero_mul] at h
+      nlinarith [sq_nonneg V]
+    have hpair := hzero parent hparent k
+    change M = 0 → 0 ≤ bombieriRealQuadraticValue (a + e) at hpair
+    have hpair0 := hpair hMzero
+    rw [bombieriRealQuadraticValue_add] at hpair0
+    change 0 ≤ A + E + 2 * X at hpair0
+    rw [hMzero, hU, hV]
+    linarith
+  · have hMpos : 0 < M := lt_of_le_of_ne hM (Ne.symm hMzero)
+    have hcross := finiteBlock_middleOrthogonalResidualCross_coordinate
+      parent k 4
+    have hdiagonals :=
+      finiteBlock_middleOrthogonalResidualQuadratic_coordinates parent k 4
+    change C = M * (M * X - U * V) at hcross
+    change
+      bombieriRealQuadraticValue l = M * (A * M - U ^ 2) ∧
+        bombieriRealQuadraticValue r = M * (M * E - V ^ 2) at hdiagonals
+    by_cases hCnegative : C < 0
+    · have hactual := hcontract parent hparent k hMpos
+        hCnegative
+      change C ^ 2 ≤
+        bombieriRealQuadraticValue l * bombieriRealQuadraticValue r at hactual
+      rw [hcross, hdiagonals.1, hdiagonals.2] at hactual
+      have hscaled :
+          M ^ 2 * (M * X - U * V) ^ 2 ≤
+            M ^ 2 * ((A * M - U ^ 2) * (M * E - V ^ 2)) := by
+        calc
+          M ^ 2 * (M * X - U * V) ^ 2 =
+              (M * (M * X - U * V)) ^ 2 := by ring
+          _ ≤ (M * (A * M - U ^ 2)) *
+                (M * (M * E - V ^ 2)) := hactual
+          _ = M ^ 2 * ((A * M - U ^ 2) * (M * E - V ^ 2)) := by ring
+      have hpivot :
+          (M * X - U * V) ^ 2 ≤
+            (A * M - U ^ 2) * (M * E - V ^ 2) :=
+        le_of_mul_le_mul_left hscaled (sq_pos_of_pos hMpos)
+      exact threeBlockQuadratic_nonnegative_of_residualDeterminant
+        hMpos hadj.1 hadj.2 hpivot
+    · have hCnonnegative : 0 ≤ C := le_of_not_gt hCnegative
+      rw [hcross] at hCnonnegative
+      have hdelta : 0 ≤ M * X - U * V :=
+        (mul_nonneg_iff_of_pos_left hMpos).mp hCnonnegative
+      exact threeBlockQuadratic_nonnegative_of_conditionalCross
+        hMpos hadj.1 hadj.2 hdelta
+
+/-- Thus the genuinely one-sided common-parent condition, together with the
+unavoidable singular endpoint clause, is already an exact characterization of
+four-cell production. -/
+theorem fourCell_productionNonnegative_iff_negativeResidualCrossContractive_and_zeroInterior :
+    RealFiniteBlockProductionNonnegativeAtLength 4 ↔
+      RealFourCellNegativeResidualCrossContractive ∧
+        RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength 4 := by
+  constructor
+  · intro hproduction
+    exact ⟨
+      fourCell_negativeResidualCrossContractive_of_residualDeterminant
+        (fourCell_residualDeterminant_of_production hproduction),
+      fourCell_zeroInteriorSparseEndpointNonnegative_of_production hproduction⟩
+  · rintro ⟨hcontract, hzero⟩
+    exact
+      fourCell_production_of_negativeResidualCrossContractive_and_zeroInterior
+        hcontract hzero
+
+theorem fourCell_productionNonnegative_iff_negativeResidualCrossContractive_and_factorTwoEndpoint :
+    RealFiniteBlockProductionNonnegativeAtLength 4 ↔
+      RealFourCellNegativeResidualCrossContractive ∧
+        RealFourCellZeroInteriorFactorTwoEndpointNonnegative := by
+  rw [fourCell_productionNonnegative_iff_negativeResidualCrossContractive_and_zeroInterior,
+    realFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength_four_iff_factorTwo]
+
 end
 
 end ArithmeticHodge.Analysis.MultiplicativeWeilFourCellResidualDeterminantStructural
