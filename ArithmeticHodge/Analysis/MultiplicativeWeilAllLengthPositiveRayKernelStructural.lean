@@ -14,6 +14,7 @@ open MultiplicativeWeilAllLengthCommonParentResidualStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
+open MultiplicativeWeilQuarterLogLatticePartitionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 
 /-!
@@ -125,6 +126,114 @@ theorem finiteBlock_residualPencil_tsupport_subset_parent
   · exact (tsupport_real_smul_subset (t * M) e).trans
       (monotoneQuarterCell_tsupport_subset_parent parent _)
 
+/-- Independently of the support of the parent, the `n`-cell residual pencil
+is confined to the canonical quarter-lattice window occupied by those
+cells. -/
+theorem finiteBlock_residualPencil_tsupport_subset_latticeWindow
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (t : ℝ) :
+    tsupport
+        (monotoneQuarterFiniteBlock
+          (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+          k 0 n : ℝ → ℂ) ⊆
+      Set.Icc (quarterLogLatticePoint k)
+        (quarterLogLatticePoint (k + (n : ℤ) + 1)) := by
+  simpa only [Nat.cast_zero, add_zero] using
+    monotoneQuarterFiniteBlock_remotePrefix_tsupport_subset
+      (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+      k 0 n
+
+private theorem bombieriQuadraticTest_apply_eq_zero_above_supportRatio
+    (g : BombieriTest) {a b x : ℝ}
+    (ha : 0 < a) (hab : a ≤ b)
+    (hsupport : tsupport g ⊆ Set.Icc a b)
+    (hratio : b / a < x) :
+    bombieriQuadraticTest g x = 0 := by
+  by_contra hne
+  have hmem := bombieriQuadraticTest_tsupport_subset_Icc
+    g ha hab hsupport
+    (subset_tsupport (bombieriQuadraticTest g)
+      (Function.mem_support.mpr hne))
+  exact (not_lt_of_ge hmem.2) hratio
+
+private theorem vonMangoldtPrimeSummand_residualPencil_eq_zero_of_cutoff_le
+    (parent : BombieriTest) (k : ℤ) (n N j : ℕ) (t : ℝ)
+    (hratio :
+      quarterLogLatticePoint (k + (n : ℤ) + 1) /
+          quarterLogLatticePoint k < (((N + 1 : ℕ) : ℝ)))
+    (hNj : N ≤ j) :
+    vonMangoldtPrimeSummand
+        (bombieriQuadraticTest
+          (monotoneQuarterFiniteBlock
+            (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+            k 0 n)) j = 0 := by
+  let g : BombieriTest :=
+    monotoneQuarterFiniteBlock
+      (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+      k 0 n
+  have hj : (((N + 1 : ℕ) : ℝ)) ≤ (((j + 1 : ℕ) : ℝ)) := by
+    exact_mod_cast (show N + 1 ≤ j + 1 by omega)
+  have hzero : bombieriQuadraticTest g (((j + 1 : ℕ) : ℝ)) = 0 := by
+    apply bombieriQuadraticTest_apply_eq_zero_above_supportRatio
+      g (a := quarterLogLatticePoint k)
+        (b := quarterLogLatticePoint (k + (n : ℤ) + 1))
+    · exact quarterLogLatticePoint_pos k
+    · exact quarterLogLatticePoint_mono (by omega)
+    · exact finiteBlock_residualPencil_tsupport_subset_latticeWindow
+        parent k n t
+    · exact hratio.trans_le hj
+  unfold vonMangoldtPrimeSummand
+  rw [primeKernel_bombieriQuadraticTest_eq_two_re, hzero]
+  norm_num
+
+/-- At every fixed length, the residual pencil has an *exact finite* prime
+shell.  Any natural cutoff above the canonical lattice-window ratio removes
+all later von-Mangoldt summands; no infinite arithmetic tail remains. -/
+theorem primeSum_residualPencil_eq_finiteShell
+    (parent : BombieriTest) (k : ℤ) (n N : ℕ) (t : ℝ)
+    (hratio :
+      quarterLogLatticePoint (k + (n : ℤ) + 1) /
+          quarterLogLatticePoint k < (((N + 1 : ℕ) : ℝ))) :
+    let g := monotoneQuarterFiniteBlock
+      (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+      k 0 n
+    primeSum (bombieriQuadraticTest g) =
+      ∑ j ∈ Finset.range N,
+        vonMangoldtPrimeSummand (bombieriQuadraticTest g) j := by
+  dsimp only
+  rw [primeSum, tsum_eq_sum (s := Finset.range N)]
+  intro j hj
+  have hNj : N ≤ j := by
+    simpa only [Finset.mem_range, not_lt] using hj
+  exact vonMangoldtPrimeSummand_residualPencil_eq_zero_of_cutoff_le
+    parent k n N j t hratio hNj
+
+/-- The wide-support part of the positive-ray problem is exactly a finite
+arithmetic domination problem: the local critical energy must dominate the
+real part of the finite von-Mangoldt shell selected by the lattice window. -/
+theorem bombieriRealQuadraticValue_residualPencil_nonnegative_iff_finiteShell
+    (parent : BombieriTest) (k : ℤ) (n N : ℕ) (t : ℝ)
+    (hratio :
+      quarterLogLatticePoint (k + (n : ℤ) + 1) /
+          quarterLogLatticePoint k < (((N + 1 : ℕ) : ℝ))) :
+    let g := monotoneQuarterFiniteBlock
+      (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+      k 0 n
+    0 ≤ bombieriRealQuadraticValue g ↔
+      (∑ j ∈ Finset.range N,
+          vonMangoldtPrimeSummand (bombieriQuadraticTest g) j).re ≤
+        (bombieriLocalCriticalForm g g).re := by
+  dsimp only
+  let g : BombieriTest := monotoneQuarterFiniteBlock
+    (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+    k 0 n
+  have hdecomposition := bombieriFunctional_quadratic_eq_localCritical_sub_prime g
+  have hprime := primeSum_residualPencil_eq_finiteShell
+    parent k n N t hratio
+  change 0 ≤ (bombieriFunctional (bombieriQuadraticTest g)).re ↔ _
+  rw [hdecomposition, hprime]
+  simp only [Complex.sub_re]
+  exact sub_nonneg
+
 /-- Every real residual-pencil parameter is unconditionally nonnegative on
 the ratio-two common-parent support cone.  The conclusion is stronger than
 the positive-ray obligation: neither `0 ≤ t` nor positivity of the interior
@@ -161,6 +270,41 @@ theorem commonParentPositiveRay_nonnegative_of_parent_ratioTwo
         k 0 n) :=
   bombieriRealQuadraticValue_residualPencil_nonnegative_of_parent_ratioTwo
     parent hparentCell k n hn t
+
+/-- The genuinely nonlocal remainder of the positive-ray certificate at one
+length: the same production quantifiers, restricted only by the assertion
+that the common parent is not supported in any ratio-two interval. -/
+def RealFiniteBlockCommonParentResidualPositiveRayNonnegativeOutsideRatioTwoAtLength
+    (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ¬ BombieriRatioTwoCell parent →
+        ∀ k : ℤ,
+          0 < bombieriRealQuadraticValue
+              (monotoneQuarterFiniteBlockInterior parent k n) →
+            ∀ t : ℝ, 0 ≤ t →
+              0 ≤ bombieriRealQuadraticValue
+                (monotoneQuarterFiniteBlock
+                  (finiteBlockMiddleOrthogonalResidualPencilParent
+                    parent k n t) k 0 n)
+
+/-- Exact quantifier-level localization of the all-length ray.  Ratio-two
+parents are already unconditional by the actual common-parent support mask,
+so the full certificate is equivalent to checking only genuinely nonlocal
+parents. -/
+theorem realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_outsideRatioTwo
+    (n : ℕ) (hn : 3 ≤ n) :
+    RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength n ↔
+      RealFiniteBlockCommonParentResidualPositiveRayNonnegativeOutsideRatioTwoAtLength
+        n := by
+  constructor
+  · intro hall parent hparent _hwide k hMpos t ht
+    exact hall parent hparent k hMpos t ht
+  · intro hwide parent hparent k hMpos t ht
+    by_cases hparentCell : BombieriRatioTwoCell parent
+    · exact commonParentPositiveRay_nonnegative_of_parent_ratioTwo
+        n hn parent hparentCell k hMpos t ht
+    · exact hwide parent hparent hparentCell k hMpos t ht
 
 /-- Sharp support obstruction to any counterexample on the positive ray (or
 on the full real pencil): a negative value forces the common parent to lie
