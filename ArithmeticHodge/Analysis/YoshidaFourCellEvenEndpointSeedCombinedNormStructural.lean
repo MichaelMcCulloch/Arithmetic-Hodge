@@ -11,10 +11,14 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCombinedNormSt
 noncomputable section
 
 open YoshidaConstantBounds
+open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointSeedCapacityCrossStructural
+open YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
 open YoshidaFourCellEvenEndpointSeedRegularRemainderStructural
 open YoshidaFourCellEvenPolarSchurStructural
+open YoshidaFourCellEvenZeroCoshCoupledCoreStructural
+open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
 
 private theorem intervalIntegrable_sq_of_memLp_two_restrict
@@ -145,6 +149,60 @@ theorem integral_endpointSeedProjectedCapacity_sub_regularRemainder_sq_le_budget
     fourCellEvenEndpointSeedProjectedCapacityRepresenter
       memLp_fourCellEvenEndpointSeedProjectedCapacityRepresenter
       integral_endpointSeedProjectedCapacityRepresenter_sq_le
+
+/-- The canonical degree-below-eight removal identifies the complete tail
+row with the combined capacity/regular-remainder representer, so the norm
+budget above is exactly the dual bound required by the endpoint Schur step. -/
+theorem integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_budget :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedProjectedTailRowRepresenter
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial x ^ 2) ≤
+      fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+        (553 / 20000 : ℝ) := by
+  calc
+    (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedProjectedTailRowRepresenter
+          fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial x ^ 2) =
+      ∫ x : ℝ in -1..1,
+        (fourCellEvenEndpointSeedProjectedCapacityRepresenter x -
+          fourCellOperatorHalfWidth *
+            fourCellEndpointSeedRegularRemainderRepresenter x) ^ 2 := by
+      apply intervalIntegral.integral_congr
+      intro x hx
+      rw [uIcc_of_le (by norm_num : (-1 : ℝ) ≤ 1)] at hx
+      change
+        fourCellEvenEndpointSeedProjectedTailRowRepresenter
+            fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial x ^ 2 =
+          (fourCellEvenEndpointSeedProjectedCapacityRepresenter x -
+            fourCellOperatorHalfWidth *
+              fourCellEndpointSeedRegularRemainderRepresenter x) ^ 2
+      rw [endpointSeedProjectedTailRowRepresenter_canonical_eq,
+        fourCellEvenEndpointSeedRegularTailRepresenter_sub_selector_eq_remainder
+          hx]
+    _ ≤ fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+        (553 / 20000 : ℝ) :=
+      integral_endpointSeedProjectedCapacity_sub_regularRemainder_sq_le_budget
+
+/-- Structural endpoint-row Schur closure on every genuine cutoff-eight
+tail.  The coupled-core diagonal and the complete capacity/regular row are
+both discharged, with no spectral truncation or exhaustive enumeration. -/
+theorem fourCellEvenEndpointSeedRow_tail_sq_le_seed_mul_polarFree
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hzero : fourCellPositiveCoshMoment r
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (hlow : centeredLegendreMomentsVanishBelow r 8) :
+    fourCellEvenEndpointSeedRow r ^ 2 ≤
+      fourCellEvenExactBracket fourCellEvenEndpointCoshSeed *
+        fourCellEvenPolarFreeOperator r := by
+  exact fourCellEvenEndpointSeedRow_tail_sq_le_seed_mul_polarFree_of_norm
+    r hr hlocal heven hzero hlow
+      (thirtyThree_div_twenty_mass_le_canonicalCoupledCore_cutoffEight
+        r hr hlocal heven hzero)
+      fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+      natDegree_fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial_lt_eight
+      integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_budget
 
 end
 
