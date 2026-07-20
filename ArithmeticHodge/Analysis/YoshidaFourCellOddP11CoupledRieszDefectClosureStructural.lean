@@ -10,6 +10,7 @@ noncomputable section
 
 open CenteredOddOneThreeEnergy
 open YoshidaEndpointOcticPotential
+open YoshidaEndpointOddResidualRegularity
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialIntegrable
 open YoshidaFactorTwoPhaseCenteredP9Structural
@@ -166,6 +167,70 @@ def FourCellOddP11FiniteCorrectedReserveNonnegative : Prop :=
   ∀ d e f g : ℝ,
     0 ≤ fourCellOddP11FiniteCorrectedReserve d e f g
 
+/-- Exact identification of the coefficient-level five-mode expression with
+the function-level core quadratic.  This is an algebraic API bridge, not a
+new positivity estimate. -/
+def FourCellOddFiveModeCoreExpressionBridge : Prop :=
+  ∀ c d e f g : ℝ,
+    fourCellOddCoreLocalQuadratic
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) =
+      fourCellOddFiveModeCoreExpression c d e f g
+
+/-- The existing finite Schur theorem supplies the actual finite corrected
+reserve as soon as the exact coefficient/function bridge is exposed. -/
+theorem fourCellOddP11FiniteCorrectedReserve_nonnegative_of_bridge
+    (hbridge : FourCellOddFiveModeCoreExpressionBridge) :
+    FourCellOddP11FiniteCorrectedReserveNonnegative := by
+  intro d e f g
+  let p := fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  have hp : Continuous p := by
+    dsimp only [p]
+    exact (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g).continuous
+  have hp1 :
+      fourCellOddOneThreeFiveSevenNineLowProfile 1 0 0 0 0 = centeredP1 := by
+    funext t
+    unfold fourCellOddOneThreeFiveSevenNineLowProfile
+      fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    simp
+  have hadd := fourCellOddCoreLocalQuadratic_add centeredP1 p
+    (by unfold centeredP1; fun_prop) hp
+  have hsum : centeredP1 + p =
+      fourCellOddOneThreeFiveSevenNineLowProfile 1 d e f g := by
+    funext t
+    dsimp only [p]
+    unfold fourCellOddOneThreeFiveSevenNineLowProfile
+      fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+      centeredP1
+    simp only [Pi.add_apply]
+    ring
+  rw [hsum, hbridge 1 d e f g] at hadd
+  have hA : fourCellOddCoreLocalQuadratic centeredP1 =
+      fourCellOddOneThreeFivePerturbed11 := by
+    rw [← hp1, hbridge 1 0 0 0 0]
+    unfold fourCellOddFiveModeCoreExpression
+      fourCellOddOneThreeFivePerturbedQuadratic
+    ring
+  have hC : fourCellOddCoreLocalQuadratic p =
+      fourCellOddFiveModeCoreExpression 0 d e f g := by
+    dsimp only [p]
+    exact hbridge 0 d e f g
+  have hexpand : fourCellOddFiveModeCoreExpression 1 d e f g =
+      fourCellOddOneThreeFivePerturbed11 +
+        2 * fourCellOddP1FiveModeRow d e f g +
+          fourCellOddFiveModeCoreExpression 0 d e f g := by
+    unfold fourCellOddFiveModeCoreExpression fourCellOddP1FiveModeRow
+      fourCellOddOneThreeFivePerturbedQuadratic
+    ring
+  have hB : fourCellOddCoreLocalBilinear centeredP1 p =
+      fourCellOddP1FiveModeRow d e f g := by
+    rw [hA, hC, hexpand] at hadd
+    linarith
+  have hrow := fourCellOddP1FiveModeRow_sq_le d e f g
+  unfold fourCellOddP11FiniteCorrectedReserve
+  dsimp only [p] at hA hB hC ⊢
+  rw [hA, hB, hC]
+  linarith
+
 /-- A single weighted-dual certificate that retains the finite--tail cross.
 `D₀` pays the pure `P₁` tail row.  The second inequality charges the corrected
 cross to the finite reserve and precisely the unused pivot `A-D₀`. -/
@@ -228,6 +293,15 @@ theorem fourCellOddP11CoupledRieszDefectNonnegative_of_weightedDual
     (by rfl)
   simpa only [fourCellOddP11CoupledRieszDefect, p, A, b, C, x, y, z]
     using h
+
+/-- Final structural handoff: the exact five-mode coefficient bridge and the
+single coupled weighted-dual certificate close the actual `P₁₁+` defect. -/
+theorem fourCellOddP11CoupledRieszDefectNonnegative_of_bridge_weightedDual
+    (hbridge : FourCellOddFiveModeCoreExpressionBridge)
+    (hdual : FourCellOddP11CoupledWeightedDualCertificate) :
+    FourCellOddP11CoupledRieszDefectNonnegative :=
+  fourCellOddP11CoupledRieszDefectNonnegative_of_weightedDual
+    (fourCellOddP11FiniteCorrectedReserve_nonnegative_of_bridge hbridge) hdual
 
 /-- Exact split of the actual corrected determinant into its finite reserve,
 twice the corrected cross, and the tail reserve. -/
