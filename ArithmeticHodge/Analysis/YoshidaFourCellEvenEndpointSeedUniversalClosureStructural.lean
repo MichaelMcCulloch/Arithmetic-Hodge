@@ -117,6 +117,22 @@ private theorem memLp_centeredPolynomialLift_two_restrict
     (hq.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
   exact hcompact.mono_set Ioc_subset_Icc_self
 
+private theorem memLp_fourCellEvenHalfWideCoshRepresenter_two_restrict :
+    MemLp fourCellEvenHalfWideCoshRepresenter 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hcosh : Continuous fourCellEvenHalfWideCoshRepresenter := by
+    unfold fourCellEvenHalfWideCoshRepresenter
+    fun_prop
+  have hmeas : AEStronglyMeasurable fourCellEvenHalfWideCoshRepresenter
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    hcosh.aestronglyMeasurable.restrict
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  have hcompact : IntegrableOn
+      (fun x : ℝ ↦ ‖fourCellEvenHalfWideCoshRepresenter x‖ ^ 2)
+      (Icc (-1 : ℝ) 1) :=
+    (hcosh.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  exact hcompact.mono_set Ioc_subset_Icc_self
+
 /-- The complete projected endpoint row is genuinely linear on continuous
 tails.  Keeping this identity at the row level lets us move finitely many
 dangerous low-tail harmonics into the coupled finite block without applying
@@ -571,6 +587,100 @@ theorem fourCellEvenEndpointSeedRow_eq_coshConstrainedLowThroughTwelve_add_tailP
   rw [hrow, htail]
   dsimp only [p, r, lambda] at hCzero ⊢
   linear_combination s * hCzero
+
+/-- Cauchy closure for the row density after quotienting by both the low
+polynomial space and the wide-cosh constraint.  This estimate is deliberately
+stated for the pairing itself: unlike the unconstrained tail-row estimate, it
+does not put the removed cosh coordinate back into the infinite block. -/
+theorem integral_endpointSeedTailFourteenConstrainedRepresenter_mul_sq_le_mass_of_norm
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (q : ℝ[X]) (s C : ℝ)
+    (hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2) ≤
+          C) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x * r x) ^ 2 ≤
+        C * (∫ x : ℝ in -1..1, r x ^ 2) := by
+  let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  let G₀ : ℝ → ℝ :=
+    fourCellEvenEndpointSeedProjectedTailRowRepresenter
+      fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  let P : ℝ → ℝ := centeredPolynomialLift q
+  let G₁₄ : ℝ → ℝ := fourCellEvenEndpointSeedTailFourteenRepresenter q
+  let H : ℝ → ℝ := fourCellEvenHalfWideCoshRepresenter
+  let G : ℝ → ℝ :=
+    fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s
+  have hG₀ : MemLp G₀ 2 μ := by
+    simpa only [G₀, μ] using
+      memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  have hP : MemLp P 2 μ := by
+    simpa only [P, μ] using memLp_centeredPolynomialLift_two_restrict q
+  have hG₁₄ : MemLp G₁₄ 2 μ := by
+    simpa only [G₁₄, G₀, P,
+      fourCellEvenEndpointSeedTailFourteenRepresenter] using hG₀.sub hP
+  have hH : MemLp H 2 μ := by
+    simpa only [H, μ] using
+      memLp_fourCellEvenHalfWideCoshRepresenter_two_restrict
+  have hG : MemLp G 2 μ := by
+    simpa only [G, G₁₄, H,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter,
+      Pi.sub_apply, Pi.smul_apply, smul_eq_mul] using
+        hG₁₄.sub (hH.const_smul s)
+  have hrMeas : AEStronglyMeasurable r μ :=
+    hr.aestronglyMeasurable.restrict
+  have hrLp : MemLp r 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hrMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖r x‖ ^ 2)
+        (Icc (-1 : ℝ) 1) :=
+      (hr.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have hcauchy :=
+    YoshidaEndpointWeightedCauchy.sq_integral_mul_le_weighted
+      μ (fun _ : ℝ ↦ 1) G r (by simp)
+        (by simpa only [div_one, Real.sqrt_one] using hG)
+        (by simpa only [Real.sqrt_one, one_mul] using hrLp)
+  have hcauchy' :
+      (∫ x : ℝ in -1..1, G x * r x) ^ 2 ≤
+        (∫ x : ℝ in -1..1, G x ^ 2) *
+          (∫ x : ℝ in -1..1, r x ^ 2) := by
+    repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+    simpa only [μ, div_one, one_mul] using hcauchy
+  have hR : 0 ≤ ∫ x : ℝ in -1..1, r x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num) (fun _ _ ↦ sq_nonneg _)
+  have hdualScaled := mul_le_mul_of_nonneg_right hdual hR
+  dsimp only [G] at hcauchy'
+  exact hcauchy'.trans hdualScaled
+
+/-- The quotient pairing is paid directly by the retained `P₁₄+`
+singular logarithmic energy.  The wide-cosh constraint has already been
+removed from its Riesz density, so its norm budget `C` is the norm in the
+actual constrained tail quotient rather than in the ambient `L²` space. -/
+theorem harmonic_fourteen_mul_endpointSeedTailFourteenConstrainedPairing_sq_le_raw_of_norm
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14)
+    (q : ℝ[X]) (s C : ℝ) (hC : 0 ≤ C)
+    (hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2) ≤
+          C) :
+    (harmonic 14 : ℝ) *
+        (∫ x : ℝ in -1..1,
+          fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x * r x) ^ 2 ≤
+      C * (centeredRawLogEnergy r / 4) := by
+  have hpair :=
+    integral_endpointSeedTailFourteenConstrainedRepresenter_mul_sq_le_mass_of_norm
+      r hr q s C hdual
+  have hraw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    r hr hlocal 14 hlow
+  have hH : 0 ≤ (harmonic 14 : ℝ) := by
+    norm_num [harmonic, Finset.sum_range_succ]
+  have hpairScaled := mul_le_mul_of_nonneg_left hpair hH
+  have hrawScaled := mul_le_mul_of_nonneg_left hraw hC
+  unfold factorTwoIntrinsicEnergy at hrawScaled
+  nlinarith only [hpairScaled, hrawScaled]
 
 /-- Refined Cauchy closure on a `P₁₄+` tail.  The extra polynomial selector
 is invisible to the tail, but removes its first three even dual coordinates
