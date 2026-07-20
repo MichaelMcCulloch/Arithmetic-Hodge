@@ -7726,6 +7726,65 @@ theorem abs_fourCellWideRegularEnvelopeError_le
       dsimp only [g]
       rw [intervalIntegral.integral_const_mul]
 
+private theorem fourCellWideRegularEnvelope_pointwise_sevenEighths
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 2) :
+    0 ≤ yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+        yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) ∧
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+          yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) <
+        (1 / 80000 : ℝ) := by
+  apply fourCell_yoshidaRegularKernelPolynomial6_sevenEighths_envelope
+  · exact mul_nonneg
+      (by unfold fourCellOperatorHalfWidth; positivity) ht.1
+  · have hmul := mul_le_mul_of_nonneg_left ht.2
+        (by unfold fourCellOperatorHalfWidth; positivity :
+          0 ≤ fourCellOperatorHalfWidth)
+    have hlog := strict_log_two_bounds.2
+    calc
+      fourCellOperatorHalfWidth * t ≤
+          fourCellOperatorHalfWidth * 2 := hmul
+      _ = 5 * Real.log 2 / 4 := by
+        unfold fourCellOperatorHalfWidth
+        ring
+      _ ≤ (7 / 8 : ℝ) := by linarith
+
+/-- On the actual four-cell range the global polynomial remainder is at
+most `1/80000` times the exact correlation `L¹` mass.  This is the common
+analytic input for the finite five-mode certificate. -/
+theorem abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    (C : ℝ → ℝ) (hC : Continuous C) :
+    |fourCellWideRegularEnvelopeError C| ≤
+      (1 / 80000 : ℝ) * (∫ t : ℝ in 0..2, |C t|) := by
+  let f : ℝ → ℝ := fun t ↦
+    (yoshidaRegularKernel (fourCellOperatorHalfWidth * t) -
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t)) * C t
+  let g : ℝ → ℝ := fun t ↦ (1 / 80000 : ℝ) * |C t|
+  have hf : IntervalIntegrable f volume 0 2 := by
+    dsimp only [f]
+    exact intervalIntegrable_fourCellWideRegularEnvelope_mul C hC
+  have hg : IntervalIntegrable g volume 0 2 := by
+    dsimp only [g]
+    exact (hC.abs.const_mul (1 / 80000 : ℝ)).intervalIntegrable 0 2
+  have hmono :
+      (∫ t : ℝ in 0..2, |f t|) ≤ ∫ t : ℝ in 0..2, g t := by
+    apply intervalIntegral.integral_mono_on (by norm_num) hf.abs hg
+    intro t ht
+    have henv := fourCellWideRegularEnvelope_pointwise_sevenEighths ht
+    dsimp only [f, g]
+    rw [abs_mul, abs_of_nonneg henv.1]
+    exact mul_le_mul_of_nonneg_right henv.2.le (abs_nonneg (C t))
+  calc
+    |fourCellWideRegularEnvelopeError C| =
+        |∫ t : ℝ in 0..2, f t| := by
+      unfold fourCellWideRegularEnvelopeError
+      rfl
+    _ ≤ ∫ t : ℝ in 0..2, |f t| :=
+      intervalIntegral.abs_integral_le_integral_abs (by norm_num)
+    _ ≤ ∫ t : ℝ in 0..2, g t := hmono
+    _ = (1 / 80000 : ℝ) * (∫ t : ℝ in 0..2, |C t|) := by
+      dsimp only [g]
+      rw [intervalIntegral.integral_const_mul]
+
 private theorem fourCellRegularIntegral_eq_polynomial_add_error
     (C : ℝ → ℝ) (hC : Continuous C) :
     (∫ t : ℝ in 0..2,
