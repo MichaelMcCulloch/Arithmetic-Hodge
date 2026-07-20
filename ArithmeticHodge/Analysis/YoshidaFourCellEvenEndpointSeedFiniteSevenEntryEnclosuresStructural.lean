@@ -196,6 +196,125 @@ private theorem finiteSeven_sinhDiv_taylor_bounds
   · unfold finiteSevenSinhDivUpper20
     linarith
 
+private theorem finiteSeven_sechPolynomial18_nonnegative
+    {u : ℝ} (hu0 : 0 ≤ u) (hu : u ≤ (7 / 16 : ℝ)) :
+    0 ≤ finiteSevenSechPolynomial18 u := by
+  have huSqRaw : u ^ 2 ≤ (7 / 16 : ℝ) ^ 2 :=
+    pow_le_pow_left₀ hu0 hu 2
+  have huSq : u ^ 2 ≤ (1 / 5 : ℝ) := by
+    norm_num at huSqRaw ⊢
+    linarith
+  have hbase : 0 ≤ 1 - u ^ 2 / 2 := by nlinarith
+  have h₁ : 0 ≤ (5 / 24 : ℝ) - 61 * u ^ 2 / 720 := by nlinarith
+  have h₂ : 0 ≤ (277 / 8064 : ℝ) - 50521 * u ^ 2 / 3628800 := by
+    nlinarith
+  have h₃ :
+      0 ≤ (540553 / 95800320 : ℝ) -
+        199360981 * u ^ 2 / 87178291200 := by
+    nlinarith
+  have h₄ :
+      0 ≤ (3878302429 / 4184557977600 : ℝ) -
+        2404879675441 * u ^ 2 / 6402373705728000 := by
+    nlinarith
+  have hgroup :
+      finiteSevenSechPolynomial18 u =
+        (1 - u ^ 2 / 2) +
+          u ^ 4 * ((5 / 24 : ℝ) - 61 * u ^ 2 / 720) +
+          u ^ 8 * ((277 / 8064 : ℝ) - 50521 * u ^ 2 / 3628800) +
+          u ^ 12 * ((540553 / 95800320 : ℝ) -
+            199360981 * u ^ 2 / 87178291200) +
+          u ^ 16 * ((3878302429 / 4184557977600 : ℝ) -
+            2404879675441 * u ^ 2 / 6402373705728000) := by
+    unfold finiteSevenSechPolynomial18
+    ring
+  rw [hgroup]
+  positivity
+
+private theorem finiteSeven_cschMultiplier18_nonnegative
+    {u : ℝ} (hu0 : 0 ≤ u) (hu : u ≤ (7 / 16 : ℝ)) :
+    0 ≤ finiteSevenCschMultiplier18 u := by
+  have huSqRaw : u ^ 2 ≤ (7 / 16 : ℝ) ^ 2 :=
+    pow_le_pow_left₀ hu0 hu 2
+  have huSq : u ^ 2 ≤ (1 / 5 : ℝ) := by
+    norm_num at huSqRaw ⊢
+    linarith
+  have hbase : 0 ≤ 1 - u ^ 2 / 6 := by nlinarith
+  have h₁ : 0 ≤ (7 / 360 : ℝ) - 31 * u ^ 2 / 15120 := by nlinarith
+  have h₂ : 0 ≤ (127 / 604800 : ℝ) - 73 * u ^ 2 / 3421440 := by
+    nlinarith
+  have h₃ :
+      0 ≤ (1414477 / 653837184000 : ℝ) -
+        8191 * u ^ 2 / 37362124800 := by
+    nlinarith
+  have h₄ :
+      0 ≤ (16931177 / 762187345920000 : ℝ) -
+        5749691557 * u ^ 2 / 2554547108585472000 := by
+    nlinarith
+  have hgroup :
+      finiteSevenCschMultiplier18 u =
+        (1 - u ^ 2 / 6) +
+          u ^ 4 * ((7 / 360 : ℝ) - 31 * u ^ 2 / 15120) +
+          u ^ 8 * ((127 / 604800 : ℝ) - 73 * u ^ 2 / 3421440) +
+          u ^ 12 * ((1414477 / 653837184000 : ℝ) -
+            8191 * u ^ 2 / 37362124800) +
+          u ^ 16 * ((16931177 / 762187345920000 : ℝ) -
+            5749691557 * u ^ 2 / 2554547108585472000) := by
+    unfold finiteSevenCschMultiplier18 finiteSevenCschRegularPolynomial17
+    ring
+  rw [hgroup]
+  positivity
+
+set_option maxHeartbeats 800000 in
+private theorem finiteSeven_sech_upper_product_identity (u : ℝ) :
+    finiteSevenSechPolynomial18 u * finiteSevenCoshUpper20 u - 1 =
+      -(u ^ 20 *
+        (2404879675441 * u ^ 18 + 679456904784315 * u ^ 16 +
+          208053063791488800 * u ^ 14 +
+          49821743203659189900 * u ^ 12 +
+          9038056804493497032960 * u ^ 10 +
+          1186949776492308275539200 * u ^ 8 +
+          105903844722183577305600000 * u ^ 6 +
+          5833314188265099690475776000 * u ^ 4 +
+          168445517718571165337481216000 * u ^ 2 +
+          1778441067698372583894355968000)) /
+        11682260884322225694902845440000000 := by
+  unfold finiteSevenSechPolynomial18 finiteSevenCoshUpper20
+    finiteSevenCoshPolynomial18
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem finiteSeven_csch_upper_product_identity (u : ℝ) :
+    finiteSevenCschMultiplier18 u * finiteSevenSinhDivUpper20 u - 1 =
+      -(u ^ 20 *
+        (28748457785 * u ^ 18 + 8772031538109 * u ^ 16 +
+          3010495769436960 * u ^ 14 + 812691320840480340 * u ^ 12 +
+          168883856693083203840 * u ^ 10 +
+          25930335518959823481600 * u ^ 8 +
+          2779765225457174748057600 * u ^ 6 +
+          191134377072102371104512000 * u ^ 4 +
+          7293505488811609420394496000 * u ^ 2 +
+          111614655465121550857629696000)) /
+        489428319748679645487954709708800000000 := by
+  unfold finiteSevenCschMultiplier18 finiteSevenCschRegularPolynomial17
+    finiteSevenSinhDivUpper20 finiteSevenSinhDivPolynomial18
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem finiteSeven_sech_lower_product_identity (u : ℝ) :
+    1 - finiteSevenSechPolynomial18 u * finiteSevenCoshPolynomial18 u =
+      finiteSevenSechError18 u := by
+  unfold finiteSevenSechPolynomial18 finiteSevenCoshPolynomial18
+    finiteSevenSechError18
+  ring
+
+set_option maxHeartbeats 800000 in
+private theorem finiteSeven_csch_lower_product_identity (u : ℝ) :
+    1 - finiteSevenCschMultiplier18 u * finiteSevenSinhDivPolynomial18 u =
+      u * finiteSevenCschError17 u := by
+  unfold finiteSevenCschMultiplier18 finiteSevenCschRegularPolynomial17
+    finiteSevenSinhDivPolynomial18 finiteSevenCschError17
+  ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedFiniteSevenEntryEnclosuresStructural
