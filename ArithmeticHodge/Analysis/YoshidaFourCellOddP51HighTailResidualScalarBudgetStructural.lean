@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP51HighTailResidualRepresenterStructural
+import ArithmeticHodge.Analysis.YoshidaFourCellOddP51SparseP11AnchorMassStructural
 
 set_option autoImplicit false
 
@@ -11,6 +12,7 @@ noncomputable section
 open YoshidaFourCellOddP51GalerkinRieszStructural
 open YoshidaFourCellOddP51HighTailResidualRepresenterStructural
 open YoshidaFourCellOddP51Kernel18ErrorBudgetStructural
+open YoshidaFourCellOddP51SparseP11AnchorMassStructural
 
 /-!
 # Loose scalar budget for the P51 high-tail residual
@@ -43,24 +45,29 @@ theorem fourCellOddP51Kernel18MainP53PlusNormCertificate_oneEighth_of_cap
       gcongr
       simpa only [FourCellOddP51GalerkinPivotSevenTenThousandFloor] using hpivot
 
-/-- Consequently only three transparent scalar facts remain on the residual
-side: the pivot floor, a harmless mass normalization, and the loose norm cap.
--/
+/-- Consequently only two scalar facts remain on the residual side: the
+pivot floor and the loose norm cap.  The pivot floor supplies its own sign,
+and the existing structural sparse-anchor theorem then proves the auxiliary
+`q51` mass normalization automatically. -/
 theorem fourCellOddP51GalerkinP53PlusResidualDual_oneEighth_of_scalarCaps
     (hpivot : FourCellOddP51GalerkinPivotSevenTenThousandFloor)
-    (hmass : FourCellOddQ51PositiveHalfMassAtMostOne)
     (hmain : FourCellOddP51MainP53PlusThreeFortyThousandCap) :
     FourCellOddP51GalerkinP53PlusResidualDual (1 / 8) := by
+  have hpivot0 : FourCellOddP51GalerkinPivotNonnegative :=
+    (by norm_num : (0 : ℝ) ≤ 7 / 10000).trans
+      (by
+        simpa only [FourCellOddP51GalerkinPivotSevenTenThousandFloor]
+          using hpivot)
+  have hmass : FourCellOddQ51PositiveHalfMassAtMostOne := by
+    simpa only [FourCellOddQ51PositiveHalfMassAtMostOne] using
+      integral_zero_one_fourCellOddQ51_sq_le_one hpivot0
   apply
     fourCellOddP51GalerkinP53PlusResidualDual_oneEighth_of_certificate
   refine ⟨?_,
     fourCellOddP51Kernel18MainP53PlusNormCertificate_oneEighth_of_cap
       hpivot hmain,
     ?_⟩
-  · exact (by norm_num : (0 : ℝ) ≤ 7 / 10000).trans
-      (by
-        simpa only [FourCellOddP51GalerkinPivotSevenTenThousandFloor]
-          using hpivot)
+  · exact hpivot0
   · exact
       integral_zero_one_fourCellOddP51Kernel18ErrorRepresenter_sq_le_budget_of_kappa_floor
         (1 / 8) (by norm_num) hpivot hmass
