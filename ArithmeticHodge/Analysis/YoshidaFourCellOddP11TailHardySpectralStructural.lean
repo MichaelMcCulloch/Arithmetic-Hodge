@@ -25,6 +25,7 @@ open UnitIntervalLogEnergyProjection
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointPotentialLegendreDiagonalStructural
+open YoshidaEndpointPotentialLegendreOffDiagonalStructural
 open YoshidaFactorTwoPhaseCenteredP9Structural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
@@ -250,6 +251,71 @@ theorem affineHardyProbe_neg_of_component_box
   norm_num at hraw hlower haffine hupper hpotential ⊢
   linarith
 
+/-! The diagonal endpoint-potential recurrence also admits a compact closed
+form.  This is useful below because it separates the single transcendental
+constant `log 2` from rational harmonic data at every degree. -/
+
+theorem endpointPotentialLegendreDiagonal_closed (n : ℕ) :
+    endpointPotentialLegendreDiagonal n =
+      (4 * ((harmonic (2 * n) : ℝ) - (harmonic n : ℝ)) +
+          2 / (2 * (n : ℝ) + 1) - 2 * Real.log 2) /
+        (2 * (n : ℝ) + 1) := by
+  induction n with
+  | zero =>
+      rw [endpointPotentialLegendreDiagonal_zero]
+      norm_num [harmonic]
+  | succ n ih =>
+      have hrec := endpointPotentialLegendreDiagonal_succ n
+      rw [ih] at hrec
+      rw [show 2 * (n + 1) = (2 * n + 1) + 1 by omega,
+        harmonic_succ (2 * n + 1), harmonic_succ (2 * n),
+        harmonic_succ n]
+      push_cast at hrec ⊢
+      field_simp at hrec ⊢
+      nlinarith
+
+private theorem endpointPotentialPolynomialPair_finset_sum_left
+    {ι : Type} [DecidableEq ι] (s : Finset ι)
+    (p : ι → ℝ[X]) (q : ℝ[X]) :
+    endpointPotentialPolynomialPair (∑ i ∈ s, p i) q =
+      ∑ i ∈ s, endpointPotentialPolynomialPair (p i) q := by
+  induction s using Finset.induction_on with
+  | empty => simp [endpointPotentialPolynomialPair]
+  | @insert i s hi ih =>
+      rw [Finset.sum_insert hi, Finset.sum_insert hi,
+        endpointPotentialPolynomialPair_add_left, ih]
+
+private theorem endpointPotentialPolynomialPair_finset_sum_right
+    {ι : Type} [DecidableEq ι] (s : Finset ι)
+    (p : ℝ[X]) (q : ι → ℝ[X]) :
+    endpointPotentialPolynomialPair p (∑ i ∈ s, q i) =
+      ∑ i ∈ s, endpointPotentialPolynomialPair p (q i) := by
+  induction s using Finset.induction_on with
+  | empty => simp [endpointPotentialPolynomialPair]
+  | @insert i s hi ih =>
+      rw [Finset.sum_insert hi, Finset.sum_insert hi,
+        endpointPotentialPolynomialPair_add_right, ih]
+
+/-- Coefficient-wise exact integral of a real polynomial on an arbitrary
+interval.  This packages all ordinary moment calculations into one finite
+algebraic functional. -/
+def polynomialIntervalIntegral (p : ℝ[X]) (a b : ℝ) : ℝ :=
+  p.sum fun n c ↦
+    c * ((b ^ (n + 1) - a ^ (n + 1)) / (n + 1 : ℝ))
+
+theorem integral_polynomial_eval_eq_intervalFunctional
+    (p : ℝ[X]) (a b : ℝ) :
+    (∫ x : ℝ in a..b, p.eval x) = polynomialIntervalIntegral p a b := by
+  unfold polynomialIntervalIntegral
+  simp_rw [Polynomial.eval_eq_sum, Polynomial.sum]
+  rw [intervalIntegral.integral_finset_sum]
+  · apply Finset.sum_congr rfl
+    intro n hn
+    rw [intervalIntegral.integral_const_mul,
+      YoshidaEndpointOcticPotential.integral_pow_nat]
+  · intro n hn
+    exact (by fun_prop : Continuous (fun x : ℝ ↦ p.coeff n * x ^ n)).intervalIntegrable _ _
+
 /-!
 ## Endpoint-concentration no-go
 
@@ -459,6 +525,46 @@ convention differs by a minus sign in odd degree. -/
 def fourCellOddP11BoundaryClassicalMode (n : ℕ) : ℝ[X] :=
   -(centeredShiftedLegendreReal n)
 
+/-- Exact endpoint-potential matrix entry for two degrees in the odd packet.
+The diagonal uses the recurrence above; the off-diagonal is the Green
+spectral-gap kernel. -/
+def fourCellOddP11BoundaryEndpointEntry (i j : ℕ) : ℝ :=
+  if i = j then endpointPotentialLegendreDiagonal (11 + 2 * i)
+  else if i < j then
+    2 / ((((11 + 2 * j : ℕ) : ℝ) - (11 + 2 * i : ℕ)) *
+      (((11 + 2 * j : ℕ) : ℝ) + (11 + 2 * i : ℕ) + 1))
+  else
+    2 / ((((11 + 2 * i : ℕ) : ℝ) - (11 + 2 * j : ℕ)) *
+      (((11 + 2 * i : ℕ) : ℝ) + (11 + 2 * j : ℕ) + 1))
+
+private theorem endpointPotentialPolynomialPair_boundaryClassicalMode
+    (i j : ℕ) :
+    endpointPotentialPolynomialPair
+        (fourCellOddP11BoundaryClassicalMode (11 + 2 * i))
+        (fourCellOddP11BoundaryClassicalMode (11 + 2 * j)) =
+      fourCellOddP11BoundaryEndpointEntry i j := by
+  have heven : Even ((11 + 2 * i) + (11 + 2 * j)) := by
+    use 11 + i + j
+    omega
+  unfold fourCellOddP11BoundaryClassicalMode
+  rw [endpointPotentialPolynomialPair_neg_left,
+    endpointPotentialPolynomialPair_neg_right]
+  simp only [neg_neg]
+  by_cases hij : i = j
+  · subst j
+    rw [fourCellOddP11BoundaryEndpointEntry, if_pos rfl]
+    rfl
+  · rw [fourCellOddP11BoundaryEndpointEntry, if_neg hij]
+    by_cases hlt : i < j
+    · rw [if_pos hlt]
+      unfold endpointPotentialPolynomialPair
+      exact integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+        (by omega) heven
+    · rw [if_neg hlt, endpointPotentialPolynomialPair_comm]
+      unfold endpointPotentialPolynomialPair
+      exact integral_endpointPotential_mul_centeredShiftedLegendreReal_of_even
+        (by omega) (by simpa [Nat.add_comm] using heven)
+
 /-- Rational six-representer coefficient at odd degree `n`. -/
 def fourCellOddP11BoundaryRepresenterCoeff (n : ℕ) : ℝ :=
   (1 / 4 : ℝ) - (n : ℝ) / 800 +
@@ -473,6 +579,29 @@ def fourCellOddP11BoundaryRepresenterPolynomial : ℝ[X] :=
   ∑ k ∈ Finset.range 66,
     fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * k) •
       fourCellOddP11BoundaryClassicalMode (11 + 2 * k)
+
+/-- Exact Green-matrix formula for the packet's global endpoint-potential
+pair.  Diagonal entries are supplied by the closed harmonic formula and all
+off-diagonal entries by the Legendre Green identity. -/
+theorem endpointPotentialPolynomialPair_boundaryRepresenter_eq :
+    endpointPotentialPolynomialPair
+        fourCellOddP11BoundaryRepresenterPolynomial
+        fourCellOddP11BoundaryRepresenterPolynomial =
+      ∑ i ∈ Finset.range 66, ∑ j ∈ Finset.range 66,
+        fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * i) *
+          fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * j) *
+            fourCellOddP11BoundaryEndpointEntry i j := by
+  unfold fourCellOddP11BoundaryRepresenterPolynomial
+  rw [endpointPotentialPolynomialPair_finset_sum_left]
+  apply Finset.sum_congr rfl
+  intro i hi
+  rw [endpointPotentialPolynomialPair_smul_left,
+    endpointPotentialPolynomialPair_finset_sum_right, Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro j hj
+  rw [endpointPotentialPolynomialPair_smul_right,
+    endpointPotentialPolynomialPair_boundaryClassicalMode]
+  ring
 
 /-- The same packet in unit-interval shifted Legendre coordinates. -/
 def fourCellOddP11BoundaryRepresenterShiftedPolynomial : ℝ[X] :=
@@ -492,6 +621,64 @@ def fourCellOddP11BoundaryStripOddShiftedPolynomial : ℝ[X] :=
 
 def fourCellOddP11BoundaryRepresenter : ℝ → ℝ := fun x ↦
   fourCellOddP11BoundaryRepresenterPolynomial.eval x
+
+def fourCellOddP11BoundaryRepresenterSquarePolynomial : ℝ[X] :=
+  fourCellOddP11BoundaryRepresenterPolynomial ^ 2
+
+def fourCellOddP11BoundaryRepresenterAffineSquarePolynomial : ℝ[X] :=
+  (C 2 - X) * fourCellOddP11BoundaryRepresenterSquarePolynomial
+
+theorem integral_lower_boundaryRepresenter_sq_eq :
+    (∫ x : ℝ in 0..3 / 5,
+      fourCellOddP11BoundaryRepresenter x ^ 2) =
+      polynomialIntervalIntegral
+        fourCellOddP11BoundaryRepresenterSquarePolynomial 0 (3 / 5) := by
+  rw [← integral_polynomial_eval_eq_intervalFunctional]
+  apply intervalIntegral.integral_congr
+  intro x hx
+  unfold fourCellOddP11BoundaryRepresenter
+    fourCellOddP11BoundaryRepresenterSquarePolynomial
+  simp only [Polynomial.eval_pow]
+
+theorem integral_upper_boundaryRepresenter_sq_eq :
+    (∫ x : ℝ in 3 / 5..1,
+      fourCellOddP11BoundaryRepresenter x ^ 2) =
+      polynomialIntervalIntegral
+        fourCellOddP11BoundaryRepresenterSquarePolynomial (3 / 5) 1 := by
+  rw [← integral_polynomial_eval_eq_intervalFunctional]
+  apply intervalIntegral.integral_congr
+  intro x hx
+  unfold fourCellOddP11BoundaryRepresenter
+    fourCellOddP11BoundaryRepresenterSquarePolynomial
+  simp only [Polynomial.eval_pow]
+
+theorem integral_affineUpper_boundaryRepresenter_sq_eq :
+    (∫ x : ℝ in 3 / 5..1,
+      (2 - x) * fourCellOddP11BoundaryRepresenter x ^ 2) =
+      polynomialIntervalIntegral
+        fourCellOddP11BoundaryRepresenterAffineSquarePolynomial (3 / 5) 1 := by
+  rw [← integral_polynomial_eval_eq_intervalFunctional]
+  apply intervalIntegral.integral_congr
+  intro x hx
+  unfold fourCellOddP11BoundaryRepresenter
+    fourCellOddP11BoundaryRepresenterAffineSquarePolynomial
+    fourCellOddP11BoundaryRepresenterSquarePolynomial
+  simp only [Polynomial.eval_mul, Polynomial.eval_sub, Polynomial.eval_C,
+    Polynomial.eval_X, Polynomial.eval_pow]
+
+theorem integral_endpointPotential_boundaryRepresenter_sq_eq :
+    (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x *
+        fourCellOddP11BoundaryRepresenter x ^ 2) =
+      ∑ i ∈ Finset.range 66, ∑ j ∈ Finset.range 66,
+        fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * i) *
+          fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * j) *
+            fourCellOddP11BoundaryEndpointEntry i j := by
+  rw [← endpointPotentialPolynomialPair_boundaryRepresenter_eq]
+  unfold endpointPotentialPolynomialPair fourCellOddP11BoundaryRepresenter
+  apply intervalIntegral.integral_congr
+  intro x hx
+  ring
 
 theorem centeredPullback_boundaryRepresenter_eq (t : ℝ) :
     centeredPullback fourCellOddP11BoundaryRepresenter t =
@@ -607,6 +794,46 @@ theorem rawStripCancellationReserve_boundaryRepresenter_eq :
     ring
   · ring
 
+/-- Fully algebraic scalar left after the structural reductions.  It contains
+one diagonal harmonic sum, one compact shifted strip form, three coefficient
+functionals, and the exact endpoint Green matrix. -/
+def fourCellOddP11BoundaryAffineCertificate : ℝ :=
+  (∑ k ∈ Finset.range 66,
+      fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * k) ^ 2 *
+        (2 * (harmonic (11 + 2 * k) : ℝ) /
+          (2 * ((11 + 2 * k : ℕ) : ℝ) + 1))) -
+    (2 / 5 : ℝ) *
+      ShiftedLegendrePolynomialGap.shiftedLogEnergyBilinear
+        fourCellOddP11BoundaryStripOddShiftedPolynomial
+        fourCellOddP11BoundaryStripOddShiftedPolynomial -
+    (68427 / 20000 : ℝ) *
+      polynomialIntervalIntegral
+        fourCellOddP11BoundaryRepresenterSquarePolynomial 0 (3 / 5) -
+    (6 / 5 : ℝ) *
+      polynomialIntervalIntegral
+        fourCellOddP11BoundaryRepresenterAffineSquarePolynomial (3 / 5) 1 +
+    (2813 / 20000 : ℝ) *
+      polynomialIntervalIntegral
+        fourCellOddP11BoundaryRepresenterSquarePolynomial (3 / 5) 1 -
+    (93 / 200 : ℝ) *
+      (∑ i ∈ Finset.range 66, ∑ j ∈ Finset.range 66,
+        fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * i) *
+          fourCellOddP11BoundaryRepresenterCoeff (11 + 2 * j) *
+            fourCellOddP11BoundaryEndpointEntry i j)
+
+/-- Exact identification of the analytic affine probe with the single
+structural certificate scalar. -/
+theorem affineHardyProbe_boundaryRepresenter_eq :
+    fourCellOddP11AffineHardyProbe fourCellOddP11BoundaryRepresenter =
+      fourCellOddP11BoundaryAffineCertificate := by
+  unfold fourCellOddP11AffineHardyProbe
+    fourCellOddP11BoundaryAffineCertificate
+  rw [rawStripCancellationReserve_boundaryRepresenter_eq,
+    integral_lower_boundaryRepresenter_sq_eq,
+    integral_affineUpper_boundaryRepresenter_sq_eq,
+    integral_upper_boundaryRepresenter_sq_eq,
+    integral_endpointPotential_boundaryRepresenter_sq_eq]
+
 /-- Every centered Legendre coordinate below degree eleven annihilates the
 boundary-representer packet.  This is an all-degree orthogonality argument;
 the rational coefficient formula is never expanded. -/
@@ -663,7 +890,7 @@ theorem integral_boundaryRepresenter_mul_centeredMode_eq_zero
 private theorem boundary_centeredP1_eq_neg_mode_one :
     centeredP1 = fun x ↦ -(centeredShiftedLegendreReal 1).eval x := by
   funext x
-  rw [eval_centeredShiftedLegendreReal_one]
+  rw [ShiftedLegendreCenteredLowModes.eval_centeredShiftedLegendreReal_one]
   unfold centeredP1
   ring
 
@@ -754,6 +981,20 @@ theorem fourCellOddP11BoundaryRepresenter_moments :
           (centeredShiftedLegendreReal 9).eval x) by funext x; ring,
         intervalIntegral.integral_neg, h9]
   norm_num
+
+/-- Strict negativity of the one named algebraic certificate is the sole
+remaining obligation needed to refute the retained Hardy mechanism. -/
+theorem not_tailHardyConcentration_of_boundaryAffineCertificate_neg
+    (hneg : fourCellOddP11BoundaryAffineCertificate < 0) :
+    ¬ FourCellOddP11TailHardyConcentration := by
+  rcases fourCellOddP11BoundaryRepresenter_moments with
+    ⟨h1, h3, h5, h7, h9⟩
+  apply not_tailHardyConcentration_of_affineProbe_neg
+    fourCellOddP11BoundaryRepresenter
+    contDiff_fourCellOddP11BoundaryRepresenter
+    odd_fourCellOddP11BoundaryRepresenter h1 h3 h5 h7 h9
+  rw [affineHardyProbe_boundaryRepresenter_eq]
+  exact hneg
 
 end
 
