@@ -4,6 +4,7 @@ import ArithmeticHodge.Analysis.YoshidaFourCellRegularKernelLowerStructural
 set_option autoImplicit false
 
 open MeasureTheory Polynomial Real Set
+open scoped Interval
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenFiniteSevenTailAssemblyStructural
 
@@ -24,8 +25,11 @@ open YoshidaFactorTwoFixedLagRepresenterStructural
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
+open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFourCellEvenEndpointCapacityCauchyStructural
 open YoshidaFourCellEvenEndpointCoshSchurStructural
+open YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
+open YoshidaFourCellEvenEndpointSeedCapacityCrossStructural
 open YoshidaFourCellEvenEndpointSeedFiniteSevenClosureStructural
 open YoshidaFourCellEvenEndpointSeedRegularRemainderStructural
 open YoshidaFourCellEvenEndpointSeedUniversalClosureStructural
@@ -499,6 +503,253 @@ private theorem finiteSeven_regularLagWeight_abs_le_quarter
   rw [abs_of_nonneg hk0]
   exact yoshidaRegularKernel_le_quarter harg0
 
+private theorem finiteSeven_intervalIntegrable_log_sq_zero_one :
+    IntervalIntegrable (fun x : ℝ ↦ Real.log x ^ 2) volume 0 1 := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+  have hr : IntegrableOn
+      (fun x : ℝ ↦ 16 * x ^ (-(1 / 2 : ℝ))) (Ioc 0 1) volume := by
+    have h := intervalIntegral.intervalIntegrable_rpow'
+      (a := (0 : ℝ)) (b := 1) (r := -(1 / 2 : ℝ)) (by norm_num)
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)] at h
+    exact h.const_mul 16
+  apply Integrable.mono' hr
+  · exact (Real.measurable_log.pow_const 2).aestronglyMeasurable
+  · filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+    have hx0 : 0 < x := hx.1
+    have hx1 : x ≤ 1 := hx.2
+    let y : ℝ := x ^ (1 / 4 : ℝ)
+    have hy : 0 < y := Real.rpow_pos_of_pos hx0 _
+    have hlog := Real.abs_log_mul_self_rpow_lt x (1 / 4 : ℝ)
+      hx0 hx1 (by norm_num)
+    norm_num at hlog
+    have hprod : |Real.log x| * y < 4 := by
+      dsimp only [y]
+      simpa only [abs_mul,
+        abs_of_pos (Real.rpow_pos_of_pos hx0 _)] using hlog
+    have hp0 : 0 ≤ |Real.log x| * y :=
+      mul_nonneg (abs_nonneg _) hy.le
+    have hmul :
+        0 ≤ (4 - |Real.log x| * y) * (4 + |Real.log x| * y) :=
+      mul_nonneg (sub_nonneg.mpr hprod.le) (add_nonneg (by norm_num) hp0)
+    have hsq : |Real.log x| ^ 2 * y ^ 2 ≤ 16 := by
+      nlinarith only [hmul]
+    have hySq : y ^ 2 = x ^ (1 / 2 : ℝ) := by
+      dsimp only [y]
+      rw [← Real.rpow_natCast, ← Real.rpow_mul hx0.le]
+      norm_num
+    have hneg : x ^ (-(1 / 2 : ℝ)) = (y ^ 2)⁻¹ := by
+      rw [Real.rpow_neg hx0.le, hySq]
+    rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _), ← sq_abs, hneg,
+      ← div_eq_mul_inv]
+    exact (le_div_iff₀ (sq_pos_of_pos hy)).2 hsq
+
+private theorem finiteSeven_intervalIntegrable_log_sq_zero_two :
+    IntervalIntegrable (fun x : ℝ ↦ Real.log x ^ 2) volume 0 2 := by
+  apply finiteSeven_intervalIntegrable_log_sq_zero_one.trans
+  apply ContinuousOn.intervalIntegrable
+  exact (Real.continuousOn_log.mono (by
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (1 : ℝ) ≤ 2)] at hx
+    simp only [mem_compl_iff, mem_singleton_iff]
+    linarith [hx.1])).pow 2
+
+private theorem finiteSeven_intervalIntegrable_endpointPotential_sq :
+    IntervalIntegrable (fun x : ℝ ↦ yoshidaEndpointPotential x ^ 2)
+      volume (-1) 1 := by
+  have hlog := finiteSeven_intervalIntegrable_log_sq_zero_two
+  have hminus : IntervalIntegrable
+      (fun x : ℝ ↦ Real.log (1 - x) ^ 2) volume (-1) 1 := by
+    convert (hlog.comp_sub_left 1).symm using 1 <;> norm_num
+  have hplus : IntervalIntegrable
+      (fun x : ℝ ↦ Real.log (1 + x) ^ 2) volume (-1) 1 := by
+    convert hlog.comp_add_left 1 using 1 <;> norm_num
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    at hminus hplus ⊢
+  have hdom : IntegrableOn
+      (fun x : ℝ ↦ (1 / 2 : ℝ) *
+        (Real.log (1 - x) ^ 2 + Real.log (1 + x) ^ 2))
+      (Ioc (-1) 1) volume := (hminus.add hplus).const_mul (1 / 2)
+  apply Integrable.mono' hdom
+  · unfold yoshidaEndpointPotential
+    exact (((Real.measurable_log.comp
+      (measurable_const.sub (measurable_id.pow_const 2))).neg.div_const 2)
+        |>.pow_const 2).aestronglyMeasurable
+  · have hne1 : ∀ᵐ x : ℝ ∂(volume.restrict (Ioc (-1 : ℝ) 1)), x ≠ 1 :=
+      (MeasureTheory.Measure.ae_ne volume (1 : ℝ)).filter_mono
+        (ae_mono Measure.restrict_le_self)
+    filter_upwards [ae_restrict_mem measurableSet_Ioc, hne1] with x hx hx1
+    have hxneg1 : x ≠ -1 := ne_of_gt hx.1
+    have hsub : 1 - x ≠ 0 := sub_ne_zero.mpr (Ne.symm hx1)
+    have hadd : 1 + x ≠ 0 := by
+      intro hzero
+      apply hxneg1
+      linarith
+    unfold yoshidaEndpointPotential
+    rw [show 1 - x ^ 2 = (1 - x) * (1 + x) by ring,
+      Real.log_mul hsub hadd]
+    rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
+    nlinarith only [sq_nonneg (Real.log (1 - x) - Real.log (1 + x))]
+
+private theorem finiteSeven_memLp_two_restrict_of_continuous
+    (f : ℝ → ℝ) (hf : Continuous f) :
+    MemLp f 2 (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    hf.aestronglyMeasurable.restrict
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  have hcompact : IntegrableOn (fun x : ℝ ↦ ‖f x‖ ^ 2)
+      (Icc (-1 : ℝ) 1) :=
+    (hf.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+  exact hcompact.mono_set Ioc_subset_Icc_self
+
+private theorem finiteSeven_memLp_endpointPotential_mul_continuous
+    (u : ℝ → ℝ) (hu : Continuous u) :
+    MemLp (fun x : ℝ ↦ yoshidaEndpointPotential x * u x) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hmeas : AEStronglyMeasurable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x * u x)
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    apply Measurable.aestronglyMeasurable
+    unfold yoshidaEndpointPotential
+    exact ((Real.measurable_log.comp
+      (measurable_const.sub (measurable_id.pow_const 2))).neg.div_const 2).mul
+        hu.measurable
+  rw [memLp_two_iff_integrable_sq_norm hmeas]
+  have hI : IntervalIntegrable
+      (fun x : ℝ ↦ yoshidaEndpointPotential x ^ 2 * u x ^ 2)
+      volume (-1) 1 := by
+    simpa only [mul_comm] using
+      finiteSeven_intervalIntegrable_endpointPotential_sq.continuousOn_mul
+        (hu.pow 2).continuousOn
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)] at hI
+  apply hI.congr
+  filter_upwards with x
+  rw [Real.norm_eq_abs, sq_abs]
+  ring
+
+private theorem finiteSeven_memLp_fixedLagK
+    (tau : ℝ) (u : ℝ → ℝ) (hu : Continuous u) :
+    MemLp (factorTwoFixedLagK tau u) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hrightBase : MemLp (fun x : ℝ ↦ u (tau + x)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    finiteSeven_memLp_two_restrict_of_continuous _
+      (hu.comp (continuous_const.add continuous_id))
+  have hright : MemLp (factorTwoFixedLagRightRepresenter tau u) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [factorTwoFixedLagRightRepresenter] using
+      hrightBase.indicator (measurableSet_Icc :
+        MeasurableSet (Icc (-1 : ℝ) (1 - tau)))
+  have hleftBase : MemLp (fun x : ℝ ↦ u (x - tau)) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    finiteSeven_memLp_two_restrict_of_continuous _
+      (hu.comp (continuous_id.sub continuous_const))
+  have hleft : MemLp (factorTwoFixedLagLeftRepresenter tau u) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [factorTwoFixedLagLeftRepresenter] using
+      hleftBase.indicator (measurableSet_Icc :
+        MeasurableSet (Icc (-1 + tau) 1))
+  simpa only [factorTwoFixedLagK] using hright.add hleft
+
+private theorem finiteSeven_memLp_regularLagK
+    (u : ℝ → ℝ) (hu : Continuous u) :
+    MemLp
+      (factorTwoContinuousLagK fourCellEvenFiniteSevenRegularLagWeight u) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let k : ℝ → ℝ := fourCellEvenFiniteSevenRegularLagWeight
+  have hkMeas : Measurable k := by
+    simpa only [k] using finiteSeven_regularLagWeight_measurable
+  have hkBound : ∀ t ∈ Icc (0 : ℝ) 2, |k t| ≤ (1 / 4 : ℝ) := by
+    intro t ht
+    simpa only [k] using
+      finiteSeven_regularLagWeight_abs_le_quarter t ht
+  have hrightI :=
+    intervalIntegrable_mul_factorTwoContinuousLagRightRepresenter_of_bounded
+      k u (fun _ : ℝ ↦ 1) hkMeas hu continuous_const (1 / 4) hkBound
+  have hleftI :=
+    intervalIntegrable_mul_factorTwoContinuousLagLeftRepresenter_of_bounded
+      k (fun _ : ℝ ↦ 1) u hkMeas continuous_const hu (1 / 4) hkBound
+  have hKI : IntervalIntegrable (factorTwoContinuousLagK k u)
+      volume (-1) 1 := by
+    apply (hrightI.add hleftI).congr
+    intro x _hx
+    unfold factorTwoContinuousLagK
+    simp only [one_mul]
+  obtain ⟨M, hM⟩ := isCompact_Icc.bddAbove_image hu.norm.continuousOn
+  let B : ℝ := max 1 M
+  have hBpos : 0 < B := lt_of_lt_of_le zero_lt_one (le_max_left 1 M)
+  have huB : ∀ x ∈ Icc (-1 : ℝ) 1, ‖u x‖ ≤ B := by
+    intro x hx
+    exact (hM (Set.mem_image_of_mem _ hx)).trans (le_max_right 1 M)
+  have hKBound : ∀ x ∈ Ioc (-1 : ℝ) 1,
+      ‖factorTwoContinuousLagK k u x‖ ≤ B := by
+    intro x hx
+    have hrightPoint : ∀ y ∈ Ι x 1,
+        ‖k (y - x) * u y‖ ≤ (1 / 4 : ℝ) * B := by
+      intro y hy
+      rw [uIoc_of_le hx.2] at hy
+      have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+        ⟨by linarith [hx.1, hy.1], hy.2⟩
+      have hlag : y - x ∈ Icc (0 : ℝ) 2 :=
+        ⟨by linarith [hy.1], by linarith [hx.1, hy.2]⟩
+      rw [norm_mul, Real.norm_eq_abs]
+      exact mul_le_mul (hkBound (y - x) hlag) (huB y hyIcc)
+        (norm_nonneg _) (by norm_num)
+    have hleftPoint : ∀ y ∈ Ι (-1) x,
+        ‖k (x - y) * u y‖ ≤ (1 / 4 : ℝ) * B := by
+      intro y hy
+      rw [uIoc_of_le hx.1.le] at hy
+      have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+        ⟨hy.1.le, by linarith [hy.2, hx.2]⟩
+      have hlag : x - y ∈ Icc (0 : ℝ) 2 :=
+        ⟨by linarith [hy.2], by linarith [hy.1, hx.2]⟩
+      rw [norm_mul, Real.norm_eq_abs]
+      exact mul_le_mul (hkBound (x - y) hlag) (huB y hyIcc)
+        (norm_nonneg _) (by norm_num)
+    have hright :=
+      intervalIntegral.norm_integral_le_of_norm_le_const hrightPoint
+    have hleft :=
+      intervalIntegral.norm_integral_le_of_norm_le_const hleftPoint
+    have hright' :
+        ‖factorTwoContinuousLagRightRepresenter k u x‖ ≤ B / 2 := by
+      change ‖∫ y : ℝ in x..1, k (y - x) * u y‖ ≤ B / 2
+      have hlen : |1 - x| ≤ 2 := by
+        rw [abs_of_nonneg (by linarith [hx.2])]
+        linarith [hx.1]
+      nlinarith only [hright, hlen, hBpos]
+    have hleft' :
+        ‖factorTwoContinuousLagLeftRepresenter k u x‖ ≤ B / 2 := by
+      change ‖∫ y : ℝ in -1..x, k (x - y) * u y‖ ≤ B / 2
+      have hlen : |x - (-1)| ≤ 2 := by
+        rw [abs_of_nonneg (by linarith [hx.1.le])]
+        linarith [hx.2]
+      nlinarith only [hleft, hlen, hBpos]
+    unfold factorTwoContinuousLagK
+    exact (norm_add_le _ _).trans (by linarith only [hright', hleft'])
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)] at hKI
+  have hmeas : AEStronglyMeasurable (factorTwoContinuousLagK k u)
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := hKI.aestronglyMeasurable
+  have hLp : MemLp (factorTwoContinuousLagK k u) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    apply MemLp.of_bound hmeas B
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+    exact hKBound x hx
+  simpa only [k] using hLp
+
+private theorem finiteSeven_memLp_endpointSeedTailRepresenter_zero :
+    MemLp (fourCellEvenEndpointSeedTailFourteenRepresenter 0) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have heq : fourCellEvenEndpointSeedTailFourteenRepresenter 0 =
+      fourCellEvenEndpointSeedProjectedTailRowRepresenter
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial := by
+    funext x
+    unfold fourCellEvenEndpointSeedTailFourteenRepresenter
+      centeredPolynomialLift
+    simp
+  rw [heq]
+  exact memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter
+    fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+
 /-- Fubini turns both surviving correlation channels into the displayed
 single tail pairing.  This identity is exact; no norm or triangle estimate
 is used. -/
@@ -610,6 +861,187 @@ theorem finiteSevenNonsingularPolarization_eq_representerPairing
   dsimp only [u, r, k]
   ring
 
+/-- The projected bordered representer is a genuine `L²(-1,1)` vector for
+every finite selector.  This is analytic square-integrability, not an
+assumed formal norm. -/
+theorem memLp_fourCellEvenFiniteSevenProjectedBorderRepresenter
+    (w : ℝ → ℝ) (hw : Continuous w) (q : ℝ[X]) :
+    MemLp (fourCellEvenFiniteSevenProjectedBorderRepresenter w hw q) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  let u : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalLow w hw
+  have hu : Continuous u := by
+    simpa only [u, fourCellEvenFiniteSevenCanonicalLow] using
+      continuous_centeredLegendreLowProjection w hw 14
+  have hpotential :=
+    finiteSeven_memLp_endpointPotential_mul_continuous u hu
+  have hfixed := finiteSeven_memLp_fixedLagK (8 / 5) u hu
+  have hregular := finiteSeven_memLp_regularLagK u hu
+  have hop : MemLp
+      (fourCellEvenFiniteSevenNonsingularOperatorRepresenter u) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [fourCellEvenFiniteSevenNonsingularOperatorRepresenter,
+      Pi.sub_apply, Pi.smul_apply, smul_eq_mul] using
+      (hpotential.sub
+        (hfixed.const_mul (Real.sqrt 2 * Real.log 2 / 2))).sub
+          (hregular.const_mul fourCellOperatorHalfWidth)
+  have htail : MemLp
+      (fourCellEvenEndpointSeedTailFourteenRepresenter 0) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    exact finiteSeven_memLp_endpointSeedTailRepresenter_zero
+  have hbase : MemLp (fourCellEvenFiniteSevenExactBorderRepresenter w hw) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+    simpa only [fourCellEvenFiniteSevenExactBorderRepresenter, u,
+      Pi.sub_apply, Pi.smul_apply, smul_eq_mul] using
+      (hop.const_mul fourCellEvenFiniteSevenSeedDiagonal).sub
+        (htail.const_mul
+          (fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw))
+  have hpoly : MemLp (centeredPolynomialLift q) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) :=
+    finiteSeven_memLp_two_restrict_of_continuous _ (by
+      unfold centeredPolynomialLift
+      fun_prop)
+  simpa only [fourCellEvenFiniteSevenProjectedBorderRepresenter] using
+    hbase.sub hpoly
+
+/-- The exact bordered mixed scalar is the pairing of the canonical `P14+`
+tail with the explicit projected representer.  The selector `q` is
+arbitrary below degree fourteen, so this is already the quotient norm that
+the final Schur determinant must control. -/
+theorem fourCellEvenFiniteSevenExactBorderMixed_eq_projectedRepresenterPairing
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (q : ℝ[X]) (hq : q.natDegree < 14) :
+    fourCellEvenFiniteSevenExactBorderMixed w hw =
+      ∫ x : ℝ in -1..1,
+        fourCellEvenFiniteSevenProjectedBorderRepresenter w hw q x *
+          fourCellEvenFiniteSevenCanonicalTail w hw x := by
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  let G : ℝ → ℝ := fourCellEvenFiniteSevenExactBorderRepresenter w hw
+  let P : ℝ → ℝ := centeredPolynomialLift q
+  let mu : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hrLp : MemLp r 2 mu := by
+    dsimp only [mu]
+    exact finiteSeven_memLp_two_restrict_of_continuous r hr
+  have hOpLp : MemLp
+      (fourCellEvenFiniteSevenNonsingularOperatorRepresenter
+        (fourCellEvenFiniteSevenCanonicalLow w hw)) 2 mu := by
+    let u : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalLow w hw
+    have hu : Continuous u := by
+      simpa only [u, fourCellEvenFiniteSevenCanonicalLow] using
+        continuous_centeredLegendreLowProjection w hw 14
+    have hpotential :=
+      finiteSeven_memLp_endpointPotential_mul_continuous u hu
+    have hfixed := finiteSeven_memLp_fixedLagK (8 / 5) u hu
+    have hregular := finiteSeven_memLp_regularLagK u hu
+    dsimp only [mu]
+    simpa only [u, fourCellEvenFiniteSevenNonsingularOperatorRepresenter,
+      Pi.sub_apply, Pi.smul_apply, smul_eq_mul] using
+      (hpotential.sub
+        (hfixed.const_mul (Real.sqrt 2 * Real.log 2 / 2))).sub
+          (hregular.const_mul fourCellOperatorHalfWidth)
+  have hTailLp : MemLp
+      (fourCellEvenEndpointSeedTailFourteenRepresenter 0) 2 mu := by
+    dsimp only [mu]
+    exact finiteSeven_memLp_endpointSeedTailRepresenter_zero
+  have hOpI : IntervalIntegrable (fun x : ℝ ↦
+      fourCellEvenFiniteSevenNonsingularOperatorRepresenter
+          (fourCellEvenFiniteSevenCanonicalLow w hw) x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hOpLp : MemLp (fun x : ℝ ↦
+      fourCellEvenFiniteSevenNonsingularOperatorRepresenter
+          (fourCellEvenFiniteSevenCanonicalLow w hw) x * r x) 1 mu).integrable
+      (by norm_num)
+  have hTailI : IntervalIntegrable (fun x : ℝ ↦
+      fourCellEvenEndpointSeedTailFourteenRepresenter 0 x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hTailLp : MemLp (fun x : ℝ ↦
+      fourCellEvenEndpointSeedTailFourteenRepresenter 0 x * r x) 1 mu)
+        |>.integrable (by norm_num)
+  have hNonsingular := finiteSevenNonsingularPolarization_eq_representerPairing
+    w hw
+  have hTail :=
+    fourCellEvenEndpointSeedCanonicalTailRow_eq_tailFourteenRepresenterPairing
+      r hr hrGap 0 (by simp)
+  have hMixed := fourCellEvenFiniteSevenExactBorderMixed_eq_nonsingular
+    w hw hlocal heven
+  rw [hNonsingular] at hMixed
+  have hMixedBase : fourCellEvenFiniteSevenExactBorderMixed w hw =
+      ∫ x : ℝ in -1..1, G x * r x := by
+    rw [hTail] at hMixed
+    calc
+      fourCellEvenFiniteSevenExactBorderMixed w hw =
+          fourCellEvenFiniteSevenSeedDiagonal *
+              (∫ x : ℝ in -1..1,
+                fourCellEvenFiniteSevenNonsingularOperatorRepresenter
+                    (fourCellEvenFiniteSevenCanonicalLow w hw) x * r x) -
+            fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw *
+              (∫ x : ℝ in -1..1,
+                fourCellEvenEndpointSeedTailFourteenRepresenter 0 x * r x) := by
+        simpa only [r] using hMixed
+      _ = ∫ x : ℝ in -1..1, G x * r x := by
+        rw [← intervalIntegral.integral_const_mul,
+          ← intervalIntegral.integral_const_mul,
+          ← intervalIntegral.integral_sub
+            (hOpI.const_mul fourCellEvenFiniteSevenSeedDiagonal)
+            (hTailI.const_mul
+              (fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw))]
+        apply intervalIntegral.integral_congr
+        intro x _hx
+        dsimp only [G, fourCellEvenFiniteSevenExactBorderRepresenter]
+        ring
+  have hGLp : MemLp G 2 mu := by
+    dsimp only [mu]
+    simpa only [G, fourCellEvenFiniteSevenExactBorderRepresenter,
+      Pi.sub_apply, Pi.smul_apply, smul_eq_mul] using
+      (hOpLp.const_mul fourCellEvenFiniteSevenSeedDiagonal).sub
+        (hTailLp.const_mul
+          (fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw))
+  have hPLp : MemLp P 2 mu := by
+    dsimp only [P, mu]
+    exact finiteSeven_memLp_two_restrict_of_continuous _ (by
+      unfold centeredPolynomialLift
+      fun_prop)
+  have hGI : IntervalIntegrable (fun x : ℝ ↦ G x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hGLp : MemLp (fun x : ℝ ↦ G x * r x) 1 mu)
+      |>.integrable (by norm_num)
+  have hPI : IntervalIntegrable (fun x : ℝ ↦ P x * r x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hrLp.mul' hPLp : MemLp (fun x : ℝ ↦ P x * r x) 1 mu)
+      |>.integrable (by norm_num)
+  have hPzero : (∫ x : ℝ in -1..1, P x * r x) = 0 := by
+    simpa only [P] using
+      intervalIntegral_centeredPolynomialLift_mul_tail_eq_zero
+        q r hr hrGap hq
+  calc
+    fourCellEvenFiniteSevenExactBorderMixed w hw =
+        ∫ x : ℝ in -1..1, G x * r x := hMixedBase
+    _ = (∫ x : ℝ in -1..1, G x * r x) -
+        ∫ x : ℝ in -1..1, P x * r x := by rw [hPzero, sub_zero]
+    _ = ∫ x : ℝ in -1..1, (G x - P x) * r x := by
+      rw [← intervalIntegral.integral_sub hGI hPI]
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      ring
+    _ = ∫ x : ℝ in -1..1,
+        fourCellEvenFiniteSevenProjectedBorderRepresenter w hw q x *
+          fourCellEvenFiniteSevenCanonicalTail w hw x := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      dsimp only [G, P, r,
+        fourCellEvenFiniteSevenProjectedBorderRepresenter]
+
 /-- Exact bordered determinant decomposition with no separate tail
 allocation.  The `1/16` obstruction disappears: the tail keeps its true row
 square and the mixed operator keeps its true polarization. -/
@@ -648,6 +1080,29 @@ theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_one_div_eighty_polarFree
     (hlow : centeredLegendreMomentsVanishBelow r 14) :
     fourCellEvenEndpointSeedCanonicalTailRow r ^ 2 ≤
       (1 / 80 : ℝ) * fourCellEvenPolarFreeOperator r := by
+  have hweighted :=
+    harmonic_fourteen_mul_fourCellEvenEndpointSeedCanonicalTailRow_sq_le_raw
+      r hr hlocal hlow
+  have hcoercive :=
+    two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+      r hr hlocal heven hlow
+  have hE : 0 ≤ centeredRawLogEnergy r / 4 :=
+    div_nonneg (centeredRawLogEnergy_nonnegative r) (by norm_num)
+  norm_num [harmonic, Finset.sum_range_succ,
+    fourCellEvenEndpointSeedCanonicalTailNormBudget] at hweighted
+  nlinarith only [hweighted, hcoercive, hE]
+
+/-- The actual harmonic representer constant is much smaller than the
+`1/80` seed pivot: only `1/4000` of the tail operator is needed for the
+endpoint row.  The remaining `49/4000` is the quantitative diagonal used by
+the exact mixed-representer Schur estimate below. -/
+theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_one_div_fourThousand_polarFree
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (heven : Function.Even r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    fourCellEvenEndpointSeedCanonicalTailRow r ^ 2 ≤
+      (1 / 4000 : ℝ) * fourCellEvenPolarFreeOperator r := by
   have hweighted :=
     harmonic_fourteen_mul_fourCellEvenEndpointSeedCanonicalTailRow_sq_le_raw
       r hr hlocal hlow
@@ -710,6 +1165,177 @@ theorem fourCellEvenFiniteSevenExactTailDiagonal_nonnegative
       r hr hrLocal hrEven hrGap
   unfold fourCellEvenFiniteSevenExactTailDiagonal
   simpa only [r] using sub_nonneg.mpr htail
+
+/-- Quantitative reserve in the true tail diagonal.  The seed contributes
+at least `1/80` of the tail operator while its endpoint row spends at most
+`1/4000`, leaving the exact fraction `49/4000`. -/
+theorem fortyNine_div_fourThousand_polarFree_le_exactTailDiagonal
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w) :
+    (49 / 4000 : ℝ) *
+        fourCellEvenPolarFreeOperator
+          (fourCellEvenFiniteSevenCanonicalTail w hw) ≤
+      fourCellEvenFiniteSevenExactTailDiagonal w hw := by
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrEven : Function.Even r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_even w hw heven 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hrow :=
+    fourCellEvenEndpointSeedCanonicalTailRow_sq_le_one_div_fourThousand_polarFree
+      r hr hrLocal hrEven hrGap
+  have hcoercive :=
+    two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+      r hr hrLocal hrEven hrGap
+  have hE : 0 ≤ centeredRawLogEnergy r / 4 :=
+    div_nonneg (centeredRawLogEnergy_nonnegative r) (by norm_num)
+  have hQ : 0 ≤ fourCellEvenPolarFreeOperator r := by
+    nlinarith only [hcoercive, hE]
+  have hseed : (1 / 80 : ℝ) ≤ fourCellEvenFiniteSevenSeedDiagonal := by
+    unfold fourCellEvenFiniteSevenSeedDiagonal
+    exact one_div_eighty_lt_fourCellEvenExactBracket_endpointCoshSeed.le
+  unfold fourCellEvenFiniteSevenExactTailDiagonal
+  dsimp only [r] at hrow hQ ⊢
+  nlinarith only [hrow, hQ,
+    mul_le_mul_of_nonneg_right hseed hQ]
+
+/-- The same reserve measured in the raw logarithmic tail energy.  This is
+the natural scale for the degree-fourteen harmonic Cauchy inequality. -/
+theorem fortyNine_div_tenThousand_raw_le_exactTailDiagonal
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w) :
+    (49 / 10000 : ℝ) *
+        (centeredRawLogEnergy
+          (fourCellEvenFiniteSevenCanonicalTail w hw) / 4) ≤
+      fourCellEvenFiniteSevenExactTailDiagonal w hw := by
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrEven : Function.Even r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_even w hw heven 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hcoercive :=
+    two_fifths_rawEnergy_le_fourCellEvenPolarFreeOperator_of_tailFourteen
+      r hr hrLocal hrEven hrGap
+  have hscaled := mul_le_mul_of_nonneg_left hcoercive
+    (by norm_num : (0 : ℝ) ≤ 49 / 4000)
+  have hreserve :=
+    fortyNine_div_fourThousand_polarFree_le_exactTailDiagonal
+      w hw hlocal heven
+  dsimp only [r] at hscaled hreserve ⊢
+  nlinarith only [hscaled, hreserve]
+
+/-- The exact mixed determinant follows from one quotient-norm estimate for
+the explicit bordered representer.  The proof loses nothing beyond ordinary
+`L²` Cauchy: the `P₁₄+` harmonic inequality converts tail mass to raw
+logarithmic energy, and the sharp `49/10000` reserve above converts that raw
+energy to the true tail diagonal. -/
+theorem fourCellEvenFiniteSevenExactBorderMixed_sq_le_of_projectedRepresenterNorm
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hlow : 0 ≤ fourCellEvenFiniteSevenExactLowDiagonal w hw)
+    (q : ℝ[X]) (hq : q.natDegree < 14)
+    (hnorm :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenFiniteSevenProjectedBorderRepresenter w hw q x ^ 2) ≤
+          ((49 / 10000 : ℝ) * (harmonic 14 : ℝ)) *
+            fourCellEvenFiniteSevenExactLowDiagonal w hw) :
+    fourCellEvenFiniteSevenExactBorderMixed w hw ^ 2 ≤
+      fourCellEvenFiniteSevenExactLowDiagonal w hw *
+        fourCellEvenFiniteSevenExactTailDiagonal w hw := by
+  let r : ℝ → ℝ := fourCellEvenFiniteSevenCanonicalTail w hw
+  let G : ℝ → ℝ :=
+    fourCellEvenFiniteSevenProjectedBorderRepresenter w hw q
+  let mu : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  have hr : Continuous r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r, fourCellEvenFiniteSevenCanonicalTail] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hG : MemLp G 2 mu := by
+    simpa only [G, mu] using
+      memLp_fourCellEvenFiniteSevenProjectedBorderRepresenter w hw q
+  have hrLp : MemLp r 2 mu := by
+    dsimp only [mu]
+    exact finiteSeven_memLp_two_restrict_of_continuous r hr
+  have hcauchy :=
+    YoshidaEndpointWeightedCauchy.sq_integral_mul_le_weighted
+      mu (fun _ : ℝ ↦ 1) G r (by simp)
+        (by simpa only [div_one, Real.sqrt_one] using hG)
+        (by simpa only [Real.sqrt_one, one_mul] using hrLp)
+  have hcauchy' :
+      (∫ x : ℝ in -1..1, G x * r x) ^ 2 ≤
+        (∫ x : ℝ in -1..1, G x ^ 2) *
+          (∫ x : ℝ in -1..1, r x ^ 2) := by
+    repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+    simpa only [mu, div_one, one_mul] using hcauchy
+  have hmass : 0 ≤ ∫ x : ℝ in -1..1, r x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num) (fun _ _ ↦ sq_nonneg _)
+  have hraw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    r hr hrLocal 14 hrGap
+  have hnormScaled := mul_le_mul_of_nonneg_right hnorm hmass
+  have hfactor : 0 ≤
+      (49 / 10000 : ℝ) *
+        fourCellEvenFiniteSevenExactLowDiagonal w hw :=
+    mul_nonneg (by norm_num) hlow
+  have hrawScaled := mul_le_mul_of_nonneg_left hraw hfactor
+  have hreserve := fortyNine_div_tenThousand_raw_le_exactTailDiagonal
+    w hw hlocal heven
+  have hreserveScaled := mul_le_mul_of_nonneg_left hreserve hlow
+  have hpair :=
+    fourCellEvenFiniteSevenExactBorderMixed_eq_projectedRepresenterPairing
+      w hw hlocal heven q hq
+  unfold factorTwoIntrinsicEnergy at hrawScaled
+  dsimp only [G, r] at hcauchy' hnormScaled hrawScaled hreserveScaled
+  rw [hpair]
+  calc
+    _ ≤
+        (∫ x : ℝ in -1..1,
+          fourCellEvenFiniteSevenProjectedBorderRepresenter w hw q x ^ 2) *
+            (∫ x : ℝ in -1..1,
+              fourCellEvenFiniteSevenCanonicalTail w hw x ^ 2) := hcauchy'
+    _ ≤
+        (((49 / 10000 : ℝ) * (harmonic 14 : ℝ)) *
+            fourCellEvenFiniteSevenExactLowDiagonal w hw) *
+          (∫ x : ℝ in -1..1,
+            fourCellEvenFiniteSevenCanonicalTail w hw x ^ 2) := hnormScaled
+    _ = ((49 / 10000 : ℝ) *
+          fourCellEvenFiniteSevenExactLowDiagonal w hw) *
+        ((harmonic 14 : ℝ) *
+          (∫ x : ℝ in -1..1,
+            fourCellEvenFiniteSevenCanonicalTail w hw x ^ 2)) := by ring
+    _ ≤ ((49 / 10000 : ℝ) *
+          fourCellEvenFiniteSevenExactLowDiagonal w hw) *
+        (centeredRawLogEnergy
+          (fourCellEvenFiniteSevenCanonicalTail w hw) / 4) := hrawScaled
+    _ = fourCellEvenFiniteSevenExactLowDiagonal w hw *
+        ((49 / 10000 : ℝ) *
+          (centeredRawLogEnergy
+            (fourCellEvenFiniteSevenCanonicalTail w hw) / 4)) := by ring
+    _ ≤ fourCellEvenFiniteSevenExactLowDiagonal w hw *
+        fourCellEvenFiniteSevenExactTailDiagonal w hw := hreserveScaled
 
 /-- Lossless coupled-Schur assembly.  Once the finite diagonal and the true
 mixed bordered entry satisfy their scalar determinant, the endpoint row is
@@ -774,6 +1400,51 @@ theorem fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_finiteSeven_exac
     unfold fourCellEvenFiniteSevenCanonicalLowBorder at hborder
     unfold fourCellEvenFiniteSevenExactLowDiagonal
     nlinarith only [hborder, hrowSq]
+  exact
+    fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_exactBorderSchur
+      w hw hlocal heven hzero hlow hmixed
+
+/-- Structural finite-seven handoff in its final analytic form.  The finite
+border supplies the low diagonal, while one explicit quotient-norm estimate
+for the bordered representer supplies the exact mixed determinant.  Thus no
+entrywise tail boxes or independent Young split remain in the assembly. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_finiteSeven_projectedRepresenterNorm
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (hbox : fourCellEvenFiniteSevenTrueBorderEntryBox)
+    (x₂ x₄ x₆ x₈ x₁₀ x₁₂ : ℝ)
+    (hmatrix :
+      fourCellEvenFiniteSevenTrueBorderMatrixQuadratic
+          x₂ x₄ x₆ x₈ x₁₀ x₁₂ =
+        fourCellEvenFiniteSevenCanonicalLowBorder w hw)
+    (q : ℝ[X]) (hq : q.natDegree < 14)
+    (hnorm :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenFiniteSevenProjectedBorderRepresenter w hw q x ^ 2) ≤
+          ((49 / 10000 : ℝ) * (harmonic 14 : ℝ)) *
+            fourCellEvenFiniteSevenExactLowDiagonal w hw) :
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      fourCellEvenFiniteSevenSeedDiagonal *
+        fourCellEvenPolarFreeOperator w := by
+  have hmatrixNonneg :=
+    finiteSevenTrueBorderMatrixQuadratic_nonnegative_of_entryBox hbox
+      x₂ x₄ x₆ x₈ x₁₀ x₁₂
+  have hborder : 0 ≤ fourCellEvenFiniteSevenCanonicalLowBorder w hw := by
+    rw [← hmatrix]
+    exact hmatrixNonneg
+  have hlow : 0 ≤ fourCellEvenFiniteSevenExactLowDiagonal w hw := by
+    have hrowSq : 0 ≤
+        fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw ^ 2 :=
+      sq_nonneg _
+    unfold fourCellEvenFiniteSevenCanonicalLowBorder at hborder
+    unfold fourCellEvenFiniteSevenExactLowDiagonal
+    nlinarith only [hborder, hrowSq]
+  have hmixed :=
+    fourCellEvenFiniteSevenExactBorderMixed_sq_le_of_projectedRepresenterNorm
+      w hw hlocal heven hlow q hq hnorm
   exact
     fourCellEvenEndpointSeedRow_sq_le_seed_mul_polarFree_of_exactBorderSchur
       w hw hlocal heven hzero hlow hmixed
