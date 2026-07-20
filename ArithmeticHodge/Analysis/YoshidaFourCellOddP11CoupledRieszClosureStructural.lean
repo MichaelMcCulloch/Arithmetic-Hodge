@@ -60,6 +60,15 @@ theorem add_row_sq_le_of_coupledP1TailSchurDefect_nonneg
   rw [coupledP1TailSchurDefect_eq] at hdefect
   linarith
 
+/-- The corrected determinant is not merely sufficient: it is exactly the
+aggregate Schur inequality, with no sign or positivity side conditions. -/
+theorem coupledP1TailSchurDefect_nonneg_iff
+    (A b C x y z : ℝ) :
+    0 ≤ coupledP1TailSchurDefect A b C x y z ↔
+      (b + x) ^ 2 ≤ A * (C + 2 * y + z) := by
+  rw [coupledP1TailSchurDefect_eq]
+  constructor <;> intro h <;> nlinarith
+
 /-- Sharp structural obstruction to a rowwise allocation: even saturated
 finite Schur, tail Schur, and finite--tail Cauchy inequalities do not imply
 the coupled conclusion.  The missing datum is the sign of `A*y - b*x`. -/
@@ -220,6 +229,118 @@ theorem fourCellOddCoreLocalBilinear_P1_add_of_P1Orthogonal
       ring,
     intervalIntegral.integral_add huRegular hvRegular]
   ring
+
+private theorem centeredOddP1Coefficient_fiveMode_without_P1_eq_zero
+    (d e f g : ℝ) :
+    centeredOddP1Coefficient
+      (fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g) = 0 := by
+  unfold fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+  rw [show factorTwoCenteredP7 = fun x ↦
+      (429 * x ^ 7 - 693 * x ^ 5 + 315 * x ^ 3 - 35 * x) / 16 by
+    funext x
+    exact factorTwoCenteredP7_eq x,
+    show factorTwoCenteredP9 = fun x ↦
+      (12155 * x ^ 9 - 25740 * x ^ 7 + 18018 * x ^ 5 -
+        4620 * x ^ 3 + 315 * x) / 128 by
+      funext x
+      exact factorTwoCenteredP9_eq x]
+  unfold centeredOddP1Coefficient centeredP1 centeredP3 factorTwoCenteredP5
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)
+    (Continuous.intervalIntegrable (by fun_prop) (-1) 1)]
+  norm_num
+  ring
+
+/-- The exact corrected determinant for one projected `P₁₁+` residual.
+The middle term is the finite--tail correlation that rowwise estimates lose.
+-/
+def fourCellOddP11CoupledRieszDefect
+    (d e f g : ℝ) (r : ℝ → ℝ) : ℝ :=
+  let p := fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  coupledP1TailSchurDefect
+    (fourCellOddCoreLocalQuadratic centeredP1)
+    (fourCellOddCoreLocalBilinear centeredP1 p)
+    (fourCellOddCoreLocalQuadratic p)
+    (fourCellOddCoreLocalBilinear centeredP1 r)
+    (fourCellOddCoreLocalBilinear p r)
+    (fourCellOddCoreLocalQuadratic r)
+
+/-- Universal nonnegativity of the corrected determinant on the genuine
+`P₁₁+` residual subspace.  This is the exact no-endpoint analytic frontier. -/
+def FourCellOddP11CoupledRieszDefectNonnegative : Prop :=
+  ∀ (d e f g : ℝ) (r : ℝ → ℝ),
+    ContDiff ℝ 1 r → Function.Odd r →
+    centeredOddP1Coefficient r = 0 →
+    centeredOddP3Coefficient r = 0 →
+    centeredOddP5Coefficient r = 0 →
+    centeredOddP7Coefficient r = 0 →
+    centeredOddP9Coefficient r = 0 →
+    0 ≤ fourCellOddP11CoupledRieszDefect d e f g r
+
+/-- A nonnegative corrected determinant on every genuine `P₁₁+` residual
+proves the required no-endpoint coupled Riesz estimate. -/
+theorem fourCellOddP1FiveModeP11CoupledTailBound_of_correctedDefect
+    (hdefect : FourCellOddP11CoupledRieszDefectNonnegative) :
+    FourCellOddP1FiveModeP11CoupledTailBound := by
+  intro d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
+  let p := fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  have hp : ContDiff ℝ 1 p := by
+    dsimp only [p]
+    exact contDiff_fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  have hpodd : Function.Odd p := by
+    dsimp only [p]
+    exact odd_fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  have hp1 : centeredOddP1Coefficient p = 0 := by
+    dsimp only [p]
+    exact centeredOddP1Coefficient_fiveMode_without_P1_eq_zero d e f g
+  have hrow := fourCellOddCoreLocalBilinear_P1_add_of_P1Orthogonal
+    p r hp hr hpodd hrodd hp1 hr1
+  have hnonneg := hdefect d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
+  have hschur := add_row_sq_le_of_coupledP1TailSchurDefect_nonneg hnonneg
+  rw [hrow]
+  exact hschur
+
+/-- Conversely, the coupled tail estimate forces the corrected determinant
+to be nonnegative.  Hence no weaker collection of separate row bounds can be
+silently substituted for this correlation-sensitive invariant. -/
+theorem correctedDefect_of_fourCellOddP1FiveModeP11CoupledTailBound
+    (hcoupled : FourCellOddP1FiveModeP11CoupledTailBound) :
+    FourCellOddP11CoupledRieszDefectNonnegative := by
+  intro d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
+  let p := fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  have hp : ContDiff ℝ 1 p := by
+    dsimp only [p]
+    exact contDiff_fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  have hpodd : Function.Odd p := by
+    dsimp only [p]
+    exact odd_fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  have hp1 : centeredOddP1Coefficient p = 0 := by
+    dsimp only [p]
+    exact centeredOddP1Coefficient_fiveMode_without_P1_eq_zero d e f g
+  have hrow := fourCellOddCoreLocalBilinear_P1_add_of_P1Orthogonal
+    p r hp hr hpodd hrodd hp1 hr1
+  have hschur := hcoupled d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
+  rw [hrow] at hschur
+  change 0 ≤ coupledP1TailSchurDefect
+    (fourCellOddCoreLocalQuadratic centeredP1)
+    (fourCellOddCoreLocalBilinear centeredP1 p)
+    (fourCellOddCoreLocalQuadratic p)
+    (fourCellOddCoreLocalBilinear centeredP1 r)
+    (fourCellOddCoreLocalBilinear p r)
+    (fourCellOddCoreLocalQuadratic r)
+  rw [coupledP1TailSchurDefect_nonneg_iff]
+  exact hschur
+
+/-- Exact characterization of the no-endpoint `P₁₁+` Riesz closure by the
+corrected finite--tail determinant. -/
+theorem fourCellOddP1FiveModeP11CoupledTailBound_iff_correctedDefect :
+    FourCellOddP1FiveModeP11CoupledTailBound ↔
+      FourCellOddP11CoupledRieszDefectNonnegative := by
+  constructor
+  · exact correctedDefect_of_fourCellOddP1FiveModeP11CoupledTailBound
+  · exact fourCellOddP1FiveModeP11CoupledTailBound_of_correctedDefect
 
 end
 
