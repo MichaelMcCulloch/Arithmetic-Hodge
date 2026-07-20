@@ -9,10 +9,16 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCapacityCrossS
 
 noncomputable section
 
+open ShiftedLegendreLogEnergyOrthogonalProjection
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialIntegrable
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoFixedLagRepresenterStructural
+open YoshidaFactorTwoPhaseIntrinsicNineP6EvenCleanPolynomialGramStructural
+open YoshidaFactorTwoPhaseIntrinsicNineP6EvenProfileCorrelationStructural
+open YoshidaFactorTwoPhaseIntrinsicSixP4EndpointProfile
+open YoshidaFactorTwoPhaseIntrinsicSixSchurReduction
+open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
 open YoshidaFourCellEvenPolarSchurStructural
@@ -481,6 +487,124 @@ theorem integral_endpointPotential_seed_mul_fixedLagK_seed :
     ring,
     intervalIntegral.integral_neg]
   exact neg_integral_seedOverlapPolynomial_mul_log_one_sub_sq
+
+/-! ## The exact low cross removed by the two canonical selectors -/
+
+/-- Polarization of the closed four-mode potential Gram gives the complete
+potential row of the endpoint seed without expanding the logarithmic
+integral mode by mode. -/
+theorem integral_endpointPotential_seed_mul_intrinsicEvenP0246
+    (d0 d2 d4 d6 : ℝ) :
+    (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x * fourCellEvenEndpointCoshSeed x *
+        factorTwoIntrinsicEvenP0246Profile d0 d2 d4 d6 x) =
+      ((10 / 9 : ℝ) - (4 / 3) * Real.log 2) * d0 +
+        (-(32 / 225 : ℝ) + (4 / 15) * Real.log 2) * d2 -
+        (1 / 35 : ℝ) * d4 - (1 / 189 : ℝ) * d6 := by
+  let s : ℝ → ℝ :=
+    factorTwoIntrinsicEvenP0246Profile (2 / 3) (-2 / 3) 0 0
+  let q : ℝ → ℝ := factorTwoIntrinsicEvenP0246Profile d0 d2 d4 d6
+  let u : ℝ → ℝ :=
+    factorTwoIntrinsicEvenP0246Profile (2 / 3 + d0) (-2 / 3 + d2) d4 d6
+  have hs : Continuous s := by
+    simpa only [s] using
+      continuous_factorTwoIntrinsicEvenP0246Profile (2 / 3) (-2 / 3) 0 0
+  have hq : Continuous q := by
+    simpa only [q] using
+      continuous_factorTwoIntrinsicEvenP0246Profile d0 d2 d4 d6
+  have hu : u = s + q := by
+    funext x
+    unfold u s q factorTwoIntrinsicEvenP0246Profile
+      factorTwoIntrinsicEvenP024Profile factorTwoEvenStructuralLowProfile
+      factorTwoIntrinsicSixEvenTail
+    simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
+    ring
+  have hss := integral_endpointPotential_mul_intrinsicEvenP0246_sq
+    (2 / 3) (-2 / 3) 0 0
+  have hqq := integral_endpointPotential_mul_intrinsicEvenP0246_sq
+    d0 d2 d4 d6
+  have huu := integral_endpointPotential_mul_intrinsicEvenP0246_sq
+    (2 / 3 + d0) (-2 / 3 + d2) d4 d6
+  have hSsq := intervalIntegrable_endpointPotential_mul_sq s hs
+  have hQsq := intervalIntegrable_endpointPotential_mul_sq q hq
+  have hcross := YoshidaEndpointEvenTailRepresenter.intervalIntegrable_endpointPotential_mul
+    s q hs hq
+  have hpolar :
+      (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * u x ^ 2) =
+        (∫ x : ℝ in -1..1, yoshidaEndpointPotential x * s x ^ 2) +
+          2 * (∫ x : ℝ in -1..1,
+            yoshidaEndpointPotential x * s x * q x) +
+          ∫ x : ℝ in -1..1, yoshidaEndpointPotential x * q x ^ 2 := by
+    rw [hu, show (fun x : ℝ ↦
+        yoshidaEndpointPotential x * (s + q) x ^ 2) =
+      fun x ↦ yoshidaEndpointPotential x * s x ^ 2 +
+        (2 * (yoshidaEndpointPotential x * s x * q x) +
+          yoshidaEndpointPotential x * q x ^ 2) by
+      funext x
+      simp only [Pi.add_apply]
+      ring,
+      intervalIntegral.integral_add hSsq
+        ((hcross.const_mul 2).add hQsq),
+      intervalIntegral.integral_add (hcross.const_mul 2) hQsq,
+      intervalIntegral.integral_const_mul]
+    ring
+  rw [show fourCellEvenEndpointCoshSeed = s by
+    simpa only [s] using
+      fourCellEvenEndpointCoshSeed_eq_intrinsicEvenP0246Profile]
+  change (∫ x : ℝ in -1..1,
+    yoshidaEndpointPotential x * s x * q x) = _
+  rw [hss] at hpolar
+  change (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x * q x ^ 2) =
+    factorTwoP6EvenPotentialGram d0 d2 d4 d6 at hqq
+  rw [hqq] at hpolar
+  change (∫ x : ℝ in -1..1,
+      yoshidaEndpointPotential x * u x ^ 2) =
+    factorTwoP6EvenPotentialGram
+      (2 / 3 + d0) (-2 / 3 + d2) d4 d6 at huu
+  rw [huu] at hpolar
+  unfold factorTwoP6EvenPotentialGram at hpolar
+  linarith
+
+/-- The low potential--fixed-lag cross removed at cutoff eight. -/
+theorem integral_endpointPotential_seed_mul_fixedLagSelector :
+    (∫ x : ℝ in -1..1,
+      (yoshidaEndpointPotential x * fourCellEvenEndpointCoshSeed x) *
+        centeredPolynomialLift
+          (fourCellEvenP0246CutoffEightFixedLagSelectorPolynomial
+            (2 / 3) (-2 / 3) 0 0) x) =
+      (32424568 / 369140625 : ℝ) -
+        (3232 / 46875) * Real.log 2 := by
+  rw [centeredPolynomialLift_cutoffEightFixedLagSelector]
+  have h := integral_endpointPotential_seed_mul_intrinsicEvenP0246
+    (fourCellEvenP0246CutoffEightFixedLagRow0
+      (2 / 3) (-2 / 3) 0 0 / 2)
+    (5 * fourCellEvenP0246CutoffEightFixedLagRow2
+      (2 / 3) (-2 / 3) 0 0 / 2)
+    (9 * fourCellEvenP0246CutoffEightFixedLagRow4
+      (2 / 3) (-2 / 3) 0 0 / 2)
+    (13 * fourCellEvenP0246CutoffEightFixedLagRow6
+      (2 / 3) (-2 / 3) 0 0 / 2)
+  simpa only [mul_assoc] using (by
+    unfold fourCellEvenP0246CutoffEightFixedLagRow0
+      fourCellEvenP0246CutoffEightFixedLagRow2
+      fourCellEvenP0246CutoffEightFixedLagRow4
+      fourCellEvenP0246CutoffEightFixedLagRow6 at h ⊢
+    norm_num at h ⊢
+    linarith :
+      (∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * fourCellEvenEndpointCoshSeed x *
+          factorTwoIntrinsicEvenP0246Profile
+            (fourCellEvenP0246CutoffEightFixedLagRow0
+              (2 / 3) (-2 / 3) 0 0 / 2)
+            (5 * fourCellEvenP0246CutoffEightFixedLagRow2
+              (2 / 3) (-2 / 3) 0 0 / 2)
+            (9 * fourCellEvenP0246CutoffEightFixedLagRow4
+              (2 / 3) (-2 / 3) 0 0 / 2)
+            (13 * fourCellEvenP0246CutoffEightFixedLagRow6
+              (2 / 3) (-2 / 3) 0 0 / 2) x) =
+        (32424568 / 369140625 : ℝ) -
+          (3232 / 46875) * Real.log 2)
 
 end
 
