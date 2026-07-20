@@ -10,9 +10,11 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedUniversalClosu
 noncomputable section
 
 open YoshidaConstantBounds
+open UnitIntervalLogEnergyAffine
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
+open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
 open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointCapacityCauchyStructural
@@ -171,6 +173,37 @@ theorem fourCellEvenEndpointSeedCanonicalTailRow_sq_le_rational_mass
         fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial)
       fourCellEvenEndpointSeedCanonicalTailNormBudget
       integral_endpointSeedProjectedTailRowRepresenter_canonical_sq_le_rational
+
+/-- Harmonic-weighted form of the endpoint-row estimate above a genuine
+`P₁₄` cutoff.  Unlike the unweighted mass estimate, this charges the row to
+the singular logarithmic diagonal retained by the four-cell operator.  The
+first three even tail modes `P₈/P₁₀/P₁₂` are deliberately excluded: they
+belong in the coupled finite block rather than being paid at the weakest
+eighth-harmonic rate. -/
+theorem harmonic_fourteen_mul_fourCellEvenEndpointSeedCanonicalTailRow_sq_le_raw
+    (r : ℝ → ℝ) (hr : Continuous r)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r)
+    (hlow : centeredLegendreMomentsVanishBelow r 14) :
+    (harmonic 14 : ℝ) *
+        fourCellEvenEndpointSeedCanonicalTailRow r ^ 2 ≤
+      fourCellEvenEndpointSeedCanonicalTailNormBudget *
+        (centeredRawLogEnergy r / 4) := by
+  have hlowEight : centeredLegendreMomentsVanishBelow r 8 := by
+    intro n hn
+    exact hlow n (by omega)
+  have hrow :=
+    fourCellEvenEndpointSeedCanonicalTailRow_sq_le_rational_mass
+      r hr hlowEight
+  have hraw := harmonic_mul_intrinsicEnergy_le_raw_div_four
+    r hr hlocal 14 hlow
+  have hH : 0 ≤ (harmonic 14 : ℝ) := by
+    norm_num [harmonic, Finset.sum_range_succ]
+  have hC : 0 ≤ fourCellEvenEndpointSeedCanonicalTailNormBudget := by
+    norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget]
+  have hrowScaled := mul_le_mul_of_nonneg_left hrow hH
+  have hrawScaled := mul_le_mul_of_nonneg_left hraw hC
+  unfold factorTwoIntrinsicEnergy at hrawScaled
+  nlinarith only [hrowScaled, hrawScaled]
 
 /-- Exact scalar Young inequality with a free positive allocation parameter.
 Keeping the parameter free is essential: a fixed split can consume more tail
