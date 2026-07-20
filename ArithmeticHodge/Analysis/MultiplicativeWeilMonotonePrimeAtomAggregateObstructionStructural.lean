@@ -4711,6 +4711,86 @@ theorem finiteBlock_endpoint_tsupports_collapse_of_interior_zero
       apply hxne
       rw [monotoneQuarterCell_apply, hparent, mul_zero]
 
+/-- A nonzero real production block of at most three consecutive cells has
+strictly positive complete Bombieri quadratic value.  The ratio-two local
+coercivity therefore has no quadratic null vectors on these short blocks. -/
+theorem bombieriRealQuadraticValue_monotoneQuarterFiniteBlock_pos_of_le_three_of_ne_zero
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (lo : ℤ) (start len : ℕ) (hlen : len ≤ 3)
+    (hblock : monotoneQuarterFiniteBlock parent lo start len ≠ 0) :
+    0 < bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent lo start len) := by
+  let m : BombieriTest :=
+    monotoneQuarterFiniteBlock parent lo start len
+  have hcell : BombieriRatioTwoCell m := by
+    dsimp only [m]
+    exact monotoneQuarterFiniteBlock_ratioTwo_of_le_three
+      parent lo start len hlen
+  have hmreal : bombieriConjugateTest m = m := by
+    dsimp only [m]
+    exact bombieriConjugateTest_monotoneQuarterFiniteBlock
+      parent hparent lo start len
+  have hcoercive := real_ratioTwo_localCriticalForm_re_ge_criticalLogEnergy
+    m hcell hmreal
+  have henergy : 0 < bombieriCriticalLogEnergy m :=
+    bombieriCriticalLogEnergy_pos_of_ne_zero m hblock
+  have hlocal : 0 < (bombieriLocalCriticalForm m m).re := by
+    have hcoeff : 0 < (1 / 12000 : ℝ) := by norm_num
+    exact lt_of_lt_of_le (mul_pos hcoeff henergy) hcoercive
+  obtain ⟨a, b, ha, hab, hsupport, hratio⟩ := hcell
+  have heq := bombieriFunctional_quadratic_eq_bombieriLocalCriticalForm_le_two
+    m ha hab hsupport hratio
+  unfold bombieriRealQuadraticValue
+  rw [heq]
+  exact hlocal
+
+/-- Through length five, a zero interior diagonal is already a zero interior
+test: deleting the two endpoints leaves at most three ratio-two cells. -/
+theorem monotoneQuarterFiniteBlockInterior_eq_zero_of_quadratic_eq_zero_of_le_five
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (n : ℕ) (hnLower : 4 ≤ n) (hnUpper : n ≤ 5)
+    (hzero : bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlockInterior parent k n) = 0) :
+    monotoneQuarterFiniteBlockInterior parent k n = 0 := by
+  by_contra hne
+  have hpositive :=
+    bombieriRealQuadraticValue_monotoneQuarterFiniteBlock_pos_of_le_three_of_ne_zero
+      parent hparent k 1 (n - 2) (by omega) (by
+        simpa only [monotoneQuarterFiniteBlockInterior] using hne)
+  have hzero' : bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent k 1 (n - 2)) = 0 := by
+    simpa only [monotoneQuarterFiniteBlockInterior] using hzero
+  rw [hzero'] at hpositive
+  exact (lt_irrefl 0) hpositive
+
+/-- Hence at lengths four and five the singular quadratic branch already
+inherits the exact outward endpoint-support collapse.  Length six is the
+first place where quadratic-null coercivity becomes a genuinely new issue. -/
+theorem finiteBlock_endpoint_tsupports_collapse_of_interior_quadratic_zero_of_le_five
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (n : ℕ) (hnLower : 4 ≤ n) (hnUpper : n ≤ 5)
+    (hzero : bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlockInterior parent k n) = 0) :
+    tsupport (monotoneQuarterCell parent k : ℝ → ℂ) ⊆
+        Set.Icc (quarterLogLatticePoint k)
+          (quarterLogLatticePoint (k + 1)) ∧
+      tsupport
+          (monotoneQuarterCell parent
+            (k + ((n - 1 : ℕ) : ℤ)) : ℝ → ℂ) ⊆
+        Set.Icc
+          (quarterLogLatticePoint
+            (k + ((n - 1 : ℕ) : ℤ) + 1))
+          (quarterLogLatticePoint
+            (k + ((n - 1 : ℕ) : ℤ) + 2)) := by
+  apply finiteBlock_endpoint_tsupports_collapse_of_interior_zero
+    parent k n hnLower
+  exact
+    monotoneQuarterFiniteBlockInterior_eq_zero_of_quadratic_eq_zero_of_le_five
+      parent hparent k n hnLower hnUpper hzero
+
 private theorem finiteBlock_parent_sub_nextCutoff_eq_leftEndpoint_allLength
     (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 2 ≤ n) :
     monotoneQuarterFiniteBlock
