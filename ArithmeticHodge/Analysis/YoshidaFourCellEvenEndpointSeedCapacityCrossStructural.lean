@@ -1339,6 +1339,49 @@ theorem integral_endpointSeedProjectedCapacityRepresenter_sq_le :
       dsimp only [Plo, Lhi, Slo, Llo, Mlo]
       norm_num
 
+/-! ## Canonical selector for the complete endpoint tail row -/
+
+/-- The actual degree-below-eight selector used by the complete endpoint
+tail row.  It removes the exact potential/fixed-lag low projection and the
+degree-six polynomial part of the regular row simultaneously. -/
+def fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial : ℝ[X] :=
+  fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial
+      (2 / 3) (-2 / 3) 0 0 -
+    fourCellOperatorHalfWidth •
+      fourCellEndpointSeedRegularPolynomialSelector
+
+theorem natDegree_fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial_lt_eight :
+    fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial.natDegree < 8 := by
+  have hcap :=
+    natDegree_fourCellEvenP0246CutoffEightSplitCapacitySelectorPolynomial_lt_eight
+      (2 / 3) (-2 / 3) 0 0
+  have hreg :
+      (fourCellOperatorHalfWidth •
+        fourCellEndpointSeedRegularPolynomialSelector).natDegree < 8 :=
+    (Polynomial.natDegree_smul_le _ _).trans_lt
+      natDegree_fourCellEndpointSeedRegularPolynomialSelector_lt_eight
+  unfold fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  exact lt_of_le_of_lt (Polynomial.natDegree_sub_le _ _) (max_lt hcap hreg)
+
+/-- Pure algebraic identity for the complete endpoint tail row: after the
+one canonical polynomial removal, the only remaining smooth term is the
+regular representer minus its exact degree-six selector. -/
+theorem endpointSeedProjectedTailRowRepresenter_canonical_eq (x : ℝ) :
+    fourCellEvenEndpointSeedProjectedTailRowRepresenter
+        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial x =
+      fourCellEvenEndpointSeedProjectedCapacityRepresenter x -
+        fourCellOperatorHalfWidth *
+          (fourCellEvenEndpointSeedRegularTailRepresenter x -
+            centeredPolynomialLift
+              fourCellEndpointSeedRegularPolynomialSelector x) := by
+  unfold fourCellEvenEndpointSeedProjectedTailRowRepresenter
+    fourCellEvenEndpointSeedProjectedCapacityRepresenter
+    fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+    fourCellEvenP0246CutoffEightProjectedCapacityRepresenter
+    centeredPolynomialLift
+  simp only [Polynomial.eval_sub, Polynomial.eval_smul, smul_eq_mul]
+  ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCapacityCrossStructural
