@@ -12831,6 +12831,279 @@ private theorem twenty_nine_two_hundredths_lt_fourCellOddCoreLocalQuadratic_P9 :
   linarith [one_hundred_fifty_nine_five_hundredths_lt_retained_P9,
     fourCellOddSignedMassRegularQuadratic_P9_lt_one_hundred_seventy_three_thousandths]
 
+/-! ### Tight finite-core boxes for the five-mode certificate -/
+
+private theorem abs_fourCellWideRegularEnvelopeError11_tight_le :
+    |fourCellWideRegularEnvelopeError oddStructuralCorrelation11| ≤
+      (1 / 120000 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    oddStructuralCorrelation11
+      (by unfold oddStructuralCorrelation11; fun_prop)
+  have hmass := integral_abs_oddStructuralCorrelation11_le
+  nlinarith
+
+private theorem abs_fourCellWideRegularEnvelopeError13_tight_lt :
+    |fourCellWideRegularEnvelopeError oddStructuralCorrelation13| <
+      (1 / 480000 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    oddStructuralCorrelation13
+      (by unfold oddStructuralCorrelation13; fun_prop)
+  have hmass := integral_abs_oddStructuralCorrelation13_lt
+  nlinarith
+
+private theorem abs_fourCellWideRegularEnvelopeError33_tight_le :
+    |fourCellWideRegularEnvelopeError oddStructuralCorrelation33| ≤
+      (1 / 280000 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    oddStructuralCorrelation33
+      (by unfold oddStructuralCorrelation33; fun_prop)
+  have hmass := integral_abs_oddStructuralCorrelation33_le
+  nlinarith
+
+private theorem abs_fourCellWideRegularEnvelopeError15_tight_lt :
+    |fourCellWideRegularEnvelopeError oddP5Correlation15| <
+      (1 / 1000000 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    oddP5Correlation15 (by unfold oddP5Correlation15; fun_prop)
+  have hmass := integral_abs_oddP5Correlation15_lt
+  nlinarith
+
+private theorem abs_fourCellWideRegularEnvelopeError35_tight_lt :
+    |fourCellWideRegularEnvelopeError oddP5Correlation35| <
+      (11 / 10000000 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    oddP5Correlation35 (by unfold oddP5Correlation35; fun_prop)
+  have hmass := integral_abs_oddP5Correlation35_lt
+  nlinarith
+
+private theorem abs_fourCellWideRegularEnvelopeError55_tight_le :
+    |fourCellWideRegularEnvelopeError oddP5Correlation55| ≤
+      (1 / 440000 : ℝ) := by
+  have herr := abs_fourCellWideRegularEnvelopeError_le_sevenEighths
+    oddP5Correlation55 continuous_oddP5Correlation55
+  have hmass := integral_abs_oddP5Correlation55_le
+  nlinarith
+
+private theorem fourCellOddOneThreeFiveRegular_entry_tight_bounds :
+    (4855 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular11 ∧
+    fourCellOddOneThreeFiveRegular11 < (4873 / 1000000 : ℝ) ∧
+    (-193 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular13 ∧
+    fourCellOddOneThreeFiveRegular13 < (-188 / 1000000 : ℝ) ∧
+    (111 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular33 ∧
+    fourCellOddOneThreeFiveRegular33 < (120 / 1000000 : ℝ) ∧
+    (-1 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular15 ∧
+    fourCellOddOneThreeFiveRegular15 < (2 / 1000000 : ℝ) ∧
+    (-28 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular35 ∧
+    fourCellOddOneThreeFiveRegular35 < (-24 / 1000000 : ℝ) ∧
+    (25 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular55 ∧
+    fourCellOddOneThreeFiveRegular55 < (31 / 1000000 : ℝ) := by
+  rcases fourCellWideRegularPolynomial_entry_bounds with
+    ⟨hP11lo, hP11hi, hP13lo, hP13hi, hP33lo, hP33hi,
+      hP15lo, hP15hi, hP35lo, hP35hi, hP55lo, hP55hi⟩
+  rcases fourCellOddOneThreeFiveRegular_entries_eq with
+    ⟨h11, h13, h33, h15, h35, h55⟩
+  have he11 := abs_le.mp abs_fourCellWideRegularEnvelopeError11_tight_le
+  have he13 := abs_lt.mp abs_fourCellWideRegularEnvelopeError13_tight_lt
+  have he33 := abs_le.mp abs_fourCellWideRegularEnvelopeError33_tight_le
+  have he15 := abs_lt.mp abs_fourCellWideRegularEnvelopeError15_tight_lt
+  have he35 := abs_lt.mp abs_fourCellWideRegularEnvelopeError35_tight_lt
+  have he55 := abs_le.mp abs_fourCellWideRegularEnvelopeError55_tight_le
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+private theorem fourCellOddOneThreeFiveCombined_entry_certificate_bounds :
+    (251905 / 1000000 : ℝ) < fourCellOddLowCombined11 ∧
+    fourCellOddLowCombined11 < (251925 / 1000000 : ℝ) ∧
+    (218622 / 1000000 : ℝ) < fourCellOddLowCombined13 ∧
+    fourCellOddLowCombined13 < (218624 / 1000000 : ℝ) ∧
+    (205150 / 1000000 : ℝ) < fourCellOddLowCombined33 ∧
+    fourCellOddLowCombined33 < (205156 / 1000000 : ℝ) ∧
+    (135290 / 10000000 : ℝ) < fourCellOddOneThreeFiveCombined15 ∧
+    fourCellOddOneThreeFiveCombined15 < (135293 / 10000000 : ℝ) ∧
+    (629389 / 10000000 : ℝ) < fourCellOddOneThreeFiveCombined35 ∧
+    fourCellOddOneThreeFiveCombined35 < (629392 / 10000000 : ℝ) ∧
+    (245090 / 1000000 : ℝ) < fourCellOddOneThreeFiveCombined55 ∧
+    fourCellOddOneThreeFiveCombined55 < (245094 / 1000000 : ℝ) := by
+  have hL := strict_log_two_fine_bounds
+  have hP := fourCell_sqrt_two_mul_log_two_fine_bounds
+  have hT := fourCellScalar_fine_bounds
+  have h11 : fourCellOddLowCombined11 =
+      893 / 600 - (31 / 50 : ℝ) * Real.log 2 +
+        (94 / 375 : ℝ) * (Real.sqrt 2 * Real.log 2) -
+          (2 / 3 : ℝ) *
+            (Real.log (2 * fourCellOperatorHalfWidth) +
+              Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddLowCombined11 fourCellOddLowLocalAlgebraic11
+    ring
+  have h13 : fourCellOddLowCombined13 =
+      93 / 500 + (104 / 3125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddLowCombined13 fourCellOddLowLocalAlgebraic13
+    ring
+  have h33 : fourCellOddLowCombined33 =
+      5434921 / 6125000 - (5242 / 109375 : ℝ) *
+          (Real.sqrt 2 * Real.log 2) -
+        (93 / 350 : ℝ) * Real.log 2 -
+        (2 / 7 : ℝ) *
+          (Real.log (2 * fourCellOperatorHalfWidth) +
+            Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddLowCombined33 fourCellOddLowLocalAlgebraic33
+    ring
+  have h15 : fourCellOddOneThreeFiveCombined15 =
+      93 / 1400 - (4216 / 78125 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddOneThreeFiveCombined15
+      fourCellOddOneThreeFiveLocalAlgebraic15
+    ring
+  have h35 : fourCellOddOneThreeFiveCombined35 =
+      96779 / 937500 - (16056 / 390625 : ℝ) *
+        (Real.sqrt 2 * Real.log 2) := by
+    unfold fourCellOddOneThreeFiveCombined35
+      fourCellOddOneThreeFiveLocalAlgebraic35
+    ring
+  have h55 : fourCellOddOneThreeFiveCombined55 =
+      1602471330659 / 2481445312500 +
+        (1933534 / 537109375 : ℝ) *
+          (Real.sqrt 2 * Real.log 2) -
+        (93 / 550 : ℝ) * Real.log 2 -
+        (2 / 11 : ℝ) *
+          (Real.log (2 * fourCellOperatorHalfWidth) +
+            Real.eulerMascheroniConstant + Real.log Real.pi) := by
+    unfold fourCellOddOneThreeFiveCombined55
+      fourCellOddOneThreeFiveLocalAlgebraic55
+    ring
+  rw [h11, h13, h33, h15, h35, h55]
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+set_option maxHeartbeats 1000000 in
+private theorem fourCellOddOneThreeFivePerturbed_entry_certificate_bounds :
+    (247682 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed11 ∧
+    fourCellOddOneThreeFivePerturbed11 < (247719 / 1000000 : ℝ) ∧
+    (218784 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed13 ∧
+    fourCellOddOneThreeFivePerturbed13 < (218792 / 1000000 : ℝ) ∧
+    (205046 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed33 ∧
+    fourCellOddOneThreeFivePerturbed33 < (205060 / 1000000 : ℝ) ∧
+    (13527 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed15 ∧
+    fourCellOddOneThreeFivePerturbed15 < (13531 / 1000000 : ℝ) ∧
+    (62959 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed35 ∧
+    fourCellOddOneThreeFivePerturbed35 < (62964 / 1000000 : ℝ) ∧
+    (245063 / 1000000 : ℝ) < fourCellOddOneThreeFivePerturbed55 ∧
+    fourCellOddOneThreeFivePerturbed55 < (245073 / 1000000 : ℝ) := by
+  let W : ℝ := 2 * fourCellOperatorHalfWidth
+  rcases two_mul_fourCellOperatorHalfWidth_fine_bounds with ⟨hWlo, hWhi⟩
+  change (8664 / 10000 : ℝ) < W at hWlo
+  change W < (8665 / 10000 : ℝ) at hWhi
+  have hW0 : 0 < W := hWlo.trans' (by norm_num)
+  rcases fourCellOddOneThreeFiveCombined_entry_certificate_bounds with
+    ⟨hAlo, hAhi, hBlo, hBhi, hDlo, hDhi,
+      hElo, hEhi, hFlo, hFhi, hGlo, hGhi⟩
+  rcases fourCellOddOneThreeFiveRegular_entry_tight_bounds with
+    ⟨h11lo, h11hi, h13lo, h13hi, h33lo, h33hi,
+      h15lo, h15hi, h35lo, h35hi, h55lo, h55hi⟩
+  have hpositiveProduct {R lo hi : ℝ}
+      (hlo : lo < R) (hhi : R < hi) (hlo0 : 0 < lo) :
+      (8664 / 10000 : ℝ) * lo < W * R ∧
+        W * R < (8665 / 10000 : ℝ) * hi := by
+    have hR0 : 0 < R := hlo0.trans hlo
+    constructor
+    · exact (mul_lt_mul_of_pos_right hWlo hlo0).trans
+        (mul_lt_mul_of_pos_left hlo hW0)
+    · exact (mul_lt_mul_of_pos_left hhi hW0).trans
+        (mul_lt_mul_of_pos_right hWhi (by linarith))
+  have hnegativeProduct {R lo hi : ℝ}
+      (hlo : lo < R) (hhi : R < hi) (hhi0 : hi < 0) :
+      (8665 / 10000 : ℝ) * lo < W * R ∧
+        W * R < (8664 / 10000 : ℝ) * hi := by
+    constructor
+    · exact (mul_lt_mul_of_neg_right hWhi (by linarith)).trans
+        (mul_lt_mul_of_pos_left hlo hW0)
+    · exact (mul_lt_mul_of_pos_left hhi hW0).trans
+        (mul_lt_mul_of_neg_right hWlo hhi0)
+  have hcrossProduct {R lo hi : ℝ}
+      (hlo : lo < R) (hhi : R < hi) (hlo0 : lo < 0) (hhi0 : 0 < hi) :
+      (8665 / 10000 : ℝ) * lo < W * R ∧
+        W * R < (8665 / 10000 : ℝ) * hi := by
+    constructor
+    · exact (mul_lt_mul_of_neg_right hWhi hlo0).trans
+        (mul_lt_mul_of_pos_left hlo hW0)
+    · exact (mul_lt_mul_of_pos_left hhi hW0).trans
+        (mul_lt_mul_of_pos_right hWhi hhi0)
+  have hW11 := hpositiveProduct h11lo h11hi (by norm_num)
+  have hW13 := hnegativeProduct h13lo h13hi (by norm_num)
+  have hW33 := hpositiveProduct h33lo h33hi (by norm_num)
+  have hW15 := hcrossProduct h15lo h15hi (by norm_num) (by norm_num)
+  have hW35 := hnegativeProduct h35lo h35hi (by norm_num)
+  have hW55 := hpositiveProduct h55lo h55hi (by norm_num)
+  unfold fourCellOddOneThreeFivePerturbed11
+    fourCellOddOneThreeFivePerturbed13
+    fourCellOddOneThreeFivePerturbed33
+    fourCellOddOneThreeFivePerturbed15
+    fourCellOddOneThreeFivePerturbed35
+    fourCellOddOneThreeFivePerturbed55
+  change
+    (247682 / 1000000 : ℝ) <
+        fourCellOddLowCombined11 - W * fourCellOddOneThreeFiveRegular11 ∧ _
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
 private theorem neg_beta_sq_sum_le_two_mul_of_abs_le
     (B β x y : ℝ) (hB : |B| ≤ β) (hβ : 0 ≤ β) :
     -β * (x ^ 2 + y ^ 2) ≤ 2 * B * x * y := by
