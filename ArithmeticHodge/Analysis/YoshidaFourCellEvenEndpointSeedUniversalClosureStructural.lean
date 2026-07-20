@@ -955,6 +955,86 @@ theorem add_sq_le_of_positive_youngParameter
   rw [← sub_nonneg, hid]
   exact mul_nonneg hinv0 (sq_nonneg (η * x - y))
 
+/-- Coupled cutoff-fourteen handoff in the actual zero-cosh quotient.  The
+finite row and the tail density share the same free scalar `s`: changing `s`
+cannot change the full row, but it can move the wide-cosh direction to the
+side of the Schur block where it is cheapest.  Only after this lossless
+coupling is exposed is a free Young allocation applied. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_coshConstrainedLowThroughTwelve_add_rawTail_of_norm
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (q : ℝ[X]) (hq : q.natDegree < 14) (s C : ℝ) (hC : 0 ≤ C)
+    (hdual :
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2) ≤
+          C)
+    (η : ℝ) (hη : 0 < η) :
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      (1 + η) *
+          (fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw -
+            s * fourCellPositiveCoshMoment
+              (centeredLegendreLowProjection w hw 14)
+              (fourCellOperatorHalfWidth / 2)) ^ 2 +
+        (1 + η⁻¹) * ((360360 / 1171733 : ℝ) * C) *
+          (centeredRawLogEnergy
+            (centeredLegendreHigherResidual w hw 14) / 4) := by
+  let r : ℝ → ℝ := centeredLegendreHigherResidual w hw 14
+  let L : ℝ :=
+    fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw -
+      s * fourCellPositiveCoshMoment
+        (centeredLegendreLowProjection w hw 14)
+        (fourCellOperatorHalfWidth / 2)
+  let T : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x * r x
+  have hr : Continuous r := by
+    simpa only [r] using continuous_centeredLegendreHigherResidual w hw 14
+  have hrLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) r := by
+    simpa only [r] using
+      locallyLipschitzOn_centeredLegendreHigherResidual w hw hlocal 14
+  have hrGap : centeredLegendreMomentsVanishBelow r 14 := by
+    simpa only [r] using
+      centeredLegendreHigherResidual_momentsVanishBelow w hw 14
+  have hweighted : (harmonic 14 : ℝ) * T ^ 2 ≤
+      C * (centeredRawLogEnergy r / 4) := by
+    simpa only [T] using
+      harmonic_fourteen_mul_endpointSeedTailFourteenConstrainedPairing_sq_le_raw_of_norm
+        r hr hrLocal hrGap q s C hC hdual
+  have hT : T ^ 2 ≤
+      (360360 / 1171733 : ℝ) * C *
+        (centeredRawLogEnergy r / 4) := by
+    norm_num [harmonic, Finset.sum_range_succ] at hweighted
+    nlinarith only [hweighted]
+  have hscale : 0 ≤ 1 + η⁻¹ := by
+    have hinv : 0 < η⁻¹ := inv_pos.mpr hη
+    positivity
+  have hTscaled := mul_le_mul_of_nonneg_left hT hscale
+  have hrow :=
+    fourCellEvenEndpointSeedRow_eq_coshConstrainedLowThroughTwelve_add_tailPairing
+      w hw hlocal heven hzero q hq s
+  have hrow' : fourCellEvenEndpointSeedRow w = L + T := by
+    simpa only [L, T, r] using hrow
+  rw [hrow']
+  calc
+    (L + T) ^ 2 ≤
+        (1 + η) * L ^ 2 + (1 + η⁻¹) * T ^ 2 :=
+      add_sq_le_of_positive_youngParameter L T η hη
+    _ ≤ (1 + η) * L ^ 2 +
+        (1 + η⁻¹) * ((360360 / 1171733 : ℝ) * C) *
+          (centeredRawLogEnergy r / 4) := by
+      nlinarith only [hTscaled]
+    _ = (1 + η) *
+          (fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw -
+            s * fourCellPositiveCoshMoment
+              (centeredLegendreLowProjection w hw 14)
+              (fourCellOperatorHalfWidth / 2)) ^ 2 +
+        (1 + η⁻¹) * ((360360 / 1171733 : ℝ) * C) *
+          (centeredRawLogEnergy
+            (centeredLegendreHigherResidual w hw 14) / 4) := by
+      dsimp only [L, r]
+
 /-- The canonical row is bounded by one explicit finite-row square and the
 mass of the moment-eight residual, for every positive Young allocation.
 This is an unconditional diagnostic interface; closing the universal Schur
