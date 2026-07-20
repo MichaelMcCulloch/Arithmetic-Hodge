@@ -4566,6 +4566,151 @@ private theorem monotoneQuarterFiniteBlock_shift_start_one
   push_cast
   ring
 
+/-- Pointwise telescope for the interior obtained by deleting both endpoint
+cells.  Its only multiplier is the difference of the two boundary cutoff
+steps. -/
+theorem monotoneQuarterFiniteBlockInterior_apply
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 2 ≤ n) (x : ℝ) :
+    monotoneQuarterFiniteBlockInterior parent k n x =
+      (((monotoneQuarterStep (k + 1) x -
+        monotoneQuarterStep
+          (k + ((n - 1 : ℕ) : ℤ)) x : ℝ) : ℂ) * parent x) := by
+  rw [monotoneQuarterFiniteBlockInterior,
+    ← monotoneQuarterFiniteBlock_shift_start_one,
+    monotoneQuarterFiniteBlock_zero_apply_allLength]
+  have hsub : n - 2 + 1 = n - 1 := by omega
+  have hindex : k + 1 + ((n - 2 : ℕ) : ℤ) =
+      k + ((n - 1 : ℕ) : ℤ) := by
+    calc
+      k + 1 + ((n - 2 : ℕ) : ℤ) =
+          k + (((n - 2) + 1 : ℕ) : ℤ) := by push_cast; ring
+      _ = k + ((n - 1 : ℕ) : ℤ) := by rw [hsub]
+  rw [hindex]
+
+private theorem monotoneQuarterStep_lt_one_of_lt_next
+    (j : ℤ) {x : ℝ}
+    (hx : x < quarterLogLatticePoint (j + 1)) :
+    monotoneQuarterStep j x < 1 := by
+  unfold monotoneQuarterStep
+  apply Real.smoothTransition.lt_one_of_lt_one
+  rw [div_lt_one (quarterLogLatticePoint_gap_pos j)]
+  linarith
+
+private theorem finiteBlock_parent_eq_zero_of_interior_zero_of_leftTransition
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 4 ≤ n)
+    (hmiddle : monotoneQuarterFiniteBlockInterior parent k n = 0)
+    {x : ℝ}
+    (hxleft : quarterLogLatticePoint (k + 1) < x)
+    (hxright : x < quarterLogLatticePoint (k + 2)) :
+    parent x = 0 := by
+  have hpoint := congrArg (fun g : BombieriTest ↦ g x) hmiddle
+  have hpoint' :
+      monotoneQuarterFiniteBlockInterior parent k n x = 0 := by
+    simpa only [TestFunction.coe_zero, Pi.zero_apply] using hpoint
+  rw [monotoneQuarterFiniteBlockInterior_apply parent k n (by omega)] at hpoint'
+  have hstepPos : 0 < monotoneQuarterStep (k + 1) x :=
+    monotoneQuarterStep_pos_of_lattice_lt (k + 1) hxleft
+  have hstepZero :
+      monotoneQuarterStep (k + ((n - 1 : ℕ) : ℤ)) x = 0 := by
+    apply monotoneQuarterStep_eq_zero_of_le
+    exact hxright.le.trans (quarterLogLatticePoint_mono (by omega))
+  rw [hstepZero, sub_zero] at hpoint'
+  exact (mul_eq_zero.mp hpoint').resolve_left
+    (Complex.ofReal_ne_zero.mpr hstepPos.ne')
+
+private theorem finiteBlock_parent_eq_zero_of_interior_zero_of_rightTransition
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 4 ≤ n)
+    (hmiddle : monotoneQuarterFiniteBlockInterior parent k n = 0)
+    {x : ℝ}
+    (hxleft :
+      quarterLogLatticePoint (k + ((n - 1 : ℕ) : ℤ)) < x)
+    (hxright :
+      x < quarterLogLatticePoint (k + ((n - 1 : ℕ) : ℤ) + 1)) :
+    parent x = 0 := by
+  have hpoint := congrArg (fun g : BombieriTest ↦ g x) hmiddle
+  have hpoint' :
+      monotoneQuarterFiniteBlockInterior parent k n x = 0 := by
+    simpa only [TestFunction.coe_zero, Pi.zero_apply] using hpoint
+  rw [monotoneQuarterFiniteBlockInterior_apply parent k n (by omega)] at hpoint'
+  have hstepOne : monotoneQuarterStep (k + 1) x = 1 := by
+    apply monotoneQuarterStep_eq_one_of_le
+    exact (quarterLogLatticePoint_mono (by omega)).trans hxleft.le
+  have hstepLt :
+      monotoneQuarterStep (k + ((n - 1 : ℕ) : ℤ)) x < 1 :=
+    monotoneQuarterStep_lt_one_of_lt_next
+      (k + ((n - 1 : ℕ) : ℤ)) hxright
+  rw [hstepOne] at hpoint'
+  exact (mul_eq_zero.mp hpoint').resolve_left
+    (Complex.ofReal_ne_zero.mpr (sub_pos.mpr hstepLt).ne')
+
+/-- If an arbitrary-length interior test itself vanishes, both endpoint
+cells collapse from their two-step supports to the two outward transition
+intervals.  This is the all-length support geometry hidden in the singular
+middle-pivot branch. -/
+theorem finiteBlock_endpoint_tsupports_collapse_of_interior_zero
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 4 ≤ n)
+    (hmiddle : monotoneQuarterFiniteBlockInterior parent k n = 0) :
+    tsupport (monotoneQuarterCell parent k : ℝ → ℂ) ⊆
+        Set.Icc (quarterLogLatticePoint k)
+          (quarterLogLatticePoint (k + 1)) ∧
+      tsupport
+          (monotoneQuarterCell parent
+            (k + ((n - 1 : ℕ) : ℤ)) : ℝ → ℂ) ⊆
+        Set.Icc
+          (quarterLogLatticePoint
+            (k + ((n - 1 : ℕ) : ℤ) + 1))
+          (quarterLogLatticePoint
+            (k + ((n - 1 : ℕ) : ℤ) + 2)) := by
+  constructor
+  · rw [tsupport]
+    apply closure_minimal _ isClosed_Icc
+    intro x hx
+    have hxne : monotoneQuarterCell parent k x ≠ 0 :=
+      Function.mem_support.mp hx
+    have hwide := monotoneQuarterCell_tsupport_subset parent k
+      (subset_tsupport _ hx)
+    refine ⟨hwide.1, ?_⟩
+    by_contra hnot
+    have hxleft : quarterLogLatticePoint (k + 1) < x :=
+      lt_of_not_ge hnot
+    by_cases hxright : quarterLogLatticePoint (k + 2) ≤ x
+    · apply hxne
+      rw [monotoneQuarterCell_apply,
+        monotoneQuarterWeight_eq_zero_of_le_left k hxright]
+      simp
+    · have hparent : parent x = 0 :=
+        finiteBlock_parent_eq_zero_of_interior_zero_of_leftTransition
+          parent k n hn hmiddle hxleft (lt_of_not_ge hxright)
+      apply hxne
+      rw [monotoneQuarterCell_apply, hparent, mul_zero]
+  · rw [tsupport]
+    apply closure_minimal _ isClosed_Icc
+    intro x hx
+    have hxne :
+        monotoneQuarterCell parent
+          (k + ((n - 1 : ℕ) : ℤ)) x ≠ 0 :=
+      Function.mem_support.mp hx
+    have hwide := monotoneQuarterCell_tsupport_subset parent
+      (k + ((n - 1 : ℕ) : ℤ)) (subset_tsupport _ hx)
+    refine ⟨?_, hwide.2⟩
+    by_contra hnot
+    have hxright :
+        x < quarterLogLatticePoint
+          (k + ((n - 1 : ℕ) : ℤ) + 1) :=
+      lt_of_not_ge hnot
+    by_cases hxleft :
+        x ≤ quarterLogLatticePoint (k + ((n - 1 : ℕ) : ℤ))
+    · apply hxne
+      rw [monotoneQuarterCell_apply,
+        monotoneQuarterWeight_eq_zero_of_le
+          (k + ((n - 1 : ℕ) : ℤ)) hxleft]
+      simp
+    · have hparent : parent x = 0 :=
+        finiteBlock_parent_eq_zero_of_interior_zero_of_rightTransition
+          parent k n hn hmiddle (lt_of_not_ge hxleft) hxright
+      apply hxne
+      rw [monotoneQuarterCell_apply, hparent, mul_zero]
+
 private theorem finiteBlock_parent_sub_nextCutoff_eq_leftEndpoint_allLength
     (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 2 ≤ n) :
     monotoneQuarterFiniteBlock
