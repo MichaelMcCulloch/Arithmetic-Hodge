@@ -13588,6 +13588,87 @@ theorem fourCellOddCoreLocalBilinear_fiveMode_P11Plus_fullyReduced
       r hr.continuous hodd hone hthree hfive hseven hnine c d e f g]
   ring
 
+/-- Complete structural Cauchy bound for the surviving wide-regular row
+against a `P₁₁+` residual. -/
+theorem fourCellOddSignedMassRegularBilinear_fiveMode_tail_sq_le_energy_mul
+    (r : ℝ → ℝ) (hr : Continuous r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (hseven : centeredOddP7Coefficient r = 0)
+    (hnine : centeredOddP9Coefficient r = 0)
+    (c d e f g : ℝ) :
+    fourCellOddSignedMassRegularBilinear
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r ^ 2 ≤
+      (fourCellOperatorHalfWidth / 10) ^ 2 *
+        factorTwoIntrinsicEnergy
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) *
+        factorTwoIntrinsicEnergy r := by
+  apply fourCellOddSignedMassRegularBilinear_sq_le_energy_mul_of_mass_eq_zero
+    (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r
+      (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile c d e f g).continuous
+      hr (odd_fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) hodd
+  exact integral_zero_one_fiveMode_mul_P11Plus_eq_zero
+    r hr hodd hone hthree hfive hseven hnine c d e f g
+
+/-- The wide-regular row is already absorbed by the proved residual
+diagonal, at the explicit finite cost `a²` times the pivot intrinsic energy.
+-/
+theorem fourCellOddSignedMassRegularBilinear_fiveMode_tail_sq_le_lowEnergy_mul_core
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (hone : centeredOddP1Coefficient r = 0)
+    (hthree : centeredOddP3Coefficient r = 0)
+    (hfive : centeredOddP5Coefficient r = 0)
+    (hseven : centeredOddP7Coefficient r = 0)
+    (hnine : centeredOddP9Coefficient r = 0)
+    (c d e f g : ℝ) :
+    fourCellOddSignedMassRegularBilinear
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r ^ 2 ≤
+      fourCellOperatorHalfWidth ^ 2 *
+        factorTwoIntrinsicEnergy
+          (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) *
+        fourCellOddCoreLocalQuadratic r := by
+  let E := factorTwoIntrinsicEnergy
+    (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g)
+  have hsigned :=
+    fourCellOddSignedMassRegularBilinear_fiveMode_tail_sq_le_energy_mul
+      r hr.continuous hodd hone hthree hfive hseven hnine c d e f g
+  have htail := one_fiftieth_positiveHalfMass_le_core_add_localWidthDefect_of_P1
+    r hr hodd hone
+  change (1 / 50 : ℝ) * (∫ x : ℝ in 0..1, r x ^ 2) ≤
+    fourCellOddCoreLocalQuadratic r at htail
+  have hmass := integral_sq_eq_two_mul_positiveHalf
+    r hr.continuous (Or.inr hodd)
+  have henergy : factorTwoIntrinsicEnergy r =
+      2 * ∫ x : ℝ in 0..1, r x ^ 2 := by
+    unfold factorTwoIntrinsicEnergy
+    exact hmass
+  have henergyLe : factorTwoIntrinsicEnergy r ≤
+      100 * fourCellOddCoreLocalQuadratic r := by
+    rw [henergy]
+    linarith
+  have hE0 : 0 ≤ E := by
+    dsimp only [E, factorTwoIntrinsicEnergy]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg _)
+  have hcoef0 : 0 ≤ (fourCellOperatorHalfWidth / 10) ^ 2 * E :=
+    mul_nonneg (sq_nonneg _) hE0
+  have hmul := mul_le_mul_of_nonneg_left henergyLe hcoef0
+  change fourCellOddSignedMassRegularBilinear
+      (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r ^ 2 ≤
+    (fourCellOperatorHalfWidth / 10) ^ 2 * E *
+      factorTwoIntrinsicEnergy r at hsigned
+  calc
+    fourCellOddSignedMassRegularBilinear
+        (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r ^ 2 ≤
+      (fourCellOperatorHalfWidth / 10) ^ 2 * E *
+        factorTwoIntrinsicEnergy r := hsigned
+    _ ≤ (fourCellOperatorHalfWidth / 10) ^ 2 * E *
+        (100 * fourCellOddCoreLocalQuadratic r) := hmul
+    _ = fourCellOperatorHalfWidth ^ 2 * E *
+        fourCellOddCoreLocalQuadratic r := by ring
+    _ = _ := by rfl
+
 private theorem integral_zero_three_fifths_P7_sq_le :
     (∫ x : ℝ in 0..3 / 5, factorTwoCenteredP7 x ^ 2) ≤
       (1 / 15 : ℝ) := by
