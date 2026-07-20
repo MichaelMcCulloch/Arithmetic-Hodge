@@ -128,6 +128,69 @@ theorem fourCellOddCoreLocalQuadratic_P1Orthogonal_fiveMode_decomposition
   rw [fourCellOddOneThreeFiveSevenNineLowPart_eq_P1Orthogonal v hone] at h
   exact h
 
+/-- The genuine remaining Riesz frontier after the finite coupled row has
+been closed.  The residual is orthogonal through `P₉`, but has no artificial
+endpoint equation.  Its mixed contribution with the finite block is retained
+inside the right-hand quadratic. -/
+def FourCellOddP1FiveModeP11CoupledTailBound : Prop :=
+  ∀ (d e f g : ℝ) (r : ℝ → ℝ),
+    ContDiff ℝ 1 r → Function.Odd r →
+    centeredOddP1Coefficient r = 0 →
+    centeredOddP3Coefficient r = 0 →
+    centeredOddP5Coefficient r = 0 →
+    centeredOddP7Coefficient r = 0 →
+    centeredOddP9Coefficient r = 0 →
+    fourCellOddCoreLocalBilinear centeredP1
+        (fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g + r) ^ 2 ≤
+      fourCellOddCoreLocalQuadratic centeredP1 *
+        (fourCellOddCoreLocalQuadratic
+            (fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g) +
+          2 * fourCellOddCoreLocalBilinear
+            (fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g) r +
+          fourCellOddCoreLocalQuadratic r)
+
+/-- The projected coupled-tail statement is sufficient for the original
+`P₁⊥` extension row.  All five projection identities and the complete mixed
+quadratic are discharged here. -/
+theorem fourCellOddP1OrthogonalFormDualBound_of_fiveModeP11CoupledTail
+    (hcoupled : FourCellOddP1FiveModeP11CoupledTailBound) :
+    FourCellOddP1OrthogonalFormDualBound := by
+  intro v hv hvodd hv1
+  let d := centeredOddP3Coefficient v
+  let e := fourCellOddP5TailCoefficient v
+  let f := fourCellOddP7TailCoefficient v
+  let g := fourCellOddP9TailCoefficient v
+  let p := fourCellOddOneThreeFiveSevenNineLowProfile 0 d e f g
+  let r := fourCellOddOneThreeFiveSevenNineResidual v
+  have hr : ContDiff ℝ 1 r := by
+    dsimp only [r]
+    exact contDiff_fourCellOddOneThreeFiveSevenNineResidual v hv
+  have hrodd : Function.Odd r := by
+    dsimp only [r]
+    exact odd_fourCellOddOneThreeFiveSevenNineResidual v hvodd
+  rcases centeredOddLowCoefficients_oneThreeFiveSevenNineResidual_eq_zero
+      v hv.continuous with ⟨hr1, hr3, hr5⟩
+  have hr7 : centeredOddP7Coefficient r = 0 := by
+    dsimp only [r]
+    exact centeredOddP7Coefficient_oneThreeFiveSevenNineResidual_eq_zero
+      v hv.continuous
+  have hr9 : centeredOddP9Coefficient r = 0 := by
+    dsimp only [r]
+    exact centeredOddP9Coefficient_oneThreeFiveSevenNineResidual_eq_zero
+      v hv.continuous
+  have hreconstruct : p + r = v := by
+    have h := fourCellOddOneThreeFiveSevenNineLowPart_add_residual v
+    rw [fourCellOddOneThreeFiveSevenNineLowPart_eq_P1Orthogonal v hv1] at h
+    simpa only [p, r, d, e, f, g] using h
+  have hdecomp :=
+    fourCellOddCoreLocalQuadratic_P1Orthogonal_fiveMode_decomposition
+      v hv hv1
+  have h := hcoupled d e f g r hr hrodd hr1 hr3 hr5 hr7 hr9
+  dsimp only [p, r, d, e, f, g] at hreconstruct hdecomp h ⊢
+  rw [hreconstruct] at h
+  rw [hdecomp]
+  exact h
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellOddP1OrthogonalCoupledClosureStructural
