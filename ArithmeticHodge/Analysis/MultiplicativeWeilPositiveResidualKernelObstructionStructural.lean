@@ -13,7 +13,10 @@ noncomputable section
 open MultiplicativeWeil
 open ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthEndpointReserveStructural
 open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellCommonParentDeterminantStructural
+open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
 open ArithmeticHodge.Analysis.MultiplicativeWeilFiveCellMinimalBlockReserveStructural
+open MultiplicativeWeilFourCellEnergyAbsorptionStructural
+open MultiplicativeWeilMonotoneCellEnergyFrameStructural
 open MultiplicativeWeilMonotoneQuarterPartitionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 
@@ -383,6 +386,102 @@ theorem exists_three_pointSeparated_real_bombieri_bumps
     fin_cases i <;> fin_cases j <;>
       simp [middle, center, hb0one, hb1one, hb2one,
         hb0c1, hb0c2, hb1c0, hb1c2, hb2c0, hb2c1]
+
+private theorem threeMiddleCombination_tsupport_subset
+    (middle : Fin 3 → BombieriTest) (c : Fin 3 → ℝ)
+    (a b : ℝ)
+    (hsupport : ∀ i, tsupport (middle i : ℝ → ℂ) ⊆ Icc a b) :
+    tsupport (threeMiddleCombination middle c : ℝ → ℂ) ⊆ Icc a b := by
+  unfold threeMiddleCombination
+  have hsum : ∀ S : Finset (Fin 3),
+      tsupport ((∑ i ∈ S, ((c i : ℝ) : ℂ) • middle i : BombieriTest) :
+        ℝ → ℂ) ⊆ Icc a b := by
+    intro S
+    induction S using Finset.induction_on with
+    | empty => simp
+    | @insert i S hi ih =>
+        rw [Finset.sum_insert hi]
+        apply (tsupport_add
+          ((((c i : ℝ) : ℂ) • middle i : BombieriTest) : ℝ → ℂ)
+          ((∑ j ∈ S, ((c j : ℝ) : ℂ) • middle j : BombieriTest) :
+            ℝ → ℂ)).trans
+        apply union_subset
+        · exact (tsupport_smul_subset_right
+            (fun _x : ℝ ↦ ((c i : ℝ) : ℂ))
+            (middle i : ℝ → ℂ)).trans (hsupport i)
+        · exact ih
+  simpa only [Finset.sum_subtype] using hsum Finset.univ
+
+private theorem threeMiddleCombination_conjugate_fixed
+    (middle : Fin 3 → BombieriTest) (c : Fin 3 → ℝ)
+    (hreal : ∀ i, bombieriConjugateTest (middle i) = middle i) :
+    bombieriConjugateTest (threeMiddleCombination middle c) =
+      threeMiddleCombination middle c := by
+  unfold threeMiddleCombination
+  have hsum : ∀ S : Finset (Fin 3),
+      bombieriConjugateTest
+          (∑ i ∈ S, ((c i : ℝ) : ℂ) • middle i) =
+        ∑ i ∈ S, ((c i : ℝ) : ℂ) • middle i := by
+    intro S
+    induction S using Finset.induction_on with
+    | empty =>
+        apply TestFunction.ext
+        intro x
+        simp [bombieriConjugateTest_apply]
+    | @insert i S hi ih =>
+        rw [Finset.sum_insert hi, bombieriConjugateTest_add, ih,
+          bombieriConjugateTest_smul, Complex.conj_ofReal, hreal i]
+  simpa only [Finset.sum_subtype] using hsum Finset.univ
+
+private theorem threeMiddleCombination_ne_zero_of_pointSeparated
+    (middle : Fin 3 → BombieriTest) (center : Fin 3 → ℝ)
+    (hpoint : ∀ i j, middle i (center j) = if i = j then 1 else 0)
+    (c : Fin 3 → ℝ) (hc : c ≠ 0) :
+    threeMiddleCombination middle c ≠ 0 := by
+  intro hzero
+  apply hc
+  funext j
+  have happly := congrArg (fun f : BombieriTest ↦ f (center j)) hzero
+  change (∑ i : Fin 3,
+    ((c i : ℝ) : ℂ) * middle i (center j)) = 0 at happly
+  simp_rw [hpoint] at happly
+  simpa using happly
+
+private theorem bombieriRealQuadraticValue_pos_of_ratioTwoCell_of_real_of_ne_zero_local
+    (m : BombieriTest) (hcell : BombieriRatioTwoCell m)
+    (hmreal : bombieriConjugateTest m = m) (hm : m ≠ 0) :
+    0 < bombieriRealQuadraticValue m := by
+  have hcoercive := real_ratioTwo_localCriticalForm_re_ge_criticalLogEnergy
+    m hcell hmreal
+  have henergy : 0 < bombieriCriticalLogEnergy m :=
+    bombieriCriticalLogEnergy_pos_of_ne_zero m hm
+  have hlocal : 0 < (bombieriLocalCriticalForm m m).re := by
+    have hcoeff : 0 < (1 / 12000 : ℝ) := by norm_num
+    exact lt_of_lt_of_le (mul_pos hcoeff henergy) hcoercive
+  obtain ⟨a, b, ha, hab, hsupport, hratio⟩ := hcell
+  have heq := bombieriFunctional_quadratic_eq_bombieriLocalCriticalForm_le_two
+    m ha hab hsupport hratio
+  unfold bombieriRealQuadraticValue
+  rw [heq]
+  exact hlocal
+
+/-- Point separation, one ratio-two support interval, and realness upgrade
+every nonzero three-bump combination to strict Bombieri positivity. -/
+theorem threeMiddleCombination_quadratic_pos_of_pointSeparated_ratioTwo
+    (middle : Fin 3 → BombieriTest) (center : Fin 3 → ℝ)
+    (a b : ℝ) (ha : 0 < a) (hab : a ≤ b) (hratio : b / a ≤ 2)
+    (hreal : ∀ i, bombieriConjugateTest (middle i) = middle i)
+    (hsupport : ∀ i, tsupport (middle i : ℝ → ℂ) ⊆ Icc a b)
+    (hpoint : ∀ i j, middle i (center j) = if i = j then 1 else 0)
+    (c : Fin 3 → ℝ) (hc : c ≠ 0) :
+    0 < bombieriRealQuadraticValue (threeMiddleCombination middle c) := by
+  apply bombieriRealQuadraticValue_pos_of_ratioTwoCell_of_real_of_ne_zero_local
+  · exact ⟨a, b, ha, hab,
+      threeMiddleCombination_tsupport_subset middle c a b hsupport,
+      hratio⟩
+  · exact threeMiddleCombination_conjugate_fixed middle c hreal
+  · exact threeMiddleCombination_ne_zero_of_pointSeparated
+      middle center hpoint c hc
 
 end
 
