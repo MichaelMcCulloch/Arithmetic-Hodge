@@ -315,6 +315,245 @@ private theorem finiteSeven_csch_lower_product_identity (u : ℝ) :
     finiteSevenSinhDivPolynomial18 finiteSevenCschError17
   ring
 
+private theorem finiteSeven_sech_envelope
+    {u : ℝ} (hu0 : 0 ≤ u) (hu : u ≤ (7 / 16 : ℝ)) :
+    0 ≤ 1 / Real.cosh u - finiteSevenSechPolynomial18 u ∧
+      1 / Real.cosh u - finiteSevenSechPolynomial18 u ≤
+        finiteSevenSechError18 u := by
+  have huWide : u < (7 / 10 : ℝ) := hu.trans_lt (by norm_num)
+  have hTaylor := finiteSeven_cosh_taylor_bounds hu0 huWide
+  have hP0 : 0 ≤ finiteSevenSechPolynomial18 u :=
+    finiteSeven_sechPolynomial18_nonnegative hu0 hu
+  have hPCup :
+      finiteSevenSechPolynomial18 u * finiteSevenCoshUpper20 u ≤ 1 := by
+    rw [← sub_nonpos, finiteSeven_sech_upper_product_identity]
+    have hnonneg :
+        0 ≤ u ^ 20 *
+          (2404879675441 * u ^ 18 + 679456904784315 * u ^ 16 +
+            208053063791488800 * u ^ 14 +
+            49821743203659189900 * u ^ 12 +
+            9038056804493497032960 * u ^ 10 +
+            1186949776492308275539200 * u ^ 8 +
+            105903844722183577305600000 * u ^ 6 +
+            5833314188265099690475776000 * u ^ 4 +
+            168445517718571165337481216000 * u ^ 2 +
+            1778441067698372583894355968000) := by
+      positivity
+    nlinarith
+  have hPCosh : finiteSevenSechPolynomial18 u * Real.cosh u ≤ 1 :=
+    (mul_le_mul_of_nonneg_left hTaylor.2 hP0).trans hPCup
+  have hLower : 0 ≤ 1 / Real.cosh u - finiteSevenSechPolynomial18 u := by
+    rw [sub_nonneg, le_div_iff₀ (Real.cosh_pos u)]
+    simpa only [one_mul] using hPCosh
+  constructor
+  · exact hLower
+  · have hIdentity :
+        1 / Real.cosh u - finiteSevenSechPolynomial18 u =
+          (1 - finiteSevenSechPolynomial18 u * Real.cosh u) /
+            Real.cosh u := by
+      field_simp [(Real.cosh_pos u).ne']
+    have hNumerator0 :
+        0 ≤ 1 - finiteSevenSechPolynomial18 u * Real.cosh u := by
+      linarith
+    have hDivide :
+        (1 - finiteSevenSechPolynomial18 u * Real.cosh u) / Real.cosh u ≤
+          1 - finiteSevenSechPolynomial18 u * Real.cosh u :=
+      div_le_self hNumerator0 (Real.one_le_cosh u)
+    have hPLower :
+        finiteSevenSechPolynomial18 u * finiteSevenCoshPolynomial18 u ≤
+          finiteSevenSechPolynomial18 u * Real.cosh u :=
+      mul_le_mul_of_nonneg_left hTaylor.1 hP0
+    rw [hIdentity]
+    calc
+      _ ≤ 1 - finiteSevenSechPolynomial18 u * Real.cosh u := hDivide
+      _ ≤ 1 - finiteSevenSechPolynomial18 u *
+          finiteSevenCoshPolynomial18 u := by nlinarith
+      _ = finiteSevenSechError18 u :=
+        finiteSeven_sech_lower_product_identity u
+
+private theorem finiteSeven_csch_envelope
+    {u : ℝ} (hu0 : 0 < u) (hu : u ≤ (7 / 16 : ℝ)) :
+    0 ≤ 1 / Real.sinh u - 1 / u - finiteSevenCschRegularPolynomial17 u ∧
+      1 / Real.sinh u - 1 / u - finiteSevenCschRegularPolynomial17 u ≤
+        finiteSevenCschError17 u := by
+  let A : ℝ := Real.sinh u / u
+  have huWide : u < (7 / 10 : ℝ) := hu.trans_lt (by norm_num)
+  have hTaylorRaw := finiteSeven_sinhDiv_taylor_bounds hu0 huWide
+  have hTaylor :
+      finiteSevenSinhDivPolynomial18 u ≤ A ∧
+        A ≤ finiteSevenSinhDivUpper20 u := hTaylorRaw
+  have hA1 : (1 : ℝ) ≤ A := by
+    dsimp only [A]
+    rw [le_div_iff₀ hu0]
+    simpa using (Real.self_le_sinh_iff.mpr hu0.le)
+  have hApos : 0 < A := lt_of_lt_of_le (by norm_num) hA1
+  have hQ0 : 0 ≤ finiteSevenCschMultiplier18 u :=
+    finiteSeven_cschMultiplier18_nonnegative hu0.le hu
+  have hQAup :
+      finiteSevenCschMultiplier18 u * finiteSevenSinhDivUpper20 u ≤ 1 := by
+    rw [← sub_nonpos, finiteSeven_csch_upper_product_identity]
+    have hnonneg :
+        0 ≤ u ^ 20 *
+          (28748457785 * u ^ 18 + 8772031538109 * u ^ 16 +
+            3010495769436960 * u ^ 14 + 812691320840480340 * u ^ 12 +
+            168883856693083203840 * u ^ 10 +
+            25930335518959823481600 * u ^ 8 +
+            2779765225457174748057600 * u ^ 6 +
+            191134377072102371104512000 * u ^ 4 +
+            7293505488811609420394496000 * u ^ 2 +
+            111614655465121550857629696000) := by
+      positivity
+    nlinarith
+  have hQA : finiteSevenCschMultiplier18 u * A ≤ 1 :=
+    (mul_le_mul_of_nonneg_left hTaylor.2 hQ0).trans hQAup
+  have hQleInv : finiteSevenCschMultiplier18 u ≤ 1 / A := by
+    rw [le_div_iff₀ hApos]
+    simpa only [one_mul] using hQA
+  have hSinhPos : 0 < Real.sinh u := Real.sinh_pos_iff.mpr hu0
+  have hMainIdentity :
+      1 / Real.sinh u - 1 / u - finiteSevenCschRegularPolynomial17 u =
+        (1 / A - finiteSevenCschMultiplier18 u) / u := by
+    dsimp only [A]
+    unfold finiteSevenCschMultiplier18
+    field_simp [hu0.ne', hSinhPos.ne']
+    ring
+  have hLower :
+      0 ≤ 1 / Real.sinh u - 1 / u - finiteSevenCschRegularPolynomial17 u := by
+    rw [hMainIdentity]
+    exact div_nonneg (sub_nonneg.mpr hQleInv) hu0.le
+  constructor
+  · exact hLower
+  · have hInvIdentity :
+        1 / A - finiteSevenCschMultiplier18 u =
+          (1 - finiteSevenCschMultiplier18 u * A) / A := by
+      field_simp [hApos.ne']
+    have hNumerator0 : 0 ≤ 1 - finiteSevenCschMultiplier18 u * A := by
+      linarith
+    have hDivideA :
+        (1 - finiteSevenCschMultiplier18 u * A) / A ≤
+          1 - finiteSevenCschMultiplier18 u * A :=
+      div_le_self hNumerator0 hA1
+    have hQLower :
+        finiteSevenCschMultiplier18 u * finiteSevenSinhDivPolynomial18 u ≤
+          finiteSevenCschMultiplier18 u * A :=
+      mul_le_mul_of_nonneg_left hTaylor.1 hQ0
+    have hInner :
+        1 / A - finiteSevenCschMultiplier18 u ≤
+          u * finiteSevenCschError17 u := by
+      rw [hInvIdentity]
+      calc
+        _ ≤ 1 - finiteSevenCschMultiplier18 u * A := hDivideA
+        _ ≤ 1 - finiteSevenCschMultiplier18 u *
+            finiteSevenSinhDivPolynomial18 u := by linarith
+        _ = u * finiteSevenCschError17 u :=
+          finiteSeven_csch_lower_product_identity u
+    rw [hMainIdentity]
+    rw [div_le_iff₀ hu0]
+    simpa only [div_mul_cancel₀ _ hu0.ne', mul_comm] using hInner
+
+private theorem finiteSeven_yoshidaRegularKernel_two_mul
+    (u : ℝ) (hu : 0 < u) :
+    yoshidaRegularKernel (2 * u) =
+      (1 / 4 : ℝ) *
+        (1 / Real.cosh u + (1 / Real.sinh u - 1 / u)) := by
+  unfold yoshidaRegularKernel
+  rw [if_neg (mul_ne_zero (by norm_num) hu.ne')]
+  rw [show 2 * u / 2 = u by ring, Real.sinh_two_mul,
+    ← Real.cosh_add_sinh]
+  field_simp [hu.ne', (Real.sinh_pos_iff.mpr hu).ne',
+    (Real.cosh_pos u).ne']
+  ring
+
+private theorem finiteSeven_regularKernelPolynomial18_two_mul (u : ℝ) :
+    fourCellEvenFiniteSevenRegularKernelPolynomial18 (2 * u) =
+      (1 / 4 : ℝ) *
+        (finiteSevenSechPolynomial18 u +
+          finiteSevenCschRegularPolynomial17 u) := by
+  unfold fourCellEvenFiniteSevenRegularKernelPolynomial18
+  ring
+
+private theorem finiteSeven_sechError18_upper
+    {u : ℝ} (hu0 : 0 ≤ u) (hu : u ≤ (7 / 16 : ℝ)) :
+    finiteSevenSechError18 u ≤
+      finiteSevenSechError18 (7 / 16 : ℝ) := by
+  unfold finiteSevenSechError18
+  gcongr
+
+private theorem finiteSeven_cschError17_upper
+    {u : ℝ} (hu0 : 0 ≤ u) (hu : u ≤ (7 / 16 : ℝ)) :
+    finiteSevenCschError17 u ≤
+      finiteSevenCschError17 (7 / 16 : ℝ) := by
+  unfold finiteSevenCschError17
+  gcongr
+
+private theorem finiteSeven_endpoint_kernel_error_lt :
+    (1 / 4 : ℝ) *
+        (finiteSevenSechError18 (7 / 16 : ℝ) +
+          finiteSevenCschError17 (7 / 16 : ℝ)) <
+      (1 / 380000000000 : ℝ) := by
+  norm_num [finiteSevenSechError18, finiteSevenCschError17]
+
+/-- On the exact finite-seven argument range, the degree-eighteen polynomial
+is a one-sided regular-kernel envelope with error below `1/380000000000`.
+This uniform analytic statement is the kernel input for all twenty-one
+border-entry enclosures. -/
+theorem fourCellEvenFiniteSevenRegularKernelPolynomial18_sevenEighths_envelope
+    {t : ℝ} (ht0 : 0 ≤ t) (ht : t ≤ (7 / 8 : ℝ)) :
+    0 ≤ yoshidaRegularKernel t -
+        fourCellEvenFiniteSevenRegularKernelPolynomial18 t ∧
+      yoshidaRegularKernel t -
+          fourCellEvenFiniteSevenRegularKernelPolynomial18 t <
+        (1 / 380000000000 : ℝ) := by
+  rcases eq_or_lt_of_le ht0 with rfl | htpos
+  · constructor <;>
+      norm_num [yoshidaRegularKernel,
+        fourCellEvenFiniteSevenRegularKernelPolynomial18,
+        finiteSevenSechPolynomial18,
+        finiteSevenCschRegularPolynomial17]
+  · let u : ℝ := t / 2
+    have hu0 : 0 < u := by
+      dsimp only [u]
+      linarith
+    have hu : u ≤ (7 / 16 : ℝ) := by
+      dsimp only [u]
+      linarith
+    have hSech := finiteSeven_sech_envelope hu0.le hu
+    have hCsch := finiteSeven_csch_envelope hu0 hu
+    have htEq : t = 2 * u := by
+      dsimp only [u]
+      ring
+    have hDifference :
+        yoshidaRegularKernel t -
+            fourCellEvenFiniteSevenRegularKernelPolynomial18 t =
+          (1 / 4 : ℝ) *
+            ((1 / Real.cosh u - finiteSevenSechPolynomial18 u) +
+              (1 / Real.sinh u - 1 / u -
+                finiteSevenCschRegularPolynomial17 u)) := by
+      rw [htEq, finiteSeven_yoshidaRegularKernel_two_mul u hu0,
+        finiteSeven_regularKernelPolynomial18_two_mul]
+      ring
+    have hError :
+        yoshidaRegularKernel t -
+            fourCellEvenFiniteSevenRegularKernelPolynomial18 t ≤
+          (1 / 4 : ℝ) *
+            (finiteSevenSechError18 u + finiteSevenCschError17 u) := by
+      rw [hDifference]
+      nlinarith
+    have hSechBound := finiteSeven_sechError18_upper hu0.le hu
+    have hCschBound := finiteSeven_cschError17_upper hu0.le hu
+    constructor
+    · rw [hDifference]
+      nlinarith [hSech.1, hCsch.1]
+    · exact hError.trans_lt <| by
+        have :
+            (1 / 4 : ℝ) *
+                (finiteSevenSechError18 u + finiteSevenCschError17 u) ≤
+              (1 / 4 : ℝ) *
+                (finiteSevenSechError18 (7 / 16 : ℝ) +
+                  finiteSevenCschError17 (7 / 16 : ℝ)) := by
+          nlinarith
+        exact this.trans_lt finiteSeven_endpoint_kernel_error_lt
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedFiniteSevenEntryEnclosuresStructural
