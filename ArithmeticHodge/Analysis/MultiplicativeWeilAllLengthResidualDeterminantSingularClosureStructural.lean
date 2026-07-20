@@ -64,7 +64,7 @@ private theorem endpointPair_nonnegative_of_residualDeterminant
     nlinarith [sq_nonneg (U + V)]
   exact (mul_nonneg_iff_of_pos_left hMpos).mp hscaled
 
-private theorem monotoneQuarterCell_eq_zero_of_innerSupport_left
+theorem monotoneQuarterCell_eq_zero_of_innerSupport_left
     (f : BombieriTest) (k : ℤ)
     (hsupport : tsupport (f : ℝ → ℂ) ⊆
       Icc (quarterLogLatticePoint (k + 2))
@@ -80,7 +80,7 @@ private theorem monotoneQuarterCell_eq_zero_of_innerSupport_left
       monotoneQuarterWeight_eq_zero_of_le_left k hxt.1]
     simp
 
-private theorem monotoneQuarterCell_eq_zero_of_innerSupport_right
+theorem monotoneQuarterCell_eq_zero_of_innerSupport_right
     (f : BombieriTest) (k : ℤ) (n : ℕ) (hn : 4 ≤ n)
     (hsupport : tsupport (f : ℝ → ℂ) ⊆
       Icc (quarterLogLatticePoint (k + 2))
@@ -100,7 +100,7 @@ private theorem monotoneQuarterCell_eq_zero_of_innerSupport_right
         (k + ((n - 1 : ℕ) : ℤ)) (hxt.2.trans hq)]
     simp
 
-private theorem finiteBlockInterior_eq_self_of_innerSupport
+theorem finiteBlockInterior_eq_self_of_innerSupport
     (f : BombieriTest) (k : ℤ) (n : ℕ) (hn : 4 ≤ n)
     (hsupport : tsupport (f : ℝ → ℂ) ⊆
       Icc (quarterLogLatticePoint (k + 2))
@@ -122,7 +122,7 @@ private theorem finiteBlockInterior_eq_self_of_innerSupport
         (k + ((n - 1 : ℕ) : ℤ)) (hxt.2.trans hq)]
     norm_num
 
-private theorem finiteBlockInterior_add
+theorem finiteBlockInterior_add
     (f g : BombieriTest) (k : ℤ) (n : ℕ) :
     monotoneQuarterFiniteBlockInterior (f + g) k n =
       monotoneQuarterFiniteBlockInterior f k n +
