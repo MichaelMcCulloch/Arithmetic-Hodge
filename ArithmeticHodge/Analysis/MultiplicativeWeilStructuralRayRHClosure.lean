@@ -43,13 +43,14 @@ theorem realFiniteBlockProductionNonnegativeAtLength_five_of_intrinsicParityRays
     (realFiveCellFactorTwoDomination_of_intrinsicParityRays hfive)
 
 /-- The complete sharpened analytic frontier, with no remote-support,
-ratio-two-support, or singular-pivot bookkeeping left implicit. -/
+ratio-two-support, lattice-position, or singular-pivot bookkeeping left
+implicit. -/
 def ArithmeticHodgeStructuralRayCertificate : Prop :=
   FourCellEvenEndpointZeroExactCapacity ∧
     FourCellOddP11CoupledSelectorLoewnerCertificate ∧
       FiveCellEndpointAdaptedIntrinsicParityRayNonnegative ∧
         ∀ n : ℕ, 6 ≤ n →
-          RealFiniteBlockCommonParentResidualPositiveRayNonnegativeLocalizedOutsideRatioTwoAtLength
+          RealFiniteBlockCommonParentResidualPositiveRayNonnegativeNormalizedOutsideRatioTwoAtLength
             n
 
 /-- The structural-ray certificate implies RH.  The zero enumeration is an
@@ -67,7 +68,7 @@ theorem riemannHypothesis_of_structuralRayCertificate
     (realFiniteBlockProductionNonnegativeAtLength_five_of_intrinsicParityRays
       hcert.2.2.1)
     (fun n hn ↦
-      (realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_localizedOutsideRatioTwo
+      (realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_normalizedOutsideRatioTwo
         n (by omega)).2 (hcert.2.2.2 n hn))
 
 end

@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthPositiveRayKernelStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilLogLatticeCovarianceStructural
 
 set_option autoImplicit false
 
@@ -210,6 +211,258 @@ theorem bombieriRealQuadraticValue_residualPencil_nonnegative_iff_canonicalFinit
     parent k n (finiteBlockResidualPrimeCutoff n) t
     (finiteBlockResidual_latticeWindow_ratio_lt_cutoff k n)
 
+/-! ## Removing the absolute lattice position -/
+
+theorem quarterLogLatticePoint_shift_div
+    (k d : ℤ) :
+    quarterLogLatticePoint (k + d) / quarterLogLatticePoint k =
+      quarterLogLatticePoint d := by
+  rw [quarterLogLatticePoint_add]
+  exact mul_div_cancel_right₀ _ (quarterLogLatticePoint_pos k).ne'
+
+theorem monotoneQuarterStep_normalize_shift
+    (k d : ℤ) (x : ℝ) :
+    monotoneQuarterStep (k + d) (quarterLogLatticePoint k * x) =
+      monotoneQuarterStep d x := by
+  unfold monotoneQuarterStep
+  congr 1
+  rw [quarterLogLatticePoint_add,
+    show k + d + 1 = k + (d + 1) by ring,
+    quarterLogLatticePoint_add]
+  field_simp [(quarterLogLatticePoint_pos k).ne']
+
+theorem monotoneQuarterWeight_normalize_shift
+    (k d : ℤ) (x : ℝ) :
+    monotoneQuarterWeight (k + d) (quarterLogLatticePoint k * x) =
+      monotoneQuarterWeight d x := by
+  unfold monotoneQuarterWeight
+  rw [monotoneQuarterStep_normalize_shift,
+    show k + d + 1 = k + (d + 1) by ring,
+    monotoneQuarterStep_normalize_shift]
+
+/-- Normalizing by the absolute lattice position translates every physical
+cell index by `-k` exactly. -/
+theorem quarterLogLatticeNormalize_monotoneQuarterCell
+    (parent : BombieriTest) (k d : ℤ) :
+    quarterLogLatticeNormalize k (monotoneQuarterCell parent (k + d)) =
+      monotoneQuarterCell (quarterLogLatticeNormalize k parent) d := by
+  apply TestFunction.ext
+  intro x
+  simp only [quarterLogLatticeNormalize, normalizedDilation_apply,
+    monotoneQuarterCell_apply]
+  rw [monotoneQuarterWeight_normalize_shift]
+  ring
+
+private theorem quarterLogLatticeNormalize_finset_sum
+    {ι : Type*} [DecidableEq ι] (s : Finset ι)
+    (f : ι → BombieriTest) (k : ℤ) :
+    quarterLogLatticeNormalize k (∑ i ∈ s, f i) =
+      ∑ i ∈ s, quarterLogLatticeNormalize k (f i) := by
+  induction s using Finset.induction_on with
+  | empty =>
+      unfold quarterLogLatticeNormalize
+      apply TestFunction.ext
+      intro x
+      simp [normalizedDilation_apply]
+  | @insert a s ha ih =>
+      rw [Finset.sum_insert ha, Finset.sum_insert ha]
+      unfold quarterLogLatticeNormalize at ih ⊢
+      rw [normalizedDilation_add, ih]
+
+/-- The complete finite block is covariant under the same lattice
+translation. -/
+theorem quarterLogLatticeNormalize_monotoneQuarterFiniteBlock
+    (parent : BombieriTest) (k : ℤ) (start len : ℕ) :
+    quarterLogLatticeNormalize k
+        (monotoneQuarterFiniteBlock parent k start len) =
+      monotoneQuarterFiniteBlock
+        (quarterLogLatticeNormalize k parent) 0 start len := by
+  classical
+  unfold monotoneQuarterFiniteBlock
+  rw [quarterLogLatticeNormalize_finset_sum]
+  apply Finset.sum_congr rfl
+  intro i _hi
+  simpa only [Nat.cast_zero, zero_add] using
+    quarterLogLatticeNormalize_monotoneQuarterCell
+      parent k (((start + i : ℕ) : ℤ))
+
+theorem quarterLogLatticeNormalize_conjugate_fixed
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) :
+    bombieriConjugateTest (quarterLogLatticeNormalize k parent) =
+      quarterLogLatticeNormalize k parent := by
+  apply TestFunction.ext
+  intro x
+  simp only [bombieriConjugateTest_apply, quarterLogLatticeNormalize,
+    normalizedDilation_apply, map_mul, Complex.conj_ofReal]
+  have hp := congrArg (fun f : BombieriTest ↦
+    f (quarterLogLatticePoint k * x)) hparent
+  simpa only [bombieriConjugateTest_apply] using congrArg
+    (fun z : ℂ ↦ ((Real.sqrt (quarterLogLatticePoint k) : ℝ) : ℂ) * z) hp
+
+theorem quarterLogLatticeNormalize_localized_tsupport_subset
+    (parent : BombieriTest) (k : ℤ) (n : ℕ)
+    (hsupport : tsupport (parent : ℝ → ℂ) ⊆
+      Set.Icc (quarterLogLatticePoint (k - 1))
+        (quarterLogLatticePoint (k + (n : ℤ) + 2))) :
+    tsupport (quarterLogLatticeNormalize k parent : ℝ → ℂ) ⊆
+      Set.Icc (quarterLogLatticePoint (-1))
+        (quarterLogLatticePoint ((n : ℤ) + 2)) := by
+  have h := normalizedDilation_tsupport_subset_Icc
+    (quarterLogLatticePoint k) (quarterLogLatticePoint_pos k)
+    parent hsupport
+  simpa only [quarterLogLatticeNormalize,
+    show k - 1 = k + (-1) by ring,
+    show k + (n : ℤ) + 2 = k + ((n : ℤ) + 2) by ring,
+    quarterLogLatticePoint_shift_div] using h
+
+/-- A ratio-two support interval stays ratio two after every positive
+normalized dilation. -/
+theorem bombieriRatioTwoCell_normalizedDilation
+    (lambda : ℝ) (hlambda : 0 < lambda) (g : BombieriTest)
+    (hg : BombieriRatioTwoCell g) :
+    BombieriRatioTwoCell (normalizedDilation lambda hlambda g) := by
+  obtain ⟨a, b, ha, hab, hsupport, hratio⟩ := hg
+  refine ⟨a / lambda, b / lambda, div_pos ha hlambda, ?_,
+    normalizedDilation_tsupport_subset_Icc
+      lambda hlambda g hsupport, ?_⟩
+  · exact (div_le_div_iff_of_pos_right hlambda).2 hab
+  · have hratioScale : b / lambda / (a / lambda) = b / a := by
+      field_simp [hlambda.ne', ha.ne']
+    rw [hratioScale]
+    exact hratio
+
+/-- Multiplicative support ratio at most two is invariant under every
+positive normalized dilation. -/
+theorem bombieriRatioTwoCell_normalizedDilation_iff
+    (lambda : ℝ) (hlambda : 0 < lambda) (g : BombieriTest) :
+    BombieriRatioTwoCell (normalizedDilation lambda hlambda g) ↔
+      BombieriRatioTwoCell g := by
+  constructor
+  · intro hdilated
+    have hback := bombieriRatioTwoCell_normalizedDilation
+      lambda⁻¹ (inv_pos.mpr hlambda)
+      (normalizedDilation lambda hlambda g) hdilated
+    rw [normalizedDilation_inv_comp] at hback
+    exact hback
+  · exact bombieriRatioTwoCell_normalizedDilation
+      lambda hlambda g
+
+theorem bombieriRealQuadraticValue_quarterLogLatticeNormalize
+    (parent : BombieriTest) (k : ℤ) :
+    bombieriRealQuadraticValue (quarterLogLatticeNormalize k parent) =
+      bombieriRealQuadraticValue parent := by
+  unfold bombieriRealQuadraticValue quarterLogLatticeNormalize
+  rw [bombieriFunctional_quadratic_normalizedDilation]
+
+theorem quarterLogLatticeNormalize_finiteBlockLeftMiddleOrthogonalResidual
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) :
+    quarterLogLatticeNormalize k
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n) =
+      finiteBlockLeftMiddleOrthogonalResidual
+        (quarterLogLatticeNormalize k parent) 0 n := by
+  let a := monotoneQuarterCell parent k
+  let m := monotoneQuarterFiniteBlockInterior parent k n
+  let a' := monotoneQuarterCell (quarterLogLatticeNormalize k parent) 0
+  let m' := monotoneQuarterFiniteBlockInterior
+    (quarterLogLatticeNormalize k parent) 0 n
+  have ha : quarterLogLatticeNormalize k a = a' := by
+    dsimp only [a, a']
+    simpa only [add_zero] using
+      quarterLogLatticeNormalize_monotoneQuarterCell parent k 0
+  have hm : quarterLogLatticeNormalize k m = m' := by
+    dsimp only [m, m']
+    unfold monotoneQuarterFiniteBlockInterior
+    exact quarterLogLatticeNormalize_monotoneQuarterFiniteBlock
+      parent k 1 (n - 2)
+  have hM : bombieriRealQuadraticValue m' =
+      bombieriRealQuadraticValue m := by
+    rw [← hm]
+    exact bombieriRealQuadraticValue_quarterLogLatticeNormalize m k
+  have hU : bombieriTwoBlockGlobalCrossSymbol a' m' =
+      bombieriTwoBlockGlobalCrossSymbol a m := by
+    rw [← ha, ← hm]
+    exact bombieriTwoBlockGlobalCrossSymbol_normalizedDilation
+      (quarterLogLatticePoint k) (quarterLogLatticePoint_pos k) a m
+  dsimp only [a, m, a', m'] at ha hm hM hU
+  unfold quarterLogLatticeNormalize at ha hm
+  unfold finiteBlockLeftMiddleOrthogonalResidual
+  dsimp only
+  change normalizedDilation (quarterLogLatticePoint k)
+      (quarterLogLatticePoint_pos k) (_ + _) = _
+  rw [normalizedDilation_add, normalizedDilation_smul,
+    normalizedDilation_smul, ha, hm, hM, hU]
+  rfl
+
+theorem quarterLogLatticeNormalize_finiteBlockRightMiddleOrthogonalResidual
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) :
+    quarterLogLatticeNormalize k
+        (finiteBlockRightMiddleOrthogonalResidual parent k n) =
+      finiteBlockRightMiddleOrthogonalResidual
+        (quarterLogLatticeNormalize k parent) 0 n := by
+  let m := monotoneQuarterFiniteBlockInterior parent k n
+  let e := monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+  let m' := monotoneQuarterFiniteBlockInterior
+    (quarterLogLatticeNormalize k parent) 0 n
+  let e' := monotoneQuarterCell (quarterLogLatticeNormalize k parent)
+    ((n - 1 : ℕ) : ℤ)
+  have hm : quarterLogLatticeNormalize k m = m' := by
+    dsimp only [m, m']
+    unfold monotoneQuarterFiniteBlockInterior
+    exact quarterLogLatticeNormalize_monotoneQuarterFiniteBlock
+      parent k 1 (n - 2)
+  have he : quarterLogLatticeNormalize k e = e' := by
+    dsimp only [e, e']
+    exact quarterLogLatticeNormalize_monotoneQuarterCell
+      parent k ((n - 1 : ℕ) : ℤ)
+  have hM : bombieriRealQuadraticValue m' =
+      bombieriRealQuadraticValue m := by
+    rw [← hm]
+    exact bombieriRealQuadraticValue_quarterLogLatticeNormalize m k
+  have hV : bombieriTwoBlockGlobalCrossSymbol m' e' =
+      bombieriTwoBlockGlobalCrossSymbol m e := by
+    rw [← hm, ← he]
+    exact bombieriTwoBlockGlobalCrossSymbol_normalizedDilation
+      (quarterLogLatticePoint k) (quarterLogLatticePoint_pos k) m e
+  dsimp only [m, e, m', e'] at hm he hM hV
+  unfold quarterLogLatticeNormalize at hm he
+  unfold finiteBlockRightMiddleOrthogonalResidual
+  dsimp only
+  simp only [zero_add]
+  change normalizedDilation (quarterLogLatticePoint k)
+      (quarterLogLatticePoint_pos k) (_ + _) = _
+  rw [normalizedDilation_add, normalizedDilation_smul,
+    normalizedDilation_smul, hm, he, hM, hV]
+  rfl
+
+/-- The complete residual pencil is covariant under translation of the
+quarter lattice, so its quadratic inequality is independent of `k`. -/
+theorem quarterLogLatticeNormalize_finiteBlock_residualPencil
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 3 ≤ n) (t : ℝ) :
+    quarterLogLatticeNormalize k
+        (monotoneQuarterFiniteBlock
+          (finiteBlockMiddleOrthogonalResidualPencilParent parent k n t)
+          k 0 n) =
+      monotoneQuarterFiniteBlock
+        (finiteBlockMiddleOrthogonalResidualPencilParent
+          (quarterLogLatticeNormalize k parent) 0 n t) 0 0 n := by
+  rw [finiteBlock_residualPencil_eq parent k n hn t,
+    finiteBlock_residualPencil_eq
+      (quarterLogLatticeNormalize k parent) 0 n hn t]
+  change normalizedDilation (quarterLogLatticePoint k)
+      (quarterLogLatticePoint_pos k) (_ + _) = _
+  have hleft :=
+    quarterLogLatticeNormalize_finiteBlockLeftMiddleOrthogonalResidual
+      parent k n
+  have hright :=
+    quarterLogLatticeNormalize_finiteBlockRightMiddleOrthogonalResidual
+      parent k n
+  unfold quarterLogLatticeNormalize at hleft hright
+  rw [normalizedDilation_add, normalizedDilation_smul,
+    hleft, hright]
+  rfl
+
 /-! ## Exact localization of the remaining positive-ray quantifiers -/
 
 /-- The genuinely unresolved ray after deleting both irrelevant remote
@@ -230,6 +483,24 @@ def RealFiniteBlockCommonParentResidualPositiveRayNonnegativeLocalizedOutsideRat
                   (monotoneQuarterFiniteBlock
                     (finiteBlockMiddleOrthogonalResidualPencilParent
                       parent k n t) k 0 n)
+
+/-- After quarter-lattice normalization the localized positive ray has one
+fixed support window and no remaining lattice-position quantifier. -/
+def RealFiniteBlockCommonParentResidualPositiveRayNonnegativeNormalizedOutsideRatioTwoAtLength
+    (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      tsupport (parent : ℝ → ℂ) ⊆
+          Set.Icc (quarterLogLatticePoint (-1))
+            (quarterLogLatticePoint ((n : ℤ) + 2)) →
+        ¬ BombieriRatioTwoCell parent →
+          0 < bombieriRealQuadraticValue
+              (monotoneQuarterFiniteBlockInterior parent 0 n) →
+            ∀ t : ℝ, 0 ≤ t →
+              0 ≤ bombieriRealQuadraticValue
+                (monotoneQuarterFiniteBlock
+                  (finiteBlockMiddleOrthogonalResidualPencilParent
+                    parent 0 n t) 0 0 n)
 
 /-- The outside-ratio-two ray is equivalent to checking only parents in the
 explicit surrounding plateau window.  If localization happens to shrink a
@@ -289,6 +560,71 @@ theorem realFiniteBlockCommonParentResidualPositiveRayNonnegativeOutsideRatioTwo
       rw [hpencil] at hnonnegative
       exact hnonnegative
 
+/-- Normalized dilation identifies every physical quarter-lattice position
+with the single base position `k = 0`. -/
+theorem realFiniteBlockCommonParentResidualPositiveRayNonnegativeLocalizedOutsideRatioTwo_iff_normalized
+    (n : ℕ) (hn : 3 ≤ n) :
+    RealFiniteBlockCommonParentResidualPositiveRayNonnegativeLocalizedOutsideRatioTwoAtLength n ↔
+      RealFiniteBlockCommonParentResidualPositiveRayNonnegativeNormalizedOutsideRatioTwoAtLength
+        n := by
+  constructor
+  · intro hlocal parent hparent hsupport hwide hMpos t ht
+    exact hlocal parent hparent 0
+      (by simpa only [zero_sub, zero_add] using hsupport)
+      hwide hMpos t ht
+  · intro hnormalized parent hparent k hsupport hwide hMpos t ht
+    let normalized : BombieriTest := quarterLogLatticeNormalize k parent
+    have hnormalizedFixed :
+        bombieriConjugateTest normalized = normalized := by
+      dsimp only [normalized]
+      exact quarterLogLatticeNormalize_conjugate_fixed parent hparent k
+    have hnormalizedSupport :
+        tsupport (normalized : ℝ → ℂ) ⊆
+          Set.Icc (quarterLogLatticePoint (-1))
+            (quarterLogLatticePoint ((n : ℤ) + 2)) := by
+      dsimp only [normalized]
+      exact quarterLogLatticeNormalize_localized_tsupport_subset
+        parent k n hsupport
+    have hnormalizedWide : ¬ BombieriRatioTwoCell normalized := by
+      dsimp only [normalized, quarterLogLatticeNormalize]
+      exact
+        (not_congr (bombieriRatioTwoCell_normalizedDilation_iff
+          (quarterLogLatticePoint k) (quarterLogLatticePoint_pos k)
+          parent)).mpr hwide
+    have hinteriorNormalize :
+        quarterLogLatticeNormalize k
+            (monotoneQuarterFiniteBlockInterior parent k n) =
+          monotoneQuarterFiniteBlockInterior normalized 0 n := by
+      unfold monotoneQuarterFiniteBlockInterior
+      dsimp only [normalized]
+      exact quarterLogLatticeNormalize_monotoneQuarterFiniteBlock
+        parent k 1 (n - 2)
+    have hMposNormalized :
+        0 < bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlockInterior normalized 0 n) := by
+      rw [← hinteriorNormalize,
+        bombieriRealQuadraticValue_quarterLogLatticeNormalize]
+      exact hMpos
+    have hnonnegativeNormalized := hnormalized normalized
+      hnormalizedFixed hnormalizedSupport hnormalizedWide
+      hMposNormalized t ht
+    have hpencilNormalize :=
+      quarterLogLatticeNormalize_finiteBlock_residualPencil
+        parent k n hn t
+    have hpencilQuadratic :
+        bombieriRealQuadraticValue
+            (monotoneQuarterFiniteBlock
+              (finiteBlockMiddleOrthogonalResidualPencilParent
+                normalized 0 n t) 0 0 n) =
+          bombieriRealQuadraticValue
+            (monotoneQuarterFiniteBlock
+              (finiteBlockMiddleOrthogonalResidualPencilParent
+                parent k n t) k 0 n) := by
+      rw [← hpencilNormalize,
+        bombieriRealQuadraticValue_quarterLogLatticeNormalize]
+    rw [hpencilQuadratic] at hnonnegativeNormalized
+    exact hnonnegativeNormalized
+
 /-- Final quantifier shape: the full common-parent positive ray is exactly
 the compact localized non-ratio-two ray above. -/
 theorem realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_localizedOutsideRatioTwo
@@ -300,6 +636,19 @@ theorem realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_localizedO
     (realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_outsideRatioTwo
       n hn).trans
       (realFiniteBlockCommonParentResidualPositiveRayNonnegativeOutsideRatioTwo_iff_localized
+        n hn)
+
+/-- Final fixed-window form of the all-length positive ray: one compact
+support interval at `k = 0`, outside the already-positive ratio-two cone. -/
+theorem realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_normalizedOutsideRatioTwo
+    (n : ℕ) (hn : 3 ≤ n) :
+    RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength n ↔
+      RealFiniteBlockCommonParentResidualPositiveRayNonnegativeNormalizedOutsideRatioTwoAtLength
+        n := by
+  exact
+    (realFiniteBlockCommonParentResidualPositiveRayNonnegative_iff_localizedOutsideRatioTwo
+      n hn).trans
+      (realFiniteBlockCommonParentResidualPositiveRayNonnegativeLocalizedOutsideRatioTwo_iff_normalized
         n hn)
 
 end
