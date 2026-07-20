@@ -12991,6 +12991,140 @@ theorem fourCellOddRetainedEndpointBilinear_P1_P7_eq :
   convert h using 1
   ring
 
+private def oddP7Correlation17Local (t : ℝ) : ℝ :=
+  -t + (27 / 2 : ℝ) * t ^ 2 - (175 / 3 : ℝ) * t ^ 3 +
+    (231 / 2 : ℝ) * t ^ 4 - (945 / 8 : ℝ) * t ^ 5 +
+      (1001 / 16 : ℝ) * t ^ 6 - (231 / 16 : ℝ) * t ^ 7 +
+        (143 / 384 : ℝ) * t ^ 9
+
+private theorem factorTwoCenteredCorrelationBilinear_P1_P7
+    (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear centeredP1 factorTwoCenteredP7 t =
+      oddP7Correlation17Local t := by
+  unfold factorTwoCenteredCorrelationBilinear
+    factorTwoCenteredCrossCorrelation centeredP1
+  rw [show (fun x : ℝ ↦ (t + x) * factorTwoCenteredP7 x) =
+      fun x ↦
+        0 * x ^ 0 + (-35 * t / 16 : ℝ) * x ^ 1 +
+          (-35 / 16 : ℝ) * x ^ 2 + (315 * t / 16 : ℝ) * x ^ 3 +
+          (315 / 16 : ℝ) * x ^ 4 + (-693 * t / 16 : ℝ) * x ^ 5 +
+          (-693 / 16 : ℝ) * x ^ 6 + (429 * t / 16 : ℝ) * x ^ 7 +
+          (429 / 16 : ℝ) * x ^ 8 + 0 * x ^ 9 + 0 * x ^ 10 +
+          0 * x ^ 11 + 0 * x ^ 12 + 0 * x ^ 13 by
+    funext x
+    rw [factorTwoCenteredP7_eq]
+    ring,
+    integral_polynomial_thirteen]
+  rw [show (fun x : ℝ ↦ factorTwoCenteredP7 (t + x) * x) =
+      fun x ↦
+        0 * x ^ 0 +
+          (-35 * t / 16 + 315 * t ^ 3 / 16 - 693 * t ^ 5 / 16 +
+            429 * t ^ 7 / 16 : ℝ) * x ^ 1 +
+          (-35 / 16 + 945 * t ^ 2 / 16 - 3465 * t ^ 4 / 16 +
+            3003 * t ^ 6 / 16 : ℝ) * x ^ 2 +
+          (945 * t / 16 - 3465 * t ^ 3 / 8 +
+            9009 * t ^ 5 / 16 : ℝ) * x ^ 3 +
+          (315 / 16 - 3465 * t ^ 2 / 8 +
+            15015 * t ^ 4 / 16 : ℝ) * x ^ 4 +
+          (-3465 * t / 16 + 15015 * t ^ 3 / 16 : ℝ) * x ^ 5 +
+          (-693 / 16 + 9009 * t ^ 2 / 16 : ℝ) * x ^ 6 +
+          (3003 * t / 16 : ℝ) * x ^ 7 +
+          (429 / 16 : ℝ) * x ^ 8 + 0 * x ^ 9 + 0 * x ^ 10 +
+          0 * x ^ 11 + 0 * x ^ 12 + 0 * x ^ 13 by
+    funext x
+    rw [factorTwoCenteredP7_eq]
+    ring,
+    integral_polynomial_thirteen]
+  unfold oddP7Correlation17Local
+  ring
+
+set_option maxHeartbeats 1000000 in
+private theorem integral_fourCellRegularPolynomial_mul_oddP7Correlation17Local :
+    (∫ t : ℝ in 0..2,
+      yoshidaRegularKernelPolynomial6 (fourCellOperatorHalfWidth * t) *
+        oddP7Correlation17Local t) =
+      -(3875 / 21424936845312 : ℝ) * Real.log 2 ^ 5 := by
+  unfold yoshidaRegularKernelPolynomial6 fourCellOperatorHalfWidth
+    oddP7Correlation17Local
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  norm_num
+  ring
+
+/-- The smooth wide-kernel correction to the exact `P₁/P₇` endpoint
+row is two orders of magnitude smaller than the endpoint entry.  The proof
+uses the global sixth-order analytic envelope and exact correlation moments;
+there is no quadrature or sampled kernel bound. -/
+theorem abs_integral_fourCellRegularKernel_mul_correlation_P1_P7_lt :
+    |∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) *
+        factorTwoCenteredCorrelationBilinear
+          centeredP1 factorTwoCenteredP7 t| < (1 / 5000 : ℝ) := by
+  let C : ℝ → ℝ := oddP7Correlation17Local
+  let I : ℝ := ∫ t : ℝ in 0..2, |C t|
+  let P : ℝ := -(3875 / 21424936845312 : ℝ) * Real.log 2 ^ 5
+  let E : ℝ := fourCellWideRegularEnvelopeError C
+  have hC : Continuous C := by
+    dsimp only [C]
+    unfold oddP7Correlation17Local
+    fun_prop
+  have hdecomp := fourCellRegularIntegral_eq_polynomial_add_error C hC
+  rw [integral_fourCellRegularPolynomial_mul_oddP7Correlation17Local]
+    at hdecomp
+  change (∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t) =
+        P + E at hdecomp
+  have hI0 : 0 ≤ I := by
+    dsimp only [I]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _t _ht ↦ abs_nonneg _)
+  have hE1 : factorTwoIntrinsicEnergy centeredP1 = (2 / 3 : ℝ) := by
+    unfold factorTwoIntrinsicEnergy centeredP1
+    rw [integral_pow]
+    norm_num
+  have hI2 : I ^ 2 ≤ (2 / 3 : ℝ) * (2 / 15) := by
+    have h :=
+      ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP67ResidualAnalyticSchurStructural.integral_abs_factorTwoCenteredCorrelationBilinear_sq_le_energy_mul
+        centeredP1 factorTwoCenteredP7
+          (by unfold centeredP1; fun_prop) continuous_factorTwoCenteredP7
+    rw [hE1, factorTwoCenteredP7_energy] at h
+    simp_rw [factorTwoCenteredCorrelationBilinear_P1_P7] at h
+    simpa only [I, C] using h
+  have hIlt : I < (3 / 10 : ℝ) := by
+    nlinarith
+  have herr := abs_fourCellWideRegularEnvelopeError_le C hC
+  change |E| ≤ (1 / 1900 : ℝ) * I at herr
+  have herrlt : |E| < (3 / 19000 : ℝ) := by
+    calc
+      |E| ≤ (1 / 1900 : ℝ) * I := herr
+      _ < (1 / 1900 : ℝ) * (3 / 10) :=
+        mul_lt_mul_of_pos_left hIlt (by norm_num)
+      _ = (3 / 19000 : ℝ) := by norm_num
+  have hpow := (fourCell_log_two_pow_fine_bounds 5 (by norm_num)).2
+  have hlog0 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hlogPow0 : 0 < Real.log 2 ^ 5 := pow_pos hlog0 5
+  have hPneg : P < 0 := by
+    dsimp only [P]
+    nlinarith
+  have hPabs : |P| < (1 / 1000000 : ℝ) := by
+    rw [abs_of_neg hPneg]
+    dsimp only [P]
+    nlinarith
+  simp_rw [factorTwoCenteredCorrelationBilinear_P1_P7]
+  change |(∫ t : ℝ in 0..2,
+      yoshidaRegularKernel (fourCellOperatorHalfWidth * t) * C t)| < _
+  rw [hdecomp]
+  calc
+    |P + E| ≤ |P| + |E| := abs_add_le P E
+    _ < (1 / 1000000 : ℝ) + 3 / 19000 :=
+      add_lt_add hPabs herrlt
+    _ < (1 / 5000 : ℝ) := by norm_num
+
 /-! ### Exact `P₁₁+` Riesz endpoint -/
 
 /-- Normalized centered `P₇` coefficient. -/
