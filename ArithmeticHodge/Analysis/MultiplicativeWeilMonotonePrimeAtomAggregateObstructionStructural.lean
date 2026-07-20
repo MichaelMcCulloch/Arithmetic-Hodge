@@ -5066,6 +5066,79 @@ def RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength
         bombieriRealQuadraticValue m = 0 →
           0 ≤ bombieriRealQuadraticValue (a + e)
 
+/-- Chebyshev-row form of the singular-pivot obligation. -/
+def RealFiniteBlockZeroInteriorFarChebyshevBoundAtLength
+    (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        let a := monotoneQuarterCell parent k
+        let m := monotoneQuarterFiniteBlockInterior parent k n
+        let e := monotoneQuarterCell parent
+          (k + ((n - 1 : ℕ) : ℤ))
+        bombieriRealQuadraticValue m = 0 →
+          -(bombieriRealQuadraticValue a +
+              bombieriRealQuadraticValue e) / 2 ≤
+            monotoneQuarterFarChebyshevContribution parent k
+              ((n - 1 : ℕ) : ℤ)
+
+/-- Once the interior diagonal vanishes, sparse endpoint positivity is
+exactly one lower bound on the lag-`n-1` corrected-Chebyshev entry. -/
+theorem realFiniteBlockZeroInteriorSparseEndpointNonnegative_iff_farChebyshevBound
+    (n : ℕ) (hn : 4 ≤ n) :
+    RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n ↔
+      RealFiniteBlockZeroInteriorFarChebyshevBoundAtLength n := by
+  constructor
+  · intro hsparse parent hparent k
+    dsimp only
+    intro hMzero
+    have hpair := hsparse parent hparent k hMzero
+    rw [bombieriRealQuadraticValue_add] at hpair
+    have hfar := monotoneQuarterCell_far_globalCross_re_eq_contribution
+      parent k ((n - 1 : ℕ) : ℤ) (by omega)
+    rw [hfar] at hpair
+    linarith
+  · intro hfarBound parent hparent k
+    dsimp only
+    intro hMzero
+    have hbound := hfarBound parent hparent k hMzero
+    rw [bombieriRealQuadraticValue_add]
+    have hfar := monotoneQuarterCell_far_globalCross_re_eq_contribution
+      parent k ((n - 1 : ℕ) : ℤ) (by omega)
+    rw [hfar]
+    linarith
+
+private theorem monotoneQuarterFiniteBlockInterior_five_eq_middleThree
+    (parent : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiniteBlockInterior parent k 5 =
+      fiveCellMiddleThree parent k := by
+  classical
+  simp [monotoneQuarterFiniteBlockInterior,
+    monotoneQuarterFiniteBlock, fiveCellMiddleThree,
+    Finset.sum_range_succ]
+
+/-- The singular branch is already discharged at length five.  The
+ratio-two coercivity of the middle three-cell block turns a zero diagonal
+into the zero test, after which the exact common-parent support-collapse
+theorem proves sparse endpoint positivity. -/
+theorem realFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength_five :
+    RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength 5 := by
+  intro parent hparent k
+  dsimp only
+  have hinterior :=
+    monotoneQuarterFiniteBlockInterior_five_eq_middleThree parent k
+  rw [hinterior]
+  intro hMzero
+  have hmiddle : fiveCellMiddleThree parent k = 0 := by
+    by_contra hmiddleNe
+    have hpositive := fiveCellMiddleThree_quadratic_pos_of_ne_zero
+      parent hparent k hmiddleNe
+    rw [hMzero] at hpositive
+    linarith
+  simpa only [Nat.reduceSubDiff, Nat.cast_ofNat] using
+    bombieriRealQuadraticValue_fiveCellSparseEndpointPair_nonnegative_of_middle_zero
+      parent k hparent hmiddle
+
 private theorem threeBlockQuadratic_nonnegative_of_conditionalCross
     {A M E U V X : ℝ}
     (hMpos : 0 < M)
