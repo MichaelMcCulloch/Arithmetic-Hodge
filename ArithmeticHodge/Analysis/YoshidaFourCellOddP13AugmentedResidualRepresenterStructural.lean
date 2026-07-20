@@ -11,6 +11,7 @@ namespace ArithmeticHodge.Analysis.YoshidaFourCellOddP13AugmentedResidualReprese
 noncomputable section
 
 open CenteredOddOneThreeEnergy
+open ShiftedLegendreCenteredL2Structural
 open ShiftedLegendreCenteredLowModes
 open ShiftedLegendreLogEigen
 open ShiftedLegendreLogKernel
@@ -26,6 +27,9 @@ open YoshidaEndpointWeightedCauchy
 open YoshidaFactorTwoContinuousLagRepresenterStructural
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoIntegrableLagRepresenterStructural
+open YoshidaFactorTwoPhaseCenteredP9Structural
+open YoshidaFactorTwoPhaseLegendreFourFiveStructural
+open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 open YoshidaFourCellOddP11FiveModeThreeHalvesStructural
 open YoshidaFourCellOddP11GalerkinResidualDualDirectStructural
 open YoshidaFourCellOddP11GalerkinResidualRepresenterStructural
@@ -99,6 +103,151 @@ theorem fourCellOddP13SixModePolynomial_eval
   rw [fourCellOddFiveModePolynomial_eval]
   unfold fourCellOddP11DirectTail
   ring
+
+/-! ## Exact mass Gram of the augmented low block -/
+
+/-- Centered Legendre polynomial of the augmented `P3/P5/P7/P9/P11`
+block.  The signs match the production odd basis convention. -/
+private def fourCellOddP11AugmentedLowCenteredPolynomial
+    (d e f g h : ℝ) : ℝ[X] :=
+  (-d) • centeredShiftedLegendreReal 3 +
+    (-e) • centeredShiftedLegendreReal 5 +
+    (-f) • centeredShiftedLegendreReal 7 +
+    (-g) • centeredShiftedLegendreReal 9 +
+    (-h) • centeredShiftedLegendreReal 11
+
+private theorem centeredP3_eq_neg_centeredLegendre_three_local :
+    centeredP3 = fun x ↦ -(centeredShiftedLegendreReal 3).eval x := by
+  funext x
+  norm_num [centeredShiftedLegendreReal, shiftedLegendreReal,
+    Polynomial.shiftedLegendre, Polynomial.eval_comp,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, centeredP3,
+    Polynomial.smul_eq_C_mul]
+  ring
+
+private theorem centeredP5_eq_neg_centeredLegendre_five_local :
+    factorTwoCenteredP5 =
+      fun x ↦ -(centeredShiftedLegendreReal 5).eval x := by
+  funext x
+  norm_num [centeredShiftedLegendreReal, shiftedLegendreReal,
+    Polynomial.shiftedLegendre, Polynomial.eval_comp,
+    Polynomial.eval_map, Polynomial.eval_finset_sum,
+    Finset.sum_range_succ, Nat.choose, factorTwoCenteredP5,
+    Polynomial.smul_eq_C_mul]
+  ring
+
+private theorem centeredP7_eq_neg_centeredLegendre_seven_local :
+    factorTwoCenteredP7 =
+      fun x ↦ -(centeredShiftedLegendreReal 7).eval x := by
+  funext x
+  have h := centeredPullback_factorTwoCenteredP7 ((x + 1) / 2)
+  unfold centeredPullback at h
+  rw [show 2 * ((x + 1) / 2) - 1 = x by ring] at h
+  rw [eval_centeredShiftedLegendreReal]
+  linarith
+
+private theorem centeredP9_eq_neg_centeredLegendre_nine_local :
+    factorTwoCenteredP9 =
+      fun x ↦ -(centeredShiftedLegendreReal 9).eval x := by
+  funext x
+  have h := centeredPullback_factorTwoCenteredP9 ((x + 1) / 2)
+  unfold centeredPullback at h
+  rw [show 2 * ((x + 1) / 2) - 1 = x by ring] at h
+  rw [eval_centeredShiftedLegendreReal]
+  linarith
+
+private theorem fourCellOddP11AugmentedLowCenteredPolynomial_eval
+    (d e f g h x : ℝ) :
+    (fourCellOddP11AugmentedLowCenteredPolynomial d e f g h).eval x =
+      fourCellOddP11AugmentedLowProfile d e f g h x := by
+  unfold fourCellOddP11AugmentedLowCenteredPolynomial
+    fourCellOddP11AugmentedLowProfile
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+  simp only [Polynomial.eval_add, Polynomial.eval_smul, smul_eq_mul]
+  rw [congrFun centeredP3_eq_neg_centeredLegendre_three_local x,
+    congrFun centeredP5_eq_neg_centeredLegendre_five_local x,
+    congrFun centeredP7_eq_neg_centeredLegendre_seven_local x,
+    congrFun centeredP9_eq_neg_centeredLegendre_nine_local x]
+  unfold fourCellOddP11DirectTail
+  ring
+
+private theorem centeredPolynomialPair_add_left_local
+    (p q r : ℝ[X]) :
+    centeredPolynomialPair (p + q) r =
+      centeredPolynomialPair p r + centeredPolynomialPair q r := by
+  unfold centeredPolynomialPair
+  simp only [Polynomial.eval_add, add_mul]
+  exact intervalIntegral.integral_add
+    ((p.continuous.mul r.continuous).intervalIntegrable _ _)
+    ((q.continuous.mul r.continuous).intervalIntegrable _ _)
+
+private theorem centeredPolynomialPair_add_right_local
+    (p q r : ℝ[X]) :
+    centeredPolynomialPair p (q + r) =
+      centeredPolynomialPair p q + centeredPolynomialPair p r := by
+  rw [centeredPolynomialPair_comm p (q + r),
+    centeredPolynomialPair_add_left_local,
+    centeredPolynomialPair_comm q p,
+    centeredPolynomialPair_comm r p]
+
+private theorem centeredPolynomialPair_smul_left_local
+    (a : ℝ) (p q : ℝ[X]) :
+    centeredPolynomialPair (a • p) q =
+      a * centeredPolynomialPair p q := by
+  unfold centeredPolynomialPair
+  rw [show (fun x : ℝ ↦ (a • p).eval x * q.eval x) =
+      fun x ↦ a * (p.eval x * q.eval x) by
+    funext x
+    simp only [Polynomial.eval_smul, smul_eq_mul]
+    ring,
+    intervalIntegral.integral_const_mul]
+
+private theorem centeredPolynomialPair_smul_right_local
+    (a : ℝ) (p q : ℝ[X]) :
+    centeredPolynomialPair p (a • q) =
+      a * centeredPolynomialPair p q := by
+  rw [centeredPolynomialPair_comm p (a • q),
+    centeredPolynomialPair_smul_left_local,
+    centeredPolynomialPair_comm q p]
+
+/-- Exact positive-half `L²` mass of the augmented retained block.  This is
+the diagonal centered-Legendre Gram identity, so downstream arguments do not
+need to expand the five-mode polynomial. -/
+theorem integral_zero_one_fourCellOddP11AugmentedLowProfile_sq
+    (d e f g h : ℝ) :
+    (∫ x : ℝ in 0..1,
+      fourCellOddP11AugmentedLowProfile d e f g h x ^ 2) =
+      d ^ 2 / 7 + e ^ 2 / 11 + f ^ 2 / 15 + g ^ 2 / 19 + h ^ 2 / 23 := by
+  let p : ℝ[X] :=
+    fourCellOddP11AugmentedLowCenteredPolynomial d e f g h
+  have hpair : centeredPolynomialPair p p =
+      2 * (d ^ 2 / 7 + e ^ 2 / 11 + f ^ 2 / 15 +
+        g ^ 2 / 19 + h ^ 2 / 23) := by
+    dsimp only [p]
+    unfold fourCellOddP11AugmentedLowCenteredPolynomial
+    simp only [centeredPolynomialPair_add_left_local,
+      centeredPolynomialPair_add_right_local,
+      centeredPolynomialPair_smul_left_local,
+      centeredPolynomialPair_smul_right_local,
+      centeredLegendreL2Gram]
+    norm_num
+    ring
+  unfold centeredPolynomialPair at hpair
+  rw [show (fun x : ℝ ↦ p.eval x * p.eval x) =
+      fun x ↦ fourCellOddP11AugmentedLowProfile d e f g h x ^ 2 by
+    funext x
+    rw [show p.eval x =
+        fourCellOddP11AugmentedLowProfile d e f g h x by
+      dsimp only [p]
+      exact fourCellOddP11AugmentedLowCenteredPolynomial_eval d e f g h x]
+    ring] at hpair
+  have hfold := integral_sq_eq_two_mul_positiveHalf
+    (fourCellOddP11AugmentedLowProfile d e f g h)
+    (contDiff_fourCellOddP11AugmentedLowProfile d e f g h).continuous
+    (Or.inr (odd_fourCellOddP11AugmentedLowProfile d e f g h))
+  linarith
 
 /-- Reflection-odd endpoint-strip pullback of the six-mode polynomial. -/
 def fourCellOddP13SixModeEndpointStripOddPolynomial
