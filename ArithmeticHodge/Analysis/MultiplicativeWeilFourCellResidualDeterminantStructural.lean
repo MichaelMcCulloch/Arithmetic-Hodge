@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilPositiveResidualKernelObstructionStructural
 
 set_option autoImplicit false
 
@@ -16,6 +17,8 @@ open MultiplicativeWeilRealCutPhaseReductionStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 open MultiplicativeWeilRealMonotoneTailConeCriterionStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
+open MultiplicativeWeilPositiveResidualKernelObstructionStructural
+open MultiplicativeWeilQuarterLogLatticePartitionStructural
 
 /-!
 # The first residual determinant is the full four-cell problem
@@ -501,6 +504,219 @@ theorem fourCell_productionNonnegative_iff_negativeResidualCrossContractive_and_
         RealFourCellZeroInteriorFactorTwoEndpointNonnegative := by
   rw [fourCell_productionNonnegative_iff_negativeResidualCrossContractive_and_zeroInterior,
     realFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength_four_iff_factorTwo]
+
+/-! ## Positive pivots force the singular clause by interior perturbation -/
+
+private theorem endpointPair_nonnegative_of_residualDeterminant
+    {A M E U V X : ℝ}
+    (hMpos : 0 < M)
+    (hAM : U ^ 2 ≤ A * M)
+    (hME : V ^ 2 ≤ M * E)
+    (hresidual :
+      (M * X - U * V) ^ 2 ≤
+        (A * M - U ^ 2) * (M * E - V ^ 2)) :
+    0 ≤ A + E + 2 * X := by
+  let alpha : ℝ := A * M - U ^ 2
+  let beta : ℝ := M * E - V ^ 2
+  let delta : ℝ := M * X - U * V
+  have halpha : 0 ≤ alpha := by dsimp only [alpha]; linarith
+  have hbeta : 0 ≤ beta := by dsimp only [beta]; linarith
+  have hresidual' : delta ^ 2 ≤ alpha * beta := by
+    simpa only [alpha, beta, delta] using hresidual
+  have hschur : 0 ≤ alpha + beta + 2 * delta := by
+    by_contra hnot
+    have hnegative : alpha + beta + 2 * delta < 0 :=
+      lt_of_not_ge hnot
+    have hsumNonnegative : 0 ≤ alpha + beta := add_nonneg halpha hbeta
+    have hminusDeltaPositive : 0 < -2 * delta := by linarith
+    have hsquare :
+        (alpha + beta) ^ 2 < (-2 * delta) ^ 2 :=
+      (sq_lt_sq₀ hsumNonnegative hminusDeltaPositive.le).2 (by linarith)
+    nlinarith [sq_nonneg (alpha - beta)]
+  have hidentity :
+      M * (A + E + 2 * X) =
+        (U + V) ^ 2 + alpha + beta + 2 * delta := by
+    dsimp only [alpha, beta, delta]
+    ring
+  have hscaled : 0 ≤ M * (A + E + 2 * X) := by
+    rw [hidentity]
+    nlinarith [sq_nonneg (U + V)]
+  exact (mul_nonneg_iff_of_pos_left hMpos).mp hscaled
+
+private theorem monotoneQuarterCell_eq_zero_of_fourCellInteriorSupport_left
+    (f : BombieriTest) (k : ℤ)
+    (hsupport : tsupport (f : ℝ → ℂ) ⊆
+      Icc (quarterLogLatticePoint (k + 2))
+        (quarterLogLatticePoint (k + 3))) :
+    monotoneQuarterCell f k = 0 := by
+  apply TestFunction.ext
+  intro x
+  by_cases hx : f x = 0
+  · simp [monotoneQuarterCell_apply, hx]
+  · have hxt := hsupport
+      (subset_tsupport (f : ℝ → ℂ) (Function.mem_support.mpr hx))
+    rw [monotoneQuarterCell_apply,
+      monotoneQuarterWeight_eq_zero_of_le_left k hxt.1]
+    simp
+
+private theorem monotoneQuarterCell_eq_zero_of_fourCellInteriorSupport_right
+    (f : BombieriTest) (k : ℤ)
+    (hsupport : tsupport (f : ℝ → ℂ) ⊆
+      Icc (quarterLogLatticePoint (k + 2))
+        (quarterLogLatticePoint (k + 3))) :
+    monotoneQuarterCell f (k + 3) = 0 := by
+  apply TestFunction.ext
+  intro x
+  by_cases hx : f x = 0
+  · simp [monotoneQuarterCell_apply, hx]
+  · have hxt := hsupport
+      (subset_tsupport (f : ℝ → ℂ) (Function.mem_support.mpr hx))
+    rw [monotoneQuarterCell_apply,
+      monotoneQuarterWeight_eq_zero_of_le (k + 3) hxt.2]
+    simp
+
+private theorem fourCellInterior_eq_self_of_centralSupport
+    (f : BombieriTest) (k : ℤ)
+    (hsupport : tsupport (f : ℝ → ℂ) ⊆
+      Icc (quarterLogLatticePoint (k + 2))
+        (quarterLogLatticePoint (k + 3))) :
+    monotoneQuarterFiniteBlockInterior f k 4 = f := by
+  apply TestFunction.ext
+  intro x
+  rw [monotoneQuarterFiniteBlockInterior_apply f k 4 (by omega)]
+  norm_num
+  by_cases hx : f x = 0
+  · simp [hx]
+  · have hxt := hsupport
+      (subset_tsupport (f : ℝ → ℂ) (Function.mem_support.mpr hx))
+    rw [monotoneQuarterStep_eq_one_of_le (k + 1) (by
+        simpa only [show k + 1 + 1 = k + 2 by ring] using hxt.1),
+      monotoneQuarterStep_eq_zero_of_le (k + 3) hxt.2]
+    norm_num
+
+private theorem fourCellInterior_add
+    (f g : BombieriTest) (k : ℤ) :
+    monotoneQuarterFiniteBlockInterior (f + g) k 4 =
+      monotoneQuarterFiniteBlockInterior f k 4 +
+        monotoneQuarterFiniteBlockInterior g k 4 := by
+  unfold monotoneQuarterFiniteBlockInterior
+  exact monotoneQuarterFiniteBlock_add f g k 1 2
+
+/-- Although the determinant predicate is stated only for positive interior
+pivots, one real bump supported strictly inside the two-cell interior lets it
+see a singular parent.  Its Schur complement then forces positivity of the
+unchanged endpoint pair. -/
+theorem fourCell_zeroInteriorSparseEndpointNonnegative_of_residualDeterminant
+    (hdeterminant :
+      RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength 4) :
+    RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength 4 := by
+  intro parent hparent k
+  dsimp only
+  intro hMzero
+  have hinteriorZero :
+      monotoneQuarterFiniteBlockInterior parent k 4 = 0 :=
+    monotoneQuarterFiniteBlockInterior_eq_zero_of_quadratic_eq_zero_of_le_five
+      parent hparent k 4 (by omega) (by omega) hMzero
+  let qa : ℝ := quarterLogLatticePoint (k + 2)
+  let qb : ℝ := quarterLogLatticePoint (k + 3)
+  have hqa : 0 < qa := quarterLogLatticePoint_pos (k + 2)
+  have hqaqb : qa < qb := quarterLogLatticePoint_strictMono (by omega)
+  obtain ⟨middle, center, hmiddleReal, hmiddleSupport, hpoint⟩ :=
+    exists_three_pointSeparated_real_bombieri_bumps qa qb hqa hqaqb
+  let g : BombieriTest := middle 0
+  have hgReal : bombieriConjugateTest g = g := hmiddleReal 0
+  have hgSupport : tsupport (g : ℝ → ℂ) ⊆ Icc qa qb :=
+    (hmiddleSupport 0).trans Ioo_subset_Icc_self
+  have hgOne : g (center 0) = 1 := by
+    simpa only [g, if_pos] using hpoint 0 0
+  have hgNe : g ≠ 0 := by
+    intro hgzero
+    have h := congrArg (fun f : BombieriTest ↦ f (center 0)) hgzero
+    change g (center 0) = 0 at h
+    rw [hgOne] at h
+    norm_num at h
+  have hratio : qb / qa ≤ 2 := by
+    apply (div_le_iff₀ hqa).2
+    dsimp only [qa, qb]
+    calc
+      quarterLogLatticePoint (k + 3) ≤
+          quarterLogLatticePoint ((k + 2) + 4) :=
+        quarterLogLatticePoint_mono (by omega)
+      _ = 2 * quarterLogLatticePoint (k + 2) :=
+        quarterLogLatticePoint_add_four (k + 2)
+  have hgPositive : 0 < bombieriRealQuadraticValue g :=
+    bombieriRealQuadraticValue_pos_of_ratioTwoCell_of_real_of_ne_zero
+      g ⟨qa, qb, hqa, hqaqb.le, hgSupport, hratio⟩ hgReal hgNe
+  have hgSupport' : tsupport (g : ℝ → ℂ) ⊆
+      Icc (quarterLogLatticePoint (k + 2))
+        (quarterLogLatticePoint (k + 3)) := by
+    simpa only [qa, qb] using hgSupport
+  let modified : BombieriTest := parent + g
+  have hmodified : bombieriConjugateTest modified = modified := by
+    dsimp only [modified]
+    rw [bombieriConjugateTest_add, hparent, hgReal]
+  have ha : monotoneQuarterCell modified k =
+      monotoneQuarterCell parent k := by
+    dsimp only [modified]
+    rw [monotoneQuarterCell_add,
+      monotoneQuarterCell_eq_zero_of_fourCellInteriorSupport_left
+        g k hgSupport', add_zero]
+  have he : monotoneQuarterCell modified (k + 3) =
+      monotoneQuarterCell parent (k + 3) := by
+    dsimp only [modified]
+    rw [monotoneQuarterCell_add,
+      monotoneQuarterCell_eq_zero_of_fourCellInteriorSupport_right
+        g k hgSupport', add_zero]
+  have hm : monotoneQuarterFiniteBlockInterior modified k 4 = g := by
+    dsimp only [modified]
+    rw [fourCellInterior_add, hinteriorZero,
+      fourCellInterior_eq_self_of_centralSupport g k hgSupport', zero_add]
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let e : BombieriTest := monotoneQuarterCell parent (k + 3)
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue g
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a g).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol g e).re
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+  have hadj := finiteBlock_adjacentPrincipalMinors_of_previousLengths
+    4 (by omega) realFiniteBlockProductionNonnegativeUpTo_three
+      modified hmodified k
+  dsimp only at hadj
+  norm_num at hadj
+  rw [ha, hm, he] at hadj
+  change U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E at hadj
+  have hpivot :=
+    (realFiniteBlockMiddleOrthogonalResidualDeterminant_iff_middlePivot 4).1
+      hdeterminant
+  have hresidual := hpivot modified hmodified k
+  dsimp only at hresidual
+  norm_num at hresidual
+  rw [ha, hm, he] at hresidual
+  change 0 < M →
+    (M * X - U * V) ^ 2 ≤
+      (A * M - U ^ 2) * (M * E - V ^ 2) at hresidual
+  have hendpoint := endpointPair_nonnegative_of_residualDeterminant
+    hgPositive hadj.1 hadj.2 (hresidual hgPositive)
+  norm_num
+  rw [bombieriRealQuadraticValue_add]
+  change 0 ≤ A + E + 2 * X
+  exact hendpoint
+
+/-- The positive-pivot residual determinant alone is losslessly equivalent to
+the complete four-cell production theorem; its apparently omitted singular
+branch is recovered by an interior perturbation. -/
+theorem fourCell_productionNonnegative_iff_residualDeterminant :
+    RealFiniteBlockProductionNonnegativeAtLength 4 ↔
+      RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength 4 := by
+  constructor
+  · exact fourCell_residualDeterminant_of_production
+  · intro hdeterminant
+    exact
+      (fourCell_productionNonnegative_iff_residualDeterminant_and_zeroInterior).2
+        ⟨hdeterminant,
+          fourCell_zeroInteriorSparseEndpointNonnegative_of_residualDeterminant
+            hdeterminant⟩
 
 end
 
