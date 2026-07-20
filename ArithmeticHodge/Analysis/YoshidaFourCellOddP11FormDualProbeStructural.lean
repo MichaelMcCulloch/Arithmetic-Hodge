@@ -13,6 +13,8 @@ open CenteredOddOneThreeEnergy
 open ShiftedLegendreCenteredLowModeL2
 open YoshidaEndpointEvenTailRepresenter
 open YoshidaEndpointOcticPotential
+open YoshidaEndpointOcticTwoModeSchurData
+open YoshidaEndpointOddResidualRegularity
 open YoshidaEndpointOddOneThreeRawPolarization
 open YoshidaEndpointPotentialBound
 open YoshidaFactorTwoEndpointBilinear
@@ -415,6 +417,226 @@ theorem fourCellOddCoreLocalBilinear_sq_le_mul_of_P1_zero
   rw [hadd] at hnonneg
   convert hnonneg using 1
   ring
+
+/-- The only extension premise left after the unconditional positivity of
+the `P₁`-orthogonal subspace: the degree-one row must be continuous in the
+complete core norm on that entire subspace. -/
+def FourCellOddP1OrthogonalFormDualBound : Prop :=
+  ∀ (v : ℝ → ℝ),
+    ContDiff ℝ 1 v → Function.Odd v →
+    centeredOddP1Coefficient v = 0 →
+    fourCellOddCoreLocalBilinear centeredP1 v ^ 2 ≤
+      fourCellOddCoreLocalQuadratic centeredP1 *
+        fourCellOddCoreLocalQuadratic v
+
+/-- Canonical projection onto the `P₁`-orthogonal odd subspace. -/
+def fourCellOddP1Residual (w : ℝ → ℝ) : ℝ → ℝ := fun x ↦
+  w x - centeredOddP1Coefficient w * centeredP1 x
+
+private theorem centeredOddP1Coefficient_centeredP1_probe :
+    centeredOddP1Coefficient centeredP1 = 1 := by
+  unfold centeredOddP1Coefficient
+  rw [show (fun x : ℝ ↦ centeredP1 x * centeredP1 x) =
+      fun x ↦ centeredP1 x ^ 2 by
+    funext x
+    ring,
+    integral_centeredP1_sq]
+  norm_num
+
+theorem centeredOddP1Coefficient_fourCellOddP1Residual_eq_zero
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    centeredOddP1Coefficient (fourCellOddP1Residual w) = 0 := by
+  have hp : Continuous centeredP1 := by
+    unfold centeredP1
+    fun_prop
+  have h := centeredOddP1Coefficient_add_const_mul_probe
+    w centeredP1 (-(centeredOddP1Coefficient w)) hw hp
+  have hfun : fourCellOddP1Residual w =
+      w + fun x ↦ -(centeredOddP1Coefficient w) * centeredP1 x := by
+    funext x
+    unfold fourCellOddP1Residual
+    simp only [Pi.add_apply]
+    ring
+  rw [hfun, h, centeredOddP1Coefficient_centeredP1_probe]
+  ring
+
+theorem contDiff_fourCellOddP1Residual
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) :
+    ContDiff ℝ 1 (fourCellOddP1Residual w) := by
+  unfold fourCellOddP1Residual centeredP1
+  fun_prop
+
+theorem odd_fourCellOddP1Residual
+    (w : ℝ → ℝ) (hodd : Function.Odd w) :
+    Function.Odd (fourCellOddP1Residual w) := by
+  intro x
+  unfold fourCellOddP1Residual centeredP1
+  rw [hodd]
+  ring
+
+theorem fourCellOddP1Residual_add_projection
+    (w : ℝ → ℝ) :
+    fourCellOddP1Residual w +
+        (fun x ↦ centeredOddP1Coefficient w * centeredP1 x) = w := by
+  funext x
+  unfold fourCellOddP1Residual
+  simp only [Pi.add_apply]
+  ring
+
+private theorem coreLocalBilinear_comm_probe
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fourCellOddCoreLocalBilinear u v =
+      fourCellOddCoreLocalBilinear v u := by
+  have huv := fourCellOddCoreLocalQuadratic_add u v hu hv
+  have hvu := fourCellOddCoreLocalQuadratic_add v u hv hu
+  have hadd : u + v = v + u := add_comm u v
+  rw [hadd] at huv
+  linarith
+
+theorem fourCellOddCoreLocalQuadratic_centeredP1_nonneg :
+    0 ≤ fourCellOddCoreLocalQuadratic centeredP1 := by
+  have h := fourCellOddHalfCoreReserve_add_localWidthDefect_low_nonneg 1 0
+  have hp : factorTwoOddStructuralLowProfile 1 0 = centeredP1 := by
+    funext x
+    unfold factorTwoOddStructuralLowProfile
+    simp
+  rw [hp] at h
+  exact h
+
+private theorem add_two_mul_add_nonneg_of_sq_le_mul_probe
+    (A B C : ℝ) (hA : 0 ≤ A) (hC : 0 ≤ C)
+    (hschur : B ^ 2 ≤ A * C) :
+    0 ≤ A + 2 * B + C := by
+  by_cases hB : 0 ≤ B
+  · linarith
+  · have hminus : 0 ≤ -2 * B := by linarith
+    have hsum : 0 ≤ A + C := add_nonneg hA hC
+    have hsquares : (-2 * B) ^ 2 ≤ (A + C) ^ 2 := by
+      nlinarith [sq_nonneg (A - C)]
+    have hlinear := (sq_le_sq₀ hminus hsum).mp hsquares
+    linarith
+
+/-- A single `P₁` extension-row bound upgrades the already proved
+`P₁⊥` coercivity to the complete odd space. -/
+theorem fourCellOddCoreLocalQuadratic_nonneg_of_P1OrthogonalFormDual
+    (hdual : FourCellOddP1OrthogonalFormDualBound)
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    0 ≤ fourCellOddCoreLocalQuadratic w := by
+  let c := centeredOddP1Coefficient w
+  let r := fourCellOddP1Residual w
+  let p : ℝ → ℝ := fun x ↦ c * centeredP1 x
+  have hp : ContDiff ℝ 1 p := by
+    dsimp only [p]
+    unfold centeredP1
+    fun_prop
+  have hpodd : Function.Odd p := by
+    intro x
+    dsimp only [p]
+    unfold centeredP1
+    ring
+  have hr : ContDiff ℝ 1 r := by
+    dsimp only [r]
+    exact contDiff_fourCellOddP1Residual w hw
+  have hrodd : Function.Odd r := by
+    dsimp only [r]
+    exact odd_fourCellOddP1Residual w hodd
+  have hrone : centeredOddP1Coefficient r = 0 := by
+    dsimp only [r]
+    exact centeredOddP1Coefficient_fourCellOddP1Residual_eq_zero
+      w hw.continuous
+  have hQr : 0 ≤ fourCellOddCoreLocalQuadratic r :=
+    fourCellOddCoreLocalQuadratic_nonneg_of_P1_zero r hr hrodd hrone
+  have hQp : 0 ≤ fourCellOddCoreLocalQuadratic p := by
+    have hscale := coreLocalQuadratic_const_mul_probe
+      centeredP1 (by unfold centeredP1; fun_prop)
+        (by intro x; unfold centeredP1; ring) c
+    dsimp only [p]
+    rw [hscale]
+    exact mul_nonneg (sq_nonneg c)
+      fourCellOddCoreLocalQuadratic_centeredP1_nonneg
+  have hbase := hdual r hr hrodd hrone
+  have hBscale : fourCellOddCoreLocalBilinear r p =
+      c * fourCellOddCoreLocalBilinear centeredP1 r := by
+    dsimp only [p]
+    rw [coreLocalBilinear_const_mul_right_probe r centeredP1 hr
+      (by unfold centeredP1; fun_prop)
+      hrodd (by intro x; unfold centeredP1; ring),
+      coreLocalBilinear_comm_probe r centeredP1 hr.continuous
+        (by unfold centeredP1; fun_prop)]
+  have hQpscale : fourCellOddCoreLocalQuadratic p =
+      c ^ 2 * fourCellOddCoreLocalQuadratic centeredP1 := by
+    dsimp only [p]
+    exact coreLocalQuadratic_const_mul_probe
+      centeredP1 (by unfold centeredP1; fun_prop)
+        (by intro x; unfold centeredP1; ring) c
+  have hscaled := mul_le_mul_of_nonneg_left hbase (sq_nonneg c)
+  have hschur : fourCellOddCoreLocalBilinear r p ^ 2 ≤
+      fourCellOddCoreLocalQuadratic r * fourCellOddCoreLocalQuadratic p := by
+    rw [hBscale, hQpscale]
+    nlinarith
+  have hsum : 0 ≤
+      fourCellOddCoreLocalQuadratic r +
+        2 * fourCellOddCoreLocalBilinear r p +
+          fourCellOddCoreLocalQuadratic p :=
+    add_two_mul_add_nonneg_of_sq_le_mul_probe _ _ _ hQr hQp hschur
+  have hadd := fourCellOddCoreLocalQuadratic_add
+    r p hr.continuous hp.continuous
+  have hreconstruct : r + p = w := by
+    dsimp only [r, p, c]
+    exact fourCellOddP1Residual_add_projection w
+  rw [hreconstruct] at hadd
+  linarith
+
+/-- Consequently the same single extension premise supplies Cauchy--Schwarz
+for the complete core on arbitrary smooth odd profiles. -/
+theorem fourCellOddCoreLocalBilinear_sq_le_mul_of_P1OrthogonalFormDual
+    (hdual : FourCellOddP1OrthogonalFormDualBound)
+    (u v : ℝ → ℝ) (hu : ContDiff ℝ 1 u) (hv : ContDiff ℝ 1 v)
+    (huodd : Function.Odd u) (hvodd : Function.Odd v) :
+    fourCellOddCoreLocalBilinear u v ^ 2 ≤
+      fourCellOddCoreLocalQuadratic u * fourCellOddCoreLocalQuadratic v := by
+  let A := fourCellOddCoreLocalQuadratic u
+  let B := fourCellOddCoreLocalBilinear u v
+  let C := fourCellOddCoreLocalQuadratic v
+  have hC : 0 ≤ C := by
+    dsimp only [C]
+    exact fourCellOddCoreLocalQuadratic_nonneg_of_P1OrthogonalFormDual
+      hdual v hv hvodd
+  apply sq_le_mul_of_forall_quadratic_nonneg_probe A B C hC
+  intro t
+  let tv : ℝ → ℝ := fun x ↦ t * v x
+  have htv : ContDiff ℝ 1 tv := by
+    dsimp only [tv]
+    exact contDiff_const.mul hv
+  have htvodd : Function.Odd tv := by
+    intro x
+    dsimp only [tv]
+    rw [hvodd]
+    ring
+  have hnonneg : 0 ≤ fourCellOddCoreLocalQuadratic (u + tv) :=
+    fourCellOddCoreLocalQuadratic_nonneg_of_P1OrthogonalFormDual
+      hdual (u + tv) (hu.add htv) (huodd.add htvodd)
+  have hadd := fourCellOddCoreLocalQuadratic_add u tv hu.continuous htv.continuous
+  dsimp only [tv] at hadd
+  rw [coreLocalBilinear_const_mul_right_probe u v hu hv huodd hvodd,
+    coreLocalQuadratic_const_mul_probe v hv hvodd] at hadd
+  dsimp only [A, B, C]
+  rw [hadd] at hnonneg
+  convert hnonneg using 1
+  ring
+
+/-- The original five-mode/`P₁₁+` form-dual proposition follows from
+exactly the one rank-one extension premise.  Its endpoint and higher-moment
+conditions are not consumed by this implication. -/
+theorem fourCellOddOneThreeFiveSevenNineEndpointFormDualBound_of_P1Orthogonal
+    (hdual : FourCellOddP1OrthogonalFormDualBound) :
+    fourCellOddOneThreeFiveSevenNineEndpointFormDualBound := by
+  intro c d e f g r hr hrodd _hr1 _hr3 _hr5 _hr7 _hr9 _hendpoint
+  exact fourCellOddCoreLocalBilinear_sq_le_mul_of_P1OrthogonalFormDual
+    hdual
+    (fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) r
+    (contDiff_fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) hr
+    (odd_fourCellOddOneThreeFiveSevenNineLowProfile c d e f g) hrodd
 
 end
 
