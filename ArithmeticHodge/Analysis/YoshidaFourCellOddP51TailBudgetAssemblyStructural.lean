@@ -120,6 +120,31 @@ theorem sq_intervalIntegral_mul_le_zero_one
   repeat rw [intervalIntegral.integral_of_le (by norm_num)]
   simpa only [μ, div_one, one_mul, Real.norm_eq_abs, sq_abs] using h
 
+/-- The same positive-half Cauchy--Schwarz estimate when the first factor is
+only known to belong to `L²`.  This is the natural interface for measurable
+lag-kernel errors, whose removable value at zero is irrelevant to the
+integral. -/
+theorem sq_intervalIntegral_mul_le_zero_one_of_memLp
+    (f r : ℝ → ℝ)
+    (hf : MemLp f 2 (volume.restrict (Ioc (0 : ℝ) 1)))
+    (hr : Continuous r) :
+    (∫ x : ℝ in 0..1, f x * r x) ^ 2 ≤
+      (∫ x : ℝ in 0..1, f x ^ 2) *
+        ∫ x : ℝ in 0..1, r x ^ 2 := by
+  let μ : Measure ℝ := volume.restrict (Ioc (0 : ℝ) 1)
+  have hrMeas : AEStronglyMeasurable r μ :=
+    hr.aestronglyMeasurable.restrict
+  have hrLp : MemLp r 2 μ := by
+    rw [memLp_two_iff_integrable_sq_norm hrMeas]
+    have hcompact : IntegrableOn (fun x : ℝ ↦ ‖r x‖ ^ 2)
+        (Icc (0 : ℝ) 1) :=
+      (hr.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
+    exact hcompact.mono_set Ioc_subset_Icc_self
+  have h := sq_integral_mul_le_weighted μ (fun _ : ℝ ↦ 1) f r
+    (by simp) (by simpa [μ] using hf) (by simpa using hrLp)
+  repeat rw [intervalIntegral.integral_of_le (by norm_num)]
+  simpa only [μ, div_one, one_mul, Real.norm_eq_abs, sq_abs] using h
+
 /-- A positive-half `L²` estimate for a continuous error representer
 immediately gives its `1/1000` tail pairing budget. -/
 theorem fourCellOddP51TailPairBudget_one_thousandth_of_l2
@@ -130,6 +155,33 @@ theorem fourCellOddP51TailPairBudget_one_thousandth_of_l2
     FourCellOddP51TailPairBudget (1 / 1000) kappa error := by
   intro r hr _hodd _htail
   have hcauchy := sq_intervalIntegral_mul_le_zero_one
+    error r herror hr.continuous
+  have hmass : 0 ≤ ∫ x : ℝ in 0..1, r x ^ 2 :=
+    intervalIntegral.integral_nonneg (by norm_num)
+      (fun x _hx ↦ sq_nonneg (r x))
+  calc
+    (∫ x : ℝ in 0..1, error x * r x) ^ 2 ≤
+        (∫ x : ℝ in 0..1, error x ^ 2) *
+          ∫ x : ℝ in 0..1, r x ^ 2 := hcauchy
+    _ ≤ ((1 / 1000 : ℝ) *
+        (fourCellOddP51GalerkinPivot * kappa)) *
+          ∫ x : ℝ in 0..1, r x ^ 2 :=
+      mul_le_mul_of_nonneg_right hl2 hmass
+    _ = (1 / 1000 : ℝ) *
+        (fourCellOddP51GalerkinPivot *
+          (kappa * (∫ x : ℝ in 0..1, r x ^ 2))) := by ring
+
+/-- An `L²` measurable error representer also yields the `1/1000` budget;
+continuity of the representer is not needed. -/
+theorem fourCellOddP51TailPairBudget_one_thousandth_of_memLp_l2
+    (kappa : ℝ) (error : ℝ → ℝ)
+    (herror : MemLp error 2 (volume.restrict (Ioc (0 : ℝ) 1)))
+    (hl2 : (∫ x : ℝ in 0..1, error x ^ 2) ≤
+      (1 / 1000 : ℝ) *
+        (fourCellOddP51GalerkinPivot * kappa)) :
+    FourCellOddP51TailPairBudget (1 / 1000) kappa error := by
+  intro r hr _hodd _htail
+  have hcauchy := sq_intervalIntegral_mul_le_zero_one_of_memLp
     error r herror hr.continuous
   have hmass : 0 ≤ ∫ x : ℝ in 0..1, r x ^ 2 :=
     intervalIntegral.integral_nonneg (by norm_num)
