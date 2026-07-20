@@ -12826,13 +12826,13 @@ private theorem fourCellOddSignedMassRegularQuadratic_P9_lt_one_hundred_seventy_
         (1 / 19 : ℝ) + 2 * fourCellOperatorHalfWidth * R < 173 / 1000
   nlinarith
 
-private theorem one_fifth_lt_fourCellOddCoreLocalQuadratic_P7 :
+theorem one_fifth_lt_fourCellOddCoreLocalQuadratic_P7 :
     (1 / 5 : ℝ) < fourCellOddCoreLocalQuadratic factorTwoCenteredP7 := by
   rw [fourCellOddCoreLocalQuadratic_eq_retained_sub_signed]
   linarith [two_hundred_eleven_five_hundredths_lt_retained_P7,
     fourCellOddSignedMassRegularQuadratic_P7_lt_eleven_fiftieths]
 
-private theorem twenty_nine_two_hundredths_lt_fourCellOddCoreLocalQuadratic_P9 :
+theorem twenty_nine_two_hundredths_lt_fourCellOddCoreLocalQuadratic_P9 :
     (29 / 200 : ℝ) < fourCellOddCoreLocalQuadratic factorTwoCenteredP9 := by
   rw [fourCellOddCoreLocalQuadratic_eq_retained_sub_signed]
   linarith [one_hundred_fifty_nine_five_hundredths_lt_retained_P9,
