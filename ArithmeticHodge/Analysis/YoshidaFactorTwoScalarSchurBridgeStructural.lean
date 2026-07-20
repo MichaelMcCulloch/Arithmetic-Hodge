@@ -341,6 +341,88 @@ theorem factorTwoConcreteEndpointPencilValues_nonneg_of_posDef
     hEvenPlus.posSemidef hEvenMinus.posSemidef
     hOddPlus.posSemidef hOddMinus.posSemidef
 
+/-! ## Quantitative floor handoff -/
+
+/-- Lower bounds for the two diagonal pencils and an upper bound for the
+alternating square imply the inverse-free scalar Schur inequality once their
+rational budget closes.  This records the direction of every bound needed by
+the eventual finite certificate. -/
+theorem factorTwoConcreteDiskSchur_of_floors
+    (a : ℝ) (ha : a ^ 2 ≤ 1)
+    (e : YoshidaEvenIndex → ℝ) (o : YoshidaOddIndex → ℝ)
+    (evenFloor oddFloor alternatingSquareCap : ℝ)
+    (hEvenFloorNonneg : 0 ≤ evenFloor)
+    (hOddFloorNonneg : 0 ≤ oddFloor)
+    (hEvenFloor : evenFloor ≤ factorTwoConcreteEvenPencilValue a e)
+    (hOddFloor : oddFloor ≤ factorTwoConcreteOddPencilValue a o)
+    (hAlternatingCap :
+      factorTwoConcreteAlternatingValue e o ^ 2 ≤ alternatingSquareCap)
+    (hBudget :
+      (1 - a ^ 2) * alternatingSquareCap ≤
+        4 * evenFloor * oddFloor) :
+    (1 - a ^ 2) * factorTwoConcreteAlternatingValue e o ^ 2 ≤
+      4 * factorTwoConcreteEvenPencilValue a e *
+        factorTwoConcreteOddPencilValue a o := by
+  have hPhaseNonneg : 0 ≤ 1 - a ^ 2 := sub_nonneg.mpr ha
+  have hEvenNonneg : 0 ≤ factorTwoConcreteEvenPencilValue a e :=
+    hEvenFloorNonneg.trans hEvenFloor
+  have hFloorProduct :
+      evenFloor * oddFloor ≤
+        factorTwoConcreteEvenPencilValue a e *
+          factorTwoConcreteOddPencilValue a o :=
+    mul_le_mul hEvenFloor hOddFloor hOddFloorNonneg hEvenNonneg
+  calc
+    (1 - a ^ 2) * factorTwoConcreteAlternatingValue e o ^ 2 ≤
+        (1 - a ^ 2) * alternatingSquareCap :=
+      mul_le_mul_of_nonneg_left hAlternatingCap hPhaseNonneg
+    _ ≤ 4 * evenFloor * oddFloor := hBudget
+    _ ≤ 4 * factorTwoConcreteEvenPencilValue a e *
+          factorTwoConcreteOddPencilValue a o := by
+      nlinarith
+
+/-- Family form of the quantitative-floor handoff.  Once the four endpoint
+matrices are certified positive definite, concrete floor/cap functions and a
+rational budget are sufficient for the complete finite-low phase theorem. -/
+theorem factorTwoConcreteLowPhase_nonneg_of_endpoint_posDef_and_floors
+    (hEvenPlus : factorTwoConcreteEvenPlusPencilMatrix.PosDef)
+    (hEvenMinus : factorTwoConcreteEvenMinusPencilMatrix.PosDef)
+    (hOddPlus : factorTwoConcreteOddPlusPencilMatrix.PosDef)
+    (hOddMinus : factorTwoConcreteOddMinusPencilMatrix.PosDef)
+    (evenFloor : ℝ → (YoshidaEvenIndex → ℝ) → ℝ)
+    (oddFloor : ℝ → (YoshidaOddIndex → ℝ) → ℝ)
+    (alternatingSquareCap :
+      (YoshidaEvenIndex → ℝ) → (YoshidaOddIndex → ℝ) → ℝ)
+    (hEvenFloorNonneg : ∀ a e, 0 ≤ evenFloor a e)
+    (hOddFloorNonneg : ∀ a o, 0 ≤ oddFloor a o)
+    (hEvenFloor : ∀ a e,
+      evenFloor a e ≤ factorTwoConcreteEvenPencilValue a e)
+    (hOddFloor : ∀ a o,
+      oddFloor a o ≤ factorTwoConcreteOddPencilValue a o)
+    (hAlternatingCap : ∀ e o,
+      factorTwoConcreteAlternatingValue e o ^ 2 ≤
+        alternatingSquareCap e o)
+    (hBudget : ∀ a : ℝ, a ^ 2 ≤ 1 →
+      ∀ (e : YoshidaEvenIndex → ℝ) (o : YoshidaOddIndex → ℝ),
+        (1 - a ^ 2) * alternatingSquareCap e o ≤
+          4 * evenFloor a e * oddFloor a o)
+    (e : YoshidaEvenIndex → ℝ) (o : YoshidaOddIndex → ℝ)
+    (a b : ℝ) (hab : a ^ 2 + b ^ 2 ≤ 1) :
+    0 ≤ YoshidaFactorTwoPhaseFullProfile.factorTwoEndpointChannelPhase
+      (factorTwoAdaptedEvenLowSynthesis e)
+      (factorTwoOddLowSynthesis o) a b := by
+  obtain ⟨hEvenPlus', hEvenMinus', hOddPlus', hOddMinus'⟩ :=
+    factorTwoConcreteEndpointPencilValues_nonneg_of_posDef
+      hEvenPlus hEvenMinus hOddPlus hOddMinus
+  exact factorTwoConcreteLowPhase_nonneg_of_endpoint_pencils_and_disk_schur
+    hEvenPlus' hEvenMinus' hOddPlus' hOddMinus' (by
+      intro a' ha' e' o'
+      exact factorTwoConcreteDiskSchur_of_floors a' ha' e' o'
+        (evenFloor a' e') (oddFloor a' o') (alternatingSquareCap e' o')
+        (hEvenFloorNonneg a' e') (hOddFloorNonneg a' o')
+        (hEvenFloor a' e') (hOddFloor a' o')
+        (hAlternatingCap e' o') (hBudget a' ha' e' o'))
+      e o a b hab
+
 /-- Final structural handoff for the production finite-low scalar-Schur
 track.  Robust congruence is expected to prove the four endpoint `PosDef`
 hypotheses.  Endpoint chord interpolation then supplies both diagonal pencils
