@@ -2672,6 +2672,92 @@ theorem fourCellOddCoreLocalBilinear_P1_P11Plus_sq_le_23_exactTailWeight
     fourCellOddP11P1SelectorDual_le hweightNonneg
   exact hcauchy.trans hdualMul
 
+private theorem fourCellOddCoreLocalQuadratic_centeredP1_eq_perturbed11 :
+    fourCellOddCoreLocalQuadratic centeredP1 =
+      fourCellOddOneThreeFivePerturbed11 := by
+  have hdiag :=
+    fourCellOddHalfCoreReserve_add_localWidthDefect_oneThreeFive_eq 1 0 0
+  have hpert :=
+    fourCellOddOneThreeFiveCombined_sub_regular_eq_perturbed 1 0 0
+  have hp : fourCellOddOneThreeFiveLowProfile 1 0 0 = centeredP1 := by
+    funext x
+    unfold fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    simp
+  rw [hp] at hdiag
+  unfold fourCellOddCoreLocalQuadratic
+  rw [hdiag, hpert]
+  unfold fourCellOddOneThreeFivePerturbedQuadratic
+  ring
+
+/-- The certified `23 / 100` row cost lies below the exact `P₁` pivot. -/
+theorem fourCellOddP11P1ExactWeightDual_proved :
+    FourCellOddP11P1ExactWeightDual := by
+  intro r hr hodd h1 h3 h5 h7 h9
+  have hrow :=
+    fourCellOddCoreLocalBilinear_P1_P11Plus_sq_le_23_exactTailWeight
+      r hr hodd h1 h3 h5 h7 h9
+  have hweight : 0 ≤ fourCellOddP1ExactTailWeight r :=
+    fourCellOddP1ExactTailWeight_nonneg r hr.continuous
+  have hpivot : (23 / 100 : ℝ) ≤
+      fourCellOddCoreLocalQuadratic centeredP1 := by
+    rw [fourCellOddCoreLocalQuadratic_centeredP1_eq_perturbed11]
+    rcases fourCellOddOneThreeFivePerturbed_entry_bounds with ⟨hlo, _⟩
+    linarith
+  exact hrow.trans (mul_le_mul_of_nonneg_right hpivot hweight)
+
+/-- The pure `P₁`--`P₁₁+` corrected Schur reserve is nonnegative. -/
+theorem fourCellOddP11P1TailSchurNonnegative_proved :
+    FourCellOddP11P1TailSchurNonnegative :=
+  fourCellOddP11P1TailSchurNonnegative_of_exactWeightDual
+    fourCellOddP11P1ExactWeightDual_proved
+
+/-- After paying for the pure row, at least `17 / 1000` times the exact
+tail weight remains in the corrected Schur reserve. -/
+theorem seventeen_thousandths_exactTailWeight_le_tailCorrectedReserve
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (h1 : centeredOddP1Coefficient r = 0)
+    (h3 : centeredOddP3Coefficient r = 0)
+    (h5 : centeredOddP5Coefficient r = 0)
+    (h7 : centeredOddP7Coefficient r = 0)
+    (h9 : centeredOddP9Coefficient r = 0) :
+    (17 / 1000 : ℝ) * fourCellOddP1ExactTailWeight r ≤
+      fourCellOddP11TailCorrectedReserve r := by
+  have hrow :=
+    fourCellOddCoreLocalBilinear_P1_P11Plus_sq_le_23_exactTailWeight
+      r hr hodd h1 h3 h5 h7 h9
+  have hweightCore := fourCellOddP1ExactTailWeight_le_core r hr hodd h1
+  have hweight : 0 ≤ fourCellOddP1ExactTailWeight r :=
+    fourCellOddP1ExactTailWeight_nonneg r hr.continuous
+  have hpivot : (247 / 1000 : ℝ) ≤
+      fourCellOddCoreLocalQuadratic centeredP1 := by
+    rw [fourCellOddCoreLocalQuadratic_centeredP1_eq_perturbed11]
+    rcases fourCellOddOneThreeFivePerturbed_entry_bounds with ⟨hlo, _⟩
+    linarith
+  have hpivotNonneg : 0 ≤ fourCellOddCoreLocalQuadratic centeredP1 := by
+    linarith
+  have hsum :
+      (17 / 1000 : ℝ) * fourCellOddP1ExactTailWeight r +
+          fourCellOddCoreLocalBilinear centeredP1 r ^ 2 ≤
+        fourCellOddCoreLocalQuadratic centeredP1 *
+          fourCellOddCoreLocalQuadratic r := by
+    calc
+      (17 / 1000 : ℝ) * fourCellOddP1ExactTailWeight r +
+            fourCellOddCoreLocalBilinear centeredP1 r ^ 2 ≤
+          (17 / 1000 : ℝ) * fourCellOddP1ExactTailWeight r +
+            (23 / 100 : ℝ) * fourCellOddP1ExactTailWeight r :=
+        by simpa only [add_comm] using
+          add_le_add_left hrow
+            ((17 / 1000 : ℝ) * fourCellOddP1ExactTailWeight r)
+      _ = (247 / 1000 : ℝ) * fourCellOddP1ExactTailWeight r := by ring
+      _ ≤ fourCellOddCoreLocalQuadratic centeredP1 *
+            fourCellOddP1ExactTailWeight r :=
+        mul_le_mul_of_nonneg_right hpivot hweight
+      _ ≤ fourCellOddCoreLocalQuadratic centeredP1 *
+            fourCellOddCoreLocalQuadratic r :=
+        mul_le_mul_of_nonneg_left hweightCore hpivotNonneg
+  unfold fourCellOddP11TailCorrectedReserve
+  linarith
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellOddP11P1TailSchurStructural
