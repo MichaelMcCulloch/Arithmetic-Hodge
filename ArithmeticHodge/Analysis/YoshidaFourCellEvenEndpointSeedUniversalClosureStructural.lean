@@ -1216,6 +1216,57 @@ theorem sq_integral_endpointSeedTailFourteenRepresenter_mul_polynomialCosh_le_gr
   repeat rw [intervalIntegral.integral_of_le (by norm_num)]
   simpa only [μ, G, J, div_one, one_mul] using hcauchy
 
+/-- The canonical endpoint row is almost orthogonal to the true cosh
+direction in the `P₁₄+` quotient.  The estimate is a two-vector Gram
+consequence of the canonical row budget and the quadratic Taylor remainder;
+no cosh integral is numerically evaluated. -/
+theorem abs_integral_endpointSeedTailFourteenRepresenter_zero_mul_quadraticCoshRemainder_le :
+    |∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter 0 x *
+        (fourCellEvenHalfWideCoshRepresenter x - centeredPolynomialLift
+          fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x)| ≤
+      (1 / 400000 : ℝ) := by
+  let B : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter 0 x *
+      (fourCellEvenHalfWideCoshRepresenter x - centeredPolynomialLift
+        fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x)
+  let A : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter 0 x ^ 2
+  let D : ℝ := ∫ x : ℝ in -1..1,
+    (fourCellEvenHalfWideCoshRepresenter x - centeredPolynomialLift
+      fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x) ^ 2
+  have hgram : B ^ 2 ≤ A * D := by
+    simpa only [A, B, D] using
+      sq_integral_endpointSeedTailFourteenRepresenter_mul_polynomialCosh_le_gram
+        0 fourCellEvenHalfWideCoshQuadraticSelectorPolynomial
+  have hA : A ≤ fourCellEvenEndpointSeedCanonicalTailNormBudget := by
+    simpa only [A] using
+      integral_endpointSeedTailFourteenRepresenter_zero_sq_le_rational
+  have hD : D ≤ (1 / 50000000 : ℝ) := by
+    simpa only [D] using integral_halfWideCosh_sub_quadraticSelector_sq_le
+  have hD0 : 0 ≤ D := by
+    dsimp only [D]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hAD : A * D ≤
+      fourCellEvenEndpointSeedCanonicalTailNormBudget *
+        (1 / 50000000 : ℝ) := by
+    exact mul_le_mul hA hD hD0
+      (by
+        norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget])
+  have hBsq : B ^ 2 ≤ (1 / 400000 : ℝ) ^ 2 := by
+    calc
+      B ^ 2 ≤ A * D := hgram
+      _ ≤ fourCellEvenEndpointSeedCanonicalTailNormBudget *
+          (1 / 50000000 : ℝ) := hAD
+      _ ≤ (1 / 400000 : ℝ) ^ 2 := by
+        norm_num [fourCellEvenEndpointSeedCanonicalTailNormBudget]
+  have habsSq : |B| ^ 2 ≤ (1 / 400000 : ℝ) ^ 2 := by
+    simpa only [sq_abs] using hBsq
+  have htarget : |B| ≤ (1 / 400000 : ℝ) := by
+    nlinarith only [habsSq, abs_nonneg B]
+  simpa only [B] using htarget
+
 /-- The cosh Gram pivot is uniformly positive.  The simple lower bound
 comes from `cosh ≥ 1`; it is enough to make the quotient projection scalar
 canonical without evaluating any transcendental integral. -/
