@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCombinedNormStructural
+import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCoshBorderCompletionStructural
 
 set_option autoImplicit false
 
@@ -23,6 +24,7 @@ open YoshidaFourCellEvenEndpointCoshSchurStructural
 open YoshidaFourCellEvenEndpointCapacityCauchyStructural
 open YoshidaFourCellEvenEndpointSeedCapacityCrossStructural
 open YoshidaFourCellEvenEndpointSeedCombinedNormStructural
+open YoshidaFourCellEvenEndpointSeedCoshBorderCompletionStructural
 open YoshidaFourCellEvenEndpointSeedCutoffEightBridgeStructural
 open YoshidaFourCellEvenEndpointSeedRegularRemainderStructural
 open YoshidaFourCellEvenPolarSchurStructural
@@ -132,6 +134,37 @@ private theorem memLp_fourCellEvenHalfWideCoshRepresenter_two_restrict :
       (Icc (-1 : ℝ) 1) :=
     (hcosh.norm.pow 2).continuousOn.integrableOn_compact isCompact_Icc
   exact hcompact.mono_set Ioc_subset_Icc_self
+
+private theorem memLp_fourCellEvenEndpointSeedTailFourteenRepresenter_two_restrict
+    (q : ℝ[X]) :
+    MemLp (fourCellEvenEndpointSeedTailFourteenRepresenter q) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hG₀ :=
+    memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter
+      fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
+  have hP := memLp_centeredPolynomialLift_two_restrict q
+  simpa only [fourCellEvenEndpointSeedTailFourteenRepresenter] using hG₀.sub hP
+
+private theorem
+    memLp_fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter_two_restrict
+    (q : ℝ[X]) (s : ℝ) :
+    MemLp (fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s) 2
+      (volume.restrict (Ioc (-1 : ℝ) 1)) := by
+  have hG :=
+    memLp_fourCellEvenEndpointSeedTailFourteenRepresenter_two_restrict q
+  have hH := memLp_fourCellEvenHalfWideCoshRepresenter_two_restrict
+  simpa only [fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter,
+    Pi.sub_apply, Pi.smul_apply, smul_eq_mul] using
+      hG.sub (hH.const_smul s)
+
+private theorem intervalIntegrable_sq_of_memLp_two_restrict
+    (f : ℝ → ℝ)
+    (hf : MemLp f 2 (volume.restrict (Ioc (-1 : ℝ) 1))) :
+    IntervalIntegrable (fun x : ℝ ↦ f x ^ 2) volume (-1) 1 := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+  apply (hf.integrable_norm_pow (by norm_num)).congr
+  filter_upwards with x
+  rw [Real.norm_eq_abs, sq_abs]
 
 /-- The complete projected endpoint row is genuinely linear on continuous
 tails.  Keeping this identity at the row level lets us move finitely many
@@ -603,31 +636,12 @@ theorem integral_endpointSeedTailFourteenConstrainedRepresenter_mul_sq_le_mass_o
       fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x * r x) ^ 2 ≤
         C * (∫ x : ℝ in -1..1, r x ^ 2) := by
   let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
-  let G₀ : ℝ → ℝ :=
-    fourCellEvenEndpointSeedProjectedTailRowRepresenter
-      fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
-  let P : ℝ → ℝ := centeredPolynomialLift q
-  let G₁₄ : ℝ → ℝ := fourCellEvenEndpointSeedTailFourteenRepresenter q
-  let H : ℝ → ℝ := fourCellEvenHalfWideCoshRepresenter
   let G : ℝ → ℝ :=
     fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s
-  have hG₀ : MemLp G₀ 2 μ := by
-    simpa only [G₀, μ] using
-      memLp_fourCellEvenEndpointSeedProjectedTailRowRepresenter
-        fourCellEvenEndpointSeedCanonicalTailSelectorPolynomial
-  have hP : MemLp P 2 μ := by
-    simpa only [P, μ] using memLp_centeredPolynomialLift_two_restrict q
-  have hG₁₄ : MemLp G₁₄ 2 μ := by
-    simpa only [G₁₄, G₀, P,
-      fourCellEvenEndpointSeedTailFourteenRepresenter] using hG₀.sub hP
-  have hH : MemLp H 2 μ := by
-    simpa only [H, μ] using
-      memLp_fourCellEvenHalfWideCoshRepresenter_two_restrict
   have hG : MemLp G 2 μ := by
-    simpa only [G, G₁₄, H,
-      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter,
-      Pi.sub_apply, Pi.smul_apply, smul_eq_mul] using
-        hG₁₄.sub (hH.const_smul s)
+    simpa only [G, μ] using
+      memLp_fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter_two_restrict
+        q s
   have hrMeas : AEStronglyMeasurable r μ :=
     hr.aestronglyMeasurable.restrict
   have hrLp : MemLp r 2 μ := by
@@ -681,6 +695,144 @@ theorem harmonic_fourteen_mul_endpointSeedTailFourteenConstrainedPairing_sq_le_r
   have hrawScaled := mul_le_mul_of_nonneg_left hraw hC
   unfold factorTwoIntrinsicEnergy at hrawScaled
   nlinarith only [hpairScaled, hrawScaled]
+
+/-- Exact quadratic norm of the cosh-quotiented tail density.  This is the
+one-dimensional Gram border that remains after the polynomial quotient; its
+three entries are kept as genuine inner products rather than independently
+estimated absolute values. -/
+theorem integral_endpointSeedTailFourteenConstrainedRepresenter_sq_eq_quadratic
+    (q : ℝ[X]) (s : ℝ) :
+    (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2) =
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2) -
+        2 * s * (∫ x : ℝ in -1..1,
+          fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+            fourCellEvenHalfWideCoshRepresenter x) +
+        s ^ 2 * (∫ x : ℝ in -1..1,
+          fourCellEvenHalfWideCoshRepresenter x ^ 2) := by
+  let μ : Measure ℝ := volume.restrict (Ioc (-1 : ℝ) 1)
+  let G : ℝ → ℝ := fourCellEvenEndpointSeedTailFourteenRepresenter q
+  let H : ℝ → ℝ := fourCellEvenHalfWideCoshRepresenter
+  have hG : MemLp G 2 μ := by
+    simpa only [G, μ] using
+      memLp_fourCellEvenEndpointSeedTailFourteenRepresenter_two_restrict q
+  have hH : MemLp H 2 μ := by
+    simpa only [H, μ] using
+      memLp_fourCellEvenHalfWideCoshRepresenter_two_restrict
+  have hGsq : IntervalIntegrable (fun x : ℝ ↦ G x ^ 2)
+      volume (-1) 1 := by
+    exact intervalIntegrable_sq_of_memLp_two_restrict G
+      (by simpa only [μ] using hG)
+  have hHsq : IntervalIntegrable (fun x : ℝ ↦ H x ^ 2)
+      volume (-1) 1 := by
+    exact intervalIntegrable_sq_of_memLp_two_restrict H
+      (by simpa only [μ] using hH)
+  have hGH : IntervalIntegrable (fun x : ℝ ↦ G x * H x)
+      volume (-1) 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num)]
+    exact (hH.mul' hG : MemLp (fun x : ℝ ↦ G x * H x) 1 μ).integrable
+      (by norm_num)
+  calc
+    (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2) =
+        ∫ x : ℝ in -1..1,
+          G x ^ 2 - (2 * s) * (G x * H x) + s ^ 2 * H x ^ 2 := by
+      apply intervalIntegral.integral_congr
+      intro x _hx
+      dsimp only [G, H,
+        fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter]
+      ring
+    _ = (∫ x : ℝ in -1..1, G x ^ 2) -
+          2 * s * (∫ x : ℝ in -1..1, G x * H x) +
+          s ^ 2 * (∫ x : ℝ in -1..1, H x ^ 2) := by
+      rw [intervalIntegral.integral_add
+          (hGsq.sub (hGH.const_mul (2 * s))) (hHsq.const_mul (s ^ 2)),
+        intervalIntegral.integral_sub hGsq (hGH.const_mul (2 * s)),
+        intervalIntegral.integral_const_mul,
+        intervalIntegral.integral_const_mul]
+    _ = (∫ x : ℝ in -1..1,
+          fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2) -
+        2 * s * (∫ x : ℝ in -1..1,
+          fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+            fourCellEvenHalfWideCoshRepresenter x) +
+        s ^ 2 * (∫ x : ℝ in -1..1,
+          fourCellEvenHalfWideCoshRepresenter x ^ 2) := by
+      dsimp only [G, H]
+
+/-- The cosh Gram pivot is uniformly positive.  The simple lower bound
+comes from `cosh ≥ 1`; it is enough to make the quotient projection scalar
+canonical without evaluating any transcendental integral. -/
+theorem one_half_le_integral_fourCellEvenHalfWideCoshRepresenter_sq :
+    (1 / 2 : ℝ) ≤
+      ∫ x : ℝ in -1..1, fourCellEvenHalfWideCoshRepresenter x ^ 2 := by
+  have hH : Continuous fourCellEvenHalfWideCoshRepresenter := by
+    unfold fourCellEvenHalfWideCoshRepresenter
+    fun_prop
+  have hconst : IntervalIntegrable (fun _x : ℝ ↦ (1 / 4 : ℝ))
+      volume (-1) 1 := Continuous.intervalIntegrable continuous_const _ _
+  have hHsq : IntervalIntegrable
+      (fun x : ℝ ↦ fourCellEvenHalfWideCoshRepresenter x ^ 2)
+      volume (-1) 1 := (hH.pow 2).intervalIntegrable _ _
+  calc
+    (1 / 2 : ℝ) = ∫ _x : ℝ in -1..1, (1 / 4 : ℝ) := by norm_num
+    _ ≤ ∫ x : ℝ in -1..1,
+        fourCellEvenHalfWideCoshRepresenter x ^ 2 := by
+      apply intervalIntegral.integral_mono_on (by norm_num) hconst hHsq
+      intro x _hx
+      have hcosh := Real.one_le_cosh
+        ((fourCellOperatorHalfWidth / 2) * x)
+      unfold fourCellEvenHalfWideCoshRepresenter
+      nlinarith only [hcosh,
+        sq_nonneg (Real.cosh ((fourCellOperatorHalfWidth / 2) * x) - 1)]
+
+/-- Pythagorean identity for the exact wide-cosh quotient.  At fixed low
+polynomial selector `q`, the displayed Gram ratio is the unique best scalar;
+every other choice pays exactly the positive cosh pivot times a square. -/
+theorem integral_endpointSeedTailFourteenConstrainedRepresenter_sq_eq_optimal_add
+    (q : ℝ[X]) (s : ℝ) :
+    let B := ∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+        fourCellEvenHalfWideCoshRepresenter x
+    let D := ∫ x : ℝ in -1..1,
+      fourCellEvenHalfWideCoshRepresenter x ^ 2
+    (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2) =
+      (∫ x : ℝ in -1..1,
+        fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q (B / D) x ^ 2) +
+        D * (s - B / D) ^ 2 := by
+  dsimp only
+  let B : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+      fourCellEvenHalfWideCoshRepresenter x
+  let D : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenHalfWideCoshRepresenter x ^ 2
+  let A : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2
+  have hDlower : (1 / 2 : ℝ) ≤ D := by
+    simpa only [D] using
+      one_half_le_integral_fourCellEvenHalfWideCoshRepresenter_sq
+  have hD : D ≠ 0 := by nlinarith only [hDlower]
+  have hs :=
+    integral_endpointSeedTailFourteenConstrainedRepresenter_sq_eq_quadratic
+      q s
+  have hopt :=
+    integral_endpointSeedTailFourteenConstrainedRepresenter_sq_eq_quadratic
+      q (B / D)
+  change (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2) =
+    A - 2 * s * B + s ^ 2 * D at hs
+  change (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q (B / D) x ^ 2) =
+    A - 2 * (B / D) * B + (B / D) ^ 2 * D at hopt
+  change (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2) =
+    (∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q (B / D) x ^ 2) +
+      D * (s - B / D) ^ 2
+  rw [hs, hopt]
+  field_simp [hD]
+  ring
 
 /-- Refined Cauchy closure on a `P₁₄+` tail.  The extra polynomial selector
 is invisible to the tail, but removes its first three even dual coordinates
