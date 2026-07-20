@@ -12,6 +12,7 @@ noncomputable section
 
 open YoshidaConstantBounds
 open CenteredEndpointCorrelation
+open ShiftedLegendreLogEnergyOrthogonalProjection
 open YoshidaEndpointEvenProjectedRemainderEnvelopeKernel
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoContinuousLagRepresenterStructural
@@ -251,6 +252,164 @@ theorem integral_fourCellEndpointSeedRegularRemainderRepresenter_sq_le :
       simp only [intervalIntegral.integral_const, sub_neg_eq_add,
         smul_eq_mul]
       norm_num
+
+private theorem intervalIntegrable_regularRemainder_right
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    IntervalIntegrable
+      (fun y : ℝ ↦
+        fourCellEndpointSeedRegularKernelRemainder (y - x) *
+          fourCellEvenEndpointCoshSeed y)
+      volume x 1 := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hx.2]
+  let f : ℝ → ℝ := fun y ↦
+    fourCellEndpointSeedRegularKernelRemainder (y - x) *
+      fourCellEvenEndpointCoshSeed y
+  let g : ℝ → ℝ := fun _y ↦ (1 / 1400 : ℝ)
+  have hgIcc : IntegrableOn g (Icc x 1) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact continuous_const.continuousOn
+  have hg : Integrable g (volume.restrict (Ioc x 1)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc x 1)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact
+      (measurable_fourCellEndpointSeedRegularKernelRemainder.comp
+        (measurable_id.sub measurable_const)).mul
+          fourCellEvenEndpointCoshSeed_continuous.measurable
+  have hfg : ∀ᵐ y : ℝ ∂(volume.restrict (Ioc x 1)),
+      ‖f y‖ ≤ g y := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with y hy
+    have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+      ⟨by linarith [hx.1, hy.1], hy.2⟩
+    have hlag : y - x ∈ Icc (0 : ℝ) 2 :=
+      ⟨by linarith [hy.1], by linarith [hx.1, hy.2]⟩
+    have hE := abs_fourCellEndpointSeedRegularKernelRemainder_le hlag
+    have hs := abs_fourCellEvenEndpointCoshSeed_le_one hyIcc
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul]
+    exact (mul_le_mul hE hs (abs_nonneg _) (by norm_num)).trans_eq
+      (by norm_num)
+  exact Integrable.mono' hg hfmeas hfg
+
+private theorem intervalIntegrable_regularRemainder_left
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    IntervalIntegrable
+      (fun y : ℝ ↦
+        fourCellEndpointSeedRegularKernelRemainder (x - y) *
+          fourCellEvenEndpointCoshSeed y)
+      volume (-1) x := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hx.1]
+  let f : ℝ → ℝ := fun y ↦
+    fourCellEndpointSeedRegularKernelRemainder (x - y) *
+      fourCellEvenEndpointCoshSeed y
+  let g : ℝ → ℝ := fun _y ↦ (1 / 1400 : ℝ)
+  have hgIcc : IntegrableOn g (Icc (-1) x) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact continuous_const.continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (-1) x)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (-1) x)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact
+      (measurable_fourCellEndpointSeedRegularKernelRemainder.comp
+        (measurable_const.sub measurable_id)).mul
+          fourCellEvenEndpointCoshSeed_continuous.measurable
+  have hfg : ∀ᵐ y : ℝ ∂(volume.restrict (Ioc (-1) x)),
+      ‖f y‖ ≤ g y := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with y hy
+    have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+      ⟨hy.1.le, by linarith [hy.2, hx.2]⟩
+    have hlag : x - y ∈ Icc (0 : ℝ) 2 :=
+      ⟨by linarith [hy.2], by linarith [hy.1, hx.2]⟩
+    have hE := abs_fourCellEndpointSeedRegularKernelRemainder_le hlag
+    have hs := abs_fourCellEvenEndpointCoshSeed_le_one hyIcc
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul]
+    exact (mul_le_mul hE hs (abs_nonneg _) (by norm_num)).trans_eq
+      (by norm_num)
+  exact Integrable.mono' hg hfmeas hfg
+
+/-- Pointwise polynomial removal for the smooth endpoint row.  On the
+physical interval, the full regular representer minus its exact degree-six
+selector is the analytic remainder representer bounded above. -/
+theorem fourCellEvenEndpointSeedRegularTailRepresenter_sub_selector_eq_remainder
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    fourCellEvenEndpointSeedRegularTailRepresenter x -
+        centeredPolynomialLift
+          fourCellEndpointSeedRegularPolynomialSelector x =
+      fourCellEndpointSeedRegularRemainderRepresenter x := by
+  let P : ℝ → ℝ := fun t ↦
+    fourCellRegularKernelPolynomial4 (fourCellOperatorHalfWidth * t)
+  have hPRight : IntervalIntegrable
+      (fun y : ℝ ↦ P (y - x) * fourCellEvenEndpointCoshSeed y)
+      volume x 1 := by
+    dsimp only [P]
+    unfold fourCellRegularKernelPolynomial4
+    have hp : Continuous (fun y : ℝ ↦
+      ((1 / 4 : ℝ) - fourCellOperatorHalfWidth * (y - x) / 48 -
+          (fourCellOperatorHalfWidth * (y - x)) ^ 2 / 32 +
+          7 * (fourCellOperatorHalfWidth * (y - x)) ^ 3 / 11520 +
+          5 * (fourCellOperatorHalfWidth * (y - x)) ^ 4 / 1536)) := by
+      fun_prop
+    exact (hp.mul fourCellEvenEndpointCoshSeed_continuous).intervalIntegrable x 1
+  have hPLeft : IntervalIntegrable
+      (fun y : ℝ ↦ P (x - y) * fourCellEvenEndpointCoshSeed y)
+      volume (-1) x := by
+    dsimp only [P]
+    unfold fourCellRegularKernelPolynomial4
+    have hp : Continuous (fun y : ℝ ↦
+      ((1 / 4 : ℝ) - fourCellOperatorHalfWidth * (x - y) / 48 -
+          (fourCellOperatorHalfWidth * (x - y)) ^ 2 / 32 +
+          7 * (fourCellOperatorHalfWidth * (x - y)) ^ 3 / 11520 +
+          5 * (fourCellOperatorHalfWidth * (x - y)) ^ 4 / 1536)) := by
+      fun_prop
+    exact (hp.mul fourCellEvenEndpointCoshSeed_continuous).intervalIntegrable (-1) x
+  have hERight := intervalIntegrable_regularRemainder_right hx
+  have hELeft := intervalIntegrable_regularRemainder_left hx
+  have hright :
+      factorTwoContinuousLagRightRepresenter
+          (fun t : ℝ ↦ yoshidaRegularKernel
+            (fourCellOperatorHalfWidth * t))
+          fourCellEvenEndpointCoshSeed x =
+        factorTwoContinuousLagRightRepresenter
+            fourCellEndpointSeedRegularKernelRemainder
+            fourCellEvenEndpointCoshSeed x +
+          factorTwoContinuousLagRightRepresenter P
+            fourCellEvenEndpointCoshSeed x := by
+    unfold factorTwoContinuousLagRightRepresenter
+    rw [← intervalIntegral.integral_add hERight hPRight]
+    apply intervalIntegral.integral_congr
+    intro y _hy
+    dsimp only [P]
+    unfold fourCellEndpointSeedRegularKernelRemainder
+    ring
+  have hleft :
+      factorTwoContinuousLagLeftRepresenter
+          (fun t : ℝ ↦ yoshidaRegularKernel
+            (fourCellOperatorHalfWidth * t))
+          fourCellEvenEndpointCoshSeed x =
+        factorTwoContinuousLagLeftRepresenter
+            fourCellEndpointSeedRegularKernelRemainder
+            fourCellEvenEndpointCoshSeed x +
+          factorTwoContinuousLagLeftRepresenter P
+            fourCellEvenEndpointCoshSeed x := by
+    unfold factorTwoContinuousLagLeftRepresenter
+    rw [← intervalIntegral.integral_add hELeft hPLeft]
+    apply intervalIntegral.integral_congr
+    intro y _hy
+    dsimp only [P]
+    unfold fourCellEndpointSeedRegularKernelRemainder
+    ring
+  rw [← factorTwoContinuousLagK_regularPolynomial4_endpointSeed_eq_selector x]
+  unfold fourCellEvenEndpointSeedRegularTailRepresenter
+    fourCellEndpointSeedRegularRemainderRepresenter factorTwoContinuousLagK
+  dsimp only [P] at hright hleft ⊢
+  rw [hright, hleft]
+  ring
 
 /-! ## A quantitative reserve for the fixed endpoint seed -/
 
