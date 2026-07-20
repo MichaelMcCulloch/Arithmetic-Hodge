@@ -10,6 +10,9 @@ namespace ArithmeticHodge.Analysis.YoshidaFiveCellEndpointAdaptedIntrinsicLowStr
 noncomputable section
 
 open YoshidaFactorTwoEndpointParityPencil
+open ShiftedLegendreFiniteEnergyGap
+open ShiftedLegendreL2Basis
+open UnitIntervalLogEnergyAffine
 open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
 open YoshidaFactorTwoPhaseIntrinsicNineUnbalancedStaticDiskStructural
@@ -25,6 +28,90 @@ ten, respectively degree nine, reserve coefficient is forced by the endpoint
 trace.  Thus the finite five-cell low problem is exactly a five-coordinate
 even problem and a four-coordinate odd problem.
 -/
+
+private theorem centeredPullbackL2_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    centeredPullbackL2 (u + v) (hu.add hv) =
+      centeredPullbackL2 u hu + centeredPullbackL2 v hv := by
+  let fu : unitInterval → ℝ := fun t ↦ centeredPullback u (t : ℝ)
+  let fv : unitInterval → ℝ := fun t ↦ centeredPullback v (t : ℝ)
+  have huLp : MeasureTheory.MemLp fu 2 := by
+    simpa only [fu] using centeredPullback_memLp_two u hu
+  have hvLp : MeasureTheory.MemLp fv 2 := by
+    simpa only [fv] using centeredPullback_memLp_two v hv
+  have huvLp := centeredPullback_memLp_two (u + v) (hu.add hv)
+  unfold centeredPullbackL2
+  calc
+    huvLp.toLp (fun t : unitInterval ↦
+        centeredPullback (u + v) (t : ℝ)) =
+        (huLp.add hvLp).toLp (fu + fv) := by
+      apply MeasureTheory.MemLp.toLp_congr
+      filter_upwards [] with t
+      simp only [fu, fv, Pi.add_apply]
+      unfold centeredPullback
+      rfl
+    _ = huLp.toLp fu + hvLp.toLp fv :=
+      MeasureTheory.MemLp.toLp_add huLp hvLp
+    _ = _ := by rfl
+
+private theorem centeredLegendreLowProjection_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) (k : ℕ) :
+    centeredLegendreLowProjection (u + v) (hu.add hv) k =
+      centeredLegendreLowProjection u hu k +
+        centeredLegendreLowProjection v hv k := by
+  funext x
+  unfold centeredLegendreLowProjection centeredLegendreProjectionPolynomial
+    shiftedLegendrePartialProjectionPolynomial
+  rw [centeredPullbackL2_add u v hu hv]
+  simp only [map_add, Polynomial.eval_finset_sum, Polynomial.eval_smul,
+    Pi.add_apply, smul_eq_mul]
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro n hn
+  simp only [lp.coeFn_add, Pi.add_apply]
+  ring
+
+private theorem fiveCellLowEndpointMean_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fiveCellLowEndpointMean (u + v) (hu.add hv) =
+      fiveCellLowEndpointMean u hu + fiveCellLowEndpointMean v hv := by
+  unfold fiveCellLowEndpointMean
+  rw [centeredLegendreLowProjection_add u v hu hv 9]
+  simp only [Pi.add_apply]
+  ring
+
+private theorem fiveCellLowEndpointAlternating_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fiveCellLowEndpointAlternating (u + v) (hu.add hv) =
+      fiveCellLowEndpointAlternating u hu +
+        fiveCellLowEndpointAlternating v hv := by
+  unfold fiveCellLowEndpointAlternating
+  rw [centeredLegendreLowProjection_add u v hu hv 9]
+  simp only [Pi.add_apply]
+  ring
+
+/-- Endpoint adaptation is a real-linear operation.  This is the bridge
+needed to split an arbitrary finite low profile into its reflection sectors. -/
+theorem fiveCellEndpointAdaptedLow_add
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v) :
+    fiveCellEndpointAdaptedLow (u + v) (hu.add hv) =
+      fiveCellEndpointAdaptedLow u hu +
+        fiveCellEndpointAdaptedLow v hv := by
+  funext x
+  unfold fiveCellEndpointAdaptedLow
+  rw [centeredLegendreLowProjection_add u v hu hv 9,
+    fiveCellLowEndpointMean_add u v hu hv,
+    fiveCellLowEndpointAlternating_add u v hu hv]
+  simp only [Pi.add_apply]
+  ring
+
+private theorem fiveCellEndpointAdaptedLow_congr
+    (u v : ℝ → ℝ) (hu : Continuous u) (hv : Continuous v)
+    (h : u = v) :
+    fiveCellEndpointAdaptedLow u hu =
+      fiveCellEndpointAdaptedLow v hv := by
+  subst v
+  rfl
 
 /-- The endpoint-zero five-coordinate even low profile.  The coefficient of
 the degree-ten reserve is forced by the value at the right endpoint. -/
@@ -127,6 +214,50 @@ theorem fiveCellEndpointAdaptedLow_odd_exists_intrinsicCoordinates
     -factorTwoCanonicalLegendreCoefficient o hoc 5,
     -factorTwoCanonicalLegendreCoefficient o hoc 7,
     fiveCellEndpointAdaptedLow_odd_eq_intrinsic o hoc hodd⟩
+
+/-- Every endpoint-adapted cutoff-nine low profile, without a parity
+hypothesis, is the sum of one five-coordinate even profile and one
+four-coordinate odd profile.  This is the exact nine-dimensional finite
+handoff used by the five-cell diagonal problem. -/
+theorem fiveCellEndpointAdaptedLow_exists_intrinsicParityCoordinates
+    (w : ℝ → ℝ) (hw : Continuous w) :
+    ∃ c0 c2 c4 c6 c8 c1 c3 c5 c7 : ℝ,
+      fiveCellEndpointAdaptedLow w hw =
+        fiveCellEndpointAdaptedIntrinsicEvenProfile c0 c2 c4 c6 c8 +
+          fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7 := by
+  let e := factorTwoReflectionEvenPart w
+  let o := factorTwoReflectionOddPart w
+  have hec : Continuous e := by
+    simpa only [e] using continuous_factorTwoReflectionEvenPart hw
+  have hoc : Continuous o := by
+    simpa only [o] using continuous_factorTwoReflectionOddPart hw
+  have heven : Function.Even e := by
+    simpa only [e] using factorTwoReflectionEvenPart_even w
+  have hodd : Function.Odd o := by
+    simpa only [o] using factorTwoReflectionOddPart_odd w
+  obtain ⟨c0, c2, c4, c6, c8, heq⟩ :=
+    fiveCellEndpointAdaptedLow_even_exists_intrinsicCoordinates
+      e hec heven
+  obtain ⟨c1, c3, c5, c7, hoq⟩ :=
+    fiveCellEndpointAdaptedLow_odd_exists_intrinsicCoordinates
+      o hoc hodd
+  refine ⟨c0, c2, c4, c6, c8, c1, c3, c5, c7, ?_⟩
+  have hadd := fiveCellEndpointAdaptedLow_add e o hec hoc
+  have hsplit : e + o = w := by
+    simpa only [e, o] using factorTwoReflectionEvenPart_add_oddPart w
+  have hleft :
+      fiveCellEndpointAdaptedLow w hw =
+        fiveCellEndpointAdaptedLow (e + o) (hec.add hoc) := by
+    exact fiveCellEndpointAdaptedLow_congr
+      w (e + o) hw (hec.add hoc) hsplit.symm
+  calc
+    fiveCellEndpointAdaptedLow w hw =
+        fiveCellEndpointAdaptedLow e hec +
+          fiveCellEndpointAdaptedLow o hoc := by
+      exact hleft.trans hadd
+    _ = fiveCellEndpointAdaptedIntrinsicEvenProfile c0 c2 c4 c6 c8 +
+        fiveCellEndpointAdaptedIntrinsicOddProfile c1 c3 c5 c7 := by
+      rw [heq, hoq]
 
 /-- The concrete finite diagonal certificate has only a five-coordinate
 even block and a four-coordinate odd block. -/
