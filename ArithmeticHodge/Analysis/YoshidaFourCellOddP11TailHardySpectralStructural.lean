@@ -2,7 +2,7 @@ import ArithmeticHodge.Analysis.YoshidaFourCellOddP11TailConcentrationClosureStr
 
 set_option autoImplicit false
 
-open MeasureTheory Real Set
+open Filter MeasureTheory Real Set Topology
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellOddP11TailHardySpectralStructural
 
@@ -101,6 +101,85 @@ theorem globalHardyProbe_nonneg_of_tailHardyConcentration
   have hresidual := hHardy r hr hodd h1 h3 h5 h7 h9
   exact hresidual.trans
     (tailHardyResidual_le_globalHardyProbe r hr.continuous hodd)
+
+/-!
+## Endpoint-concentration no-go
+
+A pure endpoint packet does not furnish the sought counterdirection.  In the
+canonical logarithmic scaling, the retained raw-strip reserve contributes
+`1/2`, while the full endpoint potential contributes only `93/200`.  The
+remaining scalar terms are lower order, leaving the strictly positive
+coefficient `7/200`.
+
+The theorem below isolates that coefficient algebraically.  It deliberately
+makes no model-specific assertion that a given family has these asymptotics;
+once those five limits are known, however, positivity is forced and no
+pointwise or finite-mode calculation can reverse it.
+-/
+
+/-- Under the canonical endpoint-packet asymptotics, the normalized global
+Hardy probe converges to the positive gap `7/200`.  Thus a counterexample must
+use a finite-scale correlation (in practice, the `3/5` strip boundary), not
+mere concentration at the two endpoints. -/
+theorem globalHardyProbe_normalized_endpointLimit
+    (r : ℕ → ℝ → ℝ) (scale : ℕ → ℝ)
+    (hscale : ∀ n, scale n ≠ 0)
+    (hraw : Tendsto (fun n ↦
+      fourCellOddRawStripCancellationReserve (r n) / scale n)
+      atTop (nhds (1 / 2 : ℝ)))
+    (hlower : Tendsto (fun n ↦
+      (∫ x : ℝ in 0..3 / 5, r n x ^ 2) / scale n)
+      atTop (nhds 0))
+    (hweighted : Tendsto (fun n ↦
+      (∫ x : ℝ in 3 / 5..1, r n x ^ 2 / x) / scale n)
+      atTop (nhds 0))
+    (hupper : Tendsto (fun n ↦
+      (∫ x : ℝ in 3 / 5..1, r n x ^ 2) / scale n)
+      atTop (nhds 0))
+    (hpotential : Tendsto (fun n ↦
+      (∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * r n x ^ 2) / scale n)
+      atTop (nhds 1)) :
+    Tendsto (fun n ↦
+      fourCellOddP11GlobalHardyProbe (r n) / scale n)
+      atTop (nhds (7 / 200 : ℝ)) := by
+  have hlimit :=
+    (((hraw.sub (hlower.const_mul (68427 / 20000 : ℝ))).sub
+      (hweighted.const_mul (6 / 5 : ℝ))).add
+      (hupper.const_mul (2813 / 20000 : ℝ))).sub
+      (hpotential.const_mul (93 / 200 : ℝ))
+  convert hlimit using 1
+  · funext n
+    unfold fourCellOddP11GlobalHardyProbe
+    field_simp [hscale n]
+  · norm_num
+
+/-- Consequently the normalized probe is eventually strictly positive in
+every canonical endpoint-packet regime. -/
+theorem eventually_globalHardyProbe_normalized_pos_of_endpointLimit
+    (r : ℕ → ℝ → ℝ) (scale : ℕ → ℝ)
+    (hscale : ∀ n, scale n ≠ 0)
+    (hraw : Tendsto (fun n ↦
+      fourCellOddRawStripCancellationReserve (r n) / scale n)
+      atTop (nhds (1 / 2 : ℝ)))
+    (hlower : Tendsto (fun n ↦
+      (∫ x : ℝ in 0..3 / 5, r n x ^ 2) / scale n)
+      atTop (nhds 0))
+    (hweighted : Tendsto (fun n ↦
+      (∫ x : ℝ in 3 / 5..1, r n x ^ 2 / x) / scale n)
+      atTop (nhds 0))
+    (hupper : Tendsto (fun n ↦
+      (∫ x : ℝ in 3 / 5..1, r n x ^ 2) / scale n)
+      atTop (nhds 0))
+    (hpotential : Tendsto (fun n ↦
+      (∫ x : ℝ in -1..1,
+        yoshidaEndpointPotential x * r n x ^ 2) / scale n)
+      atTop (nhds 1)) :
+    ∀ᶠ n in atTop,
+      0 < fourCellOddP11GlobalHardyProbe (r n) / scale n := by
+  have hlimit := globalHardyProbe_normalized_endpointLimit r scale hscale
+    hraw hlower hweighted hupper hpotential
+  exact (tendsto_order.1 hlimit).1 0 (by norm_num)
 
 end
 
