@@ -316,6 +316,26 @@ theorem fiveCellEndpointPairing_oddLowProfile (a b : ℝ) :
     fiveCellEndpointPairing_oddPositiveWitness]
   ring
 
+/-- Exact rank-one Schur congruence of the even low endpoint block.  One
+positive square and one negative square remain; the signature is exposed
+without diagonalizing numerically. -/
+theorem fiveCellEndpointPairing_evenLowProfile_schur (a b : ℝ) :
+    fiveCellEndpointPairing (fiveCellEvenLowProfile a b) =
+      (124 / 405 : ℝ) * (a + 1301 / 1674 * b) ^ 2 -
+        (551875 / 5491557 : ℝ) * b ^ 2 := by
+  rw [fiveCellEndpointPairing_evenLowProfile]
+  ring
+
+/-- Exact rank-one Schur congruence of the odd low endpoint block, pivoted
+on its positive `P₃-P₅` direction. -/
+theorem fiveCellEndpointPairing_oddLowProfile_schur (a b : ℝ) :
+    fiveCellEndpointPairing (fiveCellOddLowProfile a b) =
+      (188764 / 1515591 : ℝ) *
+          (b - 31361 / 94382 * a) ^ 2 -
+        (346480673 / 928860453 : ℝ) * a ^ 2 := by
+  rw [fiveCellEndpointPairing_oddLowProfile]
+  ring
+
 /-- The even endpoint matrix has negative determinant although both
 adjacent-difference diagonal entries are positive. -/
 theorem fiveCellEvenLowEndpointDeterminant_eq :
