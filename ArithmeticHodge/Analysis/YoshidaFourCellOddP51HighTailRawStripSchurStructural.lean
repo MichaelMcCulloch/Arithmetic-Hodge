@@ -381,6 +381,44 @@ theorem fourCellOddP51RetainedLowDiagonal_nonneg
   dsimp only [u] at hcoercive ⊢
   exact hbase.trans hcoercive
 
+/-- With no retained vector, the opaque surplus is exactly the tail
+diagonal.  Thus one genuine negative tail diagonal would refute the raw-gap
+route before any mixed Schur estimate is considered. -/
+theorem fourCellOddP51OneEighthRawStripSurplus_zero_retained_eq_tailDiagonal
+    (t : ℝ) (r : ℝ → ℝ) :
+    fourCellOddP51OneEighthRawStripSurplus (fun _ ↦ 0) t r =
+      fourCellOddP51OneEighthTailDiagonal (fun x ↦ t * r x) := by
+  have hzero : fourCellOddP51RetainedProfile (fun _ ↦ 0) =
+      (fun _ : ℝ ↦ 0) := by
+    funext x
+    unfold fourCellOddP51RetainedProfile
+      fourCellOddFiniteRetainedProfile
+    simp
+  have hscale := centeredRawLogEnergy_const_mul t r
+  have hsum : (fun _ : ℝ ↦ 0) + (fun x ↦ t * r x) =
+      (fun x ↦ t * r x) := by
+    funext x
+    simp
+  unfold fourCellOddP51OneEighthRawStripSurplus
+    fourCellOddP51HighTailMiddleProfile
+    fourCellOddP51OneEighthTailDiagonal
+    fourCellOddNineteenTwentiethsRetainedQuadratic
+  rw [hzero, hsum, hscale]
+  ring
+
+/-- A single negative genuine tail diagonal is a structural counterwitness
+to the proposed one-eighth raw-strip surplus certificate. -/
+theorem not_fourCellOddP51OneEighthRawStripSurplusNonnegative_of_tailDiagonal_neg
+    (t : ℝ) (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r)
+    (hodd : Function.Odd r) (htail : FourCellOddP53PlusMomentConditions r)
+    (hneg : fourCellOddP51OneEighthTailDiagonal (fun x ↦ t * r x) < 0) :
+    ¬ FourCellOddP51OneEighthRawStripSurplusNonnegative := by
+  intro hcertificate
+  have hnonneg := hcertificate (fun _ ↦ 0) t r hr hodd htail
+  rw [fourCellOddP51OneEighthRawStripSurplus_zero_retained_eq_tailDiagonal]
+    at hnonneg
+  linarith
+
 /-- Exact Schur handoff.  The former single opaque surplus is reduced to a
 tail diagonal and one determinant inequality for the explicitly local mixed
 row. -/
