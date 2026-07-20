@@ -12,6 +12,7 @@ open YoshidaEndpointOddResidualRegularity
 open YoshidaFactorTwoPhaseCenteredP9Structural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
+open YoshidaFourCellOddEndpointStripCoercivityStructural
 open YoshidaFourCellOddFiveModeStrictCoercivityStructural
 open YoshidaFourCellOddP11GalerkinRieszStructural
 open YoshidaFourCellOddP11UniversalCoreCauchyStructural
@@ -103,6 +104,107 @@ theorem fourCellOddP11RationalRieszGroundProfile_one :
     fourCellOddP11RationalRieszGroundProfile 1 = 10667 / 100000 := by
   rw [fourCellOddP11RationalRieszGroundProfile_eq_bernstein]
   norm_num
+
+/-! ## The endpoint-strip parity block -/
+
+/-- Exact positive Bernstein expansion of the strip-even component. -/
+theorem fourCellOddEndpointStripEven_rationalRiesz_eq_bernstein (z : ℝ) :
+    fourCellOddEndpointStripEven
+        fourCellOddP11RationalRieszGroundProfile z =
+      (187844423387 / 312500000000 : ℝ) * (1 - z ^ 2) ^ 4 +
+        4 * (2947668491 / 5000000000 : ℝ) * z ^ 2 *
+          (1 - z ^ 2) ^ 3 +
+        6 * (3615654977 / 6250000000 : ℝ) * (z ^ 2) ^ 2 *
+          (1 - z ^ 2) ^ 2 +
+        4 * (11072042849 / 19531250000 : ℝ) * (z ^ 2) ^ 3 *
+          (1 - z ^ 2) +
+        (5405382001 / 9765625000 : ℝ) * (z ^ 2) ^ 4 := by
+  unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
+  rw [fourCellOddP11RationalRieszGroundProfile_eq_bernstein,
+    fourCellOddP11RationalRieszGroundProfile_eq_bernstein]
+  ring
+
+/-- The strip-even component is strictly positive on its entire normalized
+strip. -/
+theorem fourCellOddEndpointStripEven_rationalRiesz_pos
+    {z : ℝ} (hz : z ∈ Set.Icc (-1 : ℝ) 1) :
+    0 < fourCellOddEndpointStripEven
+      fourCellOddP11RationalRieszGroundProfile z := by
+  have hzsq : 0 ≤ z ^ 2 := sq_nonneg z
+  have hgap : 0 ≤ 1 - z ^ 2 := by
+    rcases hz with ⟨hzlo, hzhi⟩
+    nlinarith [sq_nonneg (z - 1), sq_nonneg (z + 1)]
+  rw [fourCellOddEndpointStripEven_rationalRiesz_eq_bernstein]
+  by_cases hboundary : z ^ 2 = 1
+  · rw [hboundary]
+    norm_num
+  · have hgapNe : 1 - z ^ 2 ≠ 0 := by
+      intro hzero
+      apply hboundary
+      nlinarith
+    have hgapPos : 0 < 1 - z ^ 2 :=
+      lt_of_le_of_ne hgap (Ne.symm hgapNe)
+    have hfirst : 0 <
+        (187844423387 / 312500000000 : ℝ) * (1 - z ^ 2) ^ 4 := by
+      positivity
+    have hsecond : 0 ≤
+        4 * (2947668491 / 5000000000 : ℝ) * z ^ 2 *
+          (1 - z ^ 2) ^ 3 := by positivity
+    have hthird : 0 ≤
+        6 * (3615654977 / 6250000000 : ℝ) * (z ^ 2) ^ 2 *
+          (1 - z ^ 2) ^ 2 := by positivity
+    have hfourth : 0 ≤
+        4 * (11072042849 / 19531250000 : ℝ) * (z ^ 2) ^ 3 *
+          (1 - z ^ 2) := by positivity
+    have hfifth : 0 ≤
+        (5405382001 / 9765625000 : ℝ) * (z ^ 2) ^ 4 := by positivity
+    positivity
+
+/-- Exact positive Bernstein expansion after factoring `-z` from the
+strip-odd component. -/
+theorem neg_fourCellOddEndpointStripOdd_rationalRiesz_eq_bernstein (z : ℝ) :
+    -fourCellOddEndpointStripOdd
+        fourCellOddP11RationalRieszGroundProfile z =
+      z *
+        ((661570943077 / 1250000000000 : ℝ) * (1 - z ^ 2) ^ 4 +
+          4 * (252570675579 / 500000000000 : ℝ) * z ^ 2 *
+            (1 - z ^ 2) ^ 3 +
+          6 * (151017540419 / 312500000000 : ℝ) * (z ^ 2) ^ 2 *
+            (1 - z ^ 2) ^ 2 +
+          4 * (72463591169 / 156250000000 : ℝ) * (z ^ 2) ^ 3 *
+            (1 - z ^ 2) +
+          (17454731129 / 39062500000 : ℝ) * (z ^ 2) ^ 4) := by
+  unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+  rw [fourCellOddP11RationalRieszGroundProfile_eq_bernstein,
+    fourCellOddP11RationalRieszGroundProfile_eq_bernstein]
+  ring
+
+/-- On the positive normalized half-strip, the strip-odd component has the
+fixed negative sign needed for a two-channel Picone transform. -/
+theorem fourCellOddEndpointStripOdd_rationalRiesz_neg
+    {z : ℝ} (hz : 0 < z) (hz1 : z ≤ 1) :
+    fourCellOddEndpointStripOdd
+      fourCellOddP11RationalRieszGroundProfile z < 0 := by
+  have hzsq : 0 < z ^ 2 := sq_pos_of_pos hz
+  have hgap : 0 ≤ 1 - z ^ 2 := by nlinarith
+  rw [← neg_pos,
+    neg_fourCellOddEndpointStripOdd_rationalRiesz_eq_bernstein]
+  have h0 : 0 ≤
+      (661570943077 / 1250000000000 : ℝ) * (1 - z ^ 2) ^ 4 := by
+    positivity
+  have h1 : 0 ≤
+      4 * (252570675579 / 500000000000 : ℝ) * z ^ 2 *
+        (1 - z ^ 2) ^ 3 := by positivity
+  have h2 : 0 ≤
+      6 * (151017540419 / 312500000000 : ℝ) * (z ^ 2) ^ 2 *
+        (1 - z ^ 2) ^ 2 := by positivity
+  have h3 : 0 ≤
+      4 * (72463591169 / 156250000000 : ℝ) * (z ^ 2) ^ 3 *
+        (1 - z ^ 2) := by positivity
+  have h4 : 0 <
+      (17454731129 / 39062500000 : ℝ) * (z ^ 2) ^ 4 := by
+    positivity
+  positivity
 
 theorem contDiff_fourCellOddP11RationalRieszGroundProfile :
     ContDiff ℝ 1 fourCellOddP11RationalRieszGroundProfile := by
