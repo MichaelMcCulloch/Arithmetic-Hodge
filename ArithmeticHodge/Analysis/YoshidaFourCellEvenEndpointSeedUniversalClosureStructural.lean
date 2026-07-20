@@ -1,5 +1,6 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCombinedNormStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedCoshBorderCompletionStructural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicRankResidualBound
 
 set_option autoImplicit false
 
@@ -18,6 +19,7 @@ open YoshidaFactorTwoPhaseHigherLegendreDecomposition
 open YoshidaFactorTwoPhaseIntrinsicHigherResidual
 open YoshidaFactorTwoPhaseIntrinsicNineFullMixedDecompositionStructural
 open YoshidaFactorTwoPhaseIntrinsicResidual
+open YoshidaFactorTwoPhaseIntrinsicRankResidualBound
 open YoshidaFactorTwoPhaseIntrinsicNineCanonicalProjectionStructural
 open YoshidaFactorTwoPhaseSymmetricCoercivity
 open YoshidaFourCellEvenEndpointCoshSchurStructural
@@ -94,6 +96,150 @@ def fourCellEvenEndpointSeedTailFourteenRepresenter
 coordinate on even profiles. -/
 def fourCellEvenHalfWideCoshRepresenter (x : ℝ) : ℝ :=
   Real.cosh ((fourCellOperatorHalfWidth / 2) * x) / 2
+
+/-- The quadratic Taylor selector for the half-wide-cosh direction, written
+in the unit-interval polynomial coordinate used by
+`centeredPolynomialLift`.  Its pullback is exactly
+`(1 + (λx)² / 2) / 2`, where `λ = fourCellOperatorHalfWidth / 2`. -/
+def fourCellEvenHalfWideCoshQuadraticSelectorPolynomial : ℝ[X] :=
+  Polynomial.C (1 / 2 : ℝ) +
+    Polynomial.C ((fourCellOperatorHalfWidth / 2) ^ 2 / 4) *
+      (2 • Polynomial.X - Polynomial.C 1) ^ 2
+
+theorem natDegree_fourCellEvenHalfWideCoshQuadraticSelectorPolynomial_lt_fourteen :
+    fourCellEvenHalfWideCoshQuadraticSelectorPolynomial.natDegree < 14 := by
+  unfold fourCellEvenHalfWideCoshQuadraticSelectorPolynomial
+  compute_degree
+  norm_num
+
+theorem centeredPolynomialLift_halfWideCoshQuadraticSelector_eq
+    (x : ℝ) :
+    centeredPolynomialLift
+        fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x =
+      (1 + ((fourCellOperatorHalfWidth / 2) * x) ^ 2 / 2) / 2 := by
+  unfold centeredPolynomialLift
+    fourCellEvenHalfWideCoshQuadraticSelectorPolynomial
+  simp only [Polynomial.eval_add, Polynomial.eval_C, Polynomial.eval_mul,
+    Polynomial.eval_pow, Polynomial.eval_sub, Polynomial.eval_smul,
+    Polynomial.eval_X]
+  ring
+
+/-- Uniform error of the concrete quadratic cosh selector.  The estimate is
+Taylor-structural and uses the whole interval at once; no mode list or sample
+grid enters. -/
+theorem abs_fourCellEvenHalfWideCoshRepresenter_sub_quadraticSelector_lt
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    |fourCellEvenHalfWideCoshRepresenter x -
+        centeredPolynomialLift
+          fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x| <
+      (1 / 10000 : ℝ) := by
+  let lambda : ℝ := fourCellOperatorHalfWidth / 2
+  let z : ℝ := lambda * x
+  have hlambda0 : 0 ≤ lambda := by
+    dsimp only [lambda]
+    unfold fourCellOperatorHalfWidth
+    positivity
+  have hlambda : lambda < (217 / 1000 : ℝ) := by
+    have hlog := strict_log_two_bounds.2
+    dsimp only [lambda]
+    unfold fourCellOperatorHalfWidth
+    nlinarith
+  have hxAbs : |x| ≤ 1 := abs_le.mpr hx
+  have hzAbs : |z| < (217 / 1000 : ℝ) := by
+    dsimp only [z]
+    rw [abs_mul, abs_of_nonneg hlambda0]
+    calc
+      lambda * |x| ≤ lambda * 1 :=
+        mul_le_mul_of_nonneg_left hxAbs hlambda0
+      _ = lambda := by ring
+      _ < 217 / 1000 := hlambda
+  have hu0 : 0 ≤ |z| ^ 2 / 2 := by positivity
+  have huHalf : |z| ^ 2 / 2 < (1 / 2 : ℝ) := by
+    have hzSq : |z| ^ 2 < (217 / 1000 : ℝ) ^ 2 :=
+      pow_lt_pow_left₀ hzAbs (abs_nonneg z) (by norm_num)
+    nlinarith
+  have hu1 : |z| ^ 2 / 2 < (1 : ℝ) := huHalf.trans (by norm_num)
+  have hexp : Real.exp (|z| ^ 2 / 2) ≤
+      1 / (1 - |z| ^ 2 / 2) :=
+    Real.exp_bound_div_one_sub_of_interval hu0 hu1
+  have hfrac : 1 / (1 - |z| ^ 2 / 2) < (2 : ℝ) := by
+    rw [div_lt_iff₀ (sub_pos.mpr hu1)]
+    nlinarith only [huHalf]
+  have hcosh : Real.cosh |z| < (2 : ℝ) :=
+    (Real.cosh_le_exp_half_sq |z|).trans_lt (hexp.trans_lt hfrac)
+  have htaylor := abs_cosh_sub_quadratic_le z
+  have hproduct : Real.cosh |z| * |z| ^ 4 / 24 <
+      (1 / 5000 : ℝ) := by
+    have hzPow : |z| ^ 4 < (217 / 1000 : ℝ) ^ 4 :=
+      pow_lt_pow_left₀ hzAbs (abs_nonneg z) (by norm_num)
+    have hcosh0 : 0 ≤ Real.cosh |z| := (Real.cosh_pos _).le
+    have hzPow0 : 0 ≤ |z| ^ 4 := pow_nonneg (abs_nonneg z) 4
+    have hmulLeft : Real.cosh |z| * |z| ^ 4 ≤
+        2 * |z| ^ 4 := mul_le_mul_of_nonneg_right hcosh.le hzPow0
+    have hmulRight : (2 : ℝ) * |z| ^ 4 <
+        2 * (217 / 1000 : ℝ) ^ 4 :=
+      mul_lt_mul_of_pos_left hzPow (by norm_num)
+    have hrat : (2 : ℝ) * (217 / 1000 : ℝ) ^ 4 / 24 <
+        1 / 5000 := by norm_num
+    exact (div_le_div_of_nonneg_right hmulLeft (by norm_num)).trans_lt
+      ((div_lt_div_of_pos_right hmulRight (by norm_num)).trans hrat)
+  have hresidual : |Real.cosh z - 1 - z ^ 2 / 2| <
+      (1 / 5000 : ℝ) := htaylor.trans_lt hproduct
+  rw [centeredPolynomialLift_halfWideCoshQuadraticSelector_eq]
+  unfold fourCellEvenHalfWideCoshRepresenter
+  dsimp only [z, lambda] at hresidual ⊢
+  rw [show Real.cosh ((fourCellOperatorHalfWidth / 2) * x) / 2 -
+      (1 + ((fourCellOperatorHalfWidth / 2) * x) ^ 2 / 2) / 2 =
+        (Real.cosh ((fourCellOperatorHalfWidth / 2) * x) - 1 -
+          ((fourCellOperatorHalfWidth / 2) * x) ^ 2 / 2) / 2 by ring,
+    abs_div, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 2)]
+  nlinarith
+
+/-- The actual `P₁₄+` cosh pivot is tiny after the concrete quadratic
+selector is removed.  This turns the cosh border into a perturbative scalar,
+without evaluating any Legendre coefficient. -/
+theorem integral_halfWideCosh_sub_quadraticSelector_sq_le :
+    (∫ x : ℝ in -1..1,
+      (fourCellEvenHalfWideCoshRepresenter x -
+        centeredPolynomialLift
+          fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x) ^ 2) ≤
+      (1 / 50000000 : ℝ) := by
+  let f : ℝ → ℝ := fun x ↦
+    (fourCellEvenHalfWideCoshRepresenter x -
+      centeredPolynomialLift
+        fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x) ^ 2
+  have hf : Continuous f := by
+    dsimp only [f, fourCellEvenHalfWideCoshRepresenter,
+      centeredPolynomialLift,
+      fourCellEvenHalfWideCoshQuadraticSelectorPolynomial]
+    fun_prop
+  have hconst : IntervalIntegrable (fun _x : ℝ ↦ (1 / 100000000 : ℝ))
+      volume (-1) 1 := Continuous.intervalIntegrable continuous_const _ _
+  have hmono : (∫ x : ℝ in -1..1, f x) ≤
+      ∫ _x : ℝ in -1..1, (1 / 100000000 : ℝ) := by
+    apply intervalIntegral.integral_mono_on (by norm_num)
+      (hf.intervalIntegrable _ _) hconst
+    intro x hx
+    have herr :=
+      abs_fourCellEvenHalfWideCoshRepresenter_sub_quadraticSelector_lt
+        hx
+    have habs0 : 0 ≤ |fourCellEvenHalfWideCoshRepresenter x -
+        centeredPolynomialLift
+          fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x| :=
+      abs_nonneg _
+    have hsq := pow_lt_pow_left₀ herr habs0 (n := 2) (by norm_num)
+    calc
+      f x = |fourCellEvenHalfWideCoshRepresenter x -
+          centeredPolynomialLift
+            fourCellEvenHalfWideCoshQuadraticSelectorPolynomial x| ^ 2 := by
+        dsimp only [f]
+        rw [sq_abs]
+      _ ≤ (1 / 10000 : ℝ) ^ 2 := hsq.le
+      _ = 1 / 100000000 := by norm_num
+  dsimp only [f] at hmono ⊢
+  calc
+    _ ≤ ∫ _x : ℝ in -1..1, (1 / 100000000 : ℝ) := hmono
+    _ = 1 / 50000000 := by norm_num
 
 /-- Simultaneously remove a finite polynomial selector and an arbitrary
 multiple of the wide-cosh constraint from the `P₁₄+` row representer. -/
