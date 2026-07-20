@@ -1,3 +1,4 @@
+import ArithmeticHodge.Analysis.YoshidaFourCellOddP11RetainedHardySurplusStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP11TailReserveFactorStructural
 
 set_option autoImplicit false
@@ -16,6 +17,7 @@ open YoshidaEndpointPotentialIntegrable
 open YoshidaEndpointWeightedCauchy
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaFourCellOddEndpointStripCoercivityStructural
+open YoshidaFourCellOddP11RetainedHardySurplusStructural
 open YoshidaFourCellOddP11TailReserveFactorStructural
 open YoshidaFourCellOddP11TailReserveThreeHalvesStructural
 open YoshidaFourCellOddP11ThreeHalvesClosureStructural
@@ -238,6 +240,24 @@ theorem p1RetainedHardySurplus_nonneg
   unfold fourCellOddP11P1RetainedHardySurplus
   nlinarith
 
+/-- The exact `P₁` Schur completion leaves this nonnegative part of the raw
+Hardy reserve.  Its lower coefficient is the full `37969/11172`, rather than
+the rounded `421/125` used by the earlier public estimate. -/
+def fourCellOddP11ExactP1RetainedHardySurplus (r : ℝ → ℝ) : ℝ :=
+  fourCellOddRawStripCancellationReserve r -
+    (37969 / 11172 : ℝ) * (∫ x : ℝ in 0..3 / 5, r x ^ 2) -
+    (6 / 5 : ℝ) * (∫ x : ℝ in 3 / 5..1, r x ^ 2 / x)
+
+theorem exactP1RetainedHardySurplus_nonneg
+    (r : ℝ → ℝ) (hr : ContDiff ℝ 1 r) (hodd : Function.Odd r)
+    (h1 : centeredOddP1Coefficient r = 0) :
+    0 ≤ fourCellOddP11ExactP1RetainedHardySurplus r := by
+  have hraw :=
+    thirtySevenNineSixNine_div_elevenOneSevenTwo_lowerMass_add_weightedUpper_le_raw
+      r hr hodd h1
+  unfold fourCellOddP11ExactP1RetainedHardySurplus
+  linarith
+
 /-- The precise Hardy-capacity residual left after all elementary terms have
 been discharged.  Only the upper singular potential remains; its coefficient
 is exactly the adverse `93/100` from the factor-`3/2` gap. -/
@@ -264,6 +284,24 @@ theorem tailHardyResidual_eq_p1RetainedSurplus
   unfold fourCellOddP11TailHardyResidual
     fourCellOddP11RetainedHardySurplus
     fourCellOddP11P1RetainedHardySurplus
+  ring
+
+/-- With the exact `P₁` Schur completion, only
+`14259061/55860000` copies of lower mass remain exposed.  This is the same
+Hardy residual, not a relaxation of it. -/
+theorem tailHardyResidual_eq_exactP1RetainedSurplus
+    (r : ℝ → ℝ) :
+    fourCellOddP11TailHardyResidual r =
+      fourCellOddP11ExactP1RetainedHardySurplus r +
+        (2813 / 20000 : ℝ) * (∫ x : ℝ in 3 / 5..1, r x ^ 2) -
+        (14259061 / 55860000 : ℝ) *
+          (∫ x : ℝ in 0..3 / 5, r x ^ 2) -
+        (93 / 100 : ℝ) *
+          (∫ x : ℝ in 3 / 5..1,
+            yoshidaEndpointPotential x * r x ^ 2) := by
+  unfold fourCellOddP11TailHardyResidual
+    fourCellOddP11RetainedHardySurplus
+    fourCellOddP11ExactP1RetainedHardySurplus
   ring
 
 /-- Every elementary term in the rational concentration budget dominates
