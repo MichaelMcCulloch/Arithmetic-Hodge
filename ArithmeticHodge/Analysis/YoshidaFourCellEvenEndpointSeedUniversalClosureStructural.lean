@@ -1187,6 +1187,124 @@ theorem fourCellEvenEndpointSeedRow_sq_le_coshConstrainedLowThroughTwelve_add_ra
             (centeredLegendreHigherResidual w hw 14) / 4) := by
       dsimp only [L, r]
 
+/-- Self-contained quadratic form of the cosh-bordered handoff.  The three
+tail Gram entries remain coupled exactly, so the shared selector `s` is now a
+literal finite scalar border rather than an external norm certificate. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_coshBorderQuadratic
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (q : ℝ[X]) (hq : q.natDegree < 14)
+    (s η : ℝ) (hη : 0 < η) :
+    let a : ℝ := 1 + η
+    let L : ℝ := fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw
+    let P : ℝ := fourCellPositiveCoshMoment
+      (centeredLegendreLowProjection w hw 14)
+      (fourCellOperatorHalfWidth / 2)
+    let A : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2
+    let B : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+        fourCellEvenHalfWideCoshRepresenter x
+    let D : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenHalfWideCoshRepresenter x ^ 2
+    let E : ℝ := centeredRawLogEnergy
+      (centeredLegendreHigherResidual w hw 14) / 4
+    let W : ℝ :=
+      (1 + η⁻¹) * (360360 / 1171733 : ℝ) * E
+    fourCellEvenEndpointSeedRow w ^ 2 ≤
+      a * (L - s * P) ^ 2 + W * (A - 2 * s * B + s ^ 2 * D) := by
+  dsimp only
+  let C : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenConstrainedRepresenter q s x ^ 2
+  have hC : 0 ≤ C := by
+    dsimp only [C]
+    exact intervalIntegral.integral_nonneg (by norm_num)
+      (fun _ _ ↦ sq_nonneg _)
+  have hbound :=
+    fourCellEvenEndpointSeedRow_sq_le_coshConstrainedLowThroughTwelve_add_rawTail_of_norm
+      w hw hlocal heven hzero q hq s C hC (by rfl) η hη
+  have hnorm :=
+    integral_endpointSeedTailFourteenConstrainedRepresenter_sq_eq_quadratic
+      q s
+  dsimp only [C] at hbound
+  rw [hnorm] at hbound
+  convert hbound using 1
+  all_goals ring
+
+/-- Exact scalar Schur complement of the shared finite/tail cosh border.
+The negative square is retained: this is the structural gain lost by treating
+the finite row and the tail representer with separate absolute-value bounds.
+The remaining positivity premise is precisely the one-dimensional bordered
+diagonal, not a family of modes or a numerical search. -/
+theorem fourCellEvenEndpointSeedRow_sq_le_coshBorderSchurComplement
+    (w : ℝ → ℝ) (hw : Continuous w)
+    (hlocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w)
+    (heven : Function.Even w)
+    (hzero : fourCellPositiveCoshMoment w
+      (fourCellOperatorHalfWidth / 2) = 0)
+    (q : ℝ[X]) (hq : q.natDegree < 14)
+    (η : ℝ) (hη : 0 < η) :
+    let a : ℝ := 1 + η
+    let L : ℝ := fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw
+    let P : ℝ := fourCellPositiveCoshMoment
+      (centeredLegendreLowProjection w hw 14)
+      (fourCellOperatorHalfWidth / 2)
+    let A : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2
+    let B : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+        fourCellEvenHalfWideCoshRepresenter x
+    let D : ℝ := ∫ x : ℝ in -1..1,
+      fourCellEvenHalfWideCoshRepresenter x ^ 2
+    let E : ℝ := centeredRawLogEnergy
+      (centeredLegendreHigherResidual w hw 14) / 4
+    let W : ℝ :=
+      (1 + η⁻¹) * (360360 / 1171733 : ℝ) * E
+    let K : ℝ := a * P ^ 2 + W * D
+    let N : ℝ := a * L * P + W * B
+    0 < K →
+      fourCellEvenEndpointSeedRow w ^ 2 ≤
+        a * L ^ 2 + W * A - N ^ 2 / K := by
+  dsimp only
+  intro hKpos
+  let a : ℝ := 1 + η
+  let L : ℝ := fourCellEvenEndpointSeedCanonicalLowThroughTwelveRow w hw
+  let P : ℝ := fourCellPositiveCoshMoment
+    (centeredLegendreLowProjection w hw 14)
+    (fourCellOperatorHalfWidth / 2)
+  let A : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter q x ^ 2
+  let B : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenEndpointSeedTailFourteenRepresenter q x *
+      fourCellEvenHalfWideCoshRepresenter x
+  let D : ℝ := ∫ x : ℝ in -1..1,
+    fourCellEvenHalfWideCoshRepresenter x ^ 2
+  let E : ℝ := centeredRawLogEnergy
+    (centeredLegendreHigherResidual w hw 14) / 4
+  let W : ℝ :=
+    (1 + η⁻¹) * (360360 / 1171733 : ℝ) * E
+  let K : ℝ := a * P ^ 2 + W * D
+  let N : ℝ := a * L * P + W * B
+  change 0 < K at hKpos
+  change fourCellEvenEndpointSeedRow w ^ 2 ≤
+    a * L ^ 2 + W * A - N ^ 2 / K
+  let s : ℝ := N / K
+  have hquad := fourCellEvenEndpointSeedRow_sq_le_coshBorderQuadratic
+    w hw hlocal heven hzero q hq s η hη
+  have hquad' : fourCellEvenEndpointSeedRow w ^ 2 ≤
+      a * (L - s * P) ^ 2 + W * (A - 2 * s * B + s ^ 2 * D) := by
+    simpa only [a, L, P, A, B, D, E, W] using hquad
+  have hcompletion := coupled_scalar_cosh_border_completion
+    a W L P A B D s hKpos.ne'
+  have hcompletion' :
+      a * (L - s * P) ^ 2 + W * (A - 2 * s * B + s ^ 2 * D) =
+        a * L ^ 2 + W * A - N ^ 2 / K := by
+    simpa [s, N, K] using hcompletion
+  exact hquad'.trans_eq hcompletion'
+
 /-- The canonical row is bounded by one explicit finite-row square and the
 mass of the moment-eight residual, for every positive Young allocation.
 This is an unconditional diagnostic interface; closing the universal Schur
