@@ -15832,7 +15832,7 @@ theorem fourCellOddCoreLocalQuadratic_nonneg_of_endpointZero_fiveMode_formDual
   dsimp only [p, r] at hcompleted
   linarith
 
-private theorem centeredRawLogBilinear_symm_local
+theorem centeredRawLogBilinear_symm_local
     (u v : ℝ → ℝ) :
     centeredRawLogBilinear u v = centeredRawLogBilinear v u := by
   unfold centeredRawLogBilinear
@@ -15842,7 +15842,7 @@ private theorem centeredRawLogBilinear_symm_local
   intro y _hy
   ring
 
-private theorem centeredRawLogBilinear_add_left_local
+theorem centeredRawLogBilinear_add_left_local
     (u v w : ℝ → ℝ)
     (hu : LocallyLipschitzOn (Icc (-1 : ℝ) 1) u)
     (hv : LocallyLipschitzOn (Icc (-1 : ℝ) 1) v)
@@ -15875,7 +15875,7 @@ private theorem centeredRawLogBilinear_add_left_local
     integral_add huInt hvInt]
   ring
 
-private theorem centeredRawLogBilinear_const_mul_left_local
+theorem centeredRawLogBilinear_const_mul_left_local
     (u v : ℝ → ℝ) (a : ℝ) :
     centeredRawLogBilinear (fun x ↦ a * u x) v =
       a * centeredRawLogBilinear u v := by
@@ -15883,7 +15883,7 @@ private theorem centeredRawLogBilinear_const_mul_left_local
     centeredRawLogBilinear_const_mul_right_local,
     centeredRawLogBilinear_symm_local]
 
-private theorem centeredRawLogBilinear_neg_shiftedLegendre_eq_moment_local
+theorem centeredRawLogBilinear_neg_shiftedLegendre_eq_moment_local
     (n : ℕ) (q r : ℝ → ℝ) (hr : Continuous r)
     (hmode : ∀ t : ℝ, centeredPullback q t =
       -(shiftedLegendreReal n).eval t) :
