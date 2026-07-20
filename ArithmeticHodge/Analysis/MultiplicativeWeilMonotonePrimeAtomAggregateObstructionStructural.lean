@@ -4262,7 +4262,7 @@ theorem supportMinimalNegativeMonotoneBlock_length_five_forces_middlePivotResidu
     simp [monotoneQuarterFiniteBlock,
       monotoneQuarterFiniteBlockBase, fiveCellMiddleThree,
       Finset.sum_range_succ]
-    congr 1 <;> ring
+    congr 1 <;> ring_nf
   rw [hmiddleEq] at hconstraints
   change FiveCellCoupledEndpointSchurConstraints A M E U V X at hconstraints
   have hadj := fiveCell_adjacentPrincipalMinors_of_fourCellProduction
@@ -4583,7 +4583,9 @@ theorem monotoneQuarterFiniteBlockInterior_apply
       k + ((n - 1 : ℕ) : ℤ) := by
     calc
       k + 1 + ((n - 2 : ℕ) : ℤ) =
-          k + (((n - 2) + 1 : ℕ) : ℤ) := by push_cast; ring
+          k + (((n - 2) + 1 : ℕ) : ℤ) := by
+        rw [Nat.cast_add, Nat.cast_one]
+        ring
       _ = k + ((n - 1 : ℕ) : ℤ) := by rw [hsub]
   rw [hindex]
 
@@ -6511,6 +6513,25 @@ theorem riemannHypothesis_of_inductiveRadicalResidualDeterminantClosure
     RiemannHypothesis := by
   exact riemannHypothesis_of_inductiveResidualDeterminantClosure zeros
     (realFiniteBlockInductiveResidualDeterminantClosure_of_radical hclosure)
+
+/-- Exact RH characterization by the robust staged residual determinant
+interface. -/
+theorem riemannHypothesis_iff_inductiveResidualDeterminantClosure
+    (zeros : ZetaZeroEnumeration) :
+    RiemannHypothesis ↔
+      RealFiniteBlockInductiveResidualDeterminantClosure := by
+  rw [riemannHypothesis_iff_bombieriRealQuadraticNonnegativity zeros]
+  exact bombieriRealQuadraticNonnegativity_iff_inductiveResidualDeterminantClosure
+
+/-- Exact RH characterization with the singular interiors exposed as
+production-space radical vectors. -/
+theorem riemannHypothesis_iff_inductiveRadicalResidualDeterminantClosure
+    (zeros : ZetaZeroEnumeration) :
+    RiemannHypothesis ↔
+      RealFiniteBlockInductiveRadicalResidualDeterminantClosure := by
+  rw [riemannHypothesis_iff_bombieriRealQuadraticNonnegativity zeros]
+  exact
+    bombieriRealQuadraticNonnegativity_iff_inductiveRadicalResidualDeterminantClosure
 
 end
 
