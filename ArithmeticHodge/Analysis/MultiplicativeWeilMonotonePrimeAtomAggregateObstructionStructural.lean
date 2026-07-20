@@ -4711,6 +4711,27 @@ theorem finiteBlock_endpoint_tsupports_collapse_of_interior_zero
       apply hxne
       rw [monotoneQuarterCell_apply, hparent, mul_zero]
 
+/-- Every nonzero conjugation-fixed ratio-two test has strictly positive
+complete Bombieri quadratic value.  This packages local coercivity and the
+exact absence of prime terms at support ratio at most two. -/
+theorem bombieriRealQuadraticValue_pos_of_ratioTwoCell_of_real_of_ne_zero
+    (m : BombieriTest) (hcell : BombieriRatioTwoCell m)
+    (hmreal : bombieriConjugateTest m = m) (hm : m ≠ 0) :
+    0 < bombieriRealQuadraticValue m := by
+  have hcoercive := real_ratioTwo_localCriticalForm_re_ge_criticalLogEnergy
+    m hcell hmreal
+  have henergy : 0 < bombieriCriticalLogEnergy m :=
+    bombieriCriticalLogEnergy_pos_of_ne_zero m hm
+  have hlocal : 0 < (bombieriLocalCriticalForm m m).re := by
+    have hcoeff : 0 < (1 / 12000 : ℝ) := by norm_num
+    exact lt_of_lt_of_le (mul_pos hcoeff henergy) hcoercive
+  obtain ⟨a, b, ha, hab, hsupport, hratio⟩ := hcell
+  have heq := bombieriFunctional_quadratic_eq_bombieriLocalCriticalForm_le_two
+    m ha hab hsupport hratio
+  unfold bombieriRealQuadraticValue
+  rw [heq]
+  exact hlocal
+
 /-- A nonzero real production block of at most three consecutive cells has
 strictly positive complete Bombieri quadratic value.  The ratio-two local
 coercivity therefore has no quadratic null vectors on these short blocks. -/
@@ -4721,29 +4742,12 @@ theorem bombieriRealQuadraticValue_monotoneQuarterFiniteBlock_pos_of_le_three_of
     (hblock : monotoneQuarterFiniteBlock parent lo start len ≠ 0) :
     0 < bombieriRealQuadraticValue
       (monotoneQuarterFiniteBlock parent lo start len) := by
-  let m : BombieriTest :=
-    monotoneQuarterFiniteBlock parent lo start len
-  have hcell : BombieriRatioTwoCell m := by
-    dsimp only [m]
-    exact monotoneQuarterFiniteBlock_ratioTwo_of_le_three
+  apply bombieriRealQuadraticValue_pos_of_ratioTwoCell_of_real_of_ne_zero
+  · exact monotoneQuarterFiniteBlock_ratioTwo_of_le_three
       parent lo start len hlen
-  have hmreal : bombieriConjugateTest m = m := by
-    dsimp only [m]
-    exact bombieriConjugateTest_monotoneQuarterFiniteBlock
+  · exact bombieriConjugateTest_monotoneQuarterFiniteBlock
       parent hparent lo start len
-  have hcoercive := real_ratioTwo_localCriticalForm_re_ge_criticalLogEnergy
-    m hcell hmreal
-  have henergy : 0 < bombieriCriticalLogEnergy m :=
-    bombieriCriticalLogEnergy_pos_of_ne_zero m hblock
-  have hlocal : 0 < (bombieriLocalCriticalForm m m).re := by
-    have hcoeff : 0 < (1 / 12000 : ℝ) := by norm_num
-    exact lt_of_lt_of_le (mul_pos hcoeff henergy) hcoercive
-  obtain ⟨a, b, ha, hab, hsupport, hratio⟩ := hcell
-  have heq := bombieriFunctional_quadratic_eq_bombieriLocalCriticalForm_le_two
-    m ha hab hsupport hratio
-  unfold bombieriRealQuadraticValue
-  rw [heq]
-  exact hlocal
+  · exact hblock
 
 /-- Through length five, a zero interior diagonal is already a zero interior
 test: deleting the two endpoints leaves at most three ratio-two cells. -/
