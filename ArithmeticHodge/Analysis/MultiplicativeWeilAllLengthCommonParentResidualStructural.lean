@@ -1,4 +1,5 @@
 import ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthResidualPropagationClosureStructural
+import ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthNegativeResidualStructural
 
 set_option autoImplicit false
 
@@ -9,6 +10,7 @@ namespace ArithmeticHodge.Analysis.MultiplicativeWeilAllLengthCommonParentResidu
 noncomputable section
 
 open MultiplicativeWeil
+open MultiplicativeWeilAllLengthNegativeResidualStructural
 open MultiplicativeWeilAllLengthResidualDeterminantSingularClosureStructural
 open MultiplicativeWeilMinimalNegativeBlockStructural
 open MultiplicativeWeilMonotoneNullSuffixVariationStructural
@@ -373,6 +375,184 @@ theorem realFiniteBlockMiddleOrthogonalResidualDeterminant_iff_commonParentPenci
     rw [finiteBlock_residualPencil_eq parent k n (by omega),
       bombieriRealQuadraticValue_add_real_smul] at h
     exact h
+
+private theorem real_two_by_two_determinant_of_nonnegative_positiveRay
+    {A B U : ℝ}
+    (hB : 0 ≤ B) (hU : U < 0)
+    (hall : ∀ t : ℝ, 0 ≤ t → 0 ≤ A + t ^ 2 * B + 2 * t * U) :
+    U ^ 2 ≤ A * B := by
+  have hA : 0 ≤ A := by
+    simpa using hall 0 le_rfl
+  by_cases hBzero : B = 0
+  · let t : ℝ := -(A + 1) / (2 * U)
+    have ht : 0 ≤ t := by
+      have hnum : 0 < A + 1 := by linarith
+      have hden : 2 * U < 0 := by nlinarith
+      dsimp only [t]
+      exact (div_pos_of_neg_of_neg (neg_lt_zero.mpr hnum) hden).le
+    have h := hall t ht
+    have hid : A + t ^ 2 * B + 2 * t * U = -1 := by
+      dsimp only [t]
+      rw [hBzero, mul_zero, add_zero]
+      field_simp [ne_of_lt hU]
+      ring
+    rw [hid] at h
+    linarith
+  · have hBpos : 0 < B := lt_of_le_of_ne hB (Ne.symm hBzero)
+    have ht : 0 ≤ -U / B :=
+      div_nonneg (by linarith) hBpos.le
+    have h := hall (-U / B) ht
+    have hid : A + (-U / B) ^ 2 * B + 2 * (-U / B) * U =
+        (A * B - U ^ 2) / B := by
+      field_simp [hBzero]
+      ring
+    rw [hid] at h
+    rcases (div_nonneg_iff.mp h) with hpos | hneg
+    · exact sub_nonneg.mp hpos.1
+    · exact (not_le_of_gt hBpos hneg.2).elim
+
+/-- The actual common-parent residual pencil restricted to the positive
+parameter ray.  This is strictly less data than the full real pencil: positive
+residual cross is automatically harmless, and only negative cross can attain
+its minimum at a positive parameter. -/
+def RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength
+    (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        0 < bombieriRealQuadraticValue
+            (monotoneQuarterFiniteBlockInterior parent k n) →
+          ∀ t : ℝ, 0 ≤ t →
+            0 ≤ bombieriRealQuadraticValue
+              (monotoneQuarterFiniteBlock
+                (finiteBlockMiddleOrthogonalResidualPencilParent
+                  parent k n t) k 0 n)
+
+/-- Under the already-proved shorter blocks, the genuinely one-sided Schur
+condition is exactly positivity of the explicit common-parent residual pencil
+on `t ≥ 0`.  No negative parameter and no arbitrary pair of tests is needed. -/
+theorem realFiniteBlockMiddlePivotNegativeSchur_iff_commonParentPositiveRay
+    (n : ℕ) (hn : 4 ≤ n)
+    (hprev : RealFiniteBlockProductionNonnegativeUpTo (n - 1)) :
+    RealFiniteBlockMiddlePivotNegativeSchurAtLength n ↔
+      RealFiniteBlockCommonParentResidualPositiveRayNonnegativeAtLength n := by
+  constructor
+  · intro hnegative parent hparent k hMpos t ht
+    let a : BombieriTest := monotoneQuarterCell parent k
+    let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+    let e : BombieriTest :=
+      monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+    let A : ℝ := bombieriRealQuadraticValue a
+    let M : ℝ := bombieriRealQuadraticValue m
+    let E : ℝ := bombieriRealQuadraticValue e
+    let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+    let l : BombieriTest :=
+      finiteBlockLeftMiddleOrthogonalResidual parent k n
+    let r : BombieriTest :=
+      finiteBlockRightMiddleOrthogonalResidual parent k n
+    have hadj := finiteBlock_adjacentPrincipalMinors_of_previousLengths
+      n hn hprev parent hparent k
+    change U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E at hadj
+    have hdiagonal :=
+      finiteBlock_middleOrthogonalResidualQuadratic_coordinates parent k n
+    change bombieriRealQuadraticValue l = M * (A * M - U ^ 2) ∧
+      bombieriRealQuadraticValue r = M * (M * E - V ^ 2) at hdiagonal
+    have hcross := finiteBlock_middleOrthogonalResidualCross_coordinate
+      parent k n
+    change (bombieriTwoBlockGlobalCrossSymbol l r).re =
+      M * (M * X - U * V) at hcross
+    have hlNonnegative : 0 ≤ bombieriRealQuadraticValue l := by
+      rw [hdiagonal.1]
+      exact mul_nonneg hMpos.le (sub_nonneg.mpr hadj.1)
+    have hrNonnegative : 0 ≤ bombieriRealQuadraticValue r := by
+      rw [hdiagonal.2]
+      exact mul_nonneg hMpos.le (sub_nonneg.mpr hadj.2)
+    rw [finiteBlock_residualPencil_eq parent k n (by omega),
+      bombieriRealQuadraticValue_add_real_smul]
+    change 0 ≤ bombieriRealQuadraticValue l +
+      t ^ 2 * bombieriRealQuadraticValue r +
+        2 * t * (bombieriTwoBlockGlobalCrossSymbol l r).re
+    by_cases hdelta : M * X - U * V < 0
+    · have hmiddle := hnegative parent hparent k hMpos hdelta
+      have hactual :
+          (bombieriTwoBlockGlobalCrossSymbol l r).re ^ 2 ≤
+            bombieriRealQuadraticValue l * bombieriRealQuadraticValue r := by
+        rw [hcross, hdiagonal.1, hdiagonal.2]
+        calc
+          (M * (M * X - U * V)) ^ 2 =
+              M ^ 2 * (M * X - U * V) ^ 2 := by ring
+          _ ≤ M ^ 2 *
+              ((A * M - U ^ 2) * (M * E - V ^ 2)) :=
+            mul_le_mul_of_nonneg_left hmiddle (sq_nonneg M)
+          _ = (M * (A * M - U ^ 2)) *
+              (M * (M * E - V ^ 2)) := by ring
+      exact real_pencil_nonnegative_of_two_by_two_determinant
+        hlNonnegative hrNonnegative hactual t
+    · have hcrossNonnegative :
+          0 ≤ (bombieriTwoBlockGlobalCrossSymbol l r).re := by
+        rw [hcross]
+        exact mul_nonneg hMpos.le (le_of_not_gt hdelta)
+      positivity
+  · intro hray parent hparent k
+    dsimp only
+    let a : BombieriTest := monotoneQuarterCell parent k
+    let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+    let e : BombieriTest :=
+      monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+    let A : ℝ := bombieriRealQuadraticValue a
+    let M : ℝ := bombieriRealQuadraticValue m
+    let E : ℝ := bombieriRealQuadraticValue e
+    let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+    let l : BombieriTest :=
+      finiteBlockLeftMiddleOrthogonalResidual parent k n
+    let r : BombieriTest :=
+      finiteBlockRightMiddleOrthogonalResidual parent k n
+    intro hMpos hdelta
+    have hadj := finiteBlock_adjacentPrincipalMinors_of_previousLengths
+      n hn hprev parent hparent k
+    change U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E at hadj
+    have hdiagonal :=
+      finiteBlock_middleOrthogonalResidualQuadratic_coordinates parent k n
+    change bombieriRealQuadraticValue l = M * (A * M - U ^ 2) ∧
+      bombieriRealQuadraticValue r = M * (M * E - V ^ 2) at hdiagonal
+    have hcross := finiteBlock_middleOrthogonalResidualCross_coordinate
+      parent k n
+    change (bombieriTwoBlockGlobalCrossSymbol l r).re =
+      M * (M * X - U * V) at hcross
+    have hrNonnegative : 0 ≤ bombieriRealQuadraticValue r := by
+      rw [hdiagonal.2]
+      exact mul_nonneg hMpos.le (sub_nonneg.mpr hadj.2)
+    have hcrossNegative :
+        (bombieriTwoBlockGlobalCrossSymbol l r).re < 0 := by
+      rw [hcross]
+      exact mul_neg_of_pos_of_neg hMpos hdelta
+    have hall : ∀ t : ℝ, 0 ≤ t →
+        0 ≤ bombieriRealQuadraticValue l +
+          t ^ 2 * bombieriRealQuadraticValue r +
+            2 * t * (bombieriTwoBlockGlobalCrossSymbol l r).re := by
+      intro t ht
+      have h := hray parent hparent k hMpos t ht
+      rw [finiteBlock_residualPencil_eq parent k n (by omega),
+        bombieriRealQuadraticValue_add_real_smul] at h
+      exact h
+    have hactual := real_two_by_two_determinant_of_nonnegative_positiveRay
+      hrNonnegative hcrossNegative hall
+    rw [hcross, hdiagonal.1, hdiagonal.2] at hactual
+    have hscaled :
+        M ^ 2 * (M * X - U * V) ^ 2 ≤
+          M ^ 2 * ((A * M - U ^ 2) * (M * E - V ^ 2)) := by
+      calc
+        M ^ 2 * (M * X - U * V) ^ 2 =
+            (M * (M * X - U * V)) ^ 2 := by ring
+        _ ≤ (M * (A * M - U ^ 2)) *
+              (M * (M * E - V ^ 2)) := hactual
+        _ = M ^ 2 *
+              ((A * M - U ^ 2) * (M * E - V ^ 2)) := by ring
+    exact le_of_mul_le_mul_left hscaled (sq_pos_of_pos hMpos)
 
 end
 
