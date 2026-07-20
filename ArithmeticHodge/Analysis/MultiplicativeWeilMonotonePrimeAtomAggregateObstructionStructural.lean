@@ -4791,6 +4791,32 @@ theorem finiteBlock_endpoint_tsupports_collapse_of_interior_quadratic_zero_of_le
     monotoneQuarterFiniteBlockInterior_eq_zero_of_quadratic_eq_zero_of_le_five
       parent hparent k n hnLower hnUpper hzero
 
+/-- At the first singular length, the collapsed right endpoint interval is
+exactly twice the collapsed left interval.  Thus the length-four singular
+branch is a pure factor-two endpoint problem, with no residual wider support
+or additional prime window. -/
+theorem fourCell_endpoint_tsupports_factorTwo_collapse_of_interior_quadratic_zero
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ)
+    (hzero : bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlockInterior parent k 4) = 0) :
+    tsupport (monotoneQuarterCell parent k : ℝ → ℂ) ⊆
+        Set.Icc (quarterLogLatticePoint k)
+          (quarterLogLatticePoint (k + 1)) ∧
+      tsupport (monotoneQuarterCell parent (k + 3) : ℝ → ℂ) ⊆
+        Set.Icc (2 * quarterLogLatticePoint k)
+          (2 * quarterLogLatticePoint (k + 1)) := by
+  have hcollapse :=
+    finiteBlock_endpoint_tsupports_collapse_of_interior_quadratic_zero_of_le_five
+      parent hparent k 4 (by omega) (by omega) hzero
+  constructor
+  · exact hcollapse.1
+  · simpa only [Nat.reduceSubDiff, Nat.cast_ofNat,
+      show k + 3 + 1 = k + 4 by ring,
+      show k + 3 + 2 = (k + 1) + 4 by ring,
+      quarterLogLatticePoint_add_four] using hcollapse.2
+
 private theorem finiteBlock_parent_sub_nextCutoff_eq_leftEndpoint_allLength
     (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 2 ≤ n) :
     monotoneQuarterFiniteBlock
@@ -5290,6 +5316,41 @@ def RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength
           (k + ((n - 1 : ℕ) : ℤ))
         bombieriRealQuadraticValue m = 0 →
           0 ≤ bombieriRealQuadraticValue (a + e)
+
+/-- Test-level form of the singular four-cell endpoint obligation.  The
+support theorem above shows that these two surviving endpoint cells occupy
+intervals related by the exact dilation factor two. -/
+def RealFourCellZeroInteriorFactorTwoEndpointNonnegative : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        monotoneQuarterFiniteBlockInterior parent k 4 = 0 →
+          0 ≤ bombieriRealQuadraticValue
+            (monotoneQuarterCell parent k +
+              monotoneQuarterCell parent (k + 3))
+
+/-- The abstract zero-diagonal clause at the first inductive length is
+exactly the concrete collapsed factor-two endpoint problem.  Short-block
+coercivity removes any distinction between a zero quadratic value and a
+zero interior test. -/
+theorem realFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength_four_iff_factorTwo
+    : RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength 4 ↔
+      RealFourCellZeroInteriorFactorTwoEndpointNonnegative := by
+  constructor
+  · intro hsparse parent hparent k hmiddle
+    have hzero : bombieriRealQuadraticValue
+        (monotoneQuarterFiniteBlockInterior parent k 4) = 0 := by
+      rw [hmiddle, bombieriRealQuadraticValue_zero_for_aggregateExpressivity]
+    have hpair := hsparse parent hparent k hzero
+    simpa only [Nat.reduceSubDiff, Nat.cast_ofNat] using hpair
+  · intro hfactor parent hparent k
+    dsimp only
+    intro hzero
+    have hmiddle : monotoneQuarterFiniteBlockInterior parent k 4 = 0 :=
+      monotoneQuarterFiniteBlockInterior_eq_zero_of_quadratic_eq_zero_of_le_five
+        parent hparent k 4 (by omega) (by omega) hzero
+    simpa only [Nat.reduceSubDiff, Nat.cast_ofNat] using
+      hfactor parent hparent k hmiddle
 
 /-- Chebyshev-row form of the singular-pivot obligation. -/
 def RealFiniteBlockZeroInteriorFarChebyshevBoundAtLength
