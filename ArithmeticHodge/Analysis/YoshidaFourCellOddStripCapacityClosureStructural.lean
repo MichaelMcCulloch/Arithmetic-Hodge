@@ -14,6 +14,7 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5CleanCrossStr
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationDiagonalStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseCenteredP9Structural
+import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP7P9CorrelationStructural
 import ArithmeticHodge.Analysis.ShiftedLegendrePolynomialGap
 
 set_option autoImplicit false
@@ -65,9 +66,11 @@ open YoshidaFactorTwoPhaseIntrinsicOddLowEndpointStructuralPositive
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 open YoshidaFactorTwoPhaseCenteredP9Structural
+open YoshidaFactorTwoPhaseP7P9CorrelationStructural
 open YoshidaFactorTwoPhaseLowSchur
 open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFactorTwoEndpointBilinear
+open YoshidaFactorTwoEndpointParityPencil
 open YoshidaFactorTwoEndpointClean
 open YoshidaEndpointOddOneThreeRawPolarization
 open YoshidaEndpointOddResidualRegularity
@@ -12884,6 +12887,7 @@ private theorem abs_fourCellWideRegularEnvelopeError55_tight_le :
   have hmass := integral_abs_oddP5Correlation55_le
   nlinarith
 
+set_option maxHeartbeats 1000000 in
 private theorem fourCellOddOneThreeFiveRegular_entry_tight_bounds :
     (4855 / 1000000 : ℝ) < fourCellOddOneThreeFiveRegular11 ∧
     fourCellOddOneThreeFiveRegular11 < (4873 / 1000000 : ℝ) ∧
@@ -12930,6 +12934,7 @@ private theorem fourCellOddOneThreeFiveRegular_entry_tight_bounds :
   · nlinarith
   constructor <;> nlinarith
 
+set_option maxHeartbeats 1000000 in
 private theorem fourCellOddOneThreeFiveCombined_entry_certificate_bounds :
     (251905 / 1000000 : ℝ) < fourCellOddLowCombined11 ∧
     fourCellOddLowCombined11 < (251925 / 1000000 : ℝ) ∧
@@ -13103,6 +13108,62 @@ private theorem fourCellOddOneThreeFivePerturbed_entry_certificate_bounds :
   constructor
   · nlinarith
   constructor <;> nlinarith
+
+private def oddP5P7CorrelationLocal (t : ℝ) : ℝ :=
+  -t + (13 / 2 : ℝ) * t ^ 2 - (21 / 2 : ℝ) * t ^ 3 +
+    (35 / 4 : ℝ) * t ^ 5 - (21 / 4 : ℝ) * t ^ 7 +
+    (225 / 128 : ℝ) * t ^ 9 - (77 / 256 : ℝ) * t ^ 11 +
+    (21 / 1024 : ℝ) * t ^ 13
+
+private def oddP5P9CorrelationLocal (t : ℝ) : ℝ :=
+  -t + 15 * t ^ 2 - 70 * t ^ 3 + (1105 / 8 : ℝ) * t ^ 4 -
+    (441 / 4 : ℝ) * t ^ 5 + (315 / 8 : ℝ) * t ^ 7 -
+    (1815 / 128 : ℝ) * t ^ 9 + (429 / 128 : ℝ) * t ^ 11 -
+    (455 / 1024 : ℝ) * t ^ 13 + (51 / 2048 : ℝ) * t ^ 15
+
+set_option maxHeartbeats 1000000 in
+private theorem factorTwoCenteredCorrelationBilinear_P5_P7_local
+    (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear
+        factorTwoCenteredP5 factorTwoCenteredP7 t =
+      oddP5P7CorrelationLocal t := by
+  unfold factorTwoCenteredCorrelationBilinear
+  rw [factorTwoCenteredCrossCorrelation_swap_of_odd_odd
+    odd_factorTwoCenteredP5 odd_factorTwoCenteredP7]
+  unfold factorTwoCenteredCrossCorrelation factorTwoCenteredP5
+  simp_rw [factorTwoCenteredP7_eq]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) (1 - t))
+    (Continuous.intervalIntegrable (by fun_prop) (-1) (1 - t))]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  repeat rw [integral_id]
+  unfold oddP5P7CorrelationLocal
+  ring
+
+set_option maxHeartbeats 1000000 in
+private theorem factorTwoCenteredCorrelationBilinear_P5_P9_local
+    (t : ℝ) :
+    factorTwoCenteredCorrelationBilinear
+        factorTwoCenteredP5 factorTwoCenteredP9 t =
+      oddP5P9CorrelationLocal t := by
+  unfold factorTwoCenteredCorrelationBilinear
+  rw [factorTwoCenteredCrossCorrelation_swap_of_odd_odd
+    odd_factorTwoCenteredP5 odd_factorTwoCenteredP9]
+  unfold factorTwoCenteredCrossCorrelation factorTwoCenteredP5
+  simp_rw [factorTwoCenteredP9_eq]
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) (-1) (1 - t))
+    (Continuous.intervalIntegrable (by fun_prop) (-1) (1 - t))]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [intervalIntegral.integral_const_mul]
+  repeat rw [integral_pow]
+  repeat rw [integral_id]
+  unfold oddP5P9CorrelationLocal
+  ring
 
 private theorem neg_beta_sq_sum_le_two_mul_of_abs_le
     (B β x y : ℝ) (hB : |B| ≤ β) (hβ : 0 ≤ β) :
