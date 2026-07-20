@@ -761,6 +761,111 @@ theorem realFiveCellFactorTwoDomination_of_intrinsicParityRays
       heSchur.2 hoSchur.2
   simpa only [u, v] using And.intro hlow hmixed
 
+/-! ## Strength audit of the universal ray certificate -/
+
+/-- Universal positivity on smooth endpoint-zero profiles, separated by
+reflection parity. -/
+def FiveCellSmoothEndpointZeroParityNonnegative : Prop :=
+  (∀ e : ℝ → ℝ,
+      ContDiff ℝ ∞ e →
+      (e (-1) = 0 ∧ e 1 = 0) →
+      Function.Even e →
+      0 ≤ fiveCellEndpointOperator e) ∧
+    (∀ o : ℝ → ℝ,
+      ContDiff ℝ ∞ o →
+      (o (-1) = 0 ∧ o 1 = 0) →
+      Function.Odd o →
+      0 ≤ fiveCellEndpointOperator o)
+
+/-- The universal intrinsic-ray certificate is not merely a finite-low
+matrix condition: endpoint-adapted decomposition shows that it proves the
+complete smooth endpoint-zero operator in each parity sector. -/
+theorem smoothEndpointZeroParityNonnegative_of_intrinsicParityRays
+    (hcert : FiveCellEndpointAdaptedIntrinsicParityRayNonnegative) :
+    FiveCellSmoothEndpointZeroParityNonnegative := by
+  constructor
+  · intro e heTop heEnd heven
+    let hec : Continuous e := heTop.continuous
+    let u := fiveCellEndpointAdaptedLow e hec
+    let v := fiveCellEndpointAdaptedTail e hec
+    have huCoord : u =
+        fiveCellEndpointAdaptedIntrinsicEvenProfile
+          (factorTwoCanonicalLegendreCoefficient e hec 0)
+          (factorTwoCanonicalLegendreCoefficient e hec 2)
+          (factorTwoCanonicalLegendreCoefficient e hec 4)
+          (factorTwoCanonicalLegendreCoefficient e hec 6)
+          (factorTwoCanonicalLegendreCoefficient e hec 8) := by
+      simpa only [u] using
+        fiveCellEndpointAdaptedLow_even_eq_intrinsic e hec heven
+    have hvTop : ContDiff ℝ ∞ v := by
+      dsimp only [v]
+      unfold fiveCellEndpointAdaptedTail
+      exact heTop.sub (contDiff_top_fiveCellEndpointAdaptedLow e hec)
+    have hvEnd : v (-1) = 0 ∧ v 1 = 0 := by
+      simpa only [v] using
+        fiveCellEndpointAdaptedTail_endpoints_zero e hec heEnd
+    have huEven : Function.Even u := by
+      simpa only [u] using fiveCellEndpointAdaptedLow_even e hec heven
+    have hvEven : Function.Even v := by
+      intro x
+      dsimp only [v]
+      unfold fiveCellEndpointAdaptedTail
+      rw [heven x, fiveCellEndpointAdaptedLow_even e hec heven x]
+    have hvMom : centeredLegendreMomentsVanishBelow v 9 := by
+      simpa only [v] using
+        fiveCellEndpointAdaptedTail_momentsVanishBelow e hec
+    have hray := hcert.1
+      (factorTwoCanonicalLegendreCoefficient e hec 0)
+      (factorTwoCanonicalLegendreCoefficient e hec 2)
+      (factorTwoCanonicalLegendreCoefficient e hec 4)
+      (factorTwoCanonicalLegendreCoefficient e hec 6)
+      (factorTwoCanonicalLegendreCoefficient e hec 8)
+      v hvTop hvEnd hvEven hvMom 1
+    have huv : u + v = e := by
+      simpa only [u, v] using fiveCellEndpointAdaptedLow_add_tail e hec
+    rw [← huv, huCoord]
+    simpa using hray
+  · intro o hoTop hoEnd hodd
+    let hoc : Continuous o := hoTop.continuous
+    let u := fiveCellEndpointAdaptedLow o hoc
+    let v := fiveCellEndpointAdaptedTail o hoc
+    have huCoord : u =
+        fiveCellEndpointAdaptedIntrinsicOddProfile
+          (-factorTwoCanonicalLegendreCoefficient o hoc 1)
+          (-factorTwoCanonicalLegendreCoefficient o hoc 3)
+          (-factorTwoCanonicalLegendreCoefficient o hoc 5)
+          (-factorTwoCanonicalLegendreCoefficient o hoc 7) := by
+      simpa only [u] using
+        fiveCellEndpointAdaptedLow_odd_eq_intrinsic o hoc hodd
+    have hvTop : ContDiff ℝ ∞ v := by
+      dsimp only [v]
+      unfold fiveCellEndpointAdaptedTail
+      exact hoTop.sub (contDiff_top_fiveCellEndpointAdaptedLow o hoc)
+    have hvEnd : v (-1) = 0 ∧ v 1 = 0 := by
+      simpa only [v] using
+        fiveCellEndpointAdaptedTail_endpoints_zero o hoc hoEnd
+    have huOdd : Function.Odd u := by
+      simpa only [u] using fiveCellEndpointAdaptedLow_odd o hoc hodd
+    have hvOdd : Function.Odd v := by
+      intro x
+      dsimp only [v]
+      unfold fiveCellEndpointAdaptedTail
+      rw [hodd x, fiveCellEndpointAdaptedLow_odd o hoc hodd x]
+      ring
+    have hvMom : centeredLegendreMomentsVanishBelow v 9 := by
+      simpa only [v] using
+        fiveCellEndpointAdaptedTail_momentsVanishBelow o hoc
+    have hray := hcert.2
+      (-factorTwoCanonicalLegendreCoefficient o hoc 1)
+      (-factorTwoCanonicalLegendreCoefficient o hoc 3)
+      (-factorTwoCanonicalLegendreCoefficient o hoc 5)
+      (-factorTwoCanonicalLegendreCoefficient o hoc 7)
+      v hvTop hvEnd hvOdd hvMom 1
+    have huv : u + v = o := by
+      simpa only [u, v] using fiveCellEndpointAdaptedLow_add_tail o hoc
+    rw [← huv, huCoord]
+    simpa using hray
+
 
 end
 
