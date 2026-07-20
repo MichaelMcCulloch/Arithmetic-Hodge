@@ -15,11 +15,13 @@ import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicOddP5PerturbationD
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseCenteredP9Structural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseP7P9CorrelationStructural
+import ArithmeticHodge.Analysis.SparseEntriesRobustCertificate
 import ArithmeticHodge.Analysis.ShiftedLegendrePolynomialGap
 
 set_option autoImplicit false
 
 open MeasureTheory Polynomial Real Set
+open scoped BigOperators
 
 namespace ArithmeticHodge.Analysis.YoshidaFourCellOddStripCapacityClosureStructural
 
@@ -72,6 +74,8 @@ open YoshidaFactorTwoPhaseSymmetricCarleman
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoEndpointParityPencil
 open YoshidaFactorTwoEndpointClean
+open SparseEntriesCertificate
+open SparseEntriesRobustCertificate
 open YoshidaEndpointOddOneThreeRawPolarization
 open YoshidaEndpointOddResidualRegularity
 open YoshidaEndpointEvenTailRepresenter
@@ -15067,6 +15071,174 @@ theorem fourCellOddCoreLocalBilinear_P1_high_certificate_bounds :
   constructor
   · nlinarith
   constructor <;> nlinarith
+
+/-! ### Exact rational congruence for the complete five-mode block -/
+
+/-- The true finite block with the two high diagonals replaced by their
+proved rational lower bounds. -/
+def fourCellOddFiveModeLowerMatrix : Matrix (Fin 5) (Fin 5) ℝ :=
+  !![fourCellOddOneThreeFivePerturbed11,
+      fourCellOddOneThreeFivePerturbed13,
+      fourCellOddOneThreeFivePerturbed15,
+      fourCellOddCoreLocalBilinear centeredP1 factorTwoCenteredP7,
+      fourCellOddCoreLocalBilinear centeredP1 factorTwoCenteredP9;
+    fourCellOddOneThreeFivePerturbed13,
+      fourCellOddOneThreeFivePerturbed33,
+      fourCellOddOneThreeFivePerturbed35,
+      fourCellOddCoreLocalBilinear centeredP3 factorTwoCenteredP7,
+      fourCellOddCoreLocalBilinear centeredP3 factorTwoCenteredP9;
+    fourCellOddOneThreeFivePerturbed15,
+      fourCellOddOneThreeFivePerturbed35,
+      fourCellOddOneThreeFivePerturbed55,
+      fourCellOddCoreLocalBilinear factorTwoCenteredP5 factorTwoCenteredP7,
+      fourCellOddCoreLocalBilinear factorTwoCenteredP5 factorTwoCenteredP9;
+    fourCellOddCoreLocalBilinear centeredP1 factorTwoCenteredP7,
+      fourCellOddCoreLocalBilinear centeredP3 factorTwoCenteredP7,
+      fourCellOddCoreLocalBilinear factorTwoCenteredP5 factorTwoCenteredP7,
+      (1 / 5 : ℝ),
+      fourCellOddCoreLocalBilinear factorTwoCenteredP7 factorTwoCenteredP9;
+    fourCellOddCoreLocalBilinear centeredP1 factorTwoCenteredP9,
+      fourCellOddCoreLocalBilinear centeredP3 factorTwoCenteredP9,
+      fourCellOddCoreLocalBilinear factorTwoCenteredP5 factorTwoCenteredP9,
+      fourCellOddCoreLocalBilinear factorTwoCenteredP7 factorTwoCenteredP9,
+      (29 / 200 : ℝ)]
+
+private def fourCellOddFiveModeCertificateCenter :
+    Matrix (Fin 5) (Fin 5) ℚ :=
+  !![(495401 / 2000000 : ℚ), 218788 / 1000000, 13529 / 1000000,
+      35621 / 1000000, 88027 / 2000000;
+    218788 / 1000000, 205053 / 1000000, 125923 / 2000000,
+      59255 / 1000000, 40815 / 1000000;
+    13529 / 1000000, 125923 / 2000000, 245068 / 1000000,
+      187123 / 2000000, 26254 / 1000000;
+    35621 / 1000000, 59255 / 1000000, 187123 / 2000000,
+      1 / 5, 15331 / 1000000;
+    88027 / 2000000, 40815 / 1000000, 26254 / 1000000,
+      15331 / 1000000, 29 / 200]
+
+private def fourCellOddFiveModeCertificateEpsilon : ℚ := 1 / 50000
+
+private def fourCellOddFiveModeCertificateWeights : Fin 5 → ℚ :=
+  ![1, 1, 1, 1, 1]
+
+/-- A rounded exact `C`-Gram--Schmidt transform.  It is lower triangular
+with unit diagonal, and the robust error budget remains strictly diagonally
+dominant after congruence. -/
+private def fourCellOddFiveModeCertificateCongruenceEntries :
+    Fin 5 → SparseEntries (Fin 5) :=
+  ![[(0, 1)],
+    [(0, -8833 / 10000), (1, 1)],
+    [(0, 37629 / 10000), (1, -2161 / 500), (2, 1)],
+    [(0, 64317 / 10000), (1, -75183 / 10000),
+      (2, 11947 / 10000), (3, 1)],
+    [(0, -20091 / 5000), (1, 44449 / 10000),
+      (2, -1871 / 2000), (3, -2403 / 10000), (4, 1)]]
+
+private theorem fourCellOddFiveModeCertificateCenter_isSymm :
+    fourCellOddFiveModeCertificateCenter.IsSymm := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    norm_num [fourCellOddFiveModeCertificateCenter, Matrix.transpose_apply]
+
+private theorem fourCellOddFiveModeCertificateCongruence_lower :
+    ∀ i j,
+      entriesValue (fourCellOddFiveModeCertificateCongruenceEntries i) j ≠ 0 →
+        j ≤ i := by
+  intro i j
+  fin_cases i <;> fin_cases j <;>
+    norm_num [fourCellOddFiveModeCertificateCongruenceEntries, entriesValue,
+      Fin.ext_iff, Fin.le_iff_val_le_val]
+
+private theorem fourCellOddFiveModeCertificateCongruence_diagonal :
+    ∀ i,
+      entriesValue (fourCellOddFiveModeCertificateCongruenceEntries i) i ≠ 0 := by
+  intro i
+  fin_cases i <;>
+    norm_num [fourCellOddFiveModeCertificateCongruenceEntries, entriesValue,
+      Fin.ext_iff]
+
+private theorem fourCellOddFiveModeCertificateWeights_pos :
+    ∀ i, 0 < fourCellOddFiveModeCertificateWeights i := by
+  intro i
+  fin_cases i <;>
+    norm_num [fourCellOddFiveModeCertificateWeights]
+
+set_option maxHeartbeats 5000000 in
+private theorem fourCellOddFiveModeCertificateDominance :
+    ∀ i,
+      (∑ j ∈ Finset.univ.erase i,
+          entriesRobustRadius
+              fourCellOddFiveModeCertificateCongruenceEntries
+              fourCellOddFiveModeCertificateCenter
+              fourCellOddFiveModeCertificateEpsilon i j *
+            fourCellOddFiveModeCertificateWeights j) <
+        entriesRobustDiagonalLower
+            fourCellOddFiveModeCertificateCongruenceEntries
+            fourCellOddFiveModeCertificateCenter
+            fourCellOddFiveModeCertificateEpsilon i *
+          fourCellOddFiveModeCertificateWeights i := by
+  intro i
+  fin_cases i <;>
+    norm_num [entriesRobustRadius, entriesRobustDiagonalLower,
+      entriesCongruence, entriesL1,
+      fourCellOddFiveModeCertificateCongruenceEntries,
+      fourCellOddFiveModeCertificateCenter,
+      fourCellOddFiveModeCertificateEpsilon,
+      fourCellOddFiveModeCertificateWeights, Fin.sum_univ_succ,
+      Matrix.cons_val_two, Matrix.cons_val_three, Matrix.cons_val_four,
+      Matrix.cons_val_succ, Matrix.vecHead, Matrix.vecTail, Fin.ext_iff]
+
+private theorem fourCellOddFiveModeLowerMatrix_isHermitian :
+    fourCellOddFiveModeLowerMatrix.IsHermitian := by
+  apply Matrix.IsHermitian.ext
+  intro i j
+  fin_cases i <;> fin_cases j <;>
+    simp [fourCellOddFiveModeLowerMatrix]
+
+set_option maxHeartbeats 2000000 in
+private theorem fourCellOddFiveModeLowerMatrix_entrywise_close :
+    ∀ i j,
+      |fourCellOddFiveModeLowerMatrix i j -
+          (fourCellOddFiveModeCertificateCenter i j : ℝ)| ≤
+        (fourCellOddFiveModeCertificateEpsilon : ℝ) := by
+  rcases fourCellOddOneThreeFivePerturbed_entry_certificate_bounds with
+    ⟨h11lo, h11hi, h13lo, h13hi, h33lo, h33hi,
+      h15lo, h15hi, h35lo, h35hi, h55lo, h55hi⟩
+  rcases fourCellOddCoreLocalBilinear_P1_high_certificate_bounds with
+    ⟨h17lo, h17hi, h19lo, h19hi⟩
+  rcases fourCellOddCoreLocalBilinear_P3_P7_bounds with ⟨h37lo, h37hi⟩
+  rcases fourCellOddCoreLocalBilinear_P3_P9_bounds with ⟨h39lo, h39hi⟩
+  rcases fourCellOddCoreLocal_highCross_certificate_bounds with
+    ⟨h57lo, h57hi, h59lo, h59hi, h79lo, h79hi⟩
+  intro i j
+  fin_cases i <;> fin_cases j <;>
+    norm_num [fourCellOddFiveModeLowerMatrix,
+      fourCellOddFiveModeCertificateCenter,
+      fourCellOddFiveModeCertificateEpsilon,
+      Matrix.cons_val_two, Matrix.cons_val_three, Matrix.cons_val_four,
+      Matrix.cons_val_succ, Matrix.vecHead, Matrix.vecTail, Fin.ext_iff,
+      abs_le] at * <;>
+    constructor <;> nlinarith
+
+/-- The exact complete five-mode lower matrix is positive definite.  The
+proof is a rational lower-triangular congruence and strict weighted diagonal
+dominance with a uniform `1/50000` entrywise neighborhood. -/
+theorem fourCellOddFiveModeLowerMatrix_posDef :
+    fourCellOddFiveModeLowerMatrix.PosDef := by
+  exact posDef_of_sparseEntries_robust_congruence
+    fourCellOddFiveModeLowerMatrix
+    fourCellOddFiveModeCertificateCongruenceEntries
+    fourCellOddFiveModeCertificateCenter
+    fourCellOddFiveModeCertificateEpsilon
+    fourCellOddFiveModeCertificateWeights
+    fourCellOddFiveModeLowerMatrix_isHermitian
+    fourCellOddFiveModeCertificateCenter_isSymm
+    fourCellOddFiveModeCertificateCongruence_lower
+    fourCellOddFiveModeCertificateCongruence_diagonal
+    (by norm_num [fourCellOddFiveModeCertificateEpsilon])
+    fourCellOddFiveModeLowerMatrix_entrywise_close
+    fourCellOddFiveModeCertificateWeights_pos
+    fourCellOddFiveModeCertificateDominance
 
 /-! ### Exact `P₁₁+` Riesz endpoint -/
 
