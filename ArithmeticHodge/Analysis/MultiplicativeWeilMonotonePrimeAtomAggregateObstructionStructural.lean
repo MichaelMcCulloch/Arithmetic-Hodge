@@ -4901,6 +4901,156 @@ def RealFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength
         let X := (bombieriTwoBlockGlobalCrossSymbol a e).re
         0 < M → 0 ≤ M * X - U * V
 
+/-- The left middle-orthogonal residual test for an arbitrary finite block. -/
+def finiteBlockLeftMiddleOrthogonalResidual
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) : BombieriTest :=
+  let a := monotoneQuarterCell parent k
+  let m := monotoneQuarterFiniteBlockInterior parent k n
+  let M := bombieriRealQuadraticValue m
+  let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  (M : ℂ) • a + ((-U : ℝ) : ℂ) • m
+
+/-- The right middle-orthogonal residual test for an arbitrary finite block. -/
+def finiteBlockRightMiddleOrthogonalResidual
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) : BombieriTest :=
+  let m := monotoneQuarterFiniteBlockInterior parent k n
+  let e := monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+  let M := bombieriRealQuadraticValue m
+  let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  (M : ℂ) • e + ((-V : ℝ) : ℂ) • m
+
+/-- The actual common-parent residual-cross sign statement at one length. -/
+def RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength
+    (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        0 < bombieriRealQuadraticValue
+            (monotoneQuarterFiniteBlockInterior parent k n) →
+          0 ≤ (bombieriTwoBlockGlobalCrossSymbol
+            (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+            (finiteBlockRightMiddleOrthogonalResidual parent k n)).re
+
+private theorem bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength
+    (f g : BombieriTest) (a b : ℝ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      ((a : ℂ) • f) ((b : ℂ) • g)).re =
+      a * b * (bombieriTwoBlockGlobalCrossSymbol f g).re := by
+  rw [bombieriTwoBlockGlobalCrossSymbol_smul_left,
+    bombieriTwoBlockGlobalCrossSymbol_smul_right]
+  rw [show starRingEnd ℂ (a : ℂ) = (a : ℂ) by
+    rw [starRingEnd_apply, Complex.star_def, Complex.conj_ofReal]]
+  simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
+    zero_mul, sub_zero]
+  ring
+
+private theorem bombieriTwoBlockGlobalCrossSymbol_real_linearCombination_re_allLength
+    (f g h i : BombieriTest) (a b c d : ℝ) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      ((a : ℂ) • f + (b : ℂ) • g)
+      ((c : ℂ) • h + (d : ℂ) • i)).re =
+      a * c * (bombieriTwoBlockGlobalCrossSymbol f h).re +
+        a * d * (bombieriTwoBlockGlobalCrossSymbol f i).re +
+        b * c * (bombieriTwoBlockGlobalCrossSymbol g h).re +
+        b * d * (bombieriTwoBlockGlobalCrossSymbol g i).re := by
+  rw [bombieriTwoBlockGlobalCrossSymbol_add_left,
+    bombieriTwoBlockGlobalCrossSymbol_add_right,
+    bombieriTwoBlockGlobalCrossSymbol_add_right]
+  simp only [Complex.add_re]
+  rw [bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength,
+    bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength,
+    bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength,
+    bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength]
+  ring
+
+/-- Exact coordinate of the real cross between the two arbitrary-length
+middle-orthogonal residual tests. -/
+theorem finiteBlock_middleOrthogonalResidualCross_coordinate
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) :
+    let a := monotoneQuarterCell parent k
+    let m := monotoneQuarterFiniteBlockInterior parent k n
+    let e := monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+    let M := bombieriRealQuadraticValue m
+    let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    let X := (bombieriTwoBlockGlobalCrossSymbol a e).re
+    (bombieriTwoBlockGlobalCrossSymbol
+      (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+      (finiteBlockRightMiddleOrthogonalResidual parent k n)).re =
+        M * (M * X - U * V) := by
+  dsimp only
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+  let e : BombieriTest :=
+    monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+  let M : ℝ := bombieriRealQuadraticValue m
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+  have hmm : (bombieriTwoBlockGlobalCrossSymbol m m).re = M := by
+    rw [bombieriTwoBlockGlobalCrossSymbol_self]
+    rfl
+  change
+    (bombieriTwoBlockGlobalCrossSymbol
+      ((M : ℂ) • a + ((-U : ℝ) : ℂ) • m)
+      ((M : ℂ) • e + ((-V : ℝ) : ℂ) • m)).re =
+        M * (M * X - U * V)
+  rw [bombieriTwoBlockGlobalCrossSymbol_real_linearCombination_re_allLength,
+    hmm]
+  dsimp only [U, V, X]
+  ring
+
+/-- For a positive interior pivot, nonnegativity of the concrete residual
+cross is exactly the conditional numerator sign used by the induction. -/
+theorem realFiniteBlockMiddlePivotConditionalCrossNonnegative_of_residualCross
+    (n : ℕ)
+    (hresidual :
+      RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength n) :
+    RealFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength n := by
+  intro parent hparent k
+  dsimp only
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+  let e : BombieriTest :=
+    monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+  let M : ℝ := bombieriRealQuadraticValue m
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+  intro hMpos
+  have hcross := hresidual parent hparent k hMpos
+  have hcoordinate := finiteBlock_middleOrthogonalResidualCross_coordinate
+    parent k n
+  change
+    (bombieriTwoBlockGlobalCrossSymbol
+      (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+      (finiteBlockRightMiddleOrthogonalResidual parent k n)).re =
+        M * (M * X - U * V) at hcoordinate
+  rw [hcoordinate] at hcross
+  exact (mul_nonneg_iff_of_pos_left hMpos).mp hcross
+
+/-- Conversely the conditional numerator sign gives the concrete residual
+cross sign, so the two positive-pivot formulations are equivalent. -/
+theorem realFiniteBlockMiddleOrthogonalResidualCrossNonnegative_of_conditionalCross
+    (n : ℕ)
+    (hconditional :
+      RealFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength n) :
+    RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength n := by
+  intro parent hparent k hMpos
+  have hdelta := hconditional parent hparent k hMpos
+  have hcoordinate := finiteBlock_middleOrthogonalResidualCross_coordinate
+    parent k n
+  rw [hcoordinate]
+  exact mul_nonneg hMpos.le hdelta
+
+theorem realFiniteBlockMiddleOrthogonalResidualCrossNonnegative_iff_conditionalCross
+    (n : ℕ) :
+    RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength n ↔
+      RealFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength n := by
+  exact ⟨
+    realFiniteBlockMiddlePivotConditionalCrossNonnegative_of_residualCross n,
+    realFiniteBlockMiddleOrthogonalResidualCrossNonnegative_of_conditionalCross n⟩
+
 /-- The exact singular-pivot obligation at one arbitrary length.  When the
 interior diagonal vanishes, the induction needs only the sparse pair of the
 two endpoint cells. -/
@@ -5042,6 +5192,24 @@ def RealFiniteBlockAllLengthMiddlePivotClosure : Prop :=
     RealFiniteBlockMiddlePivotConditionalCrossNonnegativeAtLength n ∧
       RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n
 
+/-- Equivalent all-length interface written directly as nonnegativity of the
+two concrete middle-orthogonal residual tests, plus the unavoidable singular
+pivot clause. -/
+def RealFiniteBlockAllLengthResidualCrossClosure : Prop :=
+  ∀ n : ℕ, 4 ≤ n →
+    RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength n ∧
+      RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n
+
+theorem realFiniteBlockAllLengthMiddlePivotClosure_of_residualCross
+    (hclosure : RealFiniteBlockAllLengthResidualCrossClosure) :
+    RealFiniteBlockAllLengthMiddlePivotClosure := by
+  intro n hn
+  have h := hclosure n hn
+  exact ⟨
+    realFiniteBlockMiddlePivotConditionalCrossNonnegative_of_residualCross
+      n h.1,
+    h.2⟩
+
 /-- The all-length middle-pivot interface propagates production positivity
 through every finite block length. -/
 theorem realFiniteBlockProductionNonnegativeUpTo_all
@@ -5099,6 +5267,14 @@ theorem riemannHypothesis_of_allLengthMiddlePivotClosure
     (riemannHypothesis_iff_bombieriRealQuadraticNonnegativity zeros).2
       (bombieriRealQuadraticNonnegativity_of_allLengthMiddlePivotClosure
         hclosure)
+
+/-- Residual-cross form of the compiled all-length local-to-global theorem. -/
+theorem riemannHypothesis_of_allLengthResidualCrossClosure
+    (zeros : ZetaZeroEnumeration)
+    (hclosure : RealFiniteBlockAllLengthResidualCrossClosure) :
+    RiemannHypothesis := by
+  exact riemannHypothesis_of_allLengthMiddlePivotClosure zeros
+    (realFiniteBlockAllLengthMiddlePivotClosure_of_residualCross hclosure)
 
 end
 
