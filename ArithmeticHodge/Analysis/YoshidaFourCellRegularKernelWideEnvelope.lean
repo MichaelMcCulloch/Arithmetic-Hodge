@@ -390,7 +390,72 @@ theorem fourCell_yoshidaRegularKernelPolynomial6_wide_envelope
           nlinarith
         exact this.trans hEndpoint
 
+/-- On the smaller argument range actually used by the four-cell operator,
+the same sixth-order envelope has a much sharper rational remainder.  This is
+the range-sensitive form needed for low--high odd-mode cancellations. -/
+theorem fourCell_yoshidaRegularKernelPolynomial6_sevenEighths_envelope
+    {t : ℝ} (ht0 : 0 ≤ t) (ht : t ≤ (7 / 8 : ℝ)) :
+    0 ≤ yoshidaRegularKernel t - yoshidaRegularKernelPolynomial6 t ∧
+      yoshidaRegularKernel t - yoshidaRegularKernelPolynomial6 t <
+        (1 / 80000 : ℝ) := by
+  rcases eq_or_lt_of_le ht0 with rfl | htpos
+  · constructor <;>
+      norm_num [yoshidaRegularKernel, yoshidaRegularKernelPolynomial6]
+  · let u : ℝ := t / 2
+    have hu0 : 0 < u := by
+      dsimp only [u]
+      linarith
+    have hu : u ≤ (7 / 16 : ℝ) := by
+      dsimp only [u]
+      linarith
+    have huWide : u < (7 / 10 : ℝ) := hu.trans_lt (by norm_num)
+    have hSech := fourCell_wide_sech_envelope hu0.le huWide
+    have hCsch := fourCell_wide_csch_envelope hu0 huWide
+    have htEq : t = 2 * u := by
+      dsimp only [u]
+      ring
+    have hDifference :
+        yoshidaRegularKernel t - yoshidaRegularKernelPolynomial6 t =
+          (1 / 4 : ℝ) *
+            ((1 / Real.cosh u - fourCellWideSechPolynomial6 u) +
+              (1 / Real.sinh u - 1 / u -
+                fourCellWideCschRegularPolynomial5 u)) := by
+      rw [htEq, fourCell_yoshidaRegularKernel_two_mul_wide u hu0,
+        fourCell_yoshidaRegularKernelPolynomial6_two_mul_wide]
+      ring
+    have hError :
+        yoshidaRegularKernel t - yoshidaRegularKernelPolynomial6 t ≤
+          (1 / 4 : ℝ) *
+            (fourCellWideSechError u + fourCellWideCschError u) := by
+      rw [hDifference]
+      nlinarith
+    have hSechBound :
+        fourCellWideSechError u ≤ fourCellWideSechError (7 / 16 : ℝ) := by
+      unfold fourCellWideSechError
+      gcongr
+    have hCschBound :
+        fourCellWideCschError u ≤ fourCellWideCschError (7 / 16 : ℝ) := by
+      unfold fourCellWideCschError
+      gcongr
+    have hEndpoint :
+        (1 / 4 : ℝ) *
+            (fourCellWideSechError (7 / 16 : ℝ) +
+              fourCellWideCschError (7 / 16 : ℝ)) <
+          (1 / 80000 : ℝ) := by
+      norm_num [fourCellWideSechError, fourCellWideCschError]
+    constructor
+    · rw [hDifference]
+      nlinarith [hSech.1, hCsch.1]
+    · exact hError.trans_lt <| by
+        have :
+            (1 / 4 : ℝ) *
+                (fourCellWideSechError u + fourCellWideCschError u) ≤
+              (1 / 4 : ℝ) *
+                (fourCellWideSechError (7 / 16 : ℝ) +
+                  fourCellWideCschError (7 / 16 : ℝ)) := by
+          nlinarith
+        exact this.trans_lt hEndpoint
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellRegularKernelWideEnvelope
-
