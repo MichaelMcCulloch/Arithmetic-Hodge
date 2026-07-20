@@ -1737,6 +1737,132 @@ private theorem fourCellOddP11P1Rational_base_lt :
   nlinarith [YoshidaConstantBounds.strict_log_two_fine_bounds.1,
     YoshidaConstantBounds.strict_log_two_fine_bounds.2]
 
+private def fourCellOddP11P1LowerDualMajorant (x : ℝ) : ℝ :=
+  x ^ 2 * fourCellOddP11SelectorLowerWeight x +
+    2 * x * fourCellOddP11P1RationalLowerH x + 1 / 300 +
+    (101 / 100) * fourCellOddP11P1RationalLowerH x ^ 2 *
+      fourCellOddP11P1LowerReciprocalMajorant (5 * x / 3) +
+    (101 / 360000) *
+      fourCellOddP11P1LowerReciprocalMajorant (5 * x / 3)
+
+private def fourCellOddP11P1UpperDualMajorant (x : ℝ) : ℝ :=
+  x ^ 2 * fourCellOddP11SelectorUpperWeight x +
+    2 * x * fourCellOddP11P1RationalUpperH x + 1 / 300 +
+    (101 / 100) * x * fourCellOddP11P1RationalUpperH x ^ 2 *
+      fourCellOddP11P1UpperReciprocalMajorant ((5 * x - 3) / 2) +
+    (101 / 360000) * x *
+      fourCellOddP11P1UpperReciprocalMajorant ((5 * x - 3) / 2)
+
+private theorem sq_le_rational_transfer
+    {h h₀ : ℝ} (herr : |h - h₀| ≤ (1 / 600 : ℝ)) :
+    h ^ 2 ≤ (101 / 100 : ℝ) * h₀ ^ 2 + 101 / 360000 := by
+  have hd0 : 0 ≤ |h - h₀| := abs_nonneg _
+  have hdsq : (h - h₀) ^ 2 ≤ (1 / 600 : ℝ) ^ 2 := by
+    nlinarith [sq_nonneg (|h - h₀| - 1 / 600), sq_abs (h - h₀)]
+  have hsquare := sq_nonneg (h₀ / 10 - 10 * (h - h₀))
+  nlinarith
+
+private theorem lowerSelectorDualIntegrand_le_majorant
+    {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 3 / 5) :
+    fourCellOddP11P1LowerSelectorResidual x ^ 2 /
+        fourCellOddP11SelectorLowerWeight x ≤
+      fourCellOddP11P1LowerDualMajorant x := by
+  let W := fourCellOddP11SelectorLowerWeight x
+  let H := fourCellOddP11P1ExactLowerH x
+  let H₀ := fourCellOddP11P1RationalLowerH x
+  let P := fourCellOddP11P1LowerReciprocalMajorant (5 * x / 3)
+  have hW : 0 < W := fourCellOddP11SelectorLowerWeight_pos ⟨hx0, hx1⟩
+  have hrecip : 1 / W ≤ P := by
+    dsimp only [W, P]
+    exact one_div_lowerWeight_le_reciprocalMajorant hx0 hx1
+  have hP : 0 ≤ P := by
+    have hone : 0 < 1 / W := one_div_pos.mpr hW
+    linarith
+  have herr : |H - H₀| ≤ (1 / 600 : ℝ) := by
+    dsimp only [H, H₀]
+    exact (abs_fourCellOddP11P1ExactLowerH_sub_rational_lt hx0
+      (by linarith)).le
+  have hsq := sq_le_rational_transfer herr
+  have hbase : 2 * x * H ≤ 2 * x * H₀ + 1 / 300 := by
+    have hdelta : H - H₀ ≤ (1 / 600 : ℝ) :=
+      (le_abs_self (H - H₀)).trans herr
+    have hmul := mul_le_mul_of_nonneg_left hdelta
+      (mul_nonneg (by norm_num : (0 : ℝ) ≤ 2) hx0)
+    nlinarith [hx1]
+  have hcost : H ^ 2 / W ≤
+      (101 / 100 : ℝ) * H₀ ^ 2 * P + 101 / 360000 * P := by
+    have hfirst : H ^ 2 / W ≤ H ^ 2 * P := by
+      rw [div_eq_mul_inv]
+      exact mul_le_mul_of_nonneg_left
+        (by simpa only [one_div] using hrecip) (sq_nonneg H)
+    have hsecond := mul_le_mul_of_nonneg_right hsq hP
+    nlinarith
+  have hres := fourCellOddP11P1LowerResidual_eq_weight_add_H x
+  have hid : (x * W + H) ^ 2 / W =
+      x ^ 2 * W + 2 * x * H + H ^ 2 / W := by
+    field_simp [hW.ne']
+    ring
+  rw [hres]
+  change (x * W + H) ^ 2 / W ≤ _
+  rw [hid]
+  unfold fourCellOddP11P1LowerDualMajorant
+  dsimp only [W, H, H₀, P] at hbase hcost ⊢
+  linarith
+
+private theorem upperSelectorDualIntegrand_le_majorant
+    {x : ℝ} (hx0 : (3 / 5 : ℝ) < x) (hx1 : x < 1) :
+    fourCellOddP11P1UpperSelectorResidual x ^ 2 /
+        fourCellOddP11SelectorUpperWeight x ≤
+      fourCellOddP11P1UpperDualMajorant x := by
+  let W := fourCellOddP11SelectorUpperWeight x
+  let H := fourCellOddP11P1ExactUpperH x
+  let H₀ := fourCellOddP11P1RationalUpperH x
+  let P := fourCellOddP11P1UpperReciprocalMajorant ((5 * x - 3) / 2)
+  have hxpos : 0 < x := by linarith
+  have hrecip : 1 / (x * W) ≤ P := by
+    dsimp only [W, P]
+    exact one_div_upperDensity_le_reciprocalMajorant hx0.le hx1
+  have hW : 0 < W := by
+    exact lt_of_lt_of_le (by norm_num : (0 : ℝ) < 1 / 50)
+      (one_fiftieth_le_fourCellOddP11SelectorUpperWeight hx0 hx1)
+  have hP : 0 ≤ P := by
+    have hone : 0 < 1 / (x * W) := one_div_pos.mpr (mul_pos hxpos hW)
+    linarith
+  have herr : |H - H₀| ≤ (1 / 600 : ℝ) := by
+    dsimp only [H, H₀]
+    exact (abs_fourCellOddP11P1ExactUpperH_sub_rational_lt hxpos.le
+      hx1.le).le
+  have hsq := sq_le_rational_transfer herr
+  have hbase : 2 * x * H ≤ 2 * x * H₀ + 1 / 300 := by
+    have hdelta : H - H₀ ≤ (1 / 600 : ℝ) :=
+      (le_abs_self (H - H₀)).trans herr
+    have hmul := mul_le_mul_of_nonneg_left hdelta
+      (mul_nonneg (by norm_num : (0 : ℝ) ≤ 2) hxpos.le)
+    nlinarith [hx1.le]
+  have hcost : H ^ 2 / W ≤
+      (101 / 100 : ℝ) * x * H₀ ^ 2 * P +
+        101 / 360000 * x * P := by
+    have hidcost : H ^ 2 / W = x * H ^ 2 * (1 / (x * W)) := by
+      field_simp [hxpos.ne', hW.ne']
+    rw [hidcost]
+    have hfirst : x * H ^ 2 * (1 / (x * W)) ≤ x * H ^ 2 * P :=
+      mul_le_mul_of_nonneg_left hrecip
+        (mul_nonneg hxpos.le (sq_nonneg H))
+    have hsecond := mul_le_mul_of_nonneg_right hsq
+      (mul_nonneg hxpos.le hP)
+    nlinarith
+  have hres := fourCellOddP11P1UpperResidual_eq_weight_add_H hxpos.ne'
+  have hid : (x * W + H) ^ 2 / W =
+      x ^ 2 * W + 2 * x * H + H ^ 2 / W := by
+    field_simp [hW.ne']
+    ring
+  rw [hres]
+  change (x * W + H) ^ 2 / W ≤ _
+  rw [hid]
+  unfold fourCellOddP11P1UpperDualMajorant
+  dsimp only [W, H, H₀, P] at hbase hcost ⊢
+  linarith
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellOddP11P1TailSchurStructural
