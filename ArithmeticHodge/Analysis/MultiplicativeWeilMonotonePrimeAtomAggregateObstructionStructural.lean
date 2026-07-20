@@ -5437,6 +5437,44 @@ theorem realFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength_four_iff_fa
     simpa only [Nat.reduceSubDiff, Nat.cast_ofNat] using
       hfactor parent hparent k hmiddle
 
+/-- Long-length singular endpoint obligation after retaining all information
+forced by shorter production positivity: the zero interior is assumed to be
+a radical vector against every real common-parent variation of the same
+interior block. -/
+def RealFiniteBlockRadicalInteriorSparseEndpointNonnegativeAtLength
+    (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        let a := monotoneQuarterCell parent k
+        let m := monotoneQuarterFiniteBlockInterior parent k n
+        let e := monotoneQuarterCell parent
+          (k + ((n - 1 : ℕ) : ℤ))
+        bombieriRealQuadraticValue m = 0 →
+          (∀ variation : BombieriTest,
+            bombieriConjugateTest variation = variation →
+              (bombieriTwoBlockGlobalCrossSymbol m
+                (monotoneQuarterFiniteBlockInterior variation k n)).re = 0) →
+            0 ≤ bombieriRealQuadraticValue (a + e)
+
+/-- The radical endpoint statement implies the original singular clause at
+one induction stage, because shorter production positivity automatically
+places every zero interior diagonal in that radical. -/
+theorem realFiniteBlockZeroInteriorSparseEndpointNonnegative_of_previousLengths_and_radical
+    (n : ℕ) (hn : 4 ≤ n)
+    (hprev : RealFiniteBlockProductionNonnegativeUpTo (n - 1))
+    (hradical :
+      RealFiniteBlockRadicalInteriorSparseEndpointNonnegativeAtLength n) :
+    RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n := by
+  intro parent hparent k
+  dsimp only
+  intro hzero
+  apply hradical parent hparent k hzero
+  intro variation hvariation
+  exact
+    finiteBlockInterior_globalCross_eq_zero_of_previousLengths_and_quadratic_zero
+      n hn hprev parent hparent k hzero variation hvariation
+
 /-- Chebyshev-row form of the singular-pivot obligation. -/
 def RealFiniteBlockZeroInteriorFarChebyshevBoundAtLength
     (n : ℕ) : Prop :=
@@ -5774,6 +5812,24 @@ def RealFiniteBlockInductiveResidualCrossClosure : Prop :=
       RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength n ∧
         RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n
 
+/-- Stronger-information version of the staged interface.  In the singular
+branch it asks for endpoint positivity only after exposing the production-
+space radical condition that shorter-length positivity already forces. -/
+def RealFiniteBlockInductiveRadicalResidualCrossClosure : Prop :=
+  ∀ n : ℕ, 4 ≤ n →
+    RealFiniteBlockProductionNonnegativeUpTo (n - 1) →
+      RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength n ∧
+        RealFiniteBlockRadicalInteriorSparseEndpointNonnegativeAtLength n
+
+theorem realFiniteBlockInductiveResidualCrossClosure_of_radical
+    (hclosure : RealFiniteBlockInductiveRadicalResidualCrossClosure) :
+    RealFiniteBlockInductiveResidualCrossClosure := by
+  intro n hn hprev
+  have hnew := hclosure n hn hprev
+  exact ⟨hnew.1,
+    realFiniteBlockZeroInteriorSparseEndpointNonnegative_of_previousLengths_and_radical
+      n hn hprev hnew.2⟩
+
 theorem realFiniteBlockInductiveMiddlePivotClosure_of_residualCross
     (hclosure : RealFiniteBlockInductiveResidualCrossClosure) :
     RealFiniteBlockInductiveMiddlePivotClosure := by
@@ -5903,6 +5959,15 @@ theorem riemannHypothesis_of_inductiveResidualCrossClosure
   apply riemannHypothesis_of_allLengthMiddlePivotClosure zeros
   exact realFiniteBlockAllLengthMiddlePivotClosure_of_inductive
     (realFiniteBlockInductiveMiddlePivotClosure_of_residualCross hclosure)
+
+/-- Final staged endpoint with the long singular branch stated on its actual
+production-space radical. -/
+theorem riemannHypothesis_of_inductiveRadicalResidualCrossClosure
+    (zeros : ZetaZeroEnumeration)
+    (hclosure : RealFiniteBlockInductiveRadicalResidualCrossClosure) :
+    RiemannHypothesis := by
+  exact riemannHypothesis_of_inductiveResidualCrossClosure zeros
+    (realFiniteBlockInductiveResidualCrossClosure_of_radical hclosure)
 
 end
 
