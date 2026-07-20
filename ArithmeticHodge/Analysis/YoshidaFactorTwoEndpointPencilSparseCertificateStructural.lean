@@ -66,6 +66,36 @@ theorem abs_sub_center_le_of_intervalTargetCoveredByCenter
   constructor <;> push_cast at hcoverLowerReal hcoverUpperReal ⊢ <;>
     linarith
 
+/-- A half-width bound about the exact interval midpoint and a separate
+rounding bound for a rational center combine into closed-box coverage.  This
+is the structural handoff used by generated rounded-center tables. -/
+theorem intervalTargetCoveredByCenter_of_halfWidth_and_rounding
+    {I : RatInterval} {center midpointRadius roundingRadius : ℚ}
+    (hwidth : RatInterval.width I / 2 ≤ midpointRadius)
+    (hrounding : |targetCenter I - center| ≤ roundingRadius) :
+    IntervalTargetCoveredByCenter I center
+      (midpointRadius + roundingRadius) := by
+  rw [abs_le] at hrounding
+  unfold RatInterval.width at hwidth
+  unfold targetCenter at hrounding
+  unfold IntervalTargetCoveredByCenter
+  constructor <;> linarith
+
+/-- Pointwise half-width and center-rounding bounds provide matrix-wide
+coverage without re-proving endpoint arithmetic in the robust adapter. -/
+theorem matrix_intervalTargets_coveredByCenter_of_halfWidth_and_rounding
+    {n : Type*} (targets : Matrix n n RatInterval)
+    (centers : Matrix n n ℚ) (midpointRadius roundingRadius : ℚ)
+    (hwidth : ∀ i j,
+      RatInterval.width (targets i j) / 2 ≤ midpointRadius)
+    (hrounding : ∀ i j,
+      |targetCenter (targets i j) - centers i j| ≤ roundingRadius) :
+    ∀ i j, IntervalTargetCoveredByCenter (targets i j) (centers i j)
+      (midpointRadius + roundingRadius) := by
+  intro i j
+  exact intervalTargetCoveredByCenter_of_halfWidth_and_rounding
+    (hwidth i j) (hrounding i j)
+
 /-- Interval containment and exact center-box coverage provide the closeness
 hypothesis for an arbitrary rational center matrix. -/
 theorem matrix_entrywise_close_to_coveredCenter
