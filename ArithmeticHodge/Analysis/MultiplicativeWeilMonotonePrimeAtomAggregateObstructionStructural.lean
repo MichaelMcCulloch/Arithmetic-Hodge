@@ -5267,6 +5267,25 @@ def RealFiniteBlockMiddleOrthogonalResidualCrossNonnegativeAtLength
             (finiteBlockLeftMiddleOrthogonalResidual parent k n)
             (finiteBlockRightMiddleOrthogonalResidual parent k n)).re
 
+/-- Sign-free residual determinant condition at one length.  It is the
+ordinary real Cauchy--Schwarz inequality on the two concrete middle-
+orthogonal residual tests, and hence is compatible with either sign of their
+cross. -/
+def RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength
+    (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        0 < bombieriRealQuadraticValue
+            (monotoneQuarterFiniteBlockInterior parent k n) →
+          (bombieriTwoBlockGlobalCrossSymbol
+            (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+            (finiteBlockRightMiddleOrthogonalResidual parent k n)).re ^ 2 ≤
+          bombieriRealQuadraticValue
+              (finiteBlockLeftMiddleOrthogonalResidual parent k n) *
+            bombieriRealQuadraticValue
+              (finiteBlockRightMiddleOrthogonalResidual parent k n)
+
 private theorem bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength
     (f g : BombieriTest) (a b : ℝ) :
     (bombieriTwoBlockGlobalCrossSymbol
@@ -5297,6 +5316,25 @@ private theorem bombieriTwoBlockGlobalCrossSymbol_real_linearCombination_re_allL
     bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength,
     bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength,
     bombieriTwoBlockGlobalCrossSymbol_real_smul_both_re_allLength]
+  ring
+
+private theorem bombieriRealQuadraticValue_real_linearCombination_allLength
+    (f g : BombieriTest) (a b : ℝ) :
+    bombieriRealQuadraticValue ((a : ℂ) • f + (b : ℂ) • g) =
+      a ^ 2 * bombieriRealQuadraticValue f +
+        b ^ 2 * bombieriRealQuadraticValue g +
+        2 * a * b * (bombieriTwoBlockGlobalCrossSymbol f g).re := by
+  have hswap := congrArg Complex.re
+    (_root_.ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriTwoBlockGlobalCrossSymbol_conj_swap
+      f g)
+  simp only [Complex.star_def, Complex.conj_re] at hswap
+  unfold bombieriRealQuadraticValue
+  rw [← bombieriTwoBlockGlobalCrossSymbol_self]
+  rw [bombieriTwoBlockGlobalCrossSymbol_real_linearCombination_re_allLength]
+  rw [bombieriTwoBlockGlobalCrossSymbol_self,
+    bombieriTwoBlockGlobalCrossSymbol_self]
+  simp only [pow_two]
+  rw [hswap]
   ring
 
 /-- Exact coordinate of the real cross between the two arbitrary-length
@@ -5335,6 +5373,58 @@ theorem finiteBlock_middleOrthogonalResidualCross_coordinate
     hmm]
   dsimp only [U, V, X]
   ring
+
+/-- Exact diagonal coordinates of the two arbitrary-length middle-
+orthogonal residual tests. -/
+theorem finiteBlock_middleOrthogonalResidualQuadratic_coordinates
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) :
+    let a := monotoneQuarterCell parent k
+    let m := monotoneQuarterFiniteBlockInterior parent k n
+    let e := monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+    let A := bombieriRealQuadraticValue a
+    let M := bombieriRealQuadraticValue m
+    let E := bombieriRealQuadraticValue e
+    let U := (bombieriTwoBlockGlobalCrossSymbol a m).re
+    let V := (bombieriTwoBlockGlobalCrossSymbol m e).re
+    bombieriRealQuadraticValue
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n) =
+          M * (A * M - U ^ 2) ∧
+      bombieriRealQuadraticValue
+        (finiteBlockRightMiddleOrthogonalResidual parent k n) =
+          M * (M * E - V ^ 2) := by
+  dsimp only
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+  let e : BombieriTest :=
+    monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  have hleft :=
+    bombieriRealQuadraticValue_real_linearCombination_allLength
+      a m M (-U)
+  have hright :=
+    bombieriRealQuadraticValue_real_linearCombination_allLength
+      e m M (-V)
+  have hem : (bombieriTwoBlockGlobalCrossSymbol e m).re = V := by
+    have hswap := congrArg Complex.re
+      (_root_.ArithmeticHodge.Analysis.MultiplicativeWeil.bombieriTwoBlockGlobalCrossSymbol_conj_swap
+        m e)
+    simpa only [Complex.star_def, Complex.conj_re, V] using hswap
+  change
+    bombieriRealQuadraticValue ((M : ℂ) • a + ((-U : ℝ) : ℂ) • m) =
+        M * (A * M - U ^ 2) ∧
+      bombieriRealQuadraticValue ((M : ℂ) • e + ((-V : ℝ) : ℂ) • m) =
+        M * (M * E - V ^ 2)
+  constructor
+  · rw [hleft]
+    dsimp only [A, M, U]
+    ring
+  · rw [hright, hem]
+    dsimp only [M, E, V]
+    ring
 
 /-- For a positive interior pivot, nonnegativity of the concrete residual
 cross is exactly the conditional numerator sign used by the induction. -/
@@ -5565,7 +5655,44 @@ private theorem threeBlockQuadratic_nonnegative_of_conditionalCross
   have hscaled :
       0 ≤ M * (A + M + E + 2 * (U + V + X)) := by
     rw [hidentity]
-    positivity
+    nlinarith [sq_nonneg (M + U + V)]
+  exact (mul_nonneg_iff_of_pos_left hMpos).mp hscaled
+
+private theorem threeBlockQuadratic_nonnegative_of_residualDeterminant
+    {A M E U V X : ℝ}
+    (hMpos : 0 < M)
+    (hAM : U ^ 2 ≤ A * M)
+    (hME : V ^ 2 ≤ M * E)
+    (hresidual :
+      (M * X - U * V) ^ 2 ≤
+        (A * M - U ^ 2) * (M * E - V ^ 2)) :
+    0 ≤ A + M + E + 2 * (U + V + X) := by
+  let alpha : ℝ := A * M - U ^ 2
+  let beta : ℝ := M * E - V ^ 2
+  let delta : ℝ := M * X - U * V
+  have halpha : 0 ≤ alpha := by dsimp only [alpha]; linarith
+  have hbeta : 0 ≤ beta := by dsimp only [beta]; linarith
+  have hresidual' : delta ^ 2 ≤ alpha * beta := by
+    simpa only [alpha, beta, delta] using hresidual
+  have hschur : 0 ≤ alpha + beta + 2 * delta := by
+    by_contra hnot
+    have hnegative : alpha + beta + 2 * delta < 0 :=
+      lt_of_not_ge hnot
+    have hsumNonnegative : 0 ≤ alpha + beta := add_nonneg halpha hbeta
+    have hminusDeltaPositive : 0 < -2 * delta := by linarith
+    have hsquare :
+        (alpha + beta) ^ 2 < (-2 * delta) ^ 2 :=
+      (sq_lt_sq₀ hsumNonnegative hminusDeltaPositive.le).2 (by linarith)
+    nlinarith [sq_nonneg (alpha - beta)]
+  have hidentity :
+      M * (A + M + E + 2 * (U + V + X)) =
+        (M + U + V) ^ 2 + alpha + beta + 2 * delta := by
+    dsimp only [alpha, beta, delta]
+    ring
+  have hscaled :
+      0 ≤ M * (A + M + E + 2 * (U + V + X)) := by
+    rw [hidentity]
+    nlinarith [sq_nonneg (M + U + V)]
   exact (mul_nonneg_iff_of_pos_left hMpos).mp hscaled
 
 /-- The arbitrary-length induction step.  Positivity at every shorter
@@ -5631,6 +5758,97 @@ theorem realFiniteBlockProductionNonnegativeAtLength_of_previousLengths_and_midd
     change 0 < M → 0 ≤ M * X - U * V at hdelta
     exact threeBlockQuadratic_nonnegative_of_conditionalCross
       hMpos hadj.1 hadj.2 (hdelta hMpos)
+
+/-- Sign-free arbitrary-length induction step.  The positive-interior branch
+uses the residual determinant/Cauchy--Schwarz inequality, so a negative
+residual cross is allowed whenever the two residual diagonals absorb it. -/
+theorem realFiniteBlockProductionNonnegativeAtLength_of_previousLengths_and_residualDeterminant
+    (n : ℕ) (hn : 4 ≤ n)
+    (hprev : RealFiniteBlockProductionNonnegativeUpTo (n - 1))
+    (hresidual :
+      RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength n)
+    (hzero :
+      RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n) :
+    RealFiniteBlockProductionNonnegativeAtLength n := by
+  intro parent hparent k
+  let a : BombieriTest := monotoneQuarterCell parent k
+  let m : BombieriTest := monotoneQuarterFiniteBlockInterior parent k n
+  let e : BombieriTest :=
+    monotoneQuarterCell parent (k + ((n - 1 : ℕ) : ℤ))
+  let A : ℝ := bombieriRealQuadraticValue a
+  let M : ℝ := bombieriRealQuadraticValue m
+  let E : ℝ := bombieriRealQuadraticValue e
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol a m).re
+  let V : ℝ := (bombieriTwoBlockGlobalCrossSymbol m e).re
+  let X : ℝ := (bombieriTwoBlockGlobalCrossSymbol a e).re
+  have hadj := finiteBlock_adjacentPrincipalMinors_of_previousLengths
+    n hn hprev parent hparent k
+  change U ^ 2 ≤ A * M ∧ V ^ 2 ≤ M * E at hadj
+  have hmShift :
+      monotoneQuarterFiniteBlock parent (k + 1) 0 (n - 2) = m := by
+    dsimp only [m, monotoneQuarterFiniteBlockInterior]
+    exact monotoneQuarterFiniteBlock_shift_start_one parent k (n - 2)
+  have hM : 0 ≤ M := by
+    have hmiddle := hprev (n - 2) (by omega) parent hparent (k + 1)
+    rw [hmShift] at hmiddle
+    exact hmiddle
+  have hvalue := bombieriRealQuadraticValue_finiteBlock_eq_threeBlock_allLength
+    parent k n (by omega)
+  change bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlock parent k 0 n) =
+    A + M + E + 2 * (U + V + X) at hvalue
+  rw [hvalue]
+  by_cases hMzero : M = 0
+  · have hU : U = 0 := by
+      have h := hadj.1
+      rw [hMzero, mul_zero] at h
+      nlinarith [sq_nonneg U]
+    have hV : V = 0 := by
+      have h := hadj.2
+      rw [hMzero, zero_mul] at h
+      nlinarith [sq_nonneg V]
+    have hpair := hzero parent hparent k
+    change M = 0 →
+      0 ≤ bombieriRealQuadraticValue (a + e) at hpair
+    have hpair0 := hpair hMzero
+    rw [bombieriRealQuadraticValue_add] at hpair0
+    change 0 ≤ A + E + 2 * X at hpair0
+    rw [hMzero, hU, hV]
+    linarith
+  · have hMpos : 0 < M := lt_of_le_of_ne hM (Ne.symm hMzero)
+    have hactual := hresidual parent hparent k hMpos
+    have hcross := finiteBlock_middleOrthogonalResidualCross_coordinate
+      parent k n
+    have hdiagonals :=
+      finiteBlock_middleOrthogonalResidualQuadratic_coordinates parent k n
+    change
+      (bombieriTwoBlockGlobalCrossSymbol
+        (finiteBlockLeftMiddleOrthogonalResidual parent k n)
+        (finiteBlockRightMiddleOrthogonalResidual parent k n)).re =
+          M * (M * X - U * V) at hcross
+    change
+      bombieriRealQuadraticValue
+          (finiteBlockLeftMiddleOrthogonalResidual parent k n) =
+            M * (A * M - U ^ 2) ∧
+        bombieriRealQuadraticValue
+          (finiteBlockRightMiddleOrthogonalResidual parent k n) =
+            M * (M * E - V ^ 2) at hdiagonals
+    rw [hcross, hdiagonals.1, hdiagonals.2] at hactual
+    have hscaled :
+        M ^ 2 * (M * X - U * V) ^ 2 ≤
+          M ^ 2 * ((A * M - U ^ 2) * (M * E - V ^ 2)) := by
+      calc
+        M ^ 2 * (M * X - U * V) ^ 2 =
+            (M * (M * X - U * V)) ^ 2 := by ring
+        _ ≤ (M * (A * M - U ^ 2)) *
+              (M * (M * E - V ^ 2)) := hactual
+        _ = M ^ 2 * ((A * M - U ^ 2) * (M * E - V ^ 2)) := by ring
+    have hpivot :
+        (M * X - U * V) ^ 2 ≤
+          (A * M - U ^ 2) * (M * E - V ^ 2) :=
+      le_of_mul_le_mul_left hscaled (sq_pos_of_pos hMpos)
+    exact threeBlockQuadratic_nonnegative_of_residualDeterminant
+      hMpos hadj.1 hadj.2 hpivot
 
 private theorem monotoneQuarterFiniteBlock_eq_shiftedZero_allLength
     (parent : BombieriTest) (lo : ℤ) (start n : ℕ) :
@@ -5776,6 +5994,27 @@ theorem realFiniteBlockProductionNonnegativeUpTo_succ_of_middlePivot
     · exact hcross
     · exact hzero
 
+/-- Sign-free successor step using the residual determinant condition. -/
+theorem realFiniteBlockProductionNonnegativeUpTo_succ_of_residualDeterminant
+    (n : ℕ) (hn : 3 ≤ n)
+    (hprev : RealFiniteBlockProductionNonnegativeUpTo n)
+    (hresidual :
+      RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength (n + 1))
+    (hzero :
+      RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength (n + 1)) :
+    RealFiniteBlockProductionNonnegativeUpTo (n + 1) := by
+  intro m hm
+  by_cases hmn : m ≤ n
+  · exact hprev m hmn
+  · have hmeq : m = n + 1 := by omega
+    subst m
+    apply
+      realFiniteBlockProductionNonnegativeAtLength_of_previousLengths_and_residualDeterminant
+        (n + 1) (by omega)
+    · simpa only [Nat.add_sub_cancel] using hprev
+    · exact hresidual
+    · exact hzero
+
 /-- The exact all-length local analytic interface.  At each length at least
 four it retains only two genuinely new common-parent obligations:
 
@@ -5824,6 +6063,30 @@ def RealFiniteBlockInductiveRadicalResidualCrossClosure : Prop :=
 theorem realFiniteBlockInductiveResidualCrossClosure_of_radical
     (hclosure : RealFiniteBlockInductiveRadicalResidualCrossClosure) :
     RealFiniteBlockInductiveResidualCrossClosure := by
+  intro n hn hprev
+  have hnew := hclosure n hn hprev
+  exact ⟨hnew.1,
+    realFiniteBlockZeroInteriorSparseEndpointNonnegative_of_previousLengths_and_radical
+      n hn hprev hnew.2⟩
+
+/-- Robust staged interface: no sign is prescribed for the positive-pivot
+residual cross; only its determinant/Cauchy--Schwarz bound is retained. -/
+def RealFiniteBlockInductiveResidualDeterminantClosure : Prop :=
+  ∀ n : ℕ, 4 ≤ n →
+    RealFiniteBlockProductionNonnegativeUpTo (n - 1) →
+      RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength n ∧
+        RealFiniteBlockZeroInteriorSparseEndpointNonnegativeAtLength n
+
+/-- Radical-information refinement of the robust staged interface. -/
+def RealFiniteBlockInductiveRadicalResidualDeterminantClosure : Prop :=
+  ∀ n : ℕ, 4 ≤ n →
+    RealFiniteBlockProductionNonnegativeUpTo (n - 1) →
+      RealFiniteBlockMiddleOrthogonalResidualDeterminantAtLength n ∧
+        RealFiniteBlockRadicalInteriorSparseEndpointNonnegativeAtLength n
+
+theorem realFiniteBlockInductiveResidualDeterminantClosure_of_radical
+    (hclosure : RealFiniteBlockInductiveRadicalResidualDeterminantClosure) :
+    RealFiniteBlockInductiveResidualDeterminantClosure := by
   intro n hn hprev
   have hnew := hclosure n hn hprev
   exact ⟨hnew.1,
@@ -5896,6 +6159,29 @@ theorem realFiniteBlockProductionNonnegativeUpTo_all_of_inductiveMiddlePivot
           realFiniteBlockProductionNonnegativeUpTo_succ_of_middlePivot
             n (by omega) ih hnew.1 hnew.2
 
+/-- Finite induction from the sign-free residual determinant interface. -/
+theorem realFiniteBlockProductionNonnegativeUpTo_all_of_inductiveResidualDeterminant
+    (hclosure : RealFiniteBlockInductiveResidualDeterminantClosure) :
+    ∀ n : ℕ, RealFiniteBlockProductionNonnegativeUpTo n := by
+  intro n
+  induction n with
+  | zero =>
+      intro m hm
+      exact realFiniteBlockProductionNonnegativeUpTo_three m (by omega)
+  | succ n ih =>
+      by_cases hsmall : n + 1 ≤ 3
+      · intro m hm
+        exact realFiniteBlockProductionNonnegativeUpTo_three m
+          (hm.trans hsmall)
+      · have hn4 : 4 ≤ n + 1 := by omega
+        have hprev :
+            RealFiniteBlockProductionNonnegativeUpTo ((n + 1) - 1) := by
+          simpa only [Nat.add_sub_cancel] using ih
+        have hnew := hclosure (n + 1) hn4 hprev
+        exact
+          realFiniteBlockProductionNonnegativeUpTo_succ_of_residualDeterminant
+            n (by omega) ih hnew.1 hnew.2
+
 theorem realFiniteBlockAllLengthMiddlePivotClosure_of_inductive
     (hclosure : RealFiniteBlockInductiveMiddlePivotClosure) :
     RealFiniteBlockAllLengthMiddlePivotClosure := by
@@ -5924,6 +6210,22 @@ theorem bombieriRealQuadraticNonnegativity_of_allLengthMiddlePivotClosure
   have hproduction :=
     realFiniteBlockProductionNonnegativeAtLength_all hclosure n
       parent hparent lo
+  have hblock : monotoneQuarterFiniteBlock parent lo 0 n = parent := by
+    simpa only [monotoneQuarterFiniteBlock, zero_add] using hsum
+  rw [hblock] at hproduction
+  exact hproduction
+
+/-- The robust staged determinant interface implies the complete real
+Bombieri quadratic criterion without prescribing any residual-cross sign. -/
+theorem bombieriRealQuadraticNonnegativity_of_inductiveResidualDeterminantClosure
+    (hclosure : RealFiniteBlockInductiveResidualDeterminantClosure) :
+    BombieriRealQuadraticNonnegativity := by
+  intro parent hparent
+  obtain ⟨lo, n, _hleft, _hright, hsum, _hratio, _hsuffix⟩ :=
+    exists_monotoneQuarterCell_decomposition parent
+  have hproduction :=
+    realFiniteBlockProductionNonnegativeUpTo_all_of_inductiveResidualDeterminant
+      hclosure n n le_rfl parent hparent lo
   have hblock : monotoneQuarterFiniteBlock parent lo 0 n = parent := by
     simpa only [monotoneQuarterFiniteBlock, zero_add] using hsum
   rw [hblock] at hproduction
@@ -5968,6 +6270,28 @@ theorem riemannHypothesis_of_inductiveRadicalResidualCrossClosure
     RiemannHypothesis := by
   exact riemannHypothesis_of_inductiveResidualCrossClosure zeros
     (realFiniteBlockInductiveResidualCrossClosure_of_radical hclosure)
+
+/-- Robust staged local-to-global theorem.  The positive-pivot clause is a
+residual determinant bound and therefore remains valid with signed residual
+crosses. -/
+theorem riemannHypothesis_of_inductiveResidualDeterminantClosure
+    (zeros : ZetaZeroEnumeration)
+    (hclosure : RealFiniteBlockInductiveResidualDeterminantClosure) :
+    RiemannHypothesis := by
+  exact
+    (riemannHypothesis_iff_bombieriRealQuadraticNonnegativity zeros).2
+      (bombieriRealQuadraticNonnegativity_of_inductiveResidualDeterminantClosure
+        hclosure)
+
+/-- Sharpest robust endpoint currently exposed: the residual determinant is
+sign-free, while the singular clause is asked only on the radical interiors
+forced by the preceding induction stages. -/
+theorem riemannHypothesis_of_inductiveRadicalResidualDeterminantClosure
+    (zeros : ZetaZeroEnumeration)
+    (hclosure : RealFiniteBlockInductiveRadicalResidualDeterminantClosure) :
+    RiemannHypothesis := by
+  exact riemannHypothesis_of_inductiveResidualDeterminantClosure zeros
+    (realFiniteBlockInductiveResidualDeterminantClosure_of_radical hclosure)
 
 end
 
