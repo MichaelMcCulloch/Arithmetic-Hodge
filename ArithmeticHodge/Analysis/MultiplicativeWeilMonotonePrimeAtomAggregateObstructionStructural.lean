@@ -35,6 +35,7 @@ open MultiplicativeWeilRealCutPhaseReductionStructural
 open MultiplicativeWeilRealLogKernelStructural
 open MultiplicativeWeilRealMonotonePropagationCriterionStructural
 open MultiplicativeWeilRealMonotonePropagationLogDefectStructural
+open MultiplicativeWeilRealMonotoneTailConeCriterionStructural
 open MultiplicativeWeilSeparatedCellCrossStructural
 open MultiplicativeWeilFourCellMixedSignObstructionStructural
 open MultiplicativeWeilFiveCellLocalCrossSignObstructionStructural
@@ -4476,6 +4477,265 @@ theorem bombieriRealQuadraticValue_monotoneQuarterFiveBlock_nonnegative_of_fourC
   · exact
       not_supportMinimalNegativeMonotoneBlock_length_five_of_realFiveCellRemoteRow
         hfour hrow hparent hmin hlen
+
+/-! ## All-length common-parent middle-pivot induction -/
+
+/-- Production nonnegativity for all real common parents at one exact block
+length. -/
+def RealFiniteBlockProductionNonnegativeAtLength (n : ℕ) : Prop :=
+  ∀ parent : BombieriTest,
+    bombieriConjugateTest parent = parent →
+      ∀ k : ℤ,
+        0 ≤ bombieriRealQuadraticValue
+          (monotoneQuarterFiniteBlock parent k 0 n)
+
+/-- Production nonnegativity through a prescribed finite block length. -/
+def RealFiniteBlockProductionNonnegativeUpTo (n : ℕ) : Prop :=
+  ∀ m : ℕ, m ≤ n → RealFiniteBlockProductionNonnegativeAtLength m
+
+/-- The interior obtained by deleting both endpoint cells from an
+`n`-cell block. -/
+def monotoneQuarterFiniteBlockInterior
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) : BombieriTest :=
+  monotoneQuarterFiniteBlock parent k 1 (n - 2)
+
+private theorem monotoneQuarterFiniteBlock_zero_apply_allLength
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (x : ℝ) :
+    monotoneQuarterFiniteBlock parent k 0 n x =
+      (((monotoneQuarterStep k x -
+        monotoneQuarterStep (k + (n : ℤ)) x : ℝ) : ℂ) * parent x) := by
+  unfold monotoneQuarterFiniteBlock
+  simp only [Nat.zero_add]
+  rw [sum_range_monotoneQuarterCell_eq_cutoff_sub]
+  simp only [TestFunction.coe_sub, Pi.sub_apply,
+    monotoneQuarterCutoff_apply]
+  push_cast
+  ring
+
+private theorem monotoneQuarterFiniteBlock_add_allLength
+    (f g : BombieriTest) (k : ℤ) (n : ℕ) :
+    monotoneQuarterFiniteBlock (f + g) k 0 n =
+      monotoneQuarterFiniteBlock f k 0 n +
+        monotoneQuarterFiniteBlock g k 0 n := by
+  classical
+  unfold monotoneQuarterFiniteBlock
+  simp_rw [monotoneQuarterCell_add]
+  exact Finset.sum_add_distrib
+
+private theorem monotoneQuarterFiniteBlock_smul_allLength
+    (c : ℂ) (f : BombieriTest) (k : ℤ) (n : ℕ) :
+    monotoneQuarterFiniteBlock (c • f) k 0 n =
+      c • monotoneQuarterFiniteBlock f k 0 n := by
+  classical
+  unfold monotoneQuarterFiniteBlock
+  simp_rw [monotoneQuarterCell_smul]
+  exact Finset.smul_sum.symm
+
+private theorem monotoneQuarterFiniteBlock_eq_endpoint_add_tail
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 1 ≤ n) :
+    monotoneQuarterFiniteBlock parent k 0 n =
+      monotoneQuarterCell parent k +
+        monotoneQuarterFiniteBlock parent k 1 (n - 1) := by
+  have hsplit := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent k 0 n 1 hn
+  simpa only [monotoneQuarterFiniteBlock_one,
+    monotoneQuarterFiniteBlockBase, Int.ofNat_zero, add_zero,
+    Nat.zero_add] using hsplit
+
+private theorem monotoneQuarterFiniteBlock_eq_head_add_endpoint
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 1 ≤ n) :
+    monotoneQuarterFiniteBlock parent k 1 n =
+      monotoneQuarterFiniteBlock parent k 1 (n - 1) +
+        monotoneQuarterCell parent (k + (n : ℤ)) := by
+  have hsplit := monotoneQuarterFiniteBlock_eq_prefix_add_suffix
+    parent k 1 n (n - 1) (by omega)
+  have hsub : n - (n - 1) = 1 := by omega
+  rw [hsub, monotoneQuarterFiniteBlock_one] at hsplit
+  have hindex : 1 + (n - 1) = n := by omega
+  simpa only [monotoneQuarterFiniteBlockBase, hindex] using hsplit
+
+private theorem monotoneQuarterFiniteBlock_shift_start_one
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) :
+    monotoneQuarterFiniteBlock parent (k + 1) 0 n =
+      monotoneQuarterFiniteBlock parent k 1 n := by
+  classical
+  unfold monotoneQuarterFiniteBlock
+  apply Finset.sum_congr rfl
+  intro i _hi
+  congr 1
+  push_cast
+  ring
+
+private theorem finiteBlock_parent_sub_nextCutoff_eq_leftEndpoint_allLength
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 2 ≤ n) :
+    monotoneQuarterFiniteBlock
+        (parent - monotoneQuarterCutoff parent (k + 1)) k 0 n =
+      monotoneQuarterCell parent k := by
+  apply TestFunction.ext
+  intro x
+  rw [monotoneQuarterFiniteBlock_zero_apply_allLength,
+    monotoneQuarterCell_apply]
+  simp only [TestFunction.coe_sub, Pi.sub_apply,
+    monotoneQuarterCutoff_apply]
+  have hk1 := monotoneQuarterStep_mul_later
+    (k := k) (j := k + 1) (by omega) x
+  have h1n := monotoneQuarterStep_mul_later
+    (k := k + 1) (j := k + (n : ℤ)) (by omega) x
+  have hmask :
+      (monotoneQuarterStep k x -
+          monotoneQuarterStep (k + (n : ℤ)) x) *
+        (1 - monotoneQuarterStep (k + 1) x) =
+      monotoneQuarterWeight k x := by
+    unfold monotoneQuarterWeight
+    calc
+      (monotoneQuarterStep k x -
+            monotoneQuarterStep (k + (n : ℤ)) x) *
+          (1 - monotoneQuarterStep (k + 1) x) =
+        monotoneQuarterStep k x -
+          monotoneQuarterStep k x * monotoneQuarterStep (k + 1) x -
+          monotoneQuarterStep (k + (n : ℤ)) x +
+          monotoneQuarterStep (k + 1) x *
+            monotoneQuarterStep (k + (n : ℤ)) x := by ring
+      _ = monotoneQuarterStep k x -
+          monotoneQuarterStep (k + 1) x := by
+        rw [hk1, h1n]
+        ring
+  change
+    (↑(monotoneQuarterStep k x -
+        monotoneQuarterStep (k + (n : ℤ)) x) : ℂ) *
+        (parent x - ↑(monotoneQuarterStep (k + 1) x) * parent x) =
+      (monotoneQuarterWeight k x : ℂ) * parent x
+  calc
+    (↑(monotoneQuarterStep k x -
+          monotoneQuarterStep (k + (n : ℤ)) x) : ℂ) *
+          (parent x - ↑(monotoneQuarterStep (k + 1) x) * parent x) =
+        (↑((monotoneQuarterStep k x -
+            monotoneQuarterStep (k + (n : ℤ)) x) *
+              (1 - monotoneQuarterStep (k + 1) x)) : ℂ) * parent x := by
+      push_cast
+      ring
+    _ = (monotoneQuarterWeight k x : ℂ) * parent x := by rw [hmask]
+
+private theorem finiteBlock_rightCutoff_eq_rightEndpoint_allLength
+    (parent : BombieriTest) (k : ℤ) (n : ℕ) (hn : 2 ≤ n) :
+    monotoneQuarterFiniteBlock
+        (monotoneQuarterCutoff parent (k + (n : ℤ))) (k + 1) 0 n =
+      monotoneQuarterCell parent (k + (n : ℤ)) := by
+  apply TestFunction.ext
+  intro x
+  rw [monotoneQuarterFiniteBlock_zero_apply_allLength,
+    monotoneQuarterCell_apply]
+  simp only [monotoneQuarterCutoff_apply]
+  have h1n := monotoneQuarterStep_mul_later
+    (k := k + 1) (j := k + (n : ℤ)) (by omega) x
+  have hnnext := monotoneQuarterStep_mul_later
+    (k := k + (n : ℤ)) (j := (k + 1) + (n : ℤ)) (by omega) x
+  have hindex : (k + 1) + (n : ℤ) = k + (n : ℤ) + 1 := by ring
+  rw [hindex] at hnnext
+  have hmask :
+      (monotoneQuarterStep (k + 1) x -
+          monotoneQuarterStep ((k + 1) + (n : ℤ)) x) *
+        monotoneQuarterStep (k + (n : ℤ)) x =
+      monotoneQuarterWeight (k + (n : ℤ)) x := by
+    unfold monotoneQuarterWeight
+    rw [hindex]
+    calc
+      (monotoneQuarterStep (k + 1) x -
+            monotoneQuarterStep (k + (n : ℤ) + 1) x) *
+          monotoneQuarterStep (k + (n : ℤ)) x =
+        monotoneQuarterStep (k + 1) x *
+            monotoneQuarterStep (k + (n : ℤ)) x -
+          monotoneQuarterStep (k + (n : ℤ)) x *
+            monotoneQuarterStep (k + (n : ℤ) + 1) x := by ring
+      _ = monotoneQuarterStep (k + (n : ℤ)) x -
+          monotoneQuarterStep (k + (n : ℤ) + 1) x := by
+        rw [h1n, hnnext]
+  change
+    (↑(monotoneQuarterStep (k + 1) x -
+        monotoneQuarterStep ((k + 1) + (n : ℤ)) x) : ℂ) *
+        (↑(monotoneQuarterStep (k + (n : ℤ)) x) * parent x) =
+      (monotoneQuarterWeight (k + (n : ℤ)) x : ℂ) * parent x
+  calc
+    (↑(monotoneQuarterStep (k + 1) x -
+          monotoneQuarterStep ((k + 1) + (n : ℤ)) x) : ℂ) *
+          (↑(monotoneQuarterStep (k + (n : ℤ)) x) * parent x) =
+        (↑((monotoneQuarterStep (k + 1) x -
+            monotoneQuarterStep ((k + 1) + (n : ℤ)) x) *
+              monotoneQuarterStep (k + (n : ℤ)) x) : ℂ) * parent x := by
+      push_cast
+      ring
+    _ = (monotoneQuarterWeight (k + (n : ℤ)) x : ℂ) * parent x := by
+      rw [hmask]
+
+private theorem conjugate_fixed_real_smul_allLength
+    {f : BombieriTest} (hf : bombieriConjugateTest f = f) (c : ℝ) :
+    bombieriConjugateTest ((c : ℂ) • f) = (c : ℂ) • f := by
+  rw [bombieriConjugateTest_smul, Complex.conj_ofReal, hf]
+
+private theorem exists_realParent_finiteBlock_eq_leftEndpoint_add_smul_middle
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (n : ℕ) (hn : 2 ≤ n) (t : ℝ) :
+    ∃ modified : BombieriTest,
+      bombieriConjugateTest modified = modified ∧
+        monotoneQuarterFiniteBlock modified k 0 n =
+          monotoneQuarterCell parent k +
+            (t : ℂ) • monotoneQuarterFiniteBlock parent k 1 (n - 1) := by
+  let endpointParent : BombieriTest :=
+    parent - monotoneQuarterCutoff parent (k + 1)
+  let modified : BombieriTest :=
+    (t : ℂ) • parent + ((1 - t : ℝ) : ℂ) • endpointParent
+  have hendpoint : bombieriConjugateTest endpointParent = endpointParent := by
+    dsimp only [endpointParent]
+    exact conjugate_fixed_sub_for_remoteGap hparent
+      (bombieriConjugateTest_monotoneQuarterCutoff parent hparent (k + 1))
+  refine ⟨modified, ?_, ?_⟩
+  · dsimp only [modified]
+    rw [bombieriConjugateTest_add,
+      conjugate_fixed_real_smul_allLength hparent t,
+      conjugate_fixed_real_smul_allLength hendpoint (1 - t)]
+  · dsimp only [modified]
+    rw [monotoneQuarterFiniteBlock_add_allLength,
+      monotoneQuarterFiniteBlock_smul_allLength,
+      monotoneQuarterFiniteBlock_smul_allLength,
+      monotoneQuarterFiniteBlock_eq_endpoint_add_tail parent k n (by omega),
+      show monotoneQuarterFiniteBlock endpointParent k 0 n =
+          monotoneQuarterCell parent k by
+        exact finiteBlock_parent_sub_nextCutoff_eq_leftEndpoint_allLength
+          parent k n hn]
+    module
+
+private theorem exists_realParent_finiteBlock_eq_middle_add_smul_rightEndpoint
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ) (n : ℕ) (hn : 2 ≤ n) (t : ℝ) :
+    ∃ modified : BombieriTest,
+      bombieriConjugateTest modified = modified ∧
+        monotoneQuarterFiniteBlock modified (k + 1) 0 n =
+          monotoneQuarterFiniteBlock parent k 1 (n - 1) +
+            (t : ℂ) • monotoneQuarterCell parent (k + (n : ℤ)) := by
+  let endpointParent : BombieriTest :=
+    monotoneQuarterCutoff parent (k + (n : ℤ))
+  let modified : BombieriTest :=
+    parent + ((t - 1 : ℝ) : ℂ) • endpointParent
+  have hendpoint : bombieriConjugateTest endpointParent = endpointParent := by
+    dsimp only [endpointParent]
+    exact bombieriConjugateTest_monotoneQuarterCutoff
+      parent hparent (k + (n : ℤ))
+  refine ⟨modified, ?_, ?_⟩
+  · dsimp only [modified]
+    rw [bombieriConjugateTest_add, hparent,
+      conjugate_fixed_real_smul_allLength hendpoint (t - 1)]
+  · dsimp only [modified]
+    rw [monotoneQuarterFiniteBlock_add_allLength,
+      monotoneQuarterFiniteBlock_smul_allLength,
+      monotoneQuarterFiniteBlock_shift_start_one,
+      monotoneQuarterFiniteBlock_eq_head_add_endpoint parent k n (by omega),
+      show monotoneQuarterFiniteBlock endpointParent (k + 1) 0 n =
+          monotoneQuarterCell parent (k + (n : ℤ)) by
+        exact finiteBlock_rightCutoff_eq_rightEndpoint_allLength
+          parent k n hn]
+    module
 
 end
 
