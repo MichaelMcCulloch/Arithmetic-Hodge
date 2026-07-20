@@ -1,4 +1,5 @@
 import Mathlib.Analysis.Calculus.ContDiff.Deriv
+import Mathlib.Analysis.Calculus.ContDiff.Operations
 import Mathlib.Analysis.Calculus.Deriv.Pow
 import Mathlib.Analysis.Calculus.FDeriv.Extend
 
@@ -101,6 +102,34 @@ theorem contDiff_one_quadraticRightCutoff
       funext x
       exact (hasDerivAt_quadraticRightCutoff a p hp x).deriv]
     exact continuous_quadraticRightCutoffDeriv a p hp
+
+/-- Antisymmetrize a right cutoff.  For a positive boundary this is the
+natural odd extension of an endpoint-supported profile. -/
+def oddQuadraticEndpointCutoff (a : ℝ) (p : ℝ → ℝ) (x : ℝ) : ℝ :=
+  quadraticRightCutoff a p x - quadraticRightCutoff a p (-x)
+
+theorem odd_oddQuadraticEndpointCutoff (a : ℝ) (p : ℝ → ℝ) :
+    Function.Odd (oddQuadraticEndpointCutoff a p) := by
+  intro x
+  unfold oddQuadraticEndpointCutoff
+  rw [neg_neg]
+  ring
+
+theorem contDiff_one_oddQuadraticEndpointCutoff
+    (a : ℝ) (p : ℝ → ℝ) (hp : ContDiff ℝ 1 p) :
+    ContDiff ℝ 1 (oddQuadraticEndpointCutoff a p) := by
+  unfold oddQuadraticEndpointCutoff
+  exact (contDiff_one_quadraticRightCutoff a p hp).sub
+    ((contDiff_one_quadraticRightCutoff a p hp).comp (by fun_prop))
+
+theorem oddQuadraticEndpointCutoff_eq_right_of_nonneg
+    {a x : ℝ} (ha : 0 < a) (hx : 0 ≤ x) (p : ℝ → ℝ) :
+    oddQuadraticEndpointCutoff a p x = quadraticRightCutoff a p x := by
+  have hneg : ¬ a ≤ -x := by linarith
+  unfold oddQuadraticEndpointCutoff
+  rw [show quadraticRightCutoff a p (-x) = 0 by
+    simp [quadraticRightCutoff, hneg]]
+  ring
 
 end
 
