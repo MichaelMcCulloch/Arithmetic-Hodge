@@ -1,6 +1,7 @@
 import ArithmeticHodge.Analysis.YoshidaFourCellOddP11ThreeHalvesClosureStructural
 import ArithmeticHodge.Analysis.YoshidaFourCellEvenEndpointSeedRegularRemainderStructural
 import ArithmeticHodge.Analysis.YoshidaFactorTwoPhaseIntrinsicSixP5CleanSharpStructural
+import ArithmeticHodge.Analysis.IntervalIntegralAEMajorantStructural
 
 set_option autoImplicit false
 
@@ -1862,6 +1863,260 @@ private theorem upperSelectorDualIntegrand_le_majorant
   unfold fourCellOddP11P1UpperDualMajorant
   dsimp only [W, H, H₀, P] at hbase hcost ⊢
   linarith
+
+private theorem continuous_fourCellOddP11P1RationalLowerH :
+    Continuous fourCellOddP11P1RationalLowerH := by
+  unfold fourCellOddP11P1RationalLowerH
+    fourCellOddP11P1RationalRegularRepresenter
+    fourCellOddP11P1Selector
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  simp_rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  fun_prop
+
+private theorem continuous_fourCellOddP11P1RationalUpperH :
+    Continuous fourCellOddP11P1RationalUpperH := by
+  unfold fourCellOddP11P1RationalUpperH
+    fourCellOddP11P1RationalRegularRepresenter
+    fourCellOddP11P1Selector
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  simp_rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  fun_prop
+
+private theorem continuous_fourCellOddP11P1LowerReciprocalMajorant :
+    Continuous fourCellOddP11P1LowerReciprocalMajorant := by
+  unfold fourCellOddP11P1LowerReciprocalMajorant bernsteinAtom
+  fun_prop
+
+private theorem continuous_fourCellOddP11P1UpperReciprocalMajorant :
+    Continuous fourCellOddP11P1UpperReciprocalMajorant := by
+  unfold fourCellOddP11P1UpperReciprocalMajorant bernsteinAtom
+  fun_prop
+
+private theorem intervalIntegrable_P1_lower_rational_base :
+    IntervalIntegrable (fun x : ℝ ↦
+      x ^ 2 * fourCellOddP11SelectorLowerWeight x +
+        2 * x * fourCellOddP11P1RationalLowerH x)
+      volume 0 (3 / 5) := by
+  let V2 : ℝ → ℝ := fun x ↦ yoshidaEndpointPotential x * x ^ 2
+  have hV : IntervalIntegrable V2 volume 0 1 := by
+    have h := intervalIntegrable_zero_one_endpointPotential_mul_x_mul
+      (fun x : ℝ ↦ x) continuous_id
+    apply h.congr
+    intro x _hx
+    dsimp only [V2]
+    ring
+  have hVL : IntervalIntegrable V2 volume 0 (3 / 5) := by
+    apply hV.mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 3 / 5)] at hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1)]
+    exact ⟨hx.1, by linarith [hx.2]⟩
+  rw [show (fun x : ℝ ↦
+      x ^ 2 * fourCellOddP11SelectorLowerWeight x +
+        2 * x * fourCellOddP11P1RationalLowerH x) = fun x ↦
+      (93 / 50 : ℝ) * V2 x +
+        ((27 / 250 : ℝ) * x ^ 2 +
+          2 * x * fourCellOddP11P1RationalLowerH x) by
+    funext x
+    dsimp only [V2]
+    unfold fourCellOddP11SelectorLowerWeight
+    ring]
+  have hpoly : IntervalIntegrable (fun x : ℝ ↦
+      (27 / 250 : ℝ) * x ^ 2 +
+        2 * x * fourCellOddP11P1RationalLowerH x)
+      volume 0 (3 / 5) := by
+    have hcont : Continuous (fun x : ℝ ↦
+        (27 / 250 : ℝ) * x ^ 2 +
+          2 * x * fourCellOddP11P1RationalLowerH x) :=
+      (continuous_const.mul (continuous_id.pow 2)).add
+        ((continuous_const.mul continuous_id).mul
+          continuous_fourCellOddP11P1RationalLowerH)
+    exact hcont.intervalIntegrable _ _
+  exact (hVL.const_mul _).add hpoly
+
+private theorem intervalIntegrable_P1_upper_rational_base :
+    IntervalIntegrable (fun x : ℝ ↦
+      x ^ 2 * fourCellOddP11SelectorUpperWeight x +
+        2 * x * fourCellOddP11P1RationalUpperH x)
+      volume (3 / 5) 1 := by
+  let V2 : ℝ → ℝ := fun x ↦ yoshidaEndpointPotential x * x ^ 2
+  have hV : IntervalIntegrable V2 volume 0 1 := by
+    have h := intervalIntegrable_zero_one_endpointPotential_mul_x_mul
+      (fun x : ℝ ↦ x) continuous_id
+    apply h.congr
+    intro x _hx
+    dsimp only [V2]
+    ring
+  have hVU : IntervalIntegrable V2 volume (3 / 5) 1 := by
+    apply hV.mono_set
+    intro x hx
+    rw [uIcc_of_le (by norm_num : (3 / 5 : ℝ) ≤ 1)] at hx
+    rw [uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1)]
+    exact ⟨by linarith [hx.1], hx.2⟩
+  rw [show (fun x : ℝ ↦
+      x ^ 2 * fourCellOddP11SelectorUpperWeight x +
+        2 * x * fourCellOddP11P1RationalUpperH x) = fun x ↦
+      (93 / 50 : ℝ) * V2 x +
+        ((6 / 5 : ℝ) * x - (57 / 25) * x ^ 2 +
+          2 * x * fourCellOddP11P1RationalUpperH x) by
+    funext x
+    by_cases hx : x = 0
+    · subst x
+      simp [V2, fourCellOddP11SelectorUpperWeight]
+    · dsimp only [V2]
+      unfold fourCellOddP11SelectorUpperWeight
+      field_simp [hx]
+      ring]
+  have hpoly : IntervalIntegrable (fun x : ℝ ↦
+      (6 / 5 : ℝ) * x - (57 / 25) * x ^ 2 +
+        2 * x * fourCellOddP11P1RationalUpperH x)
+      volume (3 / 5) 1 := by
+    have hcont : Continuous (fun x : ℝ ↦
+        (6 / 5 : ℝ) * x - (57 / 25) * x ^ 2 +
+          2 * x * fourCellOddP11P1RationalUpperH x) :=
+      ((continuous_const.mul continuous_id).sub
+        (continuous_const.mul (continuous_id.pow 2))).add
+          ((continuous_const.mul continuous_id).mul
+            continuous_fourCellOddP11P1RationalUpperH)
+    exact hcont.intervalIntegrable _ _
+  exact (hVU.const_mul _).add hpoly
+
+private theorem fourCellOddP11P1DualMajorant_integral_lt :
+    (∫ x : ℝ in 0..3 / 5, fourCellOddP11P1LowerDualMajorant x) +
+      (∫ x : ℝ in 3 / 5..1, fourCellOddP11P1UpperDualMajorant x) <
+    (23 / 100 : ℝ) := by
+  let cL : ℝ → ℝ := fun x ↦
+    fourCellOddP11P1RationalLowerH x ^ 2 *
+      fourCellOddP11P1LowerReciprocalMajorant (5 * x / 3)
+  let mL : ℝ → ℝ := fun x ↦
+    fourCellOddP11P1LowerReciprocalMajorant (5 * x / 3)
+  let cU : ℝ → ℝ := fun x ↦
+    x * fourCellOddP11P1RationalUpperH x ^ 2 *
+      fourCellOddP11P1UpperReciprocalMajorant ((5 * x - 3) / 2)
+  let mU : ℝ → ℝ := fun x ↦
+    x * fourCellOddP11P1UpperReciprocalMajorant ((5 * x - 3) / 2)
+  have hcL : Continuous cL := by
+    dsimp only [cL]
+    exact (continuous_fourCellOddP11P1RationalLowerH.pow 2).mul
+      (continuous_fourCellOddP11P1LowerReciprocalMajorant.comp
+        (by fun_prop))
+  have hmL : Continuous mL := by
+    dsimp only [mL]
+    exact continuous_fourCellOddP11P1LowerReciprocalMajorant.comp (by fun_prop)
+  have hcU : Continuous cU := by
+    dsimp only [cU]
+    exact (continuous_id.mul
+      (continuous_fourCellOddP11P1RationalUpperH.pow 2)).mul
+        (continuous_fourCellOddP11P1UpperReciprocalMajorant.comp
+          (by fun_prop))
+  have hmU : Continuous mU := by
+    dsimp only [mU]
+    exact continuous_id.mul
+      (continuous_fourCellOddP11P1UpperReciprocalMajorant.comp (by fun_prop))
+  let qL : ℝ → ℝ := fun x ↦
+    (1 / 300 : ℝ) + (101 / 100) * cL x + (101 / 360000) * mL x
+  let qU : ℝ → ℝ := fun x ↦
+    (1 / 300 : ℝ) + (101 / 100) * cU x + (101 / 360000) * mU x
+  have hqL : Continuous qL := by
+    dsimp only [qL]
+    exact (continuous_const.add (hcL.const_mul _)).add (hmL.const_mul _)
+  have hqU : Continuous qU := by
+    dsimp only [qU]
+    exact (continuous_const.add (hcU.const_mul _)).add (hmU.const_mul _)
+  have hdecompL : fourCellOddP11P1LowerDualMajorant = fun x ↦
+      (x ^ 2 * fourCellOddP11SelectorLowerWeight x +
+        2 * x * fourCellOddP11P1RationalLowerH x) + qL x := by
+    funext x
+    unfold fourCellOddP11P1LowerDualMajorant
+    dsimp only [qL, cL, mL]
+    ring
+  have hdecompU : fourCellOddP11P1UpperDualMajorant = fun x ↦
+      (x ^ 2 * fourCellOddP11SelectorUpperWeight x +
+        2 * x * fourCellOddP11P1RationalUpperH x) + qU x := by
+    funext x
+    unfold fourCellOddP11P1UpperDualMajorant
+    dsimp only [qU, cU, mU]
+    ring
+  have hqLint :
+      (∫ x : ℝ in 0..3 / 5, qL x) =
+        (1 / 300 : ℝ) * (3 / 5) +
+          (101 / 100) * (∫ x : ℝ in 0..3 / 5, cL x) +
+          (101 / 360000) * (∫ x : ℝ in 0..3 / 5, mL x) := by
+    dsimp only [qL]
+    have hconst : Continuous (fun _x : ℝ ↦ (1 / 300 : ℝ)) :=
+      continuous_const
+    have hc : Continuous (fun x : ℝ ↦ (101 / 100 : ℝ) * cL x) :=
+      hcL.const_mul _
+    have hm : Continuous (fun x : ℝ ↦ (101 / 360000 : ℝ) * mL x) :=
+      hmL.const_mul _
+    have houter := intervalIntegral.integral_add
+      ((hconst.add hc).intervalIntegrable (0 : ℝ) (3 / 5) (μ := volume))
+      (hm.intervalIntegrable (0 : ℝ) (3 / 5) (μ := volume))
+    have hinner := intervalIntegral.integral_add
+      (hconst.intervalIntegrable (0 : ℝ) (3 / 5) (μ := volume))
+      (hc.intervalIntegrable (0 : ℝ) (3 / 5) (μ := volume))
+    calc
+      (∫ x : ℝ in 0..3 / 5,
+          1 / 300 + 101 / 100 * cL x + 101 / 360000 * mL x) =
+          (∫ x : ℝ in 0..3 / 5, 1 / 300 + 101 / 100 * cL x) +
+            (∫ x : ℝ in 0..3 / 5, 101 / 360000 * mL x) := by
+        simpa only [Pi.add_apply] using houter
+      _ = ((∫ _x : ℝ in 0..3 / 5, (1 / 300 : ℝ)) +
+            (∫ x : ℝ in 0..3 / 5, 101 / 100 * cL x)) +
+            (∫ x : ℝ in 0..3 / 5, 101 / 360000 * mL x) := by
+        rw [hinner]
+      _ = _ := by
+        repeat rw [intervalIntegral.integral_const_mul]
+        rw [intervalIntegral.integral_const]
+        norm_num
+  have hqUint :
+      (∫ x : ℝ in 3 / 5..1, qU x) =
+        (1 / 300 : ℝ) * (2 / 5) +
+          (101 / 100) * (∫ x : ℝ in 3 / 5..1, cU x) +
+          (101 / 360000) * (∫ x : ℝ in 3 / 5..1, mU x) := by
+    dsimp only [qU]
+    have hconst : Continuous (fun _x : ℝ ↦ (1 / 300 : ℝ)) :=
+      continuous_const
+    have hc : Continuous (fun x : ℝ ↦ (101 / 100 : ℝ) * cU x) :=
+      hcU.const_mul _
+    have hm : Continuous (fun x : ℝ ↦ (101 / 360000 : ℝ) * mU x) :=
+      hmU.const_mul _
+    have houter := intervalIntegral.integral_add
+      ((hconst.add hc).intervalIntegrable (3 / 5 : ℝ) 1 (μ := volume))
+      (hm.intervalIntegrable (3 / 5 : ℝ) 1 (μ := volume))
+    have hinner := intervalIntegral.integral_add
+      (hconst.intervalIntegrable (3 / 5 : ℝ) 1 (μ := volume))
+      (hc.intervalIntegrable (3 / 5 : ℝ) 1 (μ := volume))
+    calc
+      (∫ x : ℝ in 3 / 5..1,
+          1 / 300 + 101 / 100 * cU x + 101 / 360000 * mU x) =
+          (∫ x : ℝ in 3 / 5..1, 1 / 300 + 101 / 100 * cU x) +
+            (∫ x : ℝ in 3 / 5..1, 101 / 360000 * mU x) := by
+        simpa only [Pi.add_apply] using houter
+      _ = ((∫ _x : ℝ in 3 / 5..1, (1 / 300 : ℝ)) +
+            (∫ x : ℝ in 3 / 5..1, 101 / 100 * cU x)) +
+            (∫ x : ℝ in 3 / 5..1, 101 / 360000 * mU x) := by
+        rw [hinner]
+      _ = _ := by
+        repeat rw [intervalIntegral.integral_const_mul]
+        rw [intervalIntegral.integral_const]
+        norm_num
+  rw [hdecompL, hdecompU,
+    intervalIntegral.integral_add intervalIntegrable_P1_lower_rational_base
+      (hqL.intervalIntegrable _ _),
+    intervalIntegral.integral_add intervalIntegrable_P1_upper_rational_base
+      (hqU.intervalIntegrable _ _),
+    hqLint, hqUint]
+  have hbase := fourCellOddP11P1Rational_base_lt
+  have hcost := fourCellOddP11P1RationalH_reciprocal_cost_lt
+  have hmass := fourCellOddP11P1Reciprocal_majorant_mass_lt
+  dsimp only [cL, cU] at hcost ⊢
+  dsimp only [mL, mU] at hmass ⊢
+  nlinarith
 
 end
 
