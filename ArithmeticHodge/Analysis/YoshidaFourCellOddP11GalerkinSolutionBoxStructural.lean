@@ -17,6 +17,7 @@ open YoshidaFactorTwoPhaseCenteredP9Structural
 open YoshidaFactorTwoPhaseLegendreFourFiveStructural
 open YoshidaFactorTwoPhaseLegendreSixSevenStructuralPositive
 open YoshidaFourCellOddFiveModeCoreExpressionBridgeStructural
+open YoshidaFourCellOddEndpointStripCoercivityStructural
 open YoshidaFourCellOddP11ExplicitSelectorCauchyStructural
 open YoshidaFourCellOddP11GalerkinFiniteSolveStructural
 open YoshidaFourCellOddP11GalerkinRieszStructural
@@ -705,6 +706,248 @@ theorem fourCellOddP11GalerkinRetainedSolution_coordinate_bounds :
   constructor
   · nlinarith
   constructor <;> nlinarith
+
+/-- The exact inverse-defined Galerkin residual. -/
+def fourCellOddP11GalerkinRetainedResidualProfile : ℝ → ℝ :=
+  fourCellOddP11GalerkinResidualProfile
+    (fourCellOddP11GalerkinRetainedSolution 0)
+    (fourCellOddP11GalerkinRetainedSolution 1)
+    (fourCellOddP11GalerkinRetainedSolution 2)
+    (fourCellOddP11GalerkinRetainedSolution 3)
+
+def fourCellOddP11GalerkinResidualBernstein0 : ℝ :=
+  1 + (3 / 2 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 -
+    (15 / 8 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 +
+    (35 / 16 : ℝ) * fourCellOddP11GalerkinRetainedSolution 2 -
+    (315 / 128 : ℝ) * fourCellOddP11GalerkinRetainedSolution 3
+
+def fourCellOddP11GalerkinResidualBernstein1 : ℝ :=
+  1 + (7 / 8 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 +
+    (5 / 16 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 -
+    (175 / 64 : ℝ) * fourCellOddP11GalerkinRetainedSolution 2 +
+    (105 / 16 : ℝ) * fourCellOddP11GalerkinRetainedSolution 3
+
+def fourCellOddP11GalerkinResidualBernstein2 : ℝ :=
+  1 + (1 / 4 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 +
+    (19 / 16 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 -
+    (7 / 16 : ℝ) * fourCellOddP11GalerkinRetainedSolution 2 -
+    (63 / 8 : ℝ) * fourCellOddP11GalerkinRetainedSolution 3
+
+def fourCellOddP11GalerkinResidualBernstein3 : ℝ :=
+  1 - (3 / 8 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 +
+    (3 / 4 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 +
+    (19 / 8 : ℝ) * fourCellOddP11GalerkinRetainedSolution 2 +
+    (9 / 2 : ℝ) * fourCellOddP11GalerkinRetainedSolution 3
+
+def fourCellOddP11GalerkinResidualBernstein4 : ℝ :=
+  1 - fourCellOddP11GalerkinRetainedSolution 0 -
+    fourCellOddP11GalerkinRetainedSolution 1 -
+    fourCellOddP11GalerkinRetainedSolution 2 -
+    fourCellOddP11GalerkinRetainedSolution 3
+
+/-- Exact degree-four Bernstein expansion in `x²` of the inverse-defined
+residual. -/
+theorem fourCellOddP11GalerkinRetainedResidualProfile_eq_bernstein
+    (x : ℝ) :
+    fourCellOddP11GalerkinRetainedResidualProfile x =
+      x *
+        (fourCellOddP11GalerkinResidualBernstein0 * (1 - x ^ 2) ^ 4 +
+          4 * fourCellOddP11GalerkinResidualBernstein1 * x ^ 2 *
+            (1 - x ^ 2) ^ 3 +
+          6 * fourCellOddP11GalerkinResidualBernstein2 * (x ^ 2) ^ 2 *
+            (1 - x ^ 2) ^ 2 +
+          4 * fourCellOddP11GalerkinResidualBernstein3 * (x ^ 2) ^ 3 *
+            (1 - x ^ 2) +
+          fourCellOddP11GalerkinResidualBernstein4 * (x ^ 2) ^ 4) := by
+  unfold fourCellOddP11GalerkinRetainedResidualProfile
+    fourCellOddP11GalerkinResidualBernstein0
+    fourCellOddP11GalerkinResidualBernstein1
+    fourCellOddP11GalerkinResidualBernstein2
+    fourCellOddP11GalerkinResidualBernstein3
+    fourCellOddP11GalerkinResidualBernstein4
+    fourCellOddP11GalerkinResidualProfile
+    fourCellOddP11GalerkinLowProfile
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  rw [factorTwoCenteredP7_eq, factorTwoCenteredP9_eq]
+  ring
+
+theorem fourCellOddP11GalerkinResidualBernstein_coefficients_pos :
+    0 < fourCellOddP11GalerkinResidualBernstein0 ∧
+    0 < fourCellOddP11GalerkinResidualBernstein1 ∧
+    0 < fourCellOddP11GalerkinResidualBernstein2 ∧
+    0 < fourCellOddP11GalerkinResidualBernstein3 ∧
+    0 < fourCellOddP11GalerkinResidualBernstein4 := by
+  rcases fourCellOddP11GalerkinRetainedSolution_coordinate_bounds with
+    ⟨ha₃lo, ha₃hi, ha₅lo, ha₅hi,
+      ha₇lo, ha₇hi, ha₉lo, ha₉hi⟩
+  unfold fourCellOddP11GalerkinResidualBernstein0
+    fourCellOddP11GalerkinResidualBernstein1
+    fourCellOddP11GalerkinResidualBernstein2
+    fourCellOddP11GalerkinResidualBernstein3
+    fourCellOddP11GalerkinResidualBernstein4
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+/-- The exact Galerkin residual has the positive ground-state sign on the
+whole production half-interval. -/
+theorem fourCellOddP11GalerkinRetainedResidualProfile_pos
+    {x : ℝ} (hx : 0 < x) (hx1 : x ≤ 1) :
+    0 < fourCellOddP11GalerkinRetainedResidualProfile x := by
+  have hx2 : 0 < x ^ 2 := sq_pos_of_pos hx
+  have hgap : 0 ≤ 1 - x ^ 2 := by nlinarith
+  rcases fourCellOddP11GalerkinResidualBernstein_coefficients_pos with
+    ⟨hb₀, hb₁, hb₂, hb₃, hb₄⟩
+  rw [fourCellOddP11GalerkinRetainedResidualProfile_eq_bernstein]
+  have h₀ : 0 ≤ fourCellOddP11GalerkinResidualBernstein0 *
+      (1 - x ^ 2) ^ 4 := by positivity
+  have h₁ : 0 ≤ 4 * fourCellOddP11GalerkinResidualBernstein1 *
+      x ^ 2 * (1 - x ^ 2) ^ 3 := by positivity
+  have h₂ : 0 ≤ 6 * fourCellOddP11GalerkinResidualBernstein2 *
+      (x ^ 2) ^ 2 * (1 - x ^ 2) ^ 2 := by positivity
+  have h₃ : 0 ≤ 4 * fourCellOddP11GalerkinResidualBernstein3 *
+      (x ^ 2) ^ 3 * (1 - x ^ 2) := by positivity
+  have h₄ : 0 < fourCellOddP11GalerkinResidualBernstein4 *
+      (x ^ 2) ^ 4 := by positivity
+  positivity
+
+/-- The reflection-even endpoint-strip transform of the exact residual is
+strictly positive on the normalized closed strip. -/
+theorem fourCellOddEndpointStripEven_galerkinResidual_pos
+    {z : ℝ} (hz : z ∈ Set.Icc (-1 : ℝ) 1) :
+    0 < fourCellOddEndpointStripEven
+      fourCellOddP11GalerkinRetainedResidualProfile z := by
+  rcases hz with ⟨hzlo, hzhi⟩
+  have hp0 : 0 < (4 / 5 : ℝ) + z / 5 := by nlinarith
+  have hp1 : (4 / 5 : ℝ) + z / 5 ≤ 1 := by nlinarith
+  have hm0 : 0 < (4 / 5 : ℝ) - z / 5 := by nlinarith
+  have hm1 : (4 / 5 : ℝ) - z / 5 ≤ 1 := by nlinarith
+  have hp := fourCellOddP11GalerkinRetainedResidualProfile_pos hp0 hp1
+  have hm := fourCellOddP11GalerkinRetainedResidualProfile_pos hm0 hm1
+  unfold fourCellOddEndpointStripEven fourCellOddEndpointStripPullback
+  simpa only [sub_eq_add_neg] using (half_pos (add_pos hp hm))
+
+def fourCellOddP11GalerkinStripOddBernstein0 : ℝ :=
+  -(1 / 5 : ℝ) +
+    (33 / 50 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 +
+    (1203 / 5000 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 -
+    (972587 / 1250000 : ℝ) * fourCellOddP11GalerkinRetainedSolution 2 -
+    (41734881 / 50000000 : ℝ) *
+      fourCellOddP11GalerkinRetainedSolution 3
+
+def fourCellOddP11GalerkinStripOddBernstein1 : ℝ :=
+  -(1 / 5 : ℝ) +
+    (133 / 200 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 +
+    (3239 / 10000 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 -
+    (2621633 / 5000000 : ℝ) *
+      fourCellOddP11GalerkinRetainedSolution 2 -
+    (430467 / 625000 : ℝ) * fourCellOddP11GalerkinRetainedSolution 3
+
+def fourCellOddP11GalerkinStripOddBernstein2 : ℝ :=
+  -(1 / 5 : ℝ) +
+    (67 / 100 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 +
+    (20381 / 50000 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 -
+    (317093 / 1250000 : ℝ) * fourCellOddP11GalerkinRetainedSolution 2 -
+    (1306413 / 3125000 : ℝ) *
+      fourCellOddP11GalerkinRetainedSolution 3
+
+def fourCellOddP11GalerkinStripOddBernstein3 : ℝ :=
+  -(1 / 5 : ℝ) +
+    (27 / 40 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 +
+    (6147 / 12500 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 +
+    (21233 / 625000 : ℝ) * fourCellOddP11GalerkinRetainedSolution 2 -
+    (12699 / 781250 : ℝ) * fourCellOddP11GalerkinRetainedSolution 3
+
+def fourCellOddP11GalerkinStripOddBernstein4 : ℝ :=
+  -(1 / 5 : ℝ) +
+    (17 / 25 : ℝ) * fourCellOddP11GalerkinRetainedSolution 0 +
+    (1801 / 3125 : ℝ) * fourCellOddP11GalerkinRetainedSolution 1 +
+    (26461 / 78125 : ℝ) * fourCellOddP11GalerkinRetainedSolution 2 +
+    (204317 / 390625 : ℝ) * fourCellOddP11GalerkinRetainedSolution 3
+
+/-- Exact positive Bernstein expansion after factoring `-z` from the
+reflection-odd endpoint-strip transform of the exact residual. -/
+theorem neg_fourCellOddEndpointStripOdd_galerkinResidual_eq_bernstein
+    (z : ℝ) :
+    -fourCellOddEndpointStripOdd
+        fourCellOddP11GalerkinRetainedResidualProfile z =
+      z *
+        (fourCellOddP11GalerkinStripOddBernstein0 * (1 - z ^ 2) ^ 4 +
+          4 * fourCellOddP11GalerkinStripOddBernstein1 * z ^ 2 *
+            (1 - z ^ 2) ^ 3 +
+          6 * fourCellOddP11GalerkinStripOddBernstein2 * (z ^ 2) ^ 2 *
+            (1 - z ^ 2) ^ 2 +
+          4 * fourCellOddP11GalerkinStripOddBernstein3 * (z ^ 2) ^ 3 *
+            (1 - z ^ 2) +
+          fourCellOddP11GalerkinStripOddBernstein4 * (z ^ 2) ^ 4) := by
+  unfold fourCellOddEndpointStripOdd fourCellOddEndpointStripPullback
+    fourCellOddP11GalerkinRetainedResidualProfile
+    fourCellOddP11GalerkinStripOddBernstein0
+    fourCellOddP11GalerkinStripOddBernstein1
+    fourCellOddP11GalerkinStripOddBernstein2
+    fourCellOddP11GalerkinStripOddBernstein3
+    fourCellOddP11GalerkinStripOddBernstein4
+    fourCellOddP11GalerkinResidualProfile
+    fourCellOddP11GalerkinLowProfile
+    fourCellOddOneThreeFiveSevenNineLowProfile
+    fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    centeredP1 centeredP3 factorTwoCenteredP5
+  rw [factorTwoCenteredP7_eq, factorTwoCenteredP7_eq,
+    factorTwoCenteredP9_eq, factorTwoCenteredP9_eq]
+  ring
+
+set_option maxHeartbeats 500000 in
+theorem fourCellOddP11GalerkinStripOddBernstein_coefficients_pos :
+    0 < fourCellOddP11GalerkinStripOddBernstein0 ∧
+    0 < fourCellOddP11GalerkinStripOddBernstein1 ∧
+    0 < fourCellOddP11GalerkinStripOddBernstein2 ∧
+    0 < fourCellOddP11GalerkinStripOddBernstein3 ∧
+    0 < fourCellOddP11GalerkinStripOddBernstein4 := by
+  rcases fourCellOddP11GalerkinRetainedSolution_coordinate_bounds with
+    ⟨ha₃lo, ha₃hi, ha₅lo, ha₅hi,
+      ha₇lo, ha₇hi, ha₉lo, ha₉hi⟩
+  unfold fourCellOddP11GalerkinStripOddBernstein0
+    fourCellOddP11GalerkinStripOddBernstein1
+    fourCellOddP11GalerkinStripOddBernstein2
+    fourCellOddP11GalerkinStripOddBernstein3
+    fourCellOddP11GalerkinStripOddBernstein4
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor
+  · nlinarith
+  constructor <;> nlinarith
+
+/-- On the positive normalized half-strip, the reflection-odd component of
+the exact Galerkin residual has a fixed negative sign. -/
+theorem fourCellOddEndpointStripOdd_galerkinResidual_neg
+    {z : ℝ} (hz : 0 < z) (hz1 : z ≤ 1) :
+    fourCellOddEndpointStripOdd
+      fourCellOddP11GalerkinRetainedResidualProfile z < 0 := by
+  have hz2 : 0 < z ^ 2 := sq_pos_of_pos hz
+  have hgap : 0 ≤ 1 - z ^ 2 := by nlinarith
+  rcases fourCellOddP11GalerkinStripOddBernstein_coefficients_pos with
+    ⟨hb₀, hb₁, hb₂, hb₃, hb₄⟩
+  rw [← neg_pos,
+    neg_fourCellOddEndpointStripOdd_galerkinResidual_eq_bernstein]
+  have h₀ : 0 ≤ fourCellOddP11GalerkinStripOddBernstein0 *
+      (1 - z ^ 2) ^ 4 := by positivity
+  have h₁ : 0 ≤ 4 * fourCellOddP11GalerkinStripOddBernstein1 *
+      z ^ 2 * (1 - z ^ 2) ^ 3 := by positivity
+  have h₂ : 0 ≤ 6 * fourCellOddP11GalerkinStripOddBernstein2 *
+      (z ^ 2) ^ 2 * (1 - z ^ 2) ^ 2 := by positivity
+  have h₃ : 0 ≤ 4 * fourCellOddP11GalerkinStripOddBernstein3 *
+      (z ^ 2) ^ 3 * (1 - z ^ 2) := by positivity
+  have h₄ : 0 < fourCellOddP11GalerkinStripOddBernstein4 *
+      (z ^ 2) ^ 4 := by positivity
+  positivity
 
 end
 
