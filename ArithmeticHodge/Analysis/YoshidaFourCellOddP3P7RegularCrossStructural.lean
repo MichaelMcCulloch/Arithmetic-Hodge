@@ -125,25 +125,17 @@ private theorem integral_polynomial_twentyTwo
   norm_num
   ring
 
+set_option maxHeartbeats 800000 in
 theorem integral_fourCellOddP3P7Correlation_sq :
     (∫ t : ℝ in 0..2, fourCellOddP3P7Correlation t ^ 2) =
       (3792 / 2860165 : ℝ) := by
-  rw [show (fun t : ℝ ↦ fourCellOddP3P7Correlation t ^ 2) =
-      fun t ↦
-        0 * t ^ 0 + 0 * t ^ 1 + t ^ 2 - 22 * t ^ 3 + 196 * t ^ 4 -
-          (3729 / 4 : ℝ) * t ^ 5 + (10589 / 4 : ℝ) * t ^ 6 -
-          (37565 / 8 : ℝ) * t ^ 7 + (330369 / 64 : ℝ) * t ^ 8 -
-          (101409 / 32 : ℝ) * t ^ 9 + (8731 / 16 : ℝ) * t ^ 10 +
-          (34947 / 64 : ℝ) * t ^ 11 - (8437 / 32 : ℝ) * t ^ 12 -
-          (41899 / 512 : ℝ) * t ^ 13 + (36417 / 512 : ℝ) * t ^ 14 +
-          (5577 / 1024 : ℝ) * t ^ 15 - (11501 / 1024 : ℝ) * t ^ 16 +
-          0 * t ^ 17 + (18537 / 16384 : ℝ) * t ^ 18 + 0 * t ^ 19 -
-          (1287 / 16384 : ℝ) * t ^ 20 + 0 * t ^ 21 +
-          (169 / 65536 : ℝ) * t ^ 22 by
-      funext t
-      unfold fourCellOddP3P7Correlation
-      ring,
-    integral_polynomial_twentyTwo]
+  unfold fourCellOddP3P7Correlation
+  ring_nf
+  repeat rw [intervalIntegral.integral_add
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)
+    (Continuous.intervalIntegrable (by fun_prop) 0 2)]
+  repeat rw [intervalIntegral.integral_mul_const]
+  repeat rw [integral_pow]
   norm_num
 
 private theorem sq_intervalIntegral_mul_le_zero_two
@@ -220,6 +212,17 @@ private theorem fourCellOddP3P7RegularEnvelope_pointwise
         ring
       _ ≤ (7 / 8 : ℝ) := by linarith
 
+private theorem measurable_yoshidaRegularKernel_local :
+    Measurable yoshidaRegularKernel := by
+  unfold yoshidaRegularKernel
+  apply Measurable.ite
+  · simpa only [Set.setOf_eq_eq_singleton] using
+      measurableSet_singleton (0 : ℝ)
+  · exact measurable_const
+  · exact ((Real.measurable_exp.comp (measurable_id.div_const 2)).div
+      (measurable_const.mul Real.measurable_sinh)).sub
+        (measurable_const.div (measurable_const.mul measurable_id))
+
 private theorem intervalIntegrable_fourCellOddP3P7RegularEnvelope :
     IntervalIntegrable
       (fun t ↦
@@ -245,7 +248,7 @@ private theorem intervalIntegrable_fourCellOddP3P7RegularEnvelope :
       (volume.restrict (Ioc (0 : ℝ) 2)) := by
     apply Measurable.aestronglyMeasurable
     dsimp only [f]
-    exact ((measurable_yoshidaRegularKernel.comp
+    exact ((measurable_yoshidaRegularKernel_local.comp
       (measurable_const.mul measurable_id)).sub
         (by unfold yoshidaRegularKernelPolynomial6; fun_prop)).mul
           hcorr.measurable
@@ -399,10 +402,16 @@ theorem abs_integral_fourCellRegularKernel_mul_correlation_P3_P7_lt :
     integral_fourCellRegularKernel_mul_P3P7Correlation_eq]
   have hp := fourCellOddP3P7RegularPolynomial_nonneg_lt
   have he := abs_fourCellOddP3P7RegularEnvelopeError_lt
-  have htri := abs_add fourCellOddP3P7RegularPolynomial
-    fourCellOddP3P7RegularEnvelopeError
-  rw [abs_of_nonneg hp.1] at htri
-  nlinarith
+  calc
+    |fourCellOddP3P7RegularPolynomial +
+        fourCellOddP3P7RegularEnvelopeError| ≤
+      |fourCellOddP3P7RegularPolynomial| +
+        |fourCellOddP3P7RegularEnvelopeError| := abs_add_le _ _
+    _ = fourCellOddP3P7RegularPolynomial +
+        |fourCellOddP3P7RegularEnvelopeError| := by
+      rw [abs_of_nonneg hp.1]
+    _ < (1 / 100000000 : ℝ) + 3 / 4000000 := add_lt_add hp.2 he
+    _ < (1 / 100000 : ℝ) := by norm_num
 
 end
 
