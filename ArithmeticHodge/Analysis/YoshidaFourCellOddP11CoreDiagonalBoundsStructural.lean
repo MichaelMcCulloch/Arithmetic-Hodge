@@ -12,15 +12,20 @@ noncomputable section
 open CenteredEndpointCorrelation
 open CenteredOddOneThreeEnergy
 open EndpointPotentialPolynomialPairBilinearStructural
+open ShiftedLegendreCenteredL2Structural
 open ShiftedLegendreCenteredLowModes
+open ShiftedLegendreLogEigen
 open ShiftedLegendreOrthogonality
 open ShiftedLegendrePolynomialGap
+open UnitIntervalIntegralBridge
+open UnitIntervalLogEnergyAffine
 open YoshidaConstantBounds
 open YoshidaFactorTwoEndpointBilinear
 open YoshidaFactorTwoPhaseIntrinsicResidual
 open YoshidaEndpointOcticPotential
 open YoshidaEndpointPotentialBound
 open YoshidaEndpointPotentialLegendreDiagonalStructural
+open YoshidaEndpointEvenTailRepresenter
 open YoshidaFourCellOddCoreIntegratedRegularAbsorptionStructural
 open YoshidaFourCellOddEndpointStripCoercivityStructural
 open YoshidaFourCellOddP11CoreEntryBoundsStructural
@@ -29,6 +34,7 @@ open YoshidaFourCellOddP11GalerkinResidualDualDirectStructural
 open YoshidaFourCellOddStripCapacityClosureStructural
 open YoshidaFourCellParityHalfFoldStructural
 open YoshidaFourCellParityOperatorStructural
+open YoshidaFourCellRawParityFoldStructural
 open YoshidaRegularKernelBound
 
 /-!
@@ -313,6 +319,214 @@ theorem integral_endpointPotential_P11_sq_eq :
       unfold fourCellOddP11DirectTail
       simp
     _ = _ := h
+
+/-! ## Exact singular diagonal data -/
+
+private theorem centeredRawLogEnergy_eq_bilinear_self
+    (w : ℝ → ℝ) :
+    centeredRawLogEnergy w = centeredRawLogBilinear w w := by
+  unfold centeredRawLogEnergy centeredRawLogBilinear
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  apply intervalIntegral.integral_congr
+  intro y _hy
+  ring
+
+private theorem integral_shiftedLegendreReal_sq_closed (n : ℕ) :
+    (∫ x : ℝ in 0..1, (shiftedLegendreReal n).eval x ^ 2) =
+      1 / (2 * (n : ℝ) + 1) := by
+  have hdiag := centeredLegendreL2Diagonal_closed n
+  unfold centeredLegendreL2Diagonal centeredPolynomialPair at hdiag
+  have htransport := integral_comp_two_mul_sub_one
+    (fun x : ℝ ↦ (centeredShiftedLegendreReal n).eval x ^ 2)
+  rw [show (fun t : ℝ ↦
+      (centeredShiftedLegendreReal n).eval (2 * t - 1) ^ 2) =
+      fun t ↦ (shiftedLegendreReal n).eval t ^ 2 by
+    funext t
+    rw [eval_centeredShiftedLegendreReal]
+    congr 2
+    ring] at htransport
+  rw [show (fun x : ℝ ↦
+      (centeredShiftedLegendreReal n).eval x ^ 2) = fun x ↦
+      (centeredShiftedLegendreReal n).eval x *
+        (centeredShiftedLegendreReal n).eval x by
+    funext x
+    ring,
+    hdiag] at htransport
+  calc
+    (∫ x : ℝ in 0..1, (shiftedLegendreReal n).eval x ^ 2) =
+        (1 / 2 : ℝ) * (2 / (2 * (n : ℝ) + 1)) := htransport
+    _ = 1 / (2 * (n : ℝ) + 1) := by ring
+
+private theorem shiftedLogEnergyBilinear_legendre_ne
+    {m n : ℕ} (hmn : m ≠ n) :
+    shiftedLogEnergyBilinear
+        (shiftedLegendreReal m) (shiftedLegendreReal n) = 0 := by
+  rw [shiftedLogEnergyBilinear_apply,
+    shiftedLogKernel_shiftedLegendreReal]
+  simp only [Polynomial.eval_mul, Polynomial.eval_C]
+  rw [show (fun x : ℝ ↦
+      (shiftedLegendreReal m).eval x *
+        (2 * (harmonic n : ℝ) * (shiftedLegendreReal n).eval x)) =
+      fun x ↦ (2 * (harmonic n : ℝ)) *
+        ((shiftedLegendreReal m).eval x *
+          (shiftedLegendreReal n).eval x) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul,
+    ShiftedLegendreBasis.integral_shiftedLegendreReal_mul_eq_zero hmn]
+  ring
+
+private theorem shiftedLogEnergyBilinear_legendre_self (n : ℕ) :
+    shiftedLogEnergyBilinear
+        (shiftedLegendreReal n) (shiftedLegendreReal n) =
+      2 * (harmonic n : ℝ) / (2 * (n : ℝ) + 1) := by
+  rw [shiftedLogEnergyBilinear_apply,
+    shiftedLogKernel_shiftedLegendreReal]
+  simp only [Polynomial.eval_mul, Polynomial.eval_C]
+  rw [show (fun x : ℝ ↦
+      (shiftedLegendreReal n).eval x *
+        (2 * (harmonic n : ℝ) * (shiftedLegendreReal n).eval x)) =
+      fun x ↦ (2 * (harmonic n : ℝ)) *
+        ((shiftedLegendreReal n).eval x ^ 2) by
+    funext x
+    ring,
+    intervalIntegral.integral_const_mul,
+    integral_shiftedLegendreReal_sq_closed]
+  ring
+
+private theorem shiftedLogEnergyBilinear_legendre_eq (m n : ℕ) :
+    shiftedLogEnergyBilinear
+        (shiftedLegendreReal m) (shiftedLegendreReal n) =
+      if m = n then 2 * (harmonic n : ℝ) / (2 * (n : ℝ) + 1)
+      else 0 := by
+  by_cases hmn : m = n
+  · subst n
+    rw [if_pos rfl, shiftedLogEnergyBilinear_legendre_self]
+  · rw [if_neg hmn, shiftedLogEnergyBilinear_legendre_ne hmn]
+
+private theorem centeredRawLogBilinear_eq_four_mul_shiftedPair_of_polynomials
+    (q r : ℝ → ℝ) (p s : ℝ[X]) (hr : Continuous r)
+    (hqmode : ∀ t : ℝ, centeredPullback q t = p.eval t)
+    (hrmode : ∀ t : ℝ, centeredPullback r t = s.eval t) :
+    centeredRawLogBilinear q r =
+      4 * shiftedLogEnergyBilinear s p := by
+  rw [centeredRawLogBilinear_polynomialMode_eq_four_mul_pair
+    p q r hr hqmode,
+    shiftedLogEnergyBilinear_apply,
+    ← integral_unitInterval_eq_intervalIntegral]
+  congr 1
+  apply integral_congr_ae
+  filter_upwards [] with t
+  rw [hrmode]
+
+private theorem centeredPullback_fourCellOddP11DirectTail
+    (t : ℝ) :
+  centeredPullback fourCellOddP11DirectTail t =
+      (-(shiftedLegendreReal 11)).eval t := by
+  unfold centeredPullback fourCellOddP11DirectTail
+  simp only [Polynomial.eval_neg]
+  rw [eval_centeredShiftedLegendreReal]
+  congr 3
+  ring
+
+/-- Exact global raw-log energy of the first augmented mode, obtained from
+the `P₁₁` logarithmic eigenvalue. -/
+theorem centeredRawLogEnergy_fourCellOddP11DirectTail_eq :
+    centeredRawLogEnergy fourCellOddP11DirectTail =
+      (83711 / 79695 : ℝ) := by
+  rw [centeredRawLogEnergy_eq_bilinear_self,
+    centeredRawLogBilinear_eq_four_mul_shiftedPair_of_polynomials
+      fourCellOddP11DirectTail fourCellOddP11DirectTail
+      (-(shiftedLegendreReal 11)) (-(shiftedLegendreReal 11))
+      contDiff_fourCellOddP11DirectTail.continuous
+      centeredPullback_fourCellOddP11DirectTail
+      centeredPullback_fourCellOddP11DirectTail]
+  simp only [map_neg, LinearMap.neg_apply, neg_neg,
+    shiftedLogEnergyBilinear_legendre_self]
+  norm_num [harmonic, Finset.sum_range_succ]
+
+private def p11EndpointStripOddShiftedPolynomial : ℝ[X] := -(
+  (5088276 / 48828125 : ℝ) • shiftedLegendreReal 1 +
+    (8502676 / 48828125 : ℝ) • shiftedLegendreReal 3 +
+    (15968084 / 48828125 : ℝ) • shiftedLegendreReal 5 +
+    (25716 / 1953125 : ℝ) • shiftedLegendreReal 7 +
+    (2964 / 48828125 : ℝ) • shiftedLegendreReal 9 +
+    (1 / 48828125 : ℝ) • shiftedLegendreReal 11)
+
+set_option maxHeartbeats 2000000 in
+private theorem centeredPullback_endpointStripOdd_P11_eq_shiftedPolynomial
+    (t : ℝ) :
+    centeredPullback
+        (fourCellOddEndpointStripOdd fourCellOddP11DirectTail) t =
+      p11EndpointStripOddShiftedPolynomial.eval t := by
+  unfold centeredPullback fourCellOddEndpointStripOdd
+    fourCellOddEndpointStripPullback fourCellOddP11DirectTail
+    p11EndpointStripOddShiftedPolynomial
+  simp only [Polynomial.eval_neg, Polynomial.eval_add,
+    Polynomial.eval_smul, smul_eq_mul]
+  norm_num [centeredShiftedLegendreReal, shiftedLegendreReal,
+    Polynomial.shiftedLegendre, Polynomial.eval_comp, Polynomial.eval_map,
+    Polynomial.eval_finset_sum, Finset.sum_range_succ, Nat.choose,
+    Polynomial.smul_eq_C_mul]
+  ring
+
+/-- Exact raw-log energy of the reflection-odd endpoint strip. -/
+theorem centeredRawLogEnergy_endpointStripOdd_P11_eq :
+    centeredRawLogEnergy
+        (fourCellOddEndpointStripOdd fourCellOddP11DirectTail) =
+      (51364238588241191471 / 190007686614990234375 : ℝ) := by
+  have hstrip : Continuous
+      (fourCellOddEndpointStripOdd fourCellOddP11DirectTail) := by
+    exact continuous_fourCellOddEndpointStripOdd
+      fourCellOddP11DirectTail contDiff_fourCellOddP11DirectTail.continuous
+  rw [centeredRawLogEnergy_eq_bilinear_self,
+    centeredRawLogBilinear_eq_four_mul_shiftedPair_of_polynomials
+      (fourCellOddEndpointStripOdd fourCellOddP11DirectTail)
+      (fourCellOddEndpointStripOdd fourCellOddP11DirectTail)
+      p11EndpointStripOddShiftedPolynomial
+      p11EndpointStripOddShiftedPolynomial hstrip
+      centeredPullback_endpointStripOdd_P11_eq_shiftedPolynomial
+      centeredPullback_endpointStripOdd_P11_eq_shiftedPolynomial]
+  unfold p11EndpointStripOddShiftedPolynomial
+  simp only [map_neg, LinearMap.neg_apply, map_add, map_smul,
+    LinearMap.add_apply, LinearMap.smul_apply, smul_eq_mul,
+    shiftedLogEnergyBilinear_legendre_eq]
+  norm_num [harmonic, Finset.sum_range_succ]
+
+/-- Exact physical raw-log energy of the adverse endpoint strip. -/
+theorem fourCellOddEndpointStripOddRawEnergy_P11_eq :
+    fourCellOddEndpointStripOddRawEnergy fourCellOddP11DirectTail =
+      (51364238588241191471 / 950038433074951171875 : ℝ) := by
+  unfold fourCellOddEndpointStripOddRawEnergy
+  rw [centeredRawLogEnergy_endpointStripOdd_P11_eq]
+  ring
+
+private theorem fourCellOddRawStripCancellationReserve_eq_raw_sub_strip
+    (w : ℝ → ℝ) (hw : ContDiff ℝ 1 w) (hodd : Function.Odd w) :
+    fourCellOddRawStripCancellationReserve w =
+      (1 / 4 : ℝ) * centeredRawLogEnergy w -
+        (1 / 2 : ℝ) * fourCellOddEndpointStripOddRawEnergy w := by
+  have hwLocal : LocallyLipschitzOn (Icc (-1 : ℝ) 1) w :=
+    hw.contDiffOn.locallyLipschitzOn (convex_Icc (-1) 1)
+  have hfold := centeredRawLogEnergy_div_four_eq_positiveHalf_odd
+    w hwLocal hodd
+  unfold fourCellOddRawStripCancellationReserve
+  rw [← hfold]
+  ring
+
+/-- Exact retained raw reserve in the new diagonal. -/
+theorem fourCellOddRawStripCancellationReserve_P11_eq :
+    fourCellOddRawStripCancellationReserve fourCellOddP11DirectTail =
+      (83711 / 318780 : ℝ) -
+        (1 / 2 : ℝ) *
+          (51364238588241191471 / 950038433074951171875 : ℝ) := by
+  rw [fourCellOddRawStripCancellationReserve_eq_raw_sub_strip
+      fourCellOddP11DirectTail contDiff_fourCellOddP11DirectTail
+      odd_fourCellOddP11DirectTail,
+    centeredRawLogEnergy_fourCellOddP11DirectTail_eq,
+    fourCellOddEndpointStripOddRawEnergy_P11_eq]
+  ring
 
 end
 
