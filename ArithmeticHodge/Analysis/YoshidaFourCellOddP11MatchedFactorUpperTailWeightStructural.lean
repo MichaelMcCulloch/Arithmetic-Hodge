@@ -179,6 +179,43 @@ private theorem matchedFactorEndpointDiagonalLower_lt (n : ℕ) :
           simpa only [mul_comm (2 * (n : ℝ) + 3)
             (endpointPotentialLegendreDiagonal (n + 1))] using hrec.symm
 
+/-- The matching recursively generated upper diagonal certificate. -/
+private def matchedFactorEndpointDiagonalUpper : ℕ → ℝ
+  | 0 => 61370564 / 100000000
+  | n + 1 =>
+      ((2 * (n : ℝ) + 1) * matchedFactorEndpointDiagonalUpper n +
+        2 / ((n + 1 : ℝ) * (2 * (n : ℝ) + 1) *
+          (2 * (n : ℝ) + 3))) /
+        (2 * (n : ℝ) + 3)
+
+private theorem endpointPotentialLegendreDiagonal_lt_matchedFactorUpper
+    (n : ℕ) :
+    endpointPotentialLegendreDiagonal n <
+      matchedFactorEndpointDiagonalUpper n := by
+  induction n with
+  | zero =>
+      rw [matchedFactorEndpointDiagonalUpper,
+        endpointPotentialLegendreDiagonal_zero]
+      linarith [strict_log_two_fine_bounds.1]
+  | succ n ih =>
+      rw [matchedFactorEndpointDiagonalUpper]
+      have hrec := endpointPotentialLegendreDiagonal_succ n
+      have hcoef : 0 < 2 * (n : ℝ) + 1 := by positivity
+      have hden : 0 < 2 * (n : ℝ) + 3 := by positivity
+      apply (lt_div_iff₀ hden).2
+      calc
+        endpointPotentialLegendreDiagonal (n + 1) *
+              (2 * (n : ℝ) + 3) =
+            (2 * (n : ℝ) + 3) *
+              endpointPotentialLegendreDiagonal (n + 1) := by ring
+        _ = (2 * (n : ℝ) + 1) * endpointPotentialLegendreDiagonal n +
+              2 / ((n + 1 : ℝ) * (2 * (n : ℝ) + 1) *
+                (2 * (n : ℝ) + 3)) := hrec
+        _ < (2 * (n : ℝ) + 1) * matchedFactorEndpointDiagonalUpper n +
+              2 / ((n + 1 : ℝ) * (2 * (n : ℝ) + 1) *
+                (2 * (n : ℝ) + 3)) :=
+          add_lt_add_left (mul_lt_mul_of_pos_left ih hcoef) _
+
 private theorem endpointPotentialPolynomialPair_odd_offDiagonal
     {m n : ℕ} (hmn : m < n) (heven : Even (m + n)) :
     endpointPotentialPolynomialPair
@@ -490,6 +527,163 @@ theorem endpointPotentialPolynomialPair_upperTail_gt_1091 :
         (by norm_num : Even (23 + 25))]
   norm_num only [Nat.cast_ofNat]
   linarith
+
+/-- Matching upper enclosure for the packet endpoint-potential pair. -/
+theorem endpointPotentialPolynomialPair_upperTail_lt_273_div_250 :
+    endpointPotentialPolynomialPair
+        fourCellOddP11MatchedFactorUpperTailPolynomial
+        fourCellOddP11MatchedFactorUpperTailPolynomial <
+      (273 / 250 : ℝ) := by
+  have h11 : endpointPotentialLegendreDiagonal 11 <
+      (6020 / 100000 : ℝ) := by
+    exact (endpointPotentialLegendreDiagonal_lt_matchedFactorUpper 11).trans
+      (show matchedFactorEndpointDiagonalUpper 11 <
+        (6020 / 100000 : ℝ) by
+          norm_num [matchedFactorEndpointDiagonalUpper])
+  have h13 : endpointPotentialLegendreDiagonal 13 <
+      (5130 / 100000 : ℝ) := by
+    exact (endpointPotentialLegendreDiagonal_lt_matchedFactorUpper 13).trans
+      (show matchedFactorEndpointDiagonalUpper 13 <
+        (5130 / 100000 : ℝ) by
+          norm_num [matchedFactorEndpointDiagonalUpper])
+  have h15 : endpointPotentialLegendreDiagonal 15 <
+      (4469 / 100000 : ℝ) := by
+    exact (endpointPotentialLegendreDiagonal_lt_matchedFactorUpper 15).trans
+      (show matchedFactorEndpointDiagonalUpper 15 <
+        (4469 / 100000 : ℝ) by
+          norm_num [matchedFactorEndpointDiagonalUpper])
+  have h17 : endpointPotentialLegendreDiagonal 17 <
+      (3959 / 100000 : ℝ) := by
+    exact (endpointPotentialLegendreDiagonal_lt_matchedFactorUpper 17).trans
+      (show matchedFactorEndpointDiagonalUpper 17 <
+        (3959 / 100000 : ℝ) by
+          norm_num [matchedFactorEndpointDiagonalUpper])
+  have h19 : endpointPotentialLegendreDiagonal 19 <
+      (3553 / 100000 : ℝ) := by
+    exact (endpointPotentialLegendreDiagonal_lt_matchedFactorUpper 19).trans
+      (show matchedFactorEndpointDiagonalUpper 19 <
+        (3553 / 100000 : ℝ) by
+          norm_num [matchedFactorEndpointDiagonalUpper])
+  have h21 : endpointPotentialLegendreDiagonal 21 <
+      (3223 / 100000 : ℝ) := by
+    exact (endpointPotentialLegendreDiagonal_lt_matchedFactorUpper 21).trans
+      (show matchedFactorEndpointDiagonalUpper 21 <
+        (3223 / 100000 : ℝ) by
+          norm_num [matchedFactorEndpointDiagonalUpper])
+  have h23 : endpointPotentialLegendreDiagonal 23 <
+      (2949 / 100000 : ℝ) := by
+    exact (endpointPotentialLegendreDiagonal_lt_matchedFactorUpper 23).trans
+      (show matchedFactorEndpointDiagonalUpper 23 <
+        (2949 / 100000 : ℝ) by
+          norm_num [matchedFactorEndpointDiagonalUpper])
+  have h25 : endpointPotentialLegendreDiagonal 25 <
+      (2718 / 100000 : ℝ) := by
+    exact (endpointPotentialLegendreDiagonal_lt_matchedFactorUpper 25).trans
+      (show matchedFactorEndpointDiagonalUpper 25 <
+        (2718 / 100000 : ℝ) by
+          norm_num [matchedFactorEndpointDiagonalUpper])
+  rw [endpointPotentialPolynomialPair_upperTail_expansion,
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 11) (n := 13) (by omega)
+        (by norm_num : Even (11 + 13)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 11) (n := 15) (by omega)
+        (by norm_num : Even (11 + 15)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 11) (n := 17) (by omega)
+        (by norm_num : Even (11 + 17)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 11) (n := 19) (by omega)
+        (by norm_num : Even (11 + 19)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 11) (n := 21) (by omega)
+        (by norm_num : Even (11 + 21)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 11) (n := 23) (by omega)
+        (by norm_num : Even (11 + 23)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 11) (n := 25) (by omega)
+        (by norm_num : Even (11 + 25)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 13) (n := 15) (by omega)
+        (by norm_num : Even (13 + 15)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 13) (n := 17) (by omega)
+        (by norm_num : Even (13 + 17)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 13) (n := 19) (by omega)
+        (by norm_num : Even (13 + 19)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 13) (n := 21) (by omega)
+        (by norm_num : Even (13 + 21)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 13) (n := 23) (by omega)
+        (by norm_num : Even (13 + 23)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 13) (n := 25) (by omega)
+        (by norm_num : Even (13 + 25)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 15) (n := 17) (by omega)
+        (by norm_num : Even (15 + 17)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 15) (n := 19) (by omega)
+        (by norm_num : Even (15 + 19)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 15) (n := 21) (by omega)
+        (by norm_num : Even (15 + 21)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 15) (n := 23) (by omega)
+        (by norm_num : Even (15 + 23)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 15) (n := 25) (by omega)
+        (by norm_num : Even (15 + 25)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 17) (n := 19) (by omega)
+        (by norm_num : Even (17 + 19)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 17) (n := 21) (by omega)
+        (by norm_num : Even (17 + 21)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 17) (n := 23) (by omega)
+        (by norm_num : Even (17 + 23)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 17) (n := 25) (by omega)
+        (by norm_num : Even (17 + 25)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 19) (n := 21) (by omega)
+        (by norm_num : Even (19 + 21)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 19) (n := 23) (by omega)
+        (by norm_num : Even (19 + 23)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 19) (n := 25) (by omega)
+        (by norm_num : Even (19 + 25)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 21) (n := 23) (by omega)
+        (by norm_num : Even (21 + 23)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 21) (n := 25) (by omega)
+        (by norm_num : Even (21 + 25)),
+    endpointPotentialPolynomialPair_odd_offDiagonal
+      (m := 23) (n := 25) (by omega)
+        (by norm_num : Even (23 + 25))]
+  norm_num only [Nat.cast_ofNat]
+  linarith
+
+/-- Directly scaled form used by the matched-factor core estimate. -/
+theorem ninetyThree_hundredths_mul_endpointPotentialPair_upperTail_lt :
+    (93 / 100 : ℝ) * endpointPotentialPolynomialPair
+        fourCellOddP11MatchedFactorUpperTailPolynomial
+        fourCellOddP11MatchedFactorUpperTailPolynomial <
+      (51 / 50 : ℝ) := by
+  calc
+    (93 / 100 : ℝ) * endpointPotentialPolynomialPair
+          fourCellOddP11MatchedFactorUpperTailPolynomial
+          fourCellOddP11MatchedFactorUpperTailPolynomial <
+        (93 / 100 : ℝ) * (273 / 250 : ℝ) :=
+      mul_lt_mul_of_pos_left
+        endpointPotentialPolynomialPair_upperTail_lt_273_div_250 (by norm_num)
+    _ < (51 / 50 : ℝ) := by norm_num
 
 /-- The exact scalar tail weight of the eight-mode packet is strictly above
 `39 / 50`.  This is the upper-factor obstruction threshold. -/
