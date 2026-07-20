@@ -26,16 +26,16 @@ canonical frequencies `0, ..., 200`; the resulting positive definiteness is
 then pulled back to the production endpoint-adapted basis.
 -/
 
-@[reducible] private noncomputable def canonicalEndpointLinearOrder :
+@[reducible] noncomputable def factorTwoCanonicalEndpointLinearOrder :
     LinearOrder FactorTwoCanonicalEndpointEvenIndex :=
   LinearOrder.lift' factorTwoCanonicalEndpointIndex
     factorTwoCanonicalEndpointIndex_injective
 
 local instance : LinearOrder FactorTwoCanonicalEndpointEvenIndex :=
-  canonicalEndpointLinearOrder
+  factorTwoCanonicalEndpointLinearOrder
 
 local instance : DecidableEq FactorTwoCanonicalEndpointEvenIndex :=
-  canonicalEndpointLinearOrder.toDecidableEq
+  factorTwoCanonicalEndpointLinearOrder.toDecidableEq
 
 /-- A robust sparse certificate for the positive canonical even endpoint
 pulls back to the positive production endpoint pencil. -/
@@ -45,7 +45,7 @@ theorem factorTwoConcreteEvenPlusPencilMatrix_posDef_of_sparseCertificate
     (epsilon : ℚ)
     (weights : FactorTwoCanonicalEndpointEvenIndex → ℚ)
     (hlower : ∀ i j, entriesValue (entries i) j ≠ 0 →
-      canonicalEndpointLinearOrder.le j i)
+      factorTwoCanonicalEndpointLinearOrder.le j i)
     (hdiag : ∀ i, entriesValue (entries i) i ≠ 0)
     (hepsilon : 0 ≤ epsilon)
     (hwidth : ∀ i j,
@@ -83,7 +83,7 @@ theorem factorTwoConcreteEvenMinusPencilMatrix_posDef_of_sparseCertificate
     (epsilon : ℚ)
     (weights : FactorTwoCanonicalEndpointEvenIndex → ℚ)
     (hlower : ∀ i j, entriesValue (entries i) j ≠ 0 →
-      canonicalEndpointLinearOrder.le j i)
+      factorTwoCanonicalEndpointLinearOrder.le j i)
     (hdiag : ∀ i, entriesValue (entries i) i ≠ 0)
     (hepsilon : 0 ≤ epsilon)
     (hwidth : ∀ i j,
