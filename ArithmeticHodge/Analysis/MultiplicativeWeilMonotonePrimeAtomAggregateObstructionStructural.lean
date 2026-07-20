@@ -4988,6 +4988,26 @@ private theorem exists_realParent_finiteBlock_eq_middle_add_smul_rightEndpoint
           parent k n hn]
     module
 
+private theorem monotoneQuarterFiniteBlockInterior_add
+    (f g : BombieriTest) (k : ℤ) (n : ℕ) :
+    monotoneQuarterFiniteBlockInterior (f + g) k n =
+      monotoneQuarterFiniteBlockInterior f k n +
+        monotoneQuarterFiniteBlockInterior g k n := by
+  unfold monotoneQuarterFiniteBlockInterior
+  rw [← monotoneQuarterFiniteBlock_shift_start_one (f + g),
+    ← monotoneQuarterFiniteBlock_shift_start_one f,
+    ← monotoneQuarterFiniteBlock_shift_start_one g,
+    monotoneQuarterFiniteBlock_add_allLength]
+
+private theorem monotoneQuarterFiniteBlockInterior_smul
+    (c : ℂ) (f : BombieriTest) (k : ℤ) (n : ℕ) :
+    monotoneQuarterFiniteBlockInterior (c • f) k n =
+      c • monotoneQuarterFiniteBlockInterior f k n := by
+  unfold monotoneQuarterFiniteBlockInterior
+  rw [← monotoneQuarterFiniteBlock_shift_start_one (c • f),
+    ← monotoneQuarterFiniteBlock_shift_start_one f,
+    monotoneQuarterFiniteBlock_smul_allLength]
+
 private theorem bombieriRealQuadraticValue_add_real_smul_allLength
     (f g : BombieriTest) (t : ℝ) :
     bombieriRealQuadraticValue (f + (t : ℂ) • g) =
@@ -5028,6 +5048,67 @@ private theorem real_two_by_two_determinant_of_all_nonnegative_allLength
     rcases (div_nonneg_iff.mp h) with hpos | hneg
     · exact sub_nonneg.mp hpos.1
     · exact (not_le_of_gt hBpos hneg.2).elim
+
+/-- Under positivity at the shorter interior length, a zero interior
+diagonal is a radical vector for every real common-parent variation of that
+same interior block.  This is the exact structural information available in
+the long singular branch even when zero quadratic value does not force the
+test itself to vanish. -/
+theorem finiteBlockInterior_globalCross_eq_zero_of_previousLengths_and_quadratic_zero
+    (n : ℕ) (hn : 4 ≤ n)
+    (hprev : RealFiniteBlockProductionNonnegativeUpTo (n - 1))
+    (parent : BombieriTest)
+    (hparent : bombieriConjugateTest parent = parent)
+    (k : ℤ)
+    (hzero : bombieriRealQuadraticValue
+      (monotoneQuarterFiniteBlockInterior parent k n) = 0)
+    (variation : BombieriTest)
+    (hvariation : bombieriConjugateTest variation = variation) :
+    (bombieriTwoBlockGlobalCrossSymbol
+      (monotoneQuarterFiniteBlockInterior parent k n)
+      (monotoneQuarterFiniteBlockInterior variation k n)).re = 0 := by
+  let m : BombieriTest :=
+    monotoneQuarterFiniteBlockInterior parent k n
+  let g : BombieriTest :=
+    monotoneQuarterFiniteBlockInterior variation k n
+  let B : ℝ := bombieriRealQuadraticValue g
+  let U : ℝ := (bombieriTwoBlockGlobalCrossSymbol m g).re
+  have hgShift :
+      monotoneQuarterFiniteBlock variation (k + 1) 0 (n - 2) = g := by
+    dsimp only [g, monotoneQuarterFiniteBlockInterior]
+    exact monotoneQuarterFiniteBlock_shift_start_one variation k (n - 2)
+  have hB : 0 ≤ B := by
+    have hnonnegative :=
+      hprev (n - 2) (by omega) variation hvariation (k + 1)
+    rw [hgShift] at hnonnegative
+    exact hnonnegative
+  have hdet : U ^ 2 ≤ bombieriRealQuadraticValue m * B := by
+    apply real_two_by_two_determinant_of_all_nonnegative_allLength hB
+    intro t
+    let modified : BombieriTest := parent + (t : ℂ) • variation
+    have hmodified : bombieriConjugateTest modified = modified := by
+      dsimp only [modified]
+      rw [bombieriConjugateTest_add, hparent,
+        conjugate_fixed_real_smul_allLength hvariation t]
+    have hnonnegative :=
+      hprev (n - 2) (by omega) modified hmodified (k + 1)
+    have hmodifiedShift :
+        monotoneQuarterFiniteBlock modified (k + 1) 0 (n - 2) =
+          monotoneQuarterFiniteBlockInterior modified k n := by
+      exact monotoneQuarterFiniteBlock_shift_start_one modified k (n - 2)
+    rw [hmodifiedShift,
+      show monotoneQuarterFiniteBlockInterior modified k n =
+          m + (t : ℂ) • g by
+        dsimp only [modified, m, g]
+        rw [monotoneQuarterFiniteBlockInterior_add,
+          monotoneQuarterFiniteBlockInterior_smul],
+      bombieriRealQuadraticValue_add_real_smul_allLength] at hnonnegative
+    exact hnonnegative
+  have hmzero : bombieriRealQuadraticValue m = 0 := by
+    simpa only [m] using hzero
+  rw [hmzero, zero_mul] at hdet
+  have hU : U = 0 := by nlinarith [sq_nonneg U]
+  exact hU
 
 /-- Positivity through length `n-1` supplies both adjacent principal minors
 of the endpoint--interior--endpoint matrix for an arbitrary `n`-cell common
