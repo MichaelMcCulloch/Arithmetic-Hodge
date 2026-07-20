@@ -975,6 +975,159 @@ theorem fourCellOddCoreLocalBilinear_P1_P11Plus_eq_selectorResiduals
   rw [hrow]
   linarith
 
+private theorem intervalIntegrable_P1_regularRemainder_right
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    IntervalIntegrable
+      (fun y : ℝ ↦
+        fourCellEndpointSeedRegularKernelRemainder (y - x) * centeredP1 y)
+      volume x 1 := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hx.2]
+  let f : ℝ → ℝ := fun y ↦
+    fourCellEndpointSeedRegularKernelRemainder (y - x) * centeredP1 y
+  let g : ℝ → ℝ := fun _y ↦ (1 / 1400 : ℝ)
+  have hgIcc : IntegrableOn g (Icc x 1) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact continuous_const.continuousOn
+  have hg : Integrable g (volume.restrict (Ioc x 1)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc x 1)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact
+      (measurable_fourCellEndpointSeedRegularKernelRemainder.comp
+        (measurable_id.sub measurable_const)).mul (by
+          unfold centeredP1
+          fun_prop)
+  have hfg : ∀ᵐ y : ℝ ∂(volume.restrict (Ioc x 1)),
+      ‖f y‖ ≤ g y := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with y hy
+    have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+      ⟨by linarith [hx.1, hy.1], hy.2⟩
+    have hlag : y - x ∈ Icc (0 : ℝ) 2 :=
+      ⟨by linarith [hy.1], by linarith [hx.1, hy.2]⟩
+    have hE := abs_fourCellEndpointSeedRegularKernelRemainder_le hlag
+    have hp := abs_centeredP1_le_one hyIcc
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul]
+    exact (mul_le_mul hE hp (abs_nonneg _) (by norm_num)).trans_eq
+      (by norm_num)
+  exact Integrable.mono' hg hfmeas hfg
+
+private theorem intervalIntegrable_P1_regularRemainder_left
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    IntervalIntegrable
+      (fun y : ℝ ↦
+        fourCellEndpointSeedRegularKernelRemainder (x - y) * centeredP1 y)
+      volume (-1) x := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hx.1]
+  let f : ℝ → ℝ := fun y ↦
+    fourCellEndpointSeedRegularKernelRemainder (x - y) * centeredP1 y
+  let g : ℝ → ℝ := fun _y ↦ (1 / 1400 : ℝ)
+  have hgIcc : IntegrableOn g (Icc (-1) x) volume := by
+    apply ContinuousOn.integrableOn_compact isCompact_Icc
+    exact continuous_const.continuousOn
+  have hg : Integrable g (volume.restrict (Ioc (-1) x)) :=
+    hgIcc.mono_set Ioc_subset_Icc_self
+  have hfmeas : AEStronglyMeasurable f
+      (volume.restrict (Ioc (-1) x)) := by
+    apply Measurable.aestronglyMeasurable
+    dsimp only [f]
+    exact
+      (measurable_fourCellEndpointSeedRegularKernelRemainder.comp
+        (measurable_const.sub measurable_id)).mul (by
+          unfold centeredP1
+          fun_prop)
+  have hfg : ∀ᵐ y : ℝ ∂(volume.restrict (Ioc (-1) x)),
+      ‖f y‖ ≤ g y := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with y hy
+    have hyIcc : y ∈ Icc (-1 : ℝ) 1 :=
+      ⟨hy.1.le, by linarith [hy.2, hx.2]⟩
+    have hlag : x - y ∈ Icc (0 : ℝ) 2 :=
+      ⟨by linarith [hy.2], by linarith [hy.1, hx.2]⟩
+    have hE := abs_fourCellEndpointSeedRegularKernelRemainder_le hlag
+    have hp := abs_centeredP1_le_one hyIcc
+    dsimp only [f, g]
+    rw [Real.norm_eq_abs, abs_mul]
+    exact (mul_le_mul hE hp (abs_nonneg _) (by norm_num)).trans_eq
+      (by norm_num)
+  exact Integrable.mono' hg hfmeas hfg
+
+/-- Exact analytic decomposition of the smooth `P₁` row on the physical
+interval.  Thus every later rational approximation error separates into a
+degree-five coefficient error and the already bounded kernel remainder. -/
+theorem fourCellOddP11P1RegularRepresenter_eq_polynomial_add_remainder
+    {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) :
+    fourCellOddP11P1RegularRepresenter x =
+      fourCellOddP11P1RegularPolynomialRepresenter x +
+        fourCellOddP11P1RegularRemainderRepresenter x := by
+  let P : ℝ → ℝ := fun t ↦
+    fourCellRegularKernelPolynomial4 (fourCellOperatorHalfWidth * t)
+  have hp :
+      fourCellOddOneThreeFiveSevenNineLowProfile 1 0 0 0 0 = centeredP1 := by
+    funext y
+    unfold fourCellOddOneThreeFiveSevenNineLowProfile
+      fourCellOddOneThreeFiveLowProfile factorTwoOddStructuralLowProfile
+    simp
+  have hPRight : IntervalIntegrable
+      (fun y : ℝ ↦ P (y - x) * centeredP1 y) volume x 1 := by
+    dsimp only [P]
+    unfold fourCellRegularKernelPolynomial4 centeredP1
+    exact (by fun_prop : Continuous (fun y : ℝ ↦
+      ((1 / 4 : ℝ) - fourCellOperatorHalfWidth * (y - x) / 48 -
+          (fourCellOperatorHalfWidth * (y - x)) ^ 2 / 32 +
+          7 * (fourCellOperatorHalfWidth * (y - x)) ^ 3 / 11520 +
+          5 * (fourCellOperatorHalfWidth * (y - x)) ^ 4 / 1536) * y))
+      |>.intervalIntegrable x 1
+  have hPLeft : IntervalIntegrable
+      (fun y : ℝ ↦ P (x - y) * centeredP1 y) volume (-1) x := by
+    dsimp only [P]
+    unfold fourCellRegularKernelPolynomial4 centeredP1
+    exact (by fun_prop : Continuous (fun y : ℝ ↦
+      ((1 / 4 : ℝ) - fourCellOperatorHalfWidth * (x - y) / 48 -
+          (fourCellOperatorHalfWidth * (x - y)) ^ 2 / 32 +
+          7 * (fourCellOperatorHalfWidth * (x - y)) ^ 3 / 11520 +
+          5 * (fourCellOperatorHalfWidth * (x - y)) ^ 4 / 1536) * y))
+      |>.intervalIntegrable (-1) x
+  have hERight := intervalIntegrable_P1_regularRemainder_right hx
+  have hELeft := intervalIntegrable_P1_regularRemainder_left hx
+  have hright :
+      factorTwoContinuousLagRightRepresenter
+          (fun t : ℝ ↦ yoshidaRegularKernel
+            (fourCellOperatorHalfWidth * t)) centeredP1 x =
+        factorTwoContinuousLagRightRepresenter P centeredP1 x +
+          factorTwoContinuousLagRightRepresenter
+            fourCellEndpointSeedRegularKernelRemainder centeredP1 x := by
+    unfold factorTwoContinuousLagRightRepresenter
+    rw [← intervalIntegral.integral_add hPRight hERight]
+    apply intervalIntegral.integral_congr
+    intro y _hy
+    dsimp only [P]
+    unfold fourCellEndpointSeedRegularKernelRemainder
+    ring
+  have hleft :
+      factorTwoContinuousLagLeftRepresenter
+          (fun t : ℝ ↦ yoshidaRegularKernel
+            (fourCellOperatorHalfWidth * t)) centeredP1 x =
+        factorTwoContinuousLagLeftRepresenter P centeredP1 x +
+          factorTwoContinuousLagLeftRepresenter
+            fourCellEndpointSeedRegularKernelRemainder centeredP1 x := by
+    unfold factorTwoContinuousLagLeftRepresenter
+    rw [← intervalIntegral.integral_add hPLeft hELeft]
+    apply intervalIntegral.integral_congr
+    intro y _hy
+    dsimp only [P]
+    unfold fourCellEndpointSeedRegularKernelRemainder
+    ring
+  unfold fourCellOddP11P1RegularRepresenter
+    fourCellOddFiveModeRegularRepresenter
+  rw [hp]
+  unfold fourCellOddP11P1RegularPolynomialRepresenter
+    fourCellOddP11P1RegularRemainderRepresenter factorTwoContinuousLagK
+  dsimp only [P] at hright hleft ⊢
+  rw [hright, hleft]
+  ring
+
 end
 
 end ArithmeticHodge.Analysis.YoshidaFourCellOddP11P1TailSchurStructural
