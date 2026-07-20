@@ -19,14 +19,14 @@ open MultiplicativeWeilFiveCellResidualFactorTwoStructural
 open MultiplicativeWeilFourCellSelectorProductionClosureStructural
 open MultiplicativeWeilMonotonePrimeAtomAggregateObstructionStructural
 open YoshidaFiveCellEndpointParitySchurClosureStructural
-open YoshidaFourCellOddP11WeightedDualSelectorStructural
+open YoshidaFourCellOddP11CoupledRieszClosureStructural
 
 /-!
 # Exact structural-ray frontier for RH
 
 This file packages the sharpened low-length and tail handoffs without hiding
 any analytic premise.  Length four is one even endpoint-zero capacity family
-plus the odd two-row selector Loewner certificate.  Length five is the pair of
+plus the exact odd corrected determinant.  Length five is the pair of
 intrinsic same-parity low-plus-tail ray families.  Every later length is the
 positive ray of the actual common-parent residual pencil, restricted to
 genuinely nonlocal parents in the exact surrounding lattice window;
@@ -47,7 +47,7 @@ ratio-two-support, lattice-position, or singular-pivot bookkeeping left
 implicit. -/
 def ArithmeticHodgeStructuralRayCertificate : Prop :=
   FourCellEvenEndpointZeroExactCapacity ∧
-    FourCellOddP11CoupledSelectorLoewnerCertificate ∧
+    FourCellOddP11CoupledRieszDefectNonnegative ∧
       FiveCellEndpointAdaptedIntrinsicParityRayNonnegative ∧
         ∀ n : ℕ, 6 ≤ n →
           RealFiniteBlockCommonParentResidualPositiveRayNonnegativeNormalizedOutsideRatioTwoAtLength
@@ -63,7 +63,7 @@ theorem riemannHypothesis_of_structuralRayCertificate
     Classical.choice nonempty_zetaZeroEnumeration
   exact riemannHypothesis_of_four_five_and_tailPositiveRay
     zeros
-    (realFiniteBlockProductionNonnegativeAtLength_four_of_evenCapacity_and_oddSelector
+    (realFiniteBlockProductionNonnegativeAtLength_four_of_evenCapacity_and_oddCorrectedDefect
       hcert.1 hcert.2.1)
     (realFiniteBlockProductionNonnegativeAtLength_five_of_intrinsicParityRays
       hcert.2.2.1)
