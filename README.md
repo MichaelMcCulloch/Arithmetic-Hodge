@@ -207,4 +207,22 @@ python3 scripts/module_reachability.py   # audit root-closure coverage; see MODU
 
 ---
 
+## License
+
+Copyright © 2026 Michael McCulloch.
+
+This project is licensed under the **GNU Affero General Public License v3.0 only**
+(`AGPL-3.0-only`) — see [`LICENSE`](LICENSE), mirrored at
+[`LICENSES/AGPL-3.0-only.txt`](LICENSES/AGPL-3.0-only.txt).
+
+It builds on [Mathlib](https://github.com/leanprover-community/mathlib4), distributed
+under the Apache License 2.0 and retained at
+[`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt). Apache-2.0 is one-way
+compatible with the AGPL, so incorporating Apache-2.0 dependencies into this
+AGPL-licensed work is permitted; the combined work is governed by the AGPL.
+
+`SPDX-License-Identifier: AGPL-3.0-only`
+
+---
+
 *This corpus does not close the Riemann Hypothesis. It reduces it to the pointwise positivity of an arithmetic polarization at the archimedean place — the star of the compass — and builds, honestly and axiom-free, the verified instrument that would let a future construction of that polarization be checked. The girders are real; the bridge is not yet built.*
